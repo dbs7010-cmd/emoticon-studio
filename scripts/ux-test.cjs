@@ -43,14 +43,13 @@ const png = Buffer.alloc(33);Buffer.from([137,80,78,71,13,10,26,10]).copy(png);p
 files.set(localFile('old.png').uri,png); files.set(localFile('new.png').uri,png);
 
 let tree, scene;
-const press = async label => { let matches=tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel===label||n.type==='Button'&&n.props.label===label);if(label==='닫기')matches=matches.slice(-1);assert.equal(matches.length,1,'button '+label);assert.ok(!matches[0].props.disabled,'enabled '+label);await act(async()=>matches[0].props.onPress()); };
-const longPress = async label => { const matches=tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel===label);assert.equal(matches.length,1,'long press '+label);assert.equal(typeof matches[0].props.onLongPress,'function');await act(async()=>matches[0].props.onLongPress()); };
+const press = async label => { let matches=tree.root.findAll(n=>(n.type==='Pressable'&&n.props.accessibilityLabel===label)||(n.type==='Button'&&n.props.label===label));if(label==='닫기')matches=matches.slice(-1);assert.equal(matches.length,1,'button '+label);assert.ok(!matches[0].props.disabled,'enabled '+label);await act(async()=>matches[0].props.onPress()); };
 const tiles=()=>tree.root.findAll(n=>n.type==='Pressable'&&/^slot-\d+$/.test(n.props.testID));
 const message=async m=>{await act(async()=>tree.root.findByType('WebView').props.onMessage({nativeEvent:{data:JSON.stringify(m)}}));};
 const lastCommand=type=>commands.map(s=>JSON.parse(s.slice(s.indexOf('(')+1,s.lastIndexOf(');true;')))).filter(m=>m.type===type).at(-1);
 const init=async()=>{
  await message({type:'ready'});const m=lastCommand('init');assert.equal(m.layers.length,2);
- scene={type:'state',undo:false,redo:false,dirty:false,activeLayerId:m.activeLayerId||'draw-1',layers:m.layers,references:m.references};
+ scene={type:'state',undo:false,redo:false,dirty:false,activeLayerId:m.activeLayerId||'draw-1',activeReferenceId:null,layers:m.layers,references:m.references};
  await message(scene);await message({type:'initialized'});return m;
 };
 const publicLayer=l=>Object.fromEntries(['id','name','visible','opacity','x','y','scale','rotation'].map(k=>[k,l[k]]));
@@ -58,7 +57,9 @@ const saved=async(dirty=true)=>{
  await message({type:'save',dirty,data:'data:image/png;base64,'+png.toString('base64'),metrics,activeLayerId:scene.activeLayerId,layers:scene.layers.map(l=>({...publicLayer(l),data:'data:image/png;base64,'+png.toString('base64')})),references:scene.references.map(l=>({...publicLayer(l),path:l.path}))});
 };
 (async()=>{
- await act(async()=>{tree=create(React.createElement(App));});await press('이전 프로젝트');
+ await act(async()=>{tree=create(React.createElement(App));});
+ assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 이모티콘 세트').length,1,'home uses compact new-set action');
+ await press('이전 프로젝트');
  assert.equal(tiles().length,32);assert.equal(tiles()[0].findAllByType('Image').length,1);
  for(let n=1;n<=32;n++){
   await act(async()=>tiles().find(t=>t.props.testID==='slot-'+n).props.onPress());
@@ -67,15 +68,17 @@ const saved=async(dirty=true)=>{
  }
  assert.deepEqual(loadStore().store.projects[0],p,'opening untouched slots does not create results or change old metadata');
  await act(async()=>tiles()[0].props.onPress());await init();
- const dialogue=tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='대사')[0].props.value;assert.equal(dialogue,'대사 1');
+ await press('현재 칸 브리프');
+ const dialogue=tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='현재 칸 대사')[0].props.value;assert.equal(dialogue,'대사 1');
  pendingPicks=[{...image,path:'r2.png'},{...image,path:'r3.png'}];pendingPicks.forEach(i=>files.set(localFile(i.path).uri,png));
- await press('레퍼런스 추가');
+ await press('참고 추가');
  const added=lastCommand('addReferences').references;assert.equal(added.length,2);
  scene.references.push(...added);await message(scene);
  assert.ok(loadStore().store.projects[0].slots.every(s=>s.referenceImages.length===3),'new references are shared across every slot');
- await press('레퍼런스 1 켜짐');assert.equal(lastCommand('soloReference').id,scene.references[0].id);
- await longPress('레퍼런스 1 켜짐');assert.equal(lastCommand('tool').tool,'move');
- await press('레이어');await press('선택 그림 2');scene.activeLayerId='draw-2';await message(scene);await press('패널 닫기');
+ await press('참고 1 사용 중');assert.equal(lastCommand('toggleReference').id,scene.references[0].id);
+ scene.activeReferenceId=scene.references[0].id;await message(scene);
+ assert.equal(tree.root.findAll(n=>n.type==='Text'&&String(n.children?.join('')).includes('참고 조정 중')).length>0,true,'active reference exposes transform mode');
+ await press('레이어');await press('그림 2 선택');assert.equal(lastCommand('select').id,'draw-2');scene.activeLayerId='draw-2';await message(scene);await press('레이어');
  await press('마커');assert.equal(lastCommand('brush').brush,'marker');
  await press('지우개');await press('굵기 늘리기');assert.equal(lastCommand('width').tool,'eraser');assert.equal(lastCommand('width').width,22);
  await press('펜');await press('굵기 늘리기');assert.equal(lastCommand('width').tool,'pen');assert.equal(lastCommand('width').width,7);
@@ -85,12 +88,12 @@ const saved=async(dirty=true)=>{
  assert.deepEqual(after.canon,p.canon);
  const finalPath=after.slots[0].finalImage.path;assert.ok(files.has(localFile(finalPath).uri));
  assert.ok(tiles()[0].findByType('Image').props.source.uri.endsWith(finalPath),'thumbnail reflects export');
- await press('저장 후 다음 슬롯');await saved();const next=await init();assert.equal(next.layers[0].data,undefined);assert.equal(next.references.length,3,'shared references stay under the next slot canvas');
- await press('이전 슬롯');await saved(false);const reopened=await init();assert.equal(reopened.activeLayerId,'draw-2');
+ await press('저장 후 다음 칸');await saved();const next=await init();assert.equal(next.layers[0].data,undefined);assert.equal(next.references.length,3,'shared references stay under the next slot canvas');
+ await press('이전 칸');await saved(false);const reopened=await init();assert.equal(reopened.activeLayerId,'draw-2');
  await press('홈');await saved(false);assert.equal(tree.root.findAllByType('WebView').length,0);
  const persisted=loadStore().store;
  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});await press('이전 프로젝트');await act(async()=>tiles()[0].props.onPress());const restored=await init();
  assert.equal(restored.layers.length,2);assert.equal(restored.references.length,3);assert.deepEqual(loadStore().store,persisted,'restart reads same work and metadata');
  await act(async()=>tree.unmount());
- console.log('PASS: 32 direct Painter entries, project-wide references, Korean layer workflow, independent brush/eraser widths, layered persistence, export thumbnail, save-next continuous flow, restart, old data compatibility. Native modules/WebView mocked; engine touch gestures require device test.');
+ console.log('PASS: workshop home, 32 direct Painter entries, slot brief, project-wide references, compact layer rail, independent brush/eraser widths, layered persistence, export thumbnail, save-next flow, restart, old data compatibility. Native modules/WebView mocked; touch reference transform requires device test.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
