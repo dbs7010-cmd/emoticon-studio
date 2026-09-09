@@ -84,8 +84,9 @@
 ## VERIFICATION STATUS
 - GitHub 코드 반영: DONE
 - 이전 Android 실기기: Undo PASS / 지우개 PASS / 참고 확대 PASS
-- 최신 `npm run typecheck`: **UNVERIFIED**
-- 최신 `npm run test:ux`: **UNVERIFIED**
+- 최신 `npm run typecheck`: **PASS**
+- 최신 `npm run test:ux`: **PASS**
+- 작업 트리: clean / 브랜치 `feat/painter-flow-v1`
 - 최신 Android Expo Go:
   - Painter 대사 제거: **UNVERIFIED**
   - 세 손가락 Redo 수정: **UNVERIFIED**
@@ -112,4 +113,10 @@
 AI 고도화/움직이는 이모티콘/PRO는 그 뒤다.
 
 ## BLOCKED
-- 최신 브랜치 typecheck/자동 테스트/Android 실기기 재검증.
+자동 검증(`typecheck`, `test:ux`)은 해소됐다.
+남은 것은 Android Expo Go 실기기 검증 3개뿐이며 사용자가 직접 확인할 예정이다.
+1. Painter 상단 대사/무대사 표시 제거 확인
+2. 두 손가락 Undo 후 세 손가락 Redo 동작 확인
+3. 활성 참고 이미지에서 두 손가락 드래그 시 참고 이미지 자체 이동 확인
+
+이 3개가 PASS된 뒤 `DEVICE FEEDBACK ROUND 4`(세트 삭제 / 참고 불투명도 빠른 조절 / 펜·지우개·굵기 배치 / 초보자용 레이어 UX) 코드 작업을 시작한다.
