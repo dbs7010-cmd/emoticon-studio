@@ -26,7 +26,7 @@ function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeig
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
 function style(g){g.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';g.globalAlpha=tool==='eraser'?1:brush==='marker'?0.28:brush==='pencil'?0.7:1;g.lineWidth=tool==='eraser'?eraserWidth:penWidth;g.strokeStyle=color;g.fillStyle=color;g.lineCap=brush==='marker'&&tool!=='eraser'?'square':'round';g.lineJoin='round';}
-function touchPoint(e){return {x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY};}
+function touchPoint(e){return {id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY};}
 function points(){return [...touches.values()];}
 function firstTwo(){return points().slice(0,2);}
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
@@ -35,12 +35,13 @@ function canvasUnits(px){const r=canvas.getBoundingClientRect();return px*W/Math
 function cancelStrokeForGesture(){if(!active)return;active=false;pointer=null;strokePending=false;if(history.length){const previous=history.pop();restore(previous);}}
 function beginMulti(){
  const ps=firstTwo();if(ps.length<2)return;const [a,b]=ps,mid=middle(a,b),ref=activeReference();
- if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,didCheckpoint:false};}
+ if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,ids:[a.id,b.id],distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,didCheckpoint:false};}
  else multi.maxCount=Math.max(multi.maxCount,touches.size);
  suppressDraw=true;
 }
+function gesturePair(){if(!multi)return null;const a=touches.get(multi.ids[0]),b=touches.get(multi.ids[1]);return a&&b?[a,b]:null;}
 function applyMulti(){
- if(!multi||touches.size<2)return;const [a,b]=firstTwo(),mid=middle(a,b),d=Math.max(1,distance(a,b)),move=Math.hypot(mid.x-multi.mid.x,mid.y-multi.mid.y),pinch=Math.abs(d-multi.distance);
+ const pair=gesturePair();if(!pair)return;const [a,b]=pair,mid=middle(a,b),d=Math.max(1,distance(a,b)),move=Math.hypot(mid.x-multi.mid.x,mid.y-multi.mid.y),pinch=Math.abs(d-multi.distance);
  if(move>10||pinch>10)multi.moved=true;if(!multi.moved)return;
  const ref=multi.refId&&references.find(l=>l.id===multi.refId&&l.visible);
  if(ref){if(!multi.didCheckpoint){checkpoint();multi.didCheckpoint=true;}ref.scale=Math.max(.1,Math.min(4,multi.refScale*(d/multi.distance)));ref.x=multi.refX+canvasUnits(mid.x-multi.mid.x);ref.y=multi.refY+canvasUnits(mid.y-multi.mid.y);dirty=true;render();state();return;}
@@ -69,7 +70,6 @@ canvas.addEventListener('pointermove',e=>{
  if(e.pointerType==='touch'&&touches.has(e.pointerId)){const old=touches.get(e.pointerId);touches.set(e.pointerId,{...old,x:e.clientX,y:e.clientY});}
  if(multi&&touches.size>=2){e.preventDefault();multi.maxCount=Math.max(multi.maxCount,touches.size);applyMulti();return;}
  if(!active||e.pointerId!==pointer)return;e.preventDefault();const l=activeDraw(),p=point(e);if(!l)return;
- if(strokePending){future=[];strokePending=false;}
  const a=local(last,l),b=local(p,l),g=l.bitmap.getContext('2d');style(g);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();dirty=true;last=p;render();
 });
 function end(e){

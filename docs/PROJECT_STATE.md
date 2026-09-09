@@ -47,8 +47,42 @@
    - 두/세 손가락 탭 허용 시간을 450ms로 조정하고 작은 손가락 흔들림 허용 범위를 확대.
 3. `scripts/ux-test.cjs`를 Painter 무대사 UI 제거 구조에 맞춰 갱신.
 
+### LATEST FIX — DEVICE FEEDBACK ROUND 5 (세 손가락 Redo FAIL / 현재 해소됨)
+원인: 멀티터치 제스처가 매 프레임 `firstTwo()`(터치 등록 순서상 앞의 두 개)로 이동/핀치를 계산했다.
+손가락이 3개일 때 먼저 놓인 손가락이 먼저 떨어지면 추적 쌍이 조용히 바뀌고,
+남은 두 손가락의 다음 `pointermove`가 처음 기준점과 비교되어 큰 이동으로 오판된다.
+그 결과 `multi.moved=true`가 되어 정상적인 세 손가락 탭이 드래그로 분류되고 `redo()`가 호출되지 않았다.
+두 손가락 Undo는 손가락이 하나 빠지면 계산 자체가 중단되므로 이 문제가 발생하지 않는다.
+
+수정: 제스처 시작 시점의 두 포인터 id를 `multi.ids`로 고정하고, 그 두 포인터가 모두 살아있을 때만 이동/핀치를 계산한다.
+손가락이 두 개인 경로는 id가 바뀌지 않으므로 기존 Undo/참고 이동/핀치 동작은 그대로다.
+
+검증: `scripts/gesture-test.cjs` 추가. 수정 전 코드에서 세 손가락 Redo 실패를 재현하고 수정 후 통과함을 확인했다.
+`npm run test:ux`가 `ux-test` + `gesture-test`를 함께 실행한다.
+
+### LATEST FIX — DEVICE FEEDBACK ROUND 6 (연속 Redo FAIL / 현재 해소됨)
+계측 결과 제스처 인식은 매번 정상이었다(손가락 3개 집계, 이동 아님으로 판정, `redo()` 호출됨).
+문제는 그 시점에 redo 스택이 이미 비어 있었다는 것이다.
+
+원인: 그리기 스트로크가 redo 스택을 지우는 시점이 너무 일렀다.
+첫 손가락이 닿으면 `strokePending`이 켜지고, **그 손가락의 첫 `pointermove`에서 `future=[]`가 실행**된다.
+멀티터치는 두 번째 손가락이 닿아야 판정되므로, 실기기에서 첫 손가락이 1px만 흔들려도
+아직 제스처인지 그림인지 모르는 상태에서 redo 스택 전체가 사라진다.
+한 번 지워지면 복구되지 않으므로 `첫 Redo만 성공하고 그 뒤로는 영원히 안 되는` 증상이 된다.
+두 손가락 Undo는 `future`를 쓰지 않아 영향이 없었다.
+
+수정: `pointermove`의 `future=[]`를 제거하고, 스트로크가 실제로 확정되는 `pointerup`(`end`)에서만 지운다.
+제스처가 스트로크를 가로챈 경우 `cancelStrokeForGesture`가 `pointer`를 비우고 그림도 되돌리므로
+`end`의 지우기 경로에 도달하지 않는다. 새 스트로크가 redo 분기를 지우는 동작 자체는 그대로다.
+
+검증: `gesture-test.cjs`에 선 A/B/C → 두 손가락 Undo ×3 → 세 손가락 Redo ×3 회귀 테스트 추가.
+past/future 깊이와 화면에 남은 획을 단계별로 비교해 세 상태가 순서대로 복구되는지 확인한다.
+손가락 흔들림을 이벤트에 포함시켰고, 수정 전 코드에서는 `future`가 1을 넘지 못해 실패하는 것을 확인했다.
+
 ## CURRENT — DEVICE FEEDBACK ROUND 4 / USABILITY
+Painter 제스처 블로커가 모두 실기기 PASS로 해소됐으므로 **지금부터 이것이 CURRENT다. 아직 코드 미착수.**
 다음 항목은 P0 마감 전에 함께 고려한다. 아직 LOCKED 세부 UI는 아니며, 실기기 사용성을 기준으로 최소 변경한다.
+네 항목을 한 번에 정리하되 `그린다 → 저장 → 다음 칸` 리듬을 느리게 만들면 기본 화면에서 숨긴다.
 
 1. **세트 삭제 기능**
    - `내 작업실` 프로젝트 카드에서 세트 삭제가 가능해야 한다.
@@ -85,12 +119,20 @@
 - GitHub 코드 반영: DONE
 - 이전 Android 실기기: Undo PASS / 지우개 PASS / 참고 확대 PASS
 - 최신 `npm run typecheck`: **PASS**
-- 최신 `npm run test:ux`: **PASS**
-- 작업 트리: clean / 브랜치 `feat/painter-flow-v1`
-- 최신 Android Expo Go:
-  - Painter 대사 제거: **UNVERIFIED**
-  - 세 손가락 Redo 수정: **UNVERIFIED**
-  - 참고 이미지 이동: **UNVERIFIED**
+- 최신 `npm run test:ux`: **PASS** (`ux-test` + 신규 `gesture-test`)
+- 브랜치: `feat/painter-flow-v1`
+
+### ANDROID EXPO GO — 최종 실기기 결과 (라운드 7, 확정)
+- Painter 상단 대사/무대사 표시 제거: **DEVICE PASS**
+- 두 손가락 Undo 반복: **DEVICE PASS**
+- 세 손가락 Redo 연속 ×3: **DEVICE PASS**
+- 활성 참고 이미지 두 손가락 이동: **DEVICE PASS**
+- 활성 참고 이미지 핀치 확대/축소: **DEVICE PASS**
+
+**Android 실기기 블로커 0개.** 라운드 5·6의 FAIL / UNVERIFIED 기록은 그 시점 상태이며 현재는 모두 해소됐다.
+아래 `LATEST FIX` 두 절은 원인 분석 이력으로만 남긴다.
+
+원칙은 유지한다: 자동 테스트 PASS 자체는 실기기 PASS가 아니다. 위 항목은 실기기에서 직접 확인해 PASS로 확정한 것이다.
 
 ## CURRENT ACCEPTANCE CHECK
 1. Painter 상단이 `01 / 32` 진행만 보여 자연스러운가
@@ -107,16 +149,15 @@
 12. 초보자가 레이어 구조를 설명 없이 이해할 수 있는가
 
 ## NEXT
-우선 최신 빌드에서 대사 제거/Redo/참고 이동을 재검증한다.
-그 다음 같은 P0 안에서 `세트 삭제 + 불투명도 접근성 + 펜/지우개/굵기 배치 + 초보자용 레이어 UX`를 한 번에 정리한다.
+Painter 제스처 재검증은 끝났다. 다음은 같은 P0 안에서
+`세트 삭제 + 불투명도 접근성 + 펜/지우개/굵기 배치 + 초보자용 레이어 UX`를 한 번에 정리한다.
 이 P0가 안정된 뒤 별도 CURRENT로 `세트 기획 화면 + 대사/무대사 초안 + 참고 이미지 슬롯 배치`를 구현한다.
 AI 고도화/움직이는 이모티콘/PRO는 그 뒤다.
 
 ## BLOCKED
-자동 검증(`typecheck`, `test:ux`)은 해소됐다.
-남은 것은 Android Expo Go 실기기 검증 3개뿐이며 사용자가 직접 확인할 예정이다.
-1. Painter 상단 대사/무대사 표시 제거 확인
-2. 두 손가락 Undo 후 세 손가락 Redo 동작 확인
-3. 활성 참고 이미지에서 두 손가락 드래그 시 참고 이미지 자체 이동 확인
+**없음.**
+- 자동 검증(`typecheck`, `test:ux`): 해소
+- Android 실기기 제스처 검증: 해소 (블로커 0개)
 
-이 3개가 PASS된 뒤 `DEVICE FEEDBACK ROUND 4`(세트 삭제 / 참고 불투명도 빠른 조절 / 펜·지우개·굵기 배치 / 초보자용 레이어 UX) 코드 작업을 시작한다.
+다음 작업은 `CURRENT — DEVICE FEEDBACK ROUND 4`(세트 삭제 / 참고 불투명도 빠른 조절 / 펜·지우개·굵기 배치 / 초보자용 레이어 UX)이며 바로 착수 가능하다.
+착수 후에는 다시 실기기 검증이 필요하므로 그 시점에 새 검증 항목을 여기에 기록한다.
