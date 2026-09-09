@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "나의 이모티콘 작업실",
+    "slug": "emoticon-studio",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sharing",
+      ["expo-image-picker", { "photosPermission": "CANON과 참고 이미지, 직접 그린 그림을 선택합니다.", "cameraPermission": false, "microphonePermission": false }]
+    ]
+  }
+}
