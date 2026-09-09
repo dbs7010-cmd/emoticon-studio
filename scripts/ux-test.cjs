@@ -68,8 +68,9 @@ const saved=async(dirty=true)=>{
  }
  assert.deepEqual(loadStore().store.projects[0],p,'opening untouched slots does not create results or change old metadata');
  await act(async()=>tiles()[0].props.onPress());await init();
- await press('현재 칸 브리프');
- const dialogue=tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='현재 칸 대사')[0].props.value;assert.equal(dialogue,'대사 1');
+ assert.equal(tree.root.findAll(n=>n.type==='Text'&&n.props.accessibilityLabel==='현재 칸').length,1,'painter header shows slot progress only');
+ assert.equal(tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='현재 칸 대사').length,0,'dialogue editing stays out of painter');
+ const dialogue=p.slots[0].dialogue;
  pendingPicks=[{...image,path:'r2.png'},{...image,path:'r3.png'}];pendingPicks.forEach(i=>files.set(localFile(i.path).uri,png));
  await press('참고 추가');
  const added=lastCommand('addReferences').references;assert.equal(added.length,2);
@@ -95,5 +96,5 @@ const saved=async(dirty=true)=>{
  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});await press('이전 프로젝트');await act(async()=>tiles()[0].props.onPress());const restored=await init();
  assert.equal(restored.layers.length,2);assert.equal(restored.references.length,3);assert.deepEqual(loadStore().store,persisted,'restart reads same work and metadata');
  await act(async()=>tree.unmount());
- console.log('PASS: workshop home, 32 direct Painter entries, slot brief, project-wide references, compact layer rail, independent brush/eraser widths, layered persistence, export thumbnail, save-next flow, restart, old data compatibility. Native modules/WebView mocked; touch reference transform requires device test.');
+ console.log('PASS: workshop home, 32 direct Painter entries, painter-only slot progress, project-wide references, compact layer rail, independent brush/eraser widths, layered persistence, export thumbnail, save-next flow, restart, old data compatibility. Native modules/WebView mocked; touch gestures require device test.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
