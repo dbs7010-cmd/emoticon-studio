@@ -150,7 +150,6 @@ export function Painter({ slot, slotCount, canon, onSave, onClose, onNavigate, o
         }} style={{ flex: 1, backgroundColor: '#EEEAE3' }} />
 
         {canon && <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 보기" onPress={() => setShowCanon(true)} style={{ position: 'absolute', left: 10, top: 10, width: 48, height: 48, padding: 3, borderRadius: 14, backgroundColor: '#FFFFFFE8', borderWidth: 1, borderColor: C.line, elevation: 3 }}><Image source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%', borderRadius: 10 }} resizeMode="contain" /></Pressable>}
-
         {!!selectedReference?.visible && <View pointerEvents="none" style={{ position: 'absolute', left: 66, top: 13, backgroundColor: '#FFF9D8EE', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 5 }}><Text style={{ fontSize: 10, color: '#6F6243', fontWeight: '800' }}>참고 조정 중 · 두 손가락 이동/확대</Text></View>}
 
         {layerRail && <View style={{ position: 'absolute', right: 8, top: 8, width: 104, maxHeight: '82%', padding: 7, borderRadius: 18, backgroundColor: '#FFFDF9F2', borderWidth: 1, borderColor: C.line, elevation: 8 }}>
@@ -250,5 +249,5 @@ function SmallButton({ title, onPress, danger }: { title: string; onPress: () =>
   return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ flex: 1, minHeight: 38, borderRadius: 11, backgroundColor: danger ? '#FFE0DE' : '#F2EEE7', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 11, fontWeight: '800', color: danger ? '#A43D3D' : C.ink }}>{title}</Text></Pressable>;
 }
 function MenuButton({ title, onPress }: { title: string; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ minHeight: 42, justifyContent: 'center', paddingHorizontal: 10, borderRadius: 10 }}><Text style={{ fontSize: 12, fontWeight: '750', color: C.ink }}>{title}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ minHeight: 42, justifyContent: 'center', paddingHorizontal: 10, borderRadius: 10 }}><Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{title}</Text></Pressable>;
 }
