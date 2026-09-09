@@ -1,11 +1,31 @@
 import { KAKAO_STATIC_SPEC as SPEC } from './constants/kakao-spec';
-import type { Project, Slot, Store } from './types';
+import type { LocalImage, Project, Slot, Store } from './types';
 
 export function createProject(projectName: string, characterName: string): Project {
   const now = new Date().toISOString();
   return { id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, projectName: projectName.trim(), characterName: characterName.trim(), createdAt: now, updatedAt: now,
     canon: { personality: '', speech: '', locked: '', variable: '' },
     slots: Array.from({ length: SPEC.count }, (_, i): Slot => ({ number: i + 1, dialogue: '', emotion: '', situation: '', expressionGuide: '', poseGuide: '', compositionGuide: '', effectGuide: '', textPlacementGuide: '', notes: '', referenceImages: [], status: 'EMPTY' })) };
+}
+// Every local image a project points at: CANON, references, finals and painter working layers.
+export function imagePaths(project: Project): Set<string> {
+  const paths = new Set<string>();
+  const add = (image?: LocalImage) => { if (image?.path) paths.add(image.path); };
+  add(project.canon.image);
+  for (const slot of project.slots) {
+    slot.referenceImages.forEach(add);
+    add(slot.finalImage);
+    slot.work?.layers.forEach(layer => add(layer.image));
+    slot.work?.references.forEach(reference => add(reference.image));
+  }
+  return paths;
+}
+// Files the removed project owned that no surviving project still points at.
+// Set difference, so a path shared with another project is never reported for deletion.
+export function orphanImagePaths(removed: Project, remaining: Project[]): string[] {
+  const kept = new Set<string>();
+  for (const project of remaining) for (const path of imagePaths(project)) kept.add(path);
+  return [...imagePaths(removed)].filter(path => !kept.has(path));
 }
 export function duplicates(slots: Slot[]): number[][] {
   const groups = new Map<string, number[]>();

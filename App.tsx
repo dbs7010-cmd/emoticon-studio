@@ -7,8 +7,8 @@ import { Action, Dialog, Field, Preview, styles } from './src/components/ui';
 import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
 import { Painter } from './src/painter/painter';
 import { KAKAO_STATIC_SPEC as SPEC } from './src/constants/kakao-spec';
-import { createProject, duplicates } from './src/project';
-import { imageUri, loadStore, saveStore } from './src/services/storage';
+import { createProject, duplicates, orphanImagePaths } from './src/project';
+import { deleteLocalImages, imageUri, loadStore, saveStore } from './src/services/storage';
 import { pickImages, savePainterWork } from './src/services/images';
 import { inspectImage } from './src/services/qa';
 import { conceptAssistant } from './src/services/concept';
@@ -26,6 +26,7 @@ function Studio() {
   const [projectId, setProjectId] = useState<string | null>(null), [slotNumber, setSlotNumber] = useState<number | null>(null), [canonOpen, setCanonOpen] = useState(false), [painting, setPainting] = useState(false);
   const [projectName, setProjectName] = useState(''), [characterName, setCharacterName] = useState(''), [busy, setBusy] = useState('');
   const [menu, setMenu] = useState(false), [detail, setDetail] = useState(false), [setQA, setSetQA] = useState(false), [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [manageId, setManageId] = useState<string | null>(null), [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [issues, setIssues] = useState<QA | null>(null);
   const { width: screenWidth } = useWindowDimensions();
   const tileWidth = (screenWidth - 28 - 24) / 4;
@@ -82,6 +83,20 @@ function Studio() {
     const p = createProject(projectName.trim(), characterName.trim());
     try { commit(s => ({ ...s, projects: [...s.projects, p] })); setProjectId(p.id); setProjectName(''); setCharacterName(''); setNewProjectOpen(false); } catch (e) { Alert.alert('저장 실패', String(e)); }
   }
+  // Store first: if the snapshot write fails the set is still intact and no file has been touched.
+  function deleteProject(id: string) {
+    const target = current.current?.projects.find(p => p.id === id);
+    if (!target) return;
+    const orphans = orphanImagePaths(target, current.current!.projects.filter(p => p.id !== id));
+    try { commit(s => ({ ...s, projects: s.projects.filter(p => p.id !== id) })); }
+    catch (e) { Alert.alert('삭제 실패', String(e)); return; }
+    const { skipped } = deleteLocalImages(orphans);
+    if (id === projectId) { setProjectId(null); setSlotNumber(null); setCanonOpen(false); setDetail(false); }
+    setConfirmDeleteId(null); setManageId(null);
+    setNotice(skipped ? `${target.projectName} 세트를 삭제했어요. 그림 파일 ${skipped}개는 정리하지 못했습니다.` : `${target.projectName} 세트를 삭제했어요.`);
+  }
+  const managed = store?.projects.find(p => p.id === manageId);
+  const pendingDelete = store?.projects.find(p => p.id === confirmDeleteId);
   const dupes = project ? duplicates(project.slots) : [];
   return <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}><StatusBar style="dark" /><ImageAnalyzer ref={analyzer} />
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -107,6 +122,7 @@ function Studio() {
                 <Text numberOfLines={1} style={{ fontSize: 14, color: C.ink, fontWeight: '900' }}>{p.projectName}</Text>
                 <View style={{ height: 5, borderRadius: 3, backgroundColor: '#EEE8DF', overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / SPEC.count * 100)}%`, height: '100%', backgroundColor: C.coral }} /></View>
                 <Text style={{ fontSize: 10, color: C.muted }}>{done} / {SPEC.count}</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={6} style={{ position: 'absolute', right: 6, top: 6, width: 34, height: 34, borderRadius: 17, backgroundColor: '#FFFFFFE8', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 19, color: '#5C574F', marginTop: -6 }}>⋯</Text></Pressable>
               </Pressable>;
             })}
             <Pressable accessibilityRole="button" accessibilityLabel="새 이모티콘 세트" onPress={() => setNewProjectOpen(true)} style={{ width: projectCardWidth, minHeight: projectCardWidth + 18, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: '#BDB5AA', backgroundColor: '#FFF9F4', alignItems: 'center', justifyContent: 'center', gap: 8 }}><View style={{ width: 52, height: 52, borderRadius: 18, backgroundColor: C.yellow, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 26 }}>＋</Text></View><Text style={{ fontSize: 13, fontWeight: '900' }}>새 세트</Text><Text style={{ fontSize: 10, color: C.muted }}>원캐릭터부터 시작</Text></Pressable>
@@ -150,6 +166,19 @@ function Studio() {
     </KeyboardAvoidingView>
 
     {newProjectOpen && <Dialog title="새 이모티콘 세트" onClose={() => setNewProjectOpen(false)}><Text style={styles.muted}>복잡한 설정은 나중에. 이름만 정하고 바로 시작합니다.</Text><Field label="프로젝트 이름" value={projectName} onChangeText={setProjectName} multiline={false} /><Field label="캐릭터 이름" value={characterName} onChangeText={setCharacterName} multiline={false} /><Action primary title="세트 만들기" disabled={!projectName.trim() || !characterName.trim()} onPress={createNewProject} /></Dialog>}
+    {managed && !pendingDelete && <Dialog title="세트 관리" onClose={() => setManageId(null)}>
+      <Text style={{ fontSize: 16, fontWeight: '900', color: C.ink }}>{managed.projectName}</Text>
+      <Text style={styles.muted}>{managed.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>
+      <Action title="세트 열기" onPress={() => { const id = managed.id; setManageId(null); setProjectId(id); setDetail(false); }} />
+      <Action title="세트 삭제" onPress={() => setConfirmDeleteId(managed.id)} />
+    </Dialog>}
+    {pendingDelete && <Dialog title="세트 삭제" onClose={() => setConfirmDeleteId(null)}>
+      <Text style={{ fontSize: 16, fontWeight: '900', color: C.ink }}>{pendingDelete.projectName}</Text>
+      <Text style={styles.muted}>{pendingDelete.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>
+      <Text style={styles.muted}>이 세트의 그림, 참고 이미지, 원캐릭터가 함께 지워집니다. 삭제하면 되돌릴 수 없어요.</Text>
+      <Action title="이 세트 삭제" onPress={() => deleteProject(pendingDelete.id)} />
+      <Action title="취소" onPress={() => setConfirmDeleteId(null)} />
+    </Dialog>}
     {menu && project && <Dialog title="프로젝트" onClose={() => setMenu(false)}>
       <Action title="프로젝트 설정" onPress={() => { setMenu(false); setSlotNumber(null); setCanonOpen(true); }} />
       <Action title="전체 QA" onPress={() => { setMenu(false); void runQA(true); }} />

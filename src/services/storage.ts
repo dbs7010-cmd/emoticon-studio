@@ -10,6 +10,17 @@ export function localFile(path: string) {
 }
 export function imageUri(path: string) { return localFile(path).uri; }
 export function newImageFile() { ensureRoot(); return localFile(`image-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.png`); }
+// Only files newImageFile() created may ever be removed; store snapshots share this directory.
+const removable = (path: string) => /^image-[a-zA-Z0-9._-]+\.png$/.test(path);
+// Best effort: a file that is already gone or locked must not abort the rest of the cleanup.
+export function deleteLocalImages(paths: string[]): { removed: number; skipped: number } {
+  let removed = 0, skipped = 0;
+  for (const path of paths) {
+    if (!removable(path)) { skipped++; continue; }
+    try { const file = localFile(path); if (file.exists) { file.delete(); removed++; } } catch { skipped++; }
+  }
+  return { removed, skipped };
+}
 export function loadStore(): { store: Store; recovered: boolean } {
   ensureRoot();
   const candidates: Store[] = [];
