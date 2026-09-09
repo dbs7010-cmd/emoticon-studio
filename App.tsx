@@ -17,6 +17,7 @@ import type { Check, LocalImage, Project, Slot, Store, QA, PainterWork } from '.
 const guideFields = [['expressionGuide', '표정 가이드'], ['poseGuide', '포즈 가이드'], ['compositionGuide', '구도 가이드'], ['effectGuide', '효과 가이드'], ['textPlacementGuide', '텍스트 배치']] as const;
 const colors: Record<string, string> = { PASS: '#24734a', WARNING: '#8b6207', FAIL: '#b43d40', EMPTY: '#6d7169', DRAWING: '#316caf', REVIEW: '#8053a8', PLANNED: '#486b43' };
 function Checks({ checks }: { checks: Check[] }) { return <>{checks.filter(c => c.status !== 'PASS').map(c => <View key={c.label} style={{ gap: 4 }}><Text style={{ color: colors[c.status], fontWeight: '700' }}>{c.status} · {c.label}</Text><Text style={styles.muted}>{c.detail}</Text></View>)}</>; }
+function mergeImages(existing: LocalImage[], added: LocalImage[]) { return [...existing, ...added.filter(image => !existing.some(current => current.path === image.path))]; }
 export default function App() { return <SafeAreaProvider><Studio /></SafeAreaProvider>; }
 function Studio() {
   const [store, setStore] = useState<Store | null>(null), current = useRef<Store | null>(null);
@@ -117,8 +118,8 @@ function Studio() {
             <Action title="PNG 내보내기 / 공유" disabled={!slot.finalImage} onPress={() => task('공유 준비 중…', async () => { if (!await Sharing.isAvailableAsync()) throw new Error('공유 기능을 사용할 수 없습니다.'); await Sharing.shareAsync(imageUri(slot.finalImage!.path), { mimeType: 'image/png', UTI: 'public.png' }); })} />
             <Action title="이 슬롯 검사" onPress={() => runQA(false)} />
           </View>}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={styles.label}>참고 이미지</Text><Action title="+ 추가" onPress={() => task('참고 저장 중…', async () => { const images = await pickImages(true); updateSlot({ referenceImages: [...slot.referenceImages, ...images] }); })} /></View>
-          {!!slot.referenceImages.length && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>{slot.referenceImages.map((im, i) => <Pressable key={im.path} accessibilityRole="button" accessibilityLabel={`참고 ${i + 1} 보기`} onPress={() => Alert.alert(`참고 ${i + 1}`, '그리기에서 크게 볼 수 있습니다.', [{ text: '닫기' }, { text: '참고에서 제거', style: 'destructive', onPress: () => updateSlot({ referenceImages: slot.referenceImages.filter(x => x.path !== im.path) }) }])}><Image source={{ uri: imageUri(im.path) }} style={{ width: 64, height: 64, backgroundColor: '#e4e7e1', borderRadius: 6 }} resizeMode="contain" /></Pressable>)}</ScrollView>}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={styles.label}>참고 이미지</Text><Action title="+ 추가" onPress={() => task('참고 저장 중…', async () => { const images = await pickImages(true); updateProject(p => ({ ...p, slots: p.slots.map(s => ({ ...s, referenceImages: mergeImages(s.referenceImages, images) })) })); })} /></View>
+          {!!slot.referenceImages.length && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>{slot.referenceImages.map((im, i) => <Pressable key={im.path} accessibilityRole="button" accessibilityLabel={`참고 ${i + 1} 보기`} onPress={() => Alert.alert(`참고 ${i + 1}`, '그리기에서 크게 볼 수 있습니다.')}><Image source={{ uri: imageUri(im.path) }} style={{ width: 64, height: 64, backgroundColor: '#e4e7e1', borderRadius: 6 }} resizeMode="contain" /></Pressable>)}</ScrollView>}
           <View style={{ height: 160, alignItems: 'center', justifyContent: 'center', backgroundColor: '#e7e9e3', borderRadius: 10 }}>{slot.finalImage ? <Image accessibilityLabel="현재 그림" source={{ uri: imageUri(slot.finalImage.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={styles.muted}>아직 그린 그림이 없어요</Text>}</View>
         </> : <View testID="slot-grid" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{project.slots.map(s => <Pressable key={s.number} testID={`slot-${s.number}`} accessibilityRole="button" accessibilityLabel={`슬롯 ${s.number} ${s.dialogue} ${s.status}`} onPress={() => { setSlotNumber(s.number); setDetail(false); setPainting(true); }} style={{ width: tileWidth, aspectRatio: 1, borderRadius: 9, backgroundColor: '#fff', borderWidth: 1, borderColor: '#dce1d5', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           {s.finalImage ? <Image source={{ uri: imageUri(s.finalImage.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ fontSize: 18, color: '#92998b' }}>{String(s.number).padStart(2, '0')}</Text>}
@@ -145,8 +146,15 @@ function Studio() {
       onNavigate={number => { setSlotNumber(number); setDetail(false); }}
       onAddReferences={async () => {
         const added = await pickImages(true);
-        if (added.length) changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => s.number === slot.number ? { ...s, referenceImages: [...s.referenceImages, ...added] } : s) }));
+        if (added.length) changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => ({ ...s, referenceImages: mergeImages(s.referenceImages, added) })) }));
         return added;
+      }}
+      onRemoveReference={path => {
+        changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => ({
+          ...s,
+          referenceImages: s.referenceImages.filter(image => image.path !== path),
+          work: s.work ? { ...s.work, references: s.work.references.filter(reference => reference.image?.path !== path), activeLayerId: s.work.activeLayerId.startsWith('ref-') && s.work.references.some(reference => reference.id === s.work!.activeLayerId && reference.image?.path === path) ? 'draw-1' : s.work.activeLayerId } : undefined,
+        })) }));
       }}
       onSave={(payload, dialogue) => {
         const latest = current.current!.projects.find(p => p.id === project.id)!.slots.find(s => s.number === slot.number)!;
