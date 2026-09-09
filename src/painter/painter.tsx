@@ -4,12 +4,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Host, Slider } from '@expo/ui';
 import { WebView } from 'react-native-webview';
 import { canvasHtml } from './canvas-html';
-import { Action, Dialog, Preview, styles } from '../components/ui';
+import { Dialog, Preview, styles } from '../components/ui';
 import { dataUrl } from '../services/images';
 import { imageUri } from '../services/storage';
 import type { LayerTransform, LocalImage, PainterExport, QA, Slot } from '../types';
 
-type Scene = { undo: boolean; redo: boolean; dirty: boolean; activeLayerId: string; layers: LayerTransform[]; references: (LayerTransform & { path: string })[] };
+type Scene = {
+  undo: boolean;
+  redo: boolean;
+  dirty: boolean;
+  activeLayerId: string;
+  activeReferenceId?: string | null;
+  layers: LayerTransform[];
+  references: (LayerTransform & { path: string })[];
+};
 type Props = {
   slot: Slot;
   slotCount: number;
@@ -23,33 +31,36 @@ type Props = {
 };
 
 type Brush = 'pen' | 'pencil' | 'marker';
-type Panel = 'color' | 'layers' | 'references' | 'more' | null;
+type Panel = 'color' | 'brief' | 'reference' | 'more' | null;
 const transform = (id: string, name: string): LayerTransform => ({ id, name, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 });
 const source = { html: canvasHtml };
 const clampWidth = (value: number) => Math.max(1, Math.min(48, value));
+const C = {
+  bg: '#F7F4EE', paper: '#FFFDF9', ink: '#232323', muted: '#77736C', line: '#E7E1D7',
+  coral: '#FF7A59', peach: '#FFE2D8', yellow: '#F8D66D', mint: '#BFE9D5', blue: '#C9DCF8', lavender: '#DCCCF7',
+};
 const palette = [
-  '#111111', '#3a3a3a', '#777777', '#b7b7b7', '#ffffff',
-  '#e53935', '#f06472', '#ff8a65', '#f6a623', '#ffd54f',
-  '#8bc34a', '#4caf50', '#63b58f', '#26a69a', '#42a5f5',
-  '#5677c9', '#5c6bc0', '#7e57c2', '#ab47bc', '#ec407a',
-  '#795548', '#a67c52', '#d7b899', '#f3dfc2',
+  '#171717', '#4B4B4B', '#858585', '#C9C9C9', '#FFFFFF',
+  '#E94F4F', '#FF6E7A', '#FF8C69', '#FFAA4D', '#FFD15C',
+  '#A8D85F', '#65C47A', '#66BE9B', '#50C7C2', '#54A9E8',
+  '#5D87D6', '#6D72D9', '#9870D8', '#BF6AD5', '#E768AD',
+  '#765044', '#A77559', '#D7B79B', '#F0D8BF',
 ];
 
 export function Painter({ slot, slotCount, canon, onSave, onClose, onNavigate, onAddReferences, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<'stay' | 'close' | 'share' | number>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
-  const [scene, setScene] = useState<Scene>({ undo: false, redo: false, dirty: false, activeLayerId: 'draw-1', layers: [], references: [] });
+  const [scene, setScene] = useState<Scene>({ undo: false, redo: false, dirty: false, activeLayerId: 'draw-1', activeReferenceId: null, layers: [], references: [] });
   const [dialogue, setDialogue] = useState(slot.dialogue);
-  const [tool, setTool] = useState('pen'), [brush, setBrush] = useState<Brush>('pen'), [color, setColor] = useState('#242424');
+  const [tool, setTool] = useState<'pen' | 'eraser'>('pen'), [brush, setBrush] = useState<Brush>('pen'), [color, setColor] = useState('#242424');
   const [penWidth, setPenWidth] = useState(5), [eraserWidth, setEraserWidth] = useState(20), [zoom, setZoom] = useState(1);
-  const [panel, setPanel] = useState<Panel>(null);
+  const [panel, setPanel] = useState<Panel>(null), [layerRail, setLayerRail] = useState(false);
   const [showCanon, setShowCanon] = useState(false), [showQA, setShowQA] = useState(false), [qa, setQA] = useState<QA | undefined>(slot.qa), [saved, setSaved] = useState(false);
-  const selected = [...scene.layers, ...scene.references].find(l => l.id === scene.activeLayerId);
+  const selectedReference = scene.references.find(r => r.id === scene.activeReferenceId);
   const width = tool === 'eraser' ? eraserWidth : penWidth;
   const send = (message: object) => web.current?.injectJavaScript(`window.command(${JSON.stringify(message)});true;`);
   const unlock = () => { if (timeout.current) clearTimeout(timeout.current); inFlight.current = false; setBusy(false); };
-  const layerLabel = (layer: LayerTransform, index: number, reference = false) => reference ? `참고 ${index + 1}` : `그림 ${index + 1}`;
 
   useEffect(() => () => { if (timeout.current) clearTimeout(timeout.current); }, []);
   useEffect(() => {
@@ -69,71 +80,51 @@ export function Painter({ slot, slotCount, canon, onSave, onClose, onNavigate, o
     return () => { canceled = true; };
   }, [ready]);
 
-  function selectTool(value: 'pen' | 'eraser' | 'move' | 'pan') {
-    setTool(value);
-    send({ type: 'tool', tool: value });
-  }
-  function selectBrush(value: Brush) {
-    setBrush(value);
-    send({ type: 'brush', brush: value });
-    selectTool('pen');
-  }
+  function selectTool(value: 'pen' | 'eraser') { setTool(value); send({ type: 'tool', tool: value }); }
+  function selectBrush(value: Brush) { setBrush(value); send({ type: 'brush', brush: value }); selectTool('pen'); }
   function adjustWidth(delta: number) {
     const next = clampWidth(width + delta);
     if (tool === 'eraser') setEraserWidth(next); else setPenWidth(next);
     send({ type: 'width', tool: tool === 'eraser' ? 'eraser' : 'pen', width: next });
   }
-  function changeLayer(id: string, patch: Partial<LayerTransform>) {
-    send({ type: 'select', id });
-    send({ type: 'transform', ...patch });
-  }
+  function changeTransform(id: string, patch: Partial<LayerTransform>) { send({ type: 'transform', id, ...patch }); }
   function save(action: 'stay' | 'close' | 'share' | number = 'stay') {
     if (inFlight.current) return;
     if (!initialized) { if (action === 'close') onClose(); return; }
-    inFlight.current = true;
-    setBusy(true);
-    nextAction.current = action;
+    inFlight.current = true; setBusy(true); nextAction.current = action;
     timeout.current = setTimeout(() => { send({ type: 'saveFailed' }); unlock(); Alert.alert('저장 응답 없음', '현재 작업은 유지되어 있습니다. 다시 저장해 주세요.'); }, 20000);
     send({ type: 'save' });
   }
   async function addReferences() {
     if (inFlight.current) return;
-    inFlight.current = true;
-    setBusy(true);
+    inFlight.current = true; setBusy(true);
     try {
       const added = await onAddReferences();
-      if (added.length) {
-        send({ type: 'addReferences', references: await Promise.all(added.map(async (image, i) => ({
-          ...transform('ref-' + image.path, `참고 ${scene.references.length + i + 1}`),
-          visible: scene.references.length === 0 && i === 0,
-          opacity: .28,
-          path: image.path,
-          data: await dataUrl(image),
-        }))) });
-      }
+      if (added.length) send({ type: 'addReferences', references: await Promise.all(added.map(async (image, i) => ({
+        ...transform('ref-' + image.path, `참고 ${scene.references.length + i + 1}`), visible: false, opacity: .28, path: image.path, data: await dataUrl(image),
+      }))) });
     } catch (e) { Alert.alert('참고 이미지 추가 실패', String(e)); }
     finally { unlock(); }
   }
   function removeReference(path: string, id: string) {
-    Alert.alert('참고 이미지 삭제', '이 세트의 모든 슬롯에서 이 참고 이미지를 제거합니다.', [
+    Alert.alert('참고 이미지 삭제', '이 세트의 모든 칸에서 이 참고 이미지를 제거합니다.', [
       { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => { onRemoveReference(path); send({ type: 'removeReference', id }); } },
+      { text: '삭제', style: 'destructive', onPress: () => { onRemoveReference(path); send({ type: 'removeReference', id }); setPanel(null); } },
     ]);
   }
 
-  return <Modal onRequestClose={() => save('close')} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: '#f6f5ef' }}>
+  return <Modal onRequestClose={() => save('close')} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: 4 }}>
-        <MiniTool label="홈" onPress={() => save('close')} disabled={busy}>‹ 홈</MiniTool>
-        <Pressable accessibilityRole="button" accessibilityLabel="이전 슬롯" disabled={busy || !initialized || slot.number <= 1} onPress={() => save(slot.number - 1)} style={{ padding: 10, opacity: slot.number <= 1 ? .25 : 1 }}><Text style={{ fontSize: 18 }}>‹</Text></Pressable>
-        <View style={{ flex: 1, alignItems: 'center' }}><Text style={{ fontSize: 11, color: '#687065', fontWeight: '700' }}>이모티콘 세트</Text><Text accessibilityLabel="현재 슬롯" style={{ fontSize: 17, fontWeight: '900' }}>{String(slot.number).padStart(2, '0')} / {slotCount}</Text></View>
-        <Pressable accessibilityRole="button" accessibilityLabel="다음 슬롯" disabled={busy || !initialized || slot.number >= slotCount} onPress={() => save(slot.number + 1)} style={{ padding: 10, opacity: slot.number >= slotCount ? .25 : 1 }}><Text style={{ fontSize: 18 }}>›</Text></Pressable>
-        <MiniTool label="레이어" selected={panel === 'layers'} onPress={() => setPanel(panel === 'layers' ? null : 'layers')}>레이어</MiniTool>
-        <Pressable accessibilityRole="button" accessibilityLabel="추가 도구" disabled={busy} onPress={() => setPanel(panel === 'more' ? null : 'more')} style={{ padding: 10 }}><Text style={{ fontSize: 21 }}>⋯</Text></Pressable>
-      </View>
-
-      <View style={{ paddingHorizontal: 8, paddingBottom: 6 }}>
-        <TextInput accessibilityLabel="대사" editable={!busy} value={dialogue} placeholder="이 칸에 들어갈 대사" onChangeText={s => { setDialogue(s); setSaved(false); }} style={[styles.input, { minHeight: 40, paddingVertical: 6 }]} />
+      <View style={{ minHeight: 54, paddingHorizontal: 8, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: C.line }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="홈" disabled={busy} onPress={() => save('close')} style={{ width: 48, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 23, color: C.ink }}>‹</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="이전 칸" disabled={busy || slot.number <= 1} onPress={() => save(slot.number - 1)} style={{ width: 38, height: 44, alignItems: 'center', justifyContent: 'center', opacity: slot.number <= 1 ? .25 : 1 }}><Text style={{ fontSize: 20 }}>‹</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="현재 칸 브리프" onPress={() => setPanel('brief')} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 44 }}>
+          <Text style={{ fontSize: 10, color: C.muted, fontWeight: '700' }}>이모티콘 세트</Text>
+          <Text numberOfLines={1} style={{ fontSize: 16, color: C.ink, fontWeight: '900' }}>{String(slot.number).padStart(2, '0')} / {slotCount} · {dialogue.trim() || '무대사'}</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="다음 칸" disabled={busy || slot.number >= slotCount} onPress={() => save(slot.number + 1)} style={{ width: 38, height: 44, alignItems: 'center', justifyContent: 'center', opacity: slot.number >= slotCount ? .25 : 1 }}><Text style={{ fontSize: 20 }}>›</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="레이어" onPress={() => { setLayerRail(!layerRail); setPanel(null); }} style={{ width: 48, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 19, fontWeight: '900' }}>▱</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="더보기" onPress={() => { setPanel(panel === 'more' ? null : 'more'); setLayerRail(false); }} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 22 }}>⋯</Text></Pressable>
       </View>
 
       <View style={{ flex: 1 }}>
@@ -144,106 +135,105 @@ export function Painter({ slot, slotCount, canon, onSave, onClose, onNavigate, o
             if (m.type === 'initialized') setInitialized(true);
             if (m.type === 'state') setScene(m);
             if (m.type === 'zoom' && Number.isFinite(m.zoom)) setZoom(m.zoom);
-            if (m.type === 'hint') Alert.alert('레이어', m.message);
             if (m.type === 'error') { unlock(); Alert.alert('그리기 오류', m.message); }
             if (m.type === 'save' && inFlight.current) {
               try {
                 const action = nextAction.current;
                 if (m.dirty !== false || dialogue !== slot.dialogue || action === 'stay' || action === 'share') {
-                  const result = onSave(m, dialogue);
-                  setQA(result);
-                  setSaved(true);
+                  const result = onSave(m, dialogue); setQA(result); setSaved(true);
                 }
-                send({ type: 'saved' });
-                unlock();
-                if (action === 'close') onClose();
-                else if (typeof action === 'number') onNavigate(action);
-                else if (action === 'share') onShare().catch(e => Alert.alert('공유 실패', String(e)));
+                send({ type: 'saved' }); unlock();
+                if (action === 'close') onClose(); else if (typeof action === 'number') onNavigate(action); else if (action === 'share') onShare().catch(e => Alert.alert('공유 실패', String(e)));
               } catch (e) { send({ type: 'saveFailed' }); unlock(); Alert.alert('저장 실패', String(e)); }
             }
           } catch (e) { unlock(); Alert.alert('그리기 오류', String(e)); }
-        }} style={{ flex: 1, backgroundColor: '#eee' }} />
+        }} style={{ flex: 1, backgroundColor: '#EEEAE3' }} />
 
-        {canon && <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 크게 보기" onPress={() => setShowCanon(true)} style={{ position: 'absolute', right: 8, top: 8, width: 62, height: 72, padding: 4, borderRadius: 10, backgroundColor: '#fff', borderWidth: 1, borderColor: '#cfd5c8', alignItems: 'center' }}>
-          <Image source={{ uri: imageUri(canon.path) }} style={{ width: 52, height: 50, borderRadius: 6 }} resizeMode="contain" />
-          <Text style={{ fontSize: 9, fontWeight: '800', marginTop: 2 }}>원캐릭터</Text>
-        </Pressable>}
+        {canon && <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 보기" onPress={() => setShowCanon(true)} style={{ position: 'absolute', left: 10, top: 10, width: 48, height: 48, padding: 3, borderRadius: 14, backgroundColor: '#FFFFFFE8', borderWidth: 1, borderColor: C.line, elevation: 3 }}><Image source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%', borderRadius: 10 }} resizeMode="contain" /></Pressable>}
 
-        {panel && <View style={{ position: 'absolute', top: 0, left: 0, right: 0, maxHeight: '78%', backgroundColor: '#fafbf8', padding: 10, borderBottomWidth: 1, borderColor: '#d0d8c8' }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text style={styles.subtitle}>{{ color: '색상', layers: '레이어', references: '참고 이미지 조정', more: '도구 더보기' }[panel]}</Text><Pressable accessibilityRole="button" accessibilityLabel="패널 닫기" onPress={() => setPanel(null)} style={{ padding: 10 }}><Text style={{ fontSize: 18 }}>×</Text></Pressable></View>
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 10 }} pointerEvents={busy ? 'none' : 'auto'}>
-            {panel === 'color' && <>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9 }}>{palette.map(c => <Pressable key={c} accessibilityRole="button" accessibilityLabel={'색 ' + c} onPress={() => { setColor(c); send({ type: 'color', color: c }); setPanel(null); }} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c, borderWidth: color.toLowerCase() === c.toLowerCase() ? 3 : 1, borderColor: color.toLowerCase() === c.toLowerCase() ? '#4d7352' : '#999' }} />)}</View>
-              <TextInput accessibilityLabel="직접 색상 입력" style={styles.input} value={color} autoCapitalize="none" onChangeText={c => { setColor(c); if (/^#[0-9a-f]{6}$/i.test(c)) send({ type: 'color', color: c }); }} />
-            </>}
-            {(panel === 'layers' || panel === 'references') && <>
-              {panel === 'references' && <><Text style={styles.muted}>참고 썸네일을 선택한 뒤 캔버스에서 두 손가락으로 바로 이동·확대할 수 있습니다.</Text><Action title="참고 이미지 추가" onPress={() => void addReferences()} disabled={busy || !initialized} /></>}
-              {(panel === 'layers' ? scene.layers : scene.references).map((l, index) => {
-                const ref = 'path' in l ? slot.referenceImages.find(i => i.path === l.path) : undefined;
-                const label = layerLabel(l, index, panel === 'references');
-                return <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: l.id === scene.activeLayerId ? '#e1ead8' : '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#e1e4dc' }}>
-                  {ref && <Image source={{ uri: imageUri(ref.path) }} style={{ width: 42, height: 42, marginLeft: 6 }} resizeMode="contain" />}
-                  <Pressable accessibilityRole="button" accessibilityLabel={'선택 ' + label} onPress={() => { send({ type: 'select', id: l.id }); if (panel === 'references') selectTool('move'); }} style={{ flex: 1, padding: 12 }}><Text style={{ fontWeight: l.id === scene.activeLayerId ? '800' : '600' }}>{label}</Text></Pressable>
-                  <Pressable accessibilityRole="button" accessibilityLabel={label + (l.visible ? ' 숨기기' : ' 표시')} onPress={() => changeLayer(l.id, { visible: !l.visible })} style={{ padding: 10 }}><Text>{l.visible ? '보임' : '숨김'}</Text></Pressable>
-                  {ref && <Pressable accessibilityRole="button" accessibilityLabel={label + ' 삭제'} onPress={() => removeReference(ref.path, l.id)} style={{ padding: 10 }}><Text style={{ color: '#a63a3a' }}>삭제</Text></Pressable>}
-                </View>;
-              })}
-              {selected && <>
-                <Text style={{ fontSize: 12 }}>불투명도 {Math.round(selected.opacity * 100)}%</Text>
-                <Host matchContents><Slider value={selected.opacity} min={0} max={1} step={.05} onValueChange={opacity => changeLayer(selected.id, { opacity })} /></Host>
-                <View style={{ flexDirection: 'row', gap: 6 }}><View style={{ flex: 1 }}><Action title="손가락으로 이동" onPress={() => { selectTool('move'); setPanel(null); }} /></View><View style={{ flex: 1 }}><Action title="위치 초기화" onPress={() => changeLayer(selected.id, { x: 0, y: 0, scale: 1, rotation: 0 })} /></View></View>
-                <Text style={{ fontSize: 12 }}>크기 {selected.scale.toFixed(1)}×</Text>
-                <Host matchContents><Slider value={selected.scale} min={.1} max={4} step={.1} onValueChange={scale => changeLayer(selected.id, { scale })} /></Host>
-                <Text style={{ fontSize: 12 }}>회전 {Math.round(selected.rotation)}°</Text>
-                <Host matchContents><Slider value={selected.rotation} min={-180} max={180} step={5} onValueChange={rotation => changeLayer(selected.id, { rotation })} /></Host>
-              </>}
-            </>}
-            {panel === 'more' && <>
-              {canon && <Action title="원캐릭터 크게 보기" onPress={() => setShowCanon(true)} />}
-              <Action title={`캔버스 확대 ${zoom.toFixed(1)}×`} onPress={() => { const n = zoom >= 3 ? 1 : zoom + 1; setZoom(n); send({ type: 'zoom', zoom: n }); setPanel(null); }} />
-              <Action title="선택한 그림 레이어 비우기" onPress={() => Alert.alert('레이어 비우기', '두 손가락 탭으로 되돌릴 수 있습니다.', [{ text: '취소' }, { text: '비우기', onPress: () => send({ type: 'clear' }) }])} />
-              <Action title="PNG 공유" onPress={() => save('share')} />
-              <Action title="제출 전 검사 결과" onPress={() => setShowQA(true)} />
-            </>}
+        {!!selectedReference?.visible && <View pointerEvents="none" style={{ position: 'absolute', left: 66, top: 13, backgroundColor: '#FFF9D8EE', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 5 }}><Text style={{ fontSize: 10, color: '#6F6243', fontWeight: '800' }}>참고 조정 중 · 두 손가락 이동/확대</Text></View>}
+
+        {layerRail && <View style={{ position: 'absolute', right: 8, top: 8, width: 104, maxHeight: '82%', padding: 7, borderRadius: 18, backgroundColor: '#FFFDF9F2', borderWidth: 1, borderColor: C.line, elevation: 8 }}>
+          <Text style={{ fontSize: 11, fontWeight: '900', color: C.muted, padding: 5 }}>레이어</Text>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+            {scene.layers.map((layer, index) => <View key={layer.id} style={{ borderRadius: 12, backgroundColor: layer.id === scene.activeLayerId ? C.peach : '#FFF', borderWidth: 1, borderColor: layer.id === scene.activeLayerId ? '#F7A58E' : C.line, overflow: 'hidden' }}>
+              <Pressable accessibilityRole="button" accessibilityLabel={`그림 ${index + 1} 선택`} onPress={() => send({ type: 'select', id: layer.id })} style={{ minHeight: 52, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 11, fontWeight: '900' }}>그림 {index + 1}</Text></Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel={`그림 ${index + 1} ${layer.visible ? '숨기기' : '보이기'}`} onPress={() => changeTransform(layer.id, { visible: !layer.visible })} style={{ paddingBottom: 6, alignItems: 'center' }}><Text style={{ fontSize: 10, color: C.muted }}>{layer.visible ? '◉ 보임' : '○ 숨김'}</Text></Pressable>
+            </View>)}
+            {scene.references.map((ref, index) => {
+              const image = slot.referenceImages.find(i => i.path === ref.path);
+              const active = ref.id === scene.activeReferenceId;
+              return <View key={ref.id} style={{ borderRadius: 12, backgroundColor: active ? C.blue : '#FFF', borderWidth: 1, borderColor: active ? '#8FB8EA' : C.line, overflow: 'hidden' }}>
+                <Pressable accessibilityRole="button" accessibilityLabel={`참고 ${index + 1} 조정`} onPress={() => { if (!ref.visible) send({ type: 'toggleReference', id: ref.id }); else send({ type: 'setActiveReference', id: ref.id }); }} onLongPress={() => { send({ type: 'setActiveReference', id: ref.id }); setPanel('reference'); setLayerRail(false); }} style={{ height: 55, padding: 4 }}>{image ? <Image source={{ uri: imageUri(image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text>참고 {index + 1}</Text>}</Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={`참고 ${index + 1} ${ref.visible ? '끄기' : '켜기'}`} onPress={() => send({ type: 'toggleReference', id: ref.id })} style={{ paddingBottom: 6, alignItems: 'center' }}><Text style={{ fontSize: 10, color: C.muted }}>{ref.visible ? '◉ 참고' : '○ 꺼짐'}</Text></Pressable>
+              </View>;
+            })}
           </ScrollView>
+        </View>}
+
+        {panel === 'brief' && <View style={{ position: 'absolute', left: 12, right: 12, top: 10, padding: 14, backgroundColor: C.paper, borderRadius: 18, borderWidth: 1, borderColor: C.line, elevation: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}><Text style={{ flex: 1, fontSize: 13, fontWeight: '900' }}>{String(slot.number).padStart(2, '0')}번 칸 작업 브리프</Text><Pressable onPress={() => setPanel(null)} style={{ padding: 6 }}><Text>×</Text></Pressable></View>
+          <TextInput accessibilityLabel="현재 칸 대사" value={dialogue} onChangeText={s => { setDialogue(s); setSaved(false); }} placeholder="무대사면 비워두기" placeholderTextColor="#8C877F" style={[styles.input, { backgroundColor: '#FFF', borderColor: C.line }]} />
+          <Text style={{ marginTop: 8, fontSize: 11, color: C.muted }}>세트 기획에서 정한 대사를 빠르게 수정하는 곳입니다.</Text>
+        </View>}
+
+        {panel === 'color' && <View style={{ position: 'absolute', left: 12, right: 12, bottom: 10, padding: 13, borderRadius: 18, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, elevation: 8 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 9 }}><Text style={{ fontSize: 13, fontWeight: '900' }}>색</Text><Pressable onPress={() => setPanel(null)} style={{ padding: 6 }}><Text>×</Text></Pressable></View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{palette.map(c => <Pressable key={c} accessibilityRole="button" accessibilityLabel={'색 ' + c} onPress={() => { setColor(c); send({ type: 'color', color: c }); setPanel(null); }} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c, borderWidth: color.toLowerCase() === c.toLowerCase() ? 3 : 1, borderColor: color.toLowerCase() === c.toLowerCase() ? C.coral : '#999' }} />)}</View>
+        </View>}
+
+        {panel === 'reference' && selectedReference && <View style={{ position: 'absolute', left: 12, right: 12, bottom: 10, padding: 14, borderRadius: 18, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, elevation: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}><Text style={{ flex: 1, fontSize: 13, fontWeight: '900' }}>선택한 참고 이미지</Text><Pressable onPress={() => setPanel(null)} style={{ padding: 6 }}><Text>×</Text></Pressable></View>
+          <Text style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>두 손가락으로 이미지 자체를 이동·확대합니다.</Text>
+          <Text style={{ fontSize: 11 }}>불투명도 {Math.round(selectedReference.opacity * 100)}%</Text>
+          <Host matchContents><Slider value={selectedReference.opacity} min={0} max={1} step={.05} onValueChange={opacity => changeTransform(selectedReference.id, { opacity })} /></Host>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+            <SmallButton title="위치 초기화" onPress={() => changeTransform(selectedReference.id, { x: 0, y: 0, scale: 1, rotation: 0 })} />
+            <SmallButton title="참고 끄기" onPress={() => { send({ type: 'toggleReference', id: selectedReference.id }); setPanel(null); }} />
+            <SmallButton danger title="삭제" onPress={() => { const image = slot.referenceImages.find(i => i.path === selectedReference.path); if (image) removeReference(image.path, selectedReference.id); }} />
+          </View>
+        </View>}
+
+        {panel === 'more' && <View style={{ position: 'absolute', right: 10, top: 8, width: 178, padding: 9, borderRadius: 16, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, elevation: 8 }}>
+          {canon && <MenuButton title="원캐릭터 보기" onPress={() => { setShowCanon(true); setPanel(null); }} />}
+          <MenuButton title={`캔버스 ${zoom.toFixed(1)}×`} onPress={() => { const n = zoom >= 3 ? 1 : zoom + 1; setZoom(n); send({ type: 'zoom', zoom: n }); setPanel(null); }} />
+          <MenuButton title="현재 그림 레이어 비우기" onPress={() => { setPanel(null); Alert.alert('레이어 비우기', '두 손가락 탭으로 되돌릴 수 있습니다.', [{ text: '취소' }, { text: '비우기', onPress: () => send({ type: 'clear' }) }]); }} />
+          <MenuButton title="PNG 공유" onPress={() => { setPanel(null); save('share'); }} />
+          <MenuButton title="제출 전 검사" onPress={() => { setPanel(null); setShowQA(true); }} />
         </View>}
       </View>
 
-      <View style={{ borderTopWidth: 1, borderColor: '#d8ddd1', backgroundColor: '#f8f8f2' }} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
-        <View style={{ paddingTop: 5, paddingHorizontal: 8 }}><Text style={{ fontSize: 11, fontWeight: '800', color: '#535b50' }}>따라 그릴 참고</Text></View>
+      <View style={{ borderTopWidth: 1, borderColor: C.line, backgroundColor: C.paper }} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
+        <View style={{ paddingTop: 6, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center' }}><Text style={{ flex: 1, fontSize: 11, fontWeight: '900', color: C.muted }}>참고</Text>{!!selectedReference?.visible && <Text style={{ fontSize: 9, color: '#5277A5' }}>두 손가락으로 참고 자체 조정</Text>}</View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', gap: 7, paddingHorizontal: 8, paddingVertical: 5 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="레퍼런스 추가" onPress={() => void addReferences()} style={{ width: 54, height: 54, borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: '#aeb6a7', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 22 }}>＋</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="참고 추가" onPress={() => void addReferences()} style={{ width: 52, height: 52, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: '#BDB5AA', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF' }}><Text style={{ fontSize: 22, color: C.muted }}>＋</Text></Pressable>
           {scene.references.map((ref, index) => {
-            const image = slot.referenceImages.find(i => i.path === ref.path);
-            const active = ref.id === scene.activeLayerId;
-            return <View key={ref.id} style={{ alignItems: 'center' }}>
-              <Pressable accessibilityRole="button" accessibilityLabel={`레퍼런스 ${index + 1} ${ref.visible ? '켜짐' : '꺼짐'}`} onPress={() => send({ type: 'soloReference', id: ref.id })} onLongPress={() => { send({ type: 'select', id: ref.id }); selectTool('move'); setPanel('references'); }} style={{ width: 54, height: 54, padding: 2, borderRadius: 8, borderWidth: active ? 3 : ref.visible ? 2 : 1, borderColor: active ? '#315a37' : ref.visible ? '#6f8f71' : '#cbd0c7', backgroundColor: '#fff' }}>
-                {image ? <Image source={{ uri: imageUri(image.path) }} style={{ width: '100%', height: '100%', borderRadius: 5, opacity: ref.visible ? 1 : .4 }} resizeMode="contain" /> : <Text>{index + 1}</Text>}
-              </Pressable>
-              <Text style={{ fontSize: 9, color: ref.visible ? '#315a37' : '#8a8f86' }}>{ref.visible ? '사용 중' : '꺼짐'}</Text>
-            </View>;
+            const image = slot.referenceImages.find(i => i.path === ref.path), active = ref.id === scene.activeReferenceId;
+            return <Pressable key={ref.id} accessibilityRole="button" accessibilityLabel={`참고 ${index + 1} ${ref.visible ? '사용 중' : '꺼짐'}`} onPress={() => send({ type: 'toggleReference', id: ref.id })} onLongPress={() => { send({ type: 'setActiveReference', id: ref.id }); setPanel('reference'); }} style={{ width: 52, height: 52, padding: 2, borderRadius: 14, borderWidth: active ? 3 : 1, borderColor: active ? '#6FA4E5' : C.line, backgroundColor: ref.visible ? C.blue : '#FFF' }}>
+              {image ? <Image source={{ uri: imageUri(image.path) }} style={{ width: '100%', height: '100%', borderRadius: 10, opacity: ref.visible ? 1 : .38 }} resizeMode="contain" /> : <Text>{index + 1}</Text>}
+            </Pressable>;
           })}
         </ScrollView>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 }}>
-          <MiniTool label="펜" selected={tool === 'pen'} onPress={() => selectTool('pen')}>펜</MiniTool>
-          <MiniTool label="지우개" selected={tool === 'eraser'} onPress={() => selectTool('eraser')}>지우개</MiniTool>
-          <MiniTool label="기본 펜" selected={tool === 'pen' && brush === 'pen'} onPress={() => selectBrush('pen')}>기본</MiniTool>
-          <MiniTool label="연필" selected={tool === 'pen' && brush === 'pencil'} onPress={() => selectBrush('pencil')}>연필</MiniTool>
-          <MiniTool label="마커" selected={tool === 'pen' && brush === 'marker'} onPress={() => selectBrush('marker')}>마커</MiniTool>
-          <Pressable accessibilityRole="button" accessibilityLabel="색 선택" onPress={() => setPanel(panel === 'color' ? null : 'color')} style={{ width: 48, height: 42, alignItems: 'center', justifyContent: 'center' }}><View style={{ width: 25, height: 25, borderRadius: 13, backgroundColor: color, borderWidth: 1, borderColor: '#777' }} /></Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 7, minHeight: 46 }}>
+          <ToolPill title="펜" selected={tool === 'pen'} onPress={() => selectTool('pen')} />
+          <ToolPill title="지우개" selected={tool === 'eraser'} onPress={() => selectTool('eraser')} />
+          <ToolPill title="기본" selected={tool === 'pen' && brush === 'pen'} onPress={() => selectBrush('pen')} />
+          <ToolPill title="연필" selected={tool === 'pen' && brush === 'pencil'} onPress={() => selectBrush('pencil')} />
+          <ToolPill title="마커" selected={tool === 'pen' && brush === 'marker'} onPress={() => selectBrush('marker')} />
+          <Pressable accessibilityRole="button" accessibilityLabel="색 선택" onPress={() => setPanel(panel === 'color' ? null : 'color')} style={{ width: 43, height: 40, alignItems: 'center', justifyContent: 'center' }}><View style={{ width: 25, height: 25, borderRadius: 13, backgroundColor: color, borderWidth: 1, borderColor: '#777' }} /></Pressable>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 40, paddingHorizontal: 10 }}>
-          <Text style={{ fontSize: 12, fontWeight: '700', marginRight: 8 }}>{tool === 'eraser' ? '지우개' : '굵기'} {width}</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="굵기 줄이기" onPress={() => adjustWidth(-2)} style={{ width: 40, height: 36, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 23 }}>−</Text></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="굵기 늘리기" onPress={() => adjustWidth(2)} style={{ width: 40, height: 36, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 23 }}>＋</Text></Pressable>
-          <Text style={{ flex: 1, textAlign: 'right', fontSize: 10, color: '#777' }}>두 손가락 탭: 되돌리기 · 세 손가락 탭: 다시</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 38, paddingHorizontal: 10 }}>
+          <Text style={{ fontSize: 11, fontWeight: '800', marginRight: 4 }}>{tool === 'eraser' ? '지우개' : '굵기'} {width}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="굵기 줄이기" onPress={() => adjustWidth(-2)} style={{ width: 36, height: 34, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 22 }}>−</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="굵기 늘리기" onPress={() => adjustWidth(2)} style={{ width: 36, height: 34, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 22 }}>＋</Text></Pressable>
+          <Text style={{ flex: 1, textAlign: 'right', fontSize: 9, color: C.muted }}>두 손가락 탭 되돌리기 · 세 손가락 탭 다시</Text>
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8, padding: 8, paddingTop: 3 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="저장" disabled={busy || !initialized} onPress={() => save()} style={{ flex: 1, minHeight: 46, borderRadius: 10, borderWidth: 1, borderColor: '#9ca497', alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ fontWeight: '700' }}>{busy ? '저장 중…' : saved && !scene.dirty ? '저장됨' : '저장'}</Text></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="저장 후 다음 슬롯" disabled={busy || !initialized} onPress={() => save(slot.number < slotCount ? slot.number + 1 : 'stay')} style={{ flex: 1.45, minHeight: 46, borderRadius: 10, backgroundColor: '#4d7352', alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ color: '#fff', fontWeight: '900' }}>{slot.number < slotCount ? '저장 → 다음 칸' : '세트 마지막 저장'}</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="저장" disabled={busy || !initialized} onPress={() => save()} style={{ flex: 1, minHeight: 48, borderRadius: 15, borderWidth: 1, borderColor: '#BEB6AB', backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ fontWeight: '800', color: C.ink }}>{busy ? '저장 중…' : saved && !scene.dirty ? '저장됨' : '저장'}</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="저장 후 다음 칸" disabled={busy || !initialized} onPress={() => save(slot.number < slotCount ? slot.number + 1 : 'stay')} style={{ flex: 1.45, minHeight: 48, borderRadius: 15, backgroundColor: C.coral, alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ color: '#FFF', fontWeight: '900' }}>{slot.number < slotCount ? '저장 → 다음 칸' : '세트 마지막 저장'}</Text></Pressable>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -253,6 +243,12 @@ export function Painter({ slot, slotCount, canon, onSave, onClose, onNavigate, o
   </SafeAreaView></Modal>;
 }
 
-function MiniTool({ label, selected, disabled, onPress, children }: { label: string; selected?: boolean; disabled?: boolean; onPress: () => void; children?: React.ReactNode }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected, disabled }} disabled={disabled} onPress={onPress} style={{ flex: 1, minHeight: 42, minWidth: 48, alignItems: 'center', justifyContent: 'center', backgroundColor: selected ? '#dfe8d7' : 'transparent', borderRadius: 8, opacity: disabled ? .35 : 1 }}><Text style={{ fontSize: 12, fontWeight: selected ? '900' : '700' }}>{children ?? label}</Text></Pressable>;
+function ToolPill({ title, selected, onPress }: { title: string; selected?: boolean; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected }} onPress={onPress} style={{ flex: 1, minWidth: 45, minHeight: 38, marginHorizontal: 2, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: selected ? C.peach : 'transparent' }}><Text style={{ fontSize: 11, fontWeight: selected ? '900' : '700', color: C.ink }}>{title}</Text></Pressable>;
+}
+function SmallButton({ title, onPress, danger }: { title: string; onPress: () => void; danger?: boolean }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ flex: 1, minHeight: 38, borderRadius: 11, backgroundColor: danger ? '#FFE0DE' : '#F2EEE7', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 11, fontWeight: '800', color: danger ? '#A43D3D' : C.ink }}>{title}</Text></Pressable>;
+}
+function MenuButton({ title, onPress }: { title: string; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ minHeight: 42, justifyContent: 'center', paddingHorizontal: 10, borderRadius: 10 }}><Text style={{ fontSize: 12, fontWeight: '750', color: C.ink }}>{title}</Text></Pressable>;
 }
