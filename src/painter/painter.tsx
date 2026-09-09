@@ -52,7 +52,7 @@ export function Painter({ slot, slotCount, canon, onSave, onClose, onNavigate, o
         const savedRef = savedRefs.find(ref => ref.image?.path === image.path);
         return savedRef ?? { ...transform('ref-' + image.path, 'Reference ' + (i + 1)), visible: i === 0, opacity: .28, image };
       });
-      const decodedLayers = await Promise.all(layers.map(async l => ({ ...l, data: l.image ? await dataUrl(l.image) : undefined })));
+      const decodedLayers = await Promise.all(layers.map(async l => ({ ...l, data: 'image' in l && l.image ? await dataUrl(l.image) : undefined })));
       const decodedRefs = await Promise.all(refs.map(async l => ({ ...l, path: l.image!.path, data: await dataUrl(l.image!) })));
       if (!canceled) send({ type: 'init', layers: decodedLayers, references: decodedRefs, activeLayerId: slot.work?.activeLayerId });
     })().catch(e => Alert.alert('작업 불러오기 실패', String(e)));
