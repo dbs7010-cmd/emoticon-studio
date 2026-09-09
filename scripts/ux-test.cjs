@@ -67,7 +67,7 @@ const saved=async(dirty=true)=>{
  }
  assert.deepEqual(loadStore().store.projects[0],p,'opening untouched slots does not create results or change old metadata');
  await act(async()=>tiles()[0].props.onPress());await init();
- await press('추천');const dialogue=tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='대사')[0].props.value;assert.equal(dialogue,'고마워!');
+ const dialogue=tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='대사')[0].props.value;assert.equal(dialogue,'대사 1');
  pendingPicks=[{...image,path:'r2.png'},{...image,path:'r3.png'}];pendingPicks.forEach(i=>files.set(localFile(i.path).uri,png));
  await press('레퍼런스 추가');
  const added=lastCommand('addReferences').references;assert.equal(added.length,2);
@@ -75,7 +75,7 @@ const saved=async(dirty=true)=>{
  assert.ok(loadStore().store.projects[0].slots.every(s=>s.referenceImages.length===3),'new references are shared across every slot');
  await press('레퍼런스 1 켜짐');assert.equal(lastCommand('soloReference').id,scene.references[0].id);
  await longPress('레퍼런스 1 켜짐');assert.equal(lastCommand('tool').tool,'move');
- await press('레이어');await press('선택 Draw Layer 2');scene.activeLayerId='draw-2';await message(scene);await press('패널 닫기');
+ await press('레이어');await press('선택 그림 2');scene.activeLayerId='draw-2';await message(scene);await press('패널 닫기');
  await press('마커');assert.equal(lastCommand('brush').brush,'marker');
  await press('지우개');await press('굵기 늘리기');assert.equal(lastCommand('width').tool,'eraser');assert.equal(lastCommand('width').width,22);
  await press('펜');await press('굵기 늘리기');assert.equal(lastCommand('width').tool,'pen');assert.equal(lastCommand('width').width,7);
@@ -92,5 +92,5 @@ const saved=async(dirty=true)=>{
  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});await press('이전 프로젝트');await act(async()=>tiles()[0].props.onPress());const restored=await init();
  assert.equal(restored.layers.length,2);assert.equal(restored.references.length,3);assert.deepEqual(loadStore().store,persisted,'restart reads same work and metadata');
  await act(async()=>tree.unmount());
- console.log('PASS: 32 direct Painter entries, dialogue recommendation, project-wide reference strip, reference quick switch/move, independent brush/eraser widths, layered persistence, export thumbnail, save-next continuous flow, restart, old data compatibility. Native modules/WebView mocked; engine pixels tested separately.');
+ console.log('PASS: 32 direct Painter entries, project-wide references, Korean layer workflow, independent brush/eraser widths, layered persistence, export thumbnail, save-next continuous flow, restart, old data compatibility. Native modules/WebView mocked; engine touch gestures require device test.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
