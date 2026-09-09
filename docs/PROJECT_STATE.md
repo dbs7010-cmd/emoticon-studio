@@ -8,99 +8,69 @@
 - Visual System V1.1: 밝은 아이보리/화이트 기반 + 제한된 파스텔 포인트 + 진한 차콜 텍스트.
 - 앱 내 그래픽은 귀엽지만 디테일하지 않은 러프한 두들 감성으로 통일한다.
 - Infinite Painter는 상호작용/작업성 참고만 하며 시각 디자인을 복제하지 않는다.
+- 대사/무대사 기획은 Painter가 아니라 이후 `세트 기획` 단계의 역할이다. Painter 기본 화면은 슬롯 진행과 그림 작업에 집중한다.
 
-## DEVICE VALIDATED — 이전 실기기
+## DEVICE VALIDATED
 - 저장 → 슬롯 썸네일 반영
 - 저장 → 다음 슬롯 연속 이동
 - 공용 참고 이미지가 다음 슬롯에도 유지
 - 두 손가락 짧은 탭 = 되돌리기 동작 확인
 - 지우개 정상 동작 확인
+- 참고 이미지 자체 확대/축소 동작 확인
+- 새 Home Visual 방향이 이전 관리 폼보다 작업실에 가까워짐
 
-## IMPLEMENTED — PRODUCT UX REBUILD P0 / 실기기 재검증 대기
-이번 브랜치 `feat/painter-flow-v1`에 다음을 반영했다.
+## LATEST DEVICE FEEDBACK
+- Painter 상단 `01 / 32 · 무대사/대사` 표시는 현재 단계에서는 뜬금없음 → **Painter에서 대사 표시/수정 제거**.
+- 세 손가락 탭 Redo는 실기기에서 동작하지 않음 → **gesture history 보존 버그 수정 코드 반영, 재검증 대기**.
+- 참고 이미지 확대는 PASS.
+- 참고 이미지 이동은 최신 빌드에서 별도 재확인 필요.
+- 레이어 레일/전체 UI 사용감은 계속 실기기 검증 중.
 
-### P0-1 REFERENCE TRANSFORM ARCHITECTURE
-- `activeDrawLayerId`와 `activeReferenceId`를 분리했다.
-- 참고 썸네일 선택 시 참고 조정 대상이 고정된다.
-- 활성 참고가 있을 때 두 손가락 이동/핀치는 캔버스가 아니라 **참고 이미지 자체** x/y/scale을 변경한다.
-- 활성 참고가 없을 때만 두 손가락 이동/핀치가 캔버스 zoom/pan으로 작동한다.
-- 한 손가락은 계속 선택된 그림 레이어에 그린다.
-- 두 손가락 탭 Undo / 세 손가락 탭 Redo 로직을 유지했다.
-- 참고 이미지는 export에서 계속 제외된다.
+## IMPLEMENTED — CURRENT BRANCH `feat/painter-flow-v1`
+### PRODUCT UX P0
+- HOME: 상시 입력 폼 제거, 2열 프로젝트 작업실 카드 + `새 세트` 액션.
+- SET BOARD: 원캐릭터/진행률/4열 슬롯, 슬롯 → Painter 직행.
+- PAINTER: 캔버스 우선, 참고 스트립, 최소 그림 도구, 저장 → 다음 칸.
+- LAYER: 상단 버튼 → 우측 좁은 플로팅 레이어 레일.
+- REFERENCE: `activeDrawLayerId`와 `activeReferenceId` 분리, 선택 참고를 두 손가락으로 이동/확대.
+- VISUAL: 웜 아이보리/화이트 + 제한된 파스텔 + 차콜 텍스트.
+- 두 손가락 Undo / 세 손가락 Redo 제스처 엔진.
 
-### P0-2 LAYER ACCESS
-- 큰 레이어 패널을 기본 작업 흐름에서 제거했다.
-- 상단 `레이어` 버튼 → 우측 좁은 플로팅 레이어 레일로 변경했다.
-- `그림 1/2`, `참고 1...` 선택 및 보임/숨김을 레일에서 처리한다.
-- 참고 상세 조정은 길게 누를 때만 별도 작은 패널을 연다.
-
-### P0-3 SLOT BRIEF
-- Painter의 큰 대사 입력칸을 제거했다.
-- 상단에 `01 / 32 · 잘자` 형태의 현재 슬롯 브리프를 표시한다.
-- 브리프를 탭했을 때만 빠른 대사 수정창을 연다.
-- Painter 안의 추천 버튼은 없다.
-- AI 세트 기획/대사 일괄 배치는 아직 구현하지 않았다. 이는 다음 별도 CURRENT다.
-
-### P0-4 HOME / SET BOARD
-HOME:
-- 상시 프로젝트/캐릭터 입력 폼 제거.
-- `내 작업실` + 2열 프로젝트 썸네일/진행률 중심으로 재구성.
-- `새 세트` 카드 → 작은 생성 Dialog로 이동.
-- 원캐릭터/완성 그림을 프로젝트 cover로 사용.
-- 빈 프로젝트에는 최소한의 러프 두들 placeholder만 사용.
-
-SET BOARD:
-- 원캐릭터 + 세트명 + 진행률 hero 추가.
-- 4열 슬롯 그리드 유지.
-- 슬롯 탭 → Painter 직행 유지.
-- 관리 기능은 상단 `…`에 유지.
-
-### P0-5 PAINTER VISUAL / TOOL FLOW
-- 밝은 웜 아이보리/화이트 기반으로 변경.
-- Painter는 중립색 위주, 활성 도구와 `저장 → 다음 칸`만 강조.
-- `저장 → 다음 칸`은 코랄 포인트로 명확히 강조.
-- 참고 스트립 → 최소 그림 도구 → 굵기 → 저장 순서로 정리.
-- 색 팔레트 24색 유지.
-- 원캐릭터 Quick View 유지.
-- 사용자 노출 영어 레이어 명칭 없음.
-
-### TESTS UPDATED
-- `scripts/ux-test.cjs`: 새 작업실/슬롯 브리프/참고/레이어 레일/연속 저장 구조에 맞춰 갱신.
-- `scripts/painter-test.cjs`: 독립 reference transform, toggle, draw layer 분리, reference-free export 기준으로 갱신.
+### LATEST FIXES — DEVICE FEEDBACK ROUND 3
+1. Painter 상단에서 대사/무대사 및 브리프 편집 UI 제거.
+   - 상단은 `이모티콘 세트` + `01 / 32` 진행만 표시.
+   - 기존 슬롯 dialogue 데이터는 삭제하지 않고 그대로 보존/저장.
+   - 대사 기능은 다음 `세트 기획` CURRENT에서 제대로 배치한다.
+2. 세 손가락 Redo 수정.
+   - 첫 손가락이 닿는 순간 임시 stroke checkpoint가 redo future를 지우던 문제 수정.
+   - multi-touch가 실제 이동/핀치로 판정되기 전에는 reference transform checkpoint를 만들지 않음.
+   - 두/세 손가락 탭 허용 시간을 450ms로 조정하고 작은 손가락 흔들림 허용 범위를 확대.
+3. `scripts/ux-test.cjs`를 Painter 무대사 UI 제거 구조에 맞춰 갱신.
 
 ## VERIFICATION STATUS
-- 코드 변경: DONE
-- GitHub 브랜치 반영: DONE
-- 최신 `npm run typecheck`: **UNVERIFIED** — 이 실행 환경에서 npm 실행 불가
+- GitHub 코드 반영: DONE
+- 이전 Android 실기기: Undo PASS / 지우개 PASS / 참고 확대 PASS
+- 최신 `npm run typecheck`: **UNVERIFIED**
 - 최신 `npm run test:ux`: **UNVERIFIED**
-- 최신 `npm run test:painter`: **UNVERIFIED**
-- Android Expo Go 실기기: **UNVERIFIED**
-- 특히 `참고 이미지 자체 이동/핀치`: 실기기 확인 필수
-- 레이어 레일 실제 손가락 접근성: 실기기 확인 필수
+- 최신 Android Expo Go:
+  - Painter 대사 제거: **UNVERIFIED**
+  - 세 손가락 Redo 수정: **UNVERIFIED**
+  - 참고 이미지 이동: **UNVERIFIED**
 
-## CURRENT ACCEPTANCE CHECK — 다음 실기기 테스트
-1. 홈이 관리 폼이 아니라 작업실처럼 보이는가
-2. 새 세트 생성이 홈을 어지럽히지 않는가
-3. 세트 보드에서 진행률/원캐릭터/32칸이 즉시 읽히는가
-4. Painter 큰 대사 입력창이 사라지고 `01/32 · 대사` 브리프만 보이는가
-5. 참고 썸네일 선택 후 두 손가락 이동 = 참고 이미지 자체 이동인가
-6. 같은 상태에서 핀치 = 참고 이미지 자체 확대/축소인가
-7. 참고를 끄면 캔버스 자체 zoom/pan으로 돌아가는가
-8. 두 손가락 짧은 탭 Undo가 여전히 정상인가
-9. 세 손가락 짧은 탭 Redo가 정상인가
-10. 상단 레이어 → 우측 레이어 레일 접근이 편한가
-11. 그림 1/2 선택·보임/숨김이 정상인가
-12. 지우개가 정상 그림 레이어만 지우는가
-13. 저장 → 슬롯 썸네일 반영 정상인가
-14. 저장 → 다음 칸 연속 흐름 정상인가
-15. 다음 칸에서도 공용 참고 유지되는가
-16. 재실행 후 기존 저장 데이터/레이어 유지되는가
-17. 색감이 밝고 친근하지만 어린이 앱처럼 보이지 않는가
+## CURRENT ACCEPTANCE CHECK
+1. Painter 상단이 `01 / 32` 진행만 보여 자연스러운가
+2. 두 손가락 탭 Undo 정상
+3. 세 손가락 탭 Redo 정상
+4. 참고 선택 후 두 손가락 이동 = 참고 이미지 자체 이동
+5. 참고 선택 후 핀치 = 참고 이미지 자체 확대/축소
+6. 상단 레이어 → 우측 레이어 레일 접근이 편한가
+7. 저장 → 슬롯 반영 → 다음 칸 유지
+8. 기존 dialogue/저장 데이터 손실 없음
 
 ## NEXT
-위 실기기 검증에서 나온 실제 문제만 수정한다.
-P0가 PASS한 뒤 다음 CURRENT로 `세트 기획 화면 + 대사/무대사 초안 + 참고 이미지 슬롯 배치`를 구현한다.
+위 8개 실기기 검증에서 나온 실제 문제만 수정한다.
+P0가 안정되면 별도 CURRENT로 `세트 기획 화면 + 대사/무대사 초안 + 참고 이미지 슬롯 배치`를 구현한다.
 AI 고도화/움직이는 이모티콘/PRO는 그 뒤다.
 
 ## BLOCKED
-- 최신 브랜치의 TypeScript/자동 테스트/Android 실기기 검증.
+- 최신 브랜치 typecheck/자동 테스트/Android 실기기 재검증.
