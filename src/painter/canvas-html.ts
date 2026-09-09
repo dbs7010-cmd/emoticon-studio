@@ -7,7 +7,7 @@ export const canvasHtml = `<!doctype html><html lang="ko"><head><meta name="view
 (function(){
 const canvas=document.getElementById('drawing'),surface=document.getElementById('surface'),viewport=document.getElementById('viewport'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 const W=canvas.width,H=canvas.height;
-let tool='pen',brush='pen',color='#242424',penWidth=5,eraserWidth=20,zoom=1,active=false,last=null,pointer=null,history=[],future=[],dirty=false,loading=false,saving=false,layers=[],references=[],activeLayerId='draw-1',activeDrawLayerId='draw-1',activeReferenceId=null,strokePending=false;
+let tool='pen',brush='pen',color='#242424',penWidth=5,eraserWidth=20,zoom=1,active=false,last=null,pointer=null,history=[],future=[],dirty=false,loading=false,saving=false,layers=[],references=[],activeLayerId='draw-1',activeDrawLayerId='draw-1',activeReferenceId=null,strokePending=false,pendingFill=null,steady=null;
 const touches=new Map();let multi=null,suppressDraw=false;
 function send(m){window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify(m));}
 function bitmap(){const c=document.createElement('canvas');c.width=W;c.height=H;return c;}
@@ -32,7 +32,7 @@ function firstTwo(){return points().slice(0,2);}
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function middle(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
 function canvasUnits(px){const r=canvas.getBoundingClientRect();return px*W/Math.max(1,r.width);}
-function cancelStrokeForGesture(){if(!active)return;active=false;pointer=null;strokePending=false;if(history.length){const previous=history.pop();restore(previous);}}
+function cancelStrokeForGesture(){if(!active)return;active=false;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
 function beginMulti(){
  const ps=firstTwo();if(ps.length<2)return;const [a,b]=ps,mid=middle(a,b),ref=activeReference();
  if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,ids:[a.id,b.id],distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,didCheckpoint:false};}
@@ -47,6 +47,39 @@ function applyMulti(){
  if(ref){if(!multi.didCheckpoint){checkpoint();multi.didCheckpoint=true;}ref.scale=Math.max(.1,Math.min(4,multi.refScale*(d/multi.distance)));ref.x=multi.refX+canvasUnits(mid.x-multi.mid.x);ref.y=multi.refY+canvasUnits(mid.y-multi.mid.y);dirty=true;render();state();return;}
  const next=Math.max(1,Math.min(4,multi.zoom*(d/multi.distance)));zoom=next;size();const ratio=next/multi.zoom;viewport.scrollLeft=(multi.scrollLeft+multi.mid.x)*ratio-mid.x;viewport.scrollTop=(multi.scrollTop+multi.mid.y)*ratio-mid.y;send({type:'zoom',zoom});
 }
+function rgba(hex){const v=hex.replace('#','');const n=parseInt(v.length===3?v.split('').map(c=>c+c).join(''):v,16);return [n>>16&255,n>>8&255,n&255,255];}
+function fillAt(spot){
+ const l=activeDraw();if(!l||!l.visible)return;
+ const seed=local(spot,l),sx=Math.round(seed.x),sy=Math.round(seed.y);
+ if(sx<0||sy<0||sx>=W||sy>=H)return;
+ const g=l.bitmap.getContext('2d'),image=g.getImageData(0,0,W,H),d=image.data,start=(sy*W+sx)*4;
+ const target=[d[start],d[start+1],d[start+2],d[start+3]],paint=rgba(color);
+ if(Math.abs(target[3]-paint[3])<8&&Math.abs(target[0]-paint[0])<8&&Math.abs(target[1]-paint[1])<8&&Math.abs(target[2]-paint[2])<8)return;
+ // Tolerance is fixed: line art only needs "is this the same flat area", never a numeric dial.
+ const near=k=>{const da=d[k+3]-target[3];if(Math.abs(da)>64)return false;if(d[k+3]<8&&target[3]<8)return true;return Math.abs(d[k]-target[0])+Math.abs(d[k+1]-target[1])+Math.abs(d[k+2]-target[2])<=96;};
+ const inside=new Uint8Array(W*H),stack=[sx,sy];
+ while(stack.length){
+  const y=stack.pop(),x=stack.pop();
+  let left=x;while(left>=0&&!inside[y*W+left]&&near((y*W+left)*4))left--;
+  let right=x+1;while(right<W&&!inside[y*W+right]&&near((y*W+right)*4))right++;
+  for(let i=left+1;i<right;i++){
+   inside[y*W+i]=1;
+   if(y>0&&!inside[(y-1)*W+i]&&near(((y-1)*W+i)*4))stack.push(i,y-1);
+   if(y<H-1&&!inside[(y+1)*W+i]&&near(((y+1)*W+i)*4))stack.push(i,y+1);
+  }
+ }
+ // Grow one pixel into the anti-aliased rim so the fill meets the line instead of leaving a white hairline.
+ const edge=[];
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+  if(inside[y*W+x])continue;const k=(y*W+x)*4;if(d[k+3]>=250)continue;
+  if((x>0&&inside[y*W+x-1])||(x<W-1&&inside[y*W+x+1])||(y>0&&inside[(y-1)*W+x])||(y<H-1&&inside[(y+1)*W+x]))edge.push(y*W+x);
+ }
+ for(const i of edge)inside[i]=1;
+ let painted=0;
+ for(let i=0;i<W*H;i++)if(inside[i]){const k=i*4;d[k]=paint[0];d[k+1]=paint[1];d[k+2]=paint[2];d[k+3]=255;painted++;}
+ if(!painted)return;
+ checkpoint();g.putImageData(image,0,0);dirty=true;render();
+}
 function undo(){if(history.length){future.push(snapshot());dirty=true;restore(history.pop());}}
 function redo(){if(future.length){history.push(snapshot());dirty=true;restore(future.pop());}}
 function finishMulti(){
@@ -58,24 +91,30 @@ canvas.addEventListener('pointerdown',e=>{
  if(loading||saving)return;
  if(e.pointerType==='touch'){
    touches.set(e.pointerId,touchPoint(e));
-   if(touches.size>=2){e.preventDefault();cancelStrokeForGesture();beginMulti();return;}
+   if(touches.size>=2){e.preventDefault();pendingFill=null;pointer=null;cancelStrokeForGesture();beginMulti();return;}
    if(suppressDraw)return;
  }
  if(active)return;
  const l=activeDraw();if(!l||!l.visible)return;
- e.preventDefault();canvas.setPointerCapture(e.pointerId);pointer=e.pointerId;checkpoint(true);strokePending=true;active=true;last=point(e);
+ e.preventDefault();canvas.setPointerCapture(e.pointerId);pointer=e.pointerId;
+ if(tool==='fill'){pendingFill={clientX:e.clientX,clientY:e.clientY,...point(e)};return;}
+ checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;
  const p=local(last,l),g=l.bitmap.getContext('2d');style(g);g.beginPath();g.arc(p.x,p.y,g.lineWidth/2,0,Math.PI*2);g.fill();render();state();
 });
 canvas.addEventListener('pointermove',e=>{
  if(e.pointerType==='touch'&&touches.has(e.pointerId)){const old=touches.get(e.pointerId);touches.set(e.pointerId,{...old,x:e.clientX,y:e.clientY});}
  if(multi&&touches.size>=2){e.preventDefault();multi.maxCount=Math.max(multi.maxCount,touches.size);applyMulti();return;}
- if(!active||e.pointerId!==pointer)return;e.preventDefault();const l=activeDraw(),p=point(e);if(!l)return;
+ if(pendingFill&&e.pointerId===pointer){const moved=Math.hypot(e.clientX-pendingFill.clientX,e.clientY-pendingFill.clientY);if(moved>16)pendingFill=null;return;}
+ if(!active||e.pointerId!==pointer)return;e.preventDefault();const l=activeDraw(),raw=point(e);if(!l)return;
+ steady={x:steady.x+(raw.x-steady.x)*.55,y:steady.y+(raw.y-steady.y)*.55};const p=steady;
  const a=local(last,l),b=local(p,l),g=l.bitmap.getContext('2d');style(g);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();dirty=true;last=p;render();
 });
 function end(e){
  if(e.pointerType==='touch'&&touches.has(e.pointerId))touches.delete(e.pointerId);
  if(multi){if(touches.size===0)finishMulti();return;}
- if(e.pointerId!==pointer)return;if(strokePending){future=[];strokePending=false;}active=false;pointer=null;state();
+ if(e.pointerId!==pointer)return;
+ if(pendingFill){const spot=pendingFill;pendingFill=null;pointer=null;fillAt(spot);state();return;}
+ if(strokePending){future=[];strokePending=false;}active=false;pointer=null;steady=null;state();
 }
 canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('이미지를 열 수 없습니다.'));i.src=src;});}
@@ -102,6 +141,7 @@ async function command(m){try{
  if(m.type==='removeReference'){const index=references.findIndex(l=>l.id===m.id);if(index>=0){checkpoint();const removed=references[index];references.splice(index,1);if(activeReferenceId===removed.id)activeReferenceId=null;render();state();}}
  if(m.type==='undo')undo();
  if(m.type==='redo')redo();
+ if(m.type==='addLayer'){if(layers.length<4){checkpoint();const l={...defaults(m.id,m.name),bitmap:bitmap()};layers.push(l);selectDrawLayer(l.id);render();state();}}
  if(m.type==='clear'){const l=activeDraw();if(l){checkpoint();l.bitmap.getContext('2d').clearRect(0,0,W,H);render();state();}}
  if(m.type==='save'){saving=true;const out=bitmap(),g=out.getContext('2d');layers.forEach(l=>composite(g,l));send({type:'save',dirty,data:out.toDataURL('image/png'),metrics:metrics(out),activeLayerId,layers:layers.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')})),references:references.map(l=>({...meta(l),path:l.path}))});}
  if(m.type==='saved'){saving=false;dirty=false;state();}

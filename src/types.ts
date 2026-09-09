@@ -13,10 +13,13 @@ export type Slot = {
   expressionGuide: string; poseGuide: string; compositionGuide: string;
   effectGuide: string; textPlacementGuide: string; notes: string;
   referenceImages: LocalImage[]; finalImage?: LocalImage; status: Status; qa?: QA; work?: PainterWork;
+  // Planning-only, both optional so stores written before set planning stay valid.
+  noDialogue?: boolean; referenceKey?: string;
 };
 export type Project = {
   id: string; projectName: string; characterName: string; createdAt: string; updatedAt: string;
   canon: { image?: LocalImage; personality: string; speech: string; locked: string; variable: string };
   slots: Slot[];
+  lastSlot?: number; // where the user left off, so a restart lands back on the same칸
 };
-export type Store = { version: 1; revision: number; projects: Project[] };
+export type Store = { version: 1; revision: number; projects: Project[]; palette?: string[] };

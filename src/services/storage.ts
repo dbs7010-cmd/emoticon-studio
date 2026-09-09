@@ -9,6 +9,9 @@ export function localFile(path: string) {
   return new File(root(), path);
 }
 export function imageUri(path: string) { return localFile(path).uri; }
+// Export bundles live beside the images but are never image files, so cleanup never sees them.
+export function exportFile(name: string) { ensureRoot(); return localFile('set-' + name); }
+export function exportUri(name: string) { return localFile(name).uri; }
 export function newImageFile() { ensureRoot(); return localFile(`image-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.png`); }
 // Only files newImageFile() created may ever be removed; store snapshots share this directory.
 const removable = (path: string) => /^image-[a-zA-Z0-9._-]+\.png$/.test(path);

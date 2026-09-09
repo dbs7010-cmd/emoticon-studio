@@ -13,7 +13,7 @@ class File {
   delete() { if (!files.delete(this.uri)) throw new Error('missing ' + this.uri); }
 }
 const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } } });
-const { createProject, imagePaths, orphanImagePaths } = load('src/project.ts');
+const { createProject, imagePaths, storeImagePaths, droppedImagePaths } = load('src/project.ts');
 const { deleteLocalImages, localFile } = load('src/services/storage.ts');
 
 const image = path => ({ path, width: 360, height: 360 });
@@ -33,17 +33,26 @@ const a = sample('가', 'a'), b = sample('나', 'b');
 // Every kind of image a project can own is discovered, references counted once across 32 slots.
 assert.deepEqual([...imagePaths(a)].sort(), ['image-a-canon.png', 'image-a-final.png', 'image-a-l1.png', 'image-a-l2.png', 'image-a-ref.png']);
 
-// Two independent projects: deleting one reports only its own files.
-assert.deepEqual(orphanImagePaths(a, [b]).sort(), ['image-a-canon.png', 'image-a-final.png', 'image-a-l1.png', 'image-a-l2.png', 'image-a-ref.png']);
-assert.deepEqual(orphanImagePaths(b, [a]).sort(), ['image-b-canon.png', 'image-b-final.png', 'image-b-l1.png', 'image-b-l2.png', 'image-b-ref.png']);
-assert.deepEqual(orphanImagePaths(a, []).length, 5, 'the last project releases everything it owned');
+const store = projects => ({ version: 1, revision: 1, projects });
+assert.equal(storeImagePaths(store([a, b])).size, 10, 'the store sees every project\'s images');
 
-// A path another project still points at is never reported, even though the deleted project owned it too.
+// Two independent projects: deleting one releases only its own files.
+assert.deepEqual(droppedImagePaths(store([a, b]), store([b])).sort(), ['image-a-canon.png', 'image-a-final.png', 'image-a-l1.png', 'image-a-l2.png', 'image-a-ref.png']);
+assert.deepEqual(droppedImagePaths(store([a, b]), store([a])).sort(), ['image-b-canon.png', 'image-b-final.png', 'image-b-l1.png', 'image-b-l2.png', 'image-b-ref.png']);
+assert.equal(droppedImagePaths(store([a]), store([])).length, 5, 'the last project releases everything it owned');
+assert.deepEqual(droppedImagePaths(store([a, b]), store([a, b])), [], 'an edit that changes nothing releases nothing');
+
+// A path another project still points at is never released, even though the deleted project owned it too.
 const shared = sample('다', 'c');
 shared.canon.image = image('image-a-canon.png');
 shared.slots[0].finalImage = image('image-a-final.png');
-assert.deepEqual(orphanImagePaths(a, [shared]).sort(), ['image-a-l1.png', 'image-a-l2.png', 'image-a-ref.png'], 'shared files stay for the project that still points at them');
-assert.deepEqual(orphanImagePaths(a, [a]), [], 'a project that is still present loses nothing');
+assert.deepEqual(droppedImagePaths(store([a, shared]), store([shared])).sort(), ['image-a-l1.png', 'image-a-l2.png', 'image-a-ref.png'], 'shared files stay for the project that still points at them');
+
+// Replacing a slot's drawing releases the file it replaced, and nothing else.
+const resaved = JSON.parse(JSON.stringify(a));
+resaved.slots[0].finalImage = image('image-a-final-2.png');
+assert.deepEqual(droppedImagePaths(store([a]), store([resaved])), ['image-a-final.png'], 'a re-save leaves no orphan behind');
+assert.deepEqual(droppedImagePaths(store([a, b]), store([resaved, b])), ['image-a-final.png'], 'and still touches nothing of the other project');
 
 // Deletion only touches files newImageFile() created; store snapshots share the directory.
 for (const name of ['image-a-canon.png', 'store-a.json', 'store-b.json', 'notes.txt']) files.set(localFile(name).uri, 'x');

@@ -7,8 +7,9 @@ import { Action, Dialog, Field, Preview, styles } from './src/components/ui';
 import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
 import { Painter } from './src/painter/painter';
 import { KAKAO_STATIC_SPEC as SPEC } from './src/constants/kakao-spec';
-import { createProject, duplicates, orphanImagePaths } from './src/project';
-import { deleteLocalImages, imageUri, loadStore, saveStore } from './src/services/storage';
+import { createProject, droppedImagePaths, duplicates, planningIssues } from './src/project';
+import { deleteLocalImages, exportUri, imageUri, loadStore, saveStore } from './src/services/storage';
+import { exportSet } from './src/services/export';
 import { pickImages, savePainterWork } from './src/services/images';
 import { inspectImage } from './src/services/qa';
 import { conceptAssistant } from './src/services/concept';
@@ -28,6 +29,7 @@ function Studio() {
   const [menu, setMenu] = useState(false), [detail, setDetail] = useState(false), [setQA, setSetQA] = useState(false), [newProjectOpen, setNewProjectOpen] = useState(false);
   const [manageId, setManageId] = useState<string | null>(null), [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [issues, setIssues] = useState<QA | null>(null);
+  const [screen, setScreen] = useState<'board' | 'planning' | 'preview'>('board'), [openSlot, setOpenSlot] = useState<number | null>(null);
   const { width: screenWidth } = useWindowDimensions();
   const tileWidth = (screenWidth - 28 - 24) / 4;
   const projectCardWidth = (screenWidth - 40) / 2;
@@ -36,15 +38,19 @@ function Studio() {
   useEffect(load, []);
   function commit(transform: (s: Store) => Store) {
     if (!current.current) throw new Error('저장소가 준비되지 않았습니다.');
-    const next = { ...transform(current.current), revision: current.current.revision + 1 };
+    const previous = current.current;
+    const next = { ...transform(previous), revision: previous.revision + 1 };
     current.current = next; setStore(next);
-    try { saveStore(next); setSaveError(''); } catch (e) { setSaveError(String(e)); throw e; }
+    // Persist first. Only once the snapshot is on disk may the files it no longer references go.
+    try { saveStore(next); setSaveError(''); } catch (e) { current.current = previous; setSaveError(String(e)); throw e; }
+    deleteLocalImages(droppedImagePaths(previous, next));
   }
   function changeProject(id: string, transform: (p: Project) => Project) { commit(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...transform(p), updatedAt: new Date().toISOString() } : p) })); }
   function updateProject(transform: (p: Project) => Project) { if (projectId) { try { changeProject(projectId, transform); } catch { /* Keep unsaved state with persistent retry banner. */ } } }
   function updateSlot(patch: Partial<Slot>) { updateProject(p => ({ ...p, slots: p.slots.map(s => s.number === slotNumber ? { ...s, ...patch } : s) })); }
+  function updateSlotNumber(number: number, patch: Partial<Slot>) { updateProject(p => ({ ...p, slots: p.slots.map(s => s.number === number ? { ...s, ...patch } : s) })); }
   const project = store?.projects.find(p => p.id === projectId), slot = project?.slots.find(s => s.number === slotNumber);
-  function back() { if (busy) return; if (slotNumber !== null) { setSlotNumber(null); setDetail(false); } else if (canonOpen) setCanonOpen(false); else setProjectId(null); }
+  function back() { if (busy) return; if (slotNumber !== null) { setSlotNumber(null); setDetail(false); } else if (canonOpen) setCanonOpen(false); else if (screen !== 'board') { setScreen('board'); setOpenSlot(null); } else setProjectId(null); }
   useEffect(() => { const sub = BackHandler.addEventListener('hardwareBackPress', () => { if (painting) return false; if (projectId) { back(); return true; } return false; }); return () => sub.remove(); }, [projectId, slotNumber, canonOpen, busy, painting]);
   async function task(label: string, work: () => Promise<void>) { if (busy) return; setBusy(label); try { await work(); } catch (e) { Alert.alert('작업 실패', String(e)); } finally { setBusy(''); } }
   async function analyzed(image: LocalImage): Promise<LocalImage> { if (image.metrics) return image; try { return { ...image, metrics: await analyzer.current!.analyze(image) }; } catch { setNotice('일부 픽셀 분석을 수행하지 못했습니다. 해당 검사는 WARNING으로 표시합니다.'); return image; } }
@@ -68,7 +74,7 @@ function Studio() {
     let qa: QA;
     try { qa = inspectImage(finalImage, project.canon.image); }
     catch { qa = { status: 'WARNING', checkedAt: new Date().toISOString(), checks: [{ label: '자동 검사', status: 'WARNING', detail: '검사를 마치지 못했습니다. 상세에서 다시 검사하세요.' }], consistency: [] }; }
-    changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => s.number === slot.number ? { ...s, finalImage, work, dialogue: dialogue ?? s.dialogue, qa, status: qa.status } : s) }));
+    changeProject(project.id, p => ({ ...p, lastSlot: slot.number, slots: p.slots.map(s => s.number === slot.number ? { ...s, finalImage, work, dialogue: dialogue ?? s.dialogue, qa, status: qa.status } : s) }));
     if (goHome) { setPainting(false); setSlotNumber(null); setDetail(false); }
     if (!painting && qa.status !== 'PASS') setIssues(qa);
     return qa;
@@ -83,17 +89,39 @@ function Studio() {
     const p = createProject(projectName.trim(), characterName.trim());
     try { commit(s => ({ ...s, projects: [...s.projects, p] })); setProjectId(p.id); setProjectName(''); setCharacterName(''); setNewProjectOpen(false); } catch (e) { Alert.alert('저장 실패', String(e)); }
   }
-  // Store first: if the snapshot write fails the set is still intact and no file has been touched.
   function deleteProject(id: string) {
     const target = current.current?.projects.find(p => p.id === id);
     if (!target) return;
-    const orphans = orphanImagePaths(target, current.current!.projects.filter(p => p.id !== id));
     try { commit(s => ({ ...s, projects: s.projects.filter(p => p.id !== id) })); }
     catch (e) { Alert.alert('삭제 실패', String(e)); return; }
-    const { skipped } = deleteLocalImages(orphans);
     if (id === projectId) { setProjectId(null); setSlotNumber(null); setCanonOpen(false); setDetail(false); }
     setConfirmDeleteId(null); setManageId(null);
-    setNotice(skipped ? `${target.projectName} 세트를 삭제했어요. 그림 파일 ${skipped}개는 정리하지 못했습니다.` : `${target.projectName} 세트를 삭제했어요.`);
+    setNotice(`${target.projectName} 세트를 삭제했어요.`);
+  }
+  function rememberColor(color: string) {
+    try { commit(s => ({ ...s, palette: [color, ...(s.palette ?? []).filter(c => c !== color)].slice(0, 8) })); } catch { /* colour history is a convenience, never a blocker */ }
+  }
+  // Deterministic set-level checks. Everything here works offline.
+  const setChecks: Check[] = !project ? [] : [
+    ...(() => {
+      const missing = project.slots.filter(s => !s.finalImage).length;
+      return missing ? [{ label: '빠진 칸', status: (missing === SPEC.count ? 'FAIL' : 'WARNING') as Check['status'], detail: `${missing}칸이 아직 비어 있어요.` }] : [];
+    })(),
+    ...project.slots.filter(s => s.finalImage && (s.finalImage.width !== SPEC.width || s.finalImage.height !== SPEC.height))
+      .map(s => ({ label: `${String(s.number).padStart(2, '0')}번 크기`, status: 'FAIL' as const, detail: `${SPEC.width}×${SPEC.height}가 아니에요.` })),
+    ...project.slots.filter(s => s.finalImage && s.finalImage.metrics && !s.finalImage.metrics.transparent)
+      .map(s => ({ label: `${String(s.number).padStart(2, '0')}번 배경`, status: 'WARNING' as const, detail: '투명 배경이 아닐 수 있어요.' })),
+    ...duplicates(project.slots).map(group => ({ label: '겹친 대사', status: 'WARNING' as const, detail: `${group.map(n => String(n).padStart(2, '0')).join(', ')}번이 같아요.` })),
+    ...project.slots.filter(s => s.qa?.status === 'FAIL').map(s => ({ label: `${String(s.number).padStart(2, '0')}번 검사`, status: 'FAIL' as const, detail: '자동 검사에서 문제가 나왔어요.' })),
+  ];
+  function exportProject() {
+    if (!project) return;
+    void task('제출용 파일 만드는 중…', async () => {
+      const result = exportSet(project);
+      if (!await Sharing.isAvailableAsync()) { setNotice(`${result.count}칸을 ${result.path}로 저장했어요.`); return; }
+      await Sharing.shareAsync(exportUri(result.path), { mimeType: 'application/zip', UTI: 'public.zip' });
+      setNotice(result.missing ? `${result.count}칸을 내보냈어요. ${result.missing}칸은 아직 비어 있어요.` : `${result.count}칸 전체를 내보냈어요.`);
+    });
   }
   const managed = store?.projects.find(p => p.id === manageId);
   const pendingDelete = store?.projects.find(p => p.id === confirmDeleteId);
@@ -103,12 +131,12 @@ function Studio() {
       {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 8, minHeight: 58, borderBottomWidth: 1, borderColor: C.line }}>
         <Pressable accessibilityRole="button" accessibilityLabel="뒤로" disabled={!!busy} onPress={back} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24 }}>‹</Text></Pressable>
         {!slot && !canonOpen && (project.canon.image ? <Image source={{ uri: imageUri(project.canon.image.path) }} style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: '#FFF' }} resizeMode="contain" /> : <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.peach, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontWeight: '900' }}>{project.characterName.slice(0, 1)}</Text></View>)}
-        <View style={{ flex: 1 }}><Text numberOfLines={1} style={{ fontSize: 16, color: C.ink, fontWeight: '900' }}>{canonOpen ? '프로젝트 설정' : slot ? `슬롯 ${String(slot.number).padStart(2, '0')}` : project.projectName}</Text>{!slot && !canonOpen && <Text style={{ fontSize: 10, color: C.muted }}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>}</View>
+        <View style={{ flex: 1 }}><Text numberOfLines={1} style={{ fontSize: 16, color: C.ink, fontWeight: '900' }}>{canonOpen ? '프로젝트 설정' : slot ? `슬롯 ${String(slot.number).padStart(2, '0')}` : screen === 'planning' ? '세트 기획' : screen === 'preview' ? '전체 보기' : project.projectName}</Text>{!slot && !canonOpen && <Text style={{ fontSize: 10, color: C.muted }}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>}</View>
         <Pressable accessibilityRole="button" accessibilityLabel="프로젝트 메뉴" disabled={!!busy} onPress={() => setMenu(true)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24 }}>⋯</Text></Pressable>
       </View>}
       {!!busy && <Text style={{ paddingHorizontal: 14, paddingVertical: 4, color: C.muted }}>{busy}</Text>}
       {!!saveError && <View style={{ padding: 12, backgroundColor: '#FFE4DF' }}><Text selectable>{saveError}</Text><Action title="다시 저장" onPress={() => { try { commit(s => s); } catch {} }} /></View>}
-      <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.page}>
+      <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.page}>
         {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="알림 닫기" onPress={() => setNotice('')} style={{ padding: 8, borderRadius: 12, backgroundColor: '#FFF6D8' }}><Text>{notice} ×</Text></Pressable>}
         {loadError ? <><Text selectable>{loadError}</Text><Action title="다시 불러오기" onPress={load} /></> : !store ? <Text>불러오는 중…</Text> : !project ? <>
           <View style={{ marginBottom: 2 }}><Text style={styles.title}>내 작업실</Text><Text style={[styles.muted, { marginTop: 4 }]}>그려 저장하고, 한 세트를 끝내요.</Text></View>
@@ -117,7 +145,7 @@ function Studio() {
               const cover = p.canon.image ?? p.slots.find(s => s.finalImage)?.finalImage;
               const done = p.slots.filter(s => s.finalImage).length;
               const tint = [C.peach, C.mint, C.blue, C.lavender, '#FFF1B8'][index % 5];
-              return <Pressable accessibilityRole="button" accessibilityLabel={p.projectName} key={p.id} onPress={() => { setProjectId(p.id); setDetail(false); }} style={{ width: projectCardWidth, backgroundColor: C.paper, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 10, gap: 8 }}>
+              return <Pressable accessibilityRole="button" accessibilityLabel={p.projectName} key={p.id} onPress={() => { setProjectId(p.id); setDetail(false); setScreen('board'); setOpenSlot(null); }} style={{ width: projectCardWidth, backgroundColor: C.paper, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 10, gap: 8 }}>
                 <View style={{ height: projectCardWidth - 30, minHeight: 118, borderRadius: 16, backgroundColor: tint, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>{cover ? <Image source={{ uri: imageUri(cover.path) }} style={{ width: '86%', height: '86%' }} resizeMode="contain" /> : <View style={{ alignItems: 'center', gap: 4 }}><Text style={{ fontSize: 28, color: '#665F57' }}>〰</Text><Text style={{ fontSize: 10, color: C.muted }}>첫 그림을 기다리는 중</Text></View>}</View>
                 <Text numberOfLines={1} style={{ fontSize: 14, color: C.ink, fontWeight: '900' }}>{p.projectName}</Text>
                 <View style={{ height: 5, borderRadius: 3, backgroundColor: '#EEE8DF', overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / SPEC.count * 100)}%`, height: '100%', backgroundColor: C.coral }} /></View>
@@ -133,6 +161,51 @@ function Studio() {
           <Field label="프로젝트 이름" value={project.projectName} onChangeText={projectName => updateProject(p => ({ ...p, projectName }))} multiline={false} />
           <Field label="캐릭터 이름" value={project.characterName} onChangeText={characterName => updateProject(p => ({ ...p, characterName }))} multiline={false} />
           {([['personality', '성격'], ['speech', '말투'], ['locked', '꼭 유지할 특징'], ['variable', '바꿔도 되는 특징']] as const).map(([key, label]) => <Field key={key} label={label} value={project.canon[key]} onChangeText={value => updateProject(p => ({ ...p, canon: { ...p.canon, [key]: value } }))} />)}
+        </> : screen === 'planning' ? <>
+          <View><Text style={styles.title}>세트 기획</Text><Text style={[styles.muted, { marginTop: 4 }]}>먼저 32칸을 정해두면 그릴 때 고민하지 않아도 돼요.</Text></View>
+          {planningIssues(project).map(issue => <View key={issue} style={{ padding: 10, borderRadius: 14, backgroundColor: '#FFF6D8' }}><Text style={{ fontSize: 12, color: '#6F6243' }}>{issue}</Text></View>)}
+          {project.slots.map(s => {
+            const open = openSlot === s.number;
+            const summary = s.noDialogue ? '무대사' : s.dialogue.trim() || '아직 비어 있어요';
+            return <View key={s.number} style={{ borderRadius: 16, backgroundColor: C.paper, borderWidth: 1, borderColor: open ? C.coral : C.line, overflow: 'hidden' }}>
+              <Pressable accessibilityRole="button" accessibilityLabel={`${String(s.number).padStart(2, '0')}번 칸 기획`} accessibilityState={{ expanded: open }} onPress={() => setOpenSlot(open ? null : s.number)} style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, gap: 10 }}>
+                <Text style={{ fontSize: 13, fontWeight: '900', color: C.muted, width: 24 }}>{String(s.number).padStart(2, '0')}</Text>
+                <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '800', color: s.dialogue.trim() || s.noDialogue ? C.ink : '#A9A299' }}>{summary}</Text>
+                {!!s.emotion.trim() && <Text style={{ fontSize: 11, color: C.muted }}>{s.emotion}</Text>}
+              </Pressable>
+              {open && <View style={{ padding: 12, paddingTop: 0, gap: 10 }}>
+                <Pressable accessibilityRole="button" accessibilityLabel={`${String(s.number).padStart(2, '0')}번 무대사`} accessibilityState={{ checked: !!s.noDialogue }} onPress={() => updateSlotNumber(s.number, { noDialogue: !s.noDialogue, status: s.status === 'EMPTY' ? 'PLANNED' : s.status })} style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 2, borderColor: s.noDialogue ? C.coral : '#BDB5AA', backgroundColor: s.noDialogue ? C.coral : 'transparent' }} />
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>대사 없이 그림만</Text>
+                </Pressable>
+                {!s.noDialogue && <Field label="대사" multiline={false} value={s.dialogue} onChangeText={dialogue => updateSlotNumber(s.number, { dialogue, status: s.status === 'EMPTY' && dialogue.trim() ? 'PLANNED' : s.status })} />}
+                {([['emotion', '감정'], ['situation', '상황'], ['poseGuide', '포즈'], ['compositionGuide', '구도']] as const).map(([key, label]) =>
+                  <Field key={key} label={label} multiline={false} value={s[key]} onChangeText={value => updateSlotNumber(s.number, { [key]: value })} />)}
+                {!!s.referenceImages.length && <View style={{ gap: 6 }}>
+                  <Text style={styles.label}>따라 그릴 참고</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>{s.referenceImages.map((im, i) => {
+                    const chosen = (s.referenceKey ?? s.referenceImages[0]?.path) === im.path;
+                    return <Pressable key={im.path} accessibilityRole="button" accessibilityLabel={`${String(s.number).padStart(2, '0')}번 참고 ${i + 1}`} accessibilityState={{ selected: chosen }} onPress={() => updateSlotNumber(s.number, { referenceKey: im.path })} style={{ width: 56, height: 56, borderRadius: 12, borderWidth: chosen ? 3 : 1, borderColor: chosen ? C.coral : C.line, backgroundColor: '#FFF' }}><Image source={{ uri: imageUri(im.path) }} style={{ width: '100%', height: '100%', borderRadius: 9 }} resizeMode="contain" /></Pressable>;
+                  })}</ScrollView>
+                </View>}
+                <Action title="이 칸 그리기" onPress={() => { setScreen('board'); setSlotNumber(s.number); setDetail(false); setPainting(true); }} />
+              </View>}
+            </View>;
+          })}
+        </> : screen === 'preview' ? <>
+          <View><Text style={styles.title}>전체 보기</Text><Text style={[styles.muted, { marginTop: 4 }]}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성 · 제출 전에 한 번에 확인해요.</Text></View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{project.slots.map(s => <Pressable key={s.number} testID={`preview-${s.number}`} accessibilityRole="button" accessibilityLabel={`${String(s.number).padStart(2, '0')}번 ${s.finalImage ? '완성' : '비어 있음'}`} onPress={() => { setScreen('board'); setSlotNumber(s.number); setDetail(false); setPainting(true); }} style={{ width: tileWidth, gap: 3 }}>
+            <View style={{ width: tileWidth, aspectRatio: 1, borderRadius: 14, backgroundColor: s.finalImage ? C.paper : '#F0ECE5', borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {s.finalImage ? <Image source={{ uri: imageUri(s.finalImage.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ fontSize: 15, color: '#AAA39A', fontWeight: '700' }}>{String(s.number).padStart(2, '0')}</Text>}
+            </View>
+            <Text numberOfLines={1} style={{ fontSize: 9, color: C.muted }}>{s.noDialogue ? '무대사' : s.dialogue.trim() || ' '}</Text>
+          </Pressable>)}</View>
+          <View style={styles.card}>
+            <Text style={styles.subtitle}>제출 전 검사</Text>
+            {setChecks.length ? setChecks.map(c => <Text key={c.label} style={{ fontSize: 12, color: colors[c.status] }}>{c.status} · {c.label}: {c.detail}</Text>) : <Text style={styles.muted}>지금까지는 문제가 보이지 않아요.</Text>}
+            <Text style={{ fontSize: 11, color: C.muted }}>사전 확인일 뿐 플랫폼 승인을 보장하지 않아요.</Text>
+          </View>
+          <Action primary title="제출용 PNG 세트 내보내기" disabled={!!busy || !project.slots.some(s => s.finalImage)} onPress={exportProject} />
         </> : slot && !painting ? <>
           <Field label="대사" value={slot.dialogue} multiline={false} onChangeText={dialogue => updateSlot({ dialogue, status: slot.status === 'EMPTY' && dialogue.trim() ? 'PLANNED' : slot.status })} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -156,7 +229,11 @@ function Studio() {
             <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 설정" onPress={() => setCanonOpen(true)} style={{ width: 66, height: 66, borderRadius: 20, backgroundColor: C.peach, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>{project.canon.image ? <Image source={{ uri: imageUri(project.canon.image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ fontSize: 11, fontWeight: '800' }}>원캐릭터</Text>}</Pressable>
             <View style={{ flex: 1, gap: 5 }}><Text style={{ fontSize: 18, fontWeight: '900', color: C.ink }}>{project.projectName}</Text><Text style={{ fontSize: 11, color: C.muted }}>그림을 저장하면 바로 다음 칸으로 이어집니다.</Text><View style={{ height: 7, borderRadius: 4, backgroundColor: '#EEE8DF', overflow: 'hidden' }}><View style={{ width: `${Math.max(2, project.slots.filter(s => s.finalImage).length / SPEC.count * 100)}%`, height: '100%', backgroundColor: C.coral }} /></View><Text style={{ fontSize: 10, color: C.muted }}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text></View>
           </View>
-          <View testID="slot-grid" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{project.slots.map(s => <Pressable key={s.number} testID={`slot-${s.number}`} accessibilityRole="button" accessibilityLabel={`슬롯 ${s.number} ${s.dialogue} ${s.status}`} onPress={() => { setSlotNumber(s.number); setDetail(false); setPainting(true); }} style={{ width: tileWidth, aspectRatio: 1, borderRadius: 14, backgroundColor: C.paper, borderWidth: 1, borderColor: s.finalImage ? '#D9D1C6' : C.line, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable accessibilityRole="button" accessibilityLabel="세트 기획" onPress={() => { setScreen('planning'); setOpenSlot(null); }} style={{ flex: 1, minHeight: 48, borderRadius: 16, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '900', color: C.ink }}>세트 기획</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="전체 보기" onPress={() => setScreen('preview')} style={{ flex: 1, minHeight: 48, borderRadius: 16, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '900', color: C.ink }}>전체 보기</Text></Pressable>
+          </View>
+          <View testID="slot-grid" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{project.slots.map(s => <Pressable key={s.number} testID={`slot-${s.number}`} accessibilityRole="button" accessibilityLabel={`슬롯 ${s.number} ${s.dialogue} ${s.status}`} onPress={() => { setSlotNumber(s.number); setDetail(false); setPainting(true); }} style={{ width: tileWidth, aspectRatio: 1, borderRadius: 14, backgroundColor: C.paper, borderWidth: project.lastSlot === s.number ? 2 : 1, borderColor: project.lastSlot === s.number ? C.coral : s.finalImage ? '#D9D1C6' : C.line, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             {s.finalImage ? <Image source={{ uri: imageUri(s.finalImage.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ fontSize: 17, color: '#AAA39A', fontWeight: '700' }}>{String(s.number).padStart(2, '0')}</Text>}
             <View style={{ position: 'absolute', right: 6, bottom: 6, width: 7, height: 7, borderRadius: 4, backgroundColor: colors[s.status] }} />
           </Pressable>)}</View>
@@ -183,7 +260,7 @@ function Studio() {
       <Action title="프로젝트 설정" onPress={() => { setMenu(false); setSlotNumber(null); setCanonOpen(true); }} />
       <Action title="전체 QA" onPress={() => { setMenu(false); void runQA(true); }} />
       <Action title="카카오 규격 안내" onPress={() => { setMenu(false); Alert.alert('카카오 규격', SPEC.note, [{ text: '닫기' }, { text: '공식 안내', onPress: () => { Linking.openURL(SPEC.officialUrl).catch(e => Alert.alert('링크 오류', String(e))); } }]); }} />
-      <Action title="프로젝트 목록" onPress={() => { setMenu(false); setProjectId(null); setSlotNumber(null); setCanonOpen(false); }} />
+      <Action title="프로젝트 목록" onPress={() => { setMenu(false); setProjectId(null); setSlotNumber(null); setCanonOpen(false); setScreen('board'); }} />
     </Dialog>}
     {setQA && project && <Dialog title="전체 QA" onClose={() => setSetQA(false)}>
       <Text>완료 {project.slots.filter(s => s.finalImage).length} / {SPEC.count} · 미작업 {project.slots.filter(s => s.status === 'EMPTY').length}</Text>
@@ -192,7 +269,7 @@ function Studio() {
       {project.slots.filter(s => s.qa?.status !== 'PASS').map(s => <Pressable key={s.number} accessibilityRole="button" onPress={() => { setSetQA(false); setCanonOpen(false); setSlotNumber(s.number); setDetail(false); if (s.qa) setIssues(s.qa); }} style={{ paddingVertical: 8 }}><Text style={{ color: colors[s.qa?.status ?? 'EMPTY'] }}>{String(s.number).padStart(2, '0')} · {s.finalImage ? s.qa?.status ?? '미검사' : '그림 없음'}</Text></Pressable>)}
     </Dialog>}
     {issues && <Dialog title="검수 결과" onClose={() => setIssues(null)}>{issues.status === 'PASS' ? <Text>문제 없음</Text> : <><Checks checks={[...issues.checks, ...issues.consistency]} /><Text style={{ fontSize: 12, color: C.muted }}>V1 참고 판정</Text></>}</Dialog>}
-    {painting && project && slot && <Painter key={project.id + '/' + slot.number} slot={slot} slotCount={project.slots.length} canon={project.canon.image}
+    {painting && project && slot && <Painter key={project.id + '/' + slot.number} slot={slot} slotCount={project.slots.length} canon={project.canon.image} palette={store?.palette ?? []} onColorUsed={rememberColor}
       onClose={() => { setPainting(false); setSlotNumber(null); setDetail(false); }}
       onNavigate={number => { setSlotNumber(number); setDetail(false); }}
       onAddReferences={async () => { const added = await pickImages(true); if (added.length) changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => ({ ...s, referenceImages: mergeImages(s.referenceImages, added) })) })); return added; }}

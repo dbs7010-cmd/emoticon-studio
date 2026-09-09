@@ -20,12 +20,17 @@ export function imagePaths(project: Project): Set<string> {
   }
   return paths;
 }
-// Files the removed project owned that no surviving project still points at.
-// Set difference, so a path shared with another project is never reported for deletion.
-export function orphanImagePaths(removed: Project, remaining: Project[]): string[] {
-  const kept = new Set<string>();
-  for (const project of remaining) for (const path of imagePaths(project)) kept.add(path);
-  return [...imagePaths(removed)].filter(path => !kept.has(path));
+// Every image the whole store still points at.
+export function storeImagePaths(store: Store): Set<string> {
+  const paths = new Set<string>();
+  for (const project of store.projects) for (const path of imagePaths(project)) paths.add(path);
+  return paths;
+}
+// Files that were reachable before an edit and are not reachable after it.
+// A set difference over the whole store, so a file another project still points at is never listed.
+export function droppedImagePaths(before: Store, after: Store): string[] {
+  const kept = storeImagePaths(after);
+  return [...storeImagePaths(before)].filter(path => !kept.has(path));
 }
 export function duplicates(slots: Slot[]): number[][] {
   const groups = new Map<string, number[]>();
@@ -34,6 +39,23 @@ export function duplicates(slots: Slot[]): number[][] {
     if (key) groups.set(key, [...(groups.get(key) ?? []), slot.number]);
   }
   return [...groups.values()].filter(group => group.length > 1);
+}
+// Deterministic, local planning review. No network, so a set can always be finished offline.
+export function planningIssues(project: Project): string[] {
+  const issues: string[] = [];
+  const planned = project.slots.filter(s => s.dialogue.trim() || s.noDialogue);
+  for (const group of duplicates(project.slots)) issues.push(`같은 대사가 ${group.map(n => String(n).padStart(2, '0')).join(', ')}번에 겹쳐요`);
+  const emotions = new Map<string, number>();
+  for (const slot of project.slots) {
+    const key = slot.emotion.trim();
+    if (key) emotions.set(key, (emotions.get(key) ?? 0) + 1);
+  }
+  for (const [emotion, count] of emotions) {
+    if (planned.length >= 8 && count > planned.length * .4) issues.push(`'${emotion}' 감정이 ${count}칸으로 치우쳐 있어요`);
+  }
+  const empty = project.slots.length - planned.length;
+  if (empty) issues.push(`아직 ${empty}칸은 대사나 무대사를 정하지 않았어요`);
+  return issues;
 }
 export function parseStore(raw: string): Store {
   const value = JSON.parse(raw) as Store;
@@ -46,13 +68,16 @@ export function parseStore(raw: string): Store {
       if (!/^[a-zA-Z0-9._-]+$/.test(image.path) || !(image.width > 0) || !(image.height > 0)) throw new Error('이미지 저장 데이터가 손상되었습니다.');
     };
     validateImage(p.canon.image);
+    if (p.lastSlot !== undefined && !Number.isSafeInteger(p.lastSlot)) throw new Error('마지막 작업 칸 데이터가 손상되었습니다.');
     p.slots.forEach((s, index) => {
       if (s.number !== index + 1 || !Array.isArray(s.referenceImages) || typeof s.dialogue !== 'string') throw new Error('슬롯 저장 데이터가 손상되었습니다.');
       if (!['EMPTY', 'PLANNED', 'DRAWING', 'REVIEW', 'PASS', 'WARNING', 'FAIL'].includes(s.status)) throw new Error('슬롯 상태가 손상되었습니다.');
+      if (s.noDialogue !== undefined && typeof s.noDialogue !== 'boolean') throw new Error('슬롯 기획 데이터가 손상되었습니다.');
+      if (s.referenceKey !== undefined && typeof s.referenceKey !== 'string') throw new Error('슬롯 기획 데이터가 손상되었습니다.');
       for (const text of [s.emotion, s.situation, s.expressionGuide, s.poseGuide, s.compositionGuide, s.effectGuide, s.textPlacementGuide, s.notes]) if (typeof text !== 'string') throw new Error('슬롯 텍스트가 손상되었습니다.');
       s.referenceImages.forEach(validateImage); validateImage(s.finalImage);
       if (s.work) {
-        if (s.work.version !== 1 || !Array.isArray(s.work.layers) || !Array.isArray(s.work.references) || s.work.layers.length !== 2) throw new Error('작업 레이어 데이터가 손상되었습니다.');
+        if (s.work.version !== 1 || !Array.isArray(s.work.layers) || !Array.isArray(s.work.references) || s.work.layers.length < 1 || s.work.layers.length > 4) throw new Error('작업 레이어 데이터가 손상되었습니다.');
         const layers = [...s.work.layers, ...s.work.references];
         const ids = new Set(layers.map(l => l.id));
         if (ids.size !== layers.length || !ids.has(s.work.activeLayerId)) throw new Error('활성 레이어 데이터가 손상되었습니다.');
@@ -63,5 +88,6 @@ export function parseStore(raw: string): Store {
       }
     });
   }
+  if (value.palette !== undefined && (!Array.isArray(value.palette) || value.palette.some(c => typeof c !== 'string'))) throw new Error('색 기록이 손상되었습니다.');
   return value;
 }

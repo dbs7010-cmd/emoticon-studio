@@ -4,7 +4,15 @@ import { Host, Button } from '@expo/ui';
 import { imageUri } from '../services/storage';
 import type { LocalImage } from '../types';
 
-const C = { bg: '#F7F4EE', paper: '#FFFDF9', ink: '#232323', muted: '#77736C', line: '#E7E1D7', coral: '#FF7A59' };
+// One spacing/radius/type scale for every screen, so Home, Board, Planning, Painter and Export read as one app.
+export const T = {
+  bg: '#F7F4EE', paper: '#FFFDF9', ink: '#232323', muted: '#77736C', line: '#E7E1D7',
+  coral: '#FF7A59', peach: '#FFE2D8', yellow: '#F8D66D', mint: '#BFE9D5', blue: '#C9DCF8', lavender: '#DCCCF7',
+  radius: { sm: 12, md: 16, lg: 20 },
+  gap: { xs: 4, sm: 8, md: 12, lg: 16 },
+  tap: 48, // minimum comfortable finger target on an ordinary phone
+};
+const C = T;
 
 export function Action({ title, onPress, disabled = false, primary = false }: { title: string; onPress: () => void; disabled?: boolean; primary?: boolean }) {
   return <Host matchContents style={{ minHeight: primary ? 56 : 44 }}><Button onPress={onPress} disabled={disabled} variant={primary ? 'filled' : 'outlined'} label={title} style={{ height: primary ? 56 : 44 }} /></Host>;
