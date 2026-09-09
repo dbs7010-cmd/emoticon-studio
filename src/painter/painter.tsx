@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Modal, View, Text, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { Alert, Modal, View, Text, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Host, Slider } from '@expo/ui';
 import { WebView } from 'react-native-webview';
 import { canvasHtml } from './canvas-html';
-import { Dialog, Preview, styles } from '../components/ui';
+import { Dialog, Preview } from '../components/ui';
 import { dataUrl } from '../services/images';
 import { imageUri } from '../services/storage';
 import type { LayerTransform, LocalImage, PainterExport, QA, Slot } from '../types';
@@ -31,7 +31,7 @@ type Props = {
 };
 
 type Brush = 'pen' | 'pencil' | 'marker';
-type Panel = 'color' | 'brief' | 'reference' | 'more' | null;
+type Panel = 'color' | 'reference' | 'more' | null;
 const transform = (id: string, name: string): LayerTransform => ({ id, name, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 });
 const source = { html: canvasHtml };
 const clampWidth = (value: number) => Math.max(1, Math.min(48, value));
@@ -52,7 +52,6 @@ export function Painter({ slot, slotCount, canon, onSave, onClose, onNavigate, o
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
   const [scene, setScene] = useState<Scene>({ undo: false, redo: false, dirty: false, activeLayerId: 'draw-1', activeReferenceId: null, layers: [], references: [] });
-  const [dialogue, setDialogue] = useState(slot.dialogue);
   const [tool, setTool] = useState<'pen' | 'eraser'>('pen'), [brush, setBrush] = useState<Brush>('pen'), [color, setColor] = useState('#242424');
   const [penWidth, setPenWidth] = useState(5), [eraserWidth, setEraserWidth] = useState(20), [zoom, setZoom] = useState(1);
   const [panel, setPanel] = useState<Panel>(null), [layerRail, setLayerRail] = useState(false);
@@ -118,10 +117,10 @@ export function Painter({ slot, slotCount, canon, onSave, onClose, onNavigate, o
       <View style={{ minHeight: 54, paddingHorizontal: 8, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: C.line }}>
         <Pressable accessibilityRole="button" accessibilityLabel="홈" disabled={busy} onPress={() => save('close')} style={{ width: 48, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 23, color: C.ink }}>‹</Text></Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="이전 칸" disabled={busy || slot.number <= 1} onPress={() => save(slot.number - 1)} style={{ width: 38, height: 44, alignItems: 'center', justifyContent: 'center', opacity: slot.number <= 1 ? .25 : 1 }}><Text style={{ fontSize: 20 }}>‹</Text></Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="현재 칸 브리프" onPress={() => setPanel('brief')} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 44 }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 44 }}>
           <Text style={{ fontSize: 10, color: C.muted, fontWeight: '700' }}>이모티콘 세트</Text>
-          <Text numberOfLines={1} style={{ fontSize: 16, color: C.ink, fontWeight: '900' }}>{String(slot.number).padStart(2, '0')} / {slotCount} · {dialogue.trim() || '무대사'}</Text>
-        </Pressable>
+          <Text accessibilityLabel="현재 칸" style={{ fontSize: 17, color: C.ink, fontWeight: '900' }}>{String(slot.number).padStart(2, '0')} / {slotCount}</Text>
+        </View>
         <Pressable accessibilityRole="button" accessibilityLabel="다음 칸" disabled={busy || slot.number >= slotCount} onPress={() => save(slot.number + 1)} style={{ width: 38, height: 44, alignItems: 'center', justifyContent: 'center', opacity: slot.number >= slotCount ? .25 : 1 }}><Text style={{ fontSize: 20 }}>›</Text></Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="레이어" onPress={() => { setLayerRail(!layerRail); setPanel(null); }} style={{ width: 48, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 19, fontWeight: '900' }}>▱</Text></Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="더보기" onPress={() => { setPanel(panel === 'more' ? null : 'more'); setLayerRail(false); }} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 22 }}>⋯</Text></Pressable>
@@ -139,8 +138,8 @@ export function Painter({ slot, slotCount, canon, onSave, onClose, onNavigate, o
             if (m.type === 'save' && inFlight.current) {
               try {
                 const action = nextAction.current;
-                if (m.dirty !== false || dialogue !== slot.dialogue || action === 'stay' || action === 'share') {
-                  const result = onSave(m, dialogue); setQA(result); setSaved(true);
+                if (m.dirty !== false || action === 'stay' || action === 'share') {
+                  const result = onSave(m, slot.dialogue); setQA(result); setSaved(true);
                 }
                 send({ type: 'saved' }); unlock();
                 if (action === 'close') onClose(); else if (typeof action === 'number') onNavigate(action); else if (action === 'share') onShare().catch(e => Alert.alert('공유 실패', String(e)));
@@ -168,12 +167,6 @@ export function Painter({ slot, slotCount, canon, onSave, onClose, onNavigate, o
               </View>;
             })}
           </ScrollView>
-        </View>}
-
-        {panel === 'brief' && <View style={{ position: 'absolute', left: 12, right: 12, top: 10, padding: 14, backgroundColor: C.paper, borderRadius: 18, borderWidth: 1, borderColor: C.line, elevation: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}><Text style={{ flex: 1, fontSize: 13, fontWeight: '900' }}>{String(slot.number).padStart(2, '0')}번 칸 작업 브리프</Text><Pressable onPress={() => setPanel(null)} style={{ padding: 6 }}><Text>×</Text></Pressable></View>
-          <TextInput accessibilityLabel="현재 칸 대사" value={dialogue} onChangeText={s => { setDialogue(s); setSaved(false); }} placeholder="무대사면 비워두기" placeholderTextColor="#8C877F" style={[styles.input, { backgroundColor: '#FFF', borderColor: C.line }]} />
-          <Text style={{ marginTop: 8, fontSize: 11, color: C.muted }}>세트 기획에서 정한 대사를 빠르게 수정하는 곳입니다.</Text>
         </View>}
 
         {panel === 'color' && <View style={{ position: 'absolute', left: 12, right: 12, bottom: 10, padding: 13, borderRadius: 18, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, elevation: 8 }}>
