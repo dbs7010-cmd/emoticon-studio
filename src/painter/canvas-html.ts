@@ -2,13 +2,14 @@ import { KAKAO_STATIC_SPEC as SPEC } from '../constants/kakao-spec';
 
 // This document is bundled locally inside native WebView. No remote scripts or services.
 export const canvasHtml = `<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>
-*{box-sizing:border-box}body{margin:0;background:#eeeae3;font-family:system-ui}#viewport{height:100vh;overflow:auto;touch-action:pan-x pan-y}#surface{position:relative;background-color:white;background-image:conic-gradient(#eee 25%,transparent 0 50%,#eee 0 75%,transparent 0);background-size:20px 20px;margin:auto}canvas,img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}canvas{touch-action:none}img{pointer-events:none}#hint{position:fixed;bottom:6px;left:6px;background:#fff9;font-size:11px;pointer-events:none}
+*{box-sizing:border-box}body{margin:0;background:#eeeae3;font-family:system-ui;overflow:hidden}#viewport{height:100vh;overflow:auto;touch-action:none;overscroll-behavior:none}#surface{position:relative;background-color:white;background-image:conic-gradient(#eee 25%,transparent 0 50%,#eee 0 75%,transparent 0);background-size:20px 20px;margin:auto}canvas,img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}canvas{touch-action:none}img{pointer-events:none}#hint{position:fixed;bottom:6px;left:6px;background:#fff9;font-size:11px;pointer-events:none}
 </style></head><body><div id="viewport"><div id="surface"><canvas id="drawing" width="${SPEC.width}" height="${SPEC.height}"></canvas></div></div><div id="hint">체크 무늬 = 투명 영역</div><script>
 
 (function(){
-const canvas=document.getElementById('drawing'),surface=document.getElementById('surface'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+const canvas=document.getElementById('drawing'),surface=document.getElementById('surface'),viewport=document.getElementById('viewport'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 const W=canvas.width,H=canvas.height;
 let tool='pen',brush='pen',color='#242424',penWidth=5,eraserWidth=20,zoom=1,active=false,last=null,pointer=null,history=[],future=[],dirty=false,loading=false,saving=false,layers=[],references=[],activeLayerId='draw-1';
+const touches=new Map();let gesture=null,suppressDraw=false;
 function send(m){window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify(m));}
 function bitmap(){const c=document.createElement('canvas');c.width=W;c.height=H;return c;}
 function meta(l){return {id:l.id,name:l.name,visible:l.visible,opacity:l.opacity,x:l.x,y:l.y,scale:l.scale,rotation:l.rotation};}
@@ -24,16 +25,46 @@ function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeig
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
 function style(g){g.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';g.globalAlpha=tool==='eraser'?1:brush==='marker'?0.25:brush==='pencil'?0.65:1;g.lineWidth=tool==='eraser'?eraserWidth:penWidth;g.strokeStyle=color;g.fillStyle=color;g.lineCap=brush==='marker'&&tool!=='eraser'?'square':'round';g.lineJoin='round';}
+function touchPoint(e){return {x:e.clientX,y:e.clientY};}
+function pair(){return [...touches.values()].slice(0,2);}
+function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function middle(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
+function startGesture(){const [a,b]=pair();if(!a||!b)return;gesture={distance:Math.max(1,distance(a,b)),zoom,mid:middle(a,b),scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop};suppressDraw=true;}
+function cancelStrokeForGesture(){
+  if(!active)return;
+  active=false;pointer=null;
+  if(history.length){const previous=history.pop();restore(previous);future=[];dirty=true;}
+}
 canvas.addEventListener('pointerdown',e=>{
-if(loading||saving||active||tool==='pan')return;const l=selected();if(!l||!l.visible)return;
+if(loading||saving)return;
+if(e.pointerType==='touch'){
+  touches.set(e.pointerId,touchPoint(e));
+  if(touches.size>=2){e.preventDefault();cancelStrokeForGesture();startGesture();return;}
+  if(suppressDraw)return;
+}
+if(active||tool==='pan')return;const l=selected();if(!l||!l.visible)return;
 if(tool!=='move'&&!layers.includes(l)){send({type:'hint',message:'그릴 레이어를 선택하세요.'});return;}
 e.preventDefault();canvas.setPointerCapture(e.pointerId);pointer=e.pointerId;checkpoint();active=true;last=point(e);
 if(tool!=='move'){const p=local(last,l),g=l.bitmap.getContext('2d');style(g);g.beginPath();g.arc(p.x,p.y,g.lineWidth/2,0,Math.PI*2);g.fill();}render();state();
 });
-canvas.addEventListener('pointermove',e=>{if(!active||e.pointerId!==pointer)return;e.preventDefault();const l=selected(),p=point(e);
+canvas.addEventListener('pointermove',e=>{
+if(e.pointerType==='touch'&&touches.has(e.pointerId))touches.set(e.pointerId,touchPoint(e));
+if(gesture&&touches.size>=2){
+  e.preventDefault();const [a,b]=pair(),mid=middle(a,b),ratio=distance(a,b)/gesture.distance,next=Math.max(1,Math.min(4,gesture.zoom*ratio));
+  zoom=next;size();
+  const scaleRatio=next/gesture.zoom;
+  viewport.scrollLeft=(gesture.scrollLeft+gesture.mid.x)*scaleRatio-mid.x;
+  viewport.scrollTop=(gesture.scrollTop+gesture.mid.y)*scaleRatio-mid.y;
+  send({type:'zoom',zoom});return;
+}
+if(!active||e.pointerId!==pointer)return;e.preventDefault();const l=selected(),p=point(e);
 if(tool==='move'){l.x+=p.x-last.x;l.y+=p.y-last.y;}else{const a=local(last,l),b=local(p,l),g=l.bitmap.getContext('2d');style(g);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();}last=p;render();
 });
-function end(e){if(e.pointerId!==pointer)return;active=false;pointer=null;state();}
+function end(e){
+if(e.pointerType==='touch'&&touches.has(e.pointerId))touches.delete(e.pointerId);
+if(gesture){if(touches.size<2)gesture=null;if(touches.size===0)suppressDraw=false;return;}
+if(e.pointerId!==pointer)return;active=false;pointer=null;state();
+}
 canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('이미지를 열 수 없습니다.'));i.src=src;});}
 async function loadLayer(l,ref=false){const b=bitmap();if(l.data){const i=await image(l.data),scale=Math.min(W/i.width,H/i.height),w=i.width*scale,h=i.height*scale;b.getContext('2d').drawImage(i,(W-w)/2,(H-h)/2,w,h);}return {...defaults(l.id,l.name),...l,bitmap:b,data:undefined};}
@@ -52,14 +83,22 @@ layers=nextLayers;references=nextRefs;activeLayerId=m.activeLayerId||'draw-1';
 if(!selected())activeLayerId=layers[0].id;
 history=[];future=[];dirty=false;loading=false;render();state();send({type:'initialized'});
 }
-if(m.type==='tool'){tool=m.tool;canvas.style.pointerEvents=tool==='pan'?'none':'auto';}
+if(m.type==='tool'){tool=m.tool;}
 if(m.type==='brush')brush=m.brush;
 if(m.type==='color')color=m.color;
 if(m.type==='width'){if(m.tool==='eraser')eraserWidth=m.width;else penWidth=m.width;}
-if(m.type==='zoom'){zoom=m.zoom;size();}
+if(m.type==='zoom'){zoom=Math.max(1,Math.min(4,m.zoom));size();send({type:'zoom',zoom});}
 if(m.type==='select'){if([...layers,...references].some(l=>l.id===m.id)){activeLayerId=m.id;dirty=true;state();}}
 if(m.type==='transform'){const l=selected();if(l){checkpoint();for(const k of ['x','y','rotation'])if(Number.isFinite(m[k]))l[k]=m[k];if(Number.isFinite(m.scale))l.scale=Math.max(.1,Math.min(4,m.scale));if(Number.isFinite(m.opacity))l.opacity=Math.max(0,Math.min(1,m.opacity));if(typeof m.visible==='boolean')l.visible=m.visible;render();state();}}
 if(m.type==='addReferences'){const added=await Promise.all(m.references.map(l=>loadLayer(l,true)));checkpoint();references.push(...added);render();state();}
+if(m.type==='soloReference'){
+  const target=references.find(l=>l.id===m.id);
+  if(target){checkpoint();const onlyTarget=target.visible&&references.every(l=>l.id===target.id||!l.visible);references.forEach(l=>{l.visible=onlyTarget?false:l.id===target.id;});render();state();}
+}
+if(m.type==='removeReference'){
+  const index=references.findIndex(l=>l.id===m.id);
+  if(index>=0){checkpoint();const removed=references[index];references.splice(index,1);if(activeLayerId===removed.id)activeLayerId=layers[0]?.id||'';render();state();}
+}
 if(m.type==='reference'){let l=references.find(l=>l.id==='legacy-ref');if(!l){l=await loadLayer({...defaults('legacy-ref','Reference'),data:m.data,path:'legacy'},true);references.push(l);}l.visible=m.visible;l.opacity=m.opacity;render();}
 if(m.type==='undo'&&history.length){future.push(snapshot());dirty=true;restore(history.pop());}
 if(m.type==='redo'&&future.length){history.push(snapshot());dirty=true;restore(future.pop());}
