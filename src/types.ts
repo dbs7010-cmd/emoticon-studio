@@ -7,7 +7,8 @@ export type WorkLayer = LayerTransform & { image?: LocalImage };
 export type PainterWork = { version: 1; activeLayerId: string; layers: WorkLayer[]; references: WorkLayer[] };
 export type PainterExport = { data: string; metrics: Metrics; layers: (LayerTransform & { data: string })[]; references: (LayerTransform & { path: string })[]; activeLayerId: string };
 export type Check = { label: string; status: Verdict; detail: string };
-export type QA = { status: Verdict; checkedAt: string; checks: Check[]; consistency: Check[] };
+// notes carry what we could not verify. They never affect status.
+export type QA = { status: Verdict; checkedAt: string; checks: Check[]; consistency: Check[]; notes?: string[] };
 export type Slot = {
   number: number; dialogue: string; emotion: string; situation: string;
   expressionGuide: string; poseGuide: string; compositionGuide: string;

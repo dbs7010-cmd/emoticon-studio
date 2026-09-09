@@ -31,8 +31,8 @@ function Studio() {
   const [issues, setIssues] = useState<QA | null>(null);
   const [screen, setScreen] = useState<'board' | 'planning' | 'preview'>('board'), [openSlot, setOpenSlot] = useState<number | null>(null);
   const { width: screenWidth } = useWindowDimensions();
-  const tileWidth = (screenWidth - 28 - 24) / 4;
-  const projectCardWidth = (screenWidth - 40) / 2;
+  const tileWidth = (screenWidth - T.gap.lg * 2 - T.gap.sm * 3) / 4;
+  const projectCardWidth = (screenWidth - T.gap.lg * 2 - T.gap.md) / 2;
   const analyzer = useRef<Analyzer>(null);
   function load() { try { const result = loadStore(); current.current = result.store; setStore(result.store); setLoadError(''); if (result.recovered) setNotice('이전 저장 사본을 복구했습니다.'); } catch (e) { setLoadError(String(e)); } }
   useEffect(load, []);
@@ -73,7 +73,7 @@ function Studio() {
     if (!project || !slot) return;
     let qa: QA;
     try { qa = inspectImage(finalImage, project.canon.image); }
-    catch { qa = { status: 'WARNING', checkedAt: new Date().toISOString(), checks: [{ label: '자동 검사', status: 'WARNING', detail: '검사를 마치지 못했습니다. 상세에서 다시 검사하세요.' }], consistency: [] }; }
+    catch { qa = { status: 'WARNING', checkedAt: new Date().toISOString(), checks: [{ label: '자동 검사', status: 'WARNING', detail: '검사를 마치지 못했어요. 상세에서 다시 검사해 주세요.' }], consistency: [], notes: [] }; }
     changeProject(project.id, p => ({ ...p, lastSlot: slot.number, slots: p.slots.map(s => s.number === slot.number ? { ...s, finalImage, work, dialogue: dialogue ?? s.dialogue, qa, status: qa.status } : s) }));
     if (goHome) { setPainting(false); setSlotNumber(null); setDetail(false); }
     if (!painting && qa.status !== 'PASS') setIssues(qa);
@@ -81,7 +81,6 @@ function Studio() {
   }
   function openPainter() {
     if (!slot) return;
-    if (slot.finalImage && (slot.finalImage.width !== SPEC.width || slot.finalImage.height !== SPEC.height)) { Alert.alert('크기 불일치', `FINAL을 ${SPEC.width}×${SPEC.height}로 수정해 다시 가져오세요.`); return; }
     setPainting(true);
   }
   function createNewProject() {
@@ -110,7 +109,7 @@ function Studio() {
     ...project.slots.filter(s => s.finalImage && (s.finalImage.width !== SPEC.width || s.finalImage.height !== SPEC.height))
       .map(s => ({ label: `${String(s.number).padStart(2, '0')}번 크기`, status: 'FAIL' as const, detail: `${SPEC.width}×${SPEC.height}가 아니에요.` })),
     ...project.slots.filter(s => s.finalImage && s.finalImage.metrics && !s.finalImage.metrics.transparent)
-      .map(s => ({ label: `${String(s.number).padStart(2, '0')}번 배경`, status: 'WARNING' as const, detail: '투명 배경이 아닐 수 있어요.' })),
+      .map(s => ({ label: `${String(s.number).padStart(2, '0')}번 배경`, status: 'FAIL' as const, detail: '배경이 투명하지 않아요.' })),
     ...duplicates(project.slots).map(group => ({ label: '겹친 대사', status: 'WARNING' as const, detail: `${group.map(n => String(n).padStart(2, '0')).join(', ')}번이 같아요.` })),
     ...project.slots.filter(s => s.qa?.status === 'FAIL').map(s => ({ label: `${String(s.number).padStart(2, '0')}번 검사`, status: 'FAIL' as const, detail: '자동 검사에서 문제가 나왔어요.' })),
   ];
@@ -162,14 +161,14 @@ function Studio() {
           <Field label="캐릭터 이름" value={project.characterName} onChangeText={characterName => updateProject(p => ({ ...p, characterName }))} multiline={false} />
           {([['personality', '성격'], ['speech', '말투'], ['locked', '꼭 유지할 특징'], ['variable', '바꿔도 되는 특징']] as const).map(([key, label]) => <Field key={key} label={label} value={project.canon[key]} onChangeText={value => updateProject(p => ({ ...p, canon: { ...p.canon, [key]: value } }))} />)}
         </> : screen === 'planning' ? <>
-          <View><Text style={styles.title}>세트 기획</Text><Text style={[styles.muted, { marginTop: 4 }]}>먼저 32칸을 정해두면 그릴 때 고민하지 않아도 돼요.</Text></View>
-          {planningIssues(project).map(issue => <View key={issue} style={{ padding: T.gap.md, borderRadius: T.radius.sm, backgroundColor: '#FFF6D8' }}><Text style={{ fontSize: 12, color: '#6F6243' }}>{issue}</Text></View>)}
+          {!!planningIssues(project).length && <View style={{ padding: T.gap.md, borderRadius: T.radius.sm, backgroundColor: '#FFF6D8', gap: 2 }}>{planningIssues(project).map(issue => <Text key={issue} style={{ fontSize: 12, lineHeight: 18, color: '#6F6243' }}>{issue}</Text>)}</View>}
+          <View style={{ borderRadius: T.radius.md, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
           {project.slots.map(s => {
             const open = openSlot === s.number;
             const summary = s.noDialogue ? '무대사' : s.dialogue.trim() || '아직 비어 있어요';
-            return <View key={s.number} style={{ borderRadius: T.radius.md, backgroundColor: C.paper, borderWidth: 1, borderColor: open ? C.coral : C.line, overflow: 'hidden' }}>
+            return <View key={s.number} style={{ borderTopWidth: s.number === 1 ? 0 : 1, borderColor: C.line, backgroundColor: open ? '#FFF6F2' : 'transparent' }}>
               <Pressable accessibilityRole="button" accessibilityLabel={`${String(s.number).padStart(2, '0')}번 칸 기획`} accessibilityState={{ expanded: open }} onPress={() => setOpenSlot(open ? null : s.number)} style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, gap: 10 }}>
-                <Text style={{ fontSize: 13, fontWeight: '900', color: C.muted, width: 24 }}>{String(s.number).padStart(2, '0')}</Text>
+                <Text style={{ fontSize: 13, fontWeight: '900', color: open ? C.coral : C.muted, width: 24 }}>{String(s.number).padStart(2, '0')}</Text>
                 <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '800', color: s.dialogue.trim() || s.noDialogue ? C.ink : '#A9A299' }}>{summary}</Text>
                 {!!s.emotion.trim() && <Text style={{ fontSize: 11, color: C.muted }}>{s.emotion}</Text>}
               </Pressable>
@@ -192,17 +191,19 @@ function Studio() {
               </View>}
             </View>;
           })}
+          </View>
         </> : screen === 'preview' ? <>
-          <View><Text style={styles.title}>전체 보기</Text><Text style={[styles.muted, { marginTop: 4 }]}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성 · 제출 전에 한 번에 확인해요.</Text></View>
+          <Text style={styles.muted}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성 · 세트 전체 균형을 한눈에 봐요.</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{project.slots.map(s => <Pressable key={s.number} testID={`preview-${s.number}`} accessibilityRole="button" accessibilityLabel={`${String(s.number).padStart(2, '0')}번 ${s.finalImage ? '완성' : '비어 있음'}`} onPress={() => { setScreen('board'); setSlotNumber(s.number); setDetail(false); setPainting(true); }} style={{ width: tileWidth, gap: 3 }}>
             <View style={{ width: tileWidth, aspectRatio: 1, borderRadius: T.radius.md, backgroundColor: s.finalImage ? C.paper : '#F0ECE5', borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {s.finalImage ? <Image source={{ uri: imageUri(s.finalImage.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ fontSize: 15, color: '#AAA39A', fontWeight: '700' }}>{String(s.number).padStart(2, '0')}</Text>}
+              {s.finalImage ? <Image source={{ uri: imageUri(s.finalImage.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : null}
             </View>
-            <Text numberOfLines={1} style={{ fontSize: 9, color: C.muted }}>{s.noDialogue ? '무대사' : s.dialogue.trim() || ' '}</Text>
+            <Text numberOfLines={1} style={{ fontSize: 10, color: C.muted }}><Text style={{ fontWeight: '900', color: s.finalImage ? C.ink : '#AAA39A' }}>{String(s.number).padStart(2, '0')}</Text>{s.noDialogue ? ' 무대사' : s.dialogue.trim() ? ' ' + s.dialogue.trim() : ''}</Text>
           </Pressable>)}</View>
           <View style={styles.card}>
             <Text style={styles.subtitle}>제출 전 검사</Text>
-            {setChecks.length ? setChecks.map(c => <Text key={c.label} style={{ fontSize: 12, color: colors[c.status] }}>{c.status} · {c.label}: {c.detail}</Text>) : <Text style={styles.muted}>지금까지는 문제가 보이지 않아요.</Text>}
+            {setChecks.length ? setChecks.map(c => <Text key={c.label} style={{ fontSize: 13, lineHeight: 19, color: c.status === 'FAIL' ? colors.FAIL : C.ink }}>{c.label} · {c.detail}</Text>) : <Text style={styles.muted}>지금까지는 문제가 보이지 않아요.</Text>}
+            <Text style={{ fontSize: 11, color: C.muted }}>{SPEC.note}</Text>
             <Text style={{ fontSize: 11, color: C.muted }}>사전 확인일 뿐 플랫폼 승인을 보장하지 않아요.</Text>
           </View>
           <Action primary title="제출용 PNG 세트 내보내기" disabled={!!busy || !project.slots.some(s => s.finalImage)} onPress={exportProject} />
@@ -227,7 +228,7 @@ function Studio() {
         </> : <>
           <View style={{ padding: T.gap.lg, borderRadius: T.radius.lg, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, flexDirection: 'row', alignItems: 'center', gap: T.gap.md }}>
             <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 설정" onPress={() => setCanonOpen(true)} style={{ width: 66, height: 66, borderRadius: T.radius.md, backgroundColor: C.peach, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>{project.canon.image ? <Image source={{ uri: imageUri(project.canon.image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ fontSize: 11, fontWeight: '800' }}>원캐릭터</Text>}</Pressable>
-            <View style={{ flex: 1, gap: 5 }}><Text style={{ fontSize: 18, fontWeight: '900', color: C.ink }}>{project.projectName}</Text><Text style={{ fontSize: 11, color: C.muted }}>그림을 저장하면 바로 다음 칸으로 이어집니다.</Text><View style={{ height: 7, borderRadius: 4, backgroundColor: '#EEE8DF', overflow: 'hidden' }}><View style={{ width: `${Math.max(2, project.slots.filter(s => s.finalImage).length / SPEC.count * 100)}%`, height: '100%', backgroundColor: C.coral }} /></View><Text style={{ fontSize: 10, color: C.muted }}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text></View>
+            <View style={{ flex: 1, gap: 6 }}><Text style={{ fontSize: 15, fontWeight: '900', color: C.ink }}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text><View style={{ height: 7, borderRadius: 4, backgroundColor: '#EEE8DF', overflow: 'hidden' }}><View style={{ width: `${Math.max(2, project.slots.filter(s => s.finalImage).length / SPEC.count * 100)}%`, height: '100%', backgroundColor: C.coral }} /></View><Text style={{ fontSize: 11, color: C.muted }}>칸을 누르면 바로 그리기로 넘어가요.</Text></View>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Pressable accessibilityRole="button" accessibilityLabel="세트 기획" onPress={() => { setScreen('planning'); setOpenSlot(null); }} style={{ flex: 1, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '900', color: C.ink }}>세트 기획</Text></Pressable>
@@ -235,7 +236,7 @@ function Studio() {
           </View>
           <View testID="slot-grid" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{project.slots.map(s => <Pressable key={s.number} testID={`slot-${s.number}`} accessibilityRole="button" accessibilityLabel={`슬롯 ${s.number} ${s.dialogue} ${s.status}`} onPress={() => { setSlotNumber(s.number); setDetail(false); setPainting(true); }} style={{ width: tileWidth, aspectRatio: 1, borderRadius: T.radius.md, backgroundColor: C.paper, borderWidth: project.lastSlot === s.number ? 2 : 1, borderColor: project.lastSlot === s.number ? C.coral : s.finalImage ? '#D9D1C6' : C.line, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             {s.finalImage ? <Image source={{ uri: imageUri(s.finalImage.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ fontSize: 17, color: '#AAA39A', fontWeight: '700' }}>{String(s.number).padStart(2, '0')}</Text>}
-            <View style={{ position: 'absolute', right: 6, bottom: 6, width: 7, height: 7, borderRadius: 4, backgroundColor: colors[s.status] }} />
+            {(s.status === 'FAIL' || s.status === 'WARNING') && <View style={{ position: 'absolute', right: 5, bottom: 5, width: 9, height: 9, borderRadius: 5, borderWidth: 1.5, borderColor: '#FFF', backgroundColor: colors[s.status] }} />}
           </Pressable>)}</View>
         </>}
       </ScrollView>
@@ -268,7 +269,10 @@ function Studio() {
       {dupes.map(group => <Text key={group.join(',')}>중복 대사 · {group.join(', ')}</Text>)}
       {project.slots.filter(s => s.qa?.status !== 'PASS').map(s => <Pressable key={s.number} accessibilityRole="button" onPress={() => { setSetQA(false); setCanonOpen(false); setSlotNumber(s.number); setDetail(false); if (s.qa) setIssues(s.qa); }} style={{ paddingVertical: 8 }}><Text style={{ color: colors[s.qa?.status ?? 'EMPTY'] }}>{String(s.number).padStart(2, '0')} · {s.finalImage ? s.qa?.status ?? '미검사' : '그림 없음'}</Text></Pressable>)}
     </Dialog>}
-    {issues && <Dialog title="검수 결과" onClose={() => setIssues(null)}>{issues.status === 'PASS' ? <Text>문제 없음</Text> : <><Checks checks={[...issues.checks, ...issues.consistency]} /><Text style={{ fontSize: 12, color: C.muted }}>V1 참고 판정</Text></>}</Dialog>}
+    {issues && <Dialog title="검수 결과" onClose={() => setIssues(null)}>
+      {issues.status === 'PASS' ? <Text style={{ fontSize: 15, fontWeight: '800', color: colors.PASS }}>기본 검사는 모두 통과했어요.</Text> : <Checks checks={[...issues.checks, ...issues.consistency]} />}
+      {(issues.notes ?? []).map(note => <Text key={note} style={{ fontSize: 11, color: C.muted }}>{note}</Text>)}
+    </Dialog>}
     {painting && project && slot && <Painter key={project.id + '/' + slot.number} slot={slot} slotCount={project.slots.length} canon={project.canon.image} palette={store?.palette ?? []} onColorUsed={rememberColor}
       onClose={() => { setPainting(false); setSlotNumber(null); setDetail(false); }}
       onNavigate={number => { setSlotNumber(number); setDetail(false); }}

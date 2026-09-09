@@ -127,7 +127,7 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
   return <Modal onRequestClose={() => save('close')} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={{ minHeight: 52, paddingHorizontal: 2, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: C.line }}>
-        <Bar label="홈" glyph="‹" disabled={busy} onPress={() => save('close')} />
+        <Bar label="홈" glyph="홈" text disabled={busy} onPress={() => save('close')} />
         <Bar label="이전 칸" glyph="‹" small disabled={busy || slot.number <= 1} onPress={() => save(slot.number - 1)} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: C.tap }}>
           <Text style={{ fontSize: 10, color: C.muted, fontWeight: '700' }}>이모티콘 세트</Text>
@@ -164,17 +164,17 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
         {initialized && !scene.undo && !scene.dirty && <View pointerEvents="none" style={{ position: 'absolute', alignSelf: 'center', top: 12, backgroundColor: '#FFF9D8EE', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}><Text style={{ fontSize: 10, color: '#6F6243', fontWeight: '800' }}>두 손가락 탭 되돌리기 · 세 손가락 탭 다시</Text></View>}
         {!!selectedReference?.visible && <View pointerEvents="none" style={{ position: 'absolute', right: 10, bottom: 10, backgroundColor: '#E8F0FCEE', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 5 }}><Text style={{ fontSize: 10, color: '#3F6491', fontWeight: '800' }}>두 손가락으로 참고 옮기기 · 크기</Text></View>}
 
-        {drawRail && <View style={{ position: 'absolute', right: 8, top: 8, width: 128, maxHeight: '78%', padding: 6, borderRadius: C.radius.lg, backgroundColor: '#FFFDF9F5', borderWidth: 1, borderColor: C.line, elevation: 8 }}>
-          <Text style={{ fontSize: 11, fontWeight: '900', color: C.ink, paddingHorizontal: 4, paddingBottom: 4 }}>내 그림</Text>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+        {drawRail && <View style={{ position: 'absolute', right: 8, top: 8, width: 118, maxHeight: '70%', borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 8, overflow: 'hidden' }}>
+          <Text style={{ fontSize: 10, fontWeight: '900', color: C.muted, paddingHorizontal: 10, paddingTop: 8, paddingBottom: 4 }}>내 그림</Text>
+          <ScrollView showsVerticalScrollIndicator={false}>
             {scene.layers.map((layer, index) => {
               const active = layer.id === scene.activeLayerId;
-              return <View key={layer.id} style={{ flexDirection: 'row', alignItems: 'center', borderRadius: C.radius.sm, paddingLeft: 8, backgroundColor: active ? C.peach : '#FFF', borderWidth: 1, borderColor: active ? '#F0A98F' : C.line }}>
-                <Pressable accessibilityRole="button" accessibilityLabel={`그림 ${index + 1} 선택`} accessibilityState={{ selected: active }} onPress={() => send({ type: 'select', id: layer.id })} style={{ flex: 1, minHeight: C.tap, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '900', color: C.ink }}>그림 {index + 1}</Text></Pressable>
+              return <View key={layer.id} style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderColor: C.line, backgroundColor: active ? C.peach : 'transparent' }}>
+                <Pressable accessibilityRole="button" accessibilityLabel={`그림 ${index + 1} 선택`} accessibilityState={{ selected: active }} onPress={() => send({ type: 'select', id: layer.id })} style={{ flex: 1, minHeight: C.tap, justifyContent: 'center', paddingLeft: 10 }}><Text style={{ fontSize: 12, fontWeight: active ? '900' : '700', color: C.ink }}>그림 {index + 1}</Text></Pressable>
                 <EyeToggle label={`그림 ${index + 1} ${layer.visible ? '숨기기' : '보이기'}`} on={layer.visible} onPress={() => changeTransform(layer.id, { visible: !layer.visible })} />
               </View>;
             })}
-            {scene.layers.length < 4 && <Pressable accessibilityRole="button" accessibilityLabel="그림 추가" onPress={addDrawing} style={{ minHeight: 42, borderRadius: C.radius.sm, borderWidth: 1, borderStyle: 'dashed', borderColor: '#BDB5AA', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 11, fontWeight: '800', color: C.muted }}>＋ 그림 추가</Text></Pressable>}
+            {scene.layers.length < 4 && <Pressable accessibilityRole="button" accessibilityLabel="그림 추가" onPress={addDrawing} style={{ minHeight: C.tap, borderTopWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.muted }}>＋ 그림 추가</Text></Pressable>}
           </ScrollView>
         </View>}
 
@@ -187,7 +187,7 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, borderTopWidth: 1, borderColor: C.line, paddingTop: 8 }}>
             <Text style={{ fontSize: 10, fontWeight: '900', color: C.muted, marginRight: 2 }}>펜 종류</Text>
             {([['pen', '기본'], ['pencil', '연필'], ['marker', '마커']] as const).map(([key, title]) =>
-              <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: brush === key }} onPress={() => selectBrush(key)} style={{ minHeight: 40, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center', borderRadius: C.radius.sm, borderWidth: 1, borderColor: brush === key ? '#E4B7A6' : C.line, backgroundColor: brush === key ? C.peach : '#FFF' }}><Text style={{ fontSize: 12, fontWeight: brush === key ? '900' : '700', color: C.ink }}>{title}</Text></Pressable>)}
+              <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: brush === key }} onPress={() => selectBrush(key)} style={{ minHeight: 44, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: C.radius.sm, borderWidth: 1, borderColor: brush === key ? '#E4B7A6' : C.line, backgroundColor: brush === key ? C.peach : '#FFF' }}><Text style={{ fontSize: 12, fontWeight: brush === key ? '900' : '700', color: C.ink }}>{title}</Text></Pressable>)}
             <Pressable accessibilityRole="button" accessibilityLabel="색 닫기" onPress={() => setPanel(null)} style={{ marginLeft: 'auto', width: C.tap, height: 40, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 18, color: C.muted }}>×</Text></Pressable>
           </View>
         </View>}
@@ -200,17 +200,17 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
 
         {panel === 'more' && <View style={{ position: 'absolute', right: 8, top: 8, width: 190, padding: 6, borderRadius: C.radius.md, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, elevation: 8 }}>
           {canon && <MenuButton title="원캐릭터 보기" onPress={() => { setShowCanon(true); setPanel(null); }} />}
-          <MenuButton title={`캔버스 ${zoom.toFixed(1)}×`} onPress={() => { const n = zoom >= 3 ? 1 : zoom + 1; setZoom(n); send({ type: 'zoom', zoom: n }); setPanel(null); }} />
-          <MenuButton title="이 그림 전부 지우기" onPress={() => { setPanel(null); Alert.alert('이 그림 전부 지우기', '두 손가락 탭으로 되돌릴 수 있습니다.', [{ text: '취소' }, { text: '지우기', onPress: () => send({ type: 'clear' }) }]); }} />
+          <MenuButton title={`크게 보기 (지금 ${zoom.toFixed(1)}×)`} onPress={() => { const n = zoom >= 3 ? 1 : zoom + 1; setZoom(n); send({ type: 'zoom', zoom: n }); setPanel(null); }} />
           <MenuButton title="PNG 공유" onPress={() => { setPanel(null); save('share'); }} />
           <MenuButton title="제출 전 검사" onPress={() => { setPanel(null); setShowQA(true); }} />
+          <MenuButton danger title="이 그림 전부 지우기" onPress={() => { setPanel(null); Alert.alert('이 그림 전부 지우기', '지금 고른 그림이 비워져요. 두 손가락 탭으로 되돌릴 수 있어요.', [{ text: '취소', style: 'cancel' }, { text: '지우기', style: 'destructive', onPress: () => send({ type: 'clear' }) }]); }} />
         </View>}
       </View>
 
       <View style={dock} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 8 }}>
           <Text style={{ width: 46, fontSize: 10, fontWeight: '900', color: C.ink }}>따라 그릴{'\n'}참고</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', gap: 8, paddingHorizontal: 8, paddingVertical: 6 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', gap: 8, paddingHorizontal: 8, paddingVertical: 4 }}>
             <Pressable accessibilityRole="button" accessibilityLabel="참고 추가" onPress={() => void addReferences()} style={{ width: 52, height: 52, borderRadius: C.radius.sm, borderWidth: 1, borderStyle: 'dashed', borderColor: '#BDB5AA', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF' }}><Text style={{ fontSize: 22, color: C.muted }}>＋</Text></Pressable>
             {scene.references.map((ref, index) => {
               const image = slot.referenceImages.find(i => i.path === ref.path), active = ref.id === scene.activeReferenceId;
@@ -224,7 +224,7 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
         {!!selectedReference && <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingBottom: 4, gap: 4 }}>
           <EyeToggle label={`참고 ${selectedReference.visible ? '숨기기' : '보이기'}`} on={selectedReference.visible} onPress={() => send({ type: 'toggleReference', id: selectedReference.id })} />
           <Text style={{ fontSize: 10, fontWeight: '800', color: C.muted }}>연하게</Text>
-          <View accessibilityLabel="참고 진하기" testID="참고 진하기" style={{ flex: 1 }}><Host matchContents><Slider value={selectedReference.opacity} min={.1} max={1} step={.05} onValueChange={opacity => changeTransform(selectedReference.id, { opacity })} /></Host></View>
+          <View testID="참고 진하기" style={{ flex: 1, height: 40, justifyContent: 'center' }}><Host style={{ width: '100%', height: 36 }}><Slider value={selectedReference.opacity} min={.1} max={1} step={.05} onValueChange={opacity => changeTransform(selectedReference.id, { opacity })} /></Host></View>
           <Text style={{ fontSize: 10, fontWeight: '800', color: C.muted }}>진하게</Text>
           <Pressable accessibilityRole="button" accessibilityLabel="참고 관리" onPress={() => setPanel(panel === 'reference' ? null : 'reference')} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, color: C.muted }}>⋯</Text></Pressable>
         </View>}
@@ -237,27 +237,35 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
           <Pressable accessibilityRole="button" accessibilityLabel="색 선택" onPress={() => { setPanel(panel === 'color' ? null : 'color'); setDrawRail(false); }} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: '#F2EEE7' }}><View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: color, borderWidth: 1, borderColor: '#8D867C' }} /></Pressable>
         </View>
 
-        {tool !== 'fill' && <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, gap: 8, minHeight: C.tap }}>
-          <Text style={{ width: 58, fontSize: 10, fontWeight: '900', color: C.ink }}>{tool === 'eraser' ? '지우개 크기' : '펜 굵기'}</Text>
-          <View style={{ width: 26, alignItems: 'center' }}><View style={{ width: Math.max(4, Math.min(24, width)), height: Math.max(4, Math.min(24, width)), borderRadius: 12, backgroundColor: tool === 'eraser' ? '#C7C0B5' : color }} /></View>
-          <View accessibilityLabel={tool === 'eraser' ? '지우개 크기' : '펜 굵기'} testID={tool === 'eraser' ? '지우개 크기' : '펜 굵기'} style={{ flex: 1 }}><Host matchContents><Slider value={width} min={1} max={48} step={1} onValueChange={setWidth} /></Host></View>
+        {tool !== 'fill' && <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 10, paddingRight: 4, minHeight: C.tap }}>
+          <Text style={{ width: 52, fontSize: 10, fontWeight: '900', color: C.ink }}>{tool === 'eraser' ? '지우개\n크기' : '펜 굵기'}</Text>
+          <View style={{ width: 28, alignItems: 'center' }}><View style={{ width: Math.max(4, Math.min(24, width)), height: Math.max(4, Math.min(24, width)), borderRadius: 12, backgroundColor: tool === 'eraser' ? '#C7C0B5' : color }} /></View>
+          <Step label={tool === 'eraser' ? '지우개 크기 줄이기' : '펜 굵기 줄이기'} sign="−" onPress={() => setWidth(width - 2)} />
+          <View testID={tool === 'eraser' ? '지우개 크기' : '펜 굵기'} style={{ flex: 1, height: C.tap, justifyContent: 'center' }}>
+            <Host style={{ width: '100%', height: 40 }}><Slider value={width} min={1} max={48} step={1} onValueChange={setWidth} /></Host>
+          </View>
+          <Step label={tool === 'eraser' ? '지우개 크기 늘리기' : '펜 굵기 늘리기'} sign="＋" onPress={() => setWidth(width + 2)} />
         </View>}
 
-        <View style={{ flexDirection: 'row', gap: 8, padding: 8, paddingTop: 4 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="저장" disabled={busy || !initialized} onPress={() => save()} style={{ flex: 1, minHeight: 52, borderRadius: C.radius.md, borderWidth: 1, borderColor: '#BEB6AB', backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ fontWeight: '800', color: C.ink }}>{busy ? '저장 중…' : saved && !scene.dirty ? '저장됨' : '저장'}</Text></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="저장 후 다음 칸" disabled={busy || !initialized} onPress={() => save(slot.number < slotCount ? slot.number + 1 : 'stay')} style={{ flex: 1.5, minHeight: 52, borderRadius: C.radius.md, backgroundColor: C.coral, alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ color: '#FFF', fontWeight: '900', fontSize: 15 }}>{slot.number < slotCount ? '저장 → 다음 칸' : '세트 마지막 저장'}</Text></Pressable>
+        <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 8, paddingTop: 4, paddingBottom: 6 }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="저장" disabled={busy || !initialized} onPress={() => save()} style={{ flex: 1, minHeight: 50, borderRadius: C.radius.md, borderWidth: 1, borderColor: '#BEB6AB', backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ fontWeight: '800', color: C.ink }}>{busy ? '저장 중…' : saved && !scene.dirty ? '저장됨' : '저장'}</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="저장 후 다음 칸" disabled={busy || !initialized} onPress={() => save(slot.number < slotCount ? slot.number + 1 : 'stay')} style={{ flex: 1.5, minHeight: 50, borderRadius: C.radius.md, backgroundColor: C.coral, alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ color: '#FFF', fontWeight: '900', fontSize: 15 }}>{slot.number < slotCount ? '저장 → 다음 칸' : '세트 마지막 저장'}</Text></Pressable>
         </View>
       </View>
     </KeyboardAvoidingView>
 
     {showCanon && <Dialog title="원캐릭터" onClose={() => setShowCanon(false)}><Preview image={canon} label="기준 캐릭터" size={260} /></Dialog>}
-    {showQA && <Dialog title="제출 전 검사" onClose={() => setShowQA(false)}>{qa ? [...qa.checks, ...qa.consistency].filter(c => c.status !== 'PASS').map(c => <Text key={c.label}>{c.status} · {c.label}: {c.detail}</Text>) : <Text>저장하면 자동으로 기본 검사를 진행합니다.</Text>}</Dialog>}
+    {showQA && <Dialog title="제출 전 검사" onClose={() => setShowQA(false)}>
+      {!qa ? <Text>저장하면 자동으로 기본 검사를 해요.</Text> : qa.status === 'PASS' ? <Text style={{ fontSize: 15, fontWeight: '800', color: '#55B989' }}>기본 검사는 모두 통과했어요.</Text>
+        : [...qa.checks, ...qa.consistency].filter(c => c.status !== 'PASS').map(c => <Text key={c.label} style={{ fontSize: 13, lineHeight: 19, color: c.status === 'FAIL' ? '#E35C62' : C.ink }}>{c.label} · {c.detail}</Text>)}
+      {(qa?.notes ?? []).map(note => <Text key={note} style={{ fontSize: 11, color: C.muted }}>{note}</Text>)}
+    </Dialog>}
   </SafeAreaView></Modal>;
 }
 
-function Bar({ label, glyph, caption, small, active, disabled, onPress }: { label: string; glyph: string; caption?: string; small?: boolean; active?: boolean; disabled?: boolean; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled, expanded: active }} disabled={disabled} onPress={onPress} style={{ width: small ? 38 : T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', opacity: disabled ? .25 : 1 }}>
-    <Text style={{ fontSize: caption ? 15 : 21, fontWeight: '900', color: active ? T.coral : T.ink }}>{glyph}</Text>
+function Bar({ label, glyph, caption, text, small, active, disabled, onPress }: { label: string; glyph: string; caption?: string; text?: boolean; small?: boolean; active?: boolean; disabled?: boolean; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled, expanded: active }} disabled={disabled} onPress={onPress} style={{ width: small ? 40 : T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', opacity: disabled ? .25 : 1 }}>
+    <Text style={{ fontSize: text ? 13 : caption ? 15 : 22, fontWeight: '900', color: active ? T.coral : T.ink }}>{glyph}</Text>
     {!!caption && <Text style={{ fontSize: 9, fontWeight: '800', color: active ? T.coral : T.muted }}>{caption}</Text>}
   </Pressable>;
 }
@@ -272,9 +280,13 @@ function EyeToggle({ label, on, onPress }: { label: string; on: boolean; onPress
 function Swatch({ color, selected, onPress }: { color: string; selected: boolean; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={'색 ' + color} accessibilityState={{ selected }} onPress={onPress} hitSlop={6} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: color, borderWidth: selected ? 3 : 1, borderColor: selected ? T.coral : '#A9A299' }} />;
 }
+// Secondary to the slider, but it guarantees size stays adjustable on any device.
+function Step({ label, sign, onPress }: { label: string; sign: string; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4} style={{ width: 40, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, fontWeight: '800', color: T.muted }}>{sign}</Text></Pressable>;
+}
 function Minor({ title, onPress, danger }: { title: string; onPress: () => void; danger?: boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ flex: 1, minHeight: 44, borderRadius: T.radius.sm, backgroundColor: danger ? '#FFE0DE' : '#F2EEE7', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: danger ? '#A43D3D' : T.ink }}>{title}</Text></Pressable>;
 }
-function MenuButton({ title, onPress }: { title: string; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 10, borderRadius: T.radius.sm }}><Text style={{ fontSize: 13, fontWeight: '700', color: T.ink }}>{title}</Text></Pressable>;
+function MenuButton({ title, onPress, danger }: { title: string; onPress: () => void; danger?: boolean }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ minHeight: T.tap, justifyContent: 'center', paddingHorizontal: 10, borderRadius: T.radius.sm, borderTopWidth: danger ? 1 : 0, borderColor: T.line }}><Text style={{ fontSize: 13, fontWeight: '700', color: danger ? '#A43D3D' : T.ink }}>{title}</Text></Pressable>;
 }

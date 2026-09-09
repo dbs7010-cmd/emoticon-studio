@@ -74,6 +74,13 @@ const saved=async(dirty=true)=>{
  assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 이모티콘 세트').length,1,'home uses compact new-set action');
  await press('이전 프로젝트');
  assert.equal(tiles().length,32);assert.equal(tiles()[0].findAllByType('Image').length,1);
+ const flat=node=>Object.assign({},...[node.props.style].flat(9).filter(Boolean));
+ const fitsFourAcross=(cellWidth,label)=>{
+  const pad=16,gap=8; // styles.page padding and the grid gap
+  assert.ok(cellWidth*4+gap*3<=390-pad*2+.01,label+' must fit four across a 390pt screen, got '+cellWidth);
+  assert.ok(cellWidth*5+gap*4>390-pad*2,label+' should not be so small that five would fit');
+ };
+ fitsFourAcross(flat(tiles()[0]).width,'slot tile');
  for(let n=1;n<=32;n++){
   await act(async()=>tiles().find(t=>t.props.testID==='slot-'+n).props.onPress());
   assert.equal(tree.root.findAllByType('WebView').length,1,'direct painter '+n);await init();
@@ -160,7 +167,10 @@ const saved=async(dirty=true)=>{
 
  // Set planning: dialogue, no-dialogue, guides and reference choice, all before Painter.
  await press('세트 기획');
- assert.ok(tree.root.findAll(n=>n.type==='Text'&&String(n.children?.join(''))==='세트 기획').length>0,'planning is its own screen');
+ assert.equal(tree.root.findAll(n=>n.type==='Text'&&String(n.children?.join(''))==='세트 기획').length,1,'the screen is named once, in the app bar only');
+ const planningRow=label=>Object.assign({},...[tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel===label)[0].props.style].flat(9).filter(Boolean));
+ const rowHeight=planningRow('02번 칸 기획').minHeight;
+ assert.ok(rowHeight>=48&&rowHeight<=64,'a collapsed planning row is a list row, not a card: '+rowHeight);
  assert.equal(tree.root.findAll(n=>n.type==='TextInput').length,0,'rows stay collapsed until opened');
  await press('02번 칸 기획');
  assert.ok(tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='대사').length===1,'opening a row reveals its fields in place');
@@ -189,7 +199,10 @@ const saved=async(dirty=true)=>{
 
  // Final preview and export.
  await press('전체 보기');
- assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&/^preview-\d+$/.test(n.props.testID)).length,32,'the whole set is visible at once');
+ const previewCells=tree.root.findAll(n=>n.type==='Pressable'&&/^preview-\d+$/.test(n.props.testID));
+ assert.equal(previewCells.length,32,'the whole set is visible at once');
+ fitsFourAcross(Object.assign({},...[previewCells[0].props.style].flat(9).filter(Boolean)).width,'preview cell');
+ assert.equal(tree.root.findAll(n=>n.type==='Text'&&String(n.children?.join(''))==='전체 보기').length,1,'the screen is named once, in the app bar only');
  assert.ok(tree.root.findAll(n=>n.type==='Text').some(n=>String(n.children?.join('')).includes('칸이 아직 비어 있어요')),'QA reports the missing slots');
  assert.ok(tree.root.findAll(n=>n.type==='Text').some(n=>String(n.children?.join('')).includes('승인을 보장하지 않')),'QA never promises platform approval');
  await press('제출용 PNG 세트 내보내기');
