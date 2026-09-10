@@ -268,6 +268,21 @@ past/future 깊이와 화면에 남은 획을 단계별로 비교해 세 상태�
 8 suite 유지. 신규 구조 회귀 assertion: 캔버스 정사각형 유지, 캔버스 배경색, 참고 라벨 한 줄, 보드의 강한 CTA 정확히 1개.
 변이 2건 검출(캔버스를 flex로 되돌림 / 보드에 코랄 CTA 추가).
 
+## NARROW VISUAL POLISH — HOME / SIZE CONTROL / CANON
+**AUTOMATED PASS. DEVICE VISUAL UNVERIFIED.** 대상 3개만 손댔다. 보드/기획/제스처/저장/QA/export 무수정.
+
+- **Painter 크기 조절**: preview가 32px 회색 well 안에 있고 track과 4px 간격이라, 굵기가 얇을 때
+  네이티브 thumb가 track 왼쪽 끝에 붙어 well과 맞닿았다. 두 개의 컨트롤처럼 보인 원인이다.
+  well을 없애고 맨 점으로 바꾼 뒤 간격을 14px로 벌렸다. 구조는 `라벨 · 실제 굵기 점 · 슬라이더` 그대로.
+  **네이티브 thumb 모양 자체는 Material 기본값이고 안전한 스타일 API가 없어 손대지 않았다.**
+- **HOME**: 제목 옆 작은 손그림 spark, 부제 축소, 카드 `⋯` 무게 낮춤, `새 세트`를 프로젝트 카드가 아닌
+  액션 카드로(minHeight 104). 빈 공간을 억지로 채우지 않았다.
+- **CANON**: 같은 흰 상자 4개 쌓기 → 두 그룹이 하나의 부드러운 면을 공유하고 구분선으로 나뉜다.
+  필드 semantics·입력·저장은 그대로. `Field`에 `flat` 옵션만 추가했다.
+
+회귀 assertion 추가: 크기 행에 슬라이더 1개·preview는 배경 없는 점·간격 12px 이상, 새 세트 카드 높이 상한,
+CANON 필드 6개 존재 + 그룹 필드는 테두리 없음 + 세트 이름은 일반 필드. 변이 3건 모두 검출.
+
 ## VERIFICATION STATUS
 - GitHub 코드 반영: DONE
 - 이전 Android 실기기: Undo PASS / 지우개 PASS / 참고 확대 PASS
