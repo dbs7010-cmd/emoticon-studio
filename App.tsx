@@ -180,7 +180,7 @@ function Studio() {
       {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 8, minHeight: 58, borderBottomWidth: 1, borderColor: C.line }}>
         <Pressable accessibilityRole="button" accessibilityLabel="뒤로" disabled={!!busy} onPress={back} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24, color: C.ink }}>‹</Text></Pressable>
         {!slot && !canonOpen && (project.canon.image ? <Image source={{ uri: imageUri(project.canon.image.path) }} style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: '#FFF' }} resizeMode="contain" /> : <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.peach, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontWeight: '900' }}>{project.characterName.slice(0, 1)}</Text></View>)}
-        <View style={{ flex: 1 }}><Text numberOfLines={1} style={{ fontSize: 16, color: C.ink, fontWeight: '900' }}>{canonOpen ? '프로젝트 설정' : slot ? `슬롯 ${String(slot.number).padStart(2, '0')}` : screen === 'planning' ? '세트 기획' : screen === 'preview' ? '전체 보기' : project.projectName}</Text>{!slot && !canonOpen && <Text style={{ fontSize: 10, color: C.muted }}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>}</View>
+        <View style={{ flex: 1 }}><Text numberOfLines={1} style={{ fontSize: 16, color: C.ink, fontWeight: '900' }}>{canonOpen ? '원캐릭터와 이름' : slot ? `슬롯 ${String(slot.number).padStart(2, '0')}` : screen === 'planning' ? '세트 기획' : screen === 'preview' ? '전체 보기' : project.projectName}</Text>{!slot && !canonOpen && <Text style={{ fontSize: 10, color: C.muted }}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>}</View>
         <Pressable accessibilityRole="button" accessibilityLabel="프로젝트 메뉴" disabled={!!busy} onPress={() => setMenu(true)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24, color: C.ink }}>⋯</Text></Pressable>
       </View>}
       {!!busy && <Text style={{ paddingHorizontal: 14, paddingVertical: 4, color: C.muted }}>{busy}</Text>}
@@ -191,7 +191,7 @@ function Studio() {
           <View style={{ marginBottom: 2 }}><Text style={styles.title}>내 작업실</Text><Text style={[styles.muted, { marginTop: 4 }]}>그려 저장하고, 한 세트를 끝내요.</Text></View>
           {!store.projects.length && <View style={{ alignItems: 'center', paddingVertical: 8, gap: 8 }}>
             <Doodle />
-            <Text style={{ fontSize: 14, fontWeight: '900', color: C.ink }}>아직 세트가 없어요</Text>
+            <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>아직 세트가 없어요</Text>
             <Text style={{ fontSize: 12, color: C.muted, textAlign: 'center', lineHeight: 18 }}>원캐릭터를 정하고, 32칸을 채우고,{'\n'}제출 파일까지 한 번에 끝낼 수 있어요.</Text>
           </View>}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
@@ -343,13 +343,13 @@ function Studio() {
 
     {newProjectOpen && <Dialog title="새 이모티콘 세트" onClose={() => setNewProjectOpen(false)}><Text style={styles.muted}>복잡한 설정은 나중에. 이름만 정하고 바로 시작합니다.</Text><Field label="프로젝트 이름" value={projectName} onChangeText={setProjectName} multiline={false} /><Field label="캐릭터 이름" value={characterName} onChangeText={setCharacterName} multiline={false} /><Action primary title="세트 만들기" disabled={!projectName.trim() || !characterName.trim()} onPress={createNewProject} /></Dialog>}
     {managed && !pendingDelete && <Dialog title="세트 관리" onClose={() => setManageId(null)}>
-      <Text style={{ fontSize: 16, fontWeight: '900', color: C.ink }}>{managed.projectName}</Text>
+      <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{managed.projectName}</Text>
       <Text style={styles.muted}>{managed.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>
       <Action title="세트 열기" onPress={() => { const id = managed.id; setManageId(null); setProjectId(id); setDetail(false); }} />
       <Action title="세트 삭제" onPress={() => setConfirmDeleteId(managed.id)} />
     </Dialog>}
     {pendingDelete && <Dialog title="세트 삭제" onClose={() => setConfirmDeleteId(null)}>
-      <Text style={{ fontSize: 16, fontWeight: '900', color: C.ink }}>{pendingDelete.projectName}</Text>
+      <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{pendingDelete.projectName}</Text>
       <Text style={styles.muted}>{pendingDelete.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>
       <Text style={styles.muted}>이 세트의 그림, 참고 이미지, 원캐릭터가 함께 지워집니다. 삭제하면 되돌릴 수 없어요.</Text>
       <Action title="이 세트 삭제" onPress={() => deleteProject(pendingDelete.id)} />
