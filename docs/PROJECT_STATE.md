@@ -283,6 +283,36 @@ past/future 깊이와 화면에 남은 획을 단계별로 비교해 세 상태�
 회귀 assertion 추가: 크기 행에 슬라이더 1개·preview는 배경 없는 점·간격 12px 이상, 새 세트 카드 높이 상한,
 CANON 필드 6개 존재 + 그룹 필드는 테두리 없음 + 세트 이름은 일반 필드. 변이 3건 모두 검출.
 
+## PAINTER-FIRST V1 — 제품 UX 리셋
+**AUTOMATED PASS. DEVICE UNVERIFIED.** 기능을 늘린 패스가 아니라 그리기 전에 요구하던 준비를 걷어낸 패스다.
+
+### 결정
+- **CANON은 더 이상 필수가 아니다.** 보드 primary CTA에서 빠지고 프로젝트 메뉴 안 `캐릭터 메모`로 내려갔다.
+  이미지가 실제로 있을 때만 보드에 작은 `세트 참고` 썸네일로 나타난다.
+- **세트 기획 폼 폐기.** 32행 입력 폼 대신 `아이디어` 도우미. 한 번 탭하면 추천/직접 입력/무대사가
+  다음 빈 칸에 담긴다. 감정·상황·포즈·구도는 어디서도 요구하지 않는다.
+- **새 세트 → 곧바로 보드.** 이름 입력 창 없이 `새 이모티콘 세트`로 자동 생성된다.
+- **빈 칸 → 곧바로 Painter.** 빈 작업실에서 그리기까지 2탭.
+- **Painter는 데이터가 있을 때만 보조 컨트롤을 보여준다.** 원캐/기획 버튼이 상시 노출되지 않는다.
+- **참고는 선택.** Painter 하단 참고 스트립 기능은 그대로다.
+- **QA는 제출 결과물만 본다.** 기획 metadata가 비어 있다는 이유로 경고하지 않는다(이전 패스에서 이미 분리됨).
+
+### 데이터
+`characterName` / `personality` / `speech` / `locked` / `variable` / `emotion` / `situation` /
+`poseGuide` / `compositionGuide` / `referenceKey` 전부 **schema에 그대로 남아 있다.**
+삭제도 마이그레이션도 하지 않았다. 기존 프로젝트는 그대로 열리고, Painter는 저장된 `referenceKey`를 계속 존중한다.
+필수 UX에서만 빠졌을 뿐이다.
+
+### 제거한 죽은 코드
+폼 전용이던 staged-edit/debounce(`stageSlot`/`flushDraft`/`openSlot`)와 그 AppState flush를 없앴다.
+남은 쓰기는 전부 즉시 커밋되는 개별 동작이라 debounce할 대상이 없다. Painter의 autosave는 그대로다.
+
+### 자동 검증
+8 suite 유지. 새 계약: 새 세트가 아무것도 묻지 않고 보드를 연다 / 빈 칸이 설정 없이 Painter를 연다 /
+아이디어 한 탭이 다른 입력을 요구하지 않는다 / 지우면 칸이 다시 빈다 / 32행 폼이 사라졌다 /
+CANON 없이 Painter에 canon 컨트롤이 없다 / 기존 `referenceKey`가 계속 동작한다.
+변이 3건 모두 검출(새 세트가 보드를 안 염 / 아이디어가 감정을 함께 씀 / canon 없이 컨트롤 노출).
+
 ## VERIFICATION STATUS
 - GitHub 코드 반영: DONE
 - 이전 Android 실기기: Undo PASS / 지우개 PASS / 참고 확대 PASS
