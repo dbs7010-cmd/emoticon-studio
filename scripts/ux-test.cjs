@@ -216,11 +216,12 @@ const saved=async(dirty=true)=>{
  assert.equal(tree.root.findAll(n=>n.type==='Text'&&String(n.children?.join(''))==='전체 보기').length,1,'the screen is named once, in the app bar only');
  assert.ok(tree.root.findAll(n=>n.type==='Text').some(n=>String(n.children?.join('')).includes('칸이 아직 비어 있어요')),'QA reports the missing slots');
  assert.ok(tree.root.findAll(n=>n.type==='Text').some(n=>String(n.children?.join('')).includes('승인을 보장하지 않')),'QA never promises platform approval');
- await press('제출용 PNG 세트 내보내기');
+ await press('제출 파일 만들기');
  await act(async()=>{});
  assert.equal(shared.length,1,'the set is handed to the share sheet');
  assert.ok(shared[0].uri.endsWith('.zip'),'export produces a single bundle');
  assert.equal(shared[0].options.mimeType,'application/zip');
+ assert.ok(tree.root.findAll(n=>n.type==='Text').some(n=>String(n.children?.join('')).includes('제출 파일을 만들었어요')),'the notice reports the file was made, not that sharing succeeded');
  await press('뒤로');
 
  await act(async()=>tree.unmount());

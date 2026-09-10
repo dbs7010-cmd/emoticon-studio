@@ -35,6 +35,7 @@ export function droppedImagePaths(before: Store, after: Store): string[] {
 export function duplicates(slots: Slot[]): number[][] {
   const groups = new Map<string, number[]>();
   for (const slot of slots) {
+    if (slot.noDialogue) continue;
     const key = slot.dialogue.normalize('NFKC').replace(/[\p{P}\p{S}\s]/gu, '').toLocaleLowerCase();
     if (key) groups.set(key, [...(groups.get(key) ?? []), slot.number]);
   }

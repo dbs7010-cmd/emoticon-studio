@@ -42,7 +42,9 @@ function Studio() {
     const next = { ...transform(previous), revision: previous.revision + 1 };
     current.current = next; setStore(next);
     // Persist first. Only once the snapshot is on disk may the files it no longer references go.
-    try { saveStore(next); setSaveError(''); } catch (e) { current.current = previous; setSaveError(String(e)); throw e; }
+    // On failure keep the edit in memory: the retry banner exists to write exactly this state,
+    // and the last good snapshot on disk still points at assets nothing has deleted.
+    try { saveStore(next); setSaveError(''); } catch (e) { setSaveError(String(e)); throw e; }
     deleteLocalImages(droppedImagePaths(previous, next));
   }
   function changeProject(id: string, transform: (p: Project) => Project) { commit(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...transform(p), updatedAt: new Date().toISOString() } : p) })); }
@@ -117,9 +119,10 @@ function Studio() {
     if (!project) return;
     void task('제출용 파일 만드는 중…', async () => {
       const result = exportSet(project);
-      if (!await Sharing.isAvailableAsync()) { setNotice(`${result.count}칸을 ${result.path}로 저장했어요.`); return; }
+      const made = result.missing ? `${result.count}칸으로 제출 파일을 만들었어요. ${result.missing}칸은 아직 비어 있어요.` : `${result.count}칸 전체로 제출 파일을 만들었어요.`;
+      if (!await Sharing.isAvailableAsync()) { setNotice(`${made} 저장 위치: ${result.path}`); return; }
       await Sharing.shareAsync(exportUri(result.path), { mimeType: 'application/zip', UTI: 'public.zip' });
-      setNotice(result.missing ? `${result.count}칸을 내보냈어요. ${result.missing}칸은 아직 비어 있어요.` : `${result.count}칸 전체를 내보냈어요.`);
+      setNotice(`${made} 공유 창에서 저장할 곳을 골라 주세요.`);
     });
   }
   const managed = store?.projects.find(p => p.id === manageId);
@@ -206,7 +209,7 @@ function Studio() {
             <Text style={{ fontSize: 11, color: C.muted }}>{SPEC.note}</Text>
             <Text style={{ fontSize: 11, color: C.muted }}>사전 확인일 뿐 플랫폼 승인을 보장하지 않아요.</Text>
           </View>
-          <Action primary title="제출용 PNG 세트 내보내기" disabled={!!busy || !project.slots.some(s => s.finalImage)} onPress={exportProject} />
+          <Action primary title="제출 파일 만들기" disabled={!!busy || !project.slots.some(s => s.finalImage)} onPress={exportProject} />
         </> : slot && !painting ? <>
           <Field label="대사" value={slot.dialogue} multiline={false} onChangeText={dialogue => updateSlot({ dialogue, status: slot.status === 'EMPTY' && dialogue.trim() ? 'PLANNED' : slot.status })} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
