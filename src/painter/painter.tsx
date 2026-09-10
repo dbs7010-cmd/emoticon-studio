@@ -135,17 +135,17 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={{ minHeight: 52, paddingHorizontal: 2, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: C.line }}>
         <Bar label="홈" glyph="홈" text disabled={busy} onPress={() => save('close')} />
-        <Bar label="이전 칸" glyph="‹" small disabled={busy || slot.number <= 1} onPress={() => save(slot.number - 1)} />
+        <Bar label="이전 칸" glyph="‹" strong small disabled={busy || slot.number <= 1} onPress={() => save(slot.number - 1)} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: C.tap }}>
           <Text style={{ fontSize: 10, color: C.muted }}>이모티콘 세트</Text>
-          <Text accessibilityLabel="현재 칸" style={{ fontSize: 17, color: C.ink, fontWeight: '800' }}>{String(slot.number).padStart(2, '0')} / {slotCount}</Text>
+          <Text accessibilityLabel="현재 칸" style={{ fontSize: 19, color: C.ink, fontWeight: '800' }}>{String(slot.number).padStart(2, '0')} / {slotCount}</Text>
         </View>
-        <Bar label="다음 칸" glyph="›" small disabled={busy || slot.number >= slotCount} onPress={() => save(slot.number + 1)} />
+        <Bar label="다음 칸" glyph="›" strong small disabled={busy || slot.number >= slotCount} onPress={() => save(slot.number + 1)} />
         <Bar label="그림 겹치기" glyph="▤" caption="겹치기" active={drawRail} onPress={() => { setDrawRail(!drawRail); setPanel(null); }} />
         <Bar label="더보기" glyph="⋯" onPress={() => { setPanel(panel === 'more' ? null : 'more'); setDrawRail(false); }} />
       </View>
 
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg }}>
         <WebView ref={web} source={source} originWhitelist={['about:*']} javaScriptEnabled scrollEnabled={false} onShouldStartLoadWithRequest={r => r.url === 'about:blank'} onError={e => { unlock(); setInitialized(false); Alert.alert('그리기 오류', e.nativeEvent.description); }} onMessage={event => {
           try {
             const m = JSON.parse(event.nativeEvent.data);
@@ -165,17 +165,17 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
               } catch (e) { send({ type: 'saveFailed' }); unlock(); Alert.alert('저장 실패', String(e)); }
             }
           } catch (e) { unlock(); Alert.alert('그리기 오류', String(e)); }
-        }} style={{ flex: 1, backgroundColor: '#EEEAE3' }} />
+        }} style={{ width: '100%', aspectRatio: 1, maxHeight: '100%', backgroundColor: C.bg }} />
 
-        <Pressable accessibilityRole="button" accessibilityLabel={showCanon ? '원캐릭터 닫기' : '원캐릭터 보기'} accessibilityState={{ expanded: showCanon }} onPress={() => { setShowCanon(!showCanon); setShowBrief(false); }} style={{ position: 'absolute', left: 10, top: 10, width: C.tap, height: C.tap, padding: 3, borderRadius: 14, backgroundColor: '#FFFFFFE8', borderWidth: 1, borderColor: showCanon ? C.coral : C.line, elevation: 3, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={showCanon ? '원캐릭터 닫기' : '원캐릭터 보기'} accessibilityState={{ expanded: showCanon }} onPress={() => { setShowCanon(!showCanon); setShowBrief(false); }} style={{ position: 'absolute', left: 8, top: 8, width: 44, height: 44, padding: 3, borderRadius: 13, backgroundColor: '#FFFFFFD9', borderWidth: 1, borderColor: showCanon ? C.coral : '#E7E2D8', alignItems: 'center', justifyContent: 'center' }}>
           {canon ? <Image source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%', borderRadius: 10 }} resizeMode="contain" /> : <Text style={{ fontSize: 10, fontWeight: '700', color: '#B4ADA3' }}>원캐</Text>}
         </Pressable>
-        {!!brief.length && <Pressable accessibilityRole="button" accessibilityLabel={showBrief ? '기획 닫기' : '기획 보기'} accessibilityState={{ expanded: showBrief }} onPress={() => { setShowBrief(!showBrief); setShowCanon(false); }} style={{ position: 'absolute', left: 10, top: 64, width: C.tap, height: 34, borderRadius: 12, backgroundColor: '#FFFFFFE8', borderWidth: 1, borderColor: showBrief ? C.coral : C.line, alignItems: 'center', justifyContent: 'center', elevation: 3 }}>
+        {!!brief.length && <Pressable accessibilityRole="button" accessibilityLabel={showBrief ? '기획 닫기' : '기획 보기'} accessibilityState={{ expanded: showBrief }} onPress={() => { setShowBrief(!showBrief); setShowCanon(false); }} style={{ position: 'absolute', left: 8, top: 56, width: 44, height: 36, borderRadius: 13, backgroundColor: '#FFFFFFD9', borderWidth: 1, borderColor: showBrief ? C.coral : '#E7E2D8', alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ fontSize: 10, fontWeight: '900', color: showBrief ? C.coral : C.muted }}>기획</Text>
         </Pressable>}
         {showBrief && <>
           <Pressable accessibilityRole="button" accessibilityLabel="기획 바깥 닫기" onPress={() => setShowBrief(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
-          <View style={{ position: 'absolute', left: 10, top: 102, width: 208, padding: 10, borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 10, gap: 5 }}>
+          <View style={{ position: 'absolute', left: 8, top: 96, width: 208, padding: 10, borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 10, gap: 5 }}>
             {brief.map(([label, value]) => <View key={label} style={{ flexDirection: 'row', gap: 6 }}>
               <Text style={{ width: 44, fontSize: 10, fontWeight: '900', color: C.muted }}>{label}</Text>
               <Text style={{ flex: 1, fontSize: 11, color: C.ink }}>{value.trim()}</Text>
@@ -184,7 +184,7 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
         </>}
         {showCanon && <>
           <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 바깥 닫기" onPress={() => setShowCanon(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
-          <View style={{ position: 'absolute', left: 10, top: 62, width: 208, padding: 10, borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 10, gap: 6 }}>
+          <View style={{ position: 'absolute', left: 8, top: 56, width: 208, padding: 10, borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 10, gap: 6 }}>
             <Text style={{ fontSize: 10, fontWeight: '800', color: C.muted }}>원캐릭터{canonName ? ' · ' + canonName : ''}</Text>
             {canon
               ? <View style={{ height: 104, borderRadius: C.radius.sm, backgroundColor: '#F0ECE5', overflow: 'hidden' }}><Image accessibilityLabel="원캐릭터 그림" source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /></View>
@@ -236,7 +236,7 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
           <Minor title="닫기" onPress={() => setPanel(null)} />
         </View>}
 
-        {panel === 'more' && <View style={{ position: 'absolute', right: 8, top: 8, width: 190, padding: 6, borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 8 }}>
+        {panel === 'more' && <View style={{ position: 'absolute', right: 8, top: 8, width: 176, padding: 4, borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 8 }}>
           <MenuButton title="원캐릭터 보기" onPress={() => { setShowCanon(true); setPanel(null); }} />
           <MenuButton title={`크게 보기 (지금 ${zoom.toFixed(1)}×)`} onPress={() => { const n = zoom >= 3 ? 1 : zoom + 1; setZoom(n); send({ type: 'zoom', zoom: n }); setPanel(null); }} />
           <MenuButton title="PNG 공유" onPress={() => { setPanel(null); save('share'); }} />
@@ -246,8 +246,8 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
       </View>
 
       <View style={dock} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 8 }}>
-          <Text style={{ width: 46, fontSize: 10, fontWeight: '900', color: C.ink }}>따라 그릴{'\n'}참고</Text>
+        <Text style={{ paddingLeft: 12, paddingTop: 6, fontSize: 10, color: C.muted }}>따라 그릴 참고</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', gap: 8, paddingHorizontal: 8, paddingVertical: 4 }}>
             <Pressable accessibilityRole="button" accessibilityLabel="참고 추가" onPress={() => void addReferences()} style={{ width: 52, height: 52, borderRadius: C.radius.sm, borderWidth: 1, borderStyle: 'dashed', borderColor: '#BDB5AA', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF' }}><Text style={{ fontSize: 22, color: C.muted }}>＋</Text></Pressable>
             {scene.references.map((ref, index) => {
@@ -276,16 +276,16 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
         </View>
 
         {tool !== 'fill' && <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 10, paddingRight: 10, minHeight: C.tap }}>
-          <Text style={{ width: 58, fontSize: 10, fontWeight: '900', color: C.ink }}>{tool === 'eraser' ? '지우개 크기' : '펜 굵기'}</Text>
-          <View style={{ width: 30, height: 30, alignItems: 'center', justifyContent: 'center' }}><View style={{ width: Math.max(5, Math.min(26, width)), height: Math.max(5, Math.min(26, width)), borderRadius: 13, backgroundColor: tool === 'eraser' ? '#C7C0B5' : color }} /></View>
+          <Text style={{ width: 56, fontSize: 10, color: C.muted }}>{tool === 'eraser' ? '지우개 크기' : '펜 굵기'}</Text>
+          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F2EEE7', alignItems: 'center', justifyContent: 'center', marginRight: 4 }}><View style={{ width: Math.max(4, Math.min(24, width)), height: Math.max(4, Math.min(24, width)), borderRadius: 12, backgroundColor: tool === 'eraser' ? '#C7C0B5' : color }} /></View>
           <View testID={tool === 'eraser' ? '지우개 크기' : '펜 굵기'} style={{ flex: 1, height: C.tap, justifyContent: 'center' }}>
             <Host style={{ width: '100%', height: 40 }}><Slider value={width} min={1} max={48} onValueChange={setWidth} /></Host>
           </View>
         </View>}
 
         <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 8, paddingTop: 4, paddingBottom: 6 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="저장" disabled={busy || !initialized} onPress={() => save()} style={{ flex: 1, minHeight: 50, borderRadius: C.radius.md, borderWidth: 1, borderColor: '#BEB6AB', backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ fontWeight: '800', color: C.ink }}>{busy ? '저장 중…' : saved && !scene.dirty ? '저장됨' : '저장'}</Text></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="저장 후 다음 칸" disabled={busy || !initialized} onPress={() => save(slot.number < slotCount ? slot.number + 1 : 'stay')} style={{ flex: 1.5, minHeight: 50, borderRadius: C.radius.md, backgroundColor: C.coral, alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ color: '#FFF', fontWeight: '900', fontSize: 15 }}>{slot.number < slotCount ? '저장 → 다음 칸' : '세트 마지막 저장'}</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="저장" disabled={busy || !initialized} onPress={() => save()} style={{ width: 92, minHeight: 50, borderRadius: C.radius.md, borderWidth: 1, borderColor: C.line, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ fontWeight: '700', fontSize: 13, color: C.muted }}>{busy ? '저장 중…' : saved && !scene.dirty ? '저장됨' : '저장'}</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="저장 후 다음 칸" disabled={busy || !initialized} onPress={() => save(slot.number < slotCount ? slot.number + 1 : 'stay')} style={{ flex: 1, minHeight: 50, borderRadius: C.radius.md, backgroundColor: C.coral, alignItems: 'center', justifyContent: 'center', opacity: busy || !initialized ? .4 : 1 }}><Text style={{ color: '#FFF', fontWeight: '900', fontSize: 15 }}>{slot.number < slotCount ? '저장 → 다음 칸' : '세트 마지막 저장'}</Text></Pressable>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -298,10 +298,10 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
   </SafeAreaView></Modal>;
 }
 
-function Bar({ label, glyph, caption, text, small, active, disabled, onPress }: { label: string; glyph: string; caption?: string; text?: boolean; small?: boolean; active?: boolean; disabled?: boolean; onPress: () => void }) {
+function Bar({ label, glyph, caption, text, strong, small, active, disabled, onPress }: { label: string; glyph: string; caption?: string; text?: boolean; strong?: boolean; small?: boolean; active?: boolean; disabled?: boolean; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled, expanded: active }} disabled={disabled} onPress={onPress} style={{ width: small ? 40 : T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', opacity: disabled ? .25 : 1 }}>
-    <Text style={{ fontSize: text ? 13 : caption ? 15 : 22, fontWeight: '900', color: active ? T.coral : T.ink }}>{glyph}</Text>
-    {!!caption && <Text style={{ fontSize: 9, fontWeight: '800', color: active ? T.coral : T.muted }}>{caption}</Text>}
+    <Text style={{ fontSize: text ? 13 : caption ? 15 : 22, fontWeight: text ? '700' : '600', color: active ? T.coral : T.muted }}>{glyph}</Text>
+    {!!caption && <Text style={{ fontSize: 9, fontWeight: '700', color: active ? T.coral : T.muted }}>{caption}</Text>}
   </Pressable>;
 }
 // Hand-drawn eye: filled pupil when shown, struck through when hidden.
@@ -323,5 +323,5 @@ function Minor({ title, onPress, danger }: { title: string; onPress: () => void;
   return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ flex: 1, minHeight: 44, borderRadius: T.radius.sm, backgroundColor: danger ? '#FFE0DE' : '#F2EEE7', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: danger ? '#A43D3D' : T.ink }}>{title}</Text></Pressable>;
 }
 function MenuButton({ title, onPress, danger }: { title: string; onPress: () => void; danger?: boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ minHeight: T.tap, justifyContent: 'center', paddingHorizontal: 10, borderRadius: T.radius.sm, borderTopWidth: danger ? 1 : 0, borderColor: T.line }}><Text style={{ fontSize: 13, fontWeight: '700', color: danger ? '#A43D3D' : T.ink }}>{title}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 10, borderRadius: T.radius.sm, borderTopWidth: danger ? 1 : 0, borderColor: T.line }}><Text style={{ fontSize: 13, fontWeight: '700', color: danger ? '#A43D3D' : T.ink }}>{title}</Text></Pressable>;
 }

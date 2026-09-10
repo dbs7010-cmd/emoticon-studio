@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, AppState, BackHandler, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Text, View, Image, useWindowDimensions } from 'react-native';
+import { Alert, AppState, BackHandler, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Text, TextInput, View, Image, useWindowDimensions } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as Sharing from 'expo-sharing';
@@ -180,7 +180,7 @@ function Studio() {
       {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 8, minHeight: 58, borderBottomWidth: 1, borderColor: C.line }}>
         <Pressable accessibilityRole="button" accessibilityLabel="뒤로" disabled={!!busy} onPress={back} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24, color: C.ink }}>‹</Text></Pressable>
         {!slot && !canonOpen && (project.canon.image ? <Image source={{ uri: imageUri(project.canon.image.path) }} style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: '#FFF' }} resizeMode="contain" /> : <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.peach, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontWeight: '900' }}>{project.characterName.slice(0, 1)}</Text></View>)}
-        <View style={{ flex: 1 }}><Text numberOfLines={1} style={{ fontSize: 16, color: C.ink, fontWeight: '900' }}>{canonOpen ? '원캐릭터와 이름' : slot ? `슬롯 ${String(slot.number).padStart(2, '0')}` : screen === 'planning' ? '세트 기획' : screen === 'preview' ? '전체 보기' : project.projectName}</Text>{!slot && !canonOpen && <Text style={{ fontSize: 10, color: C.muted }}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>}</View>
+        <View style={{ flex: 1 }}><Text numberOfLines={1} style={{ fontSize: 16, color: C.ink, fontWeight: '900' }}>{canonOpen ? '원캐릭터와 이름' : slot ? `슬롯 ${String(slot.number).padStart(2, '0')}` : screen === 'planning' ? '세트 기획' : screen === 'preview' ? '전체 보기' : project.projectName}</Text>{!slot && !canonOpen && screen === 'board' && <Text style={{ fontSize: 10, color: C.muted }}>{project.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>}</View>
         <Pressable accessibilityRole="button" accessibilityLabel="프로젝트 메뉴" disabled={!!busy} onPress={() => setMenu(true)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24, color: C.ink }}>⋯</Text></Pressable>
       </View>}
       {!!busy && <Text style={{ paddingHorizontal: 14, paddingVertical: 4, color: C.muted }}>{busy}</Text>}
@@ -199,22 +199,45 @@ function Studio() {
               const cover = p.canon.image ?? p.slots.find(s => s.finalImage)?.finalImage;
               const done = p.slots.filter(s => s.finalImage).length;
               const tint = [C.peach, C.mint, C.blue][index % 3];
-              return <Pressable accessibilityRole="button" accessibilityLabel={p.projectName} key={p.id} onPress={() => { setProjectId(p.id); setDetail(false); setScreen('board'); setOpenSlot(null); }} style={{ width: projectCardWidth, backgroundColor: C.paper, borderRadius: T.radius.lg, borderWidth: 1, borderColor: C.line, padding: T.gap.sm, gap: T.gap.sm }}>
-                <View style={{ height: projectCardWidth - 46, minHeight: 96, borderRadius: T.radius.md, backgroundColor: tint, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>{cover ? <Image source={{ uri: imageUri(cover.path) }} style={{ width: '86%', height: '86%' }} resizeMode="contain" /> : <View style={{ alignItems: 'center', gap: 4 }}><Text style={{ fontSize: 28, color: '#665F57' }}>〰</Text><Text style={{ fontSize: 10, color: C.muted }}>첫 그림을 기다리는 중</Text></View>}</View>
+              return <Pressable accessibilityRole="button" accessibilityLabel={p.projectName} key={p.id} onPress={() => { setProjectId(p.id); setDetail(false); setScreen('board'); setOpenSlot(null); }} style={{ width: projectCardWidth, backgroundColor: C.paper, borderRadius: T.radius.lg, borderWidth: 1, borderColor: C.line, padding: 6, gap: 5 }}>
+                <View style={{ height: projectCardWidth - 52, minHeight: 92, borderRadius: T.radius.sm, backgroundColor: tint, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>{cover ? <Image source={{ uri: imageUri(cover.path) }} style={{ width: '86%', height: '86%' }} resizeMode="contain" /> : <View style={{ alignItems: 'center', gap: 4 }}><Text style={{ fontSize: 28, color: '#665F57' }}>〰</Text><Text style={{ fontSize: 10, color: C.muted }}>첫 그림을 기다리는 중</Text></View>}</View>
                 <Text numberOfLines={1} style={{ fontSize: 14, color: C.ink, fontWeight: '800' }}>{p.projectName}</Text>
-                <View style={{ height: 5, borderRadius: 3, backgroundColor: '#EEE8DF', overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / SPEC.count * 100)}%`, height: '100%', backgroundColor: C.coral }} /></View>
-                <Text style={{ fontSize: 10, color: C.muted }}>{done} / {SPEC.count} 완성</Text>
+                <View style={{ height: 4, borderRadius: 2, backgroundColor: '#EEE8DF', overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / SPEC.count * 100)}%`, height: '100%', backgroundColor: C.coral }} /></View>
+                <Text style={{ fontSize: 10, color: C.muted }}>{done} / {SPEC.count}</Text>
                 <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={6} style={{ position: 'absolute', right: 4, top: 4, width: T.tap, height: T.tap, borderRadius: T.tap / 2, backgroundColor: '#FFFFFFE8', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, color: '#5C574F', marginTop: -8 }}>⋯</Text></Pressable>
               </Pressable>;
             })}
-            <Pressable accessibilityRole="button" accessibilityLabel="새 이모티콘 세트" onPress={() => setNewProjectOpen(true)} style={{ width: projectCardWidth, minHeight: projectCardWidth - 6, borderRadius: T.radius.lg, borderWidth: 1, borderStyle: 'dashed', borderColor: '#D3CCC1', backgroundColor: '#FFFCF8', alignItems: 'center', justifyContent: 'center', gap: T.gap.sm }}><View style={{ width: 44, height: 44, borderRadius: T.radius.sm, backgroundColor: C.yellow, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 22 }}>＋</Text></View><Text style={{ fontSize: 13, fontWeight: '900' }}>새 세트</Text><Text style={{ fontSize: 10, color: C.muted }}>원캐릭터부터 시작</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="새 이모티콘 세트" onPress={() => setNewProjectOpen(true)} style={{ width: projectCardWidth, minHeight: projectCardWidth - 34, borderRadius: T.radius.lg, borderWidth: 1, borderStyle: 'dashed', borderColor: '#D3CCC1', backgroundColor: '#FFFCF8', alignItems: 'center', justifyContent: 'center', gap: 6 }}><View style={{ width: 40, height: 40, borderRadius: T.radius.sm, backgroundColor: C.yellow, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20 }}>＋</Text></View><Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>새 세트</Text><Text style={{ fontSize: 10, color: C.muted }}>원캐릭터부터 시작</Text></Pressable>
           </View>
         </> : canonOpen ? <>
-          <Preview image={project.canon.image} label="원캐릭터" size={160} />
-          <Action title="원캐릭터 이미지 선택" disabled={!!busy} onPress={() => task('이미지 저장 중…', async () => { const images = await pickImages(); if (!images[0]) return; const image = await analyzed(images[0]); updateProject(p => ({ ...p, canon: { ...p.canon, image }, slots: p.slots.map(s => ({ ...s, qa: undefined, status: s.finalImage ? 'REVIEW' : s.status })) })); })} />
-          <Field label="프로젝트 이름" value={project.projectName} onChangeText={projectName => updateProject(p => ({ ...p, projectName }))} multiline={false} />
-          <Field label="캐릭터 이름" value={project.characterName} onChangeText={characterName => updateProject(p => ({ ...p, characterName }))} multiline={false} />
-          {([['personality', '성격'], ['speech', '말투'], ['locked', '꼭 유지할 특징'], ['variable', '바꿔도 되는 특징']] as const).map(([key, label]) => <Field key={key} label={label} value={project.canon[key]} onChangeText={value => updateProject(p => ({ ...p, canon: { ...p.canon, [key]: value } }))} />)}
+          {(() => {
+            const pickCanon = () => task('이미지 저장 중…', async () => { const images = await pickImages(); if (!images[0]) return; const image = await analyzed(images[0]); updateProject(p => ({ ...p, canon: { ...p.canon, image }, slots: p.slots.map(s => ({ ...s, qa: undefined, status: s.finalImage ? 'REVIEW' : s.status })) })); });
+            return <>
+              <View style={{ flexDirection: 'row', gap: T.gap.md, alignItems: 'center' }}>
+                <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 이미지 선택" disabled={!!busy} onPress={pickCanon} style={{ width: 116, height: 116, borderRadius: T.radius.lg, backgroundColor: project.canon.image ? '#F0ECE5' : '#FFFCF8', borderWidth: 1, borderStyle: project.canon.image ? 'solid' : 'dashed', borderColor: project.canon.image ? C.line : '#D3CCC1', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  {project.canon.image
+                    ? <Image accessibilityLabel="원캐릭터" source={{ uri: imageUri(project.canon.image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                    : <><Doodle /><Text style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>그림 고르기</Text></>}
+                </Pressable>
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Text style={styles.label}>캐릭터 이름</Text>
+                  <TextInput accessibilityLabel="캐릭터 이름" value={project.characterName} onChangeText={characterName => updateProject(p => ({ ...p, characterName }))} style={styles.input} placeholder="이름" placeholderTextColor="#918B82" />
+                  {!!project.canon.image && <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 그림 바꾸기" disabled={!!busy} onPress={pickCanon} style={{ minHeight: 36, justifyContent: 'center' }}><Text style={{ fontSize: 12, color: C.muted }}>그림 바꾸기</Text></Pressable>}
+                </View>
+              </View>
+              <Text style={[styles.muted, { fontSize: 12 }]}>이 캐릭터를 32칸 내내 같은 모습으로 유지해요.</Text>
+
+              <Text style={styles.subtitle}>어떤 캐릭터인가요</Text>
+              {([['personality', '성격'], ['speech', '말투']] as const).map(([key, label]) => <Field key={key} label={label} value={project.canon[key]} onChangeText={value => updateProject(p => ({ ...p, canon: { ...p.canon, [key]: value } }))} />)}
+
+              <Text style={styles.subtitle}>그릴 때 지킬 것</Text>
+              {([['locked', '꼭 유지할 특징'], ['variable', '바꿔도 되는 특징']] as const).map(([key, label]) => <Field key={key} label={label} value={project.canon[key]} onChangeText={value => updateProject(p => ({ ...p, canon: { ...p.canon, [key]: value } }))} />)}
+
+              <View style={{ borderTopWidth: 1, borderColor: C.line, paddingTop: T.gap.md }}>
+                <Field label="세트 이름" value={project.projectName} onChangeText={projectName => updateProject(p => ({ ...p, projectName }))} multiline={false} />
+              </View>
+            </>;
+          })()}
         </> : screen === 'planning' ? <>
           {(() => {
             const done = plannedSlots(project).length;
@@ -319,13 +342,13 @@ function Studio() {
                 <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 설정" onPress={() => setCanonOpen(true)} style={{ width: 52, height: 52, borderRadius: T.radius.md, backgroundColor: project.canon.image ? '#F0ECE5' : C.peach, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>{project.canon.image ? <Image source={{ uri: imageUri(project.canon.image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>원캐</Text>}</Pressable>
                 <View style={{ flex: 1, gap: 5 }}>
                   <View style={{ height: 6, borderRadius: 3, backgroundColor: '#EEE8DF', overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / SPEC.count * 100)}%`, height: '100%', backgroundColor: C.coral }} /></View>
-                  <Text style={{ fontSize: 11, color: C.muted }}>{done} / {SPEC.count} 완성 · 기획 {ready}칸</Text>
+                  <Text style={{ fontSize: 11, color: C.muted }}>기획 {ready}칸 · 완성 {done}칸</Text>
                 </View>
-                <Pressable accessibilityRole="button" accessibilityLabel={next.label} onPress={next.onPress} style={{ minHeight: T.tap, paddingHorizontal: 14, borderRadius: T.radius.md, backgroundColor: C.coral, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '900', color: '#FFF' }}>{next.label}</Text></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={next.label} onPress={next.onPress} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 22, backgroundColor: C.coral, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '800', color: '#FFF' }}>{next.label}</Text></Pressable>
               </View>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <Pressable accessibilityRole="button" accessibilityLabel="세트 기획" onPress={() => { setScreen('planning'); setOpenSlot(null); }} style={{ flex: 1, minHeight: 42, borderRadius: T.radius.sm, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>세트 기획</Text></Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel="전체 보기" onPress={() => setScreen('preview')} style={{ flex: 1, minHeight: 42, borderRadius: T.radius.sm, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>전체 보기</Text></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="세트 기획" onPress={() => { setScreen('planning'); setOpenSlot(null); }} style={{ flex: 1, minHeight: 40, borderRadius: 20, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>세트 기획</Text></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="전체 보기" onPress={() => setScreen('preview')} style={{ flex: 1, minHeight: 40, borderRadius: 20, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>전체 보기</Text></Pressable>
               </View>
             </>;
           })()}

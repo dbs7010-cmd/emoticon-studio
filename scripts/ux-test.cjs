@@ -73,6 +73,10 @@ const saved=async(dirty=true)=>{
  await act(async()=>{tree=create(React.createElement(App));});
  assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 이모티콘 세트').length,1,'home uses compact new-set action');
  await press('이전 프로젝트');
+ const styleOf=node=>Object.assign({},...[node.props.style].flat(9).filter(Boolean));
+ const coral=tree.root.findAll(n=>n.type==='Pressable'&&styleOf(n).backgroundColor==='#FF7A59');
+ assert.equal(coral.length,1,'the board offers exactly one strong action');
+ for(const label of ['세트 기획','전체 보기'])assert.notEqual(styleOf(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel===label)[0]).backgroundColor,'#FF7A59',label+' is secondary');
  assert.equal(tiles().length,32);assert.equal(tiles()[0].findAllByType('Image').length,1);
  const tile=n=>tiles().find(t=>t.props.testID==='slot-'+n);
  assert.equal(tile(2).findAllByType('Image').length,0,'an undrawn slot shows no artwork');
@@ -147,6 +151,10 @@ const saved=async(dirty=true)=>{
  assert.equal(labelled('연필').length,0,'and the options close again');
  for(const gone of ['펜 굵기 늘리기','펜 굵기 줄이기','지우개 크기 늘리기','지우개 크기 줄이기'])assert.equal(labelled(gone).length,0,'size is a slider, not a stepper: '+gone);
  assert.ok(!load('src/painter/canvas-html.ts').canvasHtml.includes('체크 무늬'),'no permanent caption is painted over the canvas');
+ const canvasBox=Object.assign({},...[tree.root.findByType('WebView').props.style].flat(9).filter(Boolean));
+ assert.equal(canvasBox.aspectRatio,1,'the canvas keeps the square shape it exports, leaving no dead strip');
+ assert.ok(!/eeeae3/i.test(load('src/painter/canvas-html.ts').canvasHtml.split('<script>')[0]),'and its ground matches the app, not a foreign grey');
+ assert.ok(!shown().some(t=>t.includes('\n')&&t.includes('따라 그릴')),'the reference label stays on one line');
  assert.equal(labelled('기획 보기').length,1,'the plan is recallable from the canvas');
  await press('기획 보기');
  assert.ok(shown().some(t=>t==='감정 유지'),'it recalls the planned feeling');
