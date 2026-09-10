@@ -32,6 +32,10 @@ export function droppedImagePaths(before: Store, after: Store): string[] {
   const kept = storeImagePaths(after);
   return [...storeImagePaths(before)].filter(path => !kept.has(path));
 }
+// Everyday reactions a sticker set usually needs. A starting point when someone is stuck,
+// never a checklist: nothing in the app requires any of these to be used.
+export const IDEA_SUGGESTIONS = ['안녕!', '고마워', '미안해', '좋아!', '싫어', '헐', 'ㅋㅋㅋ', '슬퍼', '화났어', '사랑해', '축하해', '화이팅!', '잘자', '배고파', '기다려', '바빠', '피곤해', '무대사'] as const;
+export const NO_DIALOGUE_IDEA = '무대사';
 export function planningKey(text: string): string {
   return text.normalize('NFKC').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
 }

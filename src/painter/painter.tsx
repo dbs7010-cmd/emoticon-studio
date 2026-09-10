@@ -167,15 +167,15 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
           } catch (e) { unlock(); Alert.alert('그리기 오류', String(e)); }
         }} style={{ width: '100%', aspectRatio: 1, maxHeight: '100%', backgroundColor: C.bg }} />
 
-        <Pressable accessibilityRole="button" accessibilityLabel={showCanon ? '원캐릭터 닫기' : '원캐릭터 보기'} accessibilityState={{ expanded: showCanon }} onPress={() => { setShowCanon(!showCanon); setShowBrief(false); }} style={{ position: 'absolute', left: 8, top: 8, width: 44, height: 44, padding: 3, borderRadius: 13, backgroundColor: '#FFFFFFD9', borderWidth: 1, borderColor: showCanon ? C.coral : '#E7E2D8', alignItems: 'center', justifyContent: 'center' }}>
-          {canon ? <Image source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%', borderRadius: 10 }} resizeMode="contain" /> : <Text style={{ fontSize: 10, fontWeight: '700', color: '#B4ADA3' }}>원캐</Text>}
-        </Pressable>
-        {!!brief.length && <Pressable accessibilityRole="button" accessibilityLabel={showBrief ? '기획 닫기' : '기획 보기'} accessibilityState={{ expanded: showBrief }} onPress={() => { setShowBrief(!showBrief); setShowCanon(false); }} style={{ position: 'absolute', left: 8, top: 56, width: 44, height: 36, borderRadius: 13, backgroundColor: '#FFFFFFD9', borderWidth: 1, borderColor: showBrief ? C.coral : '#E7E2D8', alignItems: 'center', justifyContent: 'center' }}>
+        {!!canon && <Pressable accessibilityRole="button" accessibilityLabel={showCanon ? '원캐릭터 닫기' : '원캐릭터 보기'} accessibilityState={{ expanded: showCanon }} onPress={() => { setShowCanon(!showCanon); setShowBrief(false); }} style={{ position: 'absolute', left: 8, top: 8, width: 44, height: 44, padding: 3, borderRadius: 13, backgroundColor: '#FFFFFFD9', borderWidth: 1, borderColor: showCanon ? C.coral : '#E7E2D8', alignItems: 'center', justifyContent: 'center' }}>
+          <Image source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%', borderRadius: 10 }} resizeMode="contain" />
+        </Pressable>}
+        {!!brief.length && <Pressable accessibilityRole="button" accessibilityLabel={showBrief ? '기획 닫기' : '기획 보기'} accessibilityState={{ expanded: showBrief }} onPress={() => { setShowBrief(!showBrief); setShowCanon(false); }} style={{ position: 'absolute', left: 8, top: canon ? 56 : 8, width: 44, height: 36, borderRadius: 13, backgroundColor: '#FFFFFFD9', borderWidth: 1, borderColor: showBrief ? C.coral : '#E7E2D8', alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ fontSize: 10, fontWeight: '900', color: showBrief ? C.coral : C.muted }}>기획</Text>
         </Pressable>}
         {showBrief && <>
           <Pressable accessibilityRole="button" accessibilityLabel="기획 바깥 닫기" onPress={() => setShowBrief(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
-          <View style={{ position: 'absolute', left: 8, top: 96, width: 208, padding: 10, borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 10, gap: 5 }}>
+          <View style={{ position: 'absolute', left: 8, top: canon ? 96 : 56, width: 208, padding: 10, borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 10, gap: 5 }}>
             {brief.map(([label, value]) => <View key={label} style={{ flexDirection: 'row', gap: 6 }}>
               <Text style={{ width: 44, fontSize: 10, fontWeight: '900', color: C.muted }}>{label}</Text>
               <Text style={{ flex: 1, fontSize: 11, color: C.ink }}>{value.trim()}</Text>

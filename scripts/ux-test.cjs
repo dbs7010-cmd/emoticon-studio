@@ -71,17 +71,56 @@ const saved=async(dirty=true)=>{
 };
 (async()=>{
  await act(async()=>{tree=create(React.createElement(App));});
- assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 이모티콘 세트').length,1,'home uses compact new-set action');
- const newSetCard=Object.assign({},...[tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 이모티콘 세트')[0].props.style].flat(9).filter(Boolean));
+ const shown=()=>tree.root.findAll(n=>n.type==='Text').map(n=>String(n.children?.join('')));
+ const labelled=label=>tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel===label);
+ assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 세트 만들기').length,1,'home offers one way to start a set');
+ const newSetCard=Object.assign({},...[tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 세트 만들기')[0].props.style].flat(9).filter(Boolean));
  assert.ok(newSetCard.minHeight<=120,'the new-set card stays an action, not a peer project card: '+newSetCard.minHeight);
+ await press('새 세트 만들기');
+ assert.equal(tree.root.findAll(n=>n.type==='TextInput').length,0,'a new set asks for nothing before it opens');
+ assert.equal(tiles().length,32,'it lands on the board');
+ assert.equal(loadStore().store.projects.at(-1).projectName,'새 이모티콘 세트','and names itself');
+ assert.equal(loadStore().store.projects.at(-1).canon.image,undefined,'with no canon required');
+ await act(async()=>tiles()[0].props.onPress());
+ assert.equal(tree.root.findAllByType('WebView').length,1,'an empty slot opens the painter with no setup at all');
+ await init();await press('홈');await saved(false);
+ // Ideas are a helper, never homework: one tap files a suggestion on the next free slot.
+ await press('아이디어');
+ assert.equal(tree.root.findAll(n=>n.type==='Text'&&String(n.children?.join(''))==='아이디어').length,1,'the screen is named once, in the app bar only');
+ assert.ok(shown().some(t=>t.includes('안 써도')),'and it says using it is optional');
+ assert.equal(labelled('아이디어 안녕!').length,1,'suggestions are offered ready-made');
+ const fresh=()=>loadStore().store.projects.at(-1);
+ const firstFree=()=>fresh().slots.find(s=>!s.finalImage&&!s.dialogue.trim()&&!s.noDialogue).number;
+ const target=firstFree();
+ await press('아이디어 안녕!');
+ const filed=fresh().slots[target-1];
+ assert.equal(filed.dialogue,'안녕!','the idea lands on the next free slot');
+ assert.equal(filed.status,'PLANNED','and the slot counts as planned');
+ assert.equal(filed.emotion,'','with nothing else demanded of the user');
+ assert.equal(filed.situation,'');assert.equal(filed.poseGuide,'');assert.equal(filed.compositionGuide,'');
+ const silentTarget=firstFree();
+ await press('아이디어 무대사');
+ assert.equal(fresh().slots[silentTarget-1].noDialogue,true,'a wordless slot can be filed too');
+ const typedTarget=firstFree();
+ await act(async()=>tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='직접 쓰기')[0].props.onChangeText('내 맘대로'));
+ await press('아이디어 추가');
+ assert.equal(fresh().slots[typedTarget-1].dialogue,'내 맘대로','and anything can be written by hand');
+ assert.equal(labelled(`${String(target).padStart(2,'0')}번 아이디어 지우기`).length,1,'a filed idea can be taken back');
+ await press(`${String(target).padStart(2,'0')}번 아이디어 지우기`);
+ assert.equal(fresh().slots[target-1].dialogue,'','clearing an idea empties the slot again');
+ assert.equal(fresh().slots[target-1].status,'EMPTY');
+ assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&/번 칸 기획$/.test(n.props.accessibilityLabel??'')).length,0,'the 32-row form is gone');
+ for(const gone of ['감정','상황','포즈/행동','구도'])assert.equal(tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel===gone).length,0,gone+' is no longer asked for');
+ await press('뒤로');
+ await press('뒤로');
  await press('이전 프로젝트');
  const styleOf=node=>Object.assign({},...[node.props.style].flat(9).filter(Boolean));
  const coral=tree.root.findAll(n=>n.type==='Pressable'&&styleOf(n).backgroundColor==='#FF7A59');
  assert.equal(coral.length,1,'the board offers exactly one strong action');
- for(const label of ['세트 기획','전체 보기'])assert.notEqual(styleOf(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel===label)[0]).backgroundColor,'#FF7A59',label+' is secondary');
+ for(const label of ['아이디어','전체 보기'])assert.notEqual(styleOf(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel===label)[0]).backgroundColor,'#FF7A59',label+' is secondary');
  assert.equal(tiles().length,32);assert.equal(tiles()[0].findAllByType('Image').length,1);
  // CANON reads as a character sheet: the drawing leads and the traits share one surface.
- await press('원캐릭터 설정');
+ await press('프로젝트 메뉴');await press('캐릭터 메모');
  assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='원캐릭터 이미지 선택').length,1,'the drawing itself is the one way to choose it');
  const canonField=label=>tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel===label);
  for(const l of ['캐릭터 이름','성격','말투','꼭 유지할 특징','바꿔도 되는 특징','세트 이름'])assert.equal(canonField(l).length,1,'canon keeps its field: '+l);
@@ -115,8 +154,6 @@ const saved=async(dirty=true)=>{
  const added=lastCommand('addReferences').references;assert.equal(added.length,2);
  scene.references.push(...added);await message(scene);
  assert.ok(loadStore().store.projects[0].slots.every(s=>s.referenceImages.length===3),'new references are shared across every slot');
- const shown=()=>tree.root.findAll(n=>n.type==='Text').map(n=>String(n.children?.join('')));
- const labelled=label=>tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel===label);
  const box=label=>Object.assign({},...[labelled(label)[0].props.style].flat(9).filter(Boolean));
  assert.ok(shown().some(t=>t.includes('따라 그릴')),'reference strip is labelled in plain Korean');
  const thumb=labelled('참고 1 선택');
@@ -222,55 +259,14 @@ const saved=async(dirty=true)=>{
  assert.equal(loadStore().store.projects[0].lastSlot,1,'a save records where the user was working');
  await press('홈');await saved(false);
 
- // Set planning: dialogue, no-dialogue, guides and reference choice, all before Painter.
- await press('세트 기획');
- assert.equal(tree.root.findAll(n=>n.type==='Text'&&String(n.children?.join(''))==='세트 기획').length,1,'the screen is named once, in the app bar only');
- assert.ok(shown().some(t=>t.startsWith('기획한 칸 ')),'planning counts planned slots, not finished drawings');
- assert.ok(!shown().some(t=>/기획한 칸 .*완성/.test(t)),'and never calls them 완성');
- const planningRow=label=>Object.assign({},...[tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel===label)[0].props.style].flat(9).filter(Boolean));
- const rowHeight=planningRow('02번 칸 기획').minHeight;
- assert.ok(rowHeight>=48&&rowHeight<=64,'a collapsed planning row is a list row, not a card: '+rowHeight);
- assert.equal(tree.root.findAll(n=>n.type==='TextInput').length,0,'rows stay collapsed until opened');
- await press('02번 칸 기획');
- assert.ok(tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='대사').length===1,'opening a row reveals its fields in place');
- const field=label=>tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel===label)[0];
- const revision=()=>loadStore().store.revision;
- const beforeTyping=revision();
- for(const text of ['반','반가','반가움'])await act(async()=>field('감정').props.onChangeText(text));
- assert.equal(revision(),beforeTyping,'typing does not rewrite the whole store on every keystroke');
- assert.equal(field('감정').props.value,'반가움','but the field shows what was typed');
- await act(async()=>field('포즈/행동').props.onChangeText('손 흔들기'));
- await press('02번 칸 기획');
- assert.equal(loadStore().store.projects[0].slots[1].emotion,'반가움','collapsing the row writes the pending edit');
- assert.equal(loadStore().store.projects[0].slots[1].poseGuide,'손 흔들기','including every field that was staged');
- await press('02번 칸 기획');
- await act(async()=>field('상황').props.onChangeText('아침'));
- await act(async()=>{appState.forEach(fn=>fn('background'));});
- assert.equal(loadStore().store.projects[0].slots[1].situation,'아침','leaving the foreground writes it too');
- await press('02번 무대사');
- assert.equal(loadStore().store.projects[0].slots[1].noDialogue,true,'a slot can be planned with no dialogue');
- assert.equal(tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='대사').length,0,'no-dialogue hides the dialogue field');
- assert.equal(loadStore().store.projects[0].slots[1].dialogue,p.slots[1].dialogue,'the original dialogue text is kept, not destroyed');
- assert.equal(labelled('참고 추가').length,1,'references can be gathered from planning itself');
- const thumbs=()=>tree.root.findAll(n=>n.type==='Pressable'&&/^02번 참고 \d$/.test(n.props.accessibilityLabel??''));
- assert.ok(thumbs().length>=2,'existing references are offered for reuse');
- assert.ok(thumbs().every(t=>!t.props.accessibilityState?.selected),'nothing looks chosen until the user chooses');
- await press('02번 참고 2');
- const chosen=loadStore().store.projects[0].slots[1].referenceKey;
- assert.equal(chosen,loadStore().store.projects[0].slots[1].referenceImages[1].path,'a reference can be assigned per slot');
- assert.equal(thumbs().filter(t=>t.props.accessibilityState?.selected).length,1,'and only that one looks chosen');
- await press('02번 참고 없음');
- assert.equal(loadStore().store.projects[0].slots[1].referenceKey,'','a slot can be set to use no reference');
- assert.ok(thumbs().every(t=>!t.props.accessibilityState?.selected),'no thumbnail is selected then');
- await press('02번 참고 2');
- await act(async()=>tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='감정')[0].props.onChangeText('감정 유지'));
- assert.ok(shown().some(t=>t.includes('감정이')&&t.includes('넣어보세요')),'a lopsided emotion mix is flagged locally');
- assert.ok(shown().some(t=>t.includes('상황이')&&t.includes('넣어보세요')),'and so is a lopsided situation mix');
- assert.ok(!shown().some(t=>t.includes('자주 쓸 말부터')),'a fully planned set is not shown beginner guidance');
 
- // Planning feeds Painter: the assigned reference is the one already switched on.
- await press('이 칸 그리기');
- assert.equal(tree.root.findAllByType('WebView').length,1,'planning leads straight into Painter');
+ // Legacy planning data keeps working: a slot that already names a reference opens with it on.
+ const chosen=scene.references[1].path;
+ saveStore({...loadStore().store,projects:loadStore().store.projects.map(x=>x.id===p.id?{...x,slots:x.slots.map(s=>s.number===2?{...s,referenceKey:chosen}:s)}:x)});
+ await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
+ await press('이전 프로젝트');
+ await act(async()=>tiles()[1].props.onPress());
+ assert.equal(tree.root.findAllByType('WebView').length,1,'the slot opens straight into the painter');
  await message({type:'ready'});
  const planned=lastCommand('init');
  assert.equal(planned.references.find(r=>r.path===chosen).visible,true,'the planned reference is on');
@@ -312,9 +308,9 @@ const saved=async(dirty=true)=>{
  assert.ok(confirm.some(t=>t.includes('되돌릴 수 없')),'confirmation warns the delete is permanent');
  await press('이 세트 삭제');
  const left=loadStore().store;
- assert.equal(left.projects.length,1,'the deleted set is gone from storage');
- assert.equal(left.projects[0].id,p.id,'the other set survives');
- assert.deepEqual(left.projects[0],survivor,'the surviving set keeps every slot and image');
+ assert.ok(!left.projects.some(x=>x.id===other.id),'the deleted set is gone from storage');
+ assert.ok(left.projects.some(x=>x.id===p.id),'the other set survives');
+ assert.deepEqual(left.projects.find(x=>x.id===p.id),survivor,'the surviving set keeps every slot and image');
  for(const path of otherPaths)assert.equal(files.has(localFile(path).uri),false,'deleted set leaves no orphan image: '+path);
  for(const path of ['image-old.png','image-r2.png','image-r3.png'])assert.equal(files.has(localFile(path).uri),true,'other set keeps its images: '+path);
  for(const name of ['store-a.json','store-b.json'])assert.equal(files.has(localFile(name).uri),true,'store snapshots are never deleted: '+name);
@@ -322,24 +318,24 @@ const saved=async(dirty=true)=>{
  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
  assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='다른 프로젝트').length,0,'a restart does not bring the deleted set back');
  await press('이전 프로젝트 관리');await press('세트 삭제');await press('이 세트 삭제');
- assert.equal(loadStore().store.projects.length,0,'the last set can be removed too');
+ for(const left of loadStore().store.projects){await press(`${left.projectName} 관리`);await press('세트 삭제');await press('이 세트 삭제');}
+ assert.ok(!loadStore().store.projects.some(x=>x.id===p.id),'any set can be removed');
  assert.ok(tree.root.findAll(n=>n.type==='Text').some(n=>String(n.children?.join(''))==='아직 세트가 없어요'),'an empty workshop explains itself');
- assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 이모티콘 세트').length,1,'and still offers the one action that matters');
+ assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 세트 만들기').length,1,'and still offers the one action that matters');
 
- // First use: a new set is greeted with guidance, never with a warning.
- await press('새 이모티콘 세트');
- await act(async()=>tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='프로젝트 이름')[0].props.onChangeText('첫 세트'));
- await act(async()=>tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='캐릭터 이름')[0].props.onChangeText('콩이'));
- await press('세트 만들기');
- const fresh=()=>tree.root.findAll(n=>n.type==='Text').map(n=>String(n.children?.join('')));
- assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='원캐릭터 정하기').length,1,'the board points at the first real step');
- await press('세트 기획');
- assert.ok(fresh().some(t=>t.includes('자주 쓸 말부터')),'an unplanned set opens with guidance');
- assert.ok(!fresh().some(t=>t.includes('남았어요')),'and is not warned about the 32 empty slots');
- assert.ok(fresh().some(t=>t==='기획한 칸 0 / 32'),'progress counts planning, not drawings');
- await press('01번 칸 기획');
- assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='참고 추가').length,1,'references can be added even with none yet');
- assert.ok(fresh().some(t=>t.includes('따라 그릴 사진을 더하면')),'and the empty state says so');
+ // First use, with nothing in the workshop: one tap makes a set, the next tap draws.
+ await press('새 세트 만들기');
+ assert.equal(tree.root.findAll(n=>n.type==='TextInput').length,0,'still nothing to fill in');
+ assert.equal(loadStore().store.projects.length,1,'the set exists straight away');
+ assert.equal(tiles().length,32,'and its board is what opens');
+ assert.equal(labelled('첫 칸 그리기').length,1,'the one strong action is to draw');
+ assert.equal(labelled('원캐릭터 정하기').length+labelled('세트 기획 시작').length,0,'nothing asks for setup first');
+ assert.equal(labelled('세트 참고').length,0,'and no canon control appears until there is a canon');
+ await act(async()=>tiles()[0].props.onPress());
+ assert.equal(tree.root.findAllByType('WebView').length,1,'two taps from an empty workshop to drawing');
+ assert.equal(labelled('원캐릭터 보기').length,0,'the painter shows no canon control without a canon');
+ assert.equal(labelled('기획 보기').length,0,'and no plan control without a plan');
+ await init();await press('홈');await saved(false);
  await act(async()=>tree.unmount());
 
  console.log('PASS: workshop home, 32 direct Painter entries, finger-sized touch targets, drawings-only rail with no jargon, reference select separated from visibility, quick fade without long press, pen/fill/eraser segment with one draggable size slider, colour memory, set planning with no-dialogue and per-slot reference, planning feeds Painter, autosave on backgrounding, final preview, offline QA, single-bundle export, layered persistence, save-next flow, restart, old data compatibility, guarded set deletion scoped to one project. Native modules/WebView mocked; touch gestures require device test.');
