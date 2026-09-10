@@ -19,6 +19,17 @@ const guideFields = [['expressionGuide', '표정 가이드'], ['poseGuide', '포
 const colors: Record<string, string> = { PASS: '#55B989', WARNING: '#E7A93C', FAIL: '#E35C62', EMPTY: '#A5A097', DRAWING: '#67A9E8', REVIEW: '#A786DF', PLANNED: '#75C79C' };
 const C = T;
 function Checks({ checks }: { checks: Check[] }) { return <>{checks.filter(c => c.status !== 'PASS').map(c => <View key={c.label} style={{ gap: 4 }}><Text style={{ color: colors[c.status], fontWeight: '700' }}>{c.status} · {c.label}</Text><Text style={styles.muted}>{c.detail}</Text></View>)}</>; }
+// A rough, hand-drawn mark: friendly, and never better drawn than the user's own work.
+function Doodle() {
+  return <View style={{ width: 96, height: 64, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: 70, height: 46, borderRadius: 16, borderWidth: 2, borderColor: '#D8D1C6', transform: [{ rotate: '-3deg' }] }} />
+    <View style={{ position: 'absolute', left: 26, top: 24, width: 7, height: 7, borderRadius: 4, backgroundColor: C.ink }} />
+    <View style={{ position: 'absolute', left: 46, top: 24, width: 7, height: 7, borderRadius: 4, backgroundColor: C.ink }} />
+    <View style={{ position: 'absolute', left: 33, top: 38, width: 18, height: 2, borderRadius: 2, backgroundColor: C.ink, transform: [{ rotate: '4deg' }] }} />
+    <View style={{ position: 'absolute', right: 6, top: 6, width: 10, height: 2, borderRadius: 2, backgroundColor: C.yellow, transform: [{ rotate: '40deg' }] }} />
+    <View style={{ position: 'absolute', right: 10, top: 2, width: 2, height: 10, borderRadius: 2, backgroundColor: C.yellow, transform: [{ rotate: '40deg' }] }} />
+  </View>;
+}
 function mergeImages(existing: LocalImage[], added: LocalImage[]) { return [...existing, ...added.filter(image => !existing.some(current => current.path === image.path))]; }
 export default function App() { return <SafeAreaProvider><Studio /></SafeAreaProvider>; }
 function Studio() {
@@ -142,6 +153,11 @@ function Studio() {
         {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="알림 닫기" onPress={() => setNotice('')} style={{ padding: 8, borderRadius: 12, backgroundColor: '#FFF6D8' }}><Text>{notice} ×</Text></Pressable>}
         {loadError ? <><Text selectable>{loadError}</Text><Action title="다시 불러오기" onPress={load} /></> : !store ? <Text>불러오는 중…</Text> : !project ? <>
           <View style={{ marginBottom: 2 }}><Text style={styles.title}>내 작업실</Text><Text style={[styles.muted, { marginTop: 4 }]}>그려 저장하고, 한 세트를 끝내요.</Text></View>
+          {!store.projects.length && <View style={{ alignItems: 'center', paddingVertical: 8, gap: 8 }}>
+            <Doodle />
+            <Text style={{ fontSize: 14, fontWeight: '900', color: C.ink }}>아직 세트가 없어요</Text>
+            <Text style={{ fontSize: 12, color: C.muted, textAlign: 'center', lineHeight: 18 }}>원캐릭터를 정하고, 32칸을 채우고,{'\n'}제출 파일까지 한 번에 끝낼 수 있어요.</Text>
+          </View>}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {store.projects.map((p, index) => {
               const cover = p.canon.image ?? p.slots.find(s => s.finalImage)?.finalImage;
@@ -276,7 +292,7 @@ function Studio() {
       {issues.status === 'PASS' ? <Text style={{ fontSize: 15, fontWeight: '800', color: colors.PASS }}>기본 검사는 모두 통과했어요.</Text> : <Checks checks={[...issues.checks, ...issues.consistency]} />}
       {(issues.notes ?? []).map(note => <Text key={note} style={{ fontSize: 11, color: C.muted }}>{note}</Text>)}
     </Dialog>}
-    {painting && project && slot && <Painter key={project.id + '/' + slot.number} slot={slot} slotCount={project.slots.length} canon={project.canon.image} palette={store?.palette ?? []} onColorUsed={rememberColor}
+    {painting && project && slot && <Painter key={project.id + '/' + slot.number} slot={slot} slotCount={project.slots.length} canon={project.canon.image} canonName={project.characterName} canonLocked={project.canon.locked} palette={store?.palette ?? []} onColorUsed={rememberColor}
       onClose={() => { setPainting(false); setSlotNumber(null); setDetail(false); }}
       onNavigate={number => { setSlotNumber(number); setDetail(false); }}
       onAddReferences={async () => { const added = await pickImages(true); if (added.length) changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => ({ ...s, referenceImages: mergeImages(s.referenceImages, added) })) })); return added; }}

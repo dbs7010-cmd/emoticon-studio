@@ -143,6 +143,15 @@ const saved=async(dirty=true)=>{
  assert.equal(labelled('연필').length,0,'and the options close again');
  for(const gone of ['펜 굵기 늘리기','펜 굵기 줄이기','지우개 크기 늘리기','지우개 크기 줄이기'])assert.equal(labelled(gone).length,0,'size is a slider, not a stepper: '+gone);
  assert.ok(!load('src/painter/canvas-html.ts').canvasHtml.includes('체크 무늬'),'no permanent caption is painted over the canvas');
+ assert.equal(labelled('원캐릭터 보기').length,1,'the canon sits one tap away from the canvas');
+ const modalsBefore=tree.root.findAllByType('Modal').length;
+ await press('원캐릭터 보기');
+ assert.equal(tree.root.findAllByType('Modal').length,modalsBefore,'it opens in place, not as another screen');
+ assert.equal(tree.root.findAll(n=>n.type==='Image'&&n.props.accessibilityLabel==='원캐릭터 그림').length,1,'the reference drawing is shown');
+ assert.ok(shown().some(t=>t.includes('둥근 눈')),'and the traits worth keeping');
+ assert.equal(labelled('원캐릭터 바깥 닫기').length,1,'tapping outside closes it');
+ await press('원캐릭터 닫기');
+ assert.equal(tree.root.findAll(n=>n.type==='Image'&&n.props.accessibilityLabel==='원캐릭터 그림').length,0,'and it closes again');
  const sizeSlider=name=>tree.root.findAll(n=>n.props.testID===name);
  assert.equal(sizeSlider('펜 굵기').length,1,'pen size is a draggable slider');
  await act(async()=>sizeSlider('펜 굵기')[0].findByType('Slider').props.onValueChange(19));
@@ -249,6 +258,10 @@ const saved=async(dirty=true)=>{
  assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='다른 프로젝트').length,0,'home drops the card immediately');
  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
  assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='다른 프로젝트').length,0,'a restart does not bring the deleted set back');
+ await press('이전 프로젝트 관리');await press('세트 삭제');await press('이 세트 삭제');
+ assert.equal(loadStore().store.projects.length,0,'the last set can be removed too');
+ assert.ok(tree.root.findAll(n=>n.type==='Text').some(n=>String(n.children?.join(''))==='아직 세트가 없어요'),'an empty workshop explains itself');
+ assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 이모티콘 세트').length,1,'and still offers the one action that matters');
  await act(async()=>tree.unmount());
 
  console.log('PASS: workshop home, 32 direct Painter entries, finger-sized touch targets, drawings-only rail with no jargon, reference select separated from visibility, quick fade without long press, pen/fill/eraser segment with one draggable size slider, colour memory, set planning with no-dialogue and per-slot reference, planning feeds Painter, autosave on backgrounding, final preview, offline QA, single-bundle export, layered persistence, save-next flow, restart, old data compatibility, guarded set deletion scoped to one project. Native modules/WebView mocked; touch gestures require device test.');

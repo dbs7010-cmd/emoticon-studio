@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Host, Slider } from '@expo/ui';
 import { WebView } from 'react-native-webview';
 import { canvasHtml } from './canvas-html';
-import { Dialog, Preview, T } from '../components/ui';
+import { Dialog, T } from '../components/ui';
 import { dataUrl } from '../services/images';
 import { imageUri } from '../services/storage';
 import type { LayerTransform, LocalImage, PainterExport, QA, Slot } from '../types';
@@ -22,6 +22,8 @@ type Props = {
   slot: Slot;
   slotCount: number;
   canon?: LocalImage;
+  canonName: string;
+  canonLocked: string;
   palette: string[];
   onSave: (payload: PainterExport, dialogue: string) => QA | undefined;
   onColorUsed: (color: string) => void;
@@ -46,7 +48,7 @@ const swatches = [
   '#765044', '#A77559', '#D7B79B', '#F0D8BF',
 ];
 
-export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, onClose, onNavigate, onAddReferences, onRemoveReference, onShare }: Props) {
+export function Painter({ slot, slotCount, canon, canonName, canonLocked, palette, onSave, onColorUsed, onClose, onNavigate, onAddReferences, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<'stay' | 'close' | 'share' | number>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
@@ -127,7 +129,7 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
   }
 
   const dock = { borderTopWidth: 1, borderColor: C.line, backgroundColor: C.paper } as const;
-  return <Modal onRequestClose={() => save('close')} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+  return <Modal onRequestClose={() => { if (showCanon) { setShowCanon(false); return; } save('close'); }} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={{ minHeight: 52, paddingHorizontal: 2, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: C.line }}>
         <Bar label="홈" glyph="홈" text disabled={busy} onPress={() => save('close')} />
@@ -163,7 +165,21 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
           } catch (e) { unlock(); Alert.alert('그리기 오류', String(e)); }
         }} style={{ flex: 1, backgroundColor: '#EEEAE3' }} />
 
-        {canon && <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 보기" onPress={() => setShowCanon(true)} style={{ position: 'absolute', left: 10, top: 10, width: C.tap, height: C.tap, padding: 3, borderRadius: 14, backgroundColor: '#FFFFFFE8', borderWidth: 1, borderColor: C.line, elevation: 3 }}><Image source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%', borderRadius: 10 }} resizeMode="contain" /></Pressable>}
+        <Pressable accessibilityRole="button" accessibilityLabel={showCanon ? '원캐릭터 닫기' : '원캐릭터 보기'} accessibilityState={{ expanded: showCanon }} onPress={() => setShowCanon(!showCanon)} style={{ position: 'absolute', left: 10, top: 10, width: C.tap, height: C.tap, padding: 3, borderRadius: 14, backgroundColor: '#FFFFFFE8', borderWidth: 1, borderColor: showCanon ? C.coral : C.line, elevation: 3, alignItems: 'center', justifyContent: 'center' }}>
+          {canon ? <Image source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%', borderRadius: 10 }} resizeMode="contain" /> : <Text style={{ fontSize: 9, fontWeight: '900', color: C.muted, textAlign: 'center' }}>원캐{'\n'}없음</Text>}
+        </Pressable>
+        {showCanon && <>
+          <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 바깥 닫기" onPress={() => setShowCanon(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+          <View style={{ position: 'absolute', left: 10, top: 62, width: 208, padding: 10, borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 10, gap: 6 }}>
+            <Text style={{ fontSize: 11, fontWeight: '900', color: C.ink }}>원캐릭터{canonName ? ' · ' + canonName : ''}</Text>
+            <View style={{ height: 104, borderRadius: C.radius.sm, backgroundColor: '#F0ECE5', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {canon ? <Image accessibilityLabel="원캐릭터 그림" source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ fontSize: 10, color: C.muted, textAlign: 'center' }}>아직 등록하지 않았어요.{'\n'}홈에서 먼저 정해 보세요.</Text>}
+            </View>
+            {canonLocked.trim() ? canonLocked.trim().split(/[,·\n]+/).filter(Boolean).slice(0, 3).map(trait =>
+              <Text key={trait} numberOfLines={1} style={{ fontSize: 11, color: C.ink }}>· {trait.trim()}</Text>)
+              : <Text style={{ fontSize: 10, color: C.muted }}>꼭 유지할 특징을 적어두면 여기 보여요.</Text>}
+          </View>
+        </>}
         {initialized && !scene.undo && !scene.dirty && <View pointerEvents="none" style={{ position: 'absolute', alignSelf: 'center', top: 12, backgroundColor: '#FFF9D8EE', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}><Text style={{ fontSize: 10, color: '#6F6243', fontWeight: '800' }}>두 손가락 탭 되돌리기 · 세 손가락 탭 다시</Text></View>}
         {!!selectedReference?.visible && <View pointerEvents="none" style={{ position: 'absolute', right: 10, bottom: 10, backgroundColor: '#E8F0FCEE', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 5 }}><Text style={{ fontSize: 10, color: '#3F6491', fontWeight: '800' }}>두 손가락으로 참고 옮기기 · 크기</Text></View>}
 
@@ -207,7 +223,7 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
         </View>}
 
         {panel === 'more' && <View style={{ position: 'absolute', right: 8, top: 8, width: 190, padding: 6, borderRadius: C.radius.md, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, elevation: 8 }}>
-          {canon && <MenuButton title="원캐릭터 보기" onPress={() => { setShowCanon(true); setPanel(null); }} />}
+          <MenuButton title="원캐릭터 보기" onPress={() => { setShowCanon(true); setPanel(null); }} />
           <MenuButton title={`크게 보기 (지금 ${zoom.toFixed(1)}×)`} onPress={() => { const n = zoom >= 3 ? 1 : zoom + 1; setZoom(n); send({ type: 'zoom', zoom: n }); setPanel(null); }} />
           <MenuButton title="PNG 공유" onPress={() => { setPanel(null); save('share'); }} />
           <MenuButton title="제출 전 검사" onPress={() => { setPanel(null); setShowQA(true); }} />
@@ -260,7 +276,6 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
       </View>
     </KeyboardAvoidingView>
 
-    {showCanon && <Dialog title="원캐릭터" onClose={() => setShowCanon(false)}><Preview image={canon} label="기준 캐릭터" size={260} /></Dialog>}
     {showQA && <Dialog title="제출 전 검사" onClose={() => setShowQA(false)}>
       {!qa ? <Text>저장하면 자동으로 기본 검사를 해요.</Text> : qa.status === 'PASS' ? <Text style={{ fontSize: 15, fontWeight: '800', color: '#55B989' }}>기본 검사는 모두 통과했어요.</Text>
         : [...qa.checks, ...qa.consistency].filter(c => c.status !== 'PASS').map(c => <Text key={c.label} style={{ fontSize: 13, lineHeight: 19, color: c.status === 'FAIL' ? '#E35C62' : C.ink }}>{c.label} · {c.detail}</Text>)}
