@@ -242,6 +242,32 @@ past/future 깊이와 화면에 남은 획을 단계별로 비교해 세 상태�
 8 suite 유지 + 신규 assertion: 기획에서 참고 추가/선택/해제, debounce 저장(접기·백그라운드), 보드 기획 cue, 상황 편중, Painter 기획 보기(편집 불가·대사 미표시), 신규 세트 첫 사용 안내.
 변이 검증 4건 전부 검출(보드 cue 제거 / 기획 보기 제거 / debounce 되돌리기 / 상황 편중 제거).
 
+## FINAL PRODUCT VISUAL + PAINTER LAYOUT PASS
+**AUTOMATED PASS. DEVICE VISUAL UNVERIFIED.**
+실기기 스크린샷을 PRIMARY EVIDENCE로 사용한 첫 비주얼 패스다.
+
+### Painter 캔버스 아래 빈 영역 — ROOT CAUSE
+`size()`가 surface를 `min(innerWidth, innerHeight)` 정사각형으로 만드는데 WebView는 `flex:1`이라 훨씬 세로로 길었다.
+`#viewport`는 block 레이아웃이고 `#surface{margin:auto}`는 가로만 가운데 정렬하므로,
+정사각형이 위에 붙고 `height - width` 만큼 body 배경(#eeeae3)이 그대로 노출됐다. 패딩이 아니라 남은 공간이었다.
+
+수정: WebView 자체를 정사각형(`aspectRatio:1`)으로 만들어 안쪽 여백을 없애고, 남는 공간은 부모에서 가운데 정렬했다.
+덤으로 `원캐`/`기획` 컨트롤이 그림 위가 아니라 위쪽 여백에 놓인다. 캔버스 배경도 앱 색으로 맞췄다.
+
+### 스크린샷에서 지적된 것들
+- HOME: 카드 패딩 축소, 그림이 주인공. 새 세트 카드 높이를 기존 카드에 맞춤.
+- BOARD: 상태별 코랄 CTA **하나**. `세트 기획`/`전체 보기`는 외곽선 pill로 명확한 secondary. 진행 정보 중복 제거.
+- CANON: 긴 입력 폼 → 캐릭터 시트. 그림(탭 타깃)과 이름이 먼저, `어떤 캐릭터인가요` / `그릴 때 지킬 것` 2그룹, 세트 이름은 맨 아래 메타데이터. 이미지 없을 때 큰 회색 상자 대신 작은 두들 placeholder.
+- PAINTER: `따라 그릴 참고` 한 줄 라벨, 상단바 위계(01/32 강조·나머지 muted), 크기 행을 한 덩어리로, 저장은 quiet·저장→다음 칸이 primary, 더보기 메뉴 폭·행 높이 축소.
+
+### 하지 않은 것
+네이티브 슬라이더 thumb는 `@expo/ui` 한계로 스타일을 바꿀 수 없다. 억지 우회 대신 주변 위계만 정리했다(요구사항대로).
+제스처·fill·저장·QA·export semantics는 손대지 않았다.
+
+### 자동 검증
+8 suite 유지. 신규 구조 회귀 assertion: 캔버스 정사각형 유지, 캔버스 배경색, 참고 라벨 한 줄, 보드의 강한 CTA 정확히 1개.
+변이 2건 검출(캔버스를 flex로 되돌림 / 보드에 코랄 CTA 추가).
+
 ## VERIFICATION STATUS
 - GitHub 코드 반영: DONE
 - 이전 Android 실기기: Undo PASS / 지우개 PASS / 참고 확대 PASS
@@ -306,6 +332,8 @@ AI 고도화/움직이는 이모티콘/PRO는 그 뒤다.
 17. 화면들이 하나의 앱처럼 보이는가(간격/모서리/버튼 높이/코랄 CTA)
 
 ## KNOWN RISKS
+- **네이티브 슬라이더 thumb 모양**: 세로 막대처럼 보이는 것은 Android Material thumb 자체다. 스타일 변경 불가로 남겨두었다.
+- **짧은 화면에서의 정사각 캔버스**: `maxHeight:100%`로 넘침을 막지만, 세로가 매우 짧은 기기에서의 실제 결과는 실기기 확인이 필요하다.
 - **기획 입력 손실 구간**: debounce 700ms. flush 지점은 접기·화면 이동·뒤로·백그라운드·언마운트다. 이 경로를 지나지 않고 앱이 강제 종료되면 마지막 700ms 입력이 사라진다.
 - **웹 프리뷰 불가**: 임시 shim(metro.config.js, web-shims/)이 저장소에서 제거되어 브라우저 렌더가 다시 불가능하다. 이번 화면 변경은 실기기에서만 눈으로 확인할 수 있다.
 - **VISUAL REVIEW UNVERIFIED**: 이 저장소 환경에는 렌더러가 없다. `react-native-web`이 없고, Painter는 WebView와
