@@ -32,30 +32,39 @@ export function droppedImagePaths(before: Store, after: Store): string[] {
   const kept = storeImagePaths(after);
   return [...storeImagePaths(before)].filter(path => !kept.has(path));
 }
+export function planningKey(text: string): string {
+  return text.normalize('NFKC').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
+}
 export function duplicates(slots: Slot[]): number[][] {
   const groups = new Map<string, number[]>();
   for (const slot of slots) {
     if (slot.noDialogue) continue;
-    const key = slot.dialogue.normalize('NFKC').replace(/[\p{P}\p{S}\s]/gu, '').toLocaleLowerCase();
+    const key = planningKey(slot.dialogue).replace(/[\p{P}\p{S}\s]/gu, '');
     if (key) groups.set(key, [...(groups.get(key) ?? []), slot.number]);
   }
   return [...groups.values()].filter(group => group.length > 1);
 }
 // Deterministic, local planning review. No network, so a set can always be finished offline.
+export const plannedSlots = (project: Project): Slot[] => project.slots.filter(s => s.dialogue.trim() || s.noDialogue);
+// Counts identical wording only. A helper, never a rule.
+function concentration(slots: Slot[], read: (slot: Slot) => string, planned: number): { label: string; count: number }[] {
+  const groups = new Map<string, { label: string; count: number }>();
+  for (const slot of slots) {
+    const key = planningKey(read(slot));
+    if (!key) continue;
+    const seen = groups.get(key);
+    groups.set(key, { label: read(slot).trim(), count: (seen?.count ?? 0) + 1 });
+  }
+  return [...groups.values()].filter(g => planned >= 8 && g.count > planned * .4);
+}
 export function planningIssues(project: Project): string[] {
   const issues: string[] = [];
-  const planned = project.slots.filter(s => s.dialogue.trim() || s.noDialogue);
+  const planned = plannedSlots(project);
   for (const group of duplicates(project.slots)) issues.push(`같은 대사가 ${group.map(n => String(n).padStart(2, '0')).join(', ')}번에 겹쳐요`);
-  const emotions = new Map<string, number>();
-  for (const slot of project.slots) {
-    const key = slot.emotion.trim();
-    if (key) emotions.set(key, (emotions.get(key) ?? 0) + 1);
-  }
-  for (const [emotion, count] of emotions) {
-    if (planned.length >= 8 && count > planned.length * .4) issues.push(`'${emotion}' 감정이 ${count}칸으로 치우쳐 있어요`);
-  }
+  for (const g of concentration(project.slots, s => s.emotion, planned.length)) issues.push(`'${g.label}' 감정이 ${g.count}칸이에요. 다른 기분도 넣어보세요`);
+  for (const g of concentration(project.slots, s => s.situation, planned.length)) issues.push(`'${g.label}' 상황이 ${g.count}칸이에요. 다른 장면도 넣어보세요`);
   const empty = project.slots.length - planned.length;
-  if (empty) issues.push(`아직 ${empty}칸은 대사나 무대사를 정하지 않았어요`);
+  if (empty && planned.length) issues.push(`${empty}칸이 남았어요`);
   return issues;
 }
 export function parseStore(raw: string): Store {

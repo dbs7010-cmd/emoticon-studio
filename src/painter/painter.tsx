@@ -56,8 +56,10 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
   const [tool, setTool] = useState<Tool>('pen'), [brush, setBrush] = useState<Brush>('pen'), [color, setColor] = useState(palette[0] ?? '#242424');
   const [penWidth, setPenWidth] = useState(6), [eraserWidth, setEraserWidth] = useState(24), [zoom, setZoom] = useState(1);
   const [panel, setPanel] = useState<Panel>(null), [drawRail, setDrawRail] = useState(false);
-  const [showCanon, setShowCanon] = useState(false), [showQA, setShowQA] = useState(false), [qa, setQA] = useState<QA | undefined>(slot.qa), [saved, setSaved] = useState(false);
+  const [showCanon, setShowCanon] = useState(false), [showBrief, setShowBrief] = useState(false), [showQA, setShowQA] = useState(false), [qa, setQA] = useState<QA | undefined>(slot.qa), [saved, setSaved] = useState(false);
   const selectedReference = scene.references.find(r => r.id === scene.activeReferenceId);
+  // Read-only. Planning is done on the planning screen; the painter only recalls it.
+  const brief = ([['감정', slot.emotion], ['상황', slot.situation], ['포즈/행동', slot.poseGuide], ['구도', slot.compositionGuide]] as const).filter(([, value]) => value.trim());
   const width = tool === 'eraser' ? eraserWidth : penWidth;
   const send = (message: object) => web.current?.injectJavaScript(`window.command(${JSON.stringify(message)});true;`);
   const unlock = () => { if (timeout.current) clearTimeout(timeout.current); inFlight.current = false; setBusy(false); };
@@ -80,7 +82,7 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
       const savedRefs = slot.work?.references ?? [];
       const refs = slot.referenceImages.map((image, i) => {
         const savedRef = savedRefs.find(ref => ref.image?.path === image.path);
-        const planned = slot.referenceKey ? image.path === slot.referenceKey : i === 0;
+        const planned = slot.referenceKey === undefined ? i === 0 : image.path === slot.referenceKey;
         return savedRef ?? { ...transform('ref-' + image.path, `참고 ${i + 1}`), visible: planned, opacity: .3, image };
       });
       const decodedLayers = await Promise.all(layers.map(async l => ({ ...l, data: 'image' in l && l.image ? await dataUrl(l.image) : undefined })));
@@ -129,7 +131,7 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
   }
 
   const dock = { borderTopWidth: 1, borderColor: C.line, backgroundColor: C.paper } as const;
-  return <Modal onRequestClose={() => { if (showCanon) { setShowCanon(false); return; } save('close'); }} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+  return <Modal onRequestClose={() => { if (showCanon) { setShowCanon(false); return; } if (showBrief) { setShowBrief(false); return; } save('close'); }} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={{ minHeight: 52, paddingHorizontal: 2, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: C.line }}>
         <Bar label="홈" glyph="홈" text disabled={busy} onPress={() => save('close')} />
@@ -165,9 +167,21 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
           } catch (e) { unlock(); Alert.alert('그리기 오류', String(e)); }
         }} style={{ flex: 1, backgroundColor: '#EEEAE3' }} />
 
-        <Pressable accessibilityRole="button" accessibilityLabel={showCanon ? '원캐릭터 닫기' : '원캐릭터 보기'} accessibilityState={{ expanded: showCanon }} onPress={() => setShowCanon(!showCanon)} style={{ position: 'absolute', left: 10, top: 10, width: C.tap, height: C.tap, padding: 3, borderRadius: 14, backgroundColor: '#FFFFFFE8', borderWidth: 1, borderColor: showCanon ? C.coral : C.line, elevation: 3, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={showCanon ? '원캐릭터 닫기' : '원캐릭터 보기'} accessibilityState={{ expanded: showCanon }} onPress={() => { setShowCanon(!showCanon); setShowBrief(false); }} style={{ position: 'absolute', left: 10, top: 10, width: C.tap, height: C.tap, padding: 3, borderRadius: 14, backgroundColor: '#FFFFFFE8', borderWidth: 1, borderColor: showCanon ? C.coral : C.line, elevation: 3, alignItems: 'center', justifyContent: 'center' }}>
           {canon ? <Image source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%', borderRadius: 10 }} resizeMode="contain" /> : <Text style={{ fontSize: 9, fontWeight: '900', color: C.muted, textAlign: 'center' }}>원캐{'\n'}없음</Text>}
         </Pressable>
+        {!!brief.length && <Pressable accessibilityRole="button" accessibilityLabel={showBrief ? '기획 닫기' : '기획 보기'} accessibilityState={{ expanded: showBrief }} onPress={() => { setShowBrief(!showBrief); setShowCanon(false); }} style={{ position: 'absolute', left: 10, top: 64, width: C.tap, height: 34, borderRadius: 12, backgroundColor: '#FFFFFFE8', borderWidth: 1, borderColor: showBrief ? C.coral : C.line, alignItems: 'center', justifyContent: 'center', elevation: 3 }}>
+          <Text style={{ fontSize: 10, fontWeight: '900', color: showBrief ? C.coral : C.muted }}>기획</Text>
+        </Pressable>}
+        {showBrief && <>
+          <Pressable accessibilityRole="button" accessibilityLabel="기획 바깥 닫기" onPress={() => setShowBrief(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+          <View style={{ position: 'absolute', left: 10, top: 102, width: 208, padding: 10, borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 10, gap: 5 }}>
+            {brief.map(([label, value]) => <View key={label} style={{ flexDirection: 'row', gap: 6 }}>
+              <Text style={{ width: 44, fontSize: 10, fontWeight: '900', color: C.muted }}>{label}</Text>
+              <Text style={{ flex: 1, fontSize: 11, color: C.ink }}>{value.trim()}</Text>
+            </View>)}
+          </View>
+        </>}
         {showCanon && <>
           <Pressable accessibilityRole="button" accessibilityLabel="원캐릭터 바깥 닫기" onPress={() => setShowCanon(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
           <View style={{ position: 'absolute', left: 10, top: 62, width: 208, padding: 10, borderRadius: C.radius.md, backgroundColor: '#FFFDF9F7', borderWidth: 1, borderColor: C.line, elevation: 10, gap: 6 }}>

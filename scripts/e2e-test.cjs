@@ -46,7 +46,7 @@ plan.forEach(([dialogue, emotion], i) => {
   project.slots[i] = { ...project.slots[i], dialogue, emotion, noDialogue: !dialogue, status: 'PLANNED', referenceKey: reference.path };
 });
 assert.deepEqual(duplicates(project.slots), [], 'the plan has no repeated line');
-assert.ok(planningIssues(project).some(i => i.includes('아직')), 'and it says how many slots are still open');
+assert.ok(planningIssues(project).some(i => /^\d+칸이 남았어요$/.test(i)), 'and it says how many slots are still open');
 
 // 3. Draw and save each planned slot, the way save-next does.
 const drawn = [1, 2, 3, 4, 5];
