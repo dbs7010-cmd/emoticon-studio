@@ -34,7 +34,7 @@ type Props = {
 
 type Tool = 'pen' | 'fill' | 'eraser';
 type Brush = 'pen' | 'pencil' | 'marker';
-type Panel = 'color' | 'more' | 'reference' | null;
+type Panel = 'color' | 'brush' | 'more' | 'reference' | null;
 const transform = (id: string, name: string): LayerTransform => ({ id, name, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 });
 const source = { html: canvasHtml };
 const C = T;
@@ -88,8 +88,11 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
     return () => { canceled = true; };
   }, [ready]);
 
-  function selectTool(value: Tool) { setTool(value); setPanel(null); send({ type: 'tool', tool: value }); }
-  function selectBrush(value: Brush) { setBrush(value); send({ type: 'brush', brush: value }); setTool('pen'); send({ type: 'tool', tool: 'pen' }); }
+  function selectTool(value: Tool) {
+    if (value === 'pen' && tool === 'pen') { setPanel(panel === 'brush' ? null : 'brush'); return; }
+    setTool(value); setPanel(null); send({ type: 'tool', tool: value });
+  }
+  function selectBrush(value: Brush) { setBrush(value); setPanel(null); send({ type: 'brush', brush: value }); setTool('pen'); send({ type: 'tool', tool: 'pen' }); }
   function pickColor(value: string) { setColor(value); onColorUsed(value); send({ type: 'color', color: value }); if (tool === 'eraser') selectTool('pen'); }
   function setWidth(next: number) {
     const value = Math.max(1, Math.min(48, Math.round(next)));
@@ -178,18 +181,23 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
           </ScrollView>
         </View>}
 
-        {panel === 'color' && <View style={{ position: 'absolute', left: 8, right: 8, bottom: 8, padding: 10, borderRadius: C.radius.lg, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, elevation: 8, gap: 8 }}>
-          {!!palette.length && <View>
-            <Text style={{ fontSize: 10, fontWeight: '900', color: C.muted, marginBottom: 5 }}>최근 쓴 색</Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>{palette.slice(0, 8).map(c => <Swatch key={'recent' + c} color={c} selected={color.toLowerCase() === c.toLowerCase()} onPress={() => pickColor(c)} />)}</View>
+        {panel === 'color' && <View style={{ position: 'absolute', left: 8, right: 8, bottom: 8, paddingLeft: 10, paddingRight: 4, paddingVertical: 6, borderRadius: C.radius.lg, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, elevation: 8 }}>
+          {!!palette.length && <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ width: 34, fontSize: 9, fontWeight: '900', color: C.muted }}>최근</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4, paddingRight: 8 }}>{palette.slice(0, 8).map(c => <Swatch key={'recent' + c} color={c} selected={color.toLowerCase() === c.toLowerCase()} onPress={() => pickColor(c)} />)}</ScrollView>
           </View>}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{swatches.map(c => <Swatch key={c} color={c} selected={color.toLowerCase() === c.toLowerCase()} onPress={() => pickColor(c)} />)}</View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, borderTopWidth: 1, borderColor: C.line, paddingTop: 8 }}>
-            <Text style={{ fontSize: 10, fontWeight: '900', color: C.muted, marginRight: 2 }}>펜 종류</Text>
-            {([['pen', '기본'], ['pencil', '연필'], ['marker', '마커']] as const).map(([key, title]) =>
-              <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: brush === key }} onPress={() => selectBrush(key)} style={{ minHeight: 44, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: C.radius.sm, borderWidth: 1, borderColor: brush === key ? '#E4B7A6' : C.line, backgroundColor: brush === key ? C.peach : '#FFF' }}><Text style={{ fontSize: 12, fontWeight: brush === key ? '900' : '700', color: C.ink }}>{title}</Text></Pressable>)}
-            <Pressable accessibilityRole="button" accessibilityLabel="색 닫기" onPress={() => setPanel(null)} style={{ marginLeft: 'auto', width: C.tap, height: 40, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 18, color: C.muted }}>×</Text></Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ width: 34, fontSize: 9, fontWeight: '900', color: C.muted }}>색</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4, paddingRight: 8 }}>{swatches.map(c => <Swatch key={c} color={c} selected={color.toLowerCase() === c.toLowerCase()} onPress={() => pickColor(c)} />)}</ScrollView>
+            <Pressable accessibilityRole="button" accessibilityLabel="색 닫기" onPress={() => setPanel(null)} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 18, color: C.muted }}>×</Text></Pressable>
           </View>
+        </View>}
+
+        {panel === 'brush' && <View style={{ position: 'absolute', left: 8, right: 8, bottom: 8, flexDirection: 'row', alignItems: 'center', paddingLeft: 10, paddingRight: 4, borderRadius: C.radius.lg, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, elevation: 8 }}>
+          <Text style={{ fontSize: 9, fontWeight: '900', color: C.muted, marginRight: 8 }}>펜 종류</Text>
+          {([['pen', '기본'], ['pencil', '연필'], ['marker', '마커']] as const).map(([key, title]) =>
+            <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: brush === key }} onPress={() => selectBrush(key)} style={{ flex: 1, minHeight: C.tap, marginVertical: 5, marginRight: 6, alignItems: 'center', justifyContent: 'center', borderRadius: C.radius.sm, borderWidth: 1, borderColor: brush === key ? '#E4B7A6' : C.line, backgroundColor: brush === key ? C.peach : '#FFF' }}><Text style={{ fontSize: 13, fontWeight: brush === key ? '900' : '700', color: C.ink }}>{title}</Text></Pressable>)}
+          <Pressable accessibilityRole="button" accessibilityLabel="펜 종류 닫기" onPress={() => setPanel(null)} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 18, color: C.muted }}>×</Text></Pressable>
         </View>}
 
         {panel === 'reference' && selectedReference && <View style={{ position: 'absolute', left: 8, right: 8, bottom: 8, padding: 8, borderRadius: C.radius.lg, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, elevation: 8, flexDirection: 'row', gap: 8 }}>
@@ -224,7 +232,7 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
         {!!selectedReference && <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingBottom: 4, gap: 4 }}>
           <EyeToggle label={`참고 ${selectedReference.visible ? '숨기기' : '보이기'}`} on={selectedReference.visible} onPress={() => send({ type: 'toggleReference', id: selectedReference.id })} />
           <Text style={{ fontSize: 10, fontWeight: '800', color: C.muted }}>연하게</Text>
-          <View testID="참고 진하기" style={{ flex: 1, height: 40, justifyContent: 'center' }}><Host style={{ width: '100%', height: 36 }}><Slider value={selectedReference.opacity} min={.1} max={1} step={.05} onValueChange={opacity => changeTransform(selectedReference.id, { opacity })} /></Host></View>
+          <View testID="참고 진하기" style={{ flex: 1, height: 40, justifyContent: 'center' }}><Host style={{ width: '100%', height: 36 }}><Slider value={selectedReference.opacity} min={.1} max={1} onValueChange={opacity => changeTransform(selectedReference.id, { opacity: Math.round(opacity * 20) / 20 })} /></Host></View>
           <Text style={{ fontSize: 10, fontWeight: '800', color: C.muted }}>진하게</Text>
           <Pressable accessibilityRole="button" accessibilityLabel="참고 관리" onPress={() => setPanel(panel === 'reference' ? null : 'reference')} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, color: C.muted }}>⋯</Text></Pressable>
         </View>}
@@ -232,19 +240,17 @@ export function Painter({ slot, slotCount, canon, palette, onSave, onColorUsed, 
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, gap: 8 }}>
           <View style={{ flex: 1, flexDirection: 'row', padding: 3, borderRadius: 14, backgroundColor: '#F2EEE7' }}>
             {([['pen', '펜'], ['fill', '채우기'], ['eraser', '지우개']] as const).map(([key, title]) =>
-              <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: tool === key }} onPress={() => selectTool(key)} style={{ flex: 1, minHeight: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: tool === key ? C.coral : 'transparent' }}><Text style={{ fontSize: 13, fontWeight: '900', color: tool === key ? '#FFF' : C.muted }}>{title}</Text></Pressable>)}
+              <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: tool === key }} onPress={() => selectTool(key)} style={{ flex: 1, minHeight: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: tool === key ? C.coral : 'transparent' }}><Text style={{ fontSize: 13, fontWeight: '900', color: tool === key ? '#FFF' : C.muted }}>{title}{key === 'pen' && tool === 'pen' ? ' ⌄' : ''}</Text></Pressable>)}
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="색 선택" onPress={() => { setPanel(panel === 'color' ? null : 'color'); setDrawRail(false); }} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: '#F2EEE7' }}><View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: color, borderWidth: 1, borderColor: '#8D867C' }} /></Pressable>
         </View>
 
-        {tool !== 'fill' && <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 10, paddingRight: 4, minHeight: C.tap }}>
-          <Text style={{ width: 52, fontSize: 10, fontWeight: '900', color: C.ink }}>{tool === 'eraser' ? '지우개\n크기' : '펜 굵기'}</Text>
-          <View style={{ width: 28, alignItems: 'center' }}><View style={{ width: Math.max(4, Math.min(24, width)), height: Math.max(4, Math.min(24, width)), borderRadius: 12, backgroundColor: tool === 'eraser' ? '#C7C0B5' : color }} /></View>
-          <Step label={tool === 'eraser' ? '지우개 크기 줄이기' : '펜 굵기 줄이기'} sign="−" onPress={() => setWidth(width - 2)} />
+        {tool !== 'fill' && <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 10, paddingRight: 10, minHeight: C.tap }}>
+          <Text style={{ width: 58, fontSize: 10, fontWeight: '900', color: C.ink }}>{tool === 'eraser' ? '지우개 크기' : '펜 굵기'}</Text>
+          <View style={{ width: 30, height: 30, alignItems: 'center', justifyContent: 'center' }}><View style={{ width: Math.max(5, Math.min(26, width)), height: Math.max(5, Math.min(26, width)), borderRadius: 13, backgroundColor: tool === 'eraser' ? '#C7C0B5' : color }} /></View>
           <View testID={tool === 'eraser' ? '지우개 크기' : '펜 굵기'} style={{ flex: 1, height: C.tap, justifyContent: 'center' }}>
-            <Host style={{ width: '100%', height: 40 }}><Slider value={width} min={1} max={48} step={1} onValueChange={setWidth} /></Host>
+            <Host style={{ width: '100%', height: 40 }}><Slider value={width} min={1} max={48} onValueChange={setWidth} /></Host>
           </View>
-          <Step label={tool === 'eraser' ? '지우개 크기 늘리기' : '펜 굵기 늘리기'} sign="＋" onPress={() => setWidth(width + 2)} />
         </View>}
 
         <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 8, paddingTop: 4, paddingBottom: 6 }}>
@@ -278,7 +284,7 @@ function EyeToggle({ label, on, onPress }: { label: string; on: boolean; onPress
   </Pressable>;
 }
 function Swatch({ color, selected, onPress }: { color: string; selected: boolean; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={'색 ' + color} accessibilityState={{ selected }} onPress={onPress} hitSlop={6} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: color, borderWidth: selected ? 3 : 1, borderColor: selected ? T.coral : '#A9A299' }} />;
+  return <Pressable accessibilityRole="button" accessibilityLabel={'색 ' + color} accessibilityState={{ selected }} onPress={onPress} hitSlop={8} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: color, borderWidth: selected ? 3 : 1, borderColor: selected ? T.coral : '#A9A299' }} />;
 }
 // Secondary to the slider, but it guarantees size stays adjustable on any device.
 function Step({ label, sign, onPress }: { label: string; sign: string; onPress: () => void }) {

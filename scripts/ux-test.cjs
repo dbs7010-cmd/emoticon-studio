@@ -125,13 +125,24 @@ const saved=async(dirty=true)=>{
  assert.equal(tree.root.findAll(n=>n.props.testID==='그림 2 진하기').length,0,'drawings have no fade control to set wrong before export');
  await press('그림 겹치기');
  for(const label of ['펜','채우기','지우개'])assert.ok((box(label).minHeight??box(label).height)>=42,'finger sized tool: '+label);
- assert.equal(labelled('연필').length,0,'brush choices are not siblings of the eraser');
+ assert.equal(labelled('연필').length,0,'brush choices never sit beside the eraser');
  await press('색 선택');
- assert.equal(labelled('연필').length,1,'brush choices live with the pen colour');
- await press('마커');assert.equal(lastCommand('brush').brush,'marker');assert.equal(lastCommand('tool').tool,'pen','choosing a brush returns to the pen');
+ assert.equal(labelled('연필').length,0,'the colour sheet carries colours only');
+ assert.equal(labelled('색 #54A9E8').length,1,'and any palette colour is one tap away');
  await press('색 #54A9E8');
  assert.equal(lastCommand('color').color,'#54A9E8');
  assert.deepEqual(loadStore().store.palette,['#54A9E8'],'recent colours are remembered');
+ await press('색 닫기');
+ // Brush type is the pen's own option: tap the already active pen to reach it.
+ const toolSwitches=()=>sent().filter(m=>m.type==='tool').length;
+ const beforeOpen=toolSwitches();
+ await press('펜');
+ assert.equal(labelled('연필').length,1,'tapping the active pen opens its brush options');
+ assert.equal(toolSwitches(),beforeOpen,'and it does not re-send a tool switch to do so');
+ await press('마커');assert.equal(lastCommand('brush').brush,'marker');assert.equal(lastCommand('tool').tool,'pen','choosing a brush returns to the pen');
+ assert.equal(labelled('연필').length,0,'and the options close again');
+ for(const gone of ['펜 굵기 늘리기','펜 굵기 줄이기','지우개 크기 늘리기','지우개 크기 줄이기'])assert.equal(labelled(gone).length,0,'size is a slider, not a stepper: '+gone);
+ assert.ok(!load('src/painter/canvas-html.ts').canvasHtml.includes('체크 무늬'),'no permanent caption is painted over the canvas');
  const sizeSlider=name=>tree.root.findAll(n=>n.props.testID===name);
  assert.equal(sizeSlider('펜 굵기').length,1,'pen size is a draggable slider');
  await act(async()=>sizeSlider('펜 굵기')[0].findByType('Slider').props.onValueChange(19));

@@ -2,8 +2,8 @@ import { KAKAO_STATIC_SPEC as SPEC } from '../constants/kakao-spec';
 
 // Local-only Painter engine. Reference images are preview layers and never enter final export.
 export const canvasHtml = `<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>
-*{box-sizing:border-box}body{margin:0;background:#eeeae3;font-family:system-ui;overflow:hidden}#viewport{height:100vh;overflow:auto;touch-action:none;overscroll-behavior:none}#surface{position:relative;background-color:white;background-image:conic-gradient(#eee 25%,transparent 0 50%,#eee 0 75%,transparent 0);background-size:20px 20px;margin:auto}canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}#hint{position:fixed;bottom:5px;left:6px;background:#fff9;font-size:10px;pointer-events:none}
-</style></head><body><div id="viewport"><div id="surface"><canvas id="drawing" width="${SPEC.width}" height="${SPEC.height}"></canvas></div></div><div id="hint">체크 무늬 = 투명</div><script>
+*{box-sizing:border-box}body{margin:0;background:#eeeae3;font-family:system-ui;overflow:hidden}#viewport{height:100vh;overflow:auto;touch-action:none;overscroll-behavior:none}#surface{position:relative;background-color:white;background-image:conic-gradient(#eee 25%,transparent 0 50%,#eee 0 75%,transparent 0);background-size:20px 20px;margin:auto}canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+</style></head><body><div id="viewport"><div id="surface"><canvas id="drawing" width="${SPEC.width}" height="${SPEC.height}"></canvas></div></div><script>
 (function(){
 const canvas=document.getElementById('drawing'),surface=document.getElementById('surface'),viewport=document.getElementById('viewport'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 const W=canvas.width,H=canvas.height;
