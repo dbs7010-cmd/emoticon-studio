@@ -25,8 +25,8 @@ export function Dialog({ title, onClose, children }: { title: string; onClose: (
     </View>
   </View></Modal>;
 }
-export function Field({ label, value, onChangeText, multiline = true }: { label: string; value: string; onChangeText: (s: string) => void; multiline?: boolean }) {
-  return <View style={{ gap: 6 }}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} multiline={multiline} style={[styles.input, multiline && { minHeight: 76, textAlignVertical: 'top' }]} placeholder={`${label} 입력`} placeholderTextColor="#918B82" /></View>;
+export function Field({ label, value, onChangeText, multiline = true, flat = false }: { label: string; value: string; onChangeText: (s: string) => void; multiline?: boolean; flat?: boolean }) {
+  return <View style={{ gap: flat ? 2 : 6 }}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} multiline={multiline} style={[styles.input, multiline && { minHeight: 76, textAlignVertical: 'top' }, flat && { borderWidth: 0, backgroundColor: 'transparent', paddingHorizontal: 0, paddingVertical: 4, minHeight: 40 }, flat && multiline && { minHeight: 56 }]} placeholder={`${label} 입력`} placeholderTextColor="#918B82" /></View>;
 }
 export function Preview({ image, label, size = 140 }: { image?: LocalImage; label: string; size?: number }) {
   return <View style={{ flex: 1, gap: 6 }}><Text style={styles.label}>{label}</Text><View style={{ height: size, backgroundColor: '#F0ECE5', borderRadius: T.radius.md, justifyContent: 'center', overflow: 'hidden', borderWidth: 1, borderColor: C.line }}>{image ? <Image accessibilityLabel={label} source={{ uri: imageUri(image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ textAlign: 'center', color: C.muted }}>이미지 없음</Text>}</View></View>;

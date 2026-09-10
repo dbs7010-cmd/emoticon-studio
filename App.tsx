@@ -19,6 +19,15 @@ const guideFields = [['expressionGuide', '표정 가이드'], ['poseGuide', '포
 const colors: Record<string, string> = { PASS: '#55B989', WARNING: '#E7A93C', FAIL: '#E35C62', EMPTY: '#A5A097', DRAWING: '#67A9E8', REVIEW: '#A786DF', PLANNED: '#75C79C' };
 const C = T;
 function Checks({ checks }: { checks: Check[] }) { return <>{checks.filter(c => c.status !== 'PASS').map(c => <View key={c.label} style={{ gap: 4 }}><Text style={{ color: colors[c.status], fontWeight: '700' }}>{c.status} · {c.label}</Text><Text style={styles.muted}>{c.detail}</Text></View>)}</>; }
+// Two quick strokes and a dot: the brand accent, small enough that artwork always wins.
+function Spark() {
+  return <View style={{ width: 26, height: 26 }}>
+    <View style={{ position: 'absolute', left: 11, top: 0, width: 2, height: 11, borderRadius: 2, backgroundColor: T.yellow }} />
+    <View style={{ position: 'absolute', left: 6, top: 5, width: 12, height: 2, borderRadius: 2, backgroundColor: T.yellow, transform: [{ rotate: '38deg' }] }} />
+    <View style={{ position: 'absolute', left: 6, top: 5, width: 12, height: 2, borderRadius: 2, backgroundColor: T.yellow, transform: [{ rotate: '-38deg' }] }} />
+    <View style={{ position: 'absolute', right: 1, bottom: 3, width: 5, height: 5, borderRadius: 3, backgroundColor: T.coral }} />
+  </View>;
+}
 // A rough, hand-drawn mark: friendly, and never better drawn than the user's own work.
 function Doodle() {
   return <View style={{ width: 96, height: 64, alignItems: 'center', justifyContent: 'center' }}>
@@ -188,7 +197,10 @@ function Studio() {
       <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.page}>
         {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="알림 닫기" onPress={() => setNotice('')} style={{ padding: 8, borderRadius: 12, backgroundColor: '#FFF6D8' }}><Text>{notice} ×</Text></Pressable>}
         {loadError ? <><Text selectable>{loadError}</Text><Action title="다시 불러오기" onPress={load} /></> : !store ? <Text>불러오는 중…</Text> : !project ? <>
-          <View style={{ marginBottom: 2 }}><Text style={styles.title}>내 작업실</Text><Text style={[styles.muted, { marginTop: 4 }]}>그려 저장하고, 한 세트를 끝내요.</Text></View>
+          <View style={{ marginBottom: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Text style={styles.title}>내 작업실</Text><Spark /></View>
+            <Text style={[styles.muted, { marginTop: 2, fontSize: 13 }]}>그려 저장하고, 한 세트를 끝내요.</Text>
+          </View>
           {!store.projects.length && <View style={{ alignItems: 'center', paddingVertical: 8, gap: 8 }}>
             <Doodle />
             <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>아직 세트가 없어요</Text>
@@ -204,10 +216,10 @@ function Studio() {
                 <Text numberOfLines={1} style={{ fontSize: 14, color: C.ink, fontWeight: '800' }}>{p.projectName}</Text>
                 <View style={{ height: 4, borderRadius: 2, backgroundColor: '#EEE8DF', overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / SPEC.count * 100)}%`, height: '100%', backgroundColor: C.coral }} /></View>
                 <Text style={{ fontSize: 10, color: C.muted }}>{done} / {SPEC.count}</Text>
-                <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={6} style={{ position: 'absolute', right: 4, top: 4, width: T.tap, height: T.tap, borderRadius: T.tap / 2, backgroundColor: '#FFFFFFE8', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, color: '#5C574F', marginTop: -8 }}>⋯</Text></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={6} style={{ position: 'absolute', right: 2, top: 2, width: T.tap, height: T.tap, borderRadius: T.tap / 2, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, color: '#6E675E', marginTop: -8 }}>⋯</Text></Pressable>
               </Pressable>;
             })}
-            <Pressable accessibilityRole="button" accessibilityLabel="새 이모티콘 세트" onPress={() => setNewProjectOpen(true)} style={{ width: projectCardWidth, minHeight: projectCardWidth - 34, borderRadius: T.radius.lg, borderWidth: 1, borderStyle: 'dashed', borderColor: '#D3CCC1', backgroundColor: '#FFFCF8', alignItems: 'center', justifyContent: 'center', gap: 6 }}><View style={{ width: 40, height: 40, borderRadius: T.radius.sm, backgroundColor: C.yellow, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20 }}>＋</Text></View><Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>새 세트</Text><Text style={{ fontSize: 10, color: C.muted }}>원캐릭터부터 시작</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="새 이모티콘 세트" onPress={() => setNewProjectOpen(true)} style={{ width: projectCardWidth, minHeight: 104, borderRadius: T.radius.lg, borderWidth: 1, borderStyle: 'dashed', borderColor: '#D3CCC1', backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', gap: 6 }}><View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: C.yellow, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 18, color: '#6B5A1E' }}>＋</Text></View><Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>새 세트</Text><Text style={{ fontSize: 10, color: C.muted }}>원캐릭터부터 시작</Text></Pressable>
           </View>
         </> : canonOpen ? <>
           {(() => {
@@ -227,13 +239,17 @@ function Studio() {
               </View>
               <Text style={[styles.muted, { fontSize: 12 }]}>이 캐릭터를 32칸 내내 같은 모습으로 유지해요.</Text>
 
-              <Text style={styles.subtitle}>어떤 캐릭터인가요</Text>
-              {([['personality', '성격'], ['speech', '말투']] as const).map(([key, label]) => <Field key={key} label={label} value={project.canon[key]} onChangeText={value => updateProject(p => ({ ...p, canon: { ...p.canon, [key]: value } }))} />)}
+              {([['어떤 캐릭터인가요', [['personality', '성격'], ['speech', '말투']]], ['그릴 때 지킬 것', [['locked', '꼭 유지할 특징'], ['variable', '바꿔도 되는 특징']]]] as const).map(([section, fields]) =>
+                <View key={section} style={{ gap: 6 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink, marginTop: 2 }}>{section}</Text>
+                  <View style={{ backgroundColor: C.paper, borderRadius: T.radius.md, borderWidth: 1, borderColor: C.line, paddingHorizontal: T.gap.md }}>
+                    {fields.map(([key, label], i) => <View key={key} style={{ borderTopWidth: i ? 1 : 0, borderColor: C.line, paddingVertical: 10 }}>
+                      <Field flat label={label} value={project.canon[key]} onChangeText={value => updateProject(p => ({ ...p, canon: { ...p.canon, [key]: value } }))} />
+                    </View>)}
+                  </View>
+                </View>)}
 
-              <Text style={styles.subtitle}>그릴 때 지킬 것</Text>
-              {([['locked', '꼭 유지할 특징'], ['variable', '바꿔도 되는 특징']] as const).map(([key, label]) => <Field key={key} label={label} value={project.canon[key]} onChangeText={value => updateProject(p => ({ ...p, canon: { ...p.canon, [key]: value } }))} />)}
-
-              <View style={{ borderTopWidth: 1, borderColor: C.line, paddingTop: T.gap.md }}>
+              <View style={{ borderTopWidth: 1, borderColor: C.line, paddingTop: T.gap.md, marginTop: 2 }}>
                 <Field label="세트 이름" value={project.projectName} onChangeText={projectName => updateProject(p => ({ ...p, projectName }))} multiline={false} />
               </View>
             </>;

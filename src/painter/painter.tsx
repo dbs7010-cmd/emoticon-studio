@@ -276,8 +276,8 @@ export function Painter({ slot, slotCount, canon, canonName, canonLocked, palett
         </View>
 
         {tool !== 'fill' && <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 10, paddingRight: 10, minHeight: C.tap }}>
-          <Text style={{ width: 56, fontSize: 10, color: C.muted }}>{tool === 'eraser' ? '지우개 크기' : '펜 굵기'}</Text>
-          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F2EEE7', alignItems: 'center', justifyContent: 'center', marginRight: 4 }}><View style={{ width: Math.max(4, Math.min(24, width)), height: Math.max(4, Math.min(24, width)), borderRadius: 12, backgroundColor: tool === 'eraser' ? '#C7C0B5' : color }} /></View>
+          <Text style={{ width: 54, fontSize: 10, color: C.muted }}>{tool === 'eraser' ? '지우개 크기' : '펜 굵기'}</Text>
+          <View style={{ width: 26, alignItems: 'center', justifyContent: 'center', marginRight: 14 }}><View style={{ width: Math.max(4, Math.min(22, width)), height: Math.max(4, Math.min(22, width)), borderRadius: 11, backgroundColor: tool === 'eraser' ? '#C7C0B5' : color }} /></View>
           <View testID={tool === 'eraser' ? '지우개 크기' : '펜 굵기'} style={{ flex: 1, height: C.tap, justifyContent: 'center' }}>
             <Host style={{ width: '100%', height: 40 }}><Slider value={width} min={1} max={48} onValueChange={setWidth} /></Host>
           </View>

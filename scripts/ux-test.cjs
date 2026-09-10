@@ -72,12 +72,23 @@ const saved=async(dirty=true)=>{
 (async()=>{
  await act(async()=>{tree=create(React.createElement(App));});
  assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 이모티콘 세트').length,1,'home uses compact new-set action');
+ const newSetCard=Object.assign({},...[tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='새 이모티콘 세트')[0].props.style].flat(9).filter(Boolean));
+ assert.ok(newSetCard.minHeight<=120,'the new-set card stays an action, not a peer project card: '+newSetCard.minHeight);
  await press('이전 프로젝트');
  const styleOf=node=>Object.assign({},...[node.props.style].flat(9).filter(Boolean));
  const coral=tree.root.findAll(n=>n.type==='Pressable'&&styleOf(n).backgroundColor==='#FF7A59');
  assert.equal(coral.length,1,'the board offers exactly one strong action');
  for(const label of ['세트 기획','전체 보기'])assert.notEqual(styleOf(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel===label)[0]).backgroundColor,'#FF7A59',label+' is secondary');
  assert.equal(tiles().length,32);assert.equal(tiles()[0].findAllByType('Image').length,1);
+ // CANON reads as a character sheet: the drawing leads and the traits share one surface.
+ await press('원캐릭터 설정');
+ assert.equal(tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='원캐릭터 이미지 선택').length,1,'the drawing itself is the one way to choose it');
+ const canonField=label=>tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel===label);
+ for(const l of ['캐릭터 이름','성격','말투','꼭 유지할 특징','바꿔도 되는 특징','세트 이름'])assert.equal(canonField(l).length,1,'canon keeps its field: '+l);
+ for(const l of ['성격','말투','꼭 유지할 특징','바꿔도 되는 특징'])assert.equal(styleOf(canonField(l)[0]).borderWidth,0,l+' is grouped, not another boxed form field');
+ assert.equal(styleOf(canonField('세트 이름')[0]).borderWidth,1,'the set name stays a plain metadata field');
+ await press('뒤로');
+
  const tile=n=>tiles().find(t=>t.props.testID==='slot-'+n);
  assert.equal(tile(2).findAllByType('Image').length,0,'an undrawn slot shows no artwork');
  assert.ok(tile(2).findAllByType('Text').map(t=>String(t.children?.join(''))).includes('대사 2'),'but a planned one shows what was planned');
@@ -174,6 +185,12 @@ const saved=async(dirty=true)=>{
  assert.equal(tree.root.findAll(n=>n.type==='Image'&&n.props.accessibilityLabel==='원캐릭터 그림').length,0,'and it closes again');
  const sizeSlider=name=>tree.root.findAll(n=>n.props.testID===name);
  assert.equal(sizeSlider('펜 굵기').length,1,'pen size is a draggable slider');
+ const sizeRow=sizeSlider('펜 굵기')[0].parent;
+ assert.equal(sizeRow.findAllByType('Slider').length,1,'the size row holds a single slider, never two competing controls');
+ const swatch=sizeRow.children.filter(c=>typeof c!=='string'&&c.type==='View'&&c!==sizeSlider('펜 굵기')[0]).map(styleOf).find(st=>st.marginRight!==undefined);
+ assert.ok(swatch,'the width preview sits beside the track');
+ assert.equal(swatch.backgroundColor,undefined,'the preview is a bare dot, not a filled block');
+ assert.ok(swatch.marginRight>=12,'and keeps clear of the slider thumb, got '+swatch.marginRight);
  await act(async()=>sizeSlider('펜 굵기')[0].findByType('Slider').props.onValueChange(19));
  assert.equal(lastCommand('width').tool,'pen');assert.equal(lastCommand('width').width,19);
  await press('지우개');
@@ -277,6 +294,7 @@ const saved=async(dirty=true)=>{
  assert.equal(shared[0].options.mimeType,'application/zip');
  assert.ok(tree.root.findAll(n=>n.type==='Text').some(n=>String(n.children?.join('')).includes('제출 파일을 만들었어요')),'the notice reports the file was made, not that sharing succeeded');
  await press('뒤로');
+
 
  await act(async()=>tree.unmount());
 
