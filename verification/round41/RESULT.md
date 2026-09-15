@@ -1,5 +1,7 @@
 # 41차 — PRE-ASSET LOCK & PRODUCTION SPEC (2026-09-15)
 
+> **41.5차 정정**: 아래 D 의 "원본 캐릭터 3종(종이·잉크·지우개) · 메인 후보 종이" 서술은 철회한다. 캐릭터 원본은 실제 에셋 제작 단계에서 사용자가 제공·선택한 원본을 기준으로 별도 진행한다. 24/32 설계는 `docs/design/SET_TYPE_DESIGN.md`.
+
 판정: **PASS (기준점 LOCK · 규격 정리 · 발주서 완성)**. 새 기능·UI 재설계·엔진 변경·에셋 생성 없음.
 기준: 39차 DEVICE QA PASS · 40차 VISUAL SHELL PASS(P0 0 · P1 0).
 

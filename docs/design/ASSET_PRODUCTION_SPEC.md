@@ -7,7 +7,8 @@
 - 앱 안 자리 요약: `docs/design/ASSET_SLOTS.md` · 코드 자리: `src/design/asset-slots.ts`(`AssetSlot` 컴포넌트)
 - 출시 에셋(아이콘·스플래시·스토어) 파일 규격·검사: `assets/asset-contract.json` + `npm run assets:check` — 이 문서와 다르면 **JSON 이 맞다**
 - 생성 AI 전달 문서: `docs/design/ASSET_GENERATION_HANDOFF.md`
-- 브랜드 캐릭터 원본: `docs/design/emoti-assets-v1.zip`(`mascot-paper.png` · `mascot-ink.png` · `mascot-eraser.png`, 원본 크기), 앱 축소본 `assets/art/mascot-*.png`
+- 브랜드 캐릭터 원본: **미정** — 실제 에셋 제작 단계에서 사용자가 제공하거나 선택한 원본을 기준으로 별도 진행한다(41.5차). 41차에 `docs/design/emoti-assets-v1.zip` 을 원본으로 적었던 서술은 철회한다. 앱 안의 `assets/art/mascot-*.png` 는 현재 자리표시로만 쓰인다
+- 세트 종류(32/24) 설계: `docs/design/SET_TYPE_DESIGN.md`
 
 ## 0. 공통 규칙
 - **한국어 UI 글자는 그림에 넣지 않는다.** 문구·라벨·숫자·PRO 표시는 앱이 그린다(수정·현지화·스토어 대응). 예외: 없음. 스토어 피처 그래픽의 글자도 앱 이름 로고만 허용하고 문장은 넣지 않는다.
@@ -20,7 +21,7 @@
 
 | 분류 | ID | 이름 | 우선 | 캐릭터 | 상태 |
 |---|---|---|---|---|---|
-| A. BRAND | BR-01 | Main Character CANON | P0 | 예 | NOT STARTED (원본 3종 보유) |
+| A. BRAND | BR-01 | Main Character CANON | P0 | 예 | NOT STARTED (원본은 에셋 제작 단계에서 확정) |
 | | BR-02 | Supporting Character A | P2 | 예 | BLOCKED BY CANON |
 | | BR-03 | Supporting Character B | P2 | 예 | BLOCKED BY CANON |
 | B. HOME | HM-01 | homeHeroArtwork | P1 | 예 | PLACEHOLDER |
@@ -68,11 +69,12 @@
 | FREE / PRO context | 공통 |
 | Animation required? | 아니오(움직임은 앱 쪽). 단 관절이 읽히는 자세여야 함 |
 | Text baked into image? | NO |
-| Current placeholder location | 없음. 원본 `docs/design/emoti-assets-v1.zip`, 축소본 `assets/art/mascot-*.png` |
-| Implementation path | `assets/brand/character/canon/`(시트·포즈 원본, 앱 번들에 넣지 않음) |
-| Status | NOT STARTED — PHASE 1 에서 원본 3종 × 3방향 비교 후 LOCK |
+| Current placeholder location | 없음 |
+| Implementation path | 원본 보관 `docs/design/canon-source/`(에셋 제작 단계에서 받은 원본 그대로) · 결과 `assets/brand/character/canon/`(시트·포즈, 앱 번들에 넣지 않음) |
+| Status | NOT STARTED — 원본은 실제 에셋 제작 단계에서 사용자가 제공하거나 선택한다 |
 
-제작 방식(PHASE 1): 원본 캐릭터 3종(종이·잉크·지우개) 각각 **① 원형 최대보존형 ② 앱용 정제형 ③ 강한 브랜드형** = 9안 → 사용자가 메인 1종 + 방향 1개 선택 → 턴어라운드 시트 → **CANON LOCK**(파일 SHA-256 을 이 문서에 기록). 메인 후보: 종이 캐릭터(현재 앱이 가장 많이 씀: 빈 상태·움직임 견본·PRO 비교) — 확정은 사용자.
+제작 방식(PHASE 1, 원본 확정 뒤): 확정된 원본 캐릭터 각각 **① 원형 최대보존형 ② 앱용 정제형 ③ 강한 브랜드형** → 사용자가 메인 1종 + 방향 1개 선택 → 턴어라운드 시트 → **CANON LOCK**(파일 SHA-256 을 이 문서에 기록). 메인 후보는 원본을 받은 뒤 사용자가 정한다.
+(41.5차: 41차의 "원본 3종 = emoti-assets-v1.zip 마스코트 · 메인 후보 종이" 서술은 철회)
 
 #### BR-02 / BR-03 Supporting Character A / B
 BR-01 과 같은 표. 차이만:
@@ -83,7 +85,7 @@ BR-01 과 같은 표. 차이만:
 | Production | 턴어라운드 3840×2160 · 포즈 2048×2048, 표정 4 · 포즈 2 |
 | CANON dependency | **BLOCKED BY CANON** — 선 두께·머리 비율·눈 모양·그림자 규칙을 BR-01 에서 그대로 가져온다 |
 | Current placeholder | `assets/art/mascot-ink.png`(PRO 비교 오른쪽), `mascot-eraser.png`(앱에서 미사용) |
-| Status | BLOCKED BY CANON (메인으로 뽑히지 않은 원본 2종이 기본 후보) |
+| Status | BLOCKED BY CANON (원본 확정 뒤 결정) |
 
 ### B. HOME
 
@@ -295,7 +297,8 @@ BR-01 과 같은 표. 차이만:
 
 | PHASE | 할 일 | 산출물 | 승인 게이트 |
 |---|---|---|---|
-| 1 | 기존 캐릭터 3종 원본 → 캐릭터별 ①원형 최대보존 ②앱용 정제 ③강한 브랜드 = 9안 비교 → 메인 1종·방향 1개 선택 → 턴어라운드·표정·대표 포즈 | BR-01 CANON 시트(SHA-256 기록) | **사용자 CANON LOCK** |
+| 0 | 에셋 제작 단계 시작 시 사용자가 원본 캐릭터를 제공·선택 → `docs/design/canon-source/` 원본 보관·SHA-256 기록 | CANON 원본 | 사용자 원본 확정 |
+| 1 | 확정된 원본 → 캐릭터별 ①원형 최대보존 ②앱용 정제 ③강한 브랜드 비교 → 메인 1종·방향 1개 선택 → 턴어라운드·표정·대표 포즈 | BR-01 CANON 시트(SHA-256 기록) | **사용자 CANON LOCK** |
 | 2 | CANON 대표 포즈로 HM-01 Home Hero · HM-02 Empty · CP-01 Export Success | 3종 × @1x/@2x/@3x | 내부 규격 검사(투명·크기·안전 영역) |
 | 3 | PHASE 2 에셋 2~3개를 **실제 앱에 시험 삽입**(source 교체만) → S24 Ultra 캡처 → UI 와 캐릭터 궁합 확인 | 캡처 + 판정 | **사용자 확인(미감)** |
 | 4 | BR-02·BR-03 조연 → CR-01 Motion 견본 · CP-02 PRO 전·후 · HM-03 Notice | | PHASE 1 LOCK 필수 |
