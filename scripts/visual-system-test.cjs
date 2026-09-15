@@ -89,6 +89,12 @@ async function ready() {
   assert.equal(slots.ASSET_SLOTS.referencePoseThumbnail.aspectRatio, 3 / 4, '관절 인형 전신은 세로형 3:4');
   assert.equal(slots.EXPRESSION_GUIDE.enabled, false, '표현 가이드는 꺼진 채로 출시된다');
   assert.equal(slots.HOME_NOTICE.enabled, false, '알림은 꺼져 있다');
+  // 41차: 앱 표시 이름(런처·스토어 제목의 원본)과 홈 브랜드는 하나다.
+  const appName = JSON.parse(fs.readFileSync('app.json', 'utf8')).expo.name;
+  assert.equal(appName, '임티제작소', 'app.json expo.name 은 제품 브랜드');
+  assert.equal(require('../app.config.js')().name, appName, 'app.config.js 가 이름을 바꾸지 않는다');
+  assert.ok(fs.readFileSync('App.tsx', 'utf8').includes(`>${appName}</Text>`), '홈 머리 브랜드 글자와 앱 이름이 같다');
+  assert.ok(fs.readFileSync('docs/PLAY_STORE_LISTING_KO.md', 'utf8').includes('`' + appName + '`'), '스토어 등록정보 초안 제목도 같다');
 
   // ── 3. 홈: 브랜드 → 창작 표면 → 최근 작업. 알림이 꺼지면 자리 0 ───────────────────────────────
   const p = createProject('시각 세트', '콩이');

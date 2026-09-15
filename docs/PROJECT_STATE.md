@@ -2264,3 +2264,11 @@ BrowserStack 추가 검증 중단. 28차는 **PARTIAL / MANUAL QA DEFERRED** 로
 - 에셋 자리 7개 규격(`docs/design/ASSET_SLOTS.md`). 표현 가이드·알림 꺼짐, 기본 레퍼런스 ready=false.
 - 실기기 캡처 검토에서 수정: 홈 그림 자리 겹침, **네이티브 WebView 가 크기를 무시해 캔버스가 위에 붙고 빈 띠**(정사각 틀로 감쌈 → 가운데), 문구 입력 중 빈 띠, 선택 알약 둥글기.
 - 새 `visual-system-test` + 라벨 변경(새 세트 → 새 이모티콘 만들기). npm test exit 0(19 스위트). S24 스모크 20/20. 최종 QA APK `app-40th-visual2-…-3b161c503bfc.apk`. 상세 `verification/round40/RESULT.md`.
+
+## 41차 (2026-09-15) — PRE-ASSET LOCK & PRODUCTION SPEC — 판정 PASS (기준점·규격·발주서, 기능/UI 변경 없음)
+
+- **Git 기준점**: `5a5b635` Round40 visual shell pass(39·40차, 295 파일, 비밀값 0·바이너리 0). `.gitignore` 로 APK/AAB/검증 이미지·덤프는 로컬 보존·저장소 제외.
+- **/24 ↔ 32**: 두 규격 모두 VERIFIED(kakao-spec 2026-09-12). 원인은 세트 종류 필드 없음(`setIsAnimated` = 칸 하나라도 움직이면) + 칸 수 32 고정 모델(생성·저장 검증 `slots.length !== 32`) + 화면이 24(요약·제출 준비)와 32(격자·남은 칸·묶음)를 섞음 → **PRODUCT/DATA-MODEL BLOCKER**, 수정 안 함(저장 호환 LOCKED). 손댈 위치는 `verification/round41/RESULT.md` B.
+- **앱 이름**: `app.json expo.name` 나의 이모티콘 작업실 → **임티제작소**(홈 브랜드와 통일). slug·패키지 불변. 스토어·개인정보·약관 초안도 통일. 런처 라벨은 다음 prebuild 빌드부터. 회귀 테스트 추가.
+- **에셋 발주서**: `docs/design/ASSET_PRODUCTION_SPEC.md`(21개, 에셋별 19항목, 40차 실제 좌표 구도, PHASE 1~7 LOCK) · `docs/design/ASSET_GENERATION_HANDOFF.md`(생성 AI 전달, PHASE 1 = 원본 캐릭터 3종 × 원형보존/앱정제/강한 브랜드 9안). 자리 규격 4곳을 실제 코드 배치로 보정(홈 히어로 오른쪽 위 96/112, 빈 홈 120×90, 움직임 견본 48 안 41, PRO 전·후 1:1 두 장).
+- npm test exit 0(19 스위트). 다음: 사용자 PHASE 1 → CANON LOCK. blocker: 세트 종류/칸 수 결정, CANON, 출시 에셋 P0.
