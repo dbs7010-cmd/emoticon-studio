@@ -2281,4 +2281,13 @@ BrowserStack 추가 검증 중단. 28차는 **PARTIAL / MANUAL QA DEFERRED** 로
 - 비버그 확인(단독 재현): 문구 바깥 누르기 해제, 내보내기→보드→홈 뒤로, 강제 종료 뒤 보드 15칸 상태 동일 — 감사 스크립트 타이밍·카카오톡 포커스 탈취가 원인.
 - 실기기 러너: 두근거리기를 첫 장 기준으로만 재 스모크가 19/20(.0003)으로 두 번 떨어짐 — 16장 모든 짝으로 재면 .0013/.0015(앱 정상). `device-qa.cjs` 를 8장·모든 짝 비교로(바닥값 불변).
 - 최종 QA APK `app-42nd-fix2-debugsigned-arm64-78baac81a4df.apk`: 스모크 20/20 · 두 수정 기기 확인 PASS(새 움직이는 칸 빨간 점 0·검사 줄 0, 옛 거짓 FAIL 은 다시 검사로 0) · npm test exit 0(19 스위트).
-- 남은 것: 내보내기 24/32 표시(사용자 결정 blocker, SET_TYPE_DESIGN) · P2 5건(보드 검사 점 범례, 검사 줄 이유 없음, 기본 레퍼런스 준비 중 자리, 참고 시트+문구 줄 겹침, 완성 0칸이면 내보내기 숨김) · TASTE 2건. 상세 `verification/round42/RESULT.md`.
+- 남은 것(42차 기준): 내보내기 24/32 표시(사용자 결정 blocker, SET_TYPE_DESIGN) · P2 5건(보드 검사 점 범례, 검사 줄 이유 없음, 기본 레퍼런스 준비 중 자리, 참고 시트+문구 줄 겹침, 완성 0칸이면 내보내기 숨김) · TASTE 2건. 상세 `verification/round42/RESULT.md`.
+
+## 43차·43.1차·44차 (2026-09-16) — PAINTER FRICTION FIX + FINAL PRE-ASSET UI/UX LOCK — 판정 PASS · ASSET-READY YES
+
+- 43차 진단(수정 없음): 캔버스 왼쪽 굵기 띠(113×453px)가 그 자리에서 시작한 획을 삼킴(P1) · 지금 굵기가 안 보임 · 색 패널이 캔버스 절반을 가리고 팔레트 셋째 줄 잘림 · 두 손가락 확대가 코드에 있으나 알 수 없음.
+- 43.1차: 굵기 = 도구 줄 한 칸(점+px, 누른 채 끌기, 브러시·지우개 각자 기억), 캔버스 위 누를 수 있는 것 0 · 색 패널 머리 한 줄(최근 색 포함)·열린 동안 캔버스를 위 빈 띠로 · 확대 중에만 "N%"(누르면 100%) · 앱 켠 뒤 한 번 확대 안내. 실제 두 손가락(스크래치 계측 APK, UiAutomation 두 포인터) 확대 3.2~3.5배·이동·100%·확대 중 획 PASS. S24 A~F 전부 PASS.
+- 44차(시안 미첨부 → 원칙만): 홈 최근 넷 + 전체 보기 → **전체 작업** 한 줄 목록(보드는 세트 안 칸) · **표현 가이드**(홈 한 줄 → 분류 칩 → 2열 카드: 1:1 그림 자리·이름·몸짓 힌트, "무엇을 그릴까?") · 캔버스 위 가이드 힌트 폐지 · **기본 레퍼런스** 분류 칩 넷(포즈·표정·손동작·소품·효과) + 3:4 4열 격자("어떻게 그릴까?") · Motion 은 이미 preview-first 라 코드 불변.
+- 에셋 자리 8개 확정(`expressionGuideArtwork` 신규, 캔버스 가이드 그림·레퍼런스 가로 줄 규격 폐지) — `asset-slots.ts`·`ASSET_SLOTS.md`·`ASSET_PRODUCTION_SPEC.md`(CR-02 → EG-01)·`ASSET_GENERATION_HANDOFF.md` 일치.
+- 실기기 캡처에서 찾아 고친 P1: 가이드 칩 380px 세로 늘어남 · 레퍼런스 격자 3열 줄바꿈. 최종 APK `app-44-preasset-lock2-debugsigned-arm64-923f71528960.apk` 로 해당 화면 재확인.
+- npm test exit 0(19 스위트, 라벨 53). 남은 것: 24/32 표시(사용자 결정) · P2(빈 칸 움직임 견본 비어 보임 등) · TASTE → `docs/MANUAL_QA.md`. 상세 `verification/round44/RESULT.md`.

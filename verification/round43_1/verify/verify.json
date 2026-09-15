@@ -1,0 +1,70 @@
+{
+  "0-open-empty-slot": {
+    "ok": true,
+    "slot": "14 / 32",
+    "canvas": [
+      0,
+      591,
+      1080,
+      1671
+    ],
+    "sizeInDock": {
+      "bounds": [
+        724,
+        1902,
+        882,
+        2037
+      ],
+      "sameRowAsBrush": true,
+      "belowCanvas": true
+    }
+  },
+  "A-stroke-from-old-strip": {
+    "ok": true,
+    "changed": 1,
+    "canvasTop": 591
+  },
+  "B-size-visible-and-continuous": {
+    "ok": true,
+    "start": 32,
+    "thick": 48,
+    "thin": 16
+  },
+  "C-brush-eraser-memory": {
+    "ok": true,
+    "brushPx": 16,
+    "eraser0": 12,
+    "eraser1": 25,
+    "brushBack": 16,
+    "eraserBack": 25
+  },
+  "D-pinch-pan-reset-draw": {
+    "ok": true,
+    "zoomLabel": "크게 보기 3.2배",
+    "chipText": "318%",
+    "chipOutsideCanvas": true,
+    "strokeAt": 1,
+    "zoomAfter": "크게 보기 1.0배",
+    "normalStroke": 0.8659,
+    "zoomedVsBefore": 0.1496
+  },
+  "E-color-panel": {
+    "ok": true,
+    "canvasTopClosed": 591,
+    "canvasTopOpen": 381,
+    "canvasTopBack": 591,
+    "swatchCount": 24,
+    "lastSwatchBottom": 1849,
+    "dockTop": 1902,
+    "recentInHeader": 3,
+    "hiddenCanvasShare": 0.23
+  },
+  "F-detail-edit-zoomed": {
+    "ok": true,
+    "thinPx": 1,
+    "eye": [
+      756,
+      915
+    ]
+  }
+}

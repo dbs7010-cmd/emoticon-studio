@@ -133,9 +133,10 @@ const saved = async (dirty = true) => {
   await press('브러시');
   assert.equal(labelled('브러시 닫기').length, 0, '다시 누르면 닫힌다');
 
-  // ── 캔버스 가장자리 굵기 ─────────────────────────────────────────────────────────────────
+  // ── 도구 줄 굵기(43.1차: 캔버스 가장자리 띠는 그 자리에서 시작한 획을 삼켜 도구 줄로 옮겼다) ─────────────
   assert.equal(tree.root.findAll(n => n.props.testID === '굵기 미리보기').length, 0, '평소에는 큰 숫자나 굵기 패널이 떠 있지 않다');
-  let during = await dragSize('브러시 굵기', 400, 363);
+  assert.ok(ranges('브러시 굵기')[0].findAll(n => n.type === 'Text' && String(n.children?.join('')) === '6px').length === 1, '지금 굵기가 평소에도 px 로 보인다');
+  let during = await dragSize('브러시 굵기', 400, 333);
   assert.deepEqual(during, ['24px'], '끄는 동안에만 크기 원과 px 이 보인다');
   assert.equal(tree.root.findAll(n => n.props.testID === '굵기 미리보기').length, 0, '손을 떼면 사라진다');
   assert.equal(lastCommand('width').width, 24, '브러시 굵기가 캔버스로 간다');
@@ -145,7 +146,7 @@ const saved = async (dirty = true) => {
   await press('지우개');
   assert.equal(tree.root.findAll(n => n.type === 'Pressable' && / 닫기$/.test(n.props.accessibilityLabel ?? '') && n.props.accessibilityLabel !== '그리기 닫기').length, 0, '지우개는 따로 여는 설정 시트가 없다');
   assert.equal(ranges('브러시 굵기').length, 0, '지우개일 때는 같은 자리가 지우개 굵기');
-  during = await dragSize('지우개 굵기', 400, 379);
+  during = await dragSize('지우개 굵기', 400, 362);
   assert.deepEqual([during[0], lastCommand('width')], ['40px', { type: 'width', tool: 'eraser', width: 40 }], '지우개 굵기도 같은 조작');
   assert.equal(loadStore().store.projects[0].brush.eraserWidth, 40, '지우개 굵기도 세트에 남는다');
   await press('브러시');
@@ -155,8 +156,19 @@ const saved = async (dirty = true) => {
   assert.equal(tree.root.findAll(n => n.type === 'Pressable' && / 닫기$/.test(n.props.accessibilityLabel ?? '') && n.props.accessibilityLabel !== '그리기 닫기').length, 0, '설정이 없는 도구는 다시 눌러도 시트를 열지 않는다');
   await press('지우개');
 
+  // ── 43.1차: 이미 있는 두 손가락 확대를 알 수 있게 — 확대한 동안에만 작은 배율 표시, 누르면 100% ──────────────
+  const canvasAreaNode = () => tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
+  assert.equal(labelled('원래 크기로 보기').length, 0, '100% 에서는 배율 표시가 없다');
+  await message({ type: 'zoom', zoom: 1.5 });
+  assert.equal(labelled('원래 크기로 보기').length, 1, '확대하면 작은 배율 표시가 뜬다');
+  assert.equal(labelled('원래 크기로 보기')[0].findAll(n => n.type === 'Text' && String(n.children?.join('')) === '150%').length, 1, '배율은 150% 처럼 보인다');
+  await press('원래 크기로 보기');
+  assert.deepEqual(lastCommand('zoom'), { type: 'zoom', zoom: 1 }, '누르면 캔버스가 100% 로 돌아간다');
+  assert.equal(labelled('원래 크기로 보기').length, 0, '100% 로 돌아오면 표시가 사라진다');
+
   // ── 2. 잠금 밀도: 색 ─────────────────────────────────────────────────────────────────────
   await press('색');
+  assert.equal(canvasAreaNode().props.style.justifyContent, 'flex-start', '색 패널을 연 동안 캔버스는 위 빈 띠 쪽으로 올라가 그림이 패널 밖에 더 보인다(43.1차)');
   assert.equal(locks() + proMarks(), 0, '색(팔레트): 자물쇠·PRO 표시 0');
   await press('스포이드');
   await message({ ...scene, picking: true }); await press('스포이드 취소'); await message({ ...scene, picking: false });
@@ -325,8 +337,8 @@ const saved = async (dirty = true) => {
   // 짧은 화면(캔버스 영역 360×353): 굵기 조절은 캔버스 안에 들어가고, 움직이기 패널이 캔버스를 절반 넘게 덮지 않는다.
   const area = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
   await act(async () => area.props.onLayout({ nativeEvent: { layout: { width: 360, height: 353 } } }));
-  const sizerHeight = ranges('브러시 굵기')[0].props.style.height;
-  assert.ok(sizerHeight >= 120 && sizerHeight <= 353 * .45, '짧은 화면에서도 굵기 조절이 캔버스 안에 들어간다: ' + sizerHeight);
+  assert.equal(ranges('브러시 굵기').length, 1, '짧은 화면에서도 굵기 조절이 있다');
+  assert.equal(area.findAll(n => n.props.accessibilityLabel === '브러시 굵기' || n.props.accessibilityLabel === '지우개 굵기').length, 0, '굵기 조절은 캔버스 영역 위에 올라가지 않는다(43.1차)');
   await press('움직이기');
   const motionBox = tree.root.findAll(n => n.type === 'View' && Array.isArray(n.props.style) && n.props.style.some(s => s && typeof s.height === 'number' && s.flexShrink === 0))[0];
   const motionHeight = Object.assign({}, ...motionBox.props.style).height;

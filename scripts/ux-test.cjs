@@ -914,8 +914,8 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   assert.deepEqual(brushRow.findAll(n=>n.type==='Pressable').map(n=>n.props.accessibilityLabel),['펜','붓','연필']);
   assert.equal(labelled('굵기 12').length,0,'굵기 버튼 줄은 브러시 설정에 없다 at '+width+'dp');
   const sizer=tree.root.findAll(n=>n.type==='View'&&n.props.accessibilityRole==='adjustable'&&n.props.accessibilityLabel==='브러시 굵기')[0];
-  assert.ok(sizer,'캔버스 가장자리 굵기 조절이 있다 at '+width+'dp');
-  assert.ok(styleOf(sizer).width>=40,'손가락이 잡을 수 있는 40dp 폭 at '+width+'dp');
+  assert.ok(sizer,'도구 줄 굵기 조절이 있다 at '+width+'dp');
+  assert.ok(styleOf(sizer).minHeight>=48,'손가락이 잡을 수 있는 48dp 높이 at '+width+'dp');
   await act(async()=>sizer.props.onResponderGrant({nativeEvent:{pageY:400}}));
   await act(async()=>sizer.props.onResponderMove({nativeEvent:{pageY:340}}));
   await act(async()=>sizer.props.onResponderRelease({nativeEvent:{pageY:340}}));

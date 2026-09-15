@@ -83,11 +83,17 @@ async function ready() {
   assert.ok(hex <= 40, '화면 파일에 흩어진 하드코딩 색이 줄었다(39차 App 30 + painter 22 + motion 4 = 56, 견본 제외): ' + hex);
 
   // ── 2. 에셋 자리: 비율·표시 크기·안전 영역·바탕 규격이 모두 있다 ─────────────────────────────
-  const names = ['homeHeroArtwork', 'homeEmptyArtwork', 'noticeArtwork', 'referencePoseThumbnail', 'motionExampleArtwork', 'exportSuccessArtwork', 'proFeatureArtwork'];
-  assert.deepEqual(Object.keys(slots.ASSET_SLOTS).sort(), [...names].sort(), '에셋 자리 7개');
+  // 44차 LOCK: 표현 가이드 카드 그림 자리가 생겼다. 쓰지 않는 자리는 두지 않는다.
+  const names = ['homeHeroArtwork', 'homeEmptyArtwork', 'noticeArtwork', 'referencePoseThumbnail', 'expressionGuideArtwork', 'motionExampleArtwork', 'exportSuccessArtwork', 'proFeatureArtwork'];
+  assert.deepEqual(Object.keys(slots.ASSET_SLOTS).sort(), [...names].sort(), '에셋 자리 8개');
   for (const name of names) { const s = slots.ASSET_SLOTS[name]; assert.ok(s.aspectRatio > 0 && s.display && s.safeArea && ['transparent', 'opaque'].includes(s.background), name + ' 규격'); }
   assert.equal(slots.ASSET_SLOTS.referencePoseThumbnail.aspectRatio, 3 / 4, '관절 인형 전신은 세로형 3:4');
-  assert.equal(slots.EXPRESSION_GUIDE.enabled, false, '표현 가이드는 꺼진 채로 출시된다');
+  assert.equal(slots.ASSET_SLOTS.expressionGuideArtwork.aspectRatio, 1, '표현 가이드 카드 그림은 1:1');
+  // Guide = 무엇을 그릴까(홈에서 고르는 목록), Reference = 어떻게 그릴까(그리기 화면 참고). 캔버스 위 가이드 힌트는 두지 않는다.
+  assert.equal(slots.EXPRESSION_GUIDE.canvasHint, undefined, '캔버스 위 표현 가이드 힌트 자리는 없다');
+  assert.ok(slots.EXPRESSION_GUIDE.categories.length >= 3 && slots.EXPRESSION_GUIDE.categories.every(c => slots.EXPRESSION_GUIDE.cards.filter(x => x.category === c).length >= 4), '가이드: 분류마다 표현 카드 4개 이상');
+  assert.ok(slots.EXPRESSION_GUIDE.cards.every(c => c.name.length <= 6 && c.hint.length <= 14), '가이드 카드는 짧은 이름 + 짧은 몸짓 힌트(긴 설명 없음)');
+  assert.deepEqual([...slots.BUILTIN_REFERENCES.categories], ['포즈', '표정', '손동작', '소품·효과'], '기본 레퍼런스 분류는 V1 네 가지(소품·효과 합침)');
   assert.equal(slots.HOME_NOTICE.enabled, false, '알림은 꺼져 있다');
   // 41차: 앱 표시 이름(런처·스토어 제목의 원본)과 홈 브랜드는 하나다.
   const appName = JSON.parse(fs.readFileSync('app.json', 'utf8')).expo.name;
@@ -110,6 +116,34 @@ async function ready() {
   assert.equal(byTestID('홈 알림').length, 0, '알림 꺼짐 → 자리 없음');
   const primaryYellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
   assert.deepEqual(primaryYellow, ['새 이모티콘 만들기'], '홈의 노랑 버튼은 하나');
+
+  // ── 44차: 세트가 늘어도 홈은 최근 넷 + 전체 보기. 여러 세트는 전체 작업, 세트 안 칸은 보드. 표현 가이드는 홈의 조용한 한 줄 ─────
+  assert.equal(labelled('표현 가이드').length, 1, '홈에 표현 가이드 입구 한 줄');
+  assert.equal(labelled('전체 작업 보기').length, 0, '세트가 넷 이하면 전체 보기가 없다');
+  {
+    const many = Array.from({ length: 12 }, (_, i) => { const q = createProject('많은 세트 ' + (i + 1), '콩이'); q.updatedAt = new Date(Date.UTC(2026, 8, 1 + i)).toISOString(); return q; });
+    saveStore({ version: 1, revision: 50, projects: many, palette: [] });
+    await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); });
+    const setButtons = () => tree.root.findAll(n => n.type === 'Pressable' && /^많은 세트 \d+$/.test(n.props.accessibilityLabel ?? '')).map(n => n.props.accessibilityLabel);
+    assert.deepEqual(setButtons(), ['많은 세트 12', '많은 세트 11', '많은 세트 10', '많은 세트 9'], '세트가 12개여도 홈에는 최근에 손댄 넷만');
+    await press('전체 작업 보기');
+    assert.equal(setButtons().length, 12, '전체 작업에서 모든 세트를 찾는다');
+    assert.equal(byTestID('홈 창작 표면').length, 0, '전체 작업은 홈과 다른 화면');
+    await press('많은 세트 3');
+    assert.equal(byTestID('slot-grid').length, 1, '전체 작업에서 고른 세트는 그 세트의 칸 보드로 열린다');
+    await press('뒤로');
+    assert.equal(byTestID('전체 작업 목록').length, 1, '보드에서 뒤로 가면 전체 작업으로 돌아온다');
+    await press('홈으로');
+    await press('표현 가이드');
+    assert.equal(byTestID('표현 가이드 카드').length, 1, '표현 가이드: 카드 격자');
+    assert.equal(byTestID('asset-slot-expressionGuideArtwork').length, 4, '카드마다 그림 자리(분류당 4)');
+    await press('표현 가이드 화남·억울');
+    assert.equal(tree.root.findAll(n => n.props.accessibilityLabel === '억울해 · 팔짱 + 몸 돌리기').length, 1, '분류를 바꾸면 그 분류의 표현 카드');
+    assert.equal(tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).length, 0, '가이드 화면에 노랑 버튼 없음');
+    await press('홈으로');
+    saveStore({ version: 1, revision: 60, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
+    await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); });
+  }
 
   // ── 4. 보드: 글자 배지 없이 상태 점 ─────────────────────────────────────────────────────────
   await press('시각 세트');
@@ -175,6 +209,6 @@ async function ready() {
   assert.deepEqual(yellowOnExport, ['파일 묶음 만들기'], '내보내기의 노랑 버튼은 하나');
   await act(async () => tree.unmount());
 
-  console.log('PASS: visual system — 토큰(색·모서리 8/12/16/20/24·간격 4 기반·옅은 그림자·글자 위계 8단), 2px 노랑 선택 박스·900 굵기 남발 없음, 화면 하드코딩 색 ' + hex + '곳(39차 56, 견본·토큰 정의 제외), 에셋 자리 7개 규격·표현 가이드/알림 꺼짐, 홈 브랜드→창작 표면→최근 작업·노랑 버튼 1, 보드 글자 배지 없음·떠 있는 아래 줄, 도구 dock 테두리 없음·고른 도구만 노랑 표면·되돌리기 조용, 선 종류 세그먼트 하나(펜·붓·연필, 비선택 투명), 문구 키보드 한 줄, 움직임 없음 좁게, 내보내기 요약→격자·제출 준비·노랑 1. Native/WebView mocked.');
+  console.log('PASS: visual system — 토큰(색·모서리 8/12/16/20/24·간격 4 기반·옅은 그림자·글자 위계 8단), 2px 노랑 선택 박스·900 굵기 남발 없음, 화면 하드코딩 색 ' + hex + '곳(39차 56, 견본·토큰 정의 제외), 에셋 자리 8개 규격(44차 표현 가이드 카드 포함)·캔버스 가이드 힌트 없음·알림 꺼짐·레퍼런스 V1 분류 넷, 홈 브랜드→창작 표면→최근 작업·노랑 버튼 1, 세트 12개여도 홈은 최근 넷+전체 보기·전체 작업→보드→뒤로 전체 작업·표현 가이드 분류/카드, 보드 글자 배지 없음·떠 있는 아래 줄, 도구 dock 테두리 없음·고른 도구만 노랑 표면·되돌리기 조용, 선 종류 세그먼트 하나(펜·붓·연필, 비선택 투명), 문구 키보드 한 줄, 움직임 없음 좁게, 내보내기 요약→격자·제출 준비·노랑 1. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

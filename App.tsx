@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import { Action, AssetSlot, Dialog, Elev, Field, IconButton, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, userMessage } from './src/components/ui';
-import { HOME_NOTICE } from './src/design/asset-slots';
+import { EXPRESSION_GUIDE, HOME_NOTICE } from './src/design/asset-slots';
 import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
 import { MotionBaker, type Baker } from './src/components/motion-baker';
 import { ExtraComposer, placeInFrame, type Composer } from './src/components/extra-composer';
@@ -67,6 +67,9 @@ function Studio() {
   const [place, setPlace] = useState({ scale: 1, dx: 0, dy: 0 });
   const composer = useRef<Composer>(null);
   const [settings, setSettings] = useState(false);
+  // 홈 아래 두 화면(44차): 전체 작업(여러 세트 찾기·다시 열기)과 표현 가이드("무엇을 그릴까?"). 세트 안 칸 관리는 보드가 맡는다.
+  const [homeView, setHomeView] = useState<'home' | 'all' | 'guide'>('home');
+  const [guideCategory, setGuideCategory] = useState<string>(EXPRESSION_GUIDE.categories[0]);
   // 복구 화면의 기술 정보는 접어 두고(문의할 때만 펼침), 설정의 '저장 상태 보기'는 사람이 읽는 요약 창으로 연다.
   const [diagOpen, setDiagOpen] = useState(false), [storeStatus, setStoreStatus] = useState(false);
   const [playing, setPlaying] = useState(false), [playIndex, setPlayIndex] = useState(0);
@@ -153,7 +156,7 @@ function Studio() {
   function updateProject(transform: (p: Project) => Project) { if (projectId) { try { changeProject(projectId, transform); } catch { /* Keep unsaved state with persistent retry banner. */ } } }
   const project = store?.projects.find(p => p.id === projectId), slot = project?.slots.find(s => s.number === slotNumber);
   function back() { if (busy) return; if (slotNumber !== null) setSlotNumber(null); else if (canonOpen) setCanonOpen(false); else if (screen !== 'board') setScreen('board'); else setProjectId(null); }
-  useEffect(() => { const sub = BackHandler.addEventListener('hardwareBackPress', () => { if (painting) return false; if (projectId) { back(); return true; } return false; }); return () => sub.remove(); }, [projectId, slotNumber, canonOpen, busy, painting, screen]);
+  useEffect(() => { const sub = BackHandler.addEventListener('hardwareBackPress', () => { if (painting) return false; if (projectId) { back(); return true; } if (homeView !== 'home') { setHomeView('home'); return true; } return false; }); return () => sub.remove(); }, [projectId, slotNumber, canonOpen, busy, painting, screen, homeView]);
   async function task(label: string, work: () => Promise<void>) { if (busy) return; setBusy(label); try { await work(); } catch (e) { Alert.alert('하지 못했어요', userMessage(e)); } finally { setBusy(''); } }
   async function analyzed(image: LocalImage): Promise<LocalImage> { if (image.metrics) return image; try { return { ...image, metrics: await analyzer.current!.analyze(image) }; } catch { setNotice('일부 그림을 검사하지 못했어요. 그 칸은 확인이 필요하다고 표시돼요.'); return image; } }
   // Re-reads the saved files and replaces every verdict. No earlier PASS survives this.
@@ -464,6 +467,10 @@ function Studio() {
   }
   const managed = store?.projects.find(p => p.id === manageId);
   const pendingDelete = store?.projects.find(p => p.id === confirmDeleteId);
+  // 최근에 손댄 세트가 먼저. 홈은 앞의 넷만, 나머지는 '전체 작업'에서 찾는다 — 세트가 100개여도 홈 길이는 같다.
+  const sortedProjects = store ? [...store.projects].sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? '')) : [];
+  const HOME_RECENT = 4;
+  const setMeta = (p: Project) => { const when = new Date(p.updatedAt); return { moving: setIsAnimated(p), done: doneCount(p), working: p.slots.filter(isWorking).length, stamp: Number.isFinite(when.getTime()) ? `${when.getMonth() + 1}월 ${when.getDate()}일` : '' }; };
   return <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}><StatusBar style="dark" /><ImageAnalyzer ref={analyzer} /><MotionBaker ref={baker} /><ExtraComposer ref={composer} />
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 4, minHeight: 56, backgroundColor: C.bg }}>
@@ -483,7 +490,7 @@ function Studio() {
         <Text style={{ fontSize: 12, color: C.ink, lineHeight: 18 }}>작업은 화면에 그대로 있어요. 다시 저장을 눌러 주세요.</Text>
         <Action primary title="다시 저장" onPress={() => { try { commit(s => s); } catch {} }} />
       </View>}
-      <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, !project && !loadError && { flexGrow: 1 }]}>
+      <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}/${homeView}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, !project && !loadError && { flexGrow: 1 }]}>
         {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="알림 닫기" onPress={() => setNotice('')}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, paddingVertical: 10, paddingHorizontal: 14, borderRadius: T.radius.md, backgroundColor: C.paper, ...Elev[1] }}>
           <MaterialCommunityIcons name="information-outline" size={18} color={C.muted} />
@@ -511,7 +518,66 @@ function Studio() {
             {report.snapshots.map((file, i) => file.exists ? <Action key={file.name} title={`저장 사본 ${i + 1} 보내기`} icon="share-variant" disabled={!!busy} onPress={() => shareSnapshot(file.name)} /> : null)}
             {!report.snapshots.some(file => file.exists) && <Text style={{ fontSize: 12, color: C.muted }}>보낼 저장 파일이 없어요.</Text>}
           </View>}
-        </> : !store ? <Text style={{ fontSize: 13, color: C.muted }}>불러오는 중…</Text> : !project ? <>
+        </> : !store ? <Text style={{ fontSize: 13, color: C.muted }}>불러오는 중…</Text> : !project && homeView === 'all' ? <>
+          {/* 전체 작업(44차): 여러 이모티콘 세트를 찾고 다시 여는 곳. 한 줄 목록 — 세트 안 24/32칸은 보드가 맡는다. 폴더·태그·필터 없음. */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4, marginLeft: -8 }}>
+            <IconButton label="홈으로" icon="chevron-left" color={C.ink} onPress={() => setHomeView('home')} />
+            <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>전체 작업</Text>
+            <Text style={{ fontSize: 12, color: C.faint }}>{sortedProjects.length}개 세트</Text>
+          </View>
+          <View testID="전체 작업 목록" style={{ borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
+            {sortedProjects.map((p, i) => {
+              const m = setMeta(p), cover = p.slots.find(s => s.finalImage);
+              return <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 12, paddingRight: 2, borderTopWidth: i ? 1 : 0, borderColor: C.line }}>
+                <Pressable accessibilityRole="button" accessibilityLabel={p.projectName} onPress={() => { setProjectId(p.id); setScreen('board'); }}
+                  style={({ pressed }) => ({ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72, opacity: pressed ? .6 : 1 })}>
+                  <View style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: C.surface2, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                    {cover ? <Image source={{ uri: imageUri((cover.motionImage ?? cover.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <MaterialCommunityIcons name="draw" size={20} color={C.lineStrong} />}
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>{p.projectName}</Text>
+                    <Text numberOfLines={1} style={{ fontSize: 12, color: C.faint }}>{m.moving ? '움직이는' : '멈춰있는'} · {m.done}개 완성{m.stamp ? ` · ${m.stamp}` : ''}</Text>
+                  </View>
+                </Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="dots-horizontal" size={22} color={C.faint} /></Pressable>
+              </View>;
+            })}
+          </View>
+        </> : !project && homeView === 'guide' ? <>
+          {/* 표현 가이드(44차): "무엇을 그릴까?". 분류 → 표현 카드(그림 자리 · 이름 · 짧은 몸짓 힌트). 긴 설명·대화형·생성 없음.
+              "어떻게 그릴까?"는 그리기 화면 › 참고 › 기본 레퍼런스가 맡는다. */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4, marginLeft: -8 }}>
+            <IconButton label="홈으로" icon="chevron-left" color={C.ink} onPress={() => setHomeView('home')} />
+            <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>표현 가이드</Text>
+          </View>
+          <Text style={{ fontSize: 13, color: C.muted, marginTop: -8 }}>무엇을 그릴지 골라 보세요</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }} style={{ marginHorizontal: -16, flexGrow: 0 }}>
+            <View style={{ width: 10 }} />
+            {EXPRESSION_GUIDE.categories.map(name => { const on = guideCategory === name;
+              return <Pressable key={name} accessibilityRole="button" accessibilityLabel={'표현 가이드 ' + name} accessibilityState={{ selected: on }} onPress={() => setGuideCategory(name)}
+                style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: on ? C.ink : C.surface2 }}>
+                <Text style={{ fontSize: 13, fontWeight: on ? '700' : '600', color: on ? C.paper : C.muted }}>{name}</Text>
+              </Pressable>; })}
+            <View style={{ width: 10 }} />
+          </ScrollView>
+          {(() => {
+            const cardWidth = Math.floor((screenWidth - 32 - 12) / 2), frame = cardWidth - 20;
+            const cards = EXPRESSION_GUIDE.cards.filter(c => c.category === guideCategory);
+            return cards.length
+              ? <View testID="표현 가이드 카드" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                  {cards.map(c => <View key={c.name} accessibilityLabel={`${c.name} · ${c.hint}`} style={{ width: cardWidth, padding: 10, gap: 8, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
+                    <View style={{ width: frame, height: frame, borderRadius: 14, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                      <AssetSlot name="expressionGuideArtwork" size={Math.round(frame * .8)} />
+                    </View>
+                    <View style={{ gap: 2, paddingHorizontal: 2, paddingBottom: 2 }}>
+                      <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{c.name}</Text>
+                      <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{c.hint}</Text>
+                    </View>
+                  </View>)}
+                </View>
+              : <Text style={{ paddingVertical: 24, textAlign: 'center', fontSize: 13, color: C.muted }}>이 분류에는 아직 표현이 없어요</Text>;
+          })()}
+        </> : !project ? <>
           {/* 머리: 브랜드가 먼저. PRO 는 작은 배지, 설정은 작은 아이콘. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4 }}>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -543,6 +609,18 @@ function Studio() {
               <Action variant="ghost" icon="image-outline" title="내 그림으로 시작" disabled={!!busy} onPress={startFromImage} />
             </View>
           </View>
+          {/* 주요 기능 진입(44차): 표현 가이드 한 줄. 노랑을 쓰지 않는 조용한 줄 — 홈의 노랑 버튼은 '새 이모티콘 만들기' 하나. */}
+          <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드" onPress={() => setHomeView('guide')}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 14, borderRadius: 20, backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: C.line })}>
+            <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}>
+              <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color={C.ink} />
+            </View>
+            <View style={{ flex: 1, gap: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>표현 가이드</Text>
+              <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>무엇을 그릴지 막막할 때</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+          </Pressable>
           {HOME_NOTICE.enabled && <View testID="홈 알림" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
             <AssetSlot name="noticeArtwork" size={44} />
             <View style={{ flex: 1, gap: 2 }}>
@@ -553,7 +631,10 @@ function Studio() {
           </View>}
           <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 8 }}>
             <Text style={{ flex: 1, fontSize: 17, fontWeight: '800', color: C.ink, letterSpacing: -.2 }}>최근 작업</Text>
-            {!!store.projects.length && <Text style={{ fontSize: 12, color: C.faint }}>{store.projects.length}개 세트</Text>}
+            {sortedProjects.length > HOME_RECENT && <Pressable accessibilityRole="button" accessibilityLabel="전체 작업 보기" onPress={() => setHomeView('all')} style={{ minHeight: T.tap, paddingLeft: 12, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>전체 보기 {sortedProjects.length}</Text>
+              <MaterialCommunityIcons name="chevron-right" size={16} color={C.muted} />
+            </Pressable>}
           </View>
           {!store.projects.length
             ? <View style={{ alignItems: 'center', gap: 8, paddingVertical: 20, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong }}>
@@ -562,7 +643,7 @@ function Studio() {
                 <Text style={{ fontSize: 12, color: C.muted }}>만든 세트가 여기에 모여요</Text>
               </View>
             : <View style={{ gap: 12 }}>
-            {[...store.projects].sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? '')).map(p => {
+            {sortedProjects.slice(0, HOME_RECENT).map(p => {
               const drawn = p.slots.filter(s => s.finalImage);
               const done = doneCount(p);
               const working = p.slots.filter(isWorking).length;

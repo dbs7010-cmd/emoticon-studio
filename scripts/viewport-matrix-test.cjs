@@ -91,12 +91,13 @@ const rows = [];
     const screen = height - STATUS - NAV;
     const row = { viewport: `${width}×${height}`, canvas: side, canvasShare: +(side * side / (width * screen)).toFixed(2) };
     const tag = `${width}×${height}`;
-    // 기본 Painter: 캔버스가 한 변 280dp 이상, 굵기 조절이 캔버스 안.
+    // 기본 Painter: 캔버스가 한 변 280dp 이상. 굵기 조절은 도구 줄 안에 있고 캔버스 영역 위에는 없다(43.1차).
     assert.ok(side >= 280, tag + ': 캔버스 한 변 280dp 이상, got ' + side);
     const sizer = tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '브러시 굵기')[0];
     assert.ok(sizer, tag + ': 굵기 조절');
-    assert.ok(flat(sizer.props.style).height <= side, tag + ': 굵기 조절이 캔버스 높이 안');
-    assert.ok(flat(sizer.props.style).width >= 40, tag + ': 굵기 조절 손가락 폭 40dp');
+    assert.ok(flat(sizer.props.style).minHeight >= 48, tag + ': 굵기 조절 손가락 높이 48dp');
+    const canvasArea = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
+    assert.equal(canvasArea.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 0, tag + ': 굵기 조절이 캔버스 영역 위에 없다');
     // 기본 도구 줄: 두 줄(48dp) + 여백이 BASE_H 안에 들어간다 — 완성 버튼이 잘리지 않는다.
     assert.ok(6 + 48 + 6 + 48 <= BASE_H, tag + ': 기본 도구 줄 두 줄이 잘리지 않는다');
     for (const l of ['브러시', '지우개', '채우기', '선택', '색', '되돌리기', '다시 실행', '완성 후 다음']) assert.equal(labelled(l).length, 1, tag + ': ' + l);
@@ -153,6 +154,6 @@ const rows = [];
   fs.writeFileSync(outDir + '/viewport-matrix.json', JSON.stringify(rows, null, 2));
   console.log('  viewport  canvas share brush detail color ref layers motion kbRoom boardTile exportCell');
   for (const r of rows) console.log('  ' + [r.viewport.padEnd(9), String(r.canvas).padStart(6), String(r.canvasShare).padStart(5), r.brush, r.brushDetail, r.color, r.reference, r.layers, r.motion, r.captionKeyboardRoom, r.boardTile, r.exportCell].join('  '));
-  console.log('PASS: viewport matrix — 640/720/800/900/1000 × 360/390/412: 캔버스 280dp 이상, 굵기 조절 캔버스 안·40dp, 도구 줄 두 줄 안 잘림, 브러시·색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침, 보드 세 칸·아래 줄, 내보내기 결과 격자. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).');
+  console.log('PASS: viewport matrix — 640/720/800/900/1000 × 360/390/412: 캔버스 280dp 이상, 굵기 조절 도구 줄 안·48dp·캔버스 위 없음, 도구 줄 두 줄 안 잘림, 브러시·색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침, 보드 세 칸·아래 줄, 내보내기 결과 격자. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

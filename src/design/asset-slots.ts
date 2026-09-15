@@ -19,8 +19,10 @@ export const ASSET_SLOTS = {
   homeEmptyArtwork: { aspectRatio: 4 / 3, display: '120×90 (점선 상자 안 가운데, 아래에 문구 두 줄)', safeArea: '가운데 80%', background: 'transparent', source: null },
   // 공식 알림 카드 왼쪽 작은 그림.
   noticeArtwork: { aspectRatio: 1, display: '44×44', safeArea: '가운데 76%', background: 'transparent', source: null },
-  // 기본 레퍼런스 한 칸. 2~2.5등신 관절 인형 전신이 들어가므로 세로형.
-  referencePoseThumbnail: { aspectRatio: 3 / 4, display: '폭 (화면폭-16-8×3)/4 · 360dp 기준 약 78×104', safeArea: '위아래 6%, 좌우 10% 여백', background: 'opaque', source: null },
+  // 기본 레퍼런스 한 칸. 2~2.5등신 관절 인형 전신이 들어가므로 세로형. 44차 LOCK: 참고 패널의 4열 격자(좌우 여백 12, 간격 8).
+  referencePoseThumbnail: { aspectRatio: 3 / 4, display: '4열 격자 한 칸: 폭 floor((화면폭 − 24 − 8×3) / 4), 높이 = 폭 × 4/3 → 360dp 78×104 · 384dp 84×112 · 412dp 91×121', safeArea: '위아래 6%, 좌우 10% 여백 — 전신이 칸 안, 발끝 바닥선 94%', background: 'opaque', source: null },
+  // 표현 가이드 카드 윗부분 그림(44차 LOCK). 2열 카드(간격 12) 안 정사각 틀(모서리 14, #F3F1EC) 가운데에 틀의 80% 크기로 앉는다.
+  expressionGuideArtwork: { aspectRatio: 1, display: '틀 = floor((화면폭 − 32 − 12) / 2) − 20 → 360dp 138 · 384dp 150 · 412dp 164, 그림 = 틀 × 0.8 → 110 · 120 · 131', safeArea: '가운데 84% — 몸짓 전체가 칸 안, 바닥선 90%. 표정·몸짓만으로 뜻이 읽혀야 한다(글자 없음)', background: 'transparent', source: null },
   // 움직이기 효과 견본에 그림이 없을 때(빈 칸) 쓰는 기본 캐릭터.
   motionExampleArtwork: { aspectRatio: 1, display: '48×48 견본 칸 안 41×41 그림(86%)', safeArea: '가운데 86% — 통통 위로 16%, 흔들기 ±9° 회전, 두근거리기 1.14배에서도 칸 안', background: 'transparent', source: null },
   // 내보내기에서 모든 칸이 완성됐을 때 요약 표면 오른쪽.
@@ -32,9 +34,28 @@ export const ASSET_SLOTS = {
 
 export type AssetSlotName = keyof typeof ASSET_SLOTS;
 
-// 표현 가이드(억울해 → 팔짱 + 몸 돌리기) 자리. 켜면 Painter 캔버스 위에 한 줄 힌트로만 뜬다. 꺼져 있으면 아무것도 그리지 않는다.
-export const EXPRESSION_GUIDE = { enabled: false } as const;
-// 기본 레퍼런스(관절 인형 포즈·표정·손동작·효과). 에셋이 들어오기 전에는 '준비 중' 자리표시만 보인다.
-export const BUILTIN_REFERENCES = { enabled: true, ready: false, categories: ['포즈', '표정', '손동작', '효과'] as const, placeholderCount: 8 };
+// 표현 가이드(44차 LOCK). 역할: "무엇을 그릴까?" — 홈의 '표현 가이드'에서 분류 → 표현 카드(그림 · 표현 이름 · 짧은 몸짓 힌트)로 훑는다.
+// "어떻게 그릴까?"는 기본 레퍼런스(그리기 화면 › 참고)가 맡는다. 캔버스 위에는 가이드를 띄우지 않는다. 긴 설명·대화형·생성 기능 없음.
+// ready=false 동안 카드 그림은 expressionGuideArtwork 자리표시. 카드 글자는 앱이 그린다(그림에 굽지 않는다).
+export const EXPRESSION_GUIDE = {
+  ready: false,
+  categories: ['기쁨·인사', '슬픔·미안', '화남·억울', '놀람·당황', '일상'] as const,
+  cards: [
+    { category: '기쁨·인사', name: '안녕', hint: '손 크게 흔들기' }, { category: '기쁨·인사', name: '고마워', hint: '두 손 모아 꾸벅' },
+    { category: '기쁨·인사', name: '좋아', hint: '엄지 척' }, { category: '기쁨·인사', name: '신나', hint: '두 팔 번쩍' },
+    { category: '슬픔·미안', name: '미안해', hint: '고개 푹 숙이기' }, { category: '슬픔·미안', name: '슬퍼', hint: '무릎 안고 앉기' },
+    { category: '슬픔·미안', name: '흑흑', hint: '눈물 훔치기' }, { category: '슬픔·미안', name: '괜찮아?', hint: '살짝 다가가기' },
+    { category: '화남·억울', name: '억울해', hint: '팔짱 + 몸 돌리기' }, { category: '화남·억울', name: '화났어', hint: '주먹 불끈' },
+    { category: '화남·억울', name: '흥', hint: '고개 홱 돌리기' }, { category: '화남·억울', name: '짜증나', hint: '머리 감싸기' },
+    { category: '놀람·당황', name: '헉', hint: '두 손으로 입 가리기' }, { category: '놀람·당황', name: '뭐?', hint: '몸 뒤로 젖히기' },
+    { category: '놀람·당황', name: '당황', hint: '땀 한 방울' }, { category: '놀람·당황', name: '설마', hint: '눈 동그랗게' },
+    { category: '일상', name: '잘 자', hint: '이불 덮고 눕기' }, { category: '일상', name: '배고파', hint: '배 잡고 쓰러지기' },
+    { category: '일상', name: '출발', hint: '가방 메고 뛰기' }, { category: '일상', name: '기다려', hint: '손바닥 내밀기' },
+  ] as { category: string; name: string; hint: string }[],
+};
+// 기본 레퍼런스(44차 LOCK). 역할: "어떻게 그릴까?" — 그리기 화면 › 참고 › 기본 레퍼런스. 분류 칩 한 줄 + 3:4 썸네일 4열 격자.
+// V1 분류는 넷: 포즈 · 표정 · 손동작 · 소품·효과(소품과 효과는 합친다. '일상'은 포즈와 겹쳐 두지 않는다).
+// ready=false 동안 칸은 누를 수 없는 자리표시. ready=true 가 되면 칸을 누르면 기존 참고 사진과 같은 흐름(옮기기·크기·진하기)으로 캔버스 참고 레이어에 들어간다.
+export const BUILTIN_REFERENCES = { enabled: true, ready: false, categories: ['포즈', '표정', '손동작', '소품·효과'] as const, placeholderCount: 8, columns: 4 };
 // 홈 공식 알림. 공모전·챌린지·사례 모집에 쓴다. enabled=false 면 자리도 간격도 없다.
 export const HOME_NOTICE: { enabled: boolean; title: string; body: string } = { enabled: false, title: '', body: '' };

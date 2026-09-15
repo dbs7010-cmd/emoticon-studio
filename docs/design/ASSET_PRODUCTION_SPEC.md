@@ -1,4 +1,6 @@
-# 임티제작소 — 최종 에셋 제작 명세 (41차 PRE-ASSET LOCK, 2026-09-15)
+# 임티제작소 — 최종 에셋 제작 명세 (41차 PRE-ASSET LOCK, 2026-09-15 · 44차 FINAL UI LOCK 반영, 2026-09-16)
+
+> **44차 변경(이 문서에서 고친 곳)**: 캔버스 위 표현 가이드 힌트 폐지 → CR-02 를 **EG-01 expressionGuideArtwork**(홈 › 표현 가이드 카드 20장)로 교체 · RF-01/02 목록 칸이 4열 격자(S24 84×112)로, 분류가 포즈·표정·손동작·**소품·효과** 넷으로 · 홈은 최근 작업 넷 + 전체 보기(전체 작업 화면 전용 그림 없음). 앱 안 자리 원본 요약은 `ASSET_SLOTS.md`(8개).
 
 기준점: 커밋 `5a5b635` "Round40 visual shell pass"(39차 DEVICE QA PASS + 40차 VISUAL SHELL PASS).
 이 문서는 **발주서**다. 이번 라운드에서 그림을 만들지도, 앱에 넣지도 않았다.
@@ -28,7 +30,7 @@
 | | HM-02 | homeEmptyArtwork | P1 | 예 | PLACEHOLDER |
 | | HM-03 | noticeArtwork | P3 | 선택 | PLACEHOLDER (기능 꺼짐) |
 | C. CREATION | CR-01 | motionExampleArtwork | P2 | 예 | PLACEHOLDER (mascot-paper) |
-| | CR-02 | expressionGuideVisual | P3 | 아니오(마네킹) | NOT STARTED (기능 꺼짐, 자리 결정 필요) |
+| | EG-01 | expressionGuideArtwork (표현 카드 20) | P2 | 예(메인 캐릭터가 연기) | PLACEHOLDER (홈 › 표현 가이드, 44차) |
 | | CR-03 | brush_preset_previews | P3 | 아니오 | NOT STARTED (PRO 브러시 카드, 선택) |
 | D. REFERENCE | RF-01 | Pose Mannequin MASTER | P1 | 마네킹 | NOT STARTED |
 | | RF-02 | Pose reference pack (40~60) | P2 | 마네킹 | BLOCKED BY MASTER |
@@ -177,18 +179,28 @@ BR-01 과 같은 표. 차이만:
 | Implementation path | `assets/illustrations/motion-example.png` → `FALLBACK_SAMPLE` 를 `ASSET_SLOTS.motionExampleArtwork.source ?? mascot-paper` 로 바꾸는 1줄 연결(에셋 라운드) |
 | Status | PLACEHOLDER |
 
-#### CR-02 expressionGuideVisual (선택)
+#### EG-01 expressionGuideArtwork (44차 — 옛 CR-02 캔버스 힌트 그림을 대신함)
 | 항목 | 값 |
 |---|---|
-| Purpose | 표현 가이드 힌트("억울해 · 팔짱 + 몸 돌리기")의 보조 그림 |
-| Screen | Painter 캔버스 위 한 줄 힌트(`ExpressionHint`, `EXPRESSION_GUIDE.enabled=false`) |
-| Priority | P3 |
-| Display | **현재 레이아웃에 그림 자리가 없다**(힌트는 글자만). 넣는다면 힌트 왼쪽 40×40dp — 추가 여부는 기능 켜기 전 결정 |
-| Production | 120(@3x) / 마스터 512 · 투명 |
-| Safe area / placement | 가운데 80%, RF-01 마네킹의 동작 요약 실루엣 |
-| Character required? | 아니오(마네킹) · 의존: BLOCKED BY MASTER |
-| Animation · Text | NO · NO |
-| Status | NOT STARTED — 기능과 함께 결정(이번 발주 대상 아님) |
+| Purpose | 표현 가이드 = "무엇을 그릴까?". 표현 한 장면(예: 억울해 → 팔짱 + 몸 돌리기)을 그림으로 보여 줘 고르게 한다. "어떻게 그릴까?"(자세 따라 그리기)는 RF 가 맡는다 — 둘을 섞지 않는다 |
+| Screen | 홈 › '표현 가이드' 줄 › 표현 가이드 화면 · 분류 칩(기쁨·인사 · 슬픔·미안 · 화남·억울 · 놀람·당황 · 일상) › 2열 카드 윗부분 |
+| Priority | P2 |
+| Display aspect ratio | 1:1 |
+| Display size | 카드 폭 floor((화면폭 − 32 − 12)/2) → S24 170, 안쪽 여백 10, 정사각 틀(모서리 14, #F3F1EC) **150×150**, 그림 = 틀 × 0.8 → **120×120**(360dp 110 · 412dp 131) |
+| Production | 360(@3x) · 240 · 120 / 마스터 1024 × 카드 수 |
+| 수량 | V1 20장(5분류 × 4). 목록 원본: `src/design/asset-slots.ts EXPRESSION_GUIDE.cards`(이름·힌트) |
+| Transparent / opaque | 투명 · 틀 바탕 #F3F1EC 위 |
+| Safe area | 가운데 84%, 바닥선 90%. 몸짓·표정만으로 뜻이 읽혀야 한다(말풍선·효과 글자 금지) |
+| Subject placement | 메인 캐릭터 전신 한 명, 가운데. 힌트의 몸짓(팔짱·손 흔들기 …)이 실루엣으로 보이게 |
+| Crop tolerance | 0 |
+| Visual importance | 중 |
+| Character required? | **예** — 메인 캐릭터가 연기. 20장이 같은 캐릭터·같은 선 두께·같은 크기(키 = 틀의 70~80%) |
+| CANON dependency | BLOCKED BY CANON |
+| FREE / PRO | FREE |
+| Animation · Text | NO · **NO**(표현 이름·힌트는 앱 글자) |
+| Current placeholder | `AssetSlot name="expressionGuideArtwork"`(도형) — `App.tsx` 표현 가이드 카드 |
+| Implementation path | `assets/illustrations/guide/<category>-<nn>.png` → 카드별 source 목록(에셋 라운드: `ASSET_SLOTS.expressionGuideArtwork` 는 규격, 카드마다 이미지 연결 1곳) |
+| Status | PLACEHOLDER |
 
 #### CR-03 brush_preset_previews (선택)
 | 항목 | 값 |
@@ -207,11 +219,11 @@ BR-01 과 같은 표. 차이만:
 | 항목 | 값 |
 |---|---|
 | Purpose | 따라 그릴 자세 기준. 이모티콘 비율(2~2.5등신)의 관절 인형 — 캐릭터가 아니라 **도구** |
-| Screen | Painter · 참고 › 기본 레퍼런스(`BuiltinReferences`, 준비 중 칸 64×85) → 고르면 캔버스 참고 레이어 |
+| Screen | Painter · 참고 › 기본 레퍼런스(`BuiltinReferences`, 44차: 분류 칩 + **4열 격자**) → 고르면 캔버스 참고 레이어 |
 | Priority | P1 (RF-02 선행) |
 | Display aspect ratio | 3:4 |
-| Display size | 목록 칸 **64×85dp** · 캔버스 참고 레이어: 360×360 캔버스에 contain → 270×360 |
-| Recommended production resolution | 캔버스용 **1080×1440** 투명 · 목록 썸네일 192×255(@3x) 불투명 — 마스터 1536×2048 |
+| Display size | 격자 칸 폭 floor((화면폭 − 24 − 8×3)/4) → **360dp 78×104 · S24 84×112 · 412dp 91×121** · 캔버스 참고 레이어: 360×360 캔버스에 contain → 270×360 |
+| Recommended production resolution | 캔버스용 **1080×1440** 투명 · 목록 썸네일 273×364(@3x, 412dp 기준) 불투명 — 마스터 1536×2048 |
 | Transparent / opaque | 캔버스용 투명(참고 레이어는 진하기 30% 로 그림 위에 겹침) · 썸네일 불투명(#F5F3ED 바탕) |
 | Safe area | 위아래 6% · 좌우 10% 안에 전신. 발끝 바닥선 94% |
 | Subject placement | 정면 차렷(T 포즈 아님) 기본형 + 3/4 뷰 1장. 가운데 정렬 |
@@ -231,8 +243,8 @@ BR-01 과 같은 표. 차이만:
 #### RF-02 Pose reference pack
 | 항목 | 값 |
 |---|---|
-| Purpose | 포즈·표정·손동작·효과 카테고리별 따라 그리기 자세 |
-| Screen | 참고 › 기본 레퍼런스 카테고리 칩(포즈·표정·손동작·효과) |
+| Purpose | 포즈·표정·손동작·소품·효과 분류별 따라 그리기 자세(44차 V1 분류 넷 — 소품과 효과는 합치고 '일상'은 포즈와 겹쳐 두지 않는다) |
+| Screen | 참고 › 기본 레퍼런스 분류 칩(포즈·표정·손동작·소품·효과) › 4열 격자 |
 | Priority | P2 |
 | Display / Production | RF-01 과 동일(3:4 · 1080×1440 투명 + 192×255 썸네일) |
 | 수량 | 40~60(카테고리당 10~15) |
@@ -312,6 +324,7 @@ BR-01 과 같은 표. 차이만:
 1. `src/design/asset-slots.ts` 각 `source` 를 require 로 교체(HM-01·HM-02·HM-03·CP-01).
 2. `motion-panel.tsx FALLBACK_SAMPLE` → `motionExampleArtwork` 연결(CR-01).
 3. `App.tsx` PRO 비교 두 `Image source` 교체(CP-02).
-4. `BUILTIN_REFERENCES.ready=true` + 칸 누르기 → 기존 `addReferences` 흐름으로 참고 레이어 추가(RF-01/02).
+4. `BUILTIN_REFERENCES.ready=true` + 칸 누르기 → 기존 `addReferences` 흐름으로 참고 레이어 추가(RF-01/02). 고른 칸 = 옅은 노랑 표면(40차 선택 규칙).
+4-1. `EXPRESSION_GUIDE.ready=true` + 카드마다 그림 source 연결(EG-01). 레이아웃·카드 크기 불변.
 5. `visual-system-test` 에 "source 가 있으면 파일 존재·비율 일치" 검사 추가.
 6. 출시 에셋은 `assets/asset-contract.json` 절차(`npm run assets:check` → prebuild --clean → 빌드).
