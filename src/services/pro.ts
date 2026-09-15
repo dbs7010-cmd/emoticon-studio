@@ -1,0 +1,153 @@
+import type { Entitlement } from '../types';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import { buy, finishPurchase, listProducts, ownedPurchase, storeModuleAvailable, PRODUCT_IDS, type PlanId, type ProductsResult, type StoreProblem, type StorePurchase } from './purchase-adapter';
+import { verifyReceipt } from './receipt';
+export { storeModuleAvailable, PRODUCT_IDS };
+
+// What PRO is allowed to be, in one place.
+// Two rules run through everything here:
+//   1. Nothing in the app may grant PRO by itself. Only a store purchase that our receipt server
+//      confirmed with the store can, and it is written down only after that confirmation.
+//   2. Losing PRO never takes work away. Effects already saved keep playing and keep exporting;
+//      only making new PRO effects needs a live entitlement.
+export const PLANS = [
+  { id: 'monthly' as const, label: '월간', proposedPrice: '월 4,900원' },
+  { id: 'yearly' as const, label: '연간', proposedPrice: '연 39,000원' },
+];
+// Prices above are what we intend to ask for. They are not a registered store price, and the
+// purchase screen shows the store's own localised price as soon as the store lists it.
+export const PRICES_ARE_PROPOSED = true;
+
+export const FREE_ENTITLEMENT: Entitlement = { plan: 'free', source: 'none' };
+
+// True only in a development build. Anything that loosens a rule must be tied to this, so the
+// looser path cannot exist in what ships.
+export const devBuild = () => typeof __DEV__ !== 'undefined' && __DEV__ === true;
+
+// 내부 검수 빌드인가. **__DEV__ 가 아니라 빌드 구성이 정한다** — 손으로 확인하는 내부 APK 는 Metro
+// 없는 release 번들이라 __DEV__ 가 거짓이고, 그러면 정작 확인해야 할 그 APK 에서 동작하지 않는다.
+// app.config.js 가 EMOTICON_INTERNAL_REVIEW=1 일 때만 이 값을 참으로 박아 넣는다. 출시 구성은 거짓이다.
+export const internalReviewBuild = (): boolean =>
+  (Constants.expoConfig?.extra as { internalReview?: boolean } | undefined)?.internalReview === true;
+
+// 검수용 임시 해제. **구매가 아니고 영수증도 아니다.** 그래서 Entitlement 안에 넣지 않고 따로 둔다 —
+// 넣는 순간 언젠가 '이용권'으로 읽히고, 출시 앱으로 옮겨 갈 길이 생긴다. 저장소에 남더라도 출시
+// 구성에서는 internalReviewBuild() 가 거짓이라 아무 효력이 없다. 작품은 그대로 남는다.
+export const reviewUnlocked = (store: { reviewUnlock?: boolean } | undefined): boolean =>
+  internalReviewBuild() && store?.reviewUnlock === true;
+
+// 화면이 이 빌드가 무엇인지 스스로 말하게 한다. 검수용임을 숨기면 검수 결과를 출시 상태로 착각한다.
+export const REVIEW_BUILD_NOTE = '내부 검수용 빌드예요. PRO 기능을 결제 없이 켜서 확인할 수 있고, 이 권한은 구매가 아니며 출시 앱으로 넘어가지 않아요.';
+
+// An entitlement is live when a receipt says so and the term has not run out.
+// "verified" is set only by a server that checked the receipt with Google/Apple. The store file is
+// plain JSON anyone can edit, so a release build refuses "plan" and "source" on their own.
+export function isPro(entitlement: Entitlement | undefined, now = new Date()): boolean {
+  if (!entitlement || entitlement.plan === 'free') return false;
+  if (entitlement.source !== 'store') return false;
+  if (!entitlement.verified && !devBuild()) return false;
+  if (!entitlement.expiresAt) return true;
+  return new Date(entitlement.expiresAt).getTime() > now.getTime();
+}
+// Why PRO is off, when it is off for a reason the user cannot fix by paying again.
+export function proBlockedReason(entitlement: Entitlement | undefined): string | null {
+  if (!entitlement || entitlement.plan === 'free') return null;
+  if (entitlement.source === 'store' && !entitlement.verified && !devBuild())
+    return '영수증 확인 서버가 아직 없어서 이 빌드에서는 PRO를 켤 수 없어요. 결제는 진행되지 않습니다.';
+  return null;
+}
+export function expiredButRemembered(entitlement: Entitlement | undefined, now = new Date()): boolean {
+  return !!entitlement && entitlement.plan !== 'free' && !isPro(entitlement, now);
+}
+export function entitlementLabel(entitlement: Entitlement | undefined, now = new Date()): string {
+  if (isPro(entitlement, now)) {
+    const until = entitlement!.expiresAt ? ` · ${new Date(entitlement!.expiresAt).toLocaleDateString('ko-KR')}까지` : '';
+    return `PRO 이용 중${until}`;
+  }
+  if (expiredButRemembered(entitlement, now)) return 'PRO 기간이 끝났어요. 만든 움직임은 그대로 재생·저장할 수 있어요.';
+  return '무료';
+}
+
+// ── 구매·복원·재확인 ─────────────────────────────────────────────────────────────────────────
+export type PaymentProblem = StoreProblem | 'server-missing' | 'server-unreachable' | 'refused';
+export type PurchaseOutcome =
+  | { state: 'purchased'; entitlement: Entitlement }
+  | { state: 'cancelled' }
+  | { state: 'pending' }
+  | { state: 'none' }
+  | { state: 'failed'; problem: PaymentProblem };
+// 테스트가 서버 주소·네트워크·시각을 넣을 수 있는 자리. 앱은 빌드 설정의 주소를 쓴다.
+export type PaymentOptions = { endpoint?: string; fetchImpl?: typeof fetch; now?: Date };
+
+// 사람이 읽는 말. 스토어 오류 코드는 여기서 끝나고 화면에 나가지 않는다. 늘 **다음에 할 일**을 함께 준다.
+export function problemText(problem: PaymentProblem | 'save'): { title: string; next: string; action?: 'restore' | 'retry' } {
+  switch (problem) {
+    case 'store-missing': return { title: '이 기기에서는 결제를 열 수 없어요', next: 'Play 스토어에서 받은 앱에서 결제할 수 있어요. 무료 기능은 그대로 쓸 수 있어요.' };
+    case 'network': return { title: '스토어에 연결하지 못했어요', next: '인터넷 연결을 확인하고 다시 시도해 주세요. 결제는 진행되지 않았어요.', action: 'retry' };
+    case 'store-unavailable': return { title: '지금은 스토어 결제를 쓸 수 없어요', next: 'Play 스토어에 로그인되어 있는지 확인하고 잠시 뒤 다시 시도해 주세요.', action: 'retry' };
+    case 'not-found': return { title: '구독 상품을 불러오지 못했어요', next: '잠시 뒤 다시 시도해 주세요. 계속되면 앱을 최신 버전으로 업데이트해 주세요.', action: 'retry' };
+    case 'already-owned': return { title: '이미 PRO를 구독하고 있어요', next: '구매 복원을 누르면 이 기기에서도 PRO가 켜져요.', action: 'restore' };
+    case 'server-missing': return { title: '구매 확인을 아직 할 수 없어요', next: '결제가 됐다면 확인되지 않은 결제는 스토어가 3일 안에 자동으로 환불해요. 앱을 업데이트한 뒤 구매 복원을 눌러 주세요.' };
+    case 'server-unreachable': return { title: '결제 확인을 마치지 못했어요', next: '인터넷 연결을 확인하고 구매 복원을 눌러 주세요. 확인되기 전에는 결제가 확정되지 않아요.', action: 'restore' };
+    case 'refused': return { title: '이 구매를 확인하지 못했어요', next: 'Play 스토어의 구독 내역을 확인해 주세요. 결제가 됐는데 계속 안 되면 문의해 주세요.' };
+    case 'save': return { title: '구매는 확인했지만 저장하지 못했어요', next: '구매 복원을 누르면 다시 켜져요. 추가 결제는 없어요.', action: 'restore' };
+    default: return { title: '결제를 마치지 못했어요', next: '잠시 뒤 다시 시도해 주세요. 결제가 됐다면 구매 복원으로 켤 수 있어요.', action: 'restore' };
+  }
+}
+
+// 스토어가 "샀다"고 해도 그것만으로는 PRO 가 열리지 않는다. 우리 서버가 스토어에 직접 물어보고
+// 확인해 준 것만 `verified` 를 받고, 그다음에야 구매를 확정(acknowledge)한다.
+async function confirm(plan: PlanId, token: string, purchase: StorePurchase, options: PaymentOptions): Promise<PurchaseOutcome> {
+  const verdict = await verifyReceipt(
+    { platform: Platform.OS === 'ios' ? 'ios' : 'android', productId: PRODUCT_IDS[plan], purchaseToken: token },
+    { endpoint: options.endpoint ?? RECEIPT_ENDPOINT, fetchImpl: options.fetchImpl, now: options.now },
+  );
+  if (verdict.state === 'verified') { await finishPurchase(purchase); return { state: 'purchased', entitlement: verdict.entitlement }; }
+  if (verdict.state === 'not-configured') return { state: 'failed', problem: 'server-missing' };
+  if (verdict.state === 'unreachable') return { state: 'failed', problem: 'server-unreachable' };
+  return { state: 'failed', problem: 'refused' };
+}
+export async function purchase(plan: PlanId, options: PaymentOptions = {}): Promise<PurchaseOutcome> {
+  const result = await buy(plan);
+  if (result.state === 'purchased') return confirm(result.plan, result.token, result.purchase, options);
+  if (result.state === 'cancelled' || result.state === 'pending') return { state: result.state };
+  return { state: 'failed', problem: result.problem };
+}
+export async function restore(options: PaymentOptions = {}): Promise<PurchaseOutcome> {
+  const owned = await ownedPurchase();
+  if (owned.state === 'found') return confirm(owned.plan, owned.token, owned.purchase, options);
+  if (owned.state === 'none') return { state: 'none' };
+  return { state: 'failed', problem: owned.problem };
+}
+export const storePrices = (): Promise<ProductsResult> => listProducts();
+
+// 앱을 열 때 저장된 이용권을 스토어·서버에 다시 묻는다.
+//   - 물어볼 수 없으면(모듈 없음·오프라인·서버 없음·서버 연결 실패) 저장된 것을 **그대로 둔다.**
+//   - 스토어가 "이 계정에 구독이 없다"고 분명히 말하거나 서버가 거절하면, 살아 있던 이용권을 지금 끝낸다.
+//     기록은 지우지 않는다 — 만든 PRO 작품이 그대로 재생·재저장되어야 하기 때문이다.
+//   - 스토어에 살아 있는 구독이 있고 서버가 확인하면 새 기간으로 갱신한다(재설치 뒤 자동 복원 포함).
+export type RefreshResult = { state: 'unchanged' } | { state: 'updated'; entitlement: Entitlement };
+export async function refreshEntitlement(cached: Entitlement | undefined, options: PaymentOptions = {}): Promise<RefreshResult> {
+  if (!storeModuleAvailable()) return { state: 'unchanged' };
+  const now = options.now ?? new Date();
+  const end = (): RefreshResult => cached && cached.source === 'store' && isPro(cached, now)
+    ? { state: 'updated', entitlement: { ...cached, expiresAt: now.toISOString(), checkedAt: now.toISOString() } }
+    : { state: 'unchanged' };
+  const owned = await ownedPurchase();
+  if (owned.state === 'unavailable') return { state: 'unchanged' };
+  if (owned.state === 'none') return end();
+  const outcome = await confirm(owned.plan, owned.token, owned.purchase, options);
+  if (outcome.state === 'purchased') return { state: 'updated', entitlement: outcome.entitlement };
+  if (outcome.state === 'failed' && outcome.problem === 'refused') return end();
+  return { state: 'unchanged' };
+}
+
+// 스토어의 구독 관리 화면. 해지·결제 수단 변경은 앱이 아니라 스토어에서 한다.
+export const subscriptionManageUrl = (plan: PlanId) =>
+  `https://play.google.com/store/account/subscriptions?sku=${PRODUCT_IDS[plan]}&package=com.emoticonstudio.app`;
+
+// 서버 주소는 빌드 설정에서 온다. 비밀 키는 서버에만 있고 앱에는 없다.
+export const RECEIPT_ENDPOINT: string | undefined =
+  (Constants.expoConfig?.extra as { receiptEndpoint?: string } | undefined)?.receiptEndpoint;
+export const receiptServerReady = () => !!RECEIPT_ENDPOINT;

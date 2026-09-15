@@ -32,8 +32,7 @@ const finalAsset = ({ width = SPEC.width, height = SPEC.height, transparent = tr
   if (exists) files.set(localFile(path).uri, new Uint8Array(bytes));
   return { path, width, height, metrics: { coverage, centerX: .5, centerY: .5, width: .5, height: .5, color: [.2, .2, .2], transparent } };
 };
-const canon = finalAsset();
-const grade = options => inspectImage(finalAsset(options), canon);
+const grade = options => inspectImage(finalAsset(options));
 const failing = qa => [...qa.checks, ...qa.consistency].filter(c => c.status !== 'PASS');
 
 // A drawing with nothing wrong with it must pass. This is the whole point.
@@ -41,7 +40,7 @@ const good = grade();
 assert.equal(good.status, 'PASS', 'a flawless final PNG passes');
 assert.deepEqual(failing(good), [], 'and raises no check at all');
 assert.ok(good.notes.length > 0, 'what we could not verify is still reported, as a note');
-assert.ok(good.notes.some(n => n.includes('공식')), 'the unconfirmed official spec is one of those notes');
+assert.ok(good.notes.some(n => n.includes('눈으로 확인')), 'what a person still has to judge is said out loud');
 
 // Real defects still fail. The fix must not have softened anything.
 const wrongSize = grade({ width: 512, height: 512 });
@@ -51,14 +50,30 @@ assert.equal(grade({ transparent: false }).status, 'FAIL', 'an opaque background
 assert.equal(grade({ coverage: 0 }).status, 'FAIL', 'an empty drawing fails');
 assert.equal(grade({ signature: false }).status, 'FAIL', 'a file that is not a PNG fails');
 assert.equal(grade({ exists: false }).status, 'FAIL', 'a missing file fails');
-assert.equal(inspectImage(undefined, canon).status, 'FAIL', 'a slot with no drawing fails');
+assert.equal(inspectImage(undefined).status, 'FAIL', 'a slot with no drawing fails');
 
-// Uncertainty on our side must never be charged to the user.
-assert.equal(SPEC.policyStatus, 'UNVERIFIED', 'the official spec is still unconfirmed');
-assert.equal(SPEC.maxBytes, null, 'and so is the size limit');
-assert.equal(inspectImage(finalAsset(), undefined).status, 'PASS', 'having no canon to compare against is not a defect');
-assert.ok(inspectImage(finalAsset(), undefined).notes.some(n => n.includes('원캐릭터')), 'it is reported as a note instead');
-for (const qa of [good, wrongSize, inspectImage(finalAsset(), undefined)]) {
+// The guide was read, so the ceilings are real and enforced.
+assert.equal(SPEC.policyStatus, 'VERIFIED', 'the official spec has been read');
+assert.equal(SPEC.maxBytes, 150 * 1024, '멈춰있는 이모티콘은 150KB 이하');
+assert.equal(SPEC.count, 32);
+const ANIMATED = load('src/constants/kakao-spec.ts').KAKAO_ANIMATED_SPEC;
+assert.equal(ANIMATED.maxBytes, 650 * 1024, '움직이는 이모티콘은 650KB 이하');
+assert.equal(ANIMATED.count, 24);
+assert.equal(ANIMATED.maxFrames, 24);
+assert.equal(ANIMATED.format, 'WebP', '제출 형식은 WebP이고 우리가 쓰는 GIF가 아니다');
+// A file over the ceiling has to fail, and the same file passes under the moving ceiling.
+{
+  const big = finalAsset();
+  files.set(localFile(big.path).uri, new Uint8Array(Buffer.concat([Buffer.from(files.get(localFile(big.path).uri)), Buffer.alloc(200 * 1024)])));
+  const asStill = inspectImage(big), asMoving = inspectImage(big, ANIMATED);
+  assert.equal(asStill.status, 'FAIL', '150KB를 넘으면 멈춰있는 규격에서 떨어진다');
+  assert.ok(asStill.checks.some(c => c.label === '파일 크기' && c.status === 'FAIL'), '이유가 파일 크기라고 말한다');
+  assert.equal(asMoving.status, 'PASS', '같은 파일이 움직이는 규격 650KB 안에서는 통과한다');
+}
+// Character consistency is a person's judgement. The app says so and scores nothing.
+assert.deepEqual(good.consistency, [], 'nothing about the artwork itself is graded');
+assert.ok(good.notes.some(n => n.includes('눈으로 확인')), 'it is handed to the user as a look-at-it note');
+for (const qa of [good, wrongSize]) {
   for (const check of [...qa.checks, ...qa.consistency]) {
     assert.ok(!/^[A-Z][A-Z_]+$/.test(check.label), 'labels read as Korean, not as codes: ' + check.label);
     assert.ok(/[가-힣]/.test(check.detail), 'every message is in Korean: ' + check.detail);
@@ -74,6 +89,13 @@ project.slots[0].work = { version: 1, activeLayerId: 'draw-1', layers: [{ id: 'd
 const bundled = setEntries(project);
 assert.equal(bundled.length, 1);
 assert.deepEqual([...bundled[0].data], [...files.get(localFile(shipped.path).uri)], 'export ships the same bytes QA inspected, not the working layer');
-assert.equal(inspectImage(project.slots[0].finalImage, canon).status, 'PASS', 'and that same file is what QA grades');
+assert.equal(inspectImage(project.slots[0].finalImage).status, 'PASS', 'and that same file is what QA grades');
 
-console.log('PASS: a flawless final passes, real defects still fail, unverifiable policy stays a note, messages are Korean, and QA and export judge the same asset. File system mocked.');
+// Two cuts that exported the very same bytes are pointed out, and nothing is changed for the user.
+const { identicalFinals } = load('src/services/qa.ts');
+project.slots[1].finalImage = shipped;
+assert.deepEqual(identicalFinals(project), [[1, 2]], 'identical exports are reported as a pair');
+project.slots[1].finalImage = finalAsset();
+assert.deepEqual(identicalFinals(project), [], 'different drawings are not');
+
+console.log('PASS: a flawless final passes, real defects still fail, 공식 가이드에서 읽은 용량·개수·형식이 실제로 강제되고, artwork judgement is never scored, identical exports are reported, messages are Korean, and QA and export judge the same asset. File system mocked.');

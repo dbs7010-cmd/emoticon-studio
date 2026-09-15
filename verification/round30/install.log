@@ -1,0 +1,27 @@
+› Installing 1 other package using npm
+> npm install --save expo-iap
+
+added 1 package, removed 1 package, and audited 515 packages in 8s
+
+45 packages are looking for funding
+  run `npm fund` for details
+
+11 moderate severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+Cannot automatically write to dynamic config at: app.config.js
+Add the following to your Expo config
+
+{
+  "plugins": [
+    "expo-iap"
+  ]
+}
+

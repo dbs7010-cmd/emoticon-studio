@@ -1,0 +1,53 @@
+﻿{
+    "recordedAt":  "2026-09-14T20:45:49.461Z",
+    "label":  "QA build 2 (motion preview fix) — debug-signed release APK, arm64-v8a only. NOT an RC, NOT for Play.",
+    "source":  {
+                   "head":  "49206d380f67e8a13d953e39c742cb22347be23f",
+                   "branch":  "feat/painter-flow-v1",
+                   "changedEntries":  138,
+                   "sourceId":  "SOURCE_ID 3d0022463714c9b7e37aa73a557ba9955e654538edecf1d0bd57f21080424333 | files     45 (미추적 22개 포함)"
+               },
+    "apk":  {
+                "path":  "android\\app\\build\\outputs\\apk\\release\\app-release.apk",
+                "bytes":  38501718,
+                "sha256":  "e498dc36e01d74fadf1dece9f95eb57f3bdec7807a20a6f62f16b9fc9c58798f",
+                "builtAt":  "2026-09-14T20:39:26.731Z"
+            },
+    "manifest":  {
+                     "package":  "com.emoticonstudio.app",
+                     "versionCode":  "1",
+                     "versionName":  "1.0.0",
+                     "billingPermission":  true,
+                     "nativeCode":  "native-code: \u0027arm64-v8a\u0027"
+                 },
+    "launchTheme":  {
+                        "windowBackground":  "0x01010054=@color/activityBackground",
+                        "usesSplashBitmapAsWindow":  false,
+                        "source":  "aapt2 dump resources (APK)"
+                    },
+    "bundle":  {
+                   "bytes":  2113944,
+                   "sha256":  "430e78831f1a13229b05f3c3dac5125d898784780c5dae9fdc6571d1ea29b01b",
+                   "hermesBytecode":  true,
+                   "hasExpoIap":  true
+               },
+    "appConfig":  {
+                      "name":  "나의 이모티콘 작업실",
+                      "version":  "1.0.0",
+                      "androidPackage":  "com.emoticonstudio.app",
+                      "versionCode":  1,
+                      "internalReview":  false,
+                      "receiptEndpoint":  null,
+                      "plugins":  [
+                                      "expo-dev-client",
+                                      "expo-sharing",
+                                      "expo-iap",
+                                      "expo-image-picker",
+                                      "./plugins/withLaunchBackground",
+                                      "./plugins/withReleaseSigning"
+                                  ]
+                  },
+    "signing":  {
+                    "apksigner":  "Signer #1 certificate DN: CN=Android Debug, OU=Android, O=Unknown, L=Unknown, ST=Unknown, C=US | Signer #1 certificate SHA-256 digest: fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c"
+                }
+}

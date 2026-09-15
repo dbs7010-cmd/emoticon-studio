@@ -13,8 +13,10 @@ export function imageUri(path: string) { return localFile(path).uri; }
 export function exportFile(name: string) { ensureRoot(); return localFile('set-' + name); }
 export function exportUri(name: string) { return localFile(name).uri; }
 export function newImageFile() { ensureRoot(); return localFile(`image-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.png`); }
+// 움직이는 파일은 두 가지다: 작업용 GIF 와 카카오가 받는 WebP. 둘 다 같은 이름 규칙을 쓴다.
+export function newMotionFile(kind: 'gif' | 'webp' = 'gif') { ensureRoot(); return localFile(`image-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${kind}`); }
 // Only files newImageFile() created may ever be removed; store snapshots share this directory.
-const removable = (path: string) => /^image-[a-zA-Z0-9._-]+\.png$/.test(path);
+const removable = (path: string) => /^image-[a-zA-Z0-9._-]+\.(png|gif|webp)$/.test(path);
 // Best effort: a file that is already gone or locked must not abort the rest of the cleanup.
 export function deleteLocalImages(paths: string[]): { removed: number; skipped: number } {
   let removed = 0, skipped = 0;
@@ -24,24 +26,73 @@ export function deleteLocalImages(paths: string[]): { removed: number; skipped: 
   }
   return { removed, skipped };
 }
-export function loadStore(): { store: Store; recovered: boolean } {
-  ensureRoot();
-  const candidates: Store[] = [];
-  let broken = 0;
-  for (const name of ['store-a.json', 'store-b.json']) {
+
+const SNAPSHOTS = ['store-a.json', 'store-b.json'] as const;
+// What a snapshot file looks like from the outside, without changing it in any way.
+// `stage` says where reading stopped, because "the bytes are damaged" and "the shape is wrong"
+// have different causes and different answers.
+export type SnapshotReport = {
+  name: string; uri: string; exists: boolean; bytes: number | null;
+  head: string; tail: string; stage: 'ok' | 'read' | 'json' | 'shape'; error: string | null; revision: number | null;
+};
+export type StoreReport = { directory: string; snapshots: SnapshotReport[] };
+export type UnreadableStore = Error & { report: StoreReport };
+
+const clip = (text: string, from: 'head' | 'tail') => text.length <= 40 ? text : from === 'head' ? text.slice(0, 40) : text.slice(-40);
+
+// Read-only. Safe to call while the store is unreadable: it opens files and never writes one.
+export function inspectStore(): StoreReport {
+  const directory = root().uri;
+  const snapshots = SNAPSHOTS.map((name): SnapshotReport => {
     const file = localFile(name);
-    if (file.exists) { try { candidates.push(parseStore(file.textSync())); } catch { broken++; } }
-  }
-  if (!candidates.length && broken) throw new Error('저장 파일을 읽지 못했습니다. 원본을 보존했습니다. 앱을 삭제하지 말고 다시 시도하세요.');
-  return { store: candidates.sort((a, b) => b.revision - a.revision)[0] ?? { version: 1, revision: 0, projects: [] }, recovered: broken > 0 };
+    const base = { name, uri: file.uri, exists: false, bytes: null, head: '', tail: '', revision: null };
+    let exists = false;
+    try { exists = file.exists; } catch (e) { return { ...base, stage: 'read', error: String(e) }; }
+    if (!exists) return { ...base, stage: 'read', error: null };
+    let text: string;
+    try { text = file.textSync(); } catch (e) { return { ...base, exists: true, stage: 'read', error: String(e) }; }
+    const shape = { ...base, exists: true, bytes: text.length, head: clip(text, 'head'), tail: clip(text, 'tail') };
+    try { JSON.parse(text); } catch (e) { return { ...shape, stage: 'json', error: String(e) }; }
+    try { return { ...shape, stage: 'ok', error: null, revision: parseStore(text).revision }; }
+    catch (e) { return { ...shape, stage: 'shape', error: String(e) }; }
+  });
+  return { directory, snapshots };
 }
+
+// Which snapshot currently holds the newest readable store. The next write goes to the other one,
+// so a failed write can never damage the copy we are still relying on — not even when the caller
+// retries with a new revision number.
+let newest: string | null = null;
+
+export function loadStore(): { store: Store; recovered: boolean; report: StoreReport } {
+  ensureRoot();
+  const report = inspectStore();
+  const readable = report.snapshots.filter(s => s.stage === 'ok');
+  const damaged = report.snapshots.filter(s => s.exists && s.stage !== 'ok');
+  if (!readable.length) {
+    newest = null;
+    if (damaged.length) {
+      const error = new Error('저장 파일을 읽지 못했습니다. 원본을 보존했습니다. 앱을 삭제하지 말고 다시 시도하세요.') as UnreadableStore;
+      error.report = report;
+      throw error;
+    }
+    return { store: { version: 1, revision: 0, projects: [] }, recovered: false, report };
+  }
+  const best = readable.reduce((a, b) => (b.revision ?? 0) > (a.revision ?? 0) ? b : a);
+  newest = best.name;
+  // Re-reading here keeps parseStore the single source of truth for what a store is.
+  return { store: parseStore(localFile(best.name).textSync()), recovered: damaged.length > 0, report };
+}
+
 // Alternating snapshots: a failed/truncated write leaves the previous revision intact.
 // Synchronous small JSON writes preserve edit ordering and finish before navigation/background.
 export function saveStore(store: Store) {
   ensureRoot();
   const json = JSON.stringify(store);
   parseStore(json);
-  const file = localFile(store.revision % 2 ? 'store-a.json' : 'store-b.json');
+  const name = newest === SNAPSHOTS[0] ? SNAPSHOTS[1] : newest === SNAPSHOTS[1] ? SNAPSHOTS[0] : SNAPSHOTS[store.revision % 2];
+  const file = localFile(name);
   file.write(json);
   if (file.textSync() !== json) throw new Error('저장 검증 실패. 다시 저장하세요.');
+  newest = name;
 }

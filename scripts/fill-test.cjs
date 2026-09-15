@@ -42,6 +42,12 @@ function context2d() {
       for (let t = 0; t <= steps; t++) stamp(x1 + (x2 - x1) * t / steps, y1 + (y2 - y1) * t / steps, radius, colour);
     }
   };
+  // Text is stamped as a blob at its anchor: enough to prove where the words are burned in.
+  g.font = ''; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  const fontSize = () => Number((/(\d+)px/.exec(g.font) || [0, 10])[1]);
+  g.measureText = text => ({ width: text.length * fontSize() * .6 });
+  g.fillText = (text, x, y) => { g.__caption = { text, font: g.font, width: g.measureText(text).width }; stamp(x, y, 5, parse(g.fillStyle)); };
+  g.strokeText = () => {};
   g.getImageData = () => ({ data: buffer.slice(), width: SIZE, height: SIZE });
   g.putImageData = image => buffer.set(image.data);
   return g;
@@ -56,11 +62,11 @@ function element() {
   node.toDataURL = () => 'data:image/png;base64,';
   return node;
 }
-const canvas = element(), surface = element(), viewport = element(), messages = [];
+const canvas = element(), surface = element(), viewport = element(), messages = [], made = [];
 const sandbox = {
   Image: class { set src(_v) { this.width = SIZE; this.height = SIZE; setTimeout(() => this.onload && this.onload(), 0); } },
   setTimeout, clearTimeout, console,
-  document: { getElementById: id => ({ drawing: canvas, surface, viewport }[id]), createElement: () => element() },
+  document: { getElementById: id => ({ drawing: canvas, surface, viewport }[id]), createElement: () => { const node = element(); made.push(node); return node; } },
 };
 sandbox.window = { innerWidth: 390, innerHeight: 600, addEventListener: () => {}, ReactNativeWebView: { postMessage: m => messages.push(JSON.parse(m)) } };
 vm.createContext(sandbox);
@@ -140,5 +146,67 @@ const drawing = id => sandbox.window.__layer(id);
   assert.notDeepEqual([...drawing('draw-1')], [...beforeGesture], 'the two-finger tap still undid something');
   await command({ type: 'redo' });
 
-  console.log('PASS: flood fill stays inside closed line art, respects undo/redo, touches only the active drawing, never reaches references, and yields to multi-touch gestures. Canvas rasteriser is a test double; device test still required.');
+  // ── Words are drawn into the exported picture, and stay editable ───────────────────────────
+  await command({ type: 'select', id: 'draw-1' });
+  const layerBeforeCaption = drawing('draw-1').slice();
+  await command({ type: 'caption', caption: { text: '고마워요', place: 'bottom', color: '#E94F4F' } });
+  const withWords = messages.filter(m => m.type === 'state').at(-1);
+  assert.deepEqual(withWords.caption, { text: '고마워요', place: 'bottom', color: '#E94F4F' }, 'the words are part of the scene');
+  assert.equal(withWords.dirty, true, 'and count as unsaved work');
+  assert.deepEqual([...drawing('draw-1')], [...layerBeforeCaption], 'but they are never burned into a drawing layer');
+
+  made.length = 0;
+  await command({ type: 'save' });
+  const exported = made.at(-1).getContext().buffer;
+  const saved = messages.filter(m => m.type === 'save').at(-1);
+  assert.deepEqual(saved.caption, withWords.caption, 'the save payload carries the words');
+  const anchor = SIZE - Math.round(SIZE * .06);
+  assert.equal(at(exported, SIZE / 2, anchor)[3] > 0, true, 'and the exported picture has them painted in');
+  assert.deepEqual(at(exported, SIZE / 2, anchor).slice(0, 3), [233, 79, 79], 'in the colour that was chosen');
+  assert.ok(saved.metrics.coverage > 0, 'so a words-only cut is not read as empty');
+  await command({ type: 'saved' });
+
+  // Undo reaches the words like any other edit, and clearing them is just another caption.
+  tap([1, 2]);
+  assert.equal(messages.filter(m => m.type === 'state').at(-1).caption, null, 'two-finger tap takes the words back off');
+  tap([1, 2, 3]);
+  assert.equal(messages.filter(m => m.type === 'state').at(-1).caption.text, '고마워요', 'and puts them back');
+  await command({ type: 'caption', caption: null });
+  assert.equal(messages.filter(m => m.type === 'state').at(-1).caption, null, 'no words at all stays reachable');
+
+  // A caption that cannot fit is scaled until it does. Nothing may be cut off the picture.
+  const room = 360 - 32;
+  for (const text of ['고마워요', '가'.repeat(42), '가'.repeat(200)]) {
+    made.length = 0;
+    await command({ type: 'caption', caption: { text, place: 'bottom', color: '#242424' } });
+    await command({ type: 'save' });
+    const drawn = made.at(-1).getContext().__caption;
+    assert.equal(drawn.text, text, 'the words that were typed are the words that are drawn');
+    assert.ok(drawn.width <= room, `"${text.slice(0, 6)}…" (${text.length}자) fits the reserved width: ${Math.round(drawn.width)} <= ${room}`);
+    await command({ type: 'saved' });
+  }
+  await command({ type: 'caption', caption: null });
+
+  // ── Copying another cut hands over its own bitmaps ─────────────────────────────────────────
+  const beforeCopy = drawing('draw-1').slice();
+  const bitmapBefore = sandbox.window.__layer('draw-1');
+  await command({ type: 'copyWork', layers: [{ id: 'draw-1', name: '그림 1', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0, data: 'data:image/png;base64,copy' }], caption: { text: '복사', place: 'top', color: '#242424' } });
+  await tick();
+  assert.notEqual(sandbox.window.__layer('draw-1'), bitmapBefore, 'the copy is decoded into a fresh bitmap, not a shared one');
+  const copiedState = messages.filter(m => m.type === 'state').at(-1);
+  assert.equal(copiedState.caption.text, '복사', 'the words come with it');
+  assert.equal(copiedState.dirty, true, 'and the cut counts as unsaved work');
+  tap([1, 2]);
+  assert.deepEqual([...drawing('draw-1')], [...beforeCopy], 'and a copy can be undone like any other edit');
+
+  // ── The canvas opens on the colour and widths the tool bar is showing ──────────────────────
+  await command({ type: 'init', color: '#65C47A', penWidth: 9, eraserWidth: 30 });
+  await command({ type: 'tool', tool: 'pen' });
+  await tick();
+  line(60, 60, 200, 60);
+  assert.deepEqual(at(drawing('draw-1'), 130, 60).slice(0, 3), [101, 196, 122], 'the first stroke of a cut uses the remembered colour, not the engine default');
+  const thickness = () => { let n = 0; for (let y = 0; y < SIZE; y++) if (at(drawing('draw-1'), 130, y)[3] > 200) n++; return n; };
+  assert.ok(Math.abs(thickness() - 9) <= 2, 'and the remembered pen width, got ' + thickness());
+
+  console.log('PASS: flood fill stays inside closed line art, respects undo/redo, touches only the active drawing, never reaches references, and yields to multi-touch gestures; captions are painted into the export but never into a layer, survive undo, and travel with a copied cut. Canvas rasteriser is a test double; device test still required.');
 })().catch(e => { console.error(e); process.exitCode = 1; });

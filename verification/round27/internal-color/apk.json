@@ -1,0 +1,8 @@
+{
+  "apk": "verification/apk-keep/app-27th-internal-30675514072c.apk",
+  "bytes": 81139876,
+  "sha256": "30675514072c391de25020f52db03852b543d5ff85452c8271554b453d2a2cd7",
+  "sourceId": "d6327a4e31aed5b7a89fd995fa0a7fc21018b1846014fed6d8e2bd6e16f8f701",
+  "internalReview": true,
+  "build": "verification/round27/build-internal.log (BUILD SUCCESSFUL in 7m 15s)"
+}

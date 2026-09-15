@@ -13,15 +13,12 @@
     },
     "android": {
       "package": "com.emoticonstudio.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#F7F4EE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "navigationBar": {
-        "backgroundColor": "#F7F4EE",
-        "barStyle": "dark-content"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -29,8 +26,22 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "most-recent"
+        }
+      ],
       "expo-sharing",
-      ["expo-image-picker", { "photosPermission": "원캐릭터와 참고 이미지, 직접 그린 그림을 고를 때만 사진을 사용합니다.", "cameraPermission": false, "microphonePermission": false }]
+      "expo-iap",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "원캐릭터와 참고 이미지, 직접 그린 그림을 고를 때만 사진을 사용합니다.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ]
   }
 }

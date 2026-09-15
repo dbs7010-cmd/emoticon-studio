@@ -1,0 +1,8 @@
+{
+  "apk": "C:\\Dev\\emoticon-studio\\verification\\apk-keep\\app-27th-release-aebc2f527cc1.apk",
+  "sha256": "aebc2f527cc19389d96d8bc2df650db53461eab20a1ad13a51d26d5c9d372ef7",
+  "bytes": 81139872,
+  "app": "bs://850134f11137cfaad8902b8c54e43a65097a94f5",
+  "uploadedAt": "2026-09-14T09:11:53.958Z",
+  "verification": "local bytes unchanged during upload; remote digest unavailable"
+}

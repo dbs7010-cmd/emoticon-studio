@@ -1,0 +1,110 @@
+{
+  "mode": "--rest",
+  "startedAt": "2026-09-12T20:59:45.874Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "R1-caption-open",
+      "covers": "",
+      "note": "문구 넣기 창",
+      "shot": "R1-caption-open.png"
+    },
+    {
+      "id": "R2-caption-typed",
+      "covers": "",
+      "note": "문구를 넣었다",
+      "shot": "R2-caption-typed.png"
+    },
+    {
+      "id": "R3-caption-pick",
+      "covers": "",
+      "note": "문구 편집 중 — 파란 표시와 조작 줄",
+      "shot": "R3-caption-pick.png"
+    },
+    {
+      "id": "R4-caption-move",
+      "covers": "",
+      "note": "끌어 옮기고 키우고 돌렸다",
+      "shot": "R4-caption-move.png"
+    },
+    {
+      "id": "R5-motion-tab",
+      "covers": "",
+      "note": "탭 전환 — 선택 표시가 남지 않아야 한다",
+      "shot": "R5-motion-tab.png"
+    },
+    {
+      "id": "R6-back-to-draw",
+      "covers": "",
+      "note": "그리기로 복귀 — 잔상이 없어야 한다",
+      "shot": "R6-back-to-draw.png"
+    },
+    {
+      "id": "R7-save",
+      "covers": "",
+      "note": "저장",
+      "shot": "R7-save.png"
+    },
+    {
+      "id": "R8-restart",
+      "covers": "",
+      "note": "재실행",
+      "shot": "R8-restart.png"
+    },
+    {
+      "id": "R9-settings",
+      "covers": "",
+      "note": "설정 — 내부 검수용 빌드 표시",
+      "shot": "R9-settings.png"
+    },
+    {
+      "id": "R10-review-on",
+      "covers": "",
+      "note": "검수용 PRO 켜짐",
+      "shot": "R10-review-on.png"
+    },
+    {
+      "id": "R11-board",
+      "covers": "",
+      "note": "세트 화면 — 머리글에 제출 준비가 보여야 한다",
+      "shot": "R11-board.png"
+    },
+    {
+      "id": "R12-export",
+      "covers": "",
+      "note": "스크롤 없이 제출 준비로 들어갔다",
+      "shot": "R12-export.png"
+    },
+    {
+      "id": "R13-menu",
+      "covers": "",
+      "note": "실패 — element (\"~새 이모티콘 세트 이어서 만들기\") still not existing after 10000ms",
+      "shot": "R13-menu.png"
+    }
+  ],
+  "skipped": [],
+  "notes": [
+    "R13-menu 실패: element (\"~새 이모티콘 세트 이어서 만들기\") still not existing after 10000ms"
+  ],
+  "crashes": [],
+  "closedBecause": "done",
+  "finishedAt": "2026-09-12T21:02:28.054Z"
+}

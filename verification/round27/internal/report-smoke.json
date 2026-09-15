@@ -1,0 +1,264 @@
+{
+  "mode": "--r27",
+  "startedAt": "2026-09-14T09:06:42.509Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "27-v0-base",
+      "covers": "",
+      "note": "base {\"x\":0,\"y\":384,\"w\":1080,\"h\":1731}",
+      "shot": "27-v0-base.png"
+    },
+    {
+      "id": "27-v1-palette",
+      "covers": "",
+      "note": "팔레트 {\"x\":0,\"y\":384,\"w\":1080,\"h\":1731}",
+      "shot": "27-v1-palette.png"
+    },
+    {
+      "id": "27-v2-custom",
+      "covers": "",
+      "note": "직접 선택 {\"x\":0,\"y\":384,\"w\":1080,\"h\":1731}",
+      "shot": "27-v2-custom.png"
+    },
+    {
+      "id": "27-v3-width",
+      "covers": "",
+      "note": "펜 굵기 {\"x\":0,\"y\":384,\"w\":1080,\"h\":1731}",
+      "shot": "27-v3-width.png"
+    },
+    {
+      "id": "27-v4-caption",
+      "covers": "",
+      "note": "문구(키보드 닫힘) {\"x\":0,\"y\":384,\"w\":1080,\"h\":1731}",
+      "shot": "27-v4-caption.png"
+    },
+    {
+      "id": "27-v5-reference",
+      "covers": "",
+      "note": "참고 {\"x\":0,\"y\":384,\"w\":1080,\"h\":1731}",
+      "shot": "27-v5-reference.png"
+    },
+    {
+      "id": "27-v6-layers",
+      "covers": "",
+      "note": "레이어 {\"x\":0,\"y\":384,\"w\":1080,\"h\":1731}",
+      "shot": "27-v6-layers.png"
+    },
+    {
+      "id": "27-v7-more",
+      "covers": "",
+      "note": "더보기 {\"x\":0,\"y\":384,\"w\":1080,\"h\":1731}",
+      "shot": "27-v7-more.png"
+    },
+    {
+      "id": "27-v8-select",
+      "covers": "",
+      "note": "선택 패널 {\"x\":0,\"y\":384,\"w\":1080,\"h\":1731}",
+      "shot": "27-v8-select.png"
+    },
+    {
+      "id": "27-v9-motion",
+      "covers": "",
+      "note": "움직이기 {\"x\":0,\"y\":384,\"w\":1080,\"h\":1731}",
+      "shot": "27-v9-motion.png"
+    },
+    {
+      "id": "27-free-lock",
+      "covers": "",
+      "note": "무료: 스포이드 PRO · 내 팔레트 저장 PRO",
+      "shot": "27-free-lock.png"
+    },
+    {
+      "id": "27-free-custom",
+      "covers": "",
+      "note": "무료: 색상 줄·채도명도 면·HEX 유지, RGB·투명도 잠김",
+      "shot": "27-free-custom.png"
+    },
+    {
+      "id": "27-red-line",
+      "covers": "",
+      "note": "굵기 24 빨강 직선 — 스포이드 대상",
+      "shot": "27-red-line.png"
+    },
+    {
+      "id": "27-pro-on",
+      "covers": "",
+      "note": "내부 검수 빌드 설정 · 검수용 PRO 켜짐",
+      "shot": "27-pro-on.png"
+    },
+    {
+      "id": "27-pro-custom",
+      "covers": "",
+      "note": "PRO: 스포이드·내 팔레트 열림, 직접 선택",
+      "shot": "27-pro-custom.png"
+    },
+    {
+      "id": "27-rgb-alpha",
+      "covers": "",
+      "note": "실패 — element (\"~빨강 값\") still not existing after 3000ms",
+      "shot": "27-rgb-alpha.png"
+    },
+    {
+      "id": "27-alpha-stroke",
+      "covers": "",
+      "note": "바뀐 색·투명도로 그은 획(빨강 직선 아래)",
+      "shot": "27-alpha-stroke.png"
+    },
+    {
+      "id": "27-eyedrop-armed",
+      "covers": "",
+      "note": "스포이드 대기 안내",
+      "shot": "27-eyedrop-armed.png"
+    },
+    {
+      "id": "27-eyedrop-picked",
+      "covers": "",
+      "note": "스포이드로 읽은 색 #E94F4F",
+      "shot": "27-eyedrop-picked.png"
+    },
+    {
+      "id": "27-palette-saved",
+      "covers": "",
+      "note": "내 팔레트 #E94F4F",
+      "shot": "27-palette-saved.png"
+    },
+    {
+      "id": "27-palette-restart",
+      "covers": "",
+      "note": "재실행 후 내 팔레트 유지",
+      "shot": "27-palette-restart.png"
+    },
+    {
+      "id": "27-palette-reused",
+      "covers": "",
+      "note": "내 팔레트 색 재사용 — 패널 닫히고 도구바 색 반영",
+      "shot": "27-palette-reused.png"
+    },
+    {
+      "id": "27-last-tile",
+      "covers": "",
+      "note": "32번째 칸 열림: 32번 그림 · 전체 32",
+      "shot": "27-last-tile.png"
+    }
+  ],
+  "skipped": [],
+  "notes": [
+    "27-rgb-alpha 실패: element (\"~빨강 값\") still not existing after 3000ms"
+  ],
+  "sessionId": "12741a6f7d79e5fec7eb397a0b7726da05a17b4b",
+  "viewport": [
+    {
+      "what": "base",
+      "x": 0,
+      "y": 384,
+      "w": 1080,
+      "h": 1731
+    },
+    {
+      "what": "팔레트",
+      "x": 0,
+      "y": 384,
+      "w": 1080,
+      "h": 1731
+    },
+    {
+      "what": "직접 선택",
+      "x": 0,
+      "y": 384,
+      "w": 1080,
+      "h": 1731
+    },
+    {
+      "what": "펜 굵기",
+      "x": 0,
+      "y": 384,
+      "w": 1080,
+      "h": 1731
+    },
+    {
+      "what": "문구(키보드 닫힘)",
+      "x": 0,
+      "y": 384,
+      "w": 1080,
+      "h": 1731
+    },
+    {
+      "what": "참고",
+      "x": 0,
+      "y": 384,
+      "w": 1080,
+      "h": 1731
+    },
+    {
+      "what": "레이어",
+      "x": 0,
+      "y": 384,
+      "w": 1080,
+      "h": 1731
+    },
+    {
+      "what": "더보기",
+      "x": 0,
+      "y": 384,
+      "w": 1080,
+      "h": 1731
+    },
+    {
+      "what": "선택 패널",
+      "x": 0,
+      "y": 384,
+      "w": 1080,
+      "h": 1731
+    },
+    {
+      "what": "움직이기",
+      "x": 0,
+      "y": 384,
+      "w": 1080,
+      "h": 1731
+    }
+  ],
+  "freeLock": {
+    "eyedropLocked": true,
+    "eyedropOpen": false,
+    "rgbOpen": false
+  },
+  "eyedrop": "#E94F4F",
+  "lastTile": {
+    "x": 384,
+    "y": 1511,
+    "w": 312,
+    "h": 358,
+    "window": {
+      "width": 1080,
+      "height": 2115
+    },
+    "opened": "32번 그림 · 전체 32"
+  },
+  "crashes": [],
+  "textStringError": {
+    "found": false,
+    "lines": []
+  },
+  "closedBecause": "done",
+  "finishedAt": "2026-09-14T09:11:42.489Z"
+}

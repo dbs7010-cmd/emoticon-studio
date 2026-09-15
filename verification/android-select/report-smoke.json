@@ -1,0 +1,120 @@
+{
+  "mode": "--select",
+  "startedAt": "2026-09-12T17:36:46.293Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "04-undo",
+      "covers": "두 손가락 탭 되돌리기",
+      "note": "두 손가락 탭 — 한 획이 사라져야 한다",
+      "shot": "04-undo.png"
+    },
+    {
+      "id": "05-redo",
+      "covers": "세 손가락 탭 다시 실행",
+      "note": "세 손가락 탭 — 그 획이 돌아와야 한다",
+      "shot": "05-redo.png"
+    },
+    {
+      "id": "S1-cut",
+      "covers": "그림이 실제로 있는 칸",
+      "note": "그림이 있는 칸 · 저장까지 마친 상태",
+      "shot": "S1-cut.png"
+    },
+    {
+      "id": "S2-tool",
+      "covers": "선택 도구 진입",
+      "note": "선택 도구 진입",
+      "shot": "S2-tool.png"
+    },
+    {
+      "id": "S3-lift",
+      "covers": "마키로 영역 선택 · 들어올림",
+      "note": "마키로 영역을 잡고 손을 떼 들어올림 — 점선과 손잡이가 보여야 한다",
+      "shot": "S3-lift.png"
+    },
+    {
+      "id": "S4-move",
+      "covers": "이동",
+      "note": "선택 영역을 캔버스에서 끌어 이동",
+      "shot": "S4-move.png"
+    },
+    {
+      "id": "S5-scale",
+      "covers": "크기",
+      "note": "크기 3회(회당 1.1배)",
+      "shot": "S5-scale.png"
+    },
+    {
+      "id": "S6-rotate",
+      "covers": "회전",
+      "note": "회전 2회(회당 15도)",
+      "shot": "S6-rotate.png"
+    },
+    {
+      "id": "S7-flip",
+      "covers": "좌우 반전",
+      "note": "좌우 반전",
+      "shot": "S7-flip.png"
+    },
+    {
+      "id": "S8-cancel",
+      "covers": "취소 시 원본 복원",
+      "note": "취소 — 원본이 그대로 돌아와야 한다",
+      "shot": "S8-cancel.png"
+    },
+    {
+      "id": "S9-reselect",
+      "covers": "다시 선택해 옮김",
+      "note": "다시 선택해 아래로 옮김",
+      "shot": "S9-reselect.png"
+    },
+    {
+      "id": "S10-apply",
+      "covers": "적용",
+      "note": "적용 — 점선과 손잡이가 사라져야 한다",
+      "shot": "S10-apply.png"
+    },
+    {
+      "id": "S11-save",
+      "covers": "저장",
+      "note": "적용 결과 저장",
+      "shot": "S11-save.png"
+    },
+    {
+      "id": "S12-restart",
+      "covers": "재실행에도 결과 유지",
+      "note": "껐다 켠 뒤 — 옮긴 결과가 남아 있어야 한다",
+      "shot": "S12-restart.png"
+    },
+    {
+      "id": "S13-export",
+      "covers": "저장·내보내기 파일에 점선·손잡이가 섞이지 않는가",
+      "note": "저장 파일 미리보기 — 점선·손잡이가 섞였는지 본다",
+      "shot": "S13-export.png"
+    }
+  ],
+  "skipped": [],
+  "notes": [],
+  "crashes": [],
+  "closedBecause": "done",
+  "finishedAt": "2026-09-12T17:39:56.635Z"
+}

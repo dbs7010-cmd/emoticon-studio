@@ -1,28 +1,28 @@
-import { KAKAO_STATIC_SPEC as SPEC } from '../constants/kakao-spec';
-import type { Check, LocalImage, Metrics, QA, Verdict } from '../types';
+import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC } from '../constants/kakao-spec';
+import type { Check, LocalImage, Project, QA, Verdict } from '../types';
+import { crc32 } from './export';
 import { localFile } from './storage';
+
+// Cuts whose exported files are byte-for-byte the same picture. Worth telling the user about;
+// never worth editing or deleting on their behalf.
+export function identicalFinals(project: Project): number[][] {
+  const groups = new Map<string, number[]>();
+  for (const slot of project.slots) {
+    if (!slot.finalImage) continue;
+    const file = localFile(slot.finalImage.path);
+    if (!file.exists) continue;
+    const bytes = file.bytesSync();
+    const key = `${bytes.length}:${crc32(bytes)}`;
+    groups.set(key, [...(groups.get(key) ?? []), slot.number]);
+  }
+  return [...groups.values()].filter(group => group.length > 1);
+}
 
 export const verdict = (checks: Check[]): Verdict => checks.some(c => c.status === 'FAIL') ? 'FAIL' : checks.some(c => c.status === 'WARNING') ? 'WARNING' : 'PASS';
 
-// Only things we could actually compare become checks. "We could not check this" is a note,
-// never a verdict, or every correct drawing would be flagged forever.
-export function compareMetrics(canon?: Metrics, final?: Metrics): { checks: Check[]; notes: string[] } {
-  if (!canon || !final) return { checks: [], notes: ['원캐릭터와 자동 비교할 픽셀 정보가 없어요. 나란히 보며 직접 확인해 주세요.'] };
-  if (canon.coverage > 0.95) return { checks: [], notes: ['원캐릭터가 배경까지 꽉 찬 이미지라 자동 비교를 건너뛰었어요.'] };
-  const center = Math.hypot(canon.centerX - final.centerX, canon.centerY - final.centerY);
-  const area = Math.abs(canon.coverage - final.coverage);
-  const color = Math.sqrt(canon.color.reduce((sum, c, i) => sum + (c - final.color[i]) ** 2, 0));
-  return {
-    checks: [
-      { label: '그림 위치', status: center > 0.2 ? 'WARNING' : 'PASS', detail: `원캐릭터보다 ${(center * 100).toFixed(0)}%만큼 치우쳐 있어요.` },
-      { label: '그림 크기', status: area > 0.25 ? 'WARNING' : 'PASS', detail: `채워진 넓이가 원캐릭터와 ${(area * 100).toFixed(0)}%p 달라요.` },
-      { label: '전체 색감', status: color > 0.3 ? 'WARNING' : 'PASS', detail: `원캐릭터와 평균 색이 ${color.toFixed(2)}만큼 달라요. 소품·효과도 함께 계산돼요.` },
-    ],
-    notes: [],
-  };
-}
-
-export function inspectImage(image?: LocalImage, canon?: LocalImage): QA {
+type Profile = { width: number; height: number; maxBytes: number | null; policyStatus: string; note: string };
+export function inspectImage(image?: LocalImage, profile: Profile = KAKAO_STATIC_SPEC): QA {
+  const SPEC = profile;
   const checks: Check[] = [];
   const notes: string[] = [];
   if (!image || !localFile(image.path).exists) checks.push({ label: '그림 파일', status: 'FAIL', detail: '저장된 그림 파일을 찾을 수 없어요.' });
@@ -45,10 +45,11 @@ export function inspectImage(image?: LocalImage, canon?: LocalImage): QA {
     notes.push(SPEC.maxBytes === null ? `파일 크기 ${(bytes.length / 1024).toFixed(0)}KB. 공식 용량 상한은 아직 확인되지 않았어요.` : `파일 크기 ${(bytes.length / 1024).toFixed(0)}KB.`);
     if (SPEC.maxBytes !== null) checks.push({ label: '파일 크기', status: bytes.length <= SPEC.maxBytes ? 'PASS' : 'FAIL', detail: `${(bytes.length / 1024).toFixed(0)}KB · 상한 ${SPEC.maxBytes / 1024}KB` });
   }
-  const consistency = compareMetrics(canon?.metrics, image?.metrics);
-  notes.push(...consistency.notes);
+  // Character consistency, repeated expressions and readability are a person's call, so they are
+  // said out loud and never scored. An automatic verdict here would be a guess wearing a badge.
+  notes.push('캐릭터가 같아 보이는지, 표현이 겹치지는 않는지는 눈으로 확인해 주세요.');
   // The spec itself is unconfirmed. That is information about our own uncertainty, not a defect
   // in the user's drawing, so it must never turn a good slot into a warning.
   if (SPEC.policyStatus !== 'VERIFIED') notes.push(SPEC.note);
-  return { status: verdict([...checks, ...consistency.checks]), checkedAt: new Date().toISOString(), checks, consistency: consistency.checks, notes };
+  return { status: verdict(checks), checkedAt: new Date().toISOString(), checks, consistency: [], notes };
 }

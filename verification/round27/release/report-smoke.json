@@ -1,0 +1,84 @@
+{
+  "mode": "--r27rel",
+  "startedAt": "2026-09-14T09:11:54.076Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "27r-color-lock",
+      "covers": "",
+      "note": "출시 구성: 스포이드 PRO 잠금",
+      "shot": "27r-color-lock.png"
+    },
+    {
+      "id": "27r-color-custom",
+      "covers": "",
+      "note": "출시 구성: RGB·투명도 잠김",
+      "shot": "27r-color-custom.png"
+    },
+    {
+      "id": "27r-lock-to-sheet",
+      "covers": "",
+      "note": "잠긴 스포이드 → PRO 안내",
+      "shot": "27r-lock-to-sheet.png"
+    },
+    {
+      "id": "27r-settings",
+      "covers": "",
+      "note": "출시 구성 설정: 검수용 스위치 없음",
+      "shot": "27r-settings.png"
+    },
+    {
+      "id": "27r-purchase",
+      "covers": "",
+      "note": "PRO 시작하기 — 결제 모듈 없음 안내, 권한 미부여",
+      "shot": "27r-purchase.png"
+    },
+    {
+      "id": "27r-restore",
+      "covers": "",
+      "note": "구매 복원 — 권한 미부여",
+      "shot": "27r-restore.png"
+    },
+    {
+      "id": "27r-still-free",
+      "covers": "",
+      "note": "홈 표시 무료(PRO 보기) 유지 + 안내 문구",
+      "shot": "27r-still-free.png"
+    }
+  ],
+  "skipped": [],
+  "notes": [],
+  "sessionId": "f86826cc9731bac844b856113cbefcc3db68f849",
+  "release": {
+    "eyedropLocked": true,
+    "eyedropOpen": false,
+    "rgbOpen": false,
+    "reviewSwitch": false,
+    "homeLabel": "PRO 보기"
+  },
+  "crashes": [],
+  "textStringError": {
+    "found": false,
+    "lines": []
+  },
+  "closedBecause": "done",
+  "finishedAt": "2026-09-14T09:13:43.478Z"
+}

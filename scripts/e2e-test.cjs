@@ -15,7 +15,7 @@ class File {
   delete() { files.delete(this.uri); }
 }
 const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } }, 'expo-image-picker': {}, 'expo-image-manipulator': {} });
-const { createProject, planningIssues, duplicates, storeImagePaths } = load('src/project.ts');
+const { createProject, doneCount, duplicateCaptions, isDone, nextUnfinished, previousDrawn, reorderSlots, storeImagePaths } = load('src/project.ts');
 const { loadStore, saveStore, localFile } = load('src/services/storage.ts');
 const { saveDrawing } = load('src/services/images.ts');
 const { inspectImage } = load('src/services/qa.ts');
@@ -40,23 +40,41 @@ const reference = { path: 'image-ref.png', width: 360, height: 360 };
 files.set(localFile('image-ref.png').uri, new Uint8Array(Buffer.from('reference')));
 project.slots = project.slots.map(s => ({ ...s, referenceImages: [reference] }));
 
-// 2. Plan several slots, including one with no dialogue.
+// 2. An older store may already carry planning text and a chosen reference. Nothing is required.
 const plan = [['잘자', '졸림'], ['안녕!', '반가움'], ['고마워', '고마움'], ['헐', '놀람'], ['', '']];
 plan.forEach(([dialogue, emotion], i) => {
   project.slots[i] = { ...project.slots[i], dialogue, emotion, noDialogue: !dialogue, status: 'PLANNED', referenceKey: reference.path };
 });
-assert.deepEqual(duplicates(project.slots), [], 'the plan has no repeated line');
-assert.ok(planningIssues(project).some(i => /^\d+칸이 남았어요$/.test(i)), 'and it says how many slots are still open');
+assert.equal(doneCount(project), 0, 'planning text alone finishes nothing');
+assert.equal(nextUnfinished(project, 0), 1, 'and work starts at the first cut');
 
-// 3. Draw and save each planned slot, the way save-next does.
+// 3. Draw, declare finished, and move on, the way 완성 · 다음 does.
 const drawn = [1, 2, 3, 4, 5];
+let cursor = 0;
 for (const number of drawn) {
+  assert.equal(nextUnfinished(project, cursor), number, '완성 · 다음 lands on the next unfinished cut');
+  const caption = number === 3 ? { text: '고마워요', place: 'bottom', color: '#242424' } : undefined;
   const finalImage = { ...saveDrawing(painterOutput('slot' + number), metrics) };
-  const qa = inspectImage(finalImage, project.canon.image);
+  const qa = inspectImage(finalImage);
   assert.equal(qa.status, 'PASS', `slot ${number} passes the submission checks`);
-  project.slots[number - 1] = { ...project.slots[number - 1], finalImage, qa, status: qa.status, lastSaved: undefined };
+  project.slots[number - 1] = { ...project.slots[number - 1], finalImage, qa, status: qa.status, done: true,
+    work: { version: 1, activeLayerId: 'draw-1', layers: [{ id: 'draw-1', name: '그림 1', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0, image: finalImage }], references: [], caption } };
   project.lastSlot = number;
+  cursor = number;
 }
+assert.equal(doneCount(project), drawn.length, 'only declared cuts are counted');
+assert.equal(previousDrawn(project, 6).number, 5, 'a copy would come from the cut just finished');
+assert.deepEqual(duplicateCaptions(project.slots), [], 'no two cuts carry the same words');
+
+// 완성 · 다음 hands over an empty canvas: a cut someone already drew on is not the next stop,
+// and once the empty ones run out it comes back to the work that is still open.
+const halfway = { ...project, slots: project.slots.map(s => s.number === 6 ? { ...s, finalImage: { path: 'image-wip.png', width: 360, height: 360 }, done: false } : s) };
+assert.equal(nextUnfinished(halfway, 5), 7, 'the cut that already has a drawing is skipped');
+const onlyWip = { ...project, slots: project.slots.map(s => s.number > 5 && s.number !== 6 ? { ...s, finalImage: { path: 'image-x.png', width: 360, height: 360 }, done: true } : s.number === 6 ? { ...s, finalImage: { path: 'image-wip.png', width: 360, height: 360 }, done: false } : s) };
+assert.equal(nextUnfinished(onlyWip, 5), 6, 'but with nothing empty left, unfinished work is where it goes');
+const finished = { ...project, slots: project.slots.map(s => ({ ...s, done: true, finalImage: s.finalImage ?? { path: 'image-x.png', width: 360, height: 360 } })) };
+assert.equal(nextUnfinished(finished, 5), null, 'and a finished set sends the user to the board instead');
+assert.equal(nextUnfinished({ ...finished, slots: finished.slots.map(s => s.number === 2 ? { ...s, done: false, finalImage: undefined } : s) }, 30), 2, 'it wraps around to an earlier open cut');
 saveStore({ version: 1, revision: 1, projects: [project] });
 
 // 4. Reopen from disk, exactly as a restart would.
@@ -67,10 +85,74 @@ assert.equal(project.lastSlot, 5, 'the set remembers where work stopped');
 assert.equal(project.slots.filter(s => s.finalImage).length, drawn.length, 'every saved drawing came back');
 assert.equal(project.slots[0].referenceImages.length, 1, 'and so did the references');
 assert.equal(project.slots[4].noDialogue, true, 'and the no-dialogue plan');
+assert.equal(doneCount(project), drawn.length, 'and every completion survived the restart');
+assert.deepEqual(project.slots[2].work.caption, { text: '고마워요', place: 'bottom', color: '#242424' }, 'together with the words drawn into the picture');
+assert.equal(isDone(project.slots[5]), false, 'an untouched cut is still open');
+
+// 4b. 그림(레이어) 이름과 움직임이 가리키는 대상이 열기 → 편집 → 저장 → 재실행을 건너온다.
+// The name is what the screen calls a layer; the id is what a movement points at. A rename must
+// travel with the drawing and must not become the thing the movement is matched by.
+{
+  const before = project.slots[0].work.layers.map(l => l.id);
+  const target = before[0];
+  const named = {
+    ...project,
+    slots: project.slots.map(s => s.number === 1 ? {
+      ...s,
+      work: { ...s.work, layers: s.work.layers.map(l => l.id === target ? { ...l, name: '손' } : l) },
+      motion: { version: 1, preset: 'bounce', speed: .5, strength: .5, parts: [{ id: 'p1', layerId: target, effect: 'rotate', pivotX: .5, pivotY: .5, amount: 20, angle: 0, speed: .5, delay: 0 }] },
+    } : s),
+  };
+  saveStore({ version: 1, revision: 9, projects: [named] });
+  const back = loadStore().store.projects[0].slots[0];
+  assert.deepEqual(back.work.layers.map(l => l.id), before, 'every layer id came back unchanged');
+  assert.equal(back.work.layers.find(l => l.id === target).name, '손', 'and the name the user typed came back with it');
+  assert.equal(back.motion.parts[0].layerId, target, 'the part movement still points at the layer id, not at its name');
+  assert.ok(back.work.layers.some(l => l.id === back.motion.parts[0].layerId), 'so the layer it names is really in this cut');
+  // An older store never carried a user-chosen name, only the default one. It still opens.
+  const legacy = JSON.parse(JSON.stringify(named));
+  legacy.slots[0].work.layers = legacy.slots[0].work.layers.map((l, i) => ({ ...l, name: '그림 ' + (i + 1) }));
+  saveStore({ version: 1, revision: 10, projects: [legacy] });
+  const old = loadStore().store.projects[0].slots[0];
+  assert.equal(old.work.layers[0].name, '그림 1', 'a store from before renaming opens untouched');
+  assert.equal(old.motion.parts[0].layerId, target, 'and its movement still points at the same layer');
+  saveStore({ version: 1, revision: 11, projects: [project] });
+}
 
 // 5. Review the whole set the way the preview screen does.
 for (const slot of project.slots.filter(s => s.finalImage)) {
-  assert.equal(inspectImage(slot.finalImage, project.canon.image).status, 'PASS', `slot ${slot.number} still passes after a reopen`);
+  assert.equal(inspectImage(slot.finalImage).status, 'PASS', `slot ${slot.number} still passes after a reopen`);
+}
+
+// 5b. 순서를 바꿔도 작품과 파일 연결이 그대로 따라간다.
+{
+  const before = project.slots.map(s => s.finalImage && s.finalImage.path);
+  const movedProject = reorderSlots(project, 1, 4);
+  const order = movedProject.slots.map(s => s.finalImage && s.finalImage.path);
+  assert.deepEqual(order.slice(0, 4), [before[1], before[2], before[3], before[0]], 'the cut travels to its new place and the others close up');
+  assert.deepEqual(movedProject.slots.map(s => s.number), project.slots.map(s => s.number), 'the places keep their numbers 1..n');
+  assert.deepEqual([...storeImagePaths({ version: 1, revision: 1, projects: [movedProject] })].sort(), [...storeImagePaths({ version: 1, revision: 1, projects: [project] })].sort(), 'not one file is dropped or invented by reordering');
+  assert.equal(movedProject.slots[1].work && movedProject.slots[1].work.caption && movedProject.slots[1].work.caption.text, '고마워요', 'the words travel with the cut');
+  assert.equal(movedProject.slots[3].done, true, 'and the finished mark travels too');
+  assert.deepEqual(reorderSlots(movedProject, 4, 1).slots.map(s => s.finalImage && s.finalImage.path), before, 'moving it back restores the original order exactly');
+  assert.deepEqual(reorderSlots(project, 2, 2).slots, project.slots, 'moving a cut onto itself changes nothing');
+
+  // Reordering must not quietly break the things a cut *points at*. The set-level reference drawing
+  // and the movement targets are held by id, not by cut number, so moving a cut must leave both
+  // pointing at exactly what they pointed at before.
+  const target = project.slots[0].work.layers[0].id;
+  const motion = { version: 1, preset: 'bounce', speed: .5, strength: .5, parts: [{ id: 'p1', layerId: target, effect: 'rotate', pivotX: .5, pivotY: .5, amount: 20, angle: 0, speed: .5, delay: 0 }], alternate: { poseB: [target], interval: .4 } };
+  const withMotion = { ...project, lastSlot: 1, slots: project.slots.map(s => s.number === 1 ? { ...s, motion, motionImage: { path: 'moving-1.gif', width: 360, height: 360, bytes: 2048 } } : s) };
+  const after = reorderSlots(withMotion, 1, 4);
+  assert.deepEqual(after.canon, withMotion.canon, 'the set reference drawing is untouched by reordering');
+  assert.deepEqual(after.slots[3].motion, motion, 'the movement settings travel with the cut, unchanged');
+  assert.equal(after.slots[3].motion.parts[0].layerId, target, 'the part being moved still names the same drawing inside that cut');
+  assert.deepEqual(after.slots[3].motion.alternate.poseB, [target], 'the second pose still names the same drawing');
+  assert.equal(after.slots[3].motionImage.path, 'moving-1.gif', 'and the moving file stays attached to its own cut');
+  assert.ok(after.slots[3].work.layers.some(l => l.id === target), 'the layer the movement names is still inside the cut it travelled with');
+  assert.equal(after.lastSlot, 4, 'the cut you were last on is followed to its new place');
+  assert.equal(reorderSlots(withMotion, 2, 5).lastSlot, 1, 'and a cut that did not move keeps its place');
+  assert.equal(after.slots.filter(s => s.motion).length, 1, 'no other cut picks up a movement it never had');
 }
 
 // 6. Export, then reopen the archive and check every entry.

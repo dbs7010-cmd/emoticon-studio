@@ -12,7 +12,9 @@ const source = canvasHtml.split('<script>')[1].split('</script>')[0].replace(
 // Each context records the stroke marks drawn into it, so undo/redo restore a verifiable canvas identity.
 function context2d() {
   const g = { globalAlpha: 1, globalCompositeOperation: 'source-over', lineWidth: 1, strokeStyle: '#000', fillStyle: '#000', lineCap: 'round', lineJoin: 'round', marks: [] };
-  for (const name of ['save', 'restore', 'translate', 'rotate', 'scale', 'beginPath', 'arc', 'fill', 'moveTo', 'stroke']) g[name] = () => {};
+  for (const name of ['save', 'restore', 'translate', 'rotate', 'scale', 'beginPath', 'arc', 'fill', 'moveTo', 'stroke', 'strokeRect', 'strokeText', 'fillText', 'setLineDash']) g[name] = () => {};
+  // 글자 폭: 글꼴 px × 0.6 × 글자 수. 문구의 자리·상자 계산에 쓰인다.
+  g.measureText = text => ({ width: String(text).length * (Number((/(\d+)px/.exec(g.font || '') || [])[1]) || 10) * .6 });
   g.clearRect = () => { g.marks = []; };
   g.lineTo = (x, y) => g.marks.push(Math.round(x) + ',' + Math.round(y));
   g.drawImage = from => { if (from && from.getContext) g.marks.push(...from.getContext().marks); };
@@ -128,5 +130,58 @@ const tick = () => new Promise(resolve => setTimeout(resolve, 5));
   down(1, 100, 100); down(2, 140, 100); move(1, 60, 100); move(2, 180, 100); up(1); up(2);
   assert.ok(reference().scale > moved.scale, 'two-finger pinch scales the reference itself');
 
-  console.log('PASS: one-finger stroke, two-finger tap undo, three-finger tap redo across staggered lifts, drag is not a tap, three consecutive undo+redo steps restore every state in order, new stroke clears redo, reference move/pinch. DOM shimmed; Android touch delivery still requires device test.');
+  // ── 문구: 캔버스 위 물건처럼 직접 고르고·옮기고·키운다 ────────────────────────────────────
+  // 360×360 캔버스에서 '안녕'(40px) 상자는 x 156~204, y 288~338, 한가운데 (180, 313).
+  await command({ type: 'init' });
+  await command({ type: 'caption', caption: { text: '안녕', place: 'bottom', color: '#242424' } });
+  const cap = () => state().caption;
+  const edits = () => messages.filter(m => m.type === 'captionEdit').length;
+  const pastBefore = stacks().past;
+  down(1, 180, 313); up(1);
+  assert.equal(state().captionPicked, true, '글씨를 누르면 메뉴를 거치지 않고 바로 골라진다');
+  assert.equal(stacks().past, pastBefore, '누르기만 해서는 되돌리기 기록이 생기지 않는다(그림도 그려지지 않는다)');
+  assert.equal(edits(), 0, '처음 누름은 고르기일 뿐 편집을 열지 않는다');
+  down(1, 180, 313); up(1);
+  assert.equal(edits(), 1, '고른 글씨를 한 번 더 누르면 내용 고치기를 요청한다');
+  down(1, 180, 313); move(1, 181, 314); up(1);
+  assert.equal(cap().dx ?? 0, 0, '손가락 떨림(6px 미만)은 옮기기가 아니다');
+  assert.equal(edits(), 2, '떨린 누름은 누름으로 본다 — 고른 글씨를 누른 것이라 내용 고치기');
+  assert.equal(stacks().past, pastBefore, '떨림은 되돌리기 기록을 남기지 않는다');
+  down(1, 180, 313); move(1, 230, 280); up(1);
+  assert.deepEqual([cap().dx, cap().dy], [50, -33], '글씨 자체를 끌어 원하는 자리로 옮긴다');
+  assert.equal(stacks().past, pastBefore + 1, '옮기기는 되돌리기 한 번');
+  assert.equal(edits(), 2, '끌어 옮긴 누름은 편집을 열지 않는다');
+  // 손잡이(오른쪽 아래)를 끌면 크기. 화면 기준 26px 안이면 잡힌다.
+  down(1, 262, 311); move(1, 292, 341); up(1);
+  assert.ok(cap().scale > 1.8 && cap().scale < 2.2, '손잡이를 바깥으로 끌면 커진다: ' + cap().scale);
+  assert.deepEqual([cap().dx, cap().dy], [50, -33], '크기를 바꿔도 자리는 그대로');
+  // 두 손가락: 벌리면 크기(상한 3), 비틀면 회전.
+  const sizedTo = cap().scale;
+  down(1, 200, 280); down(2, 260, 280); move(1, 170, 280); move(2, 290, 280); up(1); up(2);
+  assert.equal(cap().scale, Math.min(3, sizedTo * 2), '고른 글씨 위의 두 손가락 벌리기는 글씨 크기');
+  assert.equal(cap().rot ?? 0, 0, '비틀지 않으면 돌지 않는다');
+  down(1, 200, 280); down(2, 260, 280); move(2, 250, 330); up(1); up(2);
+  assert.ok(Math.abs(cap().rot - 45) < 1, '두 손가락으로 비틀면 돈다: ' + cap().rot);
+  // 경계: 끝까지 끌어도 글씨 한가운데는 캔버스 안에 남는다(가운데로 끌어오지는 않는다).
+  const { dx: beforeFar } = cap();
+  down(1, 230, 280); move(1, 2000, 280); up(1);
+  assert.ok(180 + cap().dx <= 360 && 180 + cap().dx >= 300, '오른쪽 끝에서 멈추되 가장자리까지는 간다: ' + (180 + cap().dx) + ' (전 ' + beforeFar + ')');
+  // 글씨 밖을 누르면 선택이 끝나고, 그 손가락은 그림을 그리지 않는다.
+  // 손잡이는 늘 캔버스 안에서 잡을 수 있다: 글씨를 오른쪽 가장자리로 보내고 키워도 안쪽 모서리에 그려진다.
+  const handleMarks = shown().split(' ').filter(Boolean).map(p => p.split(',').map(Number));
+  assert.ok(handleMarks.length > 0 && handleMarks.every(([x, y]) => x >= 0 && x <= 360 && y >= 0 && y <= 360), '가장자리에 둔 큰 글씨의 손잡이도 캔버스 안에 있다: ' + shown());
+  const pastOutside = stacks().past;
+  down(1, 40, 40); move(1, 90, 90); up(1);
+  assert.equal(state().captionPicked, false, '다른 곳을 누르면 자연스럽게 선택이 끝난다');
+  assert.ok(!shown().split(' ').includes('90,90'), '선택을 끝낸 손가락은 선을 긋지 않는다');
+  assert.equal(stacks().past, pastOutside, '되돌리기 기록도 없다');
+  stroke(40, 40);
+  assert.equal(stacks().past, pastOutside + 1, '선택이 끝난 뒤에는 평소처럼 그린다');
+  // 저장되는 문구(파일·출력의 원천)는 화면에서 조절한 그 값이다.
+  const onCanvas = cap();
+  await command({ type: 'save' });
+  assert.deepEqual(messages.filter(m => m.type === 'save').at(-1).caption, onCanvas, '저장 값 = 캔버스에서 옮기고 키우고 돌린 값');
+  await command({ type: 'saved' });
+
+  console.log('PASS: one-finger stroke, two-finger tap undo, three-finger tap redo across staggered lifts, drag is not a tap, three consecutive undo+redo steps restore every state in order, new stroke clears redo, reference move/pinch, caption: tap selects (no stroke, no undo step), tap again asks to edit, jitter is not a move, drag moves the words, handle drag scales, two-finger pinch scales (cap 3) and twist rotates, soft bounds keep the centre on the canvas, tapping elsewhere ends the selection without drawing, saved caption equals the on-canvas one. DOM shimmed; Android touch delivery still requires device test.');
 })().catch(e => { console.error(e); process.exitCode = 1; });

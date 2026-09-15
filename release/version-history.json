@@ -1,0 +1,5 @@
+{
+  "note": "Play Console 에 실제로 올린 AAB 만 기록한다(업로드 뒤 추가). release-check 는 app.json android.versionCode 가 여기 최대값보다 커야 통과시킨다. 검증용·내부 빌드는 적지 않는다.",
+  "applicationId": "com.emoticonstudio.app",
+  "released": []
+}
