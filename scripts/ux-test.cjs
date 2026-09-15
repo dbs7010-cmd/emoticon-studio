@@ -612,6 +612,24 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  await press('다시 공유');
  await act(async()=>{});
  assert.equal(shared.length,2,'a cancelled share can always be sent again');
+ // 42차 실기기: '저장된 그림 다시 검사'가 빈 칸마다 "그림 파일 없음" FAIL 을 저장해 내보내기에 가짜 손볼 곳 29줄이 생겼다.
+ {
+  const base=fresh();
+  const polluted={status:'FAIL',checkedAt:'2026-09-15T00:00:00.000Z',checks:[{label:'그림 파일',status:'FAIL',detail:'저장된 그림 파일을 찾을 수 없어요.'}],consistency:[],notes:[]};
+  const partial={...base,id:base.id+'-empty-check',projectName:'빈 칸 검사 세트',slots:base.slots.map(s=>s.number===1?s:{...s,finalImage:undefined,motionImage:undefined,submitImage:undefined,work:undefined,done:undefined,qa:polluted})};
+  saveStore({...loadStore().store,revision:loadStore().store.revision+1,projects:[...loadStore().store.projects,partial]});
+  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
+  await press('빈 칸 검사 세트');await press('내보내기');
+  const checkRows=()=>tree.root.findAll(n=>n.type==='Pressable'&&/^\d+번 검사 고치기$/.test(n.props.accessibilityLabel??''));
+  assert.equal(checkRows().length,0,'빈 칸에 남은 옛 검사 결과는 손볼 곳이 아니다');
+  await press('자세히 보기');await press('저장된 그림 다시 검사');await act(async()=>{});await act(async()=>{});
+  const after=loadStore().store.projects.find(p=>p.id===partial.id);
+  assert.ok(after.slots.filter(s=>!s.finalImage).every(s=>s.qa===undefined),'다시 검사하면 빈 칸에는 검사 결과가 남지 않는다');
+  assert.equal(checkRows().length,0,'다시 검사 뒤에도 가짜 손볼 곳이 없다');
+  saveStore({...loadStore().store,revision:loadStore().store.revision+1,projects:loadStore().store.projects.filter(p=>p.id!==partial.id)});
+  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
+  await press('새 이모티콘 세트');await press('내보내기');
+ }
  // Identical files are pointed out, never edited away.
  const twin=fresh().slots[0].finalImage;
  saveStore({...loadStore().store,revision:loadStore().store.revision+1,projects:loadStore().store.projects.map(x=>x.id===fresh().id?{...x,slots:x.slots.map(s=>s.number===3?{...s,finalImage:twin,done:true}:s)}:x)});

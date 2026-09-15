@@ -190,7 +190,10 @@ function run(argv) {
   const screen = () => shell('wm size').match(/(\d+)x(\d+)(?![\s\S]*\d+x\d+)/).slice(1).map(Number);
   const tapFrac = (fx, fy) => { const [w, h] = screen(); shell(`input tap ${Math.round(w * fx)} ${Math.round(h * fy)}`); sleep(900); };
   // 통통은 뛰었다 쉬는 구간이 있어 두 장만 비교하면 쉬는 순간을 잡는다 → 여러 장을 연달아 찍어 가장 큰 변화를 본다.
-  const motionDelta = () => { const frames = []; for (let k = 0; k < 6; k++) { frames.push(decodePng(adb(['exec-out', 'screencap', '-p'], { binary: true }))); sleep(120); } let best = 0; for (let k = 1; k < frames.length; k++) best = Math.max(best, regionChange(frames[0], frames[k], .15, .52)); return best; };
+  // 42차: 첫 장만 기준으로 비교하면 두근거리기(가운데 기준 크기 변화)가 첫 장이 중간 크기일 때 거의 멈춘 것처럼 잰다
+  // (S24 스모크 두 번 연속 .0003). 같은 칸을 16장 전부 짝지어 재면 .0013/.0015 로 돈다(verification/round42/pulse-burst).
+  // 바닥값은 그대로 두고, 모든 짝을 비교해 한 주기 안의 가장 큰 변화를 본다.
+  const motionDelta = () => { const frames = []; for (let k = 0; k < 8; k++) { frames.push(decodePng(adb(['exec-out', 'screencap', '-p'], { binary: true }))); sleep(120); } let best = 0; for (let i = 0; i < frames.length; i++) for (let k = i + 1; k < frames.length; k++) best = Math.max(best, regionChange(frames[i], frames[k], .15, .52)); return best; };
   // 40차 움직이기 패널: 좁은 '없음' + 효과 카드 셋(S24 Ultra 캡처 08-motion 에서 잰 값). 카드 줄 y 는 아래 tapFrac 의 .69.
   const CARD = { [L.presetNone]: .106, [L.presetBounce]: .321, [L.presetShake]: .583, [L.presetPulse]: .845 };
   r.step('13-motion-quick', () => {

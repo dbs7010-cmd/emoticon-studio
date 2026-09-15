@@ -135,6 +135,9 @@ const closePainter = async () => { await press('그리기 닫기'); await answer
     const expected = { version: 1, speed: .6, strength: .35, captionMoves: false, preset };
     assert.deepEqual(slotOf(n).motion, expected, label + ': 저장된다');
     assert.ok(slotOf(n).motionImage?.path, label + ': 움직이는 파일이 붙는다');
+    // 42차 실기기: 움직이는 GIF 를 PNG 검사에 넣어 움직이는 칸마다 빨간 FAIL 이 났다. 검사는 PNG 칸 그림에 한다.
+    assert.notEqual(slotOf(n).status, 'FAIL', label + ': 움직임을 넣었다고 자동 검사에서 떨어지지 않는다 ' + JSON.stringify(slotOf(n).qa?.checks));
+    assert.ok(!slotOf(n).qa.checks.some(c => c.label === '파일 형식' && c.status === 'FAIL'), label + ': PNG 칸 그림을 검사한다');
     assert.equal(slotOf(n).work.caption.text, label + ' 문구', label + ': 움직임 저장이 그림·문구를 건드리지 않는다');
     assert.ok(isAnimated(slotOf(n)), label + ': 움직이는 칸으로 센다');
 

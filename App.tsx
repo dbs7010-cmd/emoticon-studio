@@ -163,8 +163,11 @@ function Studio() {
     await task('이미지 검수 중…', async () => {
       const checked = new Map<number, Slot>();
       for (const s of project.slots) {
-        const finalImage = s.finalImage ? await analyzed(s.finalImage) : undefined;
-        const qa = inspectImage(s.motionImage ?? finalImage, s.motion ? KAKAO_ANIMATED_SPEC : SPEC);
+        // 빈 칸은 검사할 그림이 없다. 검사하면 "그림 파일 없음" FAIL 이 빈 칸마다 쌓여 내보내기에 가짜 손볼 곳이 된다(42차 실기기).
+        if (!s.finalImage) { checked.set(s.number, { ...s, qa: undefined }); continue; }
+        const finalImage = await analyzed(s.finalImage);
+        // 검사는 PNG 칸 그림에 한다. 움직이는 GIF 는 작업용 미리보기라 PNG 검사에 넣으면 움직이는 칸마다 FAIL 이 난다(42차 실기기).
+        const qa = inspectImage(finalImage, s.motion ? KAKAO_ANIMATED_SPEC : SPEC);
         checked.set(s.number, { ...s, finalImage, qa, status: finalImage ? qa.status : s.status });
       }
       changeProject(id, p => ({ ...p, slots: p.slots.map(s => checked.get(s.number) ?? s) }));
@@ -177,7 +180,7 @@ function Studio() {
   function saveFinal(finalImage: LocalImage, work?: PainterWork, dialogue?: string, complete = false, motion?: Motion, motionImage?: LocalImage, submitImage?: LocalImage) {
     if (!project || !slot) return;
     let qa: QA;
-    try { qa = inspectImage(motionImage ?? finalImage, motion ? KAKAO_ANIMATED_SPEC : SPEC); }
+    try { qa = inspectImage(finalImage, motion ? KAKAO_ANIMATED_SPEC : SPEC); }
     catch { qa = { status: 'WARNING', checkedAt: new Date().toISOString(), checks: [{ label: '자동 검사', status: 'WARNING', detail: '검사를 마치지 못했어요. 다시 저장해 주세요.' }], consistency: [], notes: [] }; }
     // A blank canvas is never a finished cut, whatever the button said.
     const done = complete && (finalImage.metrics?.coverage ?? 0) > 0;
@@ -347,7 +350,7 @@ function Studio() {
       .map(s => ({ label: `${pad(s.number)}번 배경`, status: 'FAIL' as const, detail: '배경이 투명하지 않아요.', slot: s.number })),
     ...identicalFinals(project).map(group => ({ label: '같은 그림', status: 'WARNING' as const, detail: `${group.map(pad).join(', ')}번 파일이 완전히 같아요. 그대로 둘지 직접 판단해 주세요.`, slot: group[1] })),
     ...duplicateCaptions(project.slots).map(group => ({ label: '겹친 문구', status: 'WARNING' as const, detail: `${group.map(pad).join(', ')}번 문구가 같아요.`, slot: group[1] })),
-    ...project.slots.filter(s => s.qa?.status === 'FAIL').map(s => ({ label: `${pad(s.number)}번 검사`, status: 'FAIL' as const, detail: '자동 검사에서 문제가 나왔어요.', slot: s.number })),
+    ...project.slots.filter(s => s.finalImage && s.qa?.status === 'FAIL').map(s => ({ label: `${pad(s.number)}번 검사`, status: 'FAIL' as const, detail: '자동 검사에서 문제가 나왔어요.', slot: s.number })),
   ];
   // A purchase only ever lands here, and only after the store and our receipt server both said yes.
   async function startPurchase(plan: 'monthly' | 'yearly') {
@@ -389,7 +392,7 @@ function Studio() {
           // 예전 움직임의 WebP 가 실려 나간다 — 화면은 새 움직임을 보여 주면서.
           let submitImage: LocalImage | undefined;
           if (loop.webp) { try { submitImage = saveSubmitLoop(loop.webp); } catch { submitImage = undefined; } }
-          const qa = inspectImage(motionImage, KAKAO_ANIMATED_SPEC);
+          const qa = inspectImage(slot.finalImage, KAKAO_ANIMATED_SPEC);
           changeProject(id, p => ({ ...p, slots: p.slots.map(s => s.number === number ? { ...s, motion, motionImage, submitImage, qa, status: qa.status } : s) }));
           done.push(number);
         } catch (e) { failed.push({ number, reason: userMessage(e) }); }
