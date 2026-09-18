@@ -198,7 +198,75 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.equal(sent().filter(m => ['clear', 'removeLayer', 'discard'].includes(m.type)).length, destructive, '선택한 채 움직이기로 가도 그림을 지우지 않는다');
   await press('그리기');
 
+
+  // 앞 단계에서 켜 둔 선택은 끄고 본다(선택 중에는 아래 줄이 선택 도구 줄로 바뀐다).
+  scene = { ...scene, selection: null }; await message(scene);
+  // ── 8. 45.5 정보구조: 문구는 위 줄에 하나, 아래 줄은 브러시·색이 주인공 ─────────────────────
+  const top = () => byTestID('도구 줄')[0];
+  const quick = () => byTestID('빠른 모드')[0];
+  assert.equal(labelled('문구').length, 1, '문구 입구는 하나');
+  assert.equal(top().findAll(n => n.props.accessibilityLabel === '문구').length, 0, '문구는 아래 도구 줄에 없다');
+  assert.deepEqual(top().findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel).map(n => n.props.accessibilityLabel),
+    ['브러시', '색', '지우개', '채우기', '선택'], '아래 줄: 브러시·색 다음에 빠른 모드 셋');
+  assert.deepEqual(quick().findAll(n => n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['지우개', '채우기', '선택'], '빠른 모드는 셋뿐(중복 없음)');
+  const cell = label => top().findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === label)[0];
+  assert.ok(styleOf(cell('브러시')).flex > (styleOf(cell('지우개')).flex ?? 0), '브러시가 빠른 모드보다 크게 선다');
+  assert.ok(styleOf(cell('색')).flex >= 1 && !styleOf(cell('지우개')).flex, '색도 넓게, 빠른 모드는 좁은 칸');
+  for (const name of ['지우개', '채우기', '선택']) assert.ok((styleOf(cell(name)).minHeight ?? 0) >= 44, name + ': 손가락 자리는 그대로');
+
+  // ── 9. 도구를 열고 닫아도 캔버스는 제자리 ───────────────────────────────────────────────────
+  const canvasBox = () => {
+    const areaNode = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
+    const square = areaNode.findAll(n => n.type === 'View' && !Array.isArray(n.props.style) && n.props.style?.overflow === 'hidden' && typeof n.props.style?.width === 'number')[0];
+    return { align: areaNode.props.style.justifyContent, w: square?.props.style.width, h: square?.props.style.height };
+  };
+  // 브러시 패널을 열려면 먼저 브러시가 골라져 있어야 한다(다시 누르기 = 설정 열기).
+  if (!labelled('브러시')[0].props.accessibilityState.selected) await press('브러시');
+  const before = canvasBox();
+  const zooms = () => sent().filter(m => m.type === 'zoom').length;
+  const zoomBefore = zooms();
+  for (const [open, close] of [['브러시', '브러시 닫기'], ['색', '팔레트 닫기'], ['레이어', null], ['문구', '문구 닫기']]) {
+    await press(open);
+    assert.deepEqual(canvasBox(), before, open + ': 패널을 열어도 캔버스 자리·크기가 그대로');
+    if (close) await press(close); else await act(async () => veil()[0].props.onPress());
+    assert.deepEqual(canvasBox(), before, open + ': 닫아도 그대로');
+  }
+  assert.equal(zooms(), zoomBefore, '패널을 여닫는 동안 확대·이동 값을 건드리지 않는다');
+
+  // ── 10. 선 종류: 이름만이 아니라 실제 선 견본으로 고른다 ─────────────────────────────────────
+  await press('브러시');
+  const kinds = byTestID('선 종류')[0].findAll(n => n.type === 'Pressable');
+  assert.deepEqual(kinds.map(n => n.props.accessibilityLabel), ['펜', '붓', '연필'], '선 종류 셋');
+  for (const k of kinds) assert.equal(k.findAll(n => n.type === 'Image').length, 1, k.props.accessibilityLabel + ': 실제 선 견본이 보인다');
+  assert.ok(kinds.every(n => (styleOf(n).minHeight ?? 0) >= 44), '누르는 자리는 44dp 이상');
+  await press('붓');
+  assert.equal(lastCommand('brush').brush, 'brush', '견본을 누르면 그 선으로 바뀐다');
+  await press('브러시 닫기');
+
+  // ── 11. 문구: 색이 실제로 바뀌고, 키보드가 닫히면 남는 것이 없다 ─────────────────────────────
+  scene = { ...scene, caption: { text: '고마워', place: 'bottom', color: '#242424' } };
+  await message(scene);
+  await press('문구');
+  const swatch = tree.root.findAll(n => n.type === 'Pressable' && /^문구 색 #/.test(n.props.accessibilityLabel ?? ''))[0];
+  assert.ok(swatch, '문구 자리에서 색을 고를 수 있다');
+  await act(async () => swatch.props.onPress());
+  const painted = lastCommand('caption').caption;
+  assert.equal(painted.text, '고마워', '글자는 그대로');
+  assert.equal(painted.color.toUpperCase(), swatch.props.accessibilityLabel.replace('문구 색 ', '').toUpperCase(), '고른 색이 캔버스의 문구에 바로 간다');
+  assert.equal(lastCommand('color').color.toUpperCase(), painted.color.toUpperCase(), '그리는 색도 같은 색이 된다');
+  // 키보드 → 적용 → 정리
+  await act(async () => { for (const fn of keyboardListeners.keyboardDidShow || []) fn({ endCoordinates: { height: 320 } }); });
+  const input = tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용')[0];
+  assert.ok(input, '키보드가 올라와도 입력칸은 같은 자리');
+  await act(async () => input.props.onChangeText('안녕'));
+  await press('문구 적용');
+  await act(async () => { for (const fn of keyboardListeners.keyboardDidHide || []) fn({}); });
+  assert.equal(tree.root.findAll(n => n.type === 'TextInput').length, 0, '적용하면 입력칸이 남지 않는다');
+  assert.equal(labelled('문구 닫기').length, 0, '문구 패널도 닫힌다');
+  assert.deepEqual(lastCommand('captionPick'), { type: 'captionPick', on: true }, '적용한 글씨는 골라진 채로 캔버스에 남는다');
+  assert.equal(lastCommand('caption').caption.text, '안녕', '고친 글자가 캔버스로 간다');
+
   await act(async () => tree.unmount());
-  console.log('PASS: convenience — 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, 색상환 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
+  console.log('PASS: convenience — 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 선 종류 실제 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, 색상환 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

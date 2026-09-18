@@ -125,7 +125,8 @@ async function ready() {
     saveStore({ version: 1, revision: 50, projects: many, palette: [] });
     await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); });
     const setButtons = () => tree.root.findAll(n => n.type === 'Pressable' && /^많은 세트 \d+$/.test(n.props.accessibilityLabel ?? '')).map(n => n.props.accessibilityLabel);
-    assert.deepEqual(setButtons(), ['많은 세트 12', '많은 세트 11', '많은 세트 10', '많은 세트 9'], '세트가 12개여도 홈에는 최근에 손댄 넷만');
+    // 45.5: 홈은 시작 화면이다 — 가장 최근 세트 하나만, 나머지는 전체 작업에서.
+    assert.deepEqual(setButtons(), ['많은 세트 12'], '세트가 12개여도 홈에는 가장 최근 하나만');
     await press('전체 작업 보기');
     assert.equal(setButtons().length, 12, '전체 작업에서 모든 세트를 찾는다');
     assert.equal(byTestID('홈 창작 표면').length, 0, '전체 작업은 홈과 다른 화면');
@@ -220,6 +221,6 @@ async function ready() {
   assert.deepEqual(yellowOnExport, ['파일 묶음 만들기'], '내보내기의 노랑 버튼은 하나');
   await act(async () => tree.unmount());
 
-  console.log('PASS: visual system — 토큰(색·모서리 8/12/16/20/24·간격 4 기반·옅은 그림자·글자 위계 8단), 2px 노랑 선택 박스·900 굵기 남발 없음, 화면 하드코딩 색 ' + hex + '곳(39차 56, 견본·토큰 정의 제외), 에셋 자리 8개 규격(44차 표현 가이드 카드 포함)·캔버스 가이드 힌트 없음·알림 꺼짐·레퍼런스 V1 분류 넷, 홈 브랜드→창작 표면→최근 작업·노랑 버튼 1, 세트 12개여도 홈은 최근 넷+전체 보기·전체 작업→보드→뒤로 전체 작업·표현 가이드 분류/카드, 보드 글자 배지 없음·떠 있는 아래 줄, 도구 dock 테두리 없음·고른 도구만 노랑 표면·되돌리기 조용, 선 종류 세그먼트 하나(펜·붓·연필, 비선택 투명), 문구 키보드 한 줄, 움직임 없음 좁게, 내보내기 요약→격자·제출 준비·노랑 1. Native/WebView mocked.');
+  console.log('PASS: visual system — 토큰(색·모서리 8/12/16/20/24·간격 4 기반·옅은 그림자·글자 위계 8단), 2px 노랑 선택 박스·900 굵기 남발 없음, 화면 하드코딩 색 ' + hex + '곳(39차 56, 견본·토큰 정의 제외), 에셋 자리 8개 규격(44차 표현 가이드 카드 포함)·캔버스 가이드 힌트 없음·알림 꺼짐·레퍼런스 V1 분류 넷, 홈 브랜드→창작 표면→최근 작업·노랑 버튼 1, 세트 12개여도 홈은 가장 최근 하나+전체 보기·전체 작업→보드→뒤로 전체 작업·표현 가이드 분류/카드, 보드 글자 배지 없음·떠 있는 아래 줄, 도구 dock 테두리 없음·고른 도구만 노랑 표면·되돌리기 조용, 선 종류 세그먼트 하나(펜·붓·연필, 비선택 투명), 문구 키보드 한 줄, 움직임 없음 좁게, 내보내기 요약→격자·제출 준비·노랑 1. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

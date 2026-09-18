@@ -62,6 +62,9 @@ const lastCommand = type => sent().filter(m => m.type === type).at(-1);
 const afterInit = () => { const all = sent(); return all.slice(all.map(m => m.type).lastIndexOf('init') + 1); };
 const labelled = label => tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === label);
 const press = async label => { const m = labelled(label); assert.equal(m.length, 1, 'button ' + label + ' (' + m.length + ')'); assert.ok(!m[0].props.disabled, 'enabled ' + label); taps++; await act(async () => m[0].props.onPress()); };
+// 45.5: 홈은 최근 세트 하나만 보여 준다 — 다른 세트는 전체 작업에서 연다.
+const setButtons = label => tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === label);
+const openSet = async name => { if (setButtons(name).length === 0 && setButtons('전체 작업 보기').length === 1) await press('전체 작업 보기'); await press(name); };
 const message = async m => { await act(async () => tree.root.findByType('WebView').props.onMessage({ nativeEvent: { data: JSON.stringify(m) } })); };
 const ranges = label => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === label);
 const nudge = async (label, action, times) => { for (let i = 0; i < times; i++) await act(async () => ranges(label)[0].props.onAccessibilityAction({ nativeEvent: { actionName: action } })); };
@@ -183,7 +186,8 @@ const saved = async (dirty = true) => {
 
   // ── 2. 잠금 밀도: 색 ─────────────────────────────────────────────────────────────────────
   await press('색');
-  assert.equal(canvasAreaNode().props.style.justifyContent, 'flex-start', '색 패널을 연 동안 캔버스는 위 빈 띠 쪽으로 올라가 그림이 패널 밖에 더 보인다(43.1차)');
+  // 45.5: 도구를 연다고 그림이 움직이지 않는다 — 색 패널을 열어도 캔버스는 같은 자리(가운데)에 그대로 선다.
+  assert.equal(canvasAreaNode().props.style.justifyContent, 'center', '색 패널을 열어도 캔버스는 제자리다(45.5차)');
   assert.equal(locks() + proMarks(), 0, '색(팔레트): 자물쇠·PRO 표시 0');
   // 45.4: 스포이드는 누르기도 되고 누른 채 캔버스로 끌 수도 있는 손잡이다.
   const dropper = () => tree.root.findAll(n => n.props && n.props.accessibilityLabel === '스포이드')[0];
@@ -353,7 +357,7 @@ const saved = async (dirty = true) => {
   // ── 4. 재시작 뒤에도 굵기·선 종류 유지 ────────────────────────────────────────────────────
   await act(async () => tree.unmount()); commands.length = 0;
   await act(async () => { tree = create(React.createElement(App)); });
-  await press('새 이모티콘 세트');
+  await openSet('새 이모티콘 세트');
   await act(async () => tiles().find(t => t.props.testID === 'slot-3').props.onPress());
   init = await ready();
   assert.equal(init.penWidth, 24, '재시작 뒤에도 굵기 유지');
@@ -404,7 +408,7 @@ const saved = async (dirty = true) => {
   // FLOW A: 빈 다음 칸 → 이전 그림으로 시작 → 브러시(붓) → 굵기 → 최근 색 → 문구 입력·배치 → 완성·다음
   // FLOW B: 빈 다음 칸 → 이전 그림으로 시작 → 문구 고치기 → 직전 칸 움직임 → 완성·다음
   const bench = async run => { const t0 = taps, d0 = drags, a0 = alerts.length, m0 = seen.length; await run(); return { taps: taps - t0, drags: drags - d0, modals: alerts.length - a0 }; };
-  await press('새 이모티콘 세트');
+  await openSet('새 이모티콘 세트');
   await act(async () => tiles().find(t => t.props.testID === 'slot-4').props.onPress()); await ready();
   const flowA = await bench(async () => {
     await press('이전 칸 그림으로 시작'); await act(async () => {});

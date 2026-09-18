@@ -68,6 +68,9 @@ otherPaths.forEach(path => files.set(localFile(path).uri, png));
 
 let tree, scene;
 const press = async label => { let matches=tree.root.findAll(n=>(n.type==='Pressable'&&n.props.accessibilityLabel===label)||(n.type==='Button'&&n.props.label===label));if(label==='닫기')matches=matches.slice(-1);assert.equal(matches.length,1,'button '+label);assert.ok(!matches[0].props.disabled,'enabled '+label);await act(async()=>matches[0].props.onPress()); };
+// 45.5: 홈은 최근 세트 하나만 보여 준다 — 다른 세트는 전체 작업에서 연다.
+const buttons = label => tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === label);
+const openSet = async name => { if (buttons(name).length === 0 && buttons('전체 작업 보기').length === 1) await press('전체 작업 보기'); await press(name); };
 const tiles=()=>tree.root.findAll(n=>n.type==='Pressable'&&/^slot-\d+$/.test(n.props.testID));
 const message=async m=>{await act(async()=>tree.root.findByType('WebView').props.onMessage({nativeEvent:{data:JSON.stringify(m)}}));};
 const sent=()=>commands.map(s=>JSON.parse(s.slice(s.indexOf('(')+1,s.lastIndexOf(');true;'))));
@@ -579,7 +582,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
    :{...s,done:true,finalImage:s.finalImage??{path:'image-old.png',width:360,height:360,metrics}})});
  saveStore({...loadStore().store,revision:loadStore().store.revision+1,projects:loadStore().store.projects.map(x=>x.id===setId?allButOne(x):x)});
  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
- await press('새 이모티콘 세트');
+ await openSet('새 이모티콘 세트');
  await act(async()=>tiles().find(t=>t.props.testID==='slot-9').props.onPress());await init();
  scene.dirty=true;await message(scene);
  await press('완성 후 다음');await saved();
@@ -622,11 +625,11 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  assert.equal(shared.length,2,'a cancelled share can always be sent again');
  // 45.1차: 내보내기 결과는 그 세트의 것이다 — 다른 세트로 가면 배너도 '다시 공유'도 따라가지 않는다.
  await press('뒤로');await press('뒤로');
- await press('이전 프로젝트');await press('내보내기');
+ await openSet('이전 프로젝트');await press('내보내기');
  assert.equal(labelled('다시 공유').length,0,'다른 세트의 내보내기 결과가 따라오지 않는다');
  assert.ok(!shown().some(t=>t.includes('칸을 묶었어요')),'다른 세트의 묶음 안내도 남지 않는다');
  assert.equal(shared.length,2,'세트를 오가는 동안 아무 것도 공유되지 않는다');
- await press('뒤로');await press('뒤로');await press('새 이모티콘 세트');
+ await press('뒤로');await press('뒤로');await openSet('새 이모티콘 세트');
  // 45.1차: 보드의 일시 상태(전체 재생·순서 바꾸기)는 보드를 떠나면 끝난다.
  await press('전체 재생');
  assert.equal(labelled('전체 재생 멈추기').length,1,'보드에서 전체 재생이 켜진다');
@@ -644,7 +647,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   const partial={...base,id:base.id+'-empty-check',projectName:'빈 칸 검사 세트',slots:base.slots.map(s=>s.number===1?s:{...s,finalImage:undefined,motionImage:undefined,submitImage:undefined,work:undefined,done:undefined,qa:polluted})};
   saveStore({...loadStore().store,revision:loadStore().store.revision+1,projects:[...loadStore().store.projects,partial]});
   await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
-  await press('빈 칸 검사 세트');await press('내보내기');
+  await openSet('빈 칸 검사 세트');await press('내보내기');
   const checkRows=()=>tree.root.findAll(n=>n.type==='Pressable'&&/^\d+번 검사 고치기$/.test(n.props.accessibilityLabel??''));
   assert.equal(checkRows().length,0,'빈 칸에 남은 옛 검사 결과는 손볼 곳이 아니다');
   await press('자세히 보기');await press('저장된 그림 다시 검사');await act(async()=>{});await act(async()=>{});
@@ -653,13 +656,13 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   assert.equal(checkRows().length,0,'다시 검사 뒤에도 가짜 손볼 곳이 없다');
   saveStore({...loadStore().store,revision:loadStore().store.revision+1,projects:loadStore().store.projects.filter(p=>p.id!==partial.id)});
   await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
-  await press('새 이모티콘 세트');await press('내보내기');
+  await openSet('새 이모티콘 세트');await press('내보내기');
  }
  // Identical files are pointed out, never edited away.
  const twin=fresh().slots[0].finalImage;
  saveStore({...loadStore().store,revision:loadStore().store.revision+1,projects:loadStore().store.projects.map(x=>x.id===fresh().id?{...x,slots:x.slots.map(s=>s.number===3?{...s,finalImage:twin,done:true}:s)}:x)});
  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
- await press('새 이모티콘 세트');await press('내보내기');
+ await openSet('새 이모티콘 세트');await press('내보내기');
  const twinRow=tree.root.findAll(n=>n.type==='Pressable'&&/같은 그림/.test(n.props.accessibilityLabel??''));
  assert.equal(twinRow.length,1,'two identical exports are reported once');
  assert.ok(shown().some(t=>t.includes('직접 판단해 주세요')),'and the call is left to the user');
@@ -673,7 +676,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  // ── Old sets keep working, unchanged ────────────────────────────────────────────────────────
  await press('뒤로');
  const before=loadStore().store.projects.find(x=>x.id===p.id);
- await press('이전 프로젝트');
+ await openSet('이전 프로젝트');
  assert.equal(tiles()[0].props.accessibilityLabel,'슬롯 1 완성','a store written before 완성 existed still reads as finished');
  assert.ok(shown().some(t=>t.startsWith('1개 완성')));
  await press('세트 메뉴');await press('캐릭터 기준 · 세트 이름');
@@ -743,6 +746,8 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  await press('뒤로');
 
  // ── Deleting a set: guarded, and scoped to that set alone ───────────────────────────────────
+ // 45.5: 홈은 최근 세트 하나 — 나머지 세트 카드와 그 관리 입구는 전체 작업 화면에 있다.
+ if (buttons('다른 프로젝트 관리').length===0) await press('전체 작업 보기');
  assert.equal(labelled('다른 프로젝트 관리').length,1,'each set card carries a quiet management entry');
  assert.equal(tree.root.findAll(n=>n.type==='Button'&&n.props.label==='세트 삭제').length,0,'delete is never exposed on the card itself');
  const survivor=loadStore().store.projects.find(x=>x.id===p.id);
@@ -761,7 +766,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  assert.equal(labelled('다른 프로젝트').length,0,'a restart does not bring the deleted set back');
 
  // ── Save failure: nothing moves on, and nothing is lost ─────────────────────────────────────
- await press('이전 프로젝트');
+ await openSet('이전 프로젝트');
  await act(async()=>tiles()[4].props.onPress());await init();
  scene.dirty=true;await message(scene);
  failWrite=true;
@@ -795,7 +800,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   const preset={version:1,preset:'bounce',speed:.5,strength:.5,captionMoves:false};
   saveStore({...board,revision:board.revision+1,projects:board.projects.map(x=>x.id===live.id?{...x,slots:x.slots.map(s=>s.number===source.number?{...s,motion:preset}:s)}:x)});
   await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});await act(async()=>{});
-  await press(live.projectName);
+  await openSet(live.projectName);
   assert.equal(labelled('움직임 일괄 적용').length,0,'the board no longer pins a batch row');
   const beforeBatch=JSON.stringify(loadStore().store);
   await press('세트 메뉴');
@@ -810,7 +815,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   const withPro=loadStore().store;
   saveStore({...withPro,revision:withPro.revision+1,entitlement:{plan:'yearly',source:'store',verified:true,expiresAt:'2099-01-01T00:00:00.000Z'}});
   await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});await act(async()=>{});
-  await press(live.projectName);
+  await openSet(live.projectName);
   const proBefore=JSON.stringify(loadStore().store);
   const startedWith=bakes.length;
   await press('세트 메뉴');
@@ -850,7 +855,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
    if(count===0)assert.ok(tree.root.findAll(n=>n.type==='Icon'&&n.props.name==='draw').length>=1,'빈 세트도 카드 모양을 지킨다');
    assert.equal(labelled('새 이모티콘 만들기').length,1,label+': 새 세트는 언제나 한 자리에 있다');
    // 세트 화면: 추가 타일은 하나, 남은 칸은 한 줄로 말한다.
-   await press(live.projectName);
+   await openSet(live.projectName);
    const addTiles=shown().filter(t=>t==='그림 추가').length;
    assert.ok(addTiles<=1,label+': 빈 칸마다 추가 버튼을 반복하지 않는다 ('+addTiles+'개)');
    assert.ok(!shown().some(t=>/칸이 아직 비어 있어요/.test(t)),label+': 격자가 이미 보여 주는 것을 문장으로 반복하지 않는다');
@@ -868,7 +873,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  // 그래서 사용자가 프레임 안에서 위치와 크기만 정하고, 원본 컷은 손대지 않는다.
  {
   const live = loadStore().store.projects.at(-1);
-  await press(live.projectName);
+  await openSet(live.projectName);
   await press('내보내기');
   await press('부가 이미지 만들기');
   assert.ok(shown().some(t => t.includes('78×78')), '아이콘 규격을 말한다');

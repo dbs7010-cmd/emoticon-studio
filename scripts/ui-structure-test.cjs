@@ -92,7 +92,7 @@ const homeSections = () => {
 (async () => {
   // ── 1. 홈: 세트 수와 공지 상태가 순서를 바꾸지 않는다 ────────────────────────────────────────
   let revision = 1;
-  for (const [count, cards] of [[0, 0], [1, 1], [4, 4], [10, 4]]) {
+  for (const [count, cards] of [[0, 0], [1, 1], [4, 1], [10, 1]]) {
     for (const on of [false, true]) {
       const where = `세트 ${count} · 공지 ${on ? '켜짐' : '꺼짐'}`;
       setStore(makeProjects(count), revision++);
@@ -100,8 +100,8 @@ const homeSections = () => {
       const want = ['창작', ...(count ? [] : ['빈 상태']), ...(on ? ['공지'] : []), '가이드', ...(count ? ['최근 작업', '카드'] : [])];
       assert.deepEqual(homeSections(), want, '홈 순서(' + where + ')');
       assert.equal(byTestID('홈 알림').length, on ? 1 : 0, '공지가 꺼지면 자리도 없다(' + where + ')');
-      assert.equal(tree.root.findAll(n => n.type === 'Pressable' && /^세트 \d+$/.test(n.props.accessibilityLabel ?? '')).length, cards, '홈은 최근 넷까지(' + where + ')');
-      assert.equal(labelled('전체 작업 보기').length, count > 4 ? 1 : 0, '전체 보기는 넘칠 때만(' + where + ')');
+      assert.equal(tree.root.findAll(n => n.type === 'Pressable' && /^세트 \d+$/.test(n.props.accessibilityLabel ?? '')).length, cards, '홈에는 가장 최근 세트 하나만(' + where + ')');
+      assert.equal(labelled('전체 작업 보기').length, count > 1 ? 1 : 0, '세트가 둘 이상이면 전체 작업으로 가는 길(' + where + ')');
       if (on) {
         const notice = byTestID('홈 알림')[0];
         assert.equal(notice.findAll(n => n.props.testID === 'asset-slot-noticeArtwork').length, 1, '공지에도 그림 자리는 남는다');
@@ -241,6 +241,6 @@ const homeSections = () => {
   assert.equal(labelled('제안 기준으로 보기').length, 0, '다 채워도 제출 준비는 접혀 있다');
 
   await act(async () => tree.unmount());
-  console.log('PASS: ui structure — 홈(세트 0·1·4·10 × 공지 꺼짐/켜짐) 순서 고정·공지 꺼지면 자리 0·최근 넷·지름길 약하게, 그리기 캔버스 알림 한 번에 하나·패널 한 번에 하나·굵기는 행동 줄·선택 도구엔 없음·배율은 따로, 움직이기 효과→재사용→PRO 한 줄, 보드 범례는 두 상태일 때만, 내보내기 요약→격자→손볼 곳→만들기→제출 준비(접힘)→부가 이미지→자세히. Native/WebView mocked.');
+  console.log('PASS: ui structure — 홈(세트 0·1·4·10 × 공지 꺼짐/켜짐) 순서 고정·공지 꺼지면 자리 0·최근 하나+전체 보기·지름길 약하게, 그리기 캔버스 알림 한 번에 하나·패널 한 번에 하나·굵기는 행동 줄·선택 도구엔 없음·배율은 따로, 움직이기 효과→재사용→PRO 한 줄, 보드 범례는 두 상태일 때만, 내보내기 요약→격자→손볼 곳→만들기→제출 준비(접힘)→부가 이미지→자세히. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });
