@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import { Action, AssetSlot, Dialog, Elev, Field, IconButton, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, userMessage } from './src/components/ui';
-import { EXPRESSION_GUIDE, HOME_NOTICE } from './src/design/asset-slots';
+import { ASSET_SLOTS, EXPRESSION_GUIDE, HOME_NOTICE } from './src/design/asset-slots';
 import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
 import { MotionBaker, type Baker } from './src/components/motion-baker';
 import { ExtraComposer, placeInFrame, type Composer } from './src/components/extra-composer';
@@ -22,11 +22,6 @@ import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, 
 
 const colors: Record<string, string> = { PASS: T.success, WARNING: STATUS_TONE.warn, FAIL: STATUS_TONE.fail, EMPTY: T.faint, DRAWING: T.info, REVIEW: '#8B6FCB', PLANNED: T.success };
 const C = T;
-const MASCOT = {
-  paper: require('./assets/art/mascot-paper.png'),
-  ink: require('./assets/art/mascot-ink.png'),
-  eraser: require('./assets/art/mascot-eraser.png'),
-};
 // A rough, hand-drawn mark: friendly, and never better drawn than the user's own work.
 function Doodle() {
   return <View style={{ width: 96, height: 64, alignItems: 'center', justifyContent: 'center' }}>
@@ -1196,9 +1191,9 @@ function Studio() {
           <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink, lineHeight: 30, letterSpacing: -.5 }}>{'더 섬세하게 움직이고\n여러 칸을 한 번에'}</Text>
           {/* proFeatureArtwork 자리(16:9). 지금은 앱 기본 캐릭터 두 장으로 전후를 보여 준다. */}
           <View accessibilityLabel="움직임 전후 미리보기" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 14, aspectRatio: 16 / 9, maxHeight: 214, borderRadius: 24, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
-            <View style={{ alignItems: 'center', gap: 5 }}><Image source={MASCOT.paper} style={{ width: 86, height: 86 }} resizeMode="contain" /><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>전체 움직임</Text></View>
+            <View style={{ alignItems: 'center', gap: 5 }}><Image source={ASSET_SLOTS.proFeatureArtwork.source ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" /><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>전체 움직임</Text></View>
             <MaterialCommunityIcons name="arrow-right" size={24} color={C.ink} />
-            <View style={{ alignItems: 'center', gap: 5 }}><Image source={MASCOT.ink} style={{ width: 86, height: 86 }} resizeMode="contain" /><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>눈·팔·몸만</Text></View>
+            <View style={{ alignItems: 'center', gap: 5 }}><Image source={ASSET_SLOTS.proFeatureArtwork.sourceAfter ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" /><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>눈·팔·몸만</Text></View>
           </View>
           {/* 실제로 PRO 인 것만 적는다. 그리기 기본 도구(진하기·보정·스포이드·팔레트·RGB)는 무료라 넣지 않는다. */}
           {([['부분만 움직이기 · 두 모습 번갈아', '손, 귀, 꼬리처럼 원하는 곳만 따로, 차례로', 'hand-back-right-outline'],

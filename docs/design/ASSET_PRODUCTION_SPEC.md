@@ -175,8 +175,8 @@ BR-01 과 같은 표. 차이만:
 | Crop tolerance | 0 · Visual importance 중(작지만 반복 노출) |
 | Character required? | 예 · BLOCKED BY CANON |
 | FREE/PRO · Animation · Text | FREE · 앱이 transform 으로 움직임(그림 자체는 정지 1장) · NO |
-| Current placeholder | `FALLBACK_SAMPLE = require('assets/art/mascot-paper.png')` (motion-panel.tsx) |
-| Implementation path | `assets/illustrations/motion-example.png` → `FALLBACK_SAMPLE` 를 `ASSET_SLOTS.motionExampleArtwork.source ?? mascot-paper` 로 바꾸는 1줄 연결(에셋 라운드) |
+| Current placeholder | `ASSET_SLOTS.motionExampleArtwork.source` = `mascot-paper.png`(45.3차: motion-panel 의 직접 require 제거) |
+| Implementation path | `assets/illustrations/motion-example.png` → `asset-slots.ts motionExampleArtwork.source` **한 줄만 교체**(화면 코드 변경 없음) |
 | Status | PLACEHOLDER |
 
 #### EG-01 expressionGuideArtwork (44차 — 옛 CR-02 캔버스 힌트 그림을 대신함)
@@ -234,7 +234,7 @@ BR-01 과 같은 표. 차이만:
 | FREE / PRO | FREE(기본 레퍼런스는 무료 그리기 도구) |
 | Animation required? | 아니오 |
 | Text baked? | NO |
-| Current placeholder | `painter.tsx BuiltinReferences` 회색 도형 8칸(`BUILTIN_REFERENCES.ready=false`) |
+| Current placeholder | `painter.tsx BuiltinReferences` 회색 도형 8칸(`BUILTIN_REFERENCES.ready=false`) — 45.3차: 칸이 `ASSET_SLOTS.referencePoseThumbnail.source` 를 읽는다(넣으면 같은 칸에 그림) |
 | Implementation path | `assets/reference/mannequin/master-front.png` · `master-3q.png` → 참고 추가 흐름 연결(에셋 라운드 코드 작업) |
 | Status | NOT STARTED |
 
@@ -250,7 +250,7 @@ BR-01 과 같은 표. 차이만:
 | 수량 | 40~60(카테고리당 10~15) |
 | Character | 아니오 · 의존: **BLOCKED BY MASTER**(RF-01 승인 전 생성 금지) |
 | 열린 결정 | "표정" 카테고리: 얼굴 없는 마네킹과 충돌 → ① 머리만 크게 + 눈썹·입 기호선 허용 ② 몸짓으로 감정 표현(억울=팔짱+돌아서기) 중 선택 필요 |
-| Implementation path | `assets/reference/pack/<category>/<nn>.png` + 목록 json |
+| Implementation path | `assets/reference/pack/<category>/<nn>.png` + 목록 json. 한 장짜리 연결은 이미 있다(`referencePoseThumbnail.source`) — **분류별 목록**은 에셋이 오는 라운드에서 정한다 |
 | Status | BLOCKED BY MASTER |
 
 ### E. COMPLETION / PRO
@@ -270,7 +270,7 @@ BR-01 과 같은 표. 차이만:
 | Character required? | 예 · BLOCKED BY CANON |
 | FREE/PRO · Animation · Text | FREE · NO · NO |
 | Current placeholder | `AssetSlot name="exportSuccessArtwork"` |
-| Implementation path | `assets/illustrations/export-success.png` → `asset-slots.ts` |
+| Implementation path | `assets/illustrations/export-success.png` → `asset-slots.ts exportSuccessArtwork.source`. 표시 크기는 **84dp**(코드 `size={84}`)이고 제작은 252/168/84 |
 | Status | PLACEHOLDER |
 
 #### CP-02 proFeatureArtwork (전·후 두 장)
@@ -288,8 +288,8 @@ BR-01 과 같은 표. 차이만:
 | Character required? | 예 · BLOCKED BY CANON (BR-02 를 오른쪽에 쓰려면 BR-02 도 필요) |
 | FREE / PRO | PRO 판매 화면 — 자물쇠·금색·반짝이 금지(40차 규칙: PRO 는 조용하게) |
 | Animation · Text | NO(정지 2장) · NO |
-| Current placeholder | `App.tsx` `MASCOT.paper`(왼쪽) · `MASCOT.ink`(오른쪽) Image 86×86 |
-| Implementation path | `assets/illustrations/pro-before.png` · `pro-after.png` → 두 `Image source` 교체(레이아웃 불변) |
+| Current placeholder | `ASSET_SLOTS.proFeatureArtwork.source`/`sourceAfter` = `mascot-paper`/`mascot-ink`(45.3차: App.tsx 의 MASCOT 직접 참조 제거) |
+| Implementation path | `assets/illustrations/pro-before.png` · `pro-after.png` → `asset-slots.ts proFeatureArtwork.source`·`sourceAfter` 교체(화면 코드·레이아웃 불변) |
 | Status | PLACEHOLDER |
 
 ### F. LAUNCH / STORE (이번 라운드 제작 없음 — 파일 규격은 `assets/asset-contract.json`)

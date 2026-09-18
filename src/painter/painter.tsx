@@ -8,7 +8,7 @@ import Constants from 'expo-constants';
 import { canvasHtml } from './canvas-html';
 import { alphaOf, hsv, hsvOf, light, parseHex, toHex, typedHex, withAlpha } from './color';
 import { Action, Dialog, IconButton, ProTag, Range, Segmented, SheetHeader, T, userMessage } from '../components/ui';
-import { BUILTIN_REFERENCES } from '../design/asset-slots';
+import { ASSET_SLOTS, BUILTIN_REFERENCES } from '../design/asset-slots';
 import { MotionPanel, layerLabel } from './motion-panel';
 import { KAKAO_STATIC_SPEC } from '../constants/kakao-spec';
 import { usesPro } from '../project';
@@ -977,6 +977,8 @@ function BuiltinReferences({ maxHeight, onPick }: { maxHeight: number; onPick: (
   const [gridWidth, setGridWidth] = useState(width - 2);
   const cols = BUILTIN_REFERENCES.columns, gap = 8, cell = Math.floor((gridWidth - 24 - gap * (cols - 1)) / cols), tall = Math.round(cell * 4 / 3);
   const items = Array.from({ length: BUILTIN_REFERENCES.placeholderCount }, (_, i) => i);
+  // 그림이 들어오면 같은 칸에 그 그림이 들어가고, 없으면 지금 쓰는 회색 관절 인형 자리표시가 그대로 남는다(45.3차).
+  const pose = ASSET_SLOTS.referencePoseThumbnail.source;
   return <View style={{ paddingTop: 8, gap: 8 }}>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 12 }}>
       {BUILTIN_REFERENCES.categories.map(name => { const on = category === name;
@@ -990,12 +992,16 @@ function BuiltinReferences({ maxHeight, onPick }: { maxHeight: number; onPick: (
           {items.map(i =>
             <Pressable key={category + i} testID="기본 레퍼런스 자리" accessibilityRole="button" accessibilityLabel={`${category} 기본 레퍼런스 ${i + 1}${BUILTIN_REFERENCES.ready ? '' : ' 준비 중'}`} onPress={() => onPick(i)}
               style={({ pressed }) => ({ width: cell, height: tall, borderRadius: 12, backgroundColor: pressed ? T.fill : T.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' })}>
-              <View style={{ width: cell * .24, height: cell * .24, borderRadius: cell, backgroundColor: T.lineStrong, marginBottom: 3 }} />
-              <View style={{ width: cell * .32, height: cell * .38, borderRadius: cell * .12, backgroundColor: T.lineStrong, transform: [{ rotate: `${(i % 3 - 1) * 8}deg` }] }} />
-              <View style={{ flexDirection: 'row', gap: cell * .06, marginTop: 2 }}>
-                <View style={{ width: cell * .08, height: cell * .16, borderRadius: cell, backgroundColor: T.lineStrong }} />
-                <View style={{ width: cell * .08, height: cell * .16, borderRadius: cell, backgroundColor: T.lineStrong }} />
-              </View>
+              {pose
+                ? <Image accessibilityIgnoresInvertColors source={pose} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                : <>
+                  <View style={{ width: cell * .24, height: cell * .24, borderRadius: cell, backgroundColor: T.lineStrong, marginBottom: 3 }} />
+                  <View style={{ width: cell * .32, height: cell * .38, borderRadius: cell * .12, backgroundColor: T.lineStrong, transform: [{ rotate: `${(i % 3 - 1) * 8}deg` }] }} />
+                  <View style={{ flexDirection: 'row', gap: cell * .06, marginTop: 2 }}>
+                    <View style={{ width: cell * .08, height: cell * .16, borderRadius: cell, backgroundColor: T.lineStrong }} />
+                    <View style={{ width: cell * .08, height: cell * .16, borderRadius: cell, backgroundColor: T.lineStrong }} />
+                  </View>
+                </>}
             </Pressable>)}
         </ScrollView>
       : <Text style={{ paddingHorizontal: 12, paddingVertical: 16, fontSize: 12, color: T.muted }}>이 분류에는 아직 그림이 없어요</Text>}

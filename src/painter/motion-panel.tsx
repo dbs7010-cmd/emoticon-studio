@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView, Image } from 'react-native';
+import { View, Text, Pressable, ScrollView, Image, type ImageSourcePropType } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ProTag, Range, T } from '../components/ui';
+import { ASSET_SLOTS } from '../design/asset-slots';
 import { usesPro } from '../project';
 import type { LayerTransform, Motion, PartMotion, SavedMotion } from '../types';
 
@@ -38,7 +39,7 @@ export const layerLabel = (name: string) => name.replace(/^그림 (\d+)$/, '레�
 
 // 효과 견본. 이 칸의 그림이 그 효과대로 실제로 움직인다 — 이름만 보고 결과를 짐작하게 하지 않는다.
 // Animated 대신 작은 타이머로 한 컴포넌트만 다시 그린다(패널 전체를 매 프레임 그리지 않는다).
-export function MotionSample({ preset, uri, fallback, size = 44, active }: { preset: 'bounce' | 'shake' | 'pulse'; uri?: string; fallback: number; size?: number; active: boolean }) {
+export function MotionSample({ preset, uri, fallback, size = 44, active }: { preset: 'bounce' | 'shake' | 'pulse'; uri?: string; fallback: ImageSourcePropType | null; size?: number; active: boolean }) {
   const [t, setT] = React.useState(0);
   React.useEffect(() => {
     const started = Date.now();
@@ -50,7 +51,7 @@ export function MotionSample({ preset, uri, fallback, size = 44, active }: { pre
     : preset === 'shake' ? { transform: [{ rotate: `${phase * 9}deg` }] }
     : { transform: [{ scale: 1 + Math.max(0, phase) * .14 }] };
   return <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-    <Image accessibilityIgnoresInvertColors source={uri ? { uri } : fallback} style={[{ width: size * .86, height: size * .86, opacity: active ? 1 : .85 }, move]} resizeMode="contain" />
+    <Image accessibilityIgnoresInvertColors source={uri ? { uri } : fallback ?? undefined} style={[{ width: size * .86, height: size * .86, opacity: active ? 1 : .85 }, move]} resizeMode="contain" />
   </View>;
 }
 
@@ -84,7 +85,6 @@ type Props = {
   completeBusy: boolean;
 };
 
-const FALLBACK_SAMPLE = require('../../assets/art/mascot-paper.png');
 
 // 움직이기 화면. 결과(캔버스와 효과 견본)가 먼저이고 설정은 고른 다음에 나온다.
 // 무료 효과는 누르는 즉시 칸에 들어간다. PRO(부분 움직임·두 모습)는 **들어가기 전에** PRO 라고 알리고,
@@ -146,7 +146,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       {PRESETS.map(p => {
         const on = base.preset === p.id;
         return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={p.label} accessibilityState={{ selected: on }} onPress={() => set({ preset: p.id })} style={card(on)}>
-          <MotionSample preset={p.id} uri={sample} fallback={FALLBACK_SAMPLE} active={on} size={48} />
+          <MotionSample preset={p.id} uri={sample} fallback={ASSET_SLOTS.motionExampleArtwork.source} active={on} size={48} />
           <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{p.label}</Text>
         </Pressable>;
       })}

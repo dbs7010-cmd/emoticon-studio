@@ -2332,3 +2332,12 @@ BrowserStack 추가 검증 중단. 28차는 **PARTIAL / MANUAL QA DEFERRED** 로
 - **확대 배율 칩과 알림 간격**: 알림이 비켜 주는 폭이 72dp 라 최대 '300%' 칩(≈86dp)과 겹칠 수 있었다. 92dp 로 넓혔다(실제 겹침 여부는 실기기 눈으로 확인).
 - **에셋 자리 이름 정정**: 자리 8개의 실제 이름은 referencePoseThumbnail·proFeatureArtwork 다(referenceArtwork·proArtwork 가 아니다). 그중 화면이 `ASSET_SLOTS.source` 를 읽는 자리는 다섯(홈 히어로·홈 빈 상태·알림·표현 가이드·내보내기 완성)이고, 기본 레퍼런스 격자·움직임 견본·PRO 비교 그림은 화면이 직접 그림을 들고 있어 **source 교체만으로 바뀌지 않는다**. 에셋 양산 전에 이 세 자리의 연결을 정하는 일이 남았다.
 - npm test exit 0(20 스위트), typecheck 0. 실기기 확인 전이므로 UI-SHELL-LOCK 은 아직 NO 다.
+
+## 45.3차 (2026-09-18) — ASSET SLOT CONTRACT COMPLETION (데스크톱 전용) — 판정 PASS
+
+- 45.2 독립 검증에서 FAIL 이던 **에셋 자리 계약만** 닫았다. UI·기능·레이아웃·FREE/PRO·엔진·내보내기 규칙은 건드리지 않았다.
+- **연결한 자리 셋**: 움직임 견본(motion-panel 의 `mascot-paper` 직접 require 제거), PRO 전·후 두 장(App.tsx 의 `MASCOT` 직접 참조 제거), 기본 레퍼런스 칸(`BuiltinReferences` 가 자리의 그림을 읽고, 없으면 지금 관절 인형 자리표시를 그대로 그린다).
+- **자리 자료 보강**: 자리마다 `sourceSize`(권장 제작 해상도)를 못 박고, 전·후 두 장이 필요한 PRO 자리는 `sourceAfter` 로 받는다. 지금 쓰는 임시 캐릭터 그림도 화면이 아니라 `asset-slots.ts` 가 들고 있다 — 그림을 바꿀 곳이 한 곳뿐이다.
+- **exportSuccessArtwork 84 vs 96**: 41차 발주서(Display 84×84dp · 제작 252/168/84), 에셋 목록, 생성 전달 문서, 화면 코드(`size={84}`)가 모두 84 였고 96 은 `asset-slots.ts` 주석에만 있던 오기였다. **문서만 84 로 고쳤다**(UI 불변).
+- 새 회귀 `scripts/asset-contract-test.cjs`: 자리 8개에 그림을 넣으면 홈 히어로·빈 상태·공지·표현 가이드·기본 레퍼런스·움직임 견본·내보내기 완성·PRO 전후가 **실제로 그려지는지** 렌더로 확인하고, 없으면 자리표시가 칸 수·자리 그대로인지 확인한다. 화면 파일의 mascot 직접 참조도 막는다. 연결을 끊으면 실패하는 것을 확인했다.
+- npm test exit 0(21 스위트), typecheck 0. 실기기 확인 없음 — UI-SHELL-LOCK 은 여전히 NO, 에셋 양산은 WAIT.
