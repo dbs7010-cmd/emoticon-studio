@@ -281,10 +281,14 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  scene={...scene,activeLayerId:'draw-1'};await message(scene);
 
  // 숨긴 그림에 그으면 조용히 무시되던 것을, 이제는 화면이 말하고 되돌릴 수 있다.
+ // 엔진은 실제로 숨겨진 레이어에서만 이 소식을 보낸다 — 화면 상태도 그렇게 둔다(45.2 검증).
+ scene={...scene,layers:scene.layers.map(l=>l.id==='draw-1'?{...l,visible:false}:l)};await message(scene);
  await message({type:'blocked',reason:'hidden',id:'draw-1',name:'그림 1'});
  assert.ok(shown().some(t=>t.includes('레이어 1')&&t.includes('숨겨져 있어요')),'왜 그려지지 않는지 말한다');
  await press('숨긴 레이어 다시 보이기');
  assert.deepEqual(lastSent(),{type:'transform',id:'draw-1',visible:true},'한 번에 다시 보이게 한다');
+ scene={...scene,layers:scene.layers.map(l=>l.id==='draw-1'?{...l,visible:true}:l)};await message(scene);
+ assert.equal(labelled('숨긴 레이어 다시 보이기').length,0,'다시 보이면 경고도 끝난다 — 알림 자리를 계속 물고 있지 않는다');
 
  await press('레이어');
  assert.equal(labelled('레이어 1 선택').length,1,'the drawing rail calls a layer by its own name');

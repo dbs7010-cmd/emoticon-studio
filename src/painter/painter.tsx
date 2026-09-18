@@ -534,6 +534,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     : offerContinue ? 'previous'
     : (zoomHint && zoom <= 1.05) ? 'zoomHint'
     : null;
+  // 숨김 경고는 사실인 동안만 남는다(45.2 검증): 레이어를 다시 보이게 했거나 스포이드처럼 다른 일을 시작하면 자리를 비운다.
+  // 알림 자리가 하나뿐이라, 끝난 경고가 남아 있으면 그 뒤의 안내(스포이드 취소·표현 힌트·이전 칸)가 서지 못한다.
+  useEffect(() => {
+    if (!hiddenWarning) return;
+    const active = scene.layers.find(l => l.id === scene.activeLayerId);
+    if (!active || active.visible || scene.picking) setHiddenWarning('');
+  }, [hiddenWarning, scene.layers, scene.activeLayerId, scene.picking]);
   // 확대 안내는 실제로 보일 수 있을 때(이전 칸 제안 카드가 캔버스 위를 덮지 않을 때) 한 번 띄운다 — 카드에 가려진 채 '보였음'으로 지나가지 않게(44차 실기기).
   useEffect(() => { if (!initialized || zoomHintShown || offerContinue || guideHint || tab !== 'draw') return; zoomHintShown = true; setZoomHint(true); zoomHintTimer.current = setTimeout(() => setZoomHint(false), 2600); }, [initialized, offerContinue, guideHint, tab]);
   // 효과 견본에 쓸 이 칸의 그림: 저장된 그림이 지금 것과 같으면 그 파일, 아직 저장 전이면 지금 레이어의 작은 그림.
@@ -655,20 +662,20 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <Text style={{ fontSize: 12, fontWeight: '600', color: C.muted }}>두 손가락으로 벌리면 크게 볼 수 있어요</Text>
           </View>
         </View>}
-        {/* 캔버스 위 알림 자리(45.2차): 한 번에 하나만. 급한 순서 — 숨긴 레이어 > 스포이드 > 이전 칸 > 표현 힌트 > 확대 안내.
+        {/* 캔버스 위 알림 자리(45.2차): 한 번에 하나만. 급한 순서 — 숨긴 레이어 > 스포이드 > 표현 힌트 > 이전 칸 > 확대 안내.
             확대 배율(%)은 알림이 아니라 상태라서 이 자리를 쓰지 않고 오른쪽 위에 따로 선다. */}
-        {canvasMessage === 'hidden' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 72 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.accentSoft, borderWidth: 1, borderColor: C.accentBorder }}>
+        {canvasMessage === 'hidden' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.accentSoft, borderWidth: 1, borderColor: C.accentBorder }}>
           <MaterialCommunityIcons name="eye-off-outline" size={16} color={C.accentInk} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.accentInk }}>'{layerLabel(hiddenWarning)}'이 숨겨져 있어요</Text>
           <Pressable accessibilityRole="button" accessibilityLabel="숨긴 레이어 다시 보이기" onPress={() => { changeTransform(scene.activeLayerId, { visible: true }); setHiddenWarning(''); }} style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>보이기</Text></Pressable>
         </View>}
-        {canvasMessage === 'guide' && !!guideHint && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 72 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
+        {canvasMessage === 'guide' && !!guideHint && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
           <MaterialCommunityIcons name="lightbulb-on-outline" size={14} color={C.muted} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}><Text style={{ fontWeight: '800' }}>{guideHint.name}</Text> · {guideHint.hint}</Text>
           <IconButton label="표현 힌트 닫기" icon="close" size={16} color={C.muted} onPress={() => { setGuideHintOpen(false); onGuideHintDone?.(); }} />
         </View>}
         {/* 빈 칸: 이전 칸 그림에서 이어 그릴 수 있게 한 번 제안한다. 누를 때만 복사하고, 비어 있는 칸이라 잃을 것이 없다. */}
-        {canvasMessage === 'previous' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 72 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 6, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
+        {canvasMessage === 'previous' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 6, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
           <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: C.surface2, overflow: 'hidden' }}>
             <Image accessibilityLabel="이전 칸 그림" source={{ uri: imageUri(previousImage!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
           </View>
@@ -703,7 +710,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <Text style={{ fontSize: 10, color: T.info, fontWeight: '800' }}>옮기기 · 크기</Text>
         </View>}
 
-        {canvasMessage === 'eyedrop' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 72 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 14, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
+        {canvasMessage === 'eyedrop' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 14, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
           <MaterialCommunityIcons name="eyedropper-variant" size={18} color={C.ink} />
           <Text style={{ flex: 1, fontSize: 12, fontWeight: '800', color: C.ink }}>캔버스에서 색을 누르세요</Text>
           <Pressable accessibilityRole="button" accessibilityLabel="스포이드 취소" onPress={() => { send({ type: 'eyedrop', on: false }); setPanel('color'); }} style={{ minHeight: C.tap, paddingHorizontal: 12, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.muted }}>취소</Text></Pressable>

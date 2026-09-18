@@ -158,6 +158,23 @@ const homeSections = () => {
   assert.ok(texts().includes('200%'), '배율은 숫자로 말한다');
   assert.equal(flat(labelled('원래 크기로 보기')[0].props.style).right, 12, '배율은 알림 자리가 아니라 오른쪽 위에 따로 선다');
   await message({ type: 'zoom', zoom: 1 });
+  // 끝난 경고가 하나뿐인 알림 자리를 계속 차지하지 않는다(45.2 검증에서 발견).
+  const hide = async on => { scene = { ...scene, layers: scene.layers.map(l => l.id === scene.activeLayerId ? { ...l, visible: !on } : l) }; await message(scene); };
+  await hide(true);
+  await message({ type: 'blocked', reason: 'hidden', id: scene.activeLayerId, name: '그림' });
+  assert.equal(labelled('숨긴 레이어 다시 보이기').length, 1, '숨긴 레이어에 그으면 이유를 말한다');
+  scene = { ...scene, layers: scene.layers.map(l => ({ ...l, visible: true })) };
+  await message(scene);
+  assert.equal(labelled('숨긴 레이어 다시 보이기').length, 0, '레이어가 다시 보이면 경고는 끝난다');
+  await hide(true);
+  await message({ type: 'blocked', reason: 'hidden', id: scene.activeLayerId, name: '그림' });
+  scene = { ...scene, picking: true };
+  await message(scene);
+  assert.equal(labelled('스포이드 취소').length, 1, '다른 일을 시작하면 그 안내가 자리를 받는다');
+  scene = { ...scene, picking: false };
+  await message(scene);
+  await hide(false);
+
 
   // ── 3. 움직이기: 미리보기 → 효과 → 재사용 → 설정 → PRO 한 줄 ───────────────────────────────
   await press('움직이기');
