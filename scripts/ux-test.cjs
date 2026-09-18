@@ -369,7 +369,8 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  await press('색');
  await press('직접 선택');
  assert.equal(tree.root.findAll(n=>n.props&&n.props.accessibilityLabel==='HEX 색 값').length,1,'HEX 로 정확한 값을 넣을 수 있다');
- assert.ok(tree.root.findAll(n=>n.props&&typeof n.props.accessibilityLabel==='string'&&n.props.accessibilityLabel.startsWith('색상 ')).length>=8,'색상 계열을 고르는 줄이 있다');
+ // 45.4: 계열은 긴 막대 줄이 아니라 둥근 색상환 하나로 고른다.
+ assert.equal(tree.root.findAll(n=>n.props&&n.props.accessibilityLabel==='색상환').length,1,'계열·진하기는 색상환 하나로 고른다');
  assert.equal(tree.root.findAll(n=>n.props&&n.props.accessibilityLabel==='HEX 색 값').length,1,'상세 조절 중에는 패널이 유지된다');
  await press('팔레트');
  assert.ok(labelled('색 #54A9E8').every(n=>n.props.accessibilityState.selected),'다시 열어도 고른 색이 선택으로 표시된다');
@@ -934,18 +935,21 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   assert.equal(labelled('선 보정').length,0,'기본 화면에는 독립 선 보정 줄이 없다');
   assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='선 종류').length,0,'선 종류 카드는 기본 화면에서 접혀 있다 at '+width+'dp');
   assert.ok(!shown().some(t=>t==='PRO'),'작업 화면 기본 상태에 PRO 표시가 없다 at '+width+'dp');
-  await press('브러시');
-  const brushRow=tree.root.findAll(n=>n.type==='View'&&n.props.testID==='선 종류')[0];
-  assert.equal(styleOf(brushRow).flexDirection,'row');
-  assert.deepEqual(brushRow.findAll(n=>n.type==='Pressable').map(n=>n.props.accessibilityLabel),['펜','붓','연필']);
-  assert.equal(labelled('굵기 12').length,0,'굵기 버튼 줄은 브러시 설정에 없다 at '+width+'dp');
-  const sizer=tree.root.findAll(n=>n.type==='View'&&n.props.accessibilityRole==='adjustable'&&n.props.accessibilityLabel==='브러시 굵기')[0];
-  assert.ok(sizer,'도구 줄 굵기 조절이 있다 at '+width+'dp');
-  assert.ok(styleOf(sizer).minHeight>=48,'손가락이 잡을 수 있는 48dp 높이 at '+width+'dp');
+  // 45.4: 굵기는 도구 줄의 칸이 아니라 캔버스 오른쪽 가장자리의 좁은 띠에서 세로로 끈다.
+  const edge=()=>tree.root.findAll(n=>n.type==='View'&&n.props.accessibilityRole==='adjustable'&&n.props.accessibilityLabel==='브러시 굵기')[0];
+  const sizer=edge();
+  assert.ok(sizer,'캔버스 가장자리 굵기 띠가 있다 at '+width+'dp');
+  assert.ok(styleOf(sizer).width<=24&&styleOf(sizer).right===0,'좁은 띠로 오른쪽 가장자리에 붙는다 at '+width+'dp');
   await act(async()=>sizer.props.onResponderGrant({nativeEvent:{pageY:400}}));
   await act(async()=>sizer.props.onResponderMove({nativeEvent:{pageY:340}}));
   await act(async()=>sizer.props.onResponderRelease({nativeEvent:{pageY:340}}));
   assert.ok(lastCommand('width').width>6,'위로 끌면 굵어진다 at '+width+'dp');
+  await press('브러시');
+  assert.equal(edge(),undefined,'패널이 열린 동안에는 굵기 띠가 캔버스를 건드리지 않는다 at '+width+'dp');
+  const brushRow=tree.root.findAll(n=>n.type==='View'&&n.props.testID==='선 종류')[0];
+  assert.equal(styleOf(brushRow).flexDirection,'row');
+  assert.deepEqual(brushRow.findAll(n=>n.type==='Pressable').map(n=>n.props.accessibilityLabel),['펜','붓','연필']);
+  assert.equal(labelled('굵기 12').length,0,'굵기 버튼 줄은 브러시 설정에 없다 at '+width+'dp');
   await press('세부 설정');
   assert.equal(labelled('선 보정').length,1,'세부 설정을 펼치면 보정이 있다');
   await press('연필');

@@ -66,4 +66,11 @@ export const EXPRESSION_GUIDE = {
 // ready=false 동안 칸은 누를 수 없는 자리표시. ready=true 가 되면 칸을 누르면 기존 참고 사진과 같은 흐름(옮기기·크기·진하기)으로 캔버스 참고 레이어에 들어간다.
 export const BUILTIN_REFERENCES = { enabled: true, ready: false, categories: ['포즈', '표정', '손동작', '소품·효과'] as const, placeholderCount: 8, columns: 4 };
 // 홈 공식 알림. 공모전·챌린지·사례 모집에 쓴다. enabled=false 면 자리도 간격도 없다.
-export const HOME_NOTICE: { enabled: boolean; title: string; body: string } = { enabled: false, title: '', body: '' };
+// 운영은 이 상수 한 곳에서 한다(서버·CMS 없음): enabled 로 켜고 끄고, title·body 를 바꾸고,
+// 넘어갈 곳이 있으면 link 를 넣는다. link 가 없으면 넘어가기 표시(>)도 그리지 않는다 — 누를 수 없는 화살표를 두지 않는다.
+export const HOME_NOTICE: { enabled: boolean; title: string; body: string; link?: string } = {
+  enabled: false,
+  title: '이모티콘 공모전 소식',
+  body: '공모전·이벤트가 열리면 여기에서 알려드려요',
+  link: undefined,
+};

@@ -133,9 +133,10 @@ const saved = async (dirty = true) => {
   await press('브러시');
   assert.equal(labelled('브러시 닫기').length, 0, '다시 누르면 닫힌다');
 
-  // ── 도구 줄 굵기(43.1차: 캔버스 가장자리 띠는 그 자리에서 시작한 획을 삼켜 도구 줄로 옮겼다) ─────────────
+  // ── 굵기(45.4차: 캔버스 오른쪽 가장자리의 좁은 띠에서 세로로 끈다. 평소에는 조용하고, 끄는 동안에만 크기와 px) ──
   assert.equal(tree.root.findAll(n => n.props.testID === '굵기 미리보기').length, 0, '평소에는 큰 숫자나 굵기 패널이 떠 있지 않다');
-  assert.ok(ranges('브러시 굵기')[0].findAll(n => n.type === 'Text' && String(n.children?.join('')) === '6px').length === 1, '지금 굵기가 평소에도 px 로 보인다');
+  assert.equal(ranges('브러시 굵기')[0].findAll(n => n.type === 'Text').length, 0, '평소의 띠는 숫자 없이 점 하나로 조용하다');
+  assert.ok(ranges('브러시 굵기')[0].props.style.width <= 24, '띠는 좁다(그림 자리를 거의 쓰지 않는다)');
   let during = await dragSize('브러시 굵기', 400, 333);
   assert.deepEqual(during, ['24px'], '끄는 동안에만 크기 원과 px 이 보인다');
   assert.equal(tree.root.findAll(n => n.props.testID === '굵기 미리보기').length, 0, '손을 떼면 사라진다');
@@ -184,7 +185,12 @@ const saved = async (dirty = true) => {
   await press('색');
   assert.equal(canvasAreaNode().props.style.justifyContent, 'flex-start', '색 패널을 연 동안 캔버스는 위 빈 띠 쪽으로 올라가 그림이 패널 밖에 더 보인다(43.1차)');
   assert.equal(locks() + proMarks(), 0, '색(팔레트): 자물쇠·PRO 표시 0');
-  await press('스포이드');
+  // 45.4: 스포이드는 누르기도 되고 누른 채 캔버스로 끌 수도 있는 손잡이다.
+  const dropper = () => tree.root.findAll(n => n.props && n.props.accessibilityLabel === '스포이드')[0];
+  assert.ok(dropper(), '색 패널에 스포이드가 있다');
+  taps++;
+  await act(async () => dropper().props.onResponderGrant({ nativeEvent: { pageX: 0, pageY: 0 } }));
+  await act(async () => dropper() && dropper().props.onResponderRelease({ nativeEvent: { pageX: 0, pageY: 0 } }));
   await message({ ...scene, picking: true }); await press('스포이드 취소'); await message({ ...scene, picking: false });
   await press('내 팔레트에 저장');
   await press('직접 선택');
@@ -357,7 +363,11 @@ const saved = async (dirty = true) => {
   const area = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
   await act(async () => area.props.onLayout({ nativeEvent: { layout: { width: 360, height: 353 } } }));
   assert.equal(ranges('브러시 굵기').length, 1, '짧은 화면에서도 굵기 조절이 있다');
-  assert.equal(area.findAll(n => n.props.accessibilityLabel === '브러시 굵기' || n.props.accessibilityLabel === '지우개 굵기').length, 0, '굵기 조절은 캔버스 영역 위에 올라가지 않는다(43.1차)');
+  // 45.4: 굵기 띠는 캔버스 영역 안에 있되, 오른쪽 가장자리 20dp 만 쓰고 세로로도 가운데 일부만 차지한다(그림 자리를 가리지 않는다).
+  const band = area.findAll(n => n.props.accessibilityLabel === '브러시 굵기' || n.props.accessibilityLabel === '지우개 굵기');
+  assert.equal(band.length, 1, '굵기 띠는 캔버스 가장자리에 하나');
+  assert.ok(band[0].props.style.width <= 24 && band[0].props.style.right === 0, '좁은 띠가 오른쪽 가장자리에 붙는다');
+  assert.equal(band[0].props.style.top, '30%', '세로로도 가운데 일부만 차지한다');
   await press('움직이기');
   const motionBox = tree.root.findAll(n => n.type === 'View' && Array.isArray(n.props.style) && n.props.style.some(s => s && typeof s.height === 'number' && s.flexShrink === 0))[0];
   const motionHeight = Object.assign({}, ...motionBox.props.style).height;

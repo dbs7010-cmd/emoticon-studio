@@ -56,6 +56,9 @@ function Studio() {
   const [stage, setStage] = useState<'proposal' | 'release'>('proposal');
   // 제출 화면의 규격 원문은 접어 둔다 — 요약은 위에 늘 보이고, 원문은 필요할 때 펼친다.
   const [specOpen, setSpecOpen] = useState(false);
+  // 홈 공지는 asset-slots 의 HOME_NOTICE 하나로 켜고 끈다. 검수용 빌드에서만 설정에서 켠 상태를 미리 볼 수 있다(저장하지 않는다).
+  const [noticePreview, setNoticePreview] = useState(false);
+  const noticeOn = HOME_NOTICE.enabled || (internalReviewBuild() && noticePreview);
   const [prepOpen, setPrepOpen] = useState(false); // 제출 준비는 묶음을 만든 뒤 보는 일이라 접어 둔다(45.2차).
   // 부가 이미지 만들기. 고른 컷을 프레임 안에서 옮기고 키우기만 한다 — 원본 컷은 건드리지 않는다.
   const [extraKind, setExtraKind] = useState<'icon' | 'share' | 'cover'>('icon');
@@ -646,14 +649,23 @@ function Studio() {
             <Text style={{ fontSize: 12, color: C.muted }}>만든 세트가 여기에 모여요</Text>
           </View>}
           {/* 공지/이벤트: 켤 때만 한 줄 배너(그림 자리 · 제목 · 짧은 정보 · 넘어가기 하나). 꺼져 있으면 자리도 간격도 0. */}
-          {HOME_NOTICE.enabled && <View testID="홈 알림" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
-            <AssetSlot name="noticeArtwork" size={44} />
-            <View style={{ flex: 1, gap: 1 }}>
-              <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{HOME_NOTICE.title}</Text>
-              <Text numberOfLines={1} style={{ fontSize: 12, lineHeight: 17, color: C.muted }}>{HOME_NOTICE.body}</Text>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
-          </View>}
+          {noticeOn && (() => {
+            const body = <>
+              <AssetSlot name="noticeArtwork" size={44} />
+              <View style={{ flex: 1, gap: 1 }}>
+                <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{HOME_NOTICE.title}</Text>
+                <Text numberOfLines={1} style={{ fontSize: 12, lineHeight: 17, color: C.muted }}>{HOME_NOTICE.body}</Text>
+              </View>
+              {!!HOME_NOTICE.link && <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />}
+            </>;
+            const row = { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line } as const;
+            // 넘어갈 곳이 있을 때만 누를 수 있는 줄이 된다. 행동은 최대 하나다.
+            return HOME_NOTICE.link
+              ? <Pressable testID="홈 알림" accessibilityRole="button" accessibilityLabel={HOME_NOTICE.title}
+                  onPress={() => { Linking.openURL(HOME_NOTICE.link!).catch(() => setNotice('링크를 열지 못했어요.')); }}
+                  style={({ pressed }) => ({ ...row, backgroundColor: pressed ? C.fill : C.paper })}>{body}</Pressable>
+              : <View testID="홈 알림" style={row}>{body}</View>;
+          })()}
           {/* 주요 기능 진입: 표현 가이드 한 줄. 노랑을 쓰지 않는 조용한 줄 — 홈의 노랑 버튼은 '새 이모티콘 만들기' 하나. */}
           <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드" onPress={() => setHomeView('guide')}
             style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 14, borderRadius: 20, backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: C.line })}>
@@ -1161,6 +1173,14 @@ function Studio() {
             <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.reviewUnlock ? 18 : 0 }} />
           </View>
           <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>검수용 PRO {store?.reviewUnlock ? '켜짐' : '꺼짐'}</Text>
+        </Pressable>
+        <Pressable accessibilityRole="switch" accessibilityLabel="홈 공지 미리 보기" accessibilityState={{ checked: noticePreview }}
+          onPress={() => setNoticePreview(!noticePreview)}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
+          <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: noticePreview ? C.accentLine : C.lineStrong }}>
+            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: noticePreview ? 18 : 0 }} />
+          </View>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>홈 공지 미리 보기 {noticePreview ? '켜짐' : '꺼짐'}</Text>
         </Pressable>
       </View>}
       <Pressable accessibilityRole="switch" accessibilityLabel="캔버스 종이 질감" accessibilityState={{ checked: store?.paperTexture !== false }}

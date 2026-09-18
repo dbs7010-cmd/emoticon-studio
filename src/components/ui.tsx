@@ -160,8 +160,10 @@ export function SectionLabel({ title, right }: { title: string; right?: React.Re
 
 // 상태 점: 완성(초록) · 작업 중(노랑) · 손볼 곳(호박) · 문제(빨강). 글자 배지 대신 모서리 점 하나.
 export const STATUS_TONE = { done: T.success, working: '#E8B21A', warn: '#D9901A', fail: '#D2574F' } as const;
+// 상태는 색만으로 말하지 않는다(45.4차): 완성은 꽉 찬 점, 고치는 중은 테두리만 있는 점 — 색을 구분하지 못해도 모양이 다르다.
 export function StatusDot({ tone, size = 10 }: { tone: keyof typeof STATUS_TONE; size?: number }) {
-  return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: STATUS_TONE[tone], borderWidth: 2, borderColor: '#FFFFFF' }} />;
+  const hollow = tone === 'working';
+  return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: hollow ? '#FFFFFF' : STATUS_TONE[tone], borderWidth: 2, borderColor: hollow ? STATUS_TONE[tone] : '#FFFFFF' }} />;
 }
 
 // 최종 일러스트 자리. 에셋이 없으면 따뜻한 도형으로 구성을 채운다 — 빈칸이나 회색 박스로 두지 않는다.

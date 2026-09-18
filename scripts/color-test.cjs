@@ -74,26 +74,34 @@ async function openPainter() {
   assert.equal(color.hsvOf(color.hsv(210, .5, .8)).h, 210, '색상환 ↔ 색 왕복');
 
   const icons = (root, name) => root.findAll(n => n.type === 'Icon' && n.props.name === name).length;
+  // 45.4: 스포이드는 누르기도 되고 누른 채 캔버스로 끌 수도 있는 손잡이(Pressable 이 아니라 responder 를 가진 View).
+  const dropper = () => tree.root.findAll(n => n.props && n.props.accessibilityLabel === '스포이드')[0];
+  const dropTap = async () => { await act(async () => dropper().props.onResponderGrant({ nativeEvent: { pageX: 0, pageY: 0 } })); await act(async () => dropper() && dropper().props.onResponderRelease({ nativeEvent: { pageX: 0, pageY: 0 } })); };
   // ── PRO ─────────────────────────────────────────────────────────────────────────────────────
   const p = createProject('색 세트', '콩이');
   saveStore({ version: 1, revision: 1, projects: [p], entitlement: { plan: 'yearly', source: 'store', verified: true, expiresAt: '2099-01-01T00:00:00.000Z' } });
   await openPainter();
   await press('색');
-  assert.equal(labelled('스포이드').length, 1, '스포이드');
+  assert.ok(dropper(), '스포이드');
   assert.equal(labelled('내 팔레트에 저장').length, 1, '내 팔레트 저장');
   await press('직접 선택');
-  for (const name of ['빨강', '초록', '파랑', '투명도', '색상']) assert.equal(range(name).length, 1, name + ' 막대');
-  const start = lastCommand('init').color;
-  const rgb = color.parseHex(start);
-  await nudge('빨강', 'increment', 3);
-  assert.equal(lastCommand('color').color, color.toHex({ ...rgb, r: rgb.r + 3 }), '빨강 막대가 캔버스 색을 바꾼다');
-  await nudge('파랑', 'decrement', 2);
+  // 45.4: 계열·진하기는 둥근 색상환에서, 밝기는 막대 하나로. 긴 RGB 막대 세 줄은 없앴다(투명도는 남는다).
+  for (const name of ['밝기', '투명도']) assert.equal(range(name).length, 1, name + ' 막대');
+  for (const name of ['빨강', '초록', '파랑', '색상']) assert.equal(range(name).length, 0, name + ' 막대는 색상환이 대신한다');
+  const wheel = () => tree.root.findAll(n => n.props && n.props.accessibilityLabel === '색상환')[0];
+  assert.ok(wheel(), '색상환 하나로 색을 고른다');
+  // 가운데에서 오른쪽 끝(각도 0°) = 빨강 계열, 가장자리 = 가장 진하게.
+  await act(async () => wheel().props.onResponderGrant({ nativeEvent: { locationX: 128, locationY: 66 } }));
+  await act(async () => wheel().props.onResponderRelease({ nativeEvent: { locationX: 128, locationY: 66 } }));
+  const wheelColor = lastCommand('color').color;
+  assert.ok(wheelColor, '색상환에서 고른 색이 캔버스로 간다');
+  assert.ok(Math.abs(color.hsvOf(wheelColor).h) <= 8 || Math.abs(color.hsvOf(wheelColor).h - 360) <= 8, '오른쪽 끝은 빨강 계열: ' + wheelColor);
+  assert.ok(color.hsvOf(wheelColor).s > .8, '가장자리는 진한 색: ' + wheelColor);
   await nudge('투명도', 'decrement', 50);
   const tinted = lastCommand('color').color;
   const t = color.parseHex(tinted);
   assert.equal(tinted.length, 9, '투명도가 색 값에 들어간다: ' + tinted);
   assert.ok(Math.abs(t.a - 128) <= 2, '투명도 50% ≈ 알파 128: ' + t.a);
-  assert.equal(t.b, rgb.b - 2, '파랑 막대');
   assert.ok(!(loadStore().store.palette ?? []).includes(tinted), '막대를 끄는 동안에는 최근 색을 매번 쓰지 않는다');
   await sleep(800);
   assert.equal(loadStore().store.palette[0], tinted, '손을 멈추면 한 번 최근 색에 남는다');
@@ -102,7 +110,7 @@ async function openPainter() {
   assert.deepEqual(loadStore().store.userPalette, [tinted], '내 팔레트에 저장된다');
   assert.equal(labelled('내 팔레트에 있음').length, 1, '이미 저장한 색이라고 말한다');
 
-  await press('스포이드');
+  await dropTap();
   assert.deepEqual(lastCommand('eyedrop'), { type: 'eyedrop', on: true }, '캔버스에 스포이드를 켠다');
   assert.equal(labelled('팔레트 닫기').length, 0, '캔버스를 보도록 패널이 내려간다');
   await message({ ...scene, picking: true });
@@ -114,6 +122,22 @@ async function openPainter() {
   await message({ type: 'picked', color: null });
   assert.ok(alerts.at(-1).title.includes('색이 없는 곳'), '투명한 곳은 그렇게 말한다');
 
+  // 45.4: 누른 채 끌어서 집기 — 끄는 동안 읽은 색이 보이고, 떼는 순간 확정되어 그리기로 돌아간다.
+  if (!dropper()) await press('색');
+  // 실제 기기처럼 캔버스 사각형 크기를 정해 준다(레이아웃 한 번).
+  const area = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && n.props.style && n.props.style.flex === 1)[0];
+  if (area) await act(async () => area.props.onLayout({ nativeEvent: { layout: { width: 360, height: 640 } } }));
+  await act(async () => dropper().props.onResponderGrant({ nativeEvent: { pageX: 40, pageY: 500 } }));
+  await act(async () => dropper().props.onResponderMove({ nativeEvent: { pageX: 180, pageY: 200 } }));
+  const asked = lastCommand('sample');
+  assert.ok(asked && asked.vx >= 0 && asked.vx <= 1 && asked.vy >= 0 && asked.vy <= 1, '끄는 자리의 색을 캔버스에 물어본다');
+  await message({ type: 'sampled', color: '#22AA44' });
+  assert.ok(tree.root.findAll(n => n.props && n.props.testID === '스포이드 미리보기').length === 1, '집히는 색을 손가락에 가리지 않게 보여 준다');
+  await act(async () => dropper().props.onResponderRelease({ nativeEvent: { pageX: 180, pageY: 200 } }));
+  assert.equal(color.parseHex(lastCommand('color').color).r, color.parseHex('#22AA44').r, '떼면 그 색이 캔버스 색이 된다');
+  assert.deepEqual(lastCommand('eyedrop'), { type: 'eyedrop', on: false }, '집고 나면 스포이드는 꺼진다');
+  assert.equal(tree.root.findAll(n => n.props && n.props.testID === '스포이드 미리보기').length, 0, '손을 떼면 미리보기도 사라진다');
+  if (!hexInput().length) { await press('색'); await press('직접 선택'); }
   await act(async () => hexInput()[0].props.onChangeText('#11223380'));
   assert.equal(lastCommand('color').color, '#11223380', 'HEX 는 투명도 2자리를 받는다');
 
@@ -193,7 +217,7 @@ async function openPainter() {
   await press('색');
   assert.equal(labelled('색 #54A9E8').length, 1, '무료: 팔레트 견본');
   assert.equal(icons(tree.root, 'lock-outline'), 0, '무료: 색 패널에도 자물쇠가 없다');
-  await press('스포이드');
+  await dropTap();
   assert.deepEqual(lastCommand('eyedrop'), { type: 'eyedrop', on: true }, '무료: 스포이드를 쓴다');
   await message({ ...scene, picking: true });
   await press('스포이드 취소');
@@ -205,15 +229,17 @@ async function openPainter() {
   assert.equal(lastCommand('color').color, '#ABCDEF', '무료: 모아 둔 색을 쓴다');
   await press('색');
   await press('직접 선택');
-  assert.equal(range('빨강').length, 1, '무료: RGB 막대');
+  assert.ok(tree.root.findAll(n => n.props && n.props.accessibilityLabel === '색상환')[0], '무료: 색상환');
+  assert.equal(range('밝기').length, 1, '무료: 밝기 막대');
   assert.equal(range('투명도').length, 1, '무료: 투명도 막대');
-  await press('색상 210');
-  const cell = color.hsv(210, 1, 1);
-  await press('색 ' + cell);
-  assert.equal(lastCommand('color').color, cell, '무료: 채도·명도 면이 계열을 따라가고 색을 고른다');
+  const free = () => tree.root.findAll(n => n.props && n.props.accessibilityLabel === '색상환')[0];
+  await act(async () => free().props.onResponderGrant({ nativeEvent: { locationX: 4, locationY: 66 } }));
+  await act(async () => free().props.onResponderRelease({ nativeEvent: { locationX: 4, locationY: 66 } }));
+  const leftSide = lastCommand('color').color;
+  assert.ok(Math.abs(color.hsvOf(leftSide).h - 180) <= 8, '무료: 색상환 왼쪽 끝은 하늘 계열: ' + leftSide);
   await act(async () => hexInput()[0].props.onChangeText('#11223380'));
   assert.equal(lastCommand('color').color, '#11223380', '무료: HEX 투명도도 받는다');
   assert.equal(labelled('PRO 닫기').length, 0, '무료: 색과 브러시 조절 어디에서도 결제 화면이 열리지 않았다');
   await act(async () => tree.unmount());
-  console.log('PASS: color — 빨강·초록·파랑·투명도 막대가 캔버스 색을 바꾸고 최근 색은 멈춘 뒤 한 번만 기록, 스포이드 켜기·취소·읽은 색 반영·빈 곳 안내, 내 팔레트 저장·재사용·정리, HEX 투명도, 브러시 도구 다시 누르기로 설정, 고급 브러시 저장·복원. 무료: 색·진하기·선 보정 전부 사용, 자물쇠 0, PRO 표시는 고급 브러시 한 줄, 누르면 안내로 가고 캔버스는 그대로. Native/WebView mocked.');
+  console.log('PASS: color — 색상환·밝기·투명도가 캔버스 색을 바꾸고 최근 색은 멈춘 뒤 한 번만 기록, 스포이드 켜기·취소·읽은 색 반영·빈 곳 안내·누른 채 끌어 집기(끄는 동안 미리보기, 떼면 확정), 내 팔레트 저장·재사용·정리, HEX 투명도, 브러시 도구 다시 누르기로 설정, 고급 브러시 저장·복원. 무료: 색·진하기·선 보정 전부 사용, 자물쇠 0, PRO 표시는 고급 브러시 한 줄, 누르면 안내로 가고 캔버스는 그대로. Native/WebView mocked.');
 })().catch(e => { console.error(e); process.exit(1); });

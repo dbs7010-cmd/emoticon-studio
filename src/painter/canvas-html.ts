@@ -767,6 +767,12 @@ async function command(m){try{
  if(m.type==='brush')brush=m.brush;
  if(m.type==='color')color=m.color;
  if(m.type==='eyedrop'){picking=!!m.on;state();}
+ if(m.type==='sample'){const vr=viewport.getBoundingClientRect(),r=canvas.getBoundingClientRect();
+  const cx=vr.left+m.vx*vr.width,cy=vr.top+m.vy*vr.height;
+  const sx=Math.max(0,Math.min(W-1,Math.floor((cx-r.left)*W/r.width))),sy=Math.max(0,Math.min(H-1,Math.floor((cy-r.top)*H/r.height)));
+  const out=bitmap(),pg=out.getContext('2d',{willReadFrequently:true});references.forEach(l=>composite(pg,l));layers.forEach(l=>composite(pg,l));drawCaption(pg);
+  const px=pg.getImageData(sx,sy,1,1).data;
+  send({type:'sampled',color:px[3]<8?null:'#'+[px[0],px[1],px[2]].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase()});return;}
  if(m.type==='brushSettings'){applyBrush(m);state();}
  if(m.type==='width'){if(m.tool==='eraser')eraserWidth=m.width;else penWidth=m.width;}
  if(m.type==='zoom'){zoom=Math.max(1,Math.min(4,m.zoom));size();send({type:'zoom',zoom});}
