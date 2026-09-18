@@ -201,7 +201,10 @@ async function ready() {
   const none = flat(labelled('움직임 없음')[0].props.style), bounce = flat(labelled('통통')[0].props.style);
   assert.ok(typeof none.width === 'number' && none.width <= 64 && bounce.flex === 1, "'없음'은 효과 카드보다 좁다");
   assert.equal(labelled('통통')[0].findAll(n => n.type === 'Image').length, 1, '효과 카드에 실제로 움직이는 견본');
-  assert.ok(texts().includes('더 세밀하게 움직이기'), 'PRO 는 두 번째 층의 조용한 섹션');
+  // 45.2: 다시 쓰는 것(보관한 움직임)은 효과 바로 다음, PRO 한 줄은 맨 아래. 한 줄짜리 섹션 제목은 없다.
+  assert.ok(!texts().includes('더 세밀하게 움직이기'), '한 줄뿐인 목록에 섹션 제목을 붙이지 않는다');
+  const motionOrder = tree.root.findAll(n => n.type === 'Pressable' && ['보관한 움직임', '부분만 움직이기'].includes(n.props.accessibilityLabel)).map(n => n.props.accessibilityLabel);
+  assert.deepEqual(motionOrder, ['보관한 움직임', '부분만 움직이기'], '재사용이 먼저, PRO 한 줄이 나중');
   await press('그리기');
   await press('그리기 닫기');
   await message({ type: 'save', dirty: false, data: pngData, metrics: { coverage: .2 }, activeLayerId: 'draw-1', layers: [], references: [] });

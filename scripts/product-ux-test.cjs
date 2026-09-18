@@ -201,8 +201,13 @@ const saved = async (dirty = true) => {
   assert.equal(count(['문구', '문구 넣기', '문구 고치기', '문구 고르기']), 1, '문구 입구는 하나');
   assert.equal(labelled('저장').length, 0, '저장 버튼으로 저장을 관리하게 하지 않는다');
   await press('더보기');
-  assert.equal(count(['문구 넣기', '문구 고치기', '이 그림을 기준 그림으로', '기준 그림 보기', '이 칸을 캐릭터 기준으로']), 0, '더보기가 다른 입구를 되풀이하지 않는다');
+  assert.equal(count(['문구 넣기', '문구 고치기', '이 그림을 기준 그림으로', '기준 그림 보기']), 0, '더보기가 다른 입구를 되풀이하지 않는다');
+  // 45.2: 캐릭터 기준은 세트 전체의 일이라 더보기 한 곳에만 있다(참고 줄에는 없다).
+  assert.equal(count(['이 칸을 캐릭터 기준으로', '이 칸을 캐릭터 기준으로 바꾸기']), 1, '캐릭터 기준 입구는 더보기에 하나');
   await press('더보기 닫기');
+  await press('참고');
+  assert.equal(count(['이 칸을 캐릭터 기준으로', '이 칸을 캐릭터 기준으로 바꾸기', '캐릭터 기준 보기']), 0, '참고 줄은 볼 그림만 다룬다');
+  await press('참고');
 
   await press('문구');
   await act(async () => tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용')[0].props.onChangeText('안녕'));

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Image } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ProTag, Range, SectionLabel, T } from '../components/ui';
+import { ProTag, Range, T } from '../components/ui';
 import { usesPro } from '../project';
 import type { LayerTransform, Motion, PartMotion, SavedMotion } from '../types';
 
@@ -151,6 +151,8 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         </Pressable>;
       })}
     </View>
+    {/* 다시 쓰는 것끼리 한 묶음(45.2차): 직전 칸의 움직임과 보관해 둔 움직임. 새로 고르기 바로 다음 자리. */}
+    <View style={{ gap: 6 }}>
     {!moving && !!previousMotion && (() => {
       const locked = usesPro(previousMotion) && !pro;
       const name = [PRESETS.find(p => p.id === previousMotion.preset)?.label, previousMotion.parts?.length ? `부분 ${previousMotion.parts.length}` : null].filter(Boolean).join(' · ');
@@ -161,6 +163,12 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         {locked ? <ProTag /> : <MaterialCommunityIcons name="plus" size={18} color={C.muted} />}
       </Pressable>;
     })()}
+    <Pressable accessibilityRole="button" accessibilityLabel="보관한 움직임" onPress={() => setView('shelf')} style={row}>
+      <MaterialCommunityIcons name="folder-outline" size={20} color={C.muted} />
+      <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '500', color: C.ink }}>보관한 움직임{savedMotions.length ? ` · ${savedMotions.length}개` : ''}</Text>
+      <MaterialCommunityIcons name="chevron-right" size={20} color={C.faint} />
+    </Pressable>
+    </View>
 
     {moving && <>
       <Row label="속도" value={base.speed} min={0} max={1} onActive={setHolding} onChange={speed => set({ speed: Math.round(speed * 20) / 20 })} />
@@ -176,18 +184,12 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       <Text style={{ flex: 1, fontSize: 12, color: C.ink }}>그림이 칸 밖으로 나가요. 세기를 줄여 보세요.</Text>
     </View>}
 
-    {/* 두 번째 층: 더 세밀하게. 자물쇠 벽이 아니라 조용한 목록이고, PRO 표시는 작게 한 번. */}
+    {/* 더 세밀하게: 한 줄뿐이라 제목이 필요 없다. PRO 표시는 작게 한 번(45.2차). */}
     <View style={{ gap: 6, paddingTop: 4 }}>
-      <SectionLabel title="더 세밀하게 움직이기" />
       <Pressable accessibilityRole="button" accessibilityLabel="부분만 움직이기" onPress={enterPro} style={row}>
         <MaterialCommunityIcons name="hand-back-right-outline" size={20} color={C.ink} />
         <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '600', color: C.ink }}>부분만 움직이기{parts.length ? ` · ${parts.length}개` : ''}{base.alternate ? ' · 두 모습' : ''}</Text>
         {!pro && <ProTag />}
-        <MaterialCommunityIcons name="chevron-right" size={20} color={C.faint} />
-      </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="보관한 움직임" onPress={() => setView('shelf')} style={row}>
-        <MaterialCommunityIcons name="folder-outline" size={20} color={C.muted} />
-        <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '500', color: C.ink }}>보관한 움직임{savedMotions.length ? ` · ${savedMotions.length}개` : ''}</Text>
         <MaterialCommunityIcons name="chevron-right" size={20} color={C.faint} />
       </Pressable>
     </View>

@@ -511,7 +511,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     </View>}
   </View>;
   // 캔버스가 주인공이다. 아래 기본 도구 줄(BASE_H)은 늘 같은 높이로 자리를 차지하고, 패널은 그 위에 겹쳐 뜬다.
-  const dockOpen = !!scene.selection || (!!panel && panel !== 'more') || drawRail || refRail || !!hiddenWarning || !!scene.captionPicked;
+  const dockOpen = !!scene.selection || (!!panel && panel !== 'more') || drawRail || refRail || !!scene.captionPicked;
   // 움직이기 탭에서는 캔버스를 위로 붙이고, 패널은 캔버스 아래 남는 자리(+ 기본 도구 줄 자리)를 쓴다 — 미리보기를 가리지 않는다.
   // 남는 자리가 작은 화면에서만 최소 높이만큼 캔버스 아래쪽에 겹친다.
   const motionHeight = Math.max(250, Math.min(Math.round(windowHeight * .55), Math.round(canvasArea - (canvasSide ?? canvasArea)) + BASE_H));
@@ -524,8 +524,18 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 메뉴를 여는 순간 같은 기능의 두 번째 입구가 생기지 않게 한다.
   const continueAvailable = initialized && emptyCut && hasPrevious && !!previousImage && !continueDismissed && !scene.dirty && !scene.undo;
   const offerContinue = continueAvailable && tab === 'draw' && !panel && !refRail && !drawRail;
+  // 캔버스 위에는 한 번에 한 가지만 말한다(45.2차). 위에서부터 급한 순서로 하나를 고른다.
+  const canvasMessage: 'hidden' | 'eyedrop' | 'previous' | 'guide' | 'zoomHint' | null =
+    tab !== 'draw' ? null
+    : hiddenWarning ? 'hidden'
+    : scene.picking ? 'eyedrop'
+    // 가이드에서 고른 표현이 이전 칸 제안보다 앞이다 — 방금 사용자가 고른 이 칸의 할 일이라서. 닫으면 그 아래가 보인다.
+    : (guideHint && guideHintOpen && !scene.dirty) ? 'guide'
+    : offerContinue ? 'previous'
+    : (zoomHint && zoom <= 1.05) ? 'zoomHint'
+    : null;
   // 확대 안내는 실제로 보일 수 있을 때(이전 칸 제안 카드가 캔버스 위를 덮지 않을 때) 한 번 띄운다 — 카드에 가려진 채 '보였음'으로 지나가지 않게(44차 실기기).
-  useEffect(() => { if (!initialized || zoomHintShown || offerContinue || tab !== 'draw') return; zoomHintShown = true; setZoomHint(true); zoomHintTimer.current = setTimeout(() => setZoomHint(false), 2600); }, [initialized, offerContinue, tab]);
+  useEffect(() => { if (!initialized || zoomHintShown || offerContinue || guideHint || tab !== 'draw') return; zoomHintShown = true; setZoomHint(true); zoomHintTimer.current = setTimeout(() => setZoomHint(false), 2600); }, [initialized, offerContinue, guideHint, tab]);
   // 효과 견본에 쓸 이 칸의 그림: 저장된 그림이 지금 것과 같으면 그 파일, 아직 저장 전이면 지금 레이어의 작은 그림.
   // 이 칸에 그림이 있으면 언제나 사용자의 그림이 먼저다. 아무것도 그리지 않은 칸에서만 견본 그림(motionExampleArtwork 자리)이 대신 움직인다(44.2차).
   const hasDrawing = !!slot.finalImage || !!slot.work || scene.dirty || scene.undo;
@@ -559,10 +569,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <View pointerEvents="none" style={{ position: 'absolute', left: narrow ? 9 : 12, right: narrow ? 9 : 12, bottom: 0, height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: tab === key ? C.accent : 'transparent' }} />
           </Pressable>)}
         <View style={{ flex: 1 }} />
-        {/* 참고·레이어·문구는 여기 한 곳에서만 연다. */}
+        {/* 가져오는 것(참고)과 쌓는 것(레이어)만 여기서 연다. 문구는 캔버스에 물건을 만드는 일이라 아래 도구 줄에 있다(45.2차). */}
         {tab === 'draw' && ([['참고', refRail || showCanon, 'image-outline', () => { ease(); setRefRail(!refRail); setRefBrowse(true); setDrawRail(false); setPanel(null); }],
-           ['레이어', drawRail, 'layers-outline', () => { ease(); setDrawRail(!drawRail); setRefRail(false); setPanel(null); }],
-           ['문구', panel === 'caption' || !!scene.captionPicked, 'format-text', () => { if (panel === 'caption') { ease(); setPanel(null); setCaptionOpen(false); } else openCaption(); }]] as const).map(([title, on, icon, run]) =>
+           ['레이어', drawRail, 'layers-outline', () => { ease(); setDrawRail(!drawRail); setRefRail(false); setPanel(null); }]] as const).map(([title, on, icon, run]) =>
           <Pressable key={title} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: on }} onPress={run}
             style={{ minHeight: 48, paddingHorizontal: narrow ? 1 : 2, alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ height: 32, paddingHorizontal: narrow ? 7 : 9, borderRadius: 16, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: on ? C.accentSoft : 'transparent' }}>
@@ -640,20 +649,26 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <MaterialCommunityIcons name="magnify" size={14} color={C.muted} />
           <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{Math.round(zoom * 100)}%</Text>
         </Pressable>}
-        {tab === 'draw' && zoomHint && zoom <= 1.05 && !offerContinue && !(guideHint && guideHintOpen) && <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center' }}>
+        {canvasMessage === 'zoomHint' && <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
             <MaterialCommunityIcons name="gesture-spread" size={14} color={C.muted} />
             <Text style={{ fontSize: 12, fontWeight: '600', color: C.muted }}>두 손가락으로 벌리면 크게 볼 수 있어요</Text>
           </View>
         </View>}
-        {/* 표현 가이드에서 고른 표현(44.2차): 그리기 전 한 줄. 첫 획을 그으면 사라지고, X 로 바로 닫는다. 캔버스 위 상주 UI 가 아니다. */}
-        {tab === 'draw' && !!guideHint && guideHintOpen && !scene.dirty && <View style={{ position: 'absolute', left: 12, right: 12, top: offerContinue ? 76 : 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
+        {/* 캔버스 위 알림 자리(45.2차): 한 번에 하나만. 급한 순서 — 숨긴 레이어 > 스포이드 > 이전 칸 > 표현 힌트 > 확대 안내.
+            확대 배율(%)은 알림이 아니라 상태라서 이 자리를 쓰지 않고 오른쪽 위에 따로 선다. */}
+        {canvasMessage === 'hidden' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 72 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.accentSoft, borderWidth: 1, borderColor: C.accentBorder }}>
+          <MaterialCommunityIcons name="eye-off-outline" size={16} color={C.accentInk} />
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.accentInk }}>'{layerLabel(hiddenWarning)}'이 숨겨져 있어요</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="숨긴 레이어 다시 보이기" onPress={() => { changeTransform(scene.activeLayerId, { visible: true }); setHiddenWarning(''); }} style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>보이기</Text></Pressable>
+        </View>}
+        {canvasMessage === 'guide' && !!guideHint && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 72 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
           <MaterialCommunityIcons name="lightbulb-on-outline" size={14} color={C.muted} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}><Text style={{ fontWeight: '800' }}>{guideHint.name}</Text> · {guideHint.hint}</Text>
           <IconButton label="표현 힌트 닫기" icon="close" size={16} color={C.muted} onPress={() => { setGuideHintOpen(false); onGuideHintDone?.(); }} />
         </View>}
         {/* 빈 칸: 이전 칸 그림에서 이어 그릴 수 있게 한 번 제안한다. 누를 때만 복사하고, 비어 있는 칸이라 잃을 것이 없다. */}
-        {offerContinue && <View style={{ position: 'absolute', left: 12, right: 12, top: 12, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 6, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
+        {canvasMessage === 'previous' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 72 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 6, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
           <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: C.surface2, overflow: 'hidden' }}>
             <Image accessibilityLabel="이전 칸 그림" source={{ uri: imageUri(previousImage!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
           </View>
@@ -688,7 +703,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <Text style={{ fontSize: 10, color: T.info, fontWeight: '800' }}>옮기기 · 크기</Text>
         </View>}
 
-        {!!scene.picking && <View style={{ position: 'absolute', left: 12, right: 12, top: 12, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 14, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
+        {canvasMessage === 'eyedrop' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 72 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 14, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
           <MaterialCommunityIcons name="eyedropper-variant" size={18} color={C.ink} />
           <Text style={{ flex: 1, fontSize: 12, fontWeight: '800', color: C.ink }}>캔버스에서 색을 누르세요</Text>
           <Pressable accessibilityRole="button" accessibilityLabel="스포이드 취소" onPress={() => { send({ type: 'eyedrop', on: false }); setPanel('color'); }} style={{ minHeight: C.tap, paddingHorizontal: 12, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.muted }}>취소</Text></Pressable>
@@ -704,6 +719,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             onRight={slot.number < slotCount ? () => { setPanel(null); save(slot.number + 1); } : undefined} />
           <MenuButton icon="image-plus" title="그림 가져오기" onPress={() => { setPanel(null); if (cutouts.length) setCutoutPicker(true); else void importDrawing(); }} />
           {hasPrevious && !continueAvailable && <MenuButton icon="content-copy" title="이전 그림 복사" onPress={() => { setPanel(null); copyPrevious(); }} />}
+          {/* 캐릭터 기준은 세트 전체의 일이라 참고 사진 줄에서 내려왔다(45.2차). 보드의 세트 메뉴와 같은 계열이다. */}
+          {!!canon && <MenuButton icon="account-star-outline" title={showCanon ? '캐릭터 기준 숨기기' : '캐릭터 기준 보기'} onPress={() => { setPanel(null); setShowCanon(!showCanon); }} />}
+          <MenuButton icon="bookmark-outline" title={canon ? '이 칸을 캐릭터 기준으로 바꾸기' : '이 칸을 캐릭터 기준으로'} onPress={() => { setPanel(null); setShowCanon(false); save('reference'); }} />
           <MenuButton icon="share-variant" title="이 칸 공유" onPress={() => { setPanel(null); save('share'); }} />
           <MenuButton icon="clipboard-check-outline" title="이 칸 검사" onPress={() => { setPanel(null); setShowQA(true); }} />
           <MenuButton danger icon="delete-outline" title="지금 레이어 비우기" onPress={() => { setPanel(null); Alert.alert('지금 레이어 비우기', '지금 고른 레이어의 그림이 지워져요. 되돌리기로 되살릴 수 있어요.', [{ text: '취소', style: 'cancel' }, { text: '비우기', style: 'destructive', onPress: () => send({ type: 'clear' }) }]); }} />
@@ -776,13 +794,6 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <Minor title="참고 삭제" danger onPress={() => { const image = slot.referenceImages.find(i => i.path === selectedReference.path); if (image) removeReference(image.path, selectedReference.id); }} />
           </View>
         </Sheet> : <>
-        {/* 숨긴 레이어 위에 그으면 아무 일도 일어나지 않는다. 왜 그런지 여기서 말하고 바로 되돌린다. */}
-        {!!hiddenWarning && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 8, marginTop: 4, paddingLeft: 10, borderRadius: C.radius.sm, backgroundColor: C.accentSoft }}>
-          <MaterialCommunityIcons name="eye-off-outline" size={16} color={C.accentInk} />
-          <Text style={{ flex: 1, fontSize: 12, color: C.accentInk }}>'{layerLabel(hiddenWarning)}'이 숨겨져 있어요</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="숨긴 레이어 다시 보이기" onPress={() => { changeTransform(scene.activeLayerId, { visible: true }); setHiddenWarning(''); }} style={{ minHeight: C.tap, paddingHorizontal: 12, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>보이기</Text></Pressable>
-        </View>}
-
         {drawRail && <View style={{ maxHeight: Math.min(216, coverRoom()) }}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8, gap: 6 }}>
             {scene.layers.map(layer => {
@@ -825,10 +836,6 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             </View>)}
         {refRail && (refSource === 'mine' || !BUILTIN_REFERENCES.enabled) && <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'flex-start', gap: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
-            {/* 캐릭터 기준: 세트 전체가 따르는 그림 한 장. 따라 그릴 사진(참고)과 다른 것이라 앞에 따로 둔다. */}
-            {!!canon && <RailTile label="캐릭터 기준 보기" caption="캐릭터 기준" image={imageUri(canon.path)} selected={showCanon} onPress={() => setShowCanon(!showCanon)} />}
-            <RailTile label="이 칸을 캐릭터 기준으로" caption={canon ? '기준 바꾸기' : '기준 정하기'} icon="bookmark-outline" onPress={() => { setRefRail(false); setShowCanon(false); save('reference'); }} />
-            <View style={{ width: 1, height: 52, marginHorizontal: 2, backgroundColor: C.line }} />
             <RailTile label="참고 사진 추가" caption="사진 추가" icon="plus" dashed onPress={() => void addReferences()} />
             {scene.references.map((ref, index) => {
               const image = slot.referenceImages.find(i => i.path === ref.path), active = ref.id === scene.activeReferenceId;
@@ -869,10 +876,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{title}</Text>
               {settings && <View pointerEvents="none" style={{ position: 'absolute', top: 3, right: 5 }}><MaterialCommunityIcons name={open ? 'chevron-down' : 'chevron-up'} size={12} color={C.muted} /></View>}
             </Pressable>; })}
-          {/* 굵기: 도구 줄 안의 한 칸. 지금 굵기를 점과 px 로 늘 보여 주고, 누른 채 끌면 바뀐다. 브러시·지우개가 각자 굵기를 기억한다. */}
-          <SizeControl label={tool === 'eraser' ? '지우개 굵기' : '브러시 굵기'} value={width} color={color} eraser={tool === 'eraser'}
-            disabled={!initialized || !(tool === 'pen' || tool === 'eraser') || !!scene.selection || !!scene.picking || !!scene.captionPicked || panel === 'more'}
-            onChange={setWidth} onActive={setSizing} />
+          {/* 문구도 캔버스에 물건을 만드는 일이라 도구와 같은 줄에 선다(45.2차). 설정은 눌렀을 때만 열린다. */}
+          <Pressable accessibilityRole="button" accessibilityLabel="문구" accessibilityState={{ selected: panel === 'caption' || !!scene.captionPicked }}
+            onPress={() => { if (panel === 'caption') { ease(); setPanel(null); setCaptionOpen(false); } else openCaption(); }}
+            style={({ pressed }) => ({ flex: 1, minHeight: C.tap, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: 14, backgroundColor: panel === 'caption' || scene.captionPicked ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
+            <MaterialCommunityIcons name="format-text" size={20} color={panel === 'caption' || scene.captionPicked ? C.ink : C.muted} />
+            <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: panel === 'caption' || scene.captionPicked ? '800' : '600', color: panel === 'caption' || scene.captionPicked ? C.ink : C.muted }}>문구</Text>
+          </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="색" accessibilityState={{ expanded: panel === 'color' }}
             onPress={() => { ease(); setPanel(panel === 'color' ? null : 'color'); setDrawRail(false); setRefRail(false); }}
             style={({ pressed }) => ({ flex: 1, minHeight: C.tap, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: 14, backgroundColor: panel === 'color' ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
@@ -884,6 +894,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         </View>
         {/* 아랫줄: 엄지가 닿는 자리에 되돌리기·다시(조용한 아이콘)와 이 칸을 끝내는 행동. */}
         {!scene.selection && <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingTop: 6, gap: 4 }}>
+          {/* 굵기는 도구가 아니라 지금 도구의 상태다(45.2차): 도구 줄에서 내려와 브러시·지우개일 때만 이 자리에 선다.
+              조절 방식(누른 채 끌기)과 미리보기는 그대로 — 손 감각은 실기기에서 정한다. */}
+          {(tool === 'pen' || tool === 'eraser') && !scene.picking && !scene.captionPicked && panel !== 'more' && <View style={{ width: 64 }}>
+            <SizeControl label={tool === 'eraser' ? '지우개 굵기' : '브러시 굵기'} value={width} color={color} eraser={tool === 'eraser'}
+              disabled={!initialized} onChange={setWidth} onActive={setSizing} />
+          </View>}
           <UndoButton label="되돌리기" icon="undo-variant" disabled={!initialized || !scene.undo} onPress={() => send({ type: 'undo' })} />
           <UndoButton label="다시 실행" icon="redo-variant" disabled={!initialized || !scene.redo} onPress={() => send({ type: 'redo' })} />
           <Pressable accessibilityRole="button" accessibilityLabel="완성 후 다음" disabled={busy || !initialized} onPress={() => save('complete')}

@@ -61,6 +61,7 @@ function Studio() {
   const [stage, setStage] = useState<'proposal' | 'release'>('proposal');
   // 제출 화면의 규격 원문은 접어 둔다 — 요약은 위에 늘 보이고, 원문은 필요할 때 펼친다.
   const [specOpen, setSpecOpen] = useState(false);
+  const [prepOpen, setPrepOpen] = useState(false); // 제출 준비는 묶음을 만든 뒤 보는 일이라 접어 둔다(45.2차).
   // 부가 이미지 만들기. 고른 컷을 프레임 안에서 옮기고 키우기만 한다 — 원본 컷은 건드리지 않는다.
   const [extraKind, setExtraKind] = useState<'icon' | 'share' | 'cover'>('icon');
   const [extraSlot, setExtraSlot] = useState<number | null>(null);
@@ -643,7 +644,22 @@ function Studio() {
               <Action variant="ghost" icon="image-outline" title="내 그림으로 시작" disabled={!!busy} onPress={startFromImage} />
             </View>
           </View>
-          {/* 주요 기능 진입(44차): 표현 가이드 한 줄. 노랑을 쓰지 않는 조용한 줄 — 홈의 노랑 버튼은 '새 이모티콘 만들기' 하나. */}
+          {/* 45.2차 홈 순서: 시작 → [세트가 없을 때 자리] → [공지 켜졌을 때] → 표현 가이드 → 최근 작업. 세트 수와 공지 상태가 순서를 바꾸지 않는다. */}
+          {!sortedProjects.length && <View style={{ alignItems: 'center', gap: 8, paddingVertical: 20, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong }}>
+            <AssetSlot name="homeEmptyArtwork" size={120} />
+            <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>첫 이모티콘 세트를 만들어 보세요</Text>
+            <Text style={{ fontSize: 12, color: C.muted }}>만든 세트가 여기에 모여요</Text>
+          </View>}
+          {/* 공지/이벤트: 켤 때만 한 줄 배너(그림 자리 · 제목 · 짧은 정보 · 넘어가기 하나). 꺼져 있으면 자리도 간격도 0. */}
+          {HOME_NOTICE.enabled && <View testID="홈 알림" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
+            <AssetSlot name="noticeArtwork" size={44} />
+            <View style={{ flex: 1, gap: 1 }}>
+              <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{HOME_NOTICE.title}</Text>
+              <Text numberOfLines={1} style={{ fontSize: 12, lineHeight: 17, color: C.muted }}>{HOME_NOTICE.body}</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+          </View>}
+          {/* 주요 기능 진입: 표현 가이드 한 줄. 노랑을 쓰지 않는 조용한 줄 — 홈의 노랑 버튼은 '새 이모티콘 만들기' 하나. */}
           <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드" onPress={() => setHomeView('guide')}
             style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 14, borderRadius: 20, backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: C.line })}>
             <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}>
@@ -655,28 +671,14 @@ function Studio() {
             </View>
             <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
           </Pressable>
-          {HOME_NOTICE.enabled && <View testID="홈 알림" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
-            <AssetSlot name="noticeArtwork" size={44} />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{HOME_NOTICE.title}</Text>
-              <Text numberOfLines={2} style={{ fontSize: 12, lineHeight: 17, color: C.muted }}>{HOME_NOTICE.body}</Text>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
-          </View>}
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 8 }}>
+          {!!sortedProjects.length && <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 8 }}>
             <Text style={{ flex: 1, fontSize: 17, fontWeight: '800', color: C.ink, letterSpacing: -.2 }}>최근 작업</Text>
             {sortedProjects.length > HOME_RECENT && <Pressable accessibilityRole="button" accessibilityLabel="전체 작업 보기" onPress={() => setHomeView('all')} style={{ minHeight: T.tap, paddingLeft: 12, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>전체 보기 {sortedProjects.length}</Text>
               <MaterialCommunityIcons name="chevron-right" size={16} color={C.muted} />
             </Pressable>}
-          </View>
-          {!store.projects.length
-            ? <View style={{ alignItems: 'center', gap: 8, paddingVertical: 20, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong }}>
-                <AssetSlot name="homeEmptyArtwork" size={120} />
-                <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>첫 이모티콘 세트를 만들어 보세요</Text>
-                <Text style={{ fontSize: 12, color: C.muted }}>만든 세트가 여기에 모여요</Text>
-              </View>
-            : <View style={{ gap: 12 }}>
+          </View>}
+          {!!sortedProjects.length && <View style={{ gap: 12 }}>
             {sortedProjects.slice(0, HOME_RECENT).map(p => {
               const drawn = p.slots.filter(s => s.finalImage);
               const done = doneCount(p);
@@ -710,9 +712,10 @@ function Studio() {
                     <Text style={{ flex: 1, fontSize: 12, color: C.muted, fontWeight: '600' }}><Text style={{ color: C.ink, fontWeight: '700' }}>{done}개 완성</Text>{working ? ` · ${working}개 작업 중` : ''}</Text>
                     <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 이어서 만들기`} onPress={() => { setProjectId(p.id); setScreen('board'); setSlotNumber(nextUnfinished(p, p.lastSlot ?? 0) ?? p.lastSlot ?? 1); setPainting(true); }}
                       style={{ minHeight: 44, justifyContent: 'center' }}>
-                      <View style={{ height: 34, paddingLeft: 12, paddingRight: 8, borderRadius: 17, flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: C.surface2 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{done || working ? '이어서 만들기' : '그리기 시작'}</Text>
-                        <MaterialCommunityIcons name="chevron-right" size={16} color={C.ink} />
+                      {/* 카드를 누르면 세트가 열린다 — 이 줄은 그 안의 지름길이라 더 조용하다(45.2차). */}
+                      <View style={{ height: 34, paddingLeft: 10, paddingRight: 6, borderRadius: 17, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{done || working ? '이어서 만들기' : '그리기 시작'}</Text>
+                        <MaterialCommunityIcons name="chevron-right" size={16} color={C.muted} />
                       </View>
                     </Pressable>
                   </View>
@@ -926,6 +929,7 @@ function Studio() {
                 { label: '대표 이미지', ok: !!project.extras?.coverSlot, detail: project.extras?.coverSlot ? `${pad(project.extras.coverSlot)}번` : '아직 없어요' },
               ] : []),
             ];
+            const prepShort = requirements.filter(r => !r.ok).length;
             const row = (key: string, ok: boolean, label: string, detail: string) => <View key={key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 38 }}>
               <MaterialCommunityIcons name={ok ? 'check-circle' : 'circle-outline'} size={18} color={ok ? T.success : C.lineStrong} />
               <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: C.ink }}>{label}</Text>
@@ -973,31 +977,6 @@ function Studio() {
                 </View>
               </View>}
 
-              {/* 제출 준비: 기준 전환 세그먼트 + 필요한 것 목록 + 부가 이미지 입구가 한 표면. */}
-              <View style={{ gap: 8 }}>
-                <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink, marginTop: 4 }}>제출 준비</Text>
-                <View style={{ padding: 14, gap: 4, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
-                  <Segmented dense value={stage} onChange={setStage} items={[{ key: 'proposal', label: '제안에 필요한 것', a11y: '제안 기준으로 보기' }, { key: 'release', label: '출시에 필요한 것', a11y: '출시 기준으로 보기' }]} />
-                  <View style={{ height: 4 }} />
-                  {requirements.map(r => row(r.label, r.ok, r.label, r.detail))}
-                  <Pressable accessibilityRole="button" accessibilityLabel="부가 이미지 만들기" onPress={() => setScreen('extras')}
-                    style={{ minHeight: T.tap, marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderColor: C.line }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: C.ink }}>부가 이미지 만들기</Text>
-                    <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
-                  </Pressable>
-                </View>
-              </View>
-
-              {/* 가이드가 정한 제작 도구 규칙. 앱이 대신하지 않는 일을 한 줄로 분명히 한다. */}
-              {moving && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16, backgroundColor: C.surface2 }}>
-                <MaterialCommunityIcons name="movie-open-outline" size={20} color={C.muted} />
-                <Text style={{ flex: 1, fontSize: 12, color: C.ink, lineHeight: 18 }}>움직이는 칸은 카카오 WebPAnimator에서 WebP로 마무리해요. 묶음에 칸별 프레임이 들어 있어요.</Text>
-                <Pressable accessibilityRole="button" accessibilityLabel="WebPAnimator 열기" onPress={() => { Linking.openURL(WEBP_ANIMATOR_URL).catch(() => Alert.alert('링크를 열지 못했어요', '잠시 후 다시 시도해 주세요.')); }}
-                  style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}>
-                  <MaterialCommunityIcons name="open-in-new" size={18} color={C.muted} />
-                </Pressable>
-              </View>}
-
               {/* 4. 지금 할 일. 이 화면의 노란 버튼은 이것 하나다. */}
               <Action primary icon="package-variant-closed" title="파일 묶음 만들기" disabled={!!busy || !drawn.length} onPress={exportProject} />
               {!!lastExport && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, borderRadius: 16, backgroundColor: T.successSoft }}>
@@ -1006,6 +985,24 @@ function Studio() {
                 <Pressable accessibilityRole="button" accessibilityLabel="다시 공유" disabled={!!busy} onPress={shareAgain} style={{ minHeight: T.tap, paddingHorizontal: 14, justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>다시 공유</Text></Pressable>
               </View>}
 
+              {/* 제출 준비: 지금 그리는 일보다 뒤에 오는 일이라 접어 둔다. 접힌 줄에도 몇 개가 남았는지 보인다(45.2차). */}
+              <Pressable accessibilityRole="button" accessibilityLabel={prepOpen ? '제출 준비 접기' : '제출 준비 보기'} accessibilityState={{ expanded: prepOpen }} onPress={() => setPrepOpen(!prepOpen)}
+                style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>제출 준비</Text>
+                <Text style={{ flex: 1, fontSize: 12, color: prepShort ? colors.WARNING : C.muted }}>{prepShort ? `${prepShort}가지 더 필요해요` : '필요한 것을 다 채웠어요'}</Text>
+                <MaterialCommunityIcons name={prepOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
+              </Pressable>
+              {prepOpen && <View style={{ padding: 14, gap: 4, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
+                <Segmented dense value={stage} onChange={setStage} items={[{ key: 'proposal', label: '제안에 필요한 것', a11y: '제안 기준으로 보기' }, { key: 'release', label: '출시에 필요한 것', a11y: '출시 기준으로 보기' }]} />
+                <View style={{ height: 4 }} />
+                {requirements.map(r => row(r.label, r.ok, r.label, r.detail))}
+              </View>}
+              <Pressable accessibilityRole="button" accessibilityLabel="부가 이미지 만들기" onPress={() => setScreen('extras')}
+                style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>부가 이미지 만들기</Text>
+                <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+              </Pressable>
+
               {/* 5. 규격·직접 확인·파일 검사는 접어 둔다. 지우지 않고, 필요할 때 펼친다. */}
               <Pressable accessibilityRole="button" accessibilityLabel={specOpen ? '자세히 접기' : '자세히 보기'} accessibilityState={{ expanded: specOpen }} onPress={() => setSpecOpen(!specOpen)}
                 style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1013,6 +1010,15 @@ function Studio() {
                 <MaterialCommunityIcons name={specOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
               </Pressable>
               {specOpen && <>
+                {/* 가이드가 정한 제작 도구 규칙. 앱이 대신하지 않는 일을 한 줄로 분명히 한다. */}
+                {moving && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16, backgroundColor: C.surface2 }}>
+                  <MaterialCommunityIcons name="movie-open-outline" size={20} color={C.muted} />
+                  <Text style={{ flex: 1, fontSize: 12, color: C.ink, lineHeight: 18 }}>움직이는 칸은 카카오 WebPAnimator에서 WebP로 마무리해요. 묶음에 칸별 프레임이 들어 있어요.</Text>
+                  <Pressable accessibilityRole="button" accessibilityLabel="WebPAnimator 열기" onPress={() => { Linking.openURL(WEBP_ANIMATOR_URL).catch(() => Alert.alert('링크를 열지 못했어요', '잠시 후 다시 시도해 주세요.')); }}
+                    style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}>
+                    <MaterialCommunityIcons name="open-in-new" size={18} color={C.muted} />
+                  </Pressable>
+                </View>}
                 <View style={styles.card}>
                   <Text style={{ fontSize: 12, color: C.ink, lineHeight: 18 }}><Text style={{ fontWeight: '700' }}>{profile.profileLabel}</Text> · {profile.format} · {profile.width}×{profile.height} · {Math.round(profile.maxBytes / 1024)}KB 이하</Text>
                   {moving && movingCuts > submitReady && <Text style={{ fontSize: 12, color: colors.WARNING, lineHeight: 18 }}>움직이는 {movingCuts}칸 중 {movingCuts - submitReady}칸은 WebP를 만들지 못해 GIF로 들어가요. 그 칸을 다시 열었다 닫으면 다시 만들어요.</Text>}
@@ -1073,10 +1079,11 @@ function Studio() {
                   <Text style={{ fontSize: 12, color: C.faint }}>/ {project.slots.length}칸</Text>
                 </View>
                 <View style={{ height: 4, borderRadius: 2, backgroundColor: C.line, overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / project.slots.length * 100)}%`, height: '100%', borderRadius: 2, backgroundColor: C.accent }} /></View>
-                <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                {/* 범례는 두 상태가 실제로 같이 있을 때만 설명할 것이 있다(45.2차). */}
+                {done > 0 && working > 0 && <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><StatusDot tone="done" size={8} /><Text style={{ fontSize: 11, color: C.muted }}>완성</Text></View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><StatusDot tone="working" size={8} /><Text style={{ fontSize: 11, color: C.muted }}>고치는 중</Text></View>
-                </View>
+                </View>}
               </View>
               {drawnCount >= 2 && <Pressable accessibilityRole="button" accessibilityLabel={playing ? '전체 재생 멈추기' : '전체 재생'} onPress={() => { setPlayIndex(0); setPlaying(!playing); }}
                 style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: playing ? C.accent : C.paper, alignItems: 'center', justifyContent: 'center', ...Elev[1] }}>

@@ -468,7 +468,8 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  await press('문구 닫기');
 
  // ── Make this cut the set reference: a snapshot, not a live link ────────────────────────────
- await press('참고');
+ // 45.2: the set-wide reference lives in the set menu (더보기); the 참고 rail is only for pictures to look at.
+ await press('더보기');
  await press('이 칸을 캐릭터 기준으로');
  await saved();
  const chosen=fresh().slots[1].finalImage.path;
@@ -479,11 +480,13 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  assert.notEqual(fresh().slots[1].finalImage.path,chosen,'because the cut moved on to a new file');
  assert.ok(files.has(localFile(chosen).uri),'and the snapshot file is kept');
  await press('참고');
- assert.equal(labelled('캐릭터 기준 보기').length,1,'the character reference lives in the one 참고 entry');
+ assert.equal(labelled('캐릭터 기준 보기').length,0,'the 참고 rail does not repeat the set reference entry');
+ await press('참고');
+ await press('더보기');
+ assert.equal(labelled('캐릭터 기준 보기').length,1,'the character reference has one entry, in the set menu');
  await press('캐릭터 기준 보기');
  assert.equal(tree.root.findAll(n=>n.type==='Image'&&n.props.accessibilityLabel==='캐릭터 기준 그림').length,1,'and shows as a picture');
  await press('캐릭터 기준 닫기');
- await press('참고');
 
  // ── Re-editing a finished cut puts it back to 작업 중 ───────────────────────────────────────
  await press('더보기');
