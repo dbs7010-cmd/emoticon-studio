@@ -101,6 +101,16 @@ const closePainter = async () => { await press('그리기 닫기'); await answer
   await restart();
   let init = await openSlot(4);
   assert.equal(init.motion ?? null, null, '빈 칸은 움직임 없이 열린다');
+  // 44.2차: 아무것도 그리지 않은 칸에서는 효과 견본이 기본 그림(motionExampleArtwork 자리)으로 움직이고, 그림이 생기면 사용자의 그림이 먼저다.
+  await press('움직이기');
+  const sampleSources = () => tree.root.findAll(n => n.type === 'Image' && n.props.accessibilityIgnoresInvertColors).map(n => n.props.source);
+  assert.ok(sampleSources().length >= 3, '효과 견본 세 개');
+  assert.ok(sampleSources().every(src => !src || !src.uri), '빈 칸: 견본이 비어 있지 않고 기본 그림으로 움직인다');
+  await message({ type: 'layerThumbs', thumbs: [{ id: scene.activeLayerId, data: pngData }] });
+  scene = { ...scene, undo: true }; await message(scene);
+  assert.ok(sampleSources().every(src => src && src.uri === pngData), '그림이 있으면 사용자의 그림이 견본이 된다');
+  scene = { ...scene, undo: false }; await message(scene);
+  await press('그리기');
   scene = { ...scene, caption: { text: '안녕', place: 'bottom', color: '#242424' } };
   await press('그리기 닫기');
   assert.equal(lastCommand('save').gif, false, '움직임이 없으면 움직이는 파일을 만들지 않는다');

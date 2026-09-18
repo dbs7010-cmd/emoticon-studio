@@ -40,7 +40,7 @@ const mocks = {
 const real = loader(mocks)('src/services/images.ts');
 const images = { dataUrl: async () => pngData, pickImages: async () => [], savePainterWork: (...a) => real.savePainterWork(...a), saveCutout: (...a) => real.saveCutout(...a), saveMotionLoop: () => ({ path: 'moving.gif', width: 360, height: 360 }), saveSubmitLoop: () => undefined };
 const load = loader({ ...mocks, './src/services/images': images, '../services/images': images });
-const { saveStore } = load('src/services/storage.ts');
+const { loadStore, saveStore } = load('src/services/storage.ts');
 const { createProject } = load('src/project.ts');
 const { T, Type, Elev } = load('src/components/ui.tsx');
 const slots = load('src/design/asset-slots.ts');
@@ -140,7 +140,15 @@ async function ready() {
     await press('표현 가이드 화남·억울');
     assert.equal(tree.root.findAll(n => n.props.accessibilityLabel === '억울해 · 팔짱 + 몸 돌리기').length, 1, '분류를 바꾸면 그 분류의 표현 카드');
     assert.equal(tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).length, 0, '가이드 화면에 노랑 버튼 없음');
-    await press('홈으로');
+    // 44.2차: 가이드 카드는 열람으로 끝나지 않는다 — 고르면 최근 세트의 다음 칸 그리기로 가고, 표현은 한 줄 힌트로만 따라온다.
+    const hintLine = () => tree.root.findAll(n => n.type === 'Text' && [n.props.children].flat(9).filter(x => typeof x === 'string').join('').includes('팔짱 + 몸 돌리기'));
+    await press('억울해 · 팔짱 + 몸 돌리기');
+    assert.equal(tree.root.findAllByType('WebView').length, 1, '가이드 카드를 고르면 그리기 화면이 열린다');
+    assert.equal(hintLine().length, 1, '고른 표현이 캔버스 위 한 줄 힌트로 따라온다');
+    assert.equal(labelled('표현 힌트 닫기').length, 1, '힌트는 바로 닫을 수 있다');
+    await press('표현 힌트 닫기');
+    assert.equal(hintLine().length, 0, '닫으면 사라진다 — 상시 UI 가 아니다');
+    assert.equal(loadStore().store.projects.length, 12, '가이드는 저장 구조를 바꾸지 않는다');
     saveStore({ version: 1, revision: 60, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
     await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); });
   }

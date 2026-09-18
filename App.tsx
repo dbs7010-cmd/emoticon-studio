@@ -70,6 +70,8 @@ function Studio() {
   // 홈 아래 두 화면(44차): 전체 작업(여러 세트 찾기·다시 열기)과 표현 가이드("무엇을 그릴까?"). 세트 안 칸 관리는 보드가 맡는다.
   const [homeView, setHomeView] = useState<'home' | 'all' | 'guide'>('home');
   const [guideCategory, setGuideCategory] = useState<string>(EXPRESSION_GUIDE.categories[0]);
+  // 가이드에서 고른 표현 한 줄. Painter 가 힌트로 한 번 보여 주고 끝난다 — 저장 구조에는 남기지 않는다(44.2차).
+  const [guideHint, setGuideHint] = useState<{ name: string; hint: string } | null>(null);
   // 복구 화면의 기술 정보는 접어 두고(문의할 때만 펼침), 설정의 '저장 상태 보기'는 사람이 읽는 요약 창으로 연다.
   const [diagOpen, setDiagOpen] = useState(false), [storeStatus, setStoreStatus] = useState(false);
   const [playing, setPlaying] = useState(false), [playIndex, setPlayIndex] = useState(0);
@@ -242,6 +244,16 @@ function Studio() {
     // Nothing is asked for first: the new set opens on its own empty canvas.
     try { commit(s => ({ ...s, projects: [...s.projects, p] })); setProjectId(p.id); setScreen('board'); setSlotNumber(1); setPainting(true); }
     catch (e) { Alert.alert('세트를 만들지 못했어요', userMessage(e)); }
+  }
+  // 표현 가이드에서 고른 표현으로 바로 그리러 간다. 새 흐름을 만들지 않고, 이어서 만들기·새 세트 만들기와 같은 길을 쓴다(44.2차).
+  function startFromGuide(card: { name: string; hint: string }) {
+    setGuideHint(card);
+    setHomeView('home');
+    const target = sortedProjects[0];
+    if (!target) { createNewProject(); return; }
+    setProjectId(target.id); setScreen('board');
+    setSlotNumber(nextUnfinished(target, target.lastSlot ?? 0) ?? target.lastSlot ?? 1);
+    setPainting(true);
   }
   const [pendingImport, setPendingImport] = useState<string | null>(null);
   function startFromImage() {
@@ -565,7 +577,8 @@ function Studio() {
             const cards = EXPRESSION_GUIDE.cards.filter(c => c.category === guideCategory);
             return cards.length
               ? <View testID="표현 가이드 카드" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-                  {cards.map(c => <View key={c.name} accessibilityLabel={`${c.name} · ${c.hint}`} style={{ width: cardWidth, padding: 10, gap: 8, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
+                  {cards.map(c => <Pressable key={c.name} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => startFromGuide(c)}
+                    style={({ pressed }) => ({ width: cardWidth, padding: 10, gap: 8, borderRadius: 20, backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: C.line })}>
                     <View style={{ width: frame, height: frame, borderRadius: 14, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       <AssetSlot name="expressionGuideArtwork" size={Math.round(frame * .8)} />
                     </View>
@@ -573,7 +586,7 @@ function Studio() {
                       <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{c.name}</Text>
                       <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{c.hint}</Text>
                     </View>
-                  </View>)}
+                  </Pressable>)}
                 </View>
               : <Text style={{ paddingVertical: 24, textAlign: 'center', fontSize: 13, color: C.muted }}>이 분류에는 아직 표현이 없어요</Text>;
           })()}
@@ -1222,6 +1235,8 @@ function Studio() {
       pro={pro}
       onRequestPro={() => setProSheet(true)}
       previousMotion={project.slots.filter(s => s.number < slot.number && isAnimated(s)).at(-1)?.motion ?? null}
+      guideHint={guideHint}
+      onGuideHintDone={() => setGuideHint(null)}
       initialTool={lastTool}
       onToolChange={setLastTool}
       paperTexture={store?.paperTexture !== false}
@@ -1231,7 +1246,7 @@ function Studio() {
       onComplete={completeAndNext}
       onSetReference={useAsReference}
       onCopyPrevious={copyPreviousWork}
-      onClose={() => { setPainting(false); setSlotNumber(null); if (returnToExport) { setScreen('export'); setReturnToExport(false); } }}
+      onClose={() => { setPainting(false); setSlotNumber(null); setGuideHint(null); if (returnToExport) { setScreen('export'); setReturnToExport(false); } }}
       onNavigate={number => setSlotNumber(number)}
       onImportDrawing={async () => { const picked = await pickImages(); return picked[0] ? await dataUrl(picked[0]) : null; }}
       cutouts={(store?.cutouts ?? []).map(c => ({ id: c.id, name: c.name, path: c.image.path }))}

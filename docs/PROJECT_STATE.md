@@ -2291,3 +2291,11 @@ BrowserStack 추가 검증 중단. 28차는 **PARTIAL / MANUAL QA DEFERRED** 로
 - 에셋 자리 8개 확정(`expressionGuideArtwork` 신규, 캔버스 가이드 그림·레퍼런스 가로 줄 규격 폐지) — `asset-slots.ts`·`ASSET_SLOTS.md`·`ASSET_PRODUCTION_SPEC.md`(CR-02 → EG-01)·`ASSET_GENERATION_HANDOFF.md` 일치.
 - 실기기 캡처에서 찾아 고친 P1: 가이드 칩 380px 세로 늘어남 · 레퍼런스 격자 3열 줄바꿈. 최종 APK `app-44-preasset-lock2-debugsigned-arm64-923f71528960.apk` 로 해당 화면 재확인.
 - npm test exit 0(19 스위트, 라벨 53). 남은 것: 24/32 표시(사용자 결정) · P2(빈 칸 움직임 견본 비어 보임 등) · TASTE → `docs/MANUAL_QA.md`. 상세 `verification/round44/RESULT.md`.
+
+## 44.1차·44.2차 (2026-09-16~18) — 데스크톱 전용 에셋 직전 정리 — 판정 PASS (실기기 없음)
+
+- 44.1차(검토만): Painter 도구 줄 6칸·굵기 칸 과밀을 문제로 남기고 **LOCK 보류**(대안 2개만 제시, 구현 금지) · 기본 레퍼런스 패널이 캔버스 59% 가림 · 표현 가이드가 열람으로 끝남 · 홈 100세트는 홈 자체는 안전, 전체 작업 목록만 가설 수준 위험.
+- 44.2차(구현): **레퍼런스** 찾기→선택→격자 접힘→캔버스에서 맞추기(격자·분류·3:4 유지, 자리표시로도 흐름 동작, `다시 찾기`로 복귀) · **가이드→그리기** 카드 누르면 최근 세트의 다음 칸(없으면 기존 새 세트 흐름)으로 가고 표현은 캔버스 위 한 줄 힌트로만, 첫 획에 사라짐·X 로 닫힘(저장 구조 불변) · **움직이기** 그림 없는 칸에서만 견본 그림, 그림이 있으면 사용자 그림 우선(엔진 불변).
+- 손대지 않음: Painter 굵기 UI·확대 칩·색 패널·홈 구조·24/32·Motion 엔진.
+- 에셋 목록을 세 갈래로 정리: APP UI ASSET SLOTS(8) · STORE/RELEASE(6) · OPTIONAL, 그리고 NOT NEEDED. 8개가 출시 에셋 전부처럼 보이던 문제 해소(`docs/design/ASSET_SLOTS.md`).
+- npm test exit 0(19 스위트, 라벨 53) + 회귀 3건 추가(가이드→그리기·레퍼런스 접힘·모션 견본). 실기기 검증은 하지 않았다 — 다음 라운드 3건만 실기기(굵기 손 감각·레퍼런스 접힘 뒤 캔버스·가이드 흐름). 상세 `verification/round44_2/RESULT.md`.

@@ -60,6 +60,9 @@ type Props = {
   previousMotion?: Motion | null;
   initialTool?: Tool;
   onToolChange?: (tool: Tool) => void;
+  // 표현 가이드에서 고른 표현(44.2차): 이름과 짧은 몸짓 힌트 한 줄만 받는다 — 가이드 전용 상태·패널은 두지 않는다.
+  guideHint?: { name: string; hint: string } | null;
+  onGuideHintDone?: () => void;
   savedMotions: SavedMotion[];
   onSaveMotion: (motion: Motion) => void;
   onForgetMotion: (id: string) => void;
@@ -132,7 +135,7 @@ const swatches = [
   '#765044', '#A77559', '#D7B79B', '#F0D8BF',
 ];
 
-export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, onSetReference, onCopyPrevious, onColorUsed, onClose, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
+export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, onSetReference, onCopyPrevious, onColorUsed, onClose, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<SaveAction>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
@@ -167,6 +170,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   useEffect(() => () => { if (zoomHintTimer.current) clearTimeout(zoomHintTimer.current); }, []);
   const resetZoom = () => { setZoom(1); send({ type: 'zoom', zoom: 1 }); };
   const [panel, setPanel] = useState<Panel>(null), [drawRail, setDrawRail] = useState(false), [refRail, setRefRail] = useState(false);
+  // 기본 레퍼런스는 찾는 동안에만 큰 격자를 연다. 고르면 접히고 캔버스에서 맞춘다(44.2차).
+  const [refBrowse, setRefBrowse] = useState(true);
+  const [guideHintOpen, setGuideHintOpen] = useState(true);
   const [showCanon, setShowCanon] = useState(false), [showQA, setShowQA] = useState(false), [qa, setQA] = useState<QA | undefined>(slot.qa);
   // 빈 칸을 열면 한 번 보여 주는 '이전 칸 그림으로 시작'. 닫거나 그리기 시작하면 사라진다.
   const [continueDismissed, setContinueDismissed] = useState(false);
@@ -300,6 +306,11 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     send({ type: 'brushSettings', preset: effectiveBrush.preset ?? null, opacity: effectiveBrush.opacity, stabilizer: effectiveBrush.stabilizer === 'off' ? 'light' : effectiveBrush.stabilizer, smoothing: effectiveBrush.stabilizer !== 'off' });
   }, [initialized, brushKey]);
   // 스포이드는 캔버스를 보고 눌러야 하므로 패널을 내린다. 색을 읽으면 패널이 직접 선택으로 다시 올라온다.
+  // 기본 레퍼런스를 고르면 큰 격자는 물러난다. 그림이 들어오면(ready) 여기서 기존 참고 레이어 흐름으로 넘긴다 — 지금은 자리표시라 접기만 한다.
+  function pickBuiltinReference(index: number) {
+    ease(); setRefBrowse(false);
+    void index; // ready=true 가 되면 이 자리에서 기존 addReferences 흐름으로 참고 레이어를 추가한다.
+  }
   function startEyedrop() {
     ease(); setPanel(null); setDrawRail(false); setRefRail(false);
     send({ type: 'eyedrop', on: true });
@@ -512,7 +523,11 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 확대 안내는 실제로 보일 수 있을 때(이전 칸 제안 카드가 캔버스 위를 덮지 않을 때) 한 번 띄운다 — 카드에 가려진 채 '보였음'으로 지나가지 않게(44차 실기기).
   useEffect(() => { if (!initialized || zoomHintShown || offerContinue || tab !== 'draw') return; zoomHintShown = true; setZoomHint(true); zoomHintTimer.current = setTimeout(() => setZoomHint(false), 2600); }, [initialized, offerContinue, tab]);
   // 효과 견본에 쓸 이 칸의 그림: 저장된 그림이 지금 것과 같으면 그 파일, 아직 저장 전이면 지금 레이어의 작은 그림.
-  const sample = !scene.dirty && slot.finalImage ? imageUri(slot.finalImage.path) : thumbs[scene.activeLayerId] ?? (slot.finalImage ? imageUri(slot.finalImage.path) : undefined);
+  // 이 칸에 그림이 있으면 언제나 사용자의 그림이 먼저다. 아무것도 그리지 않은 칸에서만 견본 그림(motionExampleArtwork 자리)이 대신 움직인다(44.2차).
+  const hasDrawing = !!slot.finalImage || !!slot.work || scene.dirty || scene.undo;
+  const sample = !hasDrawing ? undefined
+    : !scene.dirty && slot.finalImage ? imageUri(slot.finalImage.path)
+    : thumbs[scene.activeLayerId] ?? (slot.finalImage ? imageUri(slot.finalImage.path) : undefined);
   type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
   const brushIcon: IconName = effectiveBrush.preset ? 'brush-variant' : brush === 'pen' ? 'fountain-pen-tip' : brush === 'brush' ? 'brush' : 'pencil';
   const tools: [Tool, string, IconName][] = [['pen', '브러시', brushIcon], ['eraser', '지우개', 'eraser'], ['fill', '채우기', 'format-color-fill'], ['select', '선택', 'select-drag']];
@@ -541,7 +556,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           </Pressable>)}
         <View style={{ flex: 1 }} />
         {/* 참고·레이어·문구는 여기 한 곳에서만 연다. */}
-        {tab === 'draw' && ([['참고', refRail || showCanon, 'image-outline', () => { ease(); setRefRail(!refRail); setDrawRail(false); setPanel(null); }],
+        {tab === 'draw' && ([['참고', refRail || showCanon, 'image-outline', () => { ease(); setRefRail(!refRail); setRefBrowse(true); setDrawRail(false); setPanel(null); }],
            ['레이어', drawRail, 'layers-outline', () => { ease(); setDrawRail(!drawRail); setRefRail(false); setPanel(null); }],
            ['문구', panel === 'caption' || !!scene.captionPicked, 'format-text', () => { if (panel === 'caption') { ease(); setPanel(null); setCaptionOpen(false); } else openCaption(); }]] as const).map(([title, on, icon, run]) =>
           <Pressable key={title} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: on }} onPress={run}
@@ -621,11 +636,17 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <MaterialCommunityIcons name="magnify" size={14} color={C.muted} />
           <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{Math.round(zoom * 100)}%</Text>
         </Pressable>}
-        {tab === 'draw' && zoomHint && zoom <= 1.05 && !offerContinue && <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center' }}>
+        {tab === 'draw' && zoomHint && zoom <= 1.05 && !offerContinue && !(guideHint && guideHintOpen) && <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
             <MaterialCommunityIcons name="gesture-spread" size={14} color={C.muted} />
             <Text style={{ fontSize: 12, fontWeight: '600', color: C.muted }}>두 손가락으로 벌리면 크게 볼 수 있어요</Text>
           </View>
+        </View>}
+        {/* 표현 가이드에서 고른 표현(44.2차): 그리기 전 한 줄. 첫 획을 그으면 사라지고, X 로 바로 닫는다. 캔버스 위 상주 UI 가 아니다. */}
+        {tab === 'draw' && !!guideHint && guideHintOpen && !scene.dirty && !offerContinue && <View style={{ position: 'absolute', left: 12, right: 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
+          <MaterialCommunityIcons name="lightbulb-on-outline" size={14} color={C.muted} />
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}><Text style={{ fontWeight: '800' }}>{guideHint.name}</Text> · {guideHint.hint}</Text>
+          <IconButton label="표현 힌트 닫기" icon="close" size={16} color={C.muted} onPress={() => { setGuideHintOpen(false); onGuideHintDone?.(); }} />
         </View>}
         {/* 빈 칸: 이전 칸 그림에서 이어 그릴 수 있게 한 번 제안한다. 누를 때만 복사하고, 비어 있는 칸이라 잃을 것이 없다. */}
         {offerContinue && <View style={{ position: 'absolute', left: 12, right: 12, top: 12, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 6, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
@@ -788,9 +809,17 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           </ScrollView>
         </View>}
         {refRail && BUILTIN_REFERENCES.enabled && <View style={{ paddingHorizontal: 12, paddingTop: 12 }}>
-          <Segmented dense value={refSource} onChange={setRefSource} items={[{ key: 'mine', label: '내 사진', icon: 'image-outline' }, { key: 'builtin', label: '기본 레퍼런스', icon: 'human-handsup' }]} />
+          <Segmented dense value={refSource} onChange={next => { setRefSource(next); setRefBrowse(true); }} items={[{ key: 'mine', label: '내 사진', icon: 'image-outline' }, { key: 'builtin', label: '기본 레퍼런스', icon: 'human-handsup' }]} />
         </View>}
-        {refRail && refSource === 'builtin' && BUILTIN_REFERENCES.enabled && <BuiltinReferences maxHeight={Math.max(120, Math.min(260, coverRoom() - 110))} />}
+        {refRail && refSource === 'builtin' && BUILTIN_REFERENCES.enabled && (refBrowse
+          ? <BuiltinReferences maxHeight={Math.max(120, Math.min(260, coverRoom() - 110))} onPick={pickBuiltinReference} />
+          : <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12 }}>
+              <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>캔버스에서 위치·크기·진하기를 맞춰요</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="기본 레퍼런스 다시 찾기" onPress={() => { ease(); setRefBrowse(true); }}
+                style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? C.fill : C.surface2 })}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>다시 찾기</Text>
+              </Pressable>
+            </View>)}
         {refRail && (refSource === 'mine' || !BUILTIN_REFERENCES.enabled) && <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'flex-start', gap: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
             {/* 캐릭터 기준: 세트 전체가 따르는 그림 한 장. 따라 그릴 사진(참고)과 다른 것이라 앞에 따로 둔다. */}
@@ -913,7 +942,7 @@ function Switch({ on }: { on: boolean }) {
 // 기본 레퍼런스(44차 LOCK) — "어떻게 그릴까?". 분류 칩 한 줄 + 3:4 썸네일 4열 격자(좌우 12 · 간격 8).
 // 격자는 패널 안에서 세로로 구르고 윗줄 하나 반이 보여 더 있다는 걸 알린다. 자리 규격: asset-slots referencePoseThumbnail.
 // ready=false 동안 칸은 누를 수 없는 자리표시(관절 인형 실루엣). 분류에 그림이 하나도 없으면 한 줄 빈 상태.
-function BuiltinReferences({ maxHeight }: { maxHeight: number }) {
+function BuiltinReferences({ maxHeight, onPick }: { maxHeight: number; onPick: (index: number) => void }) {
   const { width } = useWindowDimensions();
   const [category, setCategory] = useState<string>(BUILTIN_REFERENCES.categories[0]);
   // 칸 폭은 격자가 실제로 받은 폭으로 잰다 — 패널 테두리 1px 때문에 창 폭으로 재면 넷째 칸이 다음 줄로 밀렸다(44차 실기기).
@@ -931,14 +960,15 @@ function BuiltinReferences({ maxHeight }: { maxHeight: number }) {
     {items.length
       ? <ScrollView testID="기본 레퍼런스 격자" nestedScrollEnabled showsVerticalScrollIndicator={false} style={{ maxHeight }} onLayout={e => { const w = Math.floor(e.nativeEvent.layout.width); if (w > 0 && w !== gridWidth) setGridWidth(w); }} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap, paddingHorizontal: 12, paddingBottom: 4 }}>
           {items.map(i =>
-            <View key={category + i} testID="기본 레퍼런스 자리" accessibilityLabel={`${category} 기본 레퍼런스 ${i + 1} 준비 중`} style={{ width: cell, height: tall, borderRadius: 12, backgroundColor: T.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <Pressable key={category + i} testID="기본 레퍼런스 자리" accessibilityRole="button" accessibilityLabel={`${category} 기본 레퍼런스 ${i + 1}${BUILTIN_REFERENCES.ready ? '' : ' 준비 중'}`} onPress={() => onPick(i)}
+              style={({ pressed }) => ({ width: cell, height: tall, borderRadius: 12, backgroundColor: pressed ? T.fill : T.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' })}>
               <View style={{ width: cell * .24, height: cell * .24, borderRadius: cell, backgroundColor: T.lineStrong, marginBottom: 3 }} />
               <View style={{ width: cell * .32, height: cell * .38, borderRadius: cell * .12, backgroundColor: T.lineStrong, transform: [{ rotate: `${(i % 3 - 1) * 8}deg` }] }} />
               <View style={{ flexDirection: 'row', gap: cell * .06, marginTop: 2 }}>
                 <View style={{ width: cell * .08, height: cell * .16, borderRadius: cell, backgroundColor: T.lineStrong }} />
                 <View style={{ width: cell * .08, height: cell * .16, borderRadius: cell, backgroundColor: T.lineStrong }} />
               </View>
-            </View>)}
+            </Pressable>)}
         </ScrollView>
       : <Text style={{ paddingHorizontal: 12, paddingVertical: 16, fontSize: 12, color: T.muted }}>이 분류에는 아직 그림이 없어요</Text>}
     <Text style={{ paddingHorizontal: 12, paddingBottom: 8, fontSize: 11, color: T.faint }}>{BUILTIN_REFERENCES.ready ? '누르면 캔버스에 참고로 깔려요' : '관절 인형 그림은 준비 중이에요'}</Text>

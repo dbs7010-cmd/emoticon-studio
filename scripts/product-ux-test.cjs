@@ -166,6 +166,20 @@ const saved = async (dirty = true) => {
   assert.deepEqual(lastCommand('zoom'), { type: 'zoom', zoom: 1 }, '누르면 캔버스가 100% 로 돌아간다');
   assert.equal(labelled('원래 크기로 보기').length, 0, '100% 로 돌아오면 표시가 사라진다');
 
+  // ── 44.2차 참고: 찾는 동안에는 4열 격자, 고르면 격자가 물러나고 캔버스가 넓어진다 ─────────────────────
+  await press('참고');
+  await press('기본 레퍼런스');
+  const refGrid = () => tree.root.findAll(n => n.props.testID === '기본 레퍼런스 격자');
+  assert.equal(refGrid().length, 1, '참고 › 기본 레퍼런스: 탐색용 격자');
+  assert.ok(tree.root.findAll(n => n.props.testID === '기본 레퍼런스 자리').length >= 4, '격자에 칸이 있다');
+  await press('포즈 기본 레퍼런스 1 준비 중');
+  assert.equal(refGrid().length, 0, '고르면 큰 격자는 접힌다(캔버스에서 맞추는 단계)');
+  assert.equal(labelled('기본 레퍼런스 다시 찾기').length, 1, '다시 찾기로 언제든 격자를 연다');
+  await press('기본 레퍼런스 다시 찾기');
+  assert.equal(refGrid().length, 1, '다시 찾기를 누르면 같은 4열 격자가 돌아온다');
+  await press('내 사진');
+  await press('참고');
+
   // ── 2. 잠금 밀도: 색 ─────────────────────────────────────────────────────────────────────
   await press('색');
   assert.equal(canvasAreaNode().props.style.justifyContent, 'flex-start', '색 패널을 연 동안 캔버스는 위 빈 띠 쪽으로 올라가 그림이 패널 밖에 더 보인다(43.1차)');
