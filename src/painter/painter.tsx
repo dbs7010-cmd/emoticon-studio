@@ -372,6 +372,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     if (!initialized) { if (action === 'close') onClose(); return; }
     if (proIsNew && !proHandled.current) { pendingAction.current = action; setPanel(null); setDrawRail(false); setRefRail(false); setProSheet(true); return; }
     proHandled.current = false;
+    // 입력칸에 확정하지 않은 문구가 남아 있으면 저장 직전에 그대로 넣는다 — '적용'을 누르지 않았다고 조용히 잃지 않는다(45.1차).
+    // 빈 입력은 건드리지 않는다: 문구를 지우는 일은 '문구 지우기'로만 한다.
+    const pendingCaption = captionOpen ? captionDraft.trim() : '';
+    if (pendingCaption && pendingCaption !== (scene.caption?.text ?? '')) send({ type: 'caption', caption: { text: pendingCaption, place: captionPlace, color } });
     inFlight.current = true; nextAction.current = action;
     // 자동저장('stay')은 화면을 잠그지 않는다. 칸을 떠나는 저장(닫기·완성·이동·공유)만 잠깐 잠근다.
     if (action === 'stay') quiet.current = true; else setBusy(true);
@@ -643,7 +647,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           </View>
         </View>}
         {/* 표현 가이드에서 고른 표현(44.2차): 그리기 전 한 줄. 첫 획을 그으면 사라지고, X 로 바로 닫는다. 캔버스 위 상주 UI 가 아니다. */}
-        {tab === 'draw' && !!guideHint && guideHintOpen && !scene.dirty && !offerContinue && <View style={{ position: 'absolute', left: 12, right: 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
+        {tab === 'draw' && !!guideHint && guideHintOpen && !scene.dirty && <View style={{ position: 'absolute', left: 12, right: 12, top: offerContinue ? 76 : 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
           <MaterialCommunityIcons name="lightbulb-on-outline" size={14} color={C.muted} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}><Text style={{ fontWeight: '800' }}>{guideHint.name}</Text> · {guideHint.hint}</Text>
           <IconButton label="표현 힌트 닫기" icon="close" size={16} color={C.muted} onPress={() => { setGuideHintOpen(false); onGuideHintDone?.(); }} />
@@ -700,7 +704,6 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             onRight={slot.number < slotCount ? () => { setPanel(null); save(slot.number + 1); } : undefined} />
           <MenuButton icon="image-plus" title="그림 가져오기" onPress={() => { setPanel(null); if (cutouts.length) setCutoutPicker(true); else void importDrawing(); }} />
           {hasPrevious && !continueAvailable && <MenuButton icon="content-copy" title="이전 그림 복사" onPress={() => { setPanel(null); copyPrevious(); }} />}
-          <MenuButton icon="magnify-plus-outline" title={`크게 보기 ${zoom.toFixed(1)}배`} onPress={() => { const n = zoom >= 3 ? 1 : zoom + 1; setZoom(n); send({ type: 'zoom', zoom: n }); setPanel(null); }} />
           <MenuButton icon="share-variant" title="이 칸 공유" onPress={() => { setPanel(null); save('share'); }} />
           <MenuButton icon="clipboard-check-outline" title="이 칸 검사" onPress={() => { setPanel(null); setShowQA(true); }} />
           <MenuButton danger icon="delete-outline" title="지금 레이어 비우기" onPress={() => { setPanel(null); Alert.alert('지금 레이어 비우기', '지금 고른 레이어의 그림이 지워져요. 되돌리기로 되살릴 수 있어요.', [{ text: '취소', style: 'cancel' }, { text: '비우기', style: 'destructive', onPress: () => send({ type: 'clear' }) }]); }} />
@@ -830,7 +833,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             {scene.references.map((ref, index) => {
               const image = slot.referenceImages.find(i => i.path === ref.path), active = ref.id === scene.activeReferenceId;
               return <RailTile key={ref.id} label={`참고 ${index + 1} 선택`} caption={`참고 ${index + 1}`} image={image ? imageUri(image.path) : undefined} icon="image-outline" selected={active} faded={!ref.visible}
-                onPress={() => { send({ type: 'setActiveReference', id: active ? null : ref.id }); setPanel(null); }} />;
+                // 타일을 누르는 것은 "이 참고로 작업하겠다"는 뜻이다: 고르면 캔버스에 바로 보인다(45.1차).
+                // 다시 누르면 선택만 풀고(보임 상태는 그대로), 숨기기는 눈 아이콘이 맡는다 — 앱이 이유 없이 다시 켜지 않는다.
+                onPress={() => { send(active ? { type: 'setActiveReference', id: null } : { type: 'toggleReference', id: ref.id }); setPanel(null); }} />;
             })}
           </ScrollView>
         </View>}

@@ -444,6 +444,23 @@ const saved = async (dirty = true) => {
   const page = tree.root.findAll(n => n.type === 'ScrollView' && Array.isArray(n.props.contentContainerStyle))[0];
   assert.ok(page && Object.assign({}, ...page.props.contentContainerStyle.filter(Boolean)).flexGrow === 1, '홈은 화면 높이를 채워 아래 행동을 바닥에 둔다');
 
+  // ── 45.1차: 가이드 힌트는 고른 그 칸의 것이고, 적용하지 않은 문구는 저장과 함께 확정된다 ─────────────
+  await press('표현 가이드');
+  await press('안녕 · 손 크게 흔들기');
+  assert.equal(tree.root.findAllByType('WebView').length, 1, '가이드에서 고르면 그리기 화면이 열린다');
+  await ready();
+  const guideLine = () => tree.root.findAll(n => n.type === 'Text' && [n.props.children].flat(9).filter(x => typeof x === 'string').join('').includes('손 크게 흔들기'));
+  assert.equal(guideLine().length, 1, '고른 표현이 한 줄 힌트로 따라온다');
+  await press('문구');
+  await act(async () => tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용')[0].props.onChangeText('안 눌렀어'));
+  await press('완성 후 다음');
+  assert.equal(lastCommand('caption').caption.text, '안 눌렀어', '적용을 누르지 않아도 저장 전에 문구가 캔버스로 확정된다');
+  await saved(true);
+  assert.equal(guideLine().length, 0, '다음 칸으로 넘어가면 같은 힌트가 다시 뜨지 않는다');
+  // 다음 칸은 아직 캔버스가 준비되기 전이라 닫기는 저장 없이 바로 끝난다.
+  await press('그리기 닫기');
+  await press('뒤로');
+
   // ── 8. 글자 기호를 아이콘 대신 쓰지 않는다(소스) ─────────────────────────────────────────
   for (const file of ['App.tsx', 'src/painter/painter.tsx', 'src/painter/motion-panel.tsx']) {
     const src = fs.readFileSync(file, 'utf8');

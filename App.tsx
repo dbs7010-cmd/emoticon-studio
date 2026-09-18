@@ -159,6 +159,24 @@ function Studio() {
   const project = store?.projects.find(p => p.id === projectId), slot = project?.slots.find(s => s.number === slotNumber);
   function back() { if (busy) return; if (slotNumber !== null) setSlotNumber(null); else if (canonOpen) setCanonOpen(false); else if (screen !== 'board') setScreen('board'); else setProjectId(null); }
   useEffect(() => { const sub = BackHandler.addEventListener('hardwareBackPress', () => { if (painting) return false; if (projectId) { back(); return true; } if (homeView !== 'home') { setHomeView('home'); return true; } return false; }); return () => sub.remove(); }, [projectId, slotNumber, canonOpen, busy, painting, screen, homeView]);
+  // 상태 수명(45.1차).
+  //   PROJECT-SCOPED — 세트가 바뀌면 남을 이유가 없다: 내보내기 결과·부가 이미지 선택·움직임 한 번에·보드 일시 상태.
+  //   SCREEN-SCOPED  — 보드에서만 산다: 칸 순서 바꾸기·전체 재생.
+  //   SESSION-SCOPED — 앱을 켜 둔 동안 이어진다: 마지막 도구·PRO 상태·최근 색(저장은 세트/스토어가 맡는다).
+  // 세트를 여닫을 때 한 곳에서 정리한다. 전역 초기화 장치는 두지 않는다.
+  const openProject = useRef<string | null>(null);
+  useEffect(() => {
+    if (openProject.current === projectId) return;
+    openProject.current = projectId;
+    setLastExport(null); setHandoffCuts([]);
+    setExtraKind('icon'); setExtraSlot(null); setPlace({ scale: 1, dx: 0, dy: 0 });
+    setBatchSource(null); setBatchPicked([]); setBatchResults([]); setBatchSaved(null); setBatchPreview(null);
+    setReordering(false); setPlaying(false); setPlayIndex(0); setReturnToExport(false);
+    // 알림은 세트를 떠날 때만 지운다 — 세트를 여는 순간 띄운 안내(예: 칸이 다 찼어요)를 바로 지우지 않기 위해서다.
+    if (!projectId) setNotice('');
+  }, [projectId]);
+  // 보드의 일시 상태는 보드를 떠나면 끝난다(칸을 열거나 내보내기·부가 이미지로 가면).
+  useEffect(() => { if (painting || screen !== 'board') { setReordering(false); setPlaying(false); } }, [painting, screen]);
   async function task(label: string, work: () => Promise<void>) { if (busy) return; setBusy(label); try { await work(); } catch (e) { Alert.alert('하지 못했어요', userMessage(e)); } finally { setBusy(''); } }
   async function analyzed(image: LocalImage): Promise<LocalImage> { if (image.metrics) return image; try { return { ...image, metrics: await analyzer.current!.analyze(image) }; } catch { setNotice('일부 그림을 검사하지 못했어요. 그 칸은 확인이 필요하다고 표시돼요.'); return image; } }
   // Re-reads the saved files and replaces every verdict. No earlier PASS survives this.
@@ -211,6 +229,7 @@ function Studio() {
     const latest = current.current?.projects.find(p => p.id === projectId);
     if (!latest || slotNumber === null) return;
     const next = nextUnfinished(latest, slotNumber);
+    setGuideHint(null);
     if (next === null) {
       setPainting(false); setSlotNumber(null);
       if (returnToExport) { setScreen('export'); setReturnToExport(false); }
@@ -251,9 +270,11 @@ function Studio() {
     setHomeView('home');
     const target = sortedProjects[0];
     if (!target) { createNewProject(); return; }
+    const open = nextUnfinished(target, target.lastSlot ?? 0);
     setProjectId(target.id); setScreen('board');
-    setSlotNumber(nextUnfinished(target, target.lastSlot ?? 0) ?? target.lastSlot ?? 1);
-    setPainting(true);
+    // 칸이 다 찬 세트에서는 완성한 칸을 대신 열지 않는다 — 보드를 보여 주고 고를 사람에게 맡긴다(45.1차).
+    if (open === null) { setGuideHint(null); setNotice('이 세트는 칸이 다 찼어요. 고칠 칸을 고르거나 새 이모티콘 세트를 만들어 주세요.'); return; }
+    setSlotNumber(open); setPainting(true);
   }
   const [pendingImport, setPendingImport] = useState<string | null>(null);
   function startFromImage() {
@@ -1247,7 +1268,7 @@ function Studio() {
       onSetReference={useAsReference}
       onCopyPrevious={copyPreviousWork}
       onClose={() => { setPainting(false); setSlotNumber(null); setGuideHint(null); if (returnToExport) { setScreen('export'); setReturnToExport(false); } }}
-      onNavigate={number => setSlotNumber(number)}
+      onNavigate={number => { setGuideHint(null); setSlotNumber(number); }}
       onImportDrawing={async () => { const picked = await pickImages(); return picked[0] ? await dataUrl(picked[0]) : null; }}
       cutouts={(store?.cutouts ?? []).map(c => ({ id: c.id, name: c.name, path: c.image.path }))}
       onKeepCutout={async data => keepCutout(data)}

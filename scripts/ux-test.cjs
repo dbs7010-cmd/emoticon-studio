@@ -612,6 +612,23 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  await press('다시 공유');
  await act(async()=>{});
  assert.equal(shared.length,2,'a cancelled share can always be sent again');
+ // 45.1차: 내보내기 결과는 그 세트의 것이다 — 다른 세트로 가면 배너도 '다시 공유'도 따라가지 않는다.
+ await press('뒤로');await press('뒤로');
+ await press('이전 프로젝트');await press('내보내기');
+ assert.equal(labelled('다시 공유').length,0,'다른 세트의 내보내기 결과가 따라오지 않는다');
+ assert.ok(!shown().some(t=>t.includes('칸을 묶었어요')),'다른 세트의 묶음 안내도 남지 않는다');
+ assert.equal(shared.length,2,'세트를 오가는 동안 아무 것도 공유되지 않는다');
+ await press('뒤로');await press('뒤로');await press('새 이모티콘 세트');
+ // 45.1차: 보드의 일시 상태(전체 재생·순서 바꾸기)는 보드를 떠나면 끝난다.
+ await press('전체 재생');
+ assert.equal(labelled('전체 재생 멈추기').length,1,'보드에서 전체 재생이 켜진다');
+ await act(async()=>tiles()[0].props.onPress());await init();
+ await press('그리기 닫기');await saved(false);
+ assert.equal(labelled('전체 재생').length,1,'칸을 열고 닫으면 전체 재생은 멈춰 있다');
+ await press('세트 메뉴');await press('칸 순서 바꾸기');
+ assert.equal(labelled('순서 바꾸기 끝').length,1,'순서 바꾸기 모드가 켜진다');
+ await press('내보내기');await press('뒤로');
+ assert.equal(labelled('순서 바꾸기 끝').length,0,'보드를 떠났다 오면 순서 바꾸기는 꺼져 있다');
  // 42차 실기기: '저장된 그림 다시 검사'가 빈 칸마다 "그림 파일 없음" FAIL 을 저장해 내보내기에 가짜 손볼 곳 29줄이 생겼다.
  {
   const base=fresh();
@@ -674,12 +691,14 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  assert.equal(lastCommand('init').references.filter(r=>r.visible).length,1,'exactly one reference opens on');
  scene={type:'state',undo:false,redo:false,dirty:false,activeLayerId:'draw-1',activeReferenceId:null,caption:null,layers:lastCommand('init').layers,references:lastCommand('init').references};
  await message(scene);await message({type:'initialized'});
- // References: selecting is not toggling, the eye is the only visibility control, and removing
- // one takes it out of every cut of the set.
+ // References(45.1차): 타일을 고르면 그 참고가 캔버스에 바로 보인다. 숨기기는 눈이 맡고, 삭제는 세트 전체에서 뺀다.
  const refId=lastCommand('init').references[0].id;
  await press('참고');
  await press('참고 1 선택');
- assert.deepEqual(lastSent(),{type:'setActiveReference',id:refId},'tapping a thumbnail only selects it');
+ assert.deepEqual(lastSent(),{type:'toggleReference',id:refId},'타일을 고르면 그 참고가 캔버스에 보인다');
+ scene={...scene,activeReferenceId:refId,references:scene.references.map(r=>({...r,visible:r.id===refId}))};await message(scene);
+ await press('참고 1 선택');
+ assert.deepEqual(lastSent(),{type:'setActiveReference',id:null},'고른 타일을 다시 누르면 선택만 풀린다(앱이 마음대로 숨기지 않는다)');
  scene={...scene,activeReferenceId:refId};await message(scene);
  await press('참고 숨기기');
  assert.deepEqual(lastSent(),{type:'toggleReference',id:refId},'the eye is the one visibility control');
