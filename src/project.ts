@@ -140,6 +140,8 @@ export function parseStore(raw: string): Store {
         if (s.work.version !== 1 || !Array.isArray(s.work.layers) || !Array.isArray(s.work.references) || s.work.layers.length < 1 || s.work.layers.length > 4) throw new Error('작업 레이어 데이터가 손상되었습니다.');
         const caption = s.work.caption;
         if (caption !== undefined && (typeof caption.text !== 'string' || !['top', 'bottom'].includes(caption.place) || typeof caption.color !== 'string')) throw new Error('문구 데이터가 손상되었습니다.');
+        // 글씨체는 선택 항목이다(45.6차): 없으면 기본, 있으면 아는 값이어야 한다. 옛 저장본은 이 줄을 그냥 지나간다.
+        if (caption?.style !== undefined && !['basic', 'serif', 'thick'].includes(caption.style)) throw new Error('문구 데이터가 손상되었습니다.');
         const layers = [...s.work.layers, ...s.work.references];
         const ids = new Set(layers.map(l => l.id));
         if (ids.size !== layers.length || !ids.has(s.work.activeLayerId)) throw new Error('활성 레이어 데이터가 손상되었습니다.');

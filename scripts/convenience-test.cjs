@@ -266,7 +266,36 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.deepEqual(lastCommand('captionPick'), { type: 'captionPick', on: true }, '적용한 글씨는 골라진 채로 캔버스에 남는다');
   assert.equal(lastCommand('caption').caption.text, '안녕', '고친 글자가 캔버스로 간다');
 
+  // ── 12. 45.6 빠른 도구: 뜻이 분명한 것은 아이콘만, 접근성 이름은 그대로 ─────────────────────
+  assert.equal(byTestID('빠른 지우개')[0].findAll(n => n.type === 'Text').length, 0, '지우개는 그림만으로 통한다');
+  assert.equal(byTestID('빠른 채우기')[0].findAll(n => n.type === 'Text').length, 0, '채우기도 이름을 떼었다');
+  assert.equal(byTestID('빠른 선택')[0].findAll(n => n.type === 'Text').length, 1, '선택은 아이콘만으로 알기 어려워 짧은 이름을 남긴다');
+  for (const name of ['지우개', '채우기', '선택']) {
+    assert.equal(labelled(name).length, 1, name + ': 접근성 이름은 그대로 하나');
+    assert.ok((styleOf(labelled(name)[0]).minHeight ?? 0) >= 44, name + ': 손가락 자리 유지');
+  }
+  await press('지우개');
+  assert.equal(styleOf(labelled('지우개')[0]).backgroundColor, '#FFF2B6', '고른 빠른 도구는 옅은 노랑으로 바로 구분된다');
+  assert.equal(styleOf(labelled('채우기')[0]).backgroundColor, 'transparent', '고르지 않은 것은 조용하다');
+  await press('브러시');
+
+  // ── 13. 문구 글씨체: 고르면 캔버스에 바로, 저장에도 남고, 없던 저장본도 그대로 열린다 ─────────
+  scene = { ...scene, caption: { text: '고마워', place: 'bottom', color: '#242424', style: 'basic' } };
+  await message(scene);
+  await press('문구');
+  await press('문구 글씨 또박');
+  assert.equal(lastCommand('caption').caption.style, 'serif', '고른 글씨체가 캔버스로 간다');
+  assert.equal(lastCommand('caption').caption.text, '고마워', '글자와 자리는 그대로');
+  await press('문구 글씨 도톰');
+  assert.equal(lastCommand('caption').caption.style, 'thick', '다른 성격으로도 바꾼다');
+  await press('문구 닫기');
+  // 예전 저장본: 글씨체 항목이 아예 없어도 그대로 읽히고, 없는 채로 보존된다(옮겨 심기 필요 없음).
+  const old = loadStore().store;
+  const oldCut = { ...old.projects[0].slots[0], work: { version: 1, activeLayerId: 'draw-1', layers: [{ id: 'draw-1', name: '그림 1', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 }], references: [], caption: { text: '옛 문구', place: 'top', color: '#242424' } } };
+  saveStore({ ...old, revision: old.revision + 1, projects: [{ ...old.projects[0], slots: old.projects[0].slots.map((x, i) => i === 0 ? oldCut : x) }] });
+  const reread = loadStore().store.projects[0].slots[0].work.caption;
+  assert.deepEqual(reread, { text: '옛 문구', place: 'top', color: '#242424' }, '글씨체가 없던 저장본은 그대로 남는다(값을 몰래 넣지 않는다)');
   await act(async () => tree.unmount());
-  console.log('PASS: convenience — 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 선 종류 실제 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, 색상환 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
+  console.log('PASS: convenience — 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 선 종류 실제 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, 색상환 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -151,7 +151,8 @@ const drawing = id => sandbox.window.__layer(id);
   const layerBeforeCaption = drawing('draw-1').slice();
   await command({ type: 'caption', caption: { text: '고마워요', place: 'bottom', color: '#E94F4F' } });
   const withWords = messages.filter(m => m.type === 'state').at(-1);
-  assert.deepEqual(withWords.caption, { text: '고마워요', place: 'bottom', color: '#E94F4F' }, 'the words are part of the scene');
+  // 45.6: 글씨체는 선택 항목이지만 캔버스는 늘 아는 값 하나로 정리해서 돌려준다(없던 저장본은 'basic').
+  assert.deepEqual(withWords.caption, { text: '고마워요', place: 'bottom', color: '#E94F4F', style: 'basic' }, 'the words are part of the scene');
   assert.equal(withWords.dirty, true, 'and count as unsaved work');
   assert.deepEqual([...drawing('draw-1')], [...layerBeforeCaption], 'but they are never burned into a drawing layer');
 

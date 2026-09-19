@@ -21,12 +21,18 @@ function state(){send({type:'state',undo:history.length>0,redo:future.length>0,d
 // 문구는 이제 자리를 스스로 가진다. place(위/아래)는 **처음 놓이는 자리**이고, 그 뒤 사용자가 손가락으로
 // 옮기거나 키우거나 돌린 값이 dx·dy·scale·rot 에 쌓인다. 없으면 예전처럼 위/아래 가운데에 놓인다 —
 // 그래서 예전에 저장한 작품이 그대로 열린다.
+// 글씨 성격(45.6차): 기기에 이미 있는 글꼴만 쓴다 — 기본(고딕)·또박(명조)·도톰(더 굵고 테두리도 두껍게).
+function capFace(){const s=caption&&caption.style;
+ if(s==='serif')return {w:'700',f:'serif',o:.22};
+ if(s==='thick')return {w:'900',f:'system-ui, sans-serif',o:.36};
+ return {w:'700',f:'system-ui, sans-serif',o:.22};}
+function capFont(px){const c=capFace();return c.w+' '+px+'px '+c.f;}
 function captionSpot(g){
  if(!caption||!caption.text.trim())return null;
  const text=caption.text.trim(),room=W-32;
  let px=Math.round(H*.11),wide=0;
- for(;px>10;px--){g.font='700 '+px+'px system-ui, sans-serif';wide=g.measureText(text).width;if(wide<=room)break;}
- if(wide>room){px=Math.max(1,Math.floor(px*room/wide));g.font='700 '+px+'px system-ui, sans-serif';wide=g.measureText(text).width;}
+ for(;px>10;px--){g.font=capFont(px);wide=g.measureText(text).width;if(wide<=room)break;}
+ if(wide>room){px=Math.max(1,Math.floor(px*room/wide));g.font=capFont(px);wide=g.measureText(text).width;}
  const x=W/2+(caption.dx||0),y=(caption.place==='top'?Math.round(H*.06):H-Math.round(H*.06))+(caption.dy||0);
  const scale=caption.scale||1,rot=caption.rot||0;
  // 글자 상자. 기준선이 위/아래로 갈리므로 상자의 세로 위치도 그에 맞춘다.
@@ -42,8 +48,8 @@ function drawCaption(g,d){
  const cx=spot.x,cy=spot.box.y+spot.box.h/2;
  g.translate(cx,cy);g.rotate(spot.rot*Math.PI/180);g.scale(spot.scale,spot.scale);g.translate(-cx,-cy);
  g.textAlign='center';g.textBaseline=caption.place==='top'?'top':'bottom';
- g.font='700 '+spot.px+'px system-ui, sans-serif';
- g.lineJoin='round';g.lineWidth=Math.max(3,spot.px*.22);g.strokeStyle='#FFFFFF';g.strokeText(spot.text,spot.x,spot.y);
+ g.font=capFont(spot.px);
+ g.lineJoin='round';g.lineWidth=Math.max(3,spot.px*capFace().o);g.strokeStyle='#FFFFFF';g.strokeText(spot.text,spot.x,spot.y);
  g.fillStyle=css(caption.color||'#242424');g.fillText(spot.text,spot.x,spot.y);
  g.restore();
 }
@@ -834,7 +840,8 @@ async function command(m){try{
  }
  if(m.type==='smooth'){smoothing=m.on!==false;state();}
  if(m.type==='clear'){const l=activeDraw();if(l){checkpoint();l.bitmap.getContext('2d').clearRect(0,0,W,H);render();state();}}
- if(m.type==='caption'){checkpoint();caption=m.caption&&m.caption.text.trim()?{...(caption||{}),text:m.caption.text,place:m.caption.place==='top'?'top':'bottom',color:m.caption.color||caption?.color||'#242424'}:null;dirty=true;render();state();}
+ if(m.type==='caption'){checkpoint();const face=['basic','serif','thick'].indexOf(m.caption&&m.caption.style)>=0?m.caption.style:(caption&&caption.style)||'basic';
+  caption=m.caption&&m.caption.text.trim()?{...(caption||{}),text:m.caption.text,place:m.caption.place==='top'?'top':'bottom',color:m.caption.color||caption?.color||'#242424',style:face}:null;dirty=true;render();state();}
  // An explicit copy of another cut. Every bitmap is decoded fresh here, so editing or clearing
  // the copy can never reach back into the drawing it came from.
  if(m.type==='copyWork'){

@@ -178,7 +178,9 @@ async function ready() {
   assert.ok(cells.every(n => flat(n.props.style).flex === 1), '세 칸이 한 줄을 나눠 쓴다');
   const unselected = cells.filter(n => !n.props.accessibilityState.selected);
   assert.ok(unselected.every(n => (flat(n.props.style).borderWidth ?? 0) === 0 && flat(n.props.style).backgroundColor === 'transparent'), '고르지 않은 칸은 테두리도 바탕도 없다 — 세 장의 카드가 아니다');
-  assert.ok(cells.every(n => (flat(n.props.style).minHeight ?? 0) >= 40 && (flat(n.props.style).minHeight ?? 0) <= 48), '낮고 넓다(40~48dp)');
+  // 45.6: 칸 안에 실제 획 견본 + 도구 표시 + 이름이 들어가 52dp 로 조금 높아졌다(여전히 카드 세 장이 아니라 한 줄 고르개).
+  assert.ok(cells.every(n => { const h = flat(n.props.style).minHeight ?? 0; return h >= 40 && h <= 56; }), '낮고 넓다(40~56dp)');
+  assert.ok(cells.every(n => n.findAll(x => x.type === 'Image').length === 1), '칸마다 그 브러시의 실제 획 견본');
   assert.equal(labelled('고급 브러시 PRO').length, 1, '고급 브러시는 네 번째 칸이 아니라 아래 한 줄');
   assert.equal(labelled('선 보정').length, 0, '진하기·보정은 세부 설정 안');
   await press('브러시 닫기');

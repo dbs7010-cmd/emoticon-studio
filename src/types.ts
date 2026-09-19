@@ -7,7 +7,13 @@ export type WorkLayer = LayerTransform & { image?: LocalImage };
 // Editable text that is drawn into the exported image. Absent means no words at all, the default.
 // dx·dy·scale·rot 은 사용자가 손가락으로 옮기고 키우고 돌린 값이다. 없으면 예전처럼 위/아래
 // 가운데에 놓인다 — 그래서 이 값들이 없던 저장 데이터도 그대로 열린다.
-export type Caption = { text: string; place: 'top' | 'bottom'; color: string; dx?: number; dy?: number; scale?: number; rot?: number };
+// 문구 글씨체(45.6차). 폰트 파일을 새로 넣지 않고 기기에 이미 있는 글꼴과 테두리 굵기로 세 가지 성격을 만든다.
+// 저장에는 선택 항목으로만 들어간다 — 이 값이 없는 예전 저장본은 'basic' 으로 열리고, 옮겨 심는 작업(migration)이 필요 없다.
+export type CaptionStyle = 'basic' | 'serif' | 'thick';
+export const CAPTION_STYLES: { key: CaptionStyle; title: string }[] = [
+  { key: 'basic', title: '기본' }, { key: 'serif', title: '또박' }, { key: 'thick', title: '도톰' },
+];
+export type Caption = { text: string; place: 'top' | 'bottom'; color: string; style?: CaptionStyle; dx?: number; dy?: number; scale?: number; rot?: number };
 export type PainterWork = { version: 1; activeLayerId: string; layers: WorkLayer[]; references: WorkLayer[]; caption?: Caption };
 export type MotionLoop = { count: number; fps: number; loop: number; delayMs: number; data: string; bytes: number; droppedColours: number; clipped: boolean;
   // 카카오가 받는 형식. 기기가 WebP 인코딩을 못 하면 null 이고, 그때는 GIF 만 남는다.

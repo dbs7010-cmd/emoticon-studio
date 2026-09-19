@@ -14,7 +14,8 @@ import { KAKAO_STATIC_SPEC } from '../constants/kakao-spec';
 import { usesPro } from '../project';
 import { dataUrl } from '../services/images';
 import { imageUri } from '../services/storage';
-import type { BrushSettings, Caption, LayerTransform, LocalImage, Motion, PainterExport, QA, SavedMotion, Slot } from '../types';
+import { CAPTION_STYLES } from '../types';
+import type { BrushSettings, Caption, CaptionStyle, LayerTransform, LocalImage, Motion, PainterExport, QA, SavedMotion, Slot } from '../types';
 
 type Scene = {
   undo: boolean;
@@ -98,6 +99,9 @@ const C = T;
 const PROBE = (Constants.expoConfig?.extra as { internalReview?: boolean } | undefined)?.internalReview === true;
 // 두 손가락 확대 안내는 앱을 켠 뒤 한 번만 보인다(43.1차). 저장 데이터에는 남기지 않는다.
 let zoomHintShown = false;
+// 앱을 켜 둔 동안 마지막으로 고른 문구 글씨체(45.6차). 칸을 옮겨도 이어진다 — 24칸을 만드는 동안 매번 다시 고르지 않는다.
+// 저장된 칸은 자기 글씨체를 그대로 쓰고, 앱을 껐다 켜면 기본으로 돌아온다(저장 구조를 늘리지 않는다).
+let sessionCaptionFace: CaptionStyle = 'basic';
 // 패널이 열리고 닫힐 때만 짧게 미끄러진다. 200ms 는 눈이 변화를 따라갈 만큼이고, 기다렸다고
 // 느낄 만큼은 아니다. 그림 자체에는 어떤 움직임도 걸지 않는다 — 작품이 흔들려 보이면 안 된다.
 if (Platform.OS === 'android') UIManager?.setLayoutAnimationEnabledExperimental?.(true);
@@ -200,6 +204,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [proSheet, setProSheet] = useState(false);
   const pendingAction = useRef<SaveAction | null>(null), proHandled = useRef(false);
   const [captionOpen, setCaptionOpen] = useState(false), [captionDraft, setCaptionDraft] = useState(''), [captionPlace, setCaptionPlace] = useState<Caption['place']>('bottom');
+  // 문구 글씨체(45.6차): 한 번 고르면 다음 칸에서도 그대로 — 24칸을 만드는 동안 같은 성격을 다시 고르지 않는다.
+  const [captionFace, setFace] = useState<CaptionStyle>(sessionCaptionFace);
+  const setCaptionFace = (next: CaptionStyle) => { sessionCaptionFace = next; setFace(next); };
   // 참고 줄의 두 갈래: 내 사진 / 기본 레퍼런스(관절 인형 — 에셋 들어오기 전에는 준비 중 자리표시).
   const [refSource, setRefSource] = useState<'mine' | 'builtin'>('mine');
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
@@ -427,7 +434,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     // 입력칸에 확정하지 않은 문구가 남아 있으면 저장 직전에 그대로 넣는다 — '적용'을 누르지 않았다고 조용히 잃지 않는다(45.1차).
     // 빈 입력은 건드리지 않는다: 문구를 지우는 일은 '문구 지우기'로만 한다.
     const pendingCaption = captionOpen ? captionDraft.trim() : '';
-    if (pendingCaption && pendingCaption !== (scene.caption?.text ?? '')) send({ type: 'caption', caption: { text: pendingCaption, place: captionPlace, color } });
+    if (pendingCaption && pendingCaption !== (scene.caption?.text ?? '')) send({ type: 'caption', caption: { text: pendingCaption, place: captionPlace, color, style: captionFace } });
     inFlight.current = true; nextAction.current = action;
     // 자동저장('stay')은 화면을 잠그지 않는다. 칸을 떠나는 저장(닫기·완성·이동·공유)만 잠깐 잠근다.
     if (action === 'stay') quiet.current = true; else setBusy(true);
@@ -455,6 +462,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   function openCaption() {
     const current = scene.caption ?? slot.work?.caption ?? null;
     setCaptionDraft(current?.text ?? ''); setCaptionPlace(current?.place ?? 'bottom');
+    if (current?.style) setCaptionFace(current.style);
     ease(); setDrawRail(false); setRefRail(false); setPanel('caption'); setCaptionOpen(true);
   }
   // 문구 색(45.5차): 지금까지 문구 패널의 동그라미는 '지금 색'을 보여 주기만 했다. 이제 누르면 실제로 바뀐다.
@@ -463,9 +471,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     pickColor(next);
     if (scene.caption?.text) send({ type: 'caption', caption: { ...scene.caption, color: next } });
   }
+  function changeCaptionFace(next: CaptionStyle) {
+    setCaptionFace(next);
+    if (scene.caption?.text) send({ type: 'caption', caption: { ...scene.caption, style: next } });
+  }
   function applyCaption(text: string) {
     const clean = text.trim();
-    send({ type: 'caption', caption: clean ? { text: clean, place: captionPlace, color } : null });
+    send({ type: 'caption', caption: clean ? { text: clean, place: captionPlace, color, style: captionFace } : null });
     // 입력이 끝나면 키보드를 내리고 글씨를 고른 상태로 둔다 — 바로 캔버스에서 끌어 옮기고 손잡이로 크기를 바꾼다.
     Keyboard.dismiss();
     if (clean) send({ type: 'captionPick', on: true });
@@ -530,10 +542,15 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     {/* 선 종류(45.5차): 글자를 읽지 않아도 어떤 선이 나오는지 보이게 — 칸마다 그 브러시의 실제 선 견본. */}
     <View testID="선 종류" style={{ flexDirection: 'row', padding: 3, borderRadius: 14, backgroundColor: C.surface2 }}>
       {BRUSHES.map(b => { const on = !effectiveBrush.preset && brush === b.key;
+        const face: IconName = b.key === 'pen' ? 'fountain-pen-tip' : b.key === 'brush' ? 'brush' : 'pencil';
         return <Pressable key={b.key} accessibilityRole="button" accessibilityLabel={b.title} accessibilityState={{ selected: on }} onPress={() => selectBrush(b.key)}
-          style={({ pressed }) => ({ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', gap: 2, paddingVertical: 4, borderRadius: 11, backgroundColor: on ? C.paper : pressed ? C.fill : 'transparent', borderWidth: 0, ...(on ? Elev[1] : null) })}>
-          <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '82%', height: 14, opacity: on ? 1 : .45 }} resizeMode="contain" />
-          <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
+          style={({ pressed }) => ({ flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 5, borderRadius: 11, backgroundColor: on ? C.paper : pressed ? C.fill : 'transparent', borderWidth: 0, ...(on ? Elev[1] : null) })}>
+          {/* 획 견본은 지금 쓰는 색으로 칠해진다 — 이름을 읽기 전에 "이 브러시는 이런 선"이 먼저 보인다(45.6차). */}
+          <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '84%', height: 16, tintColor: on ? color : C.lineStrong }} resizeMode="contain" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+            <MaterialCommunityIcons name={face} size={12} color={on ? C.ink : C.muted} />
+            <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
+          </View>
         </Pressable>; })}
     </View>
     {pro
@@ -625,7 +642,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
   const brushIcon: IconName = effectiveBrush.preset ? 'brush-variant' : brush === 'pen' ? 'fountain-pen-tip' : brush === 'brush' ? 'brush' : 'pencil';
   // 아래 줄은 '지금 그리는 손'이다: 브러시와 색이 주인공, 나머지 셋은 모드를 바꾸는 빠른 칸(45.5차).
-  const quickTools: [Tool, string, IconName][] = [['eraser', '지우개', 'eraser'], ['fill', '채우기', 'format-color-fill'], ['select', '선택', 'select-drag']];
+  // 네 번째 값: 아이콘 옆에 이름을 남길지. 처음 보는 사람이 그림만으로 알 수 있는 것은 이름을 떼고, 애매한 것만 남긴다.
+  const quickTools: [Tool, string, IconName, boolean][] = [['eraser', '지우개', 'eraser', false], ['fill', '채우기', 'format-color-fill', false], ['select', '선택', 'select-drag', true]];
   const brushTitle = effectiveBrush.preset ? (PRO_BRUSHES.find(p => p.key === effectiveBrush.preset)?.title ?? '브러시') : (BRUSHES.find(b => b.key === brush)?.title ?? '브러시');
   return <Modal onRequestClose={() => { if (Keyboard.isVisible()) { Keyboard.dismiss(); return; } if (panel) { ease(); setPanel(null); return; } if (drawRail || refRail) { ease(); setDrawRail(false); setRefRail(false); return; } if (showCanon) { setShowCanon(false); return; } save('close'); }} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -655,7 +673,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             아래 도구 줄은 '지금 그리는 손'만 다룬다. 레이어는 몇 번째를 쓰는 중인지 여기서 바로 읽힌다. */}
         {tab === 'draw' && ([['참고', refRail || showCanon, 'image-outline', '참고', () => { ease(); setRefRail(!refRail); setRefBrowse(true); setDrawRail(false); setPanel(null); setCaptionOpen(false); }],
            ['레이어', drawRail, 'layers-outline', layerBadge, () => { ease(); setDrawRail(!drawRail); setRefRail(false); setPanel(null); setCaptionOpen(false); }],
-           ['문구', panel === 'caption' || !!scene.captionPicked, 'format-text', '문구', () => { if (panel === 'caption') { ease(); setPanel(null); setCaptionOpen(false); } else { setDrawRail(false); setRefRail(false); openCaption(); } }]] as const).map(([label, on, icon, title, run]) =>
+           ['문구', panel === 'caption' || !!scene.captionPicked, 'format-text', '문구', () => { if (panel === 'caption') { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); } else { setDrawRail(false); setRefRail(false); openCaption(); } }]] as const).map(([label, on, icon, title, run]) =>
           <Pressable key={label} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }} onPress={run}
             style={{ minHeight: 48, paddingHorizontal: narrow ? 1 : 2, alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ height: 32, paddingHorizontal: narrow ? 6 : 8, borderRadius: 16, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: on ? C.accentSoft : 'transparent' }}>
@@ -733,7 +751,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {/* 패널이 열린 동안의 캔버스: 누르면 패널만 닫힌다. 이 손가락은 WebView 에 닿지 않으므로 채우기·획·지우기·선택이 일어나지 않는다.
             확대·이동 값은 캔버스 안에 있으므로 패널을 여닫아도 그대로다. */}
         {panelCovering && <Pressable testID="패널 닫기 막" accessibilityRole="button" accessibilityLabel="패널 닫고 그리기로"
-          onPress={() => { ease(); setPanel(null); setCaptionOpen(false); setDrawRail(false); }}
+          onPress={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); setDrawRail(false); }}
           style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />}
         {/* 굵기(45.4차): 캔버스 오른쪽 가장자리에서 세로로 끈다. 위로 굵게, 아래로 가늘게.
             43차에 문제가 된 '왼쪽 전체 높이 띠'와 달리 좁고(20dp) 가운데 40% 높이만 차지해 그림 자리를 거의 건드리지 않는다.
@@ -873,7 +891,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           {/* 미확정 변경은 '문구 적용'으로만 확정된다. 닫으면 고치던 글자는 버려지고 화면의 문구는 그대로 남는다.
               키보드가 올라오면 머리·지우기·아래 버튼을 접고 입력 한 줄(색 · 입력 · 키보드 닫기 · 적용)만 남긴다 —
               캔버스가 띠로 줄어 고치는 글씨가 잘리던 39차 P2. 입력칸은 같은 자리에 남아 포커스를 잃지 않는다. */}
-          {!typing && <SheetHeader title="문구" closeLabel="문구 닫기" onClose={() => { ease(); setPanel(null); setCaptionOpen(false); }} />}
+          {!typing && <SheetHeader title="문구" closeLabel="문구 닫기" onClose={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); }} />}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: typing ? 8 : 16, paddingTop: typing ? 8 : 0, paddingBottom: 8 }}>
             <Pressable accessibilityRole="button" accessibilityLabel="문구 색" onPress={() => { ease(); setCaptionOpen(false); setPanel('color'); }} hitSlop={10} style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color, borderWidth: 2, borderColor: '#FFFFFF', ...{ shadowColor: '#000', shadowOpacity: .15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } } }} />
             <TextInput accessibilityLabel="문구 내용" value={captionDraft} onChangeText={setCaptionDraft} multiline={false} autoFocus returnKeyType="done" onSubmitEditing={() => applyCaption(captionDraft)} placeholder="예: 고마워" placeholderTextColor={C.faint} style={{ flex: 1, fontSize: 17, minHeight: C.tap, borderRadius: 14, paddingHorizontal: 14, backgroundColor: C.surface2, color: C.ink }} />
@@ -896,6 +914,19 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? C.fill : C.surface2 })}>
               <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>팔레트</Text>
             </Pressable>
+          </View>}
+          {/* 글씨체(45.6차): 이름이 아니라 '가' 한 글자로 성격을 보여 준다. 폰트 파일은 새로 넣지 않는다 — 기기에 있는 글꼴을 쓴다. */}
+          {!typing && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>글씨</Text>
+            <View style={{ flex: 1, flexDirection: 'row', gap: 6 }}>
+              {CAPTION_STYLES.map(face => { const on = captionFace === face.key;
+                return <Pressable key={face.key} accessibilityRole="button" accessibilityLabel={'문구 글씨 ' + face.title} accessibilityState={{ selected: on }}
+                  onPress={() => changeCaptionFace(face.key)}
+                  style={({ pressed }) => ({ flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
+                  <Text style={{ fontSize: 17, lineHeight: 22, fontWeight: face.key === 'thick' ? '900' : '700', fontFamily: face.key === 'serif' ? 'serif' : undefined, color: on ? C.ink : C.muted }}>가</Text>
+                  <Text style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{face.title}</Text>
+                </Pressable>; })}
+            </View>
           </View>}
           {!typing && !!(scene.caption?.text) && <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingBottom: 4 }}>
             <Minor danger title="문구 지우기" onPress={() => { setCaptionDraft(''); applyCaption(''); }} />
@@ -1011,11 +1042,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           </Pressable>
           {/* 빠른 모드: 눌러서 모드만 바꾼다. 브러시·색보다 작고 조용하지만 숨기지 않는다. */}
           <View testID="빠른 모드" style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingLeft: 2, borderLeftWidth: 1, borderColor: C.line }}>
-            {quickTools.map(([key, title, icon]) => { const on = tool === key;
-              return <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: on }} onPress={() => selectTool(key)}
-                style={({ pressed }) => ({ width: narrow ? 44 : 50, minHeight: C.tap, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
-                <MaterialCommunityIcons name={icon} size={18} color={on ? C.ink : C.muted} />
-                <Text numberOfLines={1} style={{ fontSize: 10, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{title}</Text>
+            {/* 지우개·채우기는 그림만으로 뜻이 통해 이름을 떼고, '선택'은 아이콘만으로는 알기 어려워 짧은 이름을 남긴다(45.6차).
+                이름을 떼도 접근성 이름은 그대로라 스크린 리더와 자동 검사는 같은 말을 듣는다. */}
+            {quickTools.map(([key, title, icon, showTitle]) => { const on = tool === key;
+              return <Pressable key={key} testID={'빠른 ' + title} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: on }} onPress={() => selectTool(key)}
+                style={({ pressed }) => ({ width: narrow ? 42 : 46, minHeight: C.tap, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
+                <MaterialCommunityIcons name={icon} size={on ? 20 : 19} color={on ? C.ink : C.muted} />
+                {showTitle && <Text numberOfLines={1} style={{ fontSize: 10, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{title}</Text>}
               </Pressable>; })}
           </View>
         </View>
