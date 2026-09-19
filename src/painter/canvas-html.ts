@@ -819,6 +819,11 @@ async function command(m){try{
     layers.push(added);selectDrawLayer(id);dirty=true;render();state();}
  }
  if(m.type==='addLayer'){if(layers.length<4){checkpoint();const l={...defaults(m.id,m.name),bitmap:bitmap()};layers.push(l);selectDrawLayer(l.id);render();state();}}
+ if(m.type==='moveLayer'){
+   const i=layers.findIndex(l=>l.id===m.id);
+   if(i>=0){const to=Math.max(0,Math.min(layers.length-1,i+(m.by>0?1:-1)));
+    if(to!==i){checkpoint();const moved=layers.splice(i,1)[0];layers.splice(to,0,moved);dirty=true;render();state();}}
+ }
  if(m.type==='renameLayer'){const l=layers.find(x=>x.id===m.id);if(l&&typeof m.name==='string'&&m.name.trim()){checkpoint();l.name=m.name.trim().slice(0,12);dirty=true;state();}}
  if(m.type==='selectionImage'){
   if(!selection){send({type:'selectionImage',id:m.id,message:'고른 부분이 없어요.'});}

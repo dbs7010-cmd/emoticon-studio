@@ -295,7 +295,22 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   saveStore({ ...old, revision: old.revision + 1, projects: [{ ...old.projects[0], slots: old.projects[0].slots.map((x, i) => i === 0 ? oldCut : x) }] });
   const reread = loadStore().store.projects[0].slots[0].work.caption;
   assert.deepEqual(reread, { text: '옛 문구', place: 'top', color: '#242424' }, '글씨체가 없던 저장본은 그대로 남는다(값을 몰래 넣지 않는다)');
+  // ── 14. 45.7 레이어 차례 바꾸기: 메뉴 안 버튼 둘, 양 끝에서는 나오지 않는다 ─────────────────
+  scene = { ...scene, layers: [scene.layers[0], { id: 'draw-2', name: '그림 2', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 }], activeLayerId: 'draw-2' };
+  await message(scene);
+  await press('레이어');
+  await press('레이어 1 관리');
+  assert.equal(labelled('앞으로 보내기').length, 1, '맨 뒤 장은 앞으로만 보낼 수 있다');
+  assert.equal(labelled('뒤로 보내기').length, 0, '맨 뒤에서는 더 뒤로 가지 않는다');
+  await press('앞으로 보내기');
+  assert.deepEqual(lastCommand('moveLayer'), { type: 'moveLayer', id: 'draw-1', by: 1 }, '그 장을 한 칸 앞으로 보낸다');
+  scene = { ...scene, layers: [scene.layers[1], scene.layers[0]] };
+  await message(scene);
+  await press('레이어 1 관리');
+  assert.equal(labelled('뒤로 보내기').length, 1, '맨 앞으로 간 장은 이제 뒤로만 갈 수 있다');
+  assert.equal(labelled('앞으로 보내기').length, 0, '맨 앞에서는 더 앞으로 가지 않는다');
+  await press('레이어');
   await act(async () => tree.unmount());
-  console.log('PASS: convenience — 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 선 종류 실제 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, 색상환 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
+  console.log('PASS: convenience — 레이어 차례 앞으로/뒤로(양 끝 멈춤), 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 선 종류 실제 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, 색상환 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

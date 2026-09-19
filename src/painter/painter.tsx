@@ -603,6 +603,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const narrow = windowWidth < 360;
   // 위 줄의 '레이어'는 지금 어느 장을 쓰는지 말한다 — 열지 않아도 읽힌다(45.5차).
   const drawLayers = scene.layers.filter(l => l.id.startsWith('draw-'));
+  const layerAt = (id: string) => scene.layers.findIndex(l => l.id === id);
   const activeLayerAt = drawLayers.findIndex(l => l.id === scene.activeLayerId);
   const layerBadge = drawLayers.length > 1 && activeLayerAt >= 0 ? '레이어 ' + (activeLayerAt + 1) : '레이어';
   const emptyCut = !slot.work && !slot.finalImage;
@@ -963,7 +964,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                 <EyeToggle label={`${name} ${layer.visible ? '숨기기' : '보이기'}`} on={layer.visible} onPress={() => changeTransform(layer.id, { visible: !layer.visible })} />
                 <Pressable accessibilityRole="button" accessibilityLabel={`${name} 관리`} onPress={() => setLayerMenu(layerMenu === layer.id ? null : layer.id)} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="dots-horizontal" size={20} color={C.muted} /></Pressable>
               </View>
-            {layerMenu === layer.id && <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 6 }}>
+            {layerMenu === layer.id && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 6 }}>
+              {/* 겹치는 차례(45.7차): 위로/아래로 대신 '앞으로 보내기·뒤로 보내기' — 목록의 방향을 몰라도 결과가 그려진다. */}
+              {scene.layers.length > 1 && layerAt(layer.id) < scene.layers.length - 1 && <Minor title="앞으로 보내기" onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: 1 }); }} />}
+              {scene.layers.length > 1 && layerAt(layer.id) > 0 && <Minor title="뒤로 보내기" onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: -1 }); }} />}
               <Minor title="이름 바꾸기" onPress={() => { setLayerMenu(null); setRenaming({ id: layer.id, name: layer.name }); }} />
               {scene.layers.length < 4 && <Minor title="복제" onPress={() => { setLayerMenu(null); send({ type: 'duplicateLayer', id: layer.id }); }} />}
               {scene.layers.length > 1 && <Minor danger title="지우기" onPress={() => { setLayerMenu(null); Alert.alert(name + ' 지우기', '이 레이어와 레이어에 준 부분 움직임이 함께 지워져요. 되돌리기로 되살릴 수 있어요.', [{ text: '취소', style: 'cancel' }, { text: '지우기', style: 'destructive', onPress: () => send({ type: 'removeLayer', id: layer.id }) }]); }} />}

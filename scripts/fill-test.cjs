@@ -209,5 +209,16 @@ const drawing = id => sandbox.window.__layer(id);
   const thickness = () => { let n = 0; for (let y = 0; y < SIZE; y++) if (at(drawing('draw-1'), 130, y)[3] > 200) n++; return n; };
   assert.ok(Math.abs(thickness() - 9) <= 2, 'and the remembered pen width, got ' + thickness());
 
-  console.log('PASS: flood fill stays inside closed line art, respects undo/redo, touches only the active drawing, never reaches references, and yields to multi-touch gestures; captions are painted into the export but never into a layer, survive undo, and travel with a copied cut. Canvas rasteriser is a test double; device test still required.');
+  // ── 45.7: 장의 차례 바꾸기 — 겹치는 차례가 실제로 바뀌고, 양 끝에서는 움직이지 않는다 ──────
+  const order = () => messages.filter(m => m.type === 'state').at(-1).layers.map(l => l.id);
+  const stack = order();
+  assert.ok(stack.length >= 2, '차례를 바꾸려면 장이 둘 이상이어야 한다');
+  const first = stack[0], swapped = [stack[1], stack[0], ...stack.slice(2)];
+  await command({ type: 'moveLayer', id: first, by: 1 });
+  assert.deepEqual(order(), swapped, '한 칸 앞으로 보내면 차례가 바뀐다');
+  await command({ type: 'moveLayer', id: order().at(-1), by: 1 });
+  assert.deepEqual(order(), swapped, '맨 앞에서는 더 가지 않는다');
+  await command({ type: 'undo' });
+  assert.deepEqual(order(), stack, '되돌리기로 차례가 되돌아온다');
+  console.log('PASS: 장의 차례 바꾸기(앞으로·양 끝 멈춤·되돌리기) · flood fill stays inside closed line art, respects undo/redo, touches only the active drawing, never reaches references, and yields to multi-touch gestures; captions are painted into the export but never into a layer, survive undo, and travel with a copied cut. Canvas rasteriser is a test double; device test still required.');
 })().catch(e => { console.error(e); process.exitCode = 1; });
