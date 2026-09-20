@@ -120,6 +120,8 @@ const drawing = id => sandbox.window.__layer(id);
   assert.deepEqual(at(layer(), 170, 170), [255, 122, 89, 255], 'three-finger tap redoes the fill');
 
   // A fill lands on the active drawing only.
+  // 45.10: 새 칸은 그림 한 장으로 열린다 — 둘째 장은 앱에서처럼 '레이어 추가'로 만든다.
+  await command({ type: 'addLayer', id: 'draw-2', name: '그림 2' });
   await command({ type: 'select', id: 'draw-2' });
   const beforeOther = drawing('draw-1').slice();
   await command({ type: 'color', color: '#54A9E8' });
@@ -231,6 +233,7 @@ const drawing = id => sandbox.window.__layer(id);
 
   // ── 45.7: 장의 차례 바꾸기 — 겹치는 차례가 실제로 바뀌고, 양 끝에서는 움직이지 않는다 ──────
   const order = () => messages.filter(m => m.type === 'state').at(-1).layers.map(l => l.id);
+  if (order().length < 2) await command({ type: 'addLayer', id: 'draw-' + (order().length + 1), name: '그림 ' + (order().length + 1) });
   const stack = order();
   assert.ok(stack.length >= 2, '차례를 바꾸려면 장이 둘 이상이어야 한다');
   const first = stack[0], swapped = [stack[1], stack[0], ...stack.slice(2)];

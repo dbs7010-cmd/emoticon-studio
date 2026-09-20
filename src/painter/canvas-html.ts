@@ -773,7 +773,7 @@ function metrics(c){const g=c.getContext('2d',{willReadFrequently:true}),w=c.wid
 async function command(m){try{
  if(saving&&!['saved','saveFailed','analyze'].includes(m.type))return;
  if(m.type==='init'){
-   loading=true;const input=m.layers||[{...defaults('draw-1','그림 1'),data:m.drawing},{...defaults('draw-2','그림 2')}];
+   loading=true;const input=m.layers||[{...defaults('draw-1','그림 1'),data:m.drawing}];
    if(m.color)color=m.color;if(m.brush)applyBrush(m.brush);if(Number.isFinite(m.penWidth))penWidth=m.penWidth;if(Number.isFinite(m.eraserWidth))eraserWidth=m.eraserWidth;
    layers=await Promise.all(input.map(l=>loadLayer(l)));references=await Promise.all((m.references||[]).map(l=>loadLayer(l)));activeLayerId=m.activeLayerId||'draw-1';if(!layers.some(l=>l.id===activeLayerId))activeLayerId=layers[0]?.id||'';activeDrawLayerId=activeLayerId;activeReferenceId=null;wet=null;wetLayer=null;picking=false;caption=m.caption||null;motion=m.motion||motion;history=[];future=[];dirty=false;loading=false;render();state();send({type:'initialized',id:m.id});
  }

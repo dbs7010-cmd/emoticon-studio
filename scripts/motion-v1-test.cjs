@@ -192,6 +192,11 @@ const closePainter = async () => { await press('그리기 닫기'); await answer
   await openSlot(2);
   await press('움직이기');
   assert.equal(tree.root.findAll(n => n.type === 'Text' && String(n.children?.join('')) === 'PRO').length, 0, 'PRO 사용자에게는 PRO 표시가 붙지 않는다');
+  // 45.10: 새 칸은 그림 한 장으로 열린다 — 부분 움직임을 두 장에 걸려면 앱에서처럼 장을 하나 더 만든다.
+  if (!scene.layers.some(l => l.id === 'draw-2')) {
+    scene = { ...scene, layers: [...scene.layers, { id: 'draw-2', name: '그림 2', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 }] };
+    await message(scene);
+  }
   await press('부분만 움직이기');
   await press('레이어 1 부분 움직임 추가');
   await echoMotion();

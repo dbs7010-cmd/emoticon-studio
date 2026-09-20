@@ -310,7 +310,44 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.equal(labelled('뒤로 보내기').length, 1, '맨 앞으로 간 장은 이제 뒤로만 갈 수 있다');
   assert.equal(labelled('앞으로 보내기').length, 0, '맨 앞에서는 더 앞으로 가지 않는다');
   await press('레이어');
+  // ── 15. 45.10 기존 저장본 보존: 장이 여럿인 옛 칸은 그대로 열리고, 부분 움직임이 가리키는 장도 그대로 ──
+  await press('그리기 닫기');
+  const keep = loadStore().store;
+  const oldWork = { version: 1, activeLayerId: 'draw-2', references: [],
+    layers: [
+      { id: 'draw-1', name: '그림 1', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0, image: drawn('old-1.png') },
+      { id: 'draw-2', name: '밑그림', visible: false, opacity: .6, x: 3, y: -2, scale: 1.1, rotation: 5, image: drawn('old-2.png') },
+      { id: 'draw-3', name: '그림 3', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0, image: drawn('old-3.png') },
+    ] };
+  const oldMotion = { version: 1, speed: .5, strength: .5, captionMoves: false,
+    parts: [{ id: 'p1', layerId: 'draw-2', effect: 'rotate', pivotX: .5, pivotY: .5, amount: 8, angle: 0, speed: .5, delay: 0 }] };
+  const target = keep.projects.find(pr => pr.projectName === '편의 세트') || keep.projects[0];
+  const withOld = { ...keep, revision: keep.revision + 1, projects: keep.projects.map(pr => pr.id === target.id
+    ? { ...pr, slots: pr.slots.map(s2 => s2.number === 2 ? { ...s2, finalImage: drawn('old-1.png'), work: oldWork, motion: oldMotion } : s2) } : pr) };
+  saveStore(withOld);
+  await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); });
+  const keptCut = loadStore().store.projects.find(pr => pr.id === target.id).slots.find(s2 => s2.number === 2);
+  assert.deepEqual(keptCut.work.layers.map(l => l.id), ['draw-1', 'draw-2', 'draw-3'], '옛 저장본의 장 수·차례·id 가 그대로');
+  assert.equal(keptCut.work.layers[1].name, '밑그림', '장 이름도 그대로');
+  assert.equal(keptCut.work.layers[1].visible, false, '숨김 상태도 그대로');
+  assert.equal(keptCut.work.activeLayerId, 'draw-2', '마지막으로 쓰던 장도 그대로');
+  assert.equal(keptCut.motion.parts[0].layerId, 'draw-2', '부분 움직임이 가리키는 장이 바뀌지 않는다');
+  await press('편의 세트');
+  // 재시작하면 마지막에 열었던 칸이 바로 열릴 수 있다 — 닫고 원하는 칸을 연다.
+  if (labelled('그리기 닫기').length) await press('그리기 닫기');
+  await act(async () => byTestID('slot-2')[0].props.onPress());
+  await ready();
+  const opened = sent().filter(m => m.type === 'init').at(-1);
+  assert.deepEqual(opened.layers.map(l => l.id), ['draw-1', 'draw-2', 'draw-3'], '다시 열 때도 그 장들을 그대로 싣는다');
+  assert.equal(opened.activeLayerId, 'draw-2', '쓰던 장을 그대로 연다');
+
+  // 새 칸은 한 장으로 연다(빈 둘째 장을 만들지 않는다).
+  await act(async () => tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === '그리기 닫기')[0].props.onPress());
+  await act(async () => byTestID('slot-4')[0].props.onPress());
+  await ready();
+  const fresh = sent().filter(m => m.type === 'init').at(-1);
+  assert.deepEqual(fresh.layers.map(l => l.id), ['draw-1'], '새 칸은 그림 한 장으로 시작한다');
   await act(async () => tree.unmount());
-  console.log('PASS: convenience — 레이어 차례 앞으로/뒤로(양 끝 멈춤), 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 선 종류 실제 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, 색상환 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
+  console.log('PASS: convenience — 새 칸 한 장·옛 다중 장 저장본과 부분 움직임 참조 보존, 레이어 차례 앞으로/뒤로(양 끝 멈춤), 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 선 종류 실제 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, 색상환 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

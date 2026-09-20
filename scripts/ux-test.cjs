@@ -79,7 +79,9 @@ const lastSent=()=>sent().at(-1);
 // Answer the last confirmation the way a person would tap it.
 const answer=async text=>{const box=alerts.at(-1);assert.ok(box,'an alert was shown');const button=(box.buttons||[]).find(b=>b.text===text);assert.ok(button,'alert offers '+text+' — got '+JSON.stringify(box));await act(async()=>button.onPress&&button.onPress());};
 const init=async()=>{
- await message({type:'ready'});const m=lastCommand('init');assert.equal(m.layers.length,2);
+ await message({type:'ready'});const m=lastCommand('init');
+ // 45.10: 새 칸은 그림 한 장으로 연다. 저장된 칸은 자기 장 목록 그대로라 1장 이상이면 된다.
+ assert.ok(m.layers.length>=1,'칸을 열면 그림 장이 적어도 하나 온다: '+m.layers.length);
  scene={type:'state',undo:false,redo:false,dirty:false,activeLayerId:m.activeLayerId||'draw-1',activeReferenceId:null,caption:m.caption||null,layers:m.layers,references:m.references};
  await message(scene);await message({type:'initialized'});return m;
 };
@@ -274,6 +276,11 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  assert.equal(labelled('색').length,1,'지금 색도 계속 보인다');
  assert.equal(labelled('레이어 1 선택').length,1,'기본 이름 "그림 1"은 칸 이름과 헷갈리지 않게 레이어로 부른다');
  assert.equal(lastCommand('layerThumbs').size,72,'패널을 열 때 캔버스에 작은 그림을 달라고 한다');
+ // 45.10: 새 칸은 한 장으로 시작한다 — 둘째 장은 눌러서 만든다.
+ assert.equal(labelled('레이어 2 선택').length,0,'새 칸에는 빈 둘째 장이 없다');
+ await press('레이어 추가');
+ assert.deepEqual(lastSent(),{type:'addLayer',id:'draw-2',name:'그림 2'},'레이어 추가가 둘째 장을 만든다');
+ scene={...scene,layers:[...scene.layers,{id:'draw-2',name:'그림 2',visible:true,opacity:1,x:0,y:0,scale:1,rotation:0}]};await message(scene);
  await press('레이어 2 선택');
  assert.deepEqual(lastSent(),{type:'select',id:'draw-2'},'고르면 그 그림이 그리는 대상이 된다');
  assert.equal(labelled('레이어 1 선택').length,0,'패널은 접힌다');

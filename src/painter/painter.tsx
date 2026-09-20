@@ -254,7 +254,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     if (!ready) return;
     let canceled = false;
     (async () => {
-      const layers = slot.work?.layers ?? [{ ...transform('draw-1', '그림 1'), image: slot.finalImage }, transform('draw-2', '그림 2')];
+      // 새 칸은 그림 한 장으로 연다(45.10차). 둘째 장은 '레이어 추가'로 필요할 때 만든다 —
+      // 빈 장이 저장 파일까지 만들던 것(칸마다 투명 PNG 한 장)과, 빈 장에 그려 놓고 "그림이 사라졌다"고 느끼던 혼동을 없앤다.
+      // 이미 저장된 칸은 자기 장 목록을 그대로 쓰므로 옛 세트의 장 수·차례·그림·부분 움직임 참조는 그대로다.
+      const layers = slot.work?.layers ?? [{ ...transform('draw-1', '그림 1'), image: slot.finalImage }];
       const savedRefs = slot.work?.references ?? [];
       const refs = slot.referenceImages.map((image, i) => {
         const savedRef = savedRefs.find(ref => ref.image?.path === image.path);
@@ -894,7 +897,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               캔버스가 띠로 줄어 고치는 글씨가 잘리던 39차 P2. 입력칸은 같은 자리에 남아 포커스를 잃지 않는다. */}
           {!typing && <SheetHeader title="문구" closeLabel="문구 닫기" onClose={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); }} />}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: typing ? 8 : 16, paddingTop: typing ? 8 : 0, paddingBottom: 8 }}>
-            <Pressable accessibilityRole="button" accessibilityLabel="문구 색" onPress={() => { ease(); setCaptionOpen(false); setPanel('color'); }} hitSlop={10} style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color, borderWidth: 2, borderColor: '#FFFFFF', ...{ shadowColor: '#000', shadowOpacity: .15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } } }} />
+            {/* 지금 색을 보여 주기만 한다(45.10차). 색을 고르는 입구는 아래 '팔레트' 하나 — 같은 일을 하는 자리를 둘 두지 않는다. */}
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color, borderWidth: 2, borderColor: '#FFFFFF', ...{ shadowColor: '#000', shadowOpacity: .15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } } }} />
             <TextInput accessibilityLabel="문구 내용" value={captionDraft} onChangeText={setCaptionDraft} multiline={false} autoFocus returnKeyType="done" onSubmitEditing={() => applyCaption(captionDraft)} placeholder="예: 고마워" placeholderTextColor={C.faint} style={{ flex: 1, fontSize: 17, minHeight: C.tap, borderRadius: 14, paddingHorizontal: 14, backgroundColor: C.surface2, color: C.ink }} />
             {typing && <IconButton label="키보드 닫기" icon="keyboard-close" color={C.muted} size={20} onPress={() => Keyboard.dismiss()} />}
             {typing && <Pressable accessibilityRole="button" accessibilityLabel="문구 적용" onPress={() => applyCaption(captionDraft)}
@@ -911,8 +915,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                   onPress={() => setCaptionColor(c)} hitSlop={6}
                   style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c, borderWidth: c.toUpperCase() === color.toUpperCase() ? 2.5 : 1, borderColor: c.toUpperCase() === color.toUpperCase() ? C.ink : '#17171718' }} />)}
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="문구 색 고르기" onPress={() => { ease(); setCaptionOpen(false); setPanel('color'); }}
-              style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? C.fill : C.surface2 })}>
+            <Pressable accessibilityRole="button" accessibilityLabel="문구 색 고르기" accessibilityValue={{ text: '지금 ' + color.toUpperCase() }}
+              onPress={() => { ease(); setCaptionOpen(false); setPanel('color'); }}
+              style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? C.fill : C.surface2 })}>
               <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>팔레트</Text>
             </Pressable>
           </View>}
