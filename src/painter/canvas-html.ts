@@ -23,16 +23,17 @@ function state(){send({type:'state',undo:history.length>0,redo:future.length>0,d
 // 그래서 예전에 저장한 작품이 그대로 열린다.
 // 글씨 성격(45.6차): 기기에 이미 있는 글꼴만 쓴다 — 기본(고딕)·또박(명조)·도톰(더 굵고 테두리도 두껍게).
 function capFace(){const s=caption&&caption.style;
- if(s==='serif')return {w:'700',f:'serif',o:.22};
- if(s==='thick')return {w:'900',f:'system-ui, sans-serif',o:.36};
- return {w:'700',f:'system-ui, sans-serif',o:.22};}
+ if(s==='serif')return {w:'700',f:'serif',o:.22,bold:0};
+ // bold: 글자 획을 얼마나 덧댈지(글자 크기 대비). 기기에 900 굵기가 없어도 이 값 때문에 확실히 굵어진다.
+ if(s==='thick')return {w:'800',f:'system-ui, sans-serif',o:.24,bold:.075};
+ return {w:'700',f:'system-ui, sans-serif',o:.22,bold:0};}
 function capFont(px){const c=capFace();return c.w+' '+px+'px '+c.f;}
 function captionSpot(g){
  if(!caption||!caption.text.trim())return null;
- const text=caption.text.trim(),room=W-32;
+ const text=caption.text.trim(),room=W-32,fat=capFace().bold||0;
  let px=Math.round(H*.11),wide=0;
- for(;px>10;px--){g.font=capFont(px);wide=g.measureText(text).width;if(wide<=room)break;}
- if(wide>room){px=Math.max(1,Math.floor(px*room/wide));g.font=capFont(px);wide=g.measureText(text).width;}
+ for(;px>10;px--){g.font=capFont(px);wide=g.measureText(text).width+px*fat;if(wide<=room)break;}
+ if(wide>room){px=Math.max(1,Math.floor(px*room/wide));g.font=capFont(px);wide=g.measureText(text).width+px*fat;}
  const x=W/2+(caption.dx||0),y=(caption.place==='top'?Math.round(H*.06):H-Math.round(H*.06))+(caption.dy||0);
  const scale=caption.scale||1,rot=caption.rot||0;
  // 글자 상자. 기준선이 위/아래로 갈리므로 상자의 세로 위치도 그에 맞춘다.
@@ -48,9 +49,14 @@ function drawCaption(g,d){
  const cx=spot.x,cy=spot.box.y+spot.box.h/2;
  g.translate(cx,cy);g.rotate(spot.rot*Math.PI/180);g.scale(spot.scale,spot.scale);g.translate(-cx,-cy);
  g.textAlign='center';g.textBaseline=caption.place==='top'?'top':'bottom';
+ const face=capFace();
  g.font=capFont(spot.px);
- g.lineJoin='round';g.lineWidth=Math.max(3,spot.px*capFace().o);g.strokeStyle='#FFFFFF';g.strokeText(spot.text,spot.x,spot.y);
- g.fillStyle=css(caption.color||'#242424');g.fillText(spot.text,spot.x,spot.y);
+ g.lineJoin='round';g.lineCap='round';
+ // 흰 테두리는 굵어진 글자 바깥을 감싸도록 덧댄 만큼 함께 넓힌다.
+ g.lineWidth=Math.max(3,spot.px*(face.o+(face.bold||0)));g.strokeStyle='#FFFFFF';g.strokeText(spot.text,spot.x,spot.y);
+ g.fillStyle=css(caption.color||'#242424');
+ if(face.bold){g.lineWidth=spot.px*face.bold;g.strokeStyle=css(caption.color||'#242424');g.strokeText(spot.text,spot.x,spot.y);}
+ g.fillText(spot.text,spot.x,spot.y);
  g.restore();
 }
 // 문구를 고르고 있을 때 그 둘레에 그리는 표시. 그림 선택과 **다른 색**을 쓴다 — 지금 무엇을 만지고
@@ -97,7 +103,7 @@ function render(t){ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l)
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
-function style(g){g.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';g.globalAlpha=tool==='eraser'?1:brush==='brush'?0.85:brush==='pencil'?0.55:1;g.lineWidth=tool==='eraser'?eraserWidth:(brush==='brush'?penWidth*1.4:penWidth);g.strokeStyle=solid(color);g.fillStyle=solid(color);g.lineCap='round';g.lineJoin='round';const P=activePreset();if(P){g.globalAlpha=1;g.lineWidth=computeBrushWidth(penWidth*P.width,lastPressure,P)*(P.taper?Math.min(1,.3+.7*strokeLen/P.taper):1);g.lineCap=P.cap||'round';}}
+function style(g){g.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';g.globalAlpha=tool==='eraser'?1:(brush==='pencil'&&wet)?1:brush==='brush'?0.85:brush==='pencil'?0.55:1;g.lineWidth=tool==='eraser'?eraserWidth:(brush==='brush'?penWidth*1.4:penWidth);g.strokeStyle=solid(color);g.fillStyle=solid(color);g.lineCap='round';g.lineJoin='round';const P=activePreset();if(P){g.globalAlpha=1;g.lineWidth=computeBrushWidth(penWidth*P.width,lastPressure,P)*(P.taper?Math.min(1,.3+.7*strokeLen/P.taper):1);g.lineCap=P.cap||'round';}}
 // 색 투명도. 획은 **불투명하게 따로 그린 뒤(wet) 손을 뗄 때 한 번에 투명도를 걸어 얹는다.** 짧은 선분마다
 // 투명도를 걸면 겹치는 이음매마다 진해져 구슬 꿴 줄처럼 보인다. 불투명한 색은 이 길을 타지 않는다.
 let wet=null,wetLayer=null,wetAlpha=1,picking=false;
@@ -112,6 +118,7 @@ const PRESETS={
 // 선 보정 강도. light 는 예전 값 그대로다(무료 '선 보정' 켜짐과 같다).
 const STAB={light:.55,medium:.3,strong:.16};
 let preset=null,brushOpacity=1,stabilizer='light',strokeLen=0,lastRaw=null,lastPressure=null;
+const PENCIL_ALPHA=.55;
 function applyBrush(m){preset=m.preset&&PRESETS[m.preset]?m.preset:null;const o=Number(m.opacity);brushOpacity=Number.isFinite(o)?Math.max(.05,Math.min(1,o)):1;stabilizer=STAB[m.stabilizer]?m.stabilizer:'light';if(typeof m.smoothing==='boolean')smoothing=m.smoothing;}
 // 필압 자리. 스타일러스(pointerType 'pen')의 0~1 값만 받는다. 지금 프리셋에는 pressure 반응이 없어 항상 기본값을 돌려준다 —
 // 손가락·마우스의 체감은 바뀌지 않는다. 0·undefined·범위 밖 값은 없는 것으로 본다.
@@ -135,7 +142,7 @@ function grain(g,a,b){
  const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
  if(len<0.5)return;
  const spread=Math.max(1,g.lineWidth*0.42),dots=Math.max(1,Math.round(len*0.9));
- g.save();g.globalAlpha=0.30;g.fillStyle=solid(color);
+ g.save();g.globalAlpha=0.55;g.fillStyle=solid(color);
  for(let i=0;i<dots;i++){
   const t=Math.random(),px=a.x+dx*t,py=a.y+dy*t;
   const off=(Math.random()-0.5)*2*spread,perp=len?{x:-dy/len,y:dx/len}:{x:0,y:0};
@@ -686,7 +693,8 @@ canvas.addEventListener('pointerdown',e=>{
   marquee={x0:p0.x,y0:p0.y,x1:p0.x,y1:p0.y};render();return;}
  checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;
  const P0=activePreset();lastPressure=penPressure(e);strokeLen=0;lastRaw=last;
- wetAlpha=tool==='eraser'?1:computeBrushAlpha(inkAlpha()*brushOpacity*(P0?P0.alpha:1),lastPressure,P0);wet=(P0||wetAlpha<1)?bitmap():null;wetLayer=wet?l.id:null;
+ const soft=(tool!=='eraser'&&!P0&&brush==='pencil')?PENCIL_ALPHA:1;
+ wetAlpha=tool==='eraser'?1:computeBrushAlpha(inkAlpha()*brushOpacity*(P0?P0.alpha:1)*soft,lastPressure,P0);wet=(P0||wetAlpha<1)?bitmap():null;wetLayer=wet?l.id:null;
  const p=local(last,l),g=(wet||l.bitmap).getContext('2d');style(g);if(P0&&P0.soft)softStamp(g,p.x,p.y,g.lineWidth);else{g.beginPath();g.arc(p.x,p.y,g.lineWidth/2,0,Math.PI*2);g.fill();}render();state();
 });
 canvas.addEventListener('pointermove',e=>{

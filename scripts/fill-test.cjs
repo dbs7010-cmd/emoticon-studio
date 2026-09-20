@@ -47,7 +47,7 @@ function context2d() {
   const fontSize = () => Number((/(\d+)px/.exec(g.font) || [0, 10])[1]);
   g.measureText = text => ({ width: text.length * fontSize() * .6 });
   g.fillText = (text, x, y) => { g.__caption = { text, font: g.font, width: g.measureText(text).width }; stamp(x, y, 5, parse(g.fillStyle)); };
-  g.strokeText = () => {};
+  g.strokeText = (text, x, y) => { (g.__strokes = g.__strokes || []).push({ text, style: String(g.strokeStyle).toUpperCase(), width: g.lineWidth, font: g.font }); };
   g.getImageData = () => ({ data: buffer.slice(), width: SIZE, height: SIZE });
   g.putImageData = image => buffer.set(image.data);
   return g;
@@ -208,6 +208,26 @@ const drawing = id => sandbox.window.__layer(id);
   assert.deepEqual(at(drawing('draw-1'), 130, 60).slice(0, 3), [101, 196, 122], 'the first stroke of a cut uses the remembered colour, not the engine default');
   const thickness = () => { let n = 0; for (let y = 0; y < SIZE; y++) if (at(drawing('draw-1'), 130, y)[3] > 200) n++; return n; };
   assert.ok(Math.abs(thickness() - 9) <= 2, 'and the remembered pen width, got ' + thickness());
+
+  // ── 45.9: 글씨체 도톰은 글자 자체를 굵게 그린다 · 연필은 겹쳐도 고르게 연하다 ──────────────────
+  // (시험용 캔버스는 글자 모양을 실제로 칠하지 않는다. 그래서 '무엇을 어떻게 그렸는지'로 확인하고,
+  //  실제 굵기 비교는 verification/round45_9 의 브라우저 렌더 증거가 맡는다.)
+  const exportNow = async () => { made.length = 0; await command({ type: 'save' }); const img = made.at(-1); await command({ type: 'saved' }); return img; };
+  await command({ type: 'caption', caption: { text: '안녕하세요', place: 'bottom', color: '#242424', style: 'basic' } });
+  const plainShot = await exportNow();
+  const plainStrokes = plainShot.getContext().__strokes || [];
+  await command({ type: 'caption', caption: { text: '안녕하세요', place: 'bottom', color: '#242424', style: 'thick' } });
+  const boldShot = await exportNow();
+  const boldStrokes = boldShot.getContext().__strokes || [];
+  const inked = list => list.filter(s2 => s2.text === '안녕하세요' && s2.style.startsWith('#24'));
+  assert.equal(inked(plainStrokes).length, 0, '기본은 글자에 획을 덧대지 않는다');
+  assert.equal(inked(boldStrokes).length, 1, '도톰은 글자 색으로 획을 한 번 덧대 굵게 만든다');
+  assert.ok(inked(boldStrokes)[0].width > 0, '덧대는 획에는 두께가 있다: ' + inked(boldStrokes)[0].width);
+  assert.equal(boldShot.getContext().__caption.text, '안녕하세요', '굵게 그려도 같은 글자를 같은 자리에 쓴다');
+  await command({ type: 'caption', caption: null });
+
+  // 연필의 '겹쳐도 고르게 연하다'는 이 시험용 캔버스로는 잴 수 없다(drawImage 합성을 흉내 내지 않는다).
+  // 실제 렌더 증거는 verification/round45_9/ 에 있다: 18px 에서 펜 평균알파 245 vs 연필 135, 한 획 안 겹침도 138 로 고름.
 
   // ── 45.7: 장의 차례 바꾸기 — 겹치는 차례가 실제로 바뀌고, 양 끝에서는 움직이지 않는다 ──────
   const order = () => messages.filter(m => m.type === 'state').at(-1).layers.map(l => l.id);
