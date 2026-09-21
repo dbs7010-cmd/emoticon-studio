@@ -20,6 +20,13 @@ const appState = [];
 const timers = [];
 const realSetInterval = global.setInterval;
 global.setInterval = (fn, ms) => { if (ms === 40000) { timers.push(fn); return { unref(){} }; } return realSetInterval(fn, ms); };
+// 저장이 길어질 때의 알림(1.5초)과 저장 시간초과(20초)는 손으로 돌린다 — 실제로 기다리지 않고 그 순간을 만든다(45.13차).
+const held = [];
+const realSetTimeout = global.setTimeout, realClearTimeout = global.clearTimeout;
+global.setTimeout = (fn, ms) => { if (ms === 1500 || ms === 20000) { const handle = { ms }; held.push({ handle, fn, ms }); return handle; } return realSetTimeout(fn, ms); };
+global.clearTimeout = handle => { const i = held.findIndex(h => h.handle === handle); if (i >= 0) { held.splice(i, 1); return; } return realClearTimeout(handle); };
+const pending = ms => held.filter(h => h.ms === ms).length;
+const fire = ms => { let i = -1; held.forEach((h, k) => { if (h.ms === ms) i = k; }); if (i < 0) return false; const [h] = held.splice(i, 1); h.fn(); return true; };
 // 키보드는 실제 기기에서만 올라온다. 여기서는 그 알림을 손으로 쏘아 배치가 접혔다 돌아오는지 본다.
 const keyboardListeners = {};
 const shared = [];
@@ -608,6 +615,55 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   await saved(false, metrics, next);
  }
 
+
+ // ── 45.13: 저장은 한 번의 호출 안에서 파일 쓰기까지 끝난다 ────────────────────────────────
+ // 중간에 기다림(await)이 생기면 A 의 쓰기가 끝나기 전에 B 가 끼어들 수 있다. 그 구조가 아님을 동작으로 못 박는다.
+ {
+  await autosave();
+  const token = lastCommand('save').token;
+  const before = loadStore().store.revision;
+  const answered = () => sent().filter(m => m.type === 'saved').length;
+  const beforeAnswered = answered();
+  let wroteInSameCall = false, answeredInSameCall = false;
+  const payload = { type: 'save', token, dirty: true, data: 'data:image/png;base64,' + png.toString('base64'), metrics,
+    activeLayerId: scene.activeLayerId, caption: scene.caption || undefined, motion: scene.motion || null,
+    layers: scene.layers.map(l => ({ ...publicLayer(l), data: 'data:image/png;base64,' + png.toString('base64') })), references: [] };
+  await act(async () => {
+   tree.root.findByType('WebView').props.onMessage({ nativeEvent: { data: JSON.stringify(payload) } });
+   // 여기까지 오는 사이에 기다림이 없었으므로, 파일도 응답도 이미 끝나 있어야 한다.
+   wroteInSameCall = loadStore().store.revision !== before;
+   answeredInSameCall = answered() === beforeAnswered + 1;
+  });
+  assert.ok(wroteInSameCall, '저장 응답을 받은 그 호출 안에서 파일이 쓰인다(중간에 기다림이 없다)');
+  assert.ok(answeredInSameCall, '같은 호출 안에서 캔버스에 저장 완료를 알린다');
+ }
+
+ // ── 45.13: 저장이 길어질 때만 캔버스가 이유를 말한다 · 시간초과 뒤에는 다시 그릴 수 있다 ──────
+ {
+  const notice = () => shown().some(t => t.includes('저장 중이에요'));
+  await autosave();
+  assert.equal(notice(), false, '보통 저장에서는 캔버스에 아무 말도 하지 않는다');
+  assert.equal(pending(1500) > 0, true, '길어질 때를 대비한 알림이 예약돼 있다');
+  await act(async () => { fire(1500); });
+  assert.ok(notice(), '저장이 길어지면 지금 그릴 수 없는 이유를 캔버스에 적는다');
+  assert.equal(labelled('저장 중이라 잠시 그릴 수 없어요').length + tree.root.findAll(n => n.props.accessibilityLabel === '저장 중이라 잠시 그릴 수 없어요').length > 0, true, '읽어 주는 이름도 붙는다');
+  // 응답이 끝내 오지 않으면 시간초과가 잠금을 풀고, 무슨 일이 있었는지 알려 준다.
+  const beforeAlerts = alerts.length;
+  await act(async () => { fire(20000); });
+  assert.ok(alerts.length > beforeAlerts, '시간초과를 알린다');
+  const late = alerts.at(-1);
+  assert.ok(String(late.message || '').includes('닫기'), '무엇을 누르면 다시 저장되는지 알려 준다: ' + JSON.stringify(late));
+  assert.equal(notice(), false, '잠금이 풀리면 캔버스 알림도 걷힌다');
+  assert.equal(lastSent().type, 'saveFailed', '캔버스에도 이번 저장을 접었다고 알린다');
+  assert.equal(lastSent().token, lastCommand('save').token, '접는 것도 그 요청 번호로만 한다');
+  // 잠금이 풀렸으니 다시 저장할 수 있다(자동저장·닫기·완성 어느 쪽이든 같은 길이다).
+  const beforeRetry = sent().filter(m => m.type === 'save').length;
+  await autosave();
+  assert.equal(sent().filter(m => m.type === 'save').length, beforeRetry + 1, '시간초과 뒤에는 다시 저장을 부를 수 있다');
+  const retryToken = lastCommand('save').token;
+  await saved(true, metrics, retryToken);
+  assert.equal(sent().filter(m => m.type === 'saved').at(-1).token, retryToken, '다시 부른 저장은 정상으로 끝난다');
+ }
  assert.equal(labelled('저장').length,0,'there is no save button to manage: work saves itself');
  const beforeDouble=sent().filter(m=>m.type==='save').length;
  const closeButton=labelled('그리기 닫기')[0];

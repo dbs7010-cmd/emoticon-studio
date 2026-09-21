@@ -198,7 +198,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 저장 확신: 저장 중에는 작은 구름, 끝나면 체크가 잠깐 보였다가 사라진다. 늘 붙어 있는 '저장됨' 글자는 없다.
   const [saveMark, setSaveMark] = useState<'saving' | 'done' | null>(null);
   const markTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (markTimer.current) clearTimeout(markTimer.current); }, []);
+  // 저장이 길어질 때만 켠다. 보통 저장은 한 번의 왕복이라 이 표시가 뜨지 않는다.
+  const [slowSave, setSlowSave] = useState(false);
+  const slowTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (markTimer.current) clearTimeout(markTimer.current); if (slowTimer.current) clearTimeout(slowTimer.current); }, []);
   const markSaved = () => { setSaveMark('done'); if (markTimer.current) clearTimeout(markTimer.current); markTimer.current = setTimeout(() => setSaveMark(null), 1200); };
   const [tab, setTab] = useState<'draw' | 'motion'>('draw');
   const [proSheet, setProSheet] = useState(false);
@@ -230,6 +233,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const send = (message: { type: string } & Record<string, unknown>) => { if (quiet.current && !['save', 'saved', 'saveFailed'].includes(message.type)) { held.current.push(message); return; } inject(message); };
   const unlock = () => {
     if (timeout.current) clearTimeout(timeout.current); inFlight.current = false; setBusy(false);
+    if (slowTimer.current) { clearTimeout(slowTimer.current); slowTimer.current = null; } setSlowSave(false);
     if (quiet.current) { quiet.current = false; held.current.splice(0).forEach(inject); }
     const next = queued.current; queued.current = null;
     if (next !== null) setTimeout(() => saveRef.current(next), 0);
@@ -446,7 +450,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     if (action === 'stay') quiet.current = true; else setBusy(true);
     setSaveMark('saving');
     const token = ++saveToken.current;
-    timeout.current = setTimeout(() => { send({ type: 'saveFailed', token }); setSaveMark(null); unlock(); Alert.alert('저장이 늦어지고 있어요', '작업은 그대로 있어요. 잠시 뒤 다시 시도해 주세요.'); }, 20000);
+    if (slowTimer.current) clearTimeout(slowTimer.current);
+    slowTimer.current = setTimeout(() => setSlowSave(true), 1500);
+    timeout.current = setTimeout(() => { send({ type: 'saveFailed', token }); setSaveMark(null); unlock(); Alert.alert('저장이 늦어지고 있어요', '작업은 화면에 그대로 있어요. 잠시 뒤 스스로 다시 저장하고, 닫기나 완성을 누르면 바로 다시 저장해요.'); }, 20000);
     send({ type: 'save', gif: !!scene.motion, token });
   }
   saveRef.current = save;
@@ -622,8 +628,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 참고 줄은 제외한다 — 참고는 캔버스 위에서 옮기고 키우는 중이라 손가락이 캔버스로 가야 한다.
   const panelCovering = tab === 'draw' && ((!!panel && panel !== 'more') || drawRail);
   // 캔버스 위에는 한 번에 한 가지만 말한다(45.2차). 위에서부터 급한 순서로 하나를 고른다.
-  const canvasMessage: 'hidden' | 'eyedrop' | 'previous' | 'guide' | 'zoomHint' | null =
+  const canvasMessage: 'saving' | 'hidden' | 'eyedrop' | 'previous' | 'guide' | 'zoomHint' | null =
     tab !== 'draw' ? null
+    // 저장이 길어지는 동안에는 이것이 가장 급한 소식이다 — 지금 획이 캔버스에 닿지 않는 이유다.
+    : slowSave ? 'saving'
     : hiddenWarning ? 'hidden'
     // 끌어서 집는 동안에는 안내 대신 집히는 색을 보여 준다 — 같은 자리에 둘이 겹치지 않게(45.4 실기기).
     : (scene.picking && !dropping) ? 'eyedrop'
@@ -788,8 +796,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <Text style={{ fontSize: 12, fontWeight: '600', color: C.muted }}>두 손가락으로 벌리면 크게 볼 수 있어요</Text>
           </View>
         </View>}
-        {/* 캔버스 위 알림 자리(45.2차): 한 번에 하나만. 급한 순서 — 숨긴 레이어 > 스포이드 > 표현 힌트 > 이전 칸 > 확대 안내.
+        {/* 캔버스 위 알림 자리(45.2차): 한 번에 하나만. 급한 순서 — 저장 중(길어질 때만) > 숨긴 레이어 > 스포이드 > 표현 힌트 > 이전 칸 > 확대 안내.
             확대 배율(%)은 알림이 아니라 상태라서 이 자리를 쓰지 않고 오른쪽 위에 따로 선다. */}
+        {canvasMessage === 'saving' && <View accessibilityLabel="저장 중이라 잠시 그릴 수 없어요" pointerEvents="none" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingHorizontal: 12, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
+          <MaterialCommunityIcons name="cloud-upload-outline" size={14} color={C.muted} />
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}>저장 중이에요 · 잠시만요</Text>
+        </View>}
         {canvasMessage === 'hidden' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.accentSoft, borderWidth: 1, borderColor: C.accentBorder }}>
           <MaterialCommunityIcons name="eye-off-outline" size={16} color={C.accentInk} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.accentInk }}>'{layerLabel(hiddenWarning)}'이 숨겨져 있어요</Text>

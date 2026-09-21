@@ -49,3 +49,28 @@ UI 로 해결되는 문제는 넣지 않았다. 이번 라운드에서 에셋을
 - 원본 템플릿 6개 해시(`templateFingerprints`): assets/icon.png · splash-icon.png · favicon.png · android-icon-foreground/background/monochrome.png — 직접 열어 템플릿 그림(파란 'A' 격자·동심원 격자)임을 확인.
 - 네이티브 30개 해시(`nativeTemplateFingerprints`): 현재 android/res 의 splashscreen_logo 5개(동심원 격자 확인) + ic_launcher* 25개.
 - 템플릿 파일은 설정이 가리키지 않으면 앱에 들어가지 않는다(Metro 는 require 한 파일만 묶음). 교체 뒤 `assets/*.png` 템플릿 원본은 지워도 되지만, 이번 라운드에서는 지우지 않았다(현재 폴백).
+
+---
+
+# UI 8자리 — 최신 코드 대조 (45.13차, 2026-09-21)
+
+새 에셋을 만들지 않았다. 이 표는 **기존 8자리(`src/design/asset-slots.ts`)를 지금 코드와 대조한 것**이다(중복 기획서를 만들지 않으려고 기존 문서에 이어 적는다).
+`코드 확인`은 소스와 자동 검사(`scripts/asset-contract-test.cjs`)로 본 것이고, **실제 화면에서 본 것은 아직 없다**(기기 없음 — `docs/MANUAL_QA.md` 45.13 검수표에서 확인한다).
+
+| 자리 | 화면 · 컴포넌트(코드 확인) | 크기 / 비율 | 형식 · 바탕 | 지금 들어 있는 그림 |
+|---|---|---|---|---|
+| `homeHeroArtwork` | 홈 창작 표면 오른쪽 위 — `App.tsx:636` `<AssetSlot size={폭<380 ? 96 : 112}>` | 1:1 · 96 또는 112dp | PNG · 투명 | **없음**(자리표시 도형) |
+| `homeEmptyArtwork` | 홈 '최근 작업'이 비었을 때 — `App.tsx:648` `<AssetSlot size={120}>` | 4:3 · 120×90dp | PNG · 투명 | **없음** |
+| `noticeArtwork` | 홈 공지 카드 왼쪽 — `App.tsx:655` `<AssetSlot size={44}>` (`HOME_NOTICE.enabled` 일 때만) | 1:1 · 44dp | PNG · 투명 | **없음** |
+| `referencePoseThumbnail` | 그리기 › 참고 › 기본 레퍼런스 4열 격자 — `painter.tsx:1142·1175` | 3:4 · 화면폭에 따라 78×104 ~ 91×121dp | PNG · 불투명 썸네일(+ 캔버스용 투명 원본) | **없음**(`BUILTIN_REFERENCES.ready=false`, 관절 인형 자리표시) |
+| `expressionGuideArtwork` | 홈 › 표현 가이드 카드 윗그림 — `App.tsx:604` `<AssetSlot size={틀×0.8}>` | 1:1 · 110~131dp | PNG · 투명 | **없음**(`EXPRESSION_GUIDE.ready=false`) |
+| `motionExampleArtwork` | 그리기 › 움직이기 효과 견본 — `motion-panel.tsx:149` (칸에 그림이 없을 때만) | 1:1 · 48dp 칸 안 41dp | PNG · 투명 | **있음(임시)** `assets/art/mascot-paper.png` |
+| `exportSuccessArtwork` | 내보내기 요약, 모든 칸 완성 시 — `App.tsx:959` `<AssetSlot size={84}>` | 1:1 · 84dp | PNG · 투명 | **없음** |
+| `proFeatureArtwork` (+`sourceAfter`) | PRO 화면 위쪽 전·후 비교 — `App.tsx:1215·1217` `<Image style={{width:86,height:86}}>` 두 장 | 1:1 · 86dp × 2 | PNG · 투명 | **있음(임시)** `mascot-paper.png` / `mascot-ink.png` |
+
+권장 제작 해상도·안전 영역은 `src/design/asset-slots.ts` 의 각 자리 주석이 원본이다(이 표는 그 값을 옮기지 않는다 — 둘이 다르면 코드가 맞다).
+
+확인한 방법과 한계
+- 자리 8개가 **실제로 그 화면에서 소비되는지**는 `npm test` 의 `asset-contract-test` 가 매번 확인한다(그림을 넣으면 그려지고, 없으면 45.2 자리표시가 같은 칸 수·자리로 남는다).
+- **아직 못 본 것**: 실제 기기 화면에서의 크기감·잘림·대비. 8자리 모두 `docs/MANUAL_QA.md` 검수표의 화면(홈·참고·표현 가이드·움직이기·내보내기·PRO)에서 함께 확인된다.
+- 그림을 넣을 때는 `src/design/asset-slots.ts` 의 `source` 만 `require(...)` 로 바꾼다. 비율이 다른 그림을 넣지 않는다. 레이아웃은 고치지 않는다.
