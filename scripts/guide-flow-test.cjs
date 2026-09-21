@@ -4,6 +4,7 @@
 //   밑그림은 기존 참고 레이어 길을 그대로 쓴다: 그림 레이어와 따로 쌓이고, 최종 PNG·움직이는 파일·썸네일에 들어가지 않는다.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const { PNG } = require('pngjs');
 const React = require('react');
 const { create, act } = require('react-test-renderer');
 const { loader } = require('./load-ts.cjs');
@@ -66,7 +67,8 @@ const art = id => ({ uri: 'test-art://' + id });
 const withArt = on => {
   const cards = design.EXPRESSION_GUIDE.cards.map(card => card.examples ? {
     ...card,
-    examples: card.examples.map(x => on && (x.id.endsWith('-polite') || x.id.endsWith('-friendly')) ? { ...x, artwork: art(x.id) } : x),
+    // 실제 납품분을 먼저 비운다 — 이 스위트는 '그림이 있다/없다'는 구조를 보는 것이지 납품 여부를 보는 게 아니다.
+    examples: card.examples.map(({ artwork: _delivered, ...x }) => on && (x.id.endsWith('-polite') || x.id.endsWith('-friendly')) ? { ...x, artwork: art(x.id) } : x),
   } : card);
   const patched = { ...design, EXPRESSION_GUIDE: { ...design.EXPRESSION_GUIDE, cards } };
   return loader({ ...base, './src/design/asset-slots': patched, '../design/asset-slots': patched })('App.tsx').default;
@@ -116,10 +118,32 @@ async function echoReferences(scene) {
   assert.equal(design.EXPRESSION_GUIDE.cards.filter(c => c.examples).length, 1, '이번 라운드는 고마워 한 감정만 연결한다(다른 감정을 임의로 채우지 않는다)');
   assert.equal(design.EXPRESSION_GUIDE.cards.length, 20, '감정 카드 수는 그대로 20개');
   assert.equal(design.EXPRESSION_GUIDE.ready, false, '에셋이 오기 전에는 ready 를 켜지 않는다');
-  for (const x of card.examples) assert.equal(x.artwork, undefined, x.id + ': 실제 파일이 없으므로 코드에 require 를 두지 않는다');
+  // 45.18차 납품 확인: 파일이 실제로 있는 예시만 artwork 를 갖는다(없는 파일을 require 하지 않는다).
+  for (const x of card.examples) {
+    const file = 'assets/expression-guides/' + x.id + '.png';
+    const exists = fs.existsSync(file);
+    assert.equal(!!x.artwork, exists, x.id + ': 파일 존재와 artwork 연결이 어긋난다(파일 ' + exists + ')');
+    if (!exists) continue;
+    const png = PNG.sync.read(fs.readFileSync(file));
+    assert.equal(png.width, png.height, x.id + ': 1:1 이어야 한다 (' + png.width + 'x' + png.height + ')');
+    assert.equal(png.colorType, 6, x.id + ': 알파 채널이 있는 RGBA 여야 한다');
+    let clear = 0, solid = 0, edge = 0;
+    for (let i = 0; i < png.data.length; i += 4) { const a = png.data[i + 3]; if (!a) clear++; else if (a > 200) solid++; }
+    // 가장자리 한 줄에 그림이 닿아 있으면 선·손발·소품이 잘렸다는 뜻이다.
+    for (let x2 = 0; x2 < png.width; x2++) for (const y of [0, png.height - 1]) if (png.data[(y * png.width + x2) * 4 + 3] > 32) edge++;
+    for (let y2 = 0; y2 < png.height; y2++) for (const x2 of [0, png.width - 1]) if (png.data[(y2 * png.width + x2) * 4 + 3] > 32) edge++;
+    assert.ok(clear > png.width * png.height * .5, x.id + ': 바탕이 투명해야 한다(투명 픽셀 ' + clear + ')');
+    assert.ok(solid > 300, x.id + ': 읽을 수 있는 진한 선이 있어야 한다(진한 픽셀 ' + solid + ')');
+    assert.equal(edge, 0, x.id + ': 그림이 가장자리에 닿았다 — 잘렸거나 여백이 없다');
+  }
   const slotsSrc = fs.readFileSync('src/design/asset-slots.ts', 'utf8');
   assert.ok(/assets\/expression-guides\/<[^>]+>\.png/.test(slotsSrc), '파일 이름 규칙이 자료 파일에 적혀 있다(45.16차 카드 그림과 같은 자리)');
-  for (const x of card.examples) assert.equal(fs.existsSync('assets/expression-guides/' + x.id + '.png'), false, x.id + ': 아직 파일이 없다(생기면 이 줄이 아니라 연결을 갱신한다)');
+  // 다섯 장은 한 벌이다: 같은 틀·같은 배율이어야 나란히 놓았을 때 크기가 튀지 않는다.
+  const delivered = card.examples.map(x => 'assets/expression-guides/' + x.id + '.png').filter(f => fs.existsSync(f));
+  if (delivered.length) {
+    const sides = new Set(delivered.map(f => { const g = PNG.sync.read(fs.readFileSync(f)); return g.width + 'x' + g.height; }));
+    assert.equal(sides.size, 1, '납품된 예시는 모두 같은 틀이어야 한다: ' + [...sides].join(', '));
+  }
 
   // ── 2. 그림이 없을 때: 준비 중으로 두고 두 버튼을 내주지 않는다 ────────────────────────────
   saveStore({ version: 1, revision: 1, projects: [], palette: [] });

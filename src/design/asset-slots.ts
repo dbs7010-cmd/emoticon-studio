@@ -31,6 +31,8 @@ export type ExpressionGuideCard = {
 // 예시 id 는 '<카드 id>-<표현 갈래>' 라서 카드 파일 이름과 겹치지 않는다(greeting-thanks.png vs greeting-thanks-polite.png).
 // 파일이 실제로 들어오기 전에는 artwork 를 두지 않는다(없는 파일을 require 하지 않는다).
 // artwork 가 없으면 화면은 '준비 중'으로 두고 두 버튼(참고·밑그림)을 누를 수 없게 한다.
+// 45.18차 납품: '고마워' 다섯 장은 9×9 통합 시트(1254×1254)에서 칸을 잘라 낸 것이라 실제 크기가 132×132 다.
+// 권장 360 / 마스터 1024 에 못 미친다. 확대하지 않고 원본 픽셀 그대로 넣었다 — 큰 화면(참고 창·밑그림)에서는 늘어나 부드럽게 보인다.
 export type ExpressionExample = {
   id: string;
   label: string;   // 표현 갈래 이름 — 감정 이름과 함께 읽힌다('고마워 · 정중하게')
@@ -78,11 +80,11 @@ export const EXPRESSION_GUIDE = {
       id: 'greeting-thanks', category: '기쁨·인사', name: '고마워', hint: '두 손 모아 꾸벅',
       // 45.17차 첫 흐름. 카드의 이름·힌트·차례는 그대로 두고 표현 다섯 갈래만 아래에 달았다.
       examples: [
-        { id: 'greeting-thanks-polite', label: '정중하게', hint: '두 손 모으고 깊게 꾸벅' },
-        { id: 'greeting-thanks-moved', label: '감격해서', hint: '눈물 맺힌 눈으로 선물 꼭 안기' },
-        { id: 'greeting-thanks-friendly', label: '친근하게', hint: '엄지 척하며 씩 웃기' },
-        { id: 'greeting-thanks-grand', label: '과장해서', hint: '바닥까지 큰절하기' },
-        { id: 'greeting-thanks-shy', label: '수줍게', hint: '시선 피하며 작은 하트 내밀기' },
+        { id: 'greeting-thanks-polite', label: '정중하게', hint: '두 손 모으고 깊게 꾸벅', artwork: require('../../assets/expression-guides/greeting-thanks-polite.png') },
+        { id: 'greeting-thanks-moved', label: '감격해서', hint: '눈물 맺힌 눈으로 선물 꼭 안기', artwork: require('../../assets/expression-guides/greeting-thanks-moved.png') },
+        { id: 'greeting-thanks-friendly', label: '친근하게', hint: '엄지 척하며 씩 웃기', artwork: require('../../assets/expression-guides/greeting-thanks-friendly.png') },
+        { id: 'greeting-thanks-grand', label: '과장해서', hint: '바닥까지 큰절하기', artwork: require('../../assets/expression-guides/greeting-thanks-grand.png') },
+        { id: 'greeting-thanks-shy', label: '수줍게', hint: '시선 피하며 작은 하트 내밀기', artwork: require('../../assets/expression-guides/greeting-thanks-shy.png') },
       ],
     },
     { id: 'greeting-like', category: '기쁨·인사', name: '좋아', hint: '엄지 척' }, { id: 'greeting-excited', category: '기쁨·인사', name: '신나', hint: '두 팔 번쩍' },
