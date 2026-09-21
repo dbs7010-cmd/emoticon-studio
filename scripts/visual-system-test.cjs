@@ -144,7 +144,10 @@ async function ready() {
     // 44.2차: 가이드 카드는 열람으로 끝나지 않는다 — 고르면 최근 세트의 다음 칸 그리기로 가고, 표현은 한 줄 힌트로만 따라온다.
     const hintLine = () => tree.root.findAll(n => n.type === 'Text' && [n.props.children].flat(9).filter(x => typeof x === 'string').join('').includes('팔짱 + 몸 돌리기'));
     await press('억울해 · 팔짱 + 몸 돌리기');
-    assert.equal(tree.root.findAllByType('WebView').length, 1, '가이드 카드를 고르면 그리기 화면이 열린다');
+    // 45.19 에셋 삽입 뒤: 감정을 고르면 그 감정의 표현 목록이 먼저 펼쳐지고, 표현을 골라야 그리기로 간다.
+    assert.equal(byTestID('표현 예시 목록').length, 1, '감정을 고르면 표현 목록이 펼쳐진다');
+    await press('속상해서 참고하며 그리기');
+    assert.equal(tree.root.findAllByType('WebView').length, 1, '표현을 고르면 그리기 화면이 열린다');
     assert.equal(hintLine().length, 1, '고른 표현이 캔버스 위 한 줄 힌트로 따라온다');
     assert.equal(labelled('표현 힌트 닫기').length, 1, '힌트는 바로 닫을 수 있다');
     await press('표현 힌트 닫기');

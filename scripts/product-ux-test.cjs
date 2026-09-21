@@ -467,7 +467,10 @@ const saved = async (dirty = true) => {
   // ── 45.1차: 가이드 힌트는 고른 그 칸의 것이고, 적용하지 않은 문구는 저장과 함께 확정된다 ─────────────
   await press('표현 가이드');
   await press('안녕 · 손 크게 흔들기');
-  assert.equal(tree.root.findAllByType('WebView').length, 1, '가이드에서 고르면 그리기 화면이 열린다');
+  // 45.19 에셋 삽입 뒤: 감정을 고르면 그 감정의 표현 목록이 먼저 펼쳐진다(확정된 흐름).
+  assert.equal(tree.root.findAll(n => n.props.testID === '표현 예시 목록').length, 1, '감정을 고르면 표현 목록이 펼쳐진다');
+  await press('손 흔들며 참고하며 그리기');
+  assert.equal(tree.root.findAllByType('WebView').length, 1, '표현을 고르면 그리기 화면이 열린다');
   await ready();
   const guideLine = () => tree.root.findAll(n => n.type === 'Text' && [n.props.children].flat(9).filter(x => typeof x === 'string').join('').includes('손 크게 흔들기'));
   assert.equal(guideLine().length, 1, '고른 표현이 한 줄 힌트로 따라온다');

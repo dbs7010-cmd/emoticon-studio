@@ -115,9 +115,12 @@ async function echoReferences(scene) {
   assert.equal(card.name + '/' + card.hint, '고마워/두 손 모아 꾸벅', '감정 카드의 이름·힌트는 그대로다');
   assert.equal(new Set(card.examples.map(x => x.id)).size, 5, '표현 ID 는 겹치지 않는다');
   for (const x of card.examples) assert.ok(x.id.startsWith(card.id + '-'), x.id + ': 표현 ID 는 카드 ID 에서 파생한다');
-  assert.equal(design.EXPRESSION_GUIDE.cards.filter(c => c.examples).length, 1, '이번 라운드는 고마워 한 감정만 연결한다(다른 감정을 임의로 채우지 않는다)');
+  // 45.17 에서는 고마워 하나뿐이었다. 45.19 에셋 삽입으로 20개 감정 모두 표현을 갖는다(아래 1-B 절이 수량을 본다).
+  assert.equal(design.EXPRESSION_GUIDE.cards.filter(c => c.examples && c.examples.length).length, 20, '20개 감정 모두 표현 목록을 갖는다');
   assert.equal(design.EXPRESSION_GUIDE.cards.length, 20, '감정 카드 수는 그대로 20개');
-  assert.equal(design.EXPRESSION_GUIDE.ready, false, '에셋이 오기 전에는 ready 를 켜지 않는다');
+  // 카드 자체의 그림(20장 썸네일)은 아직 없다 — ready 는 그 목록을 가리키므로 켜지 않는다.
+  assert.equal(design.EXPRESSION_GUIDE.ready, false, '카드 그림이 오기 전에는 ready 를 켜지 않는다');
+  assert.equal(design.EXPRESSION_GUIDE.cards.filter(c => c.artwork).length, 0, '카드 자체 그림은 아직 0장');
   // 45.18차 납품 확인: 파일이 실제로 있는 예시만 artwork 를 갖는다(없는 파일을 require 하지 않는다).
   for (const x of card.examples) {
     const file = 'assets/expression-guides/' + x.id + '.png';
@@ -144,6 +147,68 @@ async function echoReferences(scene) {
     const sides = new Set(delivered.map(f => { const g = PNG.sync.read(fs.readFileSync(f)); return g.width + 'x' + g.height; }));
     assert.equal(sides.size, 1, '납품된 예시는 모두 같은 틀이어야 한다: ' + [...sides].join(', '));
   }
+
+  // ── 1-B. 45.19 에셋 삽입: 신규 76장 등록 검사 ────────────────────────────────────────
+  //   기존 5장(고마워)은 그대로 두고, 나머지 감정 카드에 76장을 더했다. 여기서 보는 것:
+  //   총 개수 · id 중복 · 그림 파일 중복 · 파일 없음 · 대소문자 · 카드 id 파생 규칙 · 기존 5장 불변.
+  const EXPECTED_EXISTING_ASSETS = 5;
+  const EXPECTED_NEW_ASSETS = 76;
+  const GUIDE_DIR = 'assets/expression-guides';
+  const allCards = design.EXPRESSION_GUIDE.cards;
+  const allExamples = allCards.flatMap(c => (c.examples ?? []).map(x => ({ ...x, card: c })));
+  const withArtwork = allExamples.filter(x => x.artwork);
+
+  // 코드에 적힌 require 경로를 직접 읽는다(번들러 없이도 확인할 수 있게).
+  const slotsSource = fs.readFileSync('src/design/asset-slots.ts', 'utf8');
+  const requirePaths = [...slotsSource.matchAll(/artwork: require\('\.\.\/\.\.\/(assets\/expression-guides\/[^']+)'\)/g)].map(m => m[1]);
+  const idsInSource = [...slotsSource.matchAll(/\{ id: '([^']+)', label: '[^']*', hint: '[^']*', artwork: require\('\.\.\/\.\.\/assets\/expression-guides\/([^']+)\.png'\) \}/g)];
+
+  assert.equal(withArtwork.length, EXPECTED_EXISTING_ASSETS + EXPECTED_NEW_ASSETS,
+    '그림이 붙은 표현은 기존 5 + 신규 76 = 81 이어야 한다: ' + withArtwork.length);
+  assert.equal(requirePaths.length, EXPECTED_EXISTING_ASSETS + EXPECTED_NEW_ASSETS,
+    'require 경로 수도 81 이어야 한다: ' + requirePaths.length);
+
+  // id 중복 없음(전체 카드 통틀어)
+  const allIds = allExamples.map(x => x.id);
+  assert.equal(new Set(allIds).size, allIds.length,
+    '예시 id 가 겹친다: ' + allIds.filter((v, i) => allIds.indexOf(v) !== i).join(', '));
+  // 그림 파일 중복 없음 — 같은 그림을 두 표현이 쓰지 않는다
+  assert.equal(new Set(requirePaths).size, requirePaths.length,
+    '같은 그림 파일을 두 번 쓴다: ' + requirePaths.filter((v, i) => requirePaths.indexOf(v) !== i).join(', '));
+  // 파일 없음 없음 + 대소문자까지 정확히 일치
+  const onDisk = fs.readdirSync(GUIDE_DIR);
+  for (const rel of requirePaths) {
+    assert.ok(fs.existsSync(rel), 'require 대상 파일이 없다: ' + rel);
+    const base = rel.slice(GUIDE_DIR.length + 1);
+    assert.ok(onDisk.includes(base), '파일명 대소문자가 다르다: ' + base);
+  }
+  // id 는 카드 id 에서 파생한다 → 어느 감정의 표현인지 이름만 보고 안다
+  for (const x of allExamples) assert.ok(x.id.startsWith(x.card.id + '-'), x.id + ': 카드 id 파생 규칙 위반(' + x.card.id + ')');
+  // id 와 파일 이름이 같다 → 이름만으로 그림을 찾을 수 있다
+  for (const [, id, file] of idsInSource) assert.equal(id, file, 'id 와 파일 이름이 다르다: ' + id + ' vs ' + file);
+  // 20개 카드·5개 분류·이름·힌트·차례는 그대로다(위 1 절의 목록 검사가 이미 본다)
+  assert.equal(allCards.length, 20, '감정 카드는 20개 그대로');
+  assert.equal(design.EXPRESSION_GUIDE.categories.length, 5, '분류는 5개 그대로');
+  // 기존 5장 회귀: id·label·hint·파일이 그대로여야 한다
+  const thanks = allCards.find(c => c.id === 'greeting-thanks');
+  assert.deepEqual(thanks.examples.map(x => x.id), [
+    'greeting-thanks-polite', 'greeting-thanks-moved', 'greeting-thanks-friendly', 'greeting-thanks-grand', 'greeting-thanks-shy',
+  ], '기존 고마워 5장의 id·차례가 바뀌었다');
+  assert.equal(thanks.examples.filter(x => x.artwork).length, 5, '기존 고마워 5장의 그림 연결이 끊겼다');
+
+  // 납품 파일 자체 검사(1:1 · RGBA · 투명 · 진한 선 · 가장자리 잉크 0)
+  for (const rel of requirePaths) {
+    const png = PNG.sync.read(fs.readFileSync(rel));
+    assert.equal(png.colorType, 6, rel + ': RGBA 가 아니다');
+    let clear = 0, solid = 0, edge = 0;
+    for (let i = 0; i < png.data.length; i += 4) { const a = png.data[i + 3]; if (!a) clear++; else if (a > 200) solid++; }
+    for (let x2 = 0; x2 < png.width; x2++) for (const y of [0, png.height - 1]) if (png.data[(y * png.width + x2) * 4 + 3] > 32) edge++;
+    for (let y2 = 0; y2 < png.height; y2++) for (const x2 of [0, png.width - 1]) if (png.data[(y2 * png.width + x2) * 4 + 3] > 32) edge++;
+    assert.ok(clear > png.width * png.height * .3, rel + ': 투명 바탕이 아니다');
+    assert.ok(solid > 150, rel + ': 읽을 수 있는 진한 선이 없다');
+    assert.equal(edge, 0, rel + ': 그림이 가장자리에 닿았다(잘림 또는 이웃 칸 오염)');
+  }
+  console.log('  에셋 등록: 기존 ' + EXPECTED_EXISTING_ASSETS + ' + 신규 ' + EXPECTED_NEW_ASSETS + ' = ' + withArtwork.length + ' · id/파일 중복 0 · 파일 없음 0 · 가장자리 잉크 0');
 
   // ── 2. 그림이 없을 때: 준비 중으로 두고 두 버튼을 내주지 않는다 ────────────────────────────
   saveStore({ version: 1, revision: 1, projects: [], palette: [] });
