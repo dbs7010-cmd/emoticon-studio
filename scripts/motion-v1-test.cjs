@@ -30,7 +30,7 @@ Object.assign(rn, { Keyboard: { addListener: () => ({ remove() {} }), dismiss() 
 const mocks = {
   'react-native': rn, '@expo/ui': { Host: 'Host', Button: 'Button', Slider: 'Slider' }, '@expo/vector-icons': { MaterialCommunityIcons: 'Icon' },
   'react-native-safe-area-context': { SafeAreaProvider: 'SafeAreaProvider', SafeAreaView: 'SafeAreaView', useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) },
-  'expo-image-picker': {}, 'expo-image-manipulator': {},
+  'expo-image-picker': {}, 'expo-image-manipulator': {}, 'expo-asset': { Asset: { fromModule: () => ({ downloadAsync: async () => ({ localUri: 'bundled://art', uri: 'bundled://art' }) }) } },
   'expo-status-bar': { StatusBar: 'StatusBar' }, 'expo-constants': { default: { expoConfig: { extra: {} } } }, 'react-native-webview': { WebView },
   'expo-sharing': { isAvailableAsync: async () => true, shareAsync: async () => {} },
   'expo-file-system': { Directory, File, Paths: { document: 'document' } },

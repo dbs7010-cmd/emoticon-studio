@@ -21,6 +21,21 @@ export type ExpressionGuideCard = {
   hint: string;
   // 파일이 실제로 들어온 카드에만 정적 require(...)를 넣는다. 없으면 기존 준비 중 자리표시를 쓴다.
   artwork?: ImageSourcePropType;
+  // 45.17차: 한 감정 아래의 여러 표현(표정·자세·구도). 없으면 카드는 예전처럼 바로 그리기로 간다.
+  examples?: ExpressionExample[];
+};
+
+// 표현 가이드는 창작자의 내비게이션이다: 한 감정에서 여러 표현을 보고 골라 자기 캐릭터로 응용한다.
+// 흐름은 감정 선택 → 표현 보기 → 예시 선택 → (참고하며 그리기 | 밑그림으로 넣기).
+// 파일 이름 규칙: assets/expression-guides/<예시 id>.png — 카드 그림(45.16차)과 같은 자리를 쓴다.
+// 예시 id 는 '<카드 id>-<표현 갈래>' 라서 카드 파일 이름과 겹치지 않는다(greeting-thanks.png vs greeting-thanks-polite.png).
+// 파일이 실제로 들어오기 전에는 artwork 를 두지 않는다(없는 파일을 require 하지 않는다).
+// artwork 가 없으면 화면은 '준비 중'으로 두고 두 버튼(참고·밑그림)을 누를 수 없게 한다.
+export type ExpressionExample = {
+  id: string;
+  label: string;   // 표현 갈래 이름 — 감정 이름과 함께 읽힌다('고마워 · 정중하게')
+  hint: string;    // 무엇을 그리는지 한 줄
+  artwork?: ImageSourcePropType;
 };
 
 export const ASSET_SLOTS = {
@@ -59,7 +74,17 @@ export const EXPRESSION_GUIDE = {
   ready: false,
   categories: ['기쁨·인사', '슬픔·미안', '화남·억울', '놀람·당황', '일상'] as const,
   cards: [
-    { id: 'greeting-hello', category: '기쁨·인사', name: '안녕', hint: '손 크게 흔들기' }, { id: 'greeting-thanks', category: '기쁨·인사', name: '고마워', hint: '두 손 모아 꾸벅' },
+    { id: 'greeting-hello', category: '기쁨·인사', name: '안녕', hint: '손 크게 흔들기' }, {
+      id: 'greeting-thanks', category: '기쁨·인사', name: '고마워', hint: '두 손 모아 꾸벅',
+      // 45.17차 첫 흐름. 카드의 이름·힌트·차례는 그대로 두고 표현 다섯 갈래만 아래에 달았다.
+      examples: [
+        { id: 'greeting-thanks-polite', label: '정중하게', hint: '두 손 모으고 깊게 꾸벅' },
+        { id: 'greeting-thanks-moved', label: '감격해서', hint: '눈물 맺힌 눈으로 선물 꼭 안기' },
+        { id: 'greeting-thanks-friendly', label: '친근하게', hint: '엄지 척하며 씩 웃기' },
+        { id: 'greeting-thanks-grand', label: '과장해서', hint: '바닥까지 큰절하기' },
+        { id: 'greeting-thanks-shy', label: '수줍게', hint: '시선 피하며 작은 하트 내밀기' },
+      ],
+    },
     { id: 'greeting-like', category: '기쁨·인사', name: '좋아', hint: '엄지 척' }, { id: 'greeting-excited', category: '기쁨·인사', name: '신나', hint: '두 팔 번쩍' },
     { id: 'sad-sorry', category: '슬픔·미안', name: '미안해', hint: '고개 푹 숙이기' }, { id: 'sad-sad', category: '슬픔·미안', name: '슬퍼', hint: '무릎 안고 앉기' },
     { id: 'sad-crying', category: '슬픔·미안', name: '흑흑', hint: '눈물 훔치기' }, { id: 'sad-are-you-okay', category: '슬픔·미안', name: '괜찮아?', hint: '살짝 다가가기' },

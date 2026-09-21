@@ -1,7 +1,9 @@
 import * as Picker from 'expo-image-picker';
+import { Asset } from 'expo-asset';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { File } from 'expo-file-system';
 import { newImageFile, newMotionFile, localFile } from './storage';
+import type { ImageSourcePropType } from 'react-native';
 import type { LocalImage, Metrics, PainterExport, PainterWork } from '../types';
 
 export async function pickImages(multiple = false): Promise<LocalImage[]> {
@@ -19,6 +21,22 @@ export async function pickImages(multiple = false): Promise<LocalImage[]> {
     context.release(); rendered.release();
   }
   return images;
+}
+// 앱에 함께 실린 그림(표현 가이드 예시 등)을 참고 사진과 같은 자리로 들여온다.
+// 고른 사진과 똑같이 PNG 한 장으로 옮겨 놓아야, 참고 레이어의 저장·복원·삭제가 기존 정책 그대로 돈다
+// (저장 파일은 LocalImage 경로로 참고를 찾는다 — 번들 모듈은 경로가 없어 그대로는 쓸 수 없다).
+export async function importBundledImage(module: ImageSourcePropType): Promise<LocalImage> {
+  // 정적 require(...) 로 들어온 번들 그림은 실행 시점에 숫자 손잡이다. 자리 정의가 쓰는 넓은 타입을 그대로 받고 여기서 좁힌다.
+  const asset = await Asset.fromModule(module as number).downloadAsync();
+  const uri = asset.localUri ?? asset.uri;
+  if (!uri) throw new Error('그림 파일을 찾지 못했습니다.');
+  const context = ImageManipulator.manipulate(uri);
+  const rendered = await context.renderAsync();
+  const png = await rendered.saveAsync({ format: SaveFormat.PNG });
+  const destination = newImageFile();
+  new File(png.uri).copy(destination);
+  context.release(); rendered.release();
+  return { path: destination.name, width: png.width, height: png.height };
 }
 export async function dataUrl(image: LocalImage): Promise<string> {
   if (Math.max(image.width, image.height) > 720) {

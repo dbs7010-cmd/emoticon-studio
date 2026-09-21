@@ -138,3 +138,45 @@ UI 로 해결되는 문제는 넣지 않았다. 이번 라운드에서 에셋을
 ## NEXT / BLOCKED
 - NEXT: 실제 에셋을 위 규칙으로 전달받으면 파일 존재·규격을 확인한 뒤 해당 카드만 연결하고 같은 회귀 검사를 실행한다.
 - BLOCKED: 실제 에셋 미전달. 이미지의 캐릭터·색·세부 표현은 공식 확정으로 간주하지 않는다.
+
+---
+
+# 45.17 — 표현 가이드 예시 5종 납품 계약 (2026-09-22, Claude)
+
+45.16 의 카드 그림 계약(`assets/expression-guides/<카드 id>.png`)은 그대로 살아 있다. 이번에는 그 아래 **표현 예시**가 생겼고, **같은 폴더·같은 규격**을 쓴다.
+
+## 왜 예시가 따로 필요한가
+표현 가이드는 창작자의 내비게이션이다. 한 감정에서 여러 표정·자세·구도를 보여 주고 자기 캐릭터로 응용하게 한다.
+흐름: **감정 선택 → 다양한 표현 보기 → 예시 선택 → ① 참고하며 그리기 / ② 밑그림으로 넣기.**
+이번 라운드는 `고마워` 한 감정으로 전체 흐름만 구현했다. 다른 19개 감정과 기본 레퍼런스 32칸은 **건드리지 않았다.**
+
+## CURRENT — 납품 위치와 파일명 (예시 5종)
+- 위치: `assets/expression-guides/` — 45.16 카드 그림과 같은 폴더.
+- 파일명: `<예시 id>.png`. 예시 id 는 `<카드 id>-<표현 갈래>` 라서 카드 파일과 겹치지 않는다(`greeting-thanks.png` vs `greeting-thanks-polite.png`).
+- 규격: **1:1 · 투명 PNG · 글자 없음**, 마스터 1024×1024px, 납품 권장 360×360px.
+  - 가이드 화면 예시 줄에서는 74dp `contain`.
+  - 참고 창에서는 창 너비(화면폭의 약 46%, 120~190dp) 정사각 `contain`.
+  - **밑그림으로 깔릴 때는 같은 파일을 그대로 쓴다.** 캔버스(360×360) 안에 비율을 지켜 가운데로 줄여 들어가고(`min(W/w, H/h)`), 기본 진하기 30% 로 깔린다. 그래서 **투명 바탕이 필수**다(불투명이면 그림을 덮는다).
+- 연결: `src/design/asset-slots.ts` 의 `EXPRESSION_GUIDE.cards` 중 `greeting-thanks` 카드의 `examples[]` 항목에 `artwork: require('../../assets/expression-guides/<예시 id>.png')` 를 단다. **파일이 실제로 존재한 뒤에만** 넣는다.
+
+| 예시 ID | 표현 이름 | 힌트(코드에 있는 값) | 납품 파일 |
+|---|---|---|---|
+| `greeting-thanks-polite` | 정중하게 | 두 손 모으고 깊게 꾸벅 | `assets/expression-guides/greeting-thanks-polite.png` |
+| `greeting-thanks-moved` | 감격해서 | 눈물 맺힌 눈으로 선물 꼭 안기 | `assets/expression-guides/greeting-thanks-moved.png` |
+| `greeting-thanks-friendly` | 친근하게 | 엄지 척하며 씩 웃기 | `assets/expression-guides/greeting-thanks-friendly.png` |
+| `greeting-thanks-grand` | 과장해서 | 바닥까지 큰절하기 | `assets/expression-guides/greeting-thanks-grand.png` |
+| `greeting-thanks-shy` | 수줍게 | 시선 피하며 작은 하트 내밀기 | `assets/expression-guides/greeting-thanks-shy.png` |
+
+**미정**: 캐릭터 생김새·색·선 두께(공식 캐릭터 미확정). 이름과 힌트 밖의 세부(소품 모양·시선 방향·배경)는 정해진 바 없다.
+
+## DONE — 코드 준비 상태
+- 감정 카드 20개의 이름·힌트·분류·차례는 그대로다. `examples` 를 가진 카드는 `고마워` **하나뿐**이고, 나머지 19개는 누르면 예전처럼 바로 그리기로 간다.
+- 그림이 없는 예시는 **'그림 준비 중이에요'** 로 두고 두 버튼(참고·밑그림)을 **아예 그리지 않는다**. 없는 파일을 `require` 하지 않는다. `EXPRESSION_GUIDE.ready` 는 `false` 그대로다.
+- 실제 납품 이미지와 `artwork` 연결은 **0개**다. 임시 그림을 채우지 않았다.
+
+## 안내판은 방향 확인용이다
+채팅에서 만든 '고마워 5가지' 안내판은 방향을 맞추기 위한 것이다. **안내판 전체를 그대로 넣거나 임의로 잘라 쓰지 않는다.** 개별 에셋은 위 규격대로 따로 만들어 전달한다.
+
+## NEXT / BLOCKED
+- NEXT: 위 파일명으로 전달받으면 파일 존재·규격(1:1·투명)을 확인한 뒤 해당 예시만 연결하고 `npm test` 를 다시 돌린다. `ready` 를 일괄로 켜지 않는다.
+- BLOCKED: 실제 에셋 미전달. 실기기 화면에서의 크기감·투명도·손맛은 사용자의 APK 설치·캡처 전까지 **미검증**이다.

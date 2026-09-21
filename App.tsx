@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, AppState, BackHandler, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, Image, useWindowDimensions } from 'react-native';
+import { Alert, AppState, BackHandler, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, Image, useWindowDimensions, type ImageSourcePropType } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import { Action, AssetSlot, Dialog, Elev, Field, IconButton, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, userMessage } from './src/components/ui';
-import { ASSET_SLOTS, EXPRESSION_GUIDE, HOME_NOTICE } from './src/design/asset-slots';
+import { ASSET_SLOTS, EXPRESSION_GUIDE, HOME_NOTICE, type ExpressionExample, type ExpressionGuideCard } from './src/design/asset-slots';
 import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
 import { MotionBaker, type Baker } from './src/components/motion-baker';
 import { ExtraComposer, placeInFrame, type Composer } from './src/components/extra-composer';
@@ -14,7 +14,7 @@ import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC as SPEC, STAGES, WEBP_TOOL_RULE,
 import { captionText, createProject, doneCount, usesPro, droppedImagePaths, duplicateCaptions, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
 import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, saveStore, type StoreReport } from './src/services/storage';
 import { exportSet, decodeDataUrl, type HandoffFrames } from './src/services/export';
-import { dataUrl, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
+import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinals, inspectImage } from './src/services/qa';
 import { PLANS, REVIEW_BUILD_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, purchase, refreshEntitlement, restore, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
 import { PRESETS } from './src/painter/motion-panel';
@@ -69,6 +69,11 @@ function Studio() {
   // 홈 아래 두 화면(44차): 전체 작업(여러 세트 찾기·다시 열기)과 표현 가이드("무엇을 그릴까?"). 세트 안 칸 관리는 보드가 맡는다.
   const [homeView, setHomeView] = useState<'home' | 'all' | 'guide'>('home');
   const [guideCategory, setGuideCategory] = useState<string>(EXPRESSION_GUIDE.categories[0]);
+  // 표현 가이드는 창작자의 내비게이션이다(45.17차): 감정을 고르면 그 감정의 여러 표현을 펼쳐 보고,
+  // 예시 하나를 고른 다음 '참고하며 그리기' 또는 '밑그림으로 넣기'로 그리기 화면에 들어간다.
+  const [guideCard, setGuideCard] = useState<ExpressionGuideCard | null>(null);
+  const [guideExample, setGuideExample] = useState<{ id: string; title: string; hint: string; artwork: ImageSourcePropType } | null>(null);
+  const [guideExampleMode, setGuideExampleMode] = useState<'watch' | 'underlay' | null>(null);
   // 가이드에서 고른 표현 한 줄. Painter 가 힌트로 한 번 보여 주고 끝난다 — 저장 구조에는 남기지 않는다(44.2차).
   const [guideHint, setGuideHint] = useState<{ name: string; hint: string } | null>(null);
   // 복구 화면의 기술 정보는 접어 두고(문의할 때만 펼침), 설정의 '저장 상태 보기'는 사람이 읽는 요약 창으로 연다.
@@ -157,7 +162,7 @@ function Studio() {
   function updateProject(transform: (p: Project) => Project) { if (projectId) { try { changeProject(projectId, transform); } catch { /* Keep unsaved state with persistent retry banner. */ } } }
   const project = store?.projects.find(p => p.id === projectId), slot = project?.slots.find(s => s.number === slotNumber);
   function back() { if (busy) return; if (slotNumber !== null) setSlotNumber(null); else if (canonOpen) setCanonOpen(false); else if (screen !== 'board') setScreen('board'); else setProjectId(null); }
-  useEffect(() => { const sub = BackHandler.addEventListener('hardwareBackPress', () => { if (painting) return false; if (projectId) { back(); return true; } if (homeView !== 'home') { setHomeView('home'); return true; } return false; }); return () => sub.remove(); }, [projectId, slotNumber, canonOpen, busy, painting, screen, homeView]);
+  useEffect(() => { const sub = BackHandler.addEventListener('hardwareBackPress', () => { if (painting) return false; if (projectId) { back(); return true; } if (guideCard) { setGuideCard(null); return true; } if (homeView !== 'home') { setHomeView('home'); return true; } return false; }); return () => sub.remove(); }, [projectId, slotNumber, canonOpen, busy, painting, screen, homeView, guideCard]);
   // 상태 수명(45.1차).
   //   PROJECT-SCOPED — 세트가 바뀌면 남을 이유가 없다: 내보내기 결과·부가 이미지 선택·움직임 한 번에·보드 일시 상태.
   //   SCREEN-SCOPED  — 보드에서만 산다: 칸 순서 바꾸기·전체 재생.
@@ -264,15 +269,21 @@ function Studio() {
     catch (e) { Alert.alert('세트를 만들지 못했어요', userMessage(e)); }
   }
   // 표현 가이드에서 고른 표현으로 바로 그리러 간다. 새 흐름을 만들지 않고, 이어서 만들기·새 세트 만들기와 같은 길을 쓴다(44.2차).
-  function startFromGuide(card: { name: string; hint: string }) {
+  // 예시를 함께 고른 경우에도 새 흐름을 만들지 않는다 — 대상 칸을 정하는 길은 예전 그대로다(44.2차).
+  function startFromGuide(card: { name: string; hint: string }, example?: ExpressionExample, mode?: 'watch' | 'underlay') {
     setGuideHint(card);
+    // 그림이 아직 없는 예시는 가이드 화면에서 고를 수 없으므로 여기까지 오지 않는다.
+    const artwork = example?.artwork;
+    setGuideExample(example && artwork ? { id: example.id, title: card.name + ' · ' + example.label, hint: example.hint, artwork } : null);
+    setGuideExampleMode(example && artwork ? mode ?? 'watch' : null);
+    setGuideCard(null);
     setHomeView('home');
     const target = sortedProjects[0];
     if (!target) { createNewProject(); return; }
     const open = nextUnfinished(target, target.lastSlot ?? 0);
     setProjectId(target.id); setScreen('board');
     // 칸이 다 찬 세트에서는 완성한 칸을 대신 열지 않는다 — 보드를 보여 주고 고를 사람에게 맡긴다(45.1차).
-    if (open === null) { setGuideHint(null); setNotice('이 세트는 칸이 다 찼어요. 고칠 칸을 고르거나 새 이모티콘 세트를 만들어 주세요.'); return; }
+    if (open === null) { setGuideHint(null); setGuideExample(null); setGuideExampleMode(null); setNotice('이 세트는 칸이 다 찼어요. 고칠 칸을 고르거나 새 이모티콘 세트를 만들어 주세요.'); return; }
     setSlotNumber(open); setPainting(true);
   }
   const [pendingImport, setPendingImport] = useState<string | null>(null);
@@ -580,11 +591,11 @@ function Studio() {
           {/* 표현 가이드(44차): "무엇을 그릴까?". 분류 → 표현 카드(그림 자리 · 이름 · 짧은 몸짓 힌트). 긴 설명·대화형·생성 없음.
               "어떻게 그릴까?"는 그리기 화면 › 참고 › 기본 레퍼런스가 맡는다. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4, marginLeft: -8 }}>
-            <IconButton label="홈으로" icon="chevron-left" color={C.ink} onPress={() => setHomeView('home')} />
-            <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>표현 가이드</Text>
+            <IconButton label={guideCard ? '표현 가이드로' : '홈으로'} icon="chevron-left" color={C.ink} onPress={() => guideCard ? setGuideCard(null) : setHomeView('home')} />
+            <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{guideCard ? guideCard.name : '표현 가이드'}</Text>
           </View>
-          <Text style={{ fontSize: 13, color: C.muted, marginTop: -8 }}>무엇을 그릴지 골라 보세요</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }} style={{ marginHorizontal: -16, flexGrow: 0 }}>
+          <Text style={{ fontSize: 13, color: C.muted, marginTop: -8 }}>{guideCard ? '같은 말도 표정과 자세에 따라 달라져요' : '무엇을 그릴지 골라 보세요'}</Text>
+          {!guideCard && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }} style={{ marginHorizontal: -16, flexGrow: 0 }}>
             <View style={{ width: 10 }} />
             {EXPRESSION_GUIDE.categories.map(name => { const on = guideCategory === name;
               return <Pressable key={name} accessibilityRole="button" accessibilityLabel={'표현 가이드 ' + name} accessibilityState={{ selected: on }} onPress={() => setGuideCategory(name)}
@@ -592,13 +603,38 @@ function Studio() {
                 <Text style={{ fontSize: 13, fontWeight: on ? '700' : '600', color: on ? C.paper : C.muted }}>{name}</Text>
               </Pressable>; })}
             <View style={{ width: 10 }} />
-          </ScrollView>
-          {(() => {
+          </ScrollView>}
+          {/* 예시 목록(45.17차): 한 감정 아래의 여러 표현. 그림이 아직 없는 예시는 '준비 중'으로 두고 두 버튼을 잠근다. */}
+          {!!guideCard && <View testID="표현 예시 목록" style={{ gap: 10 }}>
+            {(guideCard.examples ?? []).map(x => { const has = !!x.artwork;
+              return <View key={x.id} style={{ flexDirection: 'row', gap: 12, padding: 10, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
+                <View style={{ width: 92, height: 92, borderRadius: 14, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  <AssetSlot name="expressionGuideArtwork" size={74} sourceOverride={x.artwork ?? null} />
+                </View>
+                <View style={{ flex: 1, gap: 4, justifyContent: 'center' }}>
+                  <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{x.label}</Text>
+                  <Text numberOfLines={2} style={{ fontSize: 12, color: C.muted }}>{x.hint}</Text>
+                  {has
+                    ? <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
+                        <Pressable accessibilityRole="button" accessibilityLabel={`${x.label} 참고하며 그리기`} onPress={() => startFromGuide(guideCard, x, 'watch')}
+                          style={({ pressed }) => ({ flex: 1, minHeight: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : C.surface2 })}>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>참고하며 그리기</Text>
+                        </Pressable>
+                        <Pressable accessibilityRole="button" accessibilityLabel={`${x.label} 밑그림으로 넣기`} onPress={() => startFromGuide(guideCard, x, 'underlay')}
+                          style={({ pressed }) => ({ flex: 1, minHeight: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : C.ink })}>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: C.paper }}>밑그림으로 넣기</Text>
+                        </Pressable>
+                      </View>
+                    : <Text style={{ fontSize: 12, fontWeight: '700', color: C.faint, marginTop: 2 }}>그림 준비 중이에요</Text>}
+                </View>
+              </View>; })}
+          </View>}
+          {!guideCard && (() => {
             const cardWidth = Math.floor((screenWidth - 32 - 12) / 2), frame = cardWidth - 20;
             const cards = EXPRESSION_GUIDE.cards.filter(c => c.category === guideCategory);
             return cards.length
               ? <View testID="표현 가이드 카드" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-                  {cards.map(c => <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => startFromGuide(c)}
+                  {cards.map(c => <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => c.examples?.length ? setGuideCard(c) : startFromGuide(c)}
                     style={({ pressed }) => ({ width: cardWidth, padding: 10, gap: 8, borderRadius: 20, backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: C.line })}>
                     <View style={{ width: frame, height: frame, borderRadius: 14, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       <AssetSlot name="expressionGuideArtwork" size={Math.round(frame * .8)} sourceOverride={c.artwork ?? null} />
@@ -1281,6 +1317,14 @@ function Studio() {
       previousMotion={project.slots.filter(s => s.number < slot.number && isAnimated(s)).at(-1)?.motion ?? null}
       guideHint={guideHint}
       onGuideHintDone={() => setGuideHint(null)}
+      guideExample={guideExample}
+      guideExampleMode={guideExampleMode}
+      // 번들 그림을 세트의 참고 사진과 같은 자리에 들여놓는다. 저장·복원·삭제는 기존 참고 정책이 그대로 맡는다.
+      onImportGuideExample={async artwork => {
+        const image = await importBundledImage(artwork);
+        changeProject(project.id, q => ({ ...q, slots: q.slots.map(t => ({ ...t, referenceImages: mergeImages(t.referenceImages, [image]) })) }));
+        return image;
+      }}
       initialTool={lastTool}
       onToolChange={setLastTool}
       paperTexture={store?.paperTexture !== false}
@@ -1290,8 +1334,9 @@ function Studio() {
       onComplete={completeAndNext}
       onSetReference={useAsReference}
       onCopyPrevious={copyPreviousWork}
-      onClose={() => { setPainting(false); setSlotNumber(null); setGuideHint(null); if (returnToExport) { setScreen('export'); setReturnToExport(false); } }}
-      onNavigate={number => { setGuideHint(null); setSlotNumber(number); }}
+      onClose={() => { setPainting(false); setSlotNumber(null); setGuideHint(null); setGuideExample(null); setGuideExampleMode(null); if (returnToExport) { setScreen('export'); setReturnToExport(false); } }}
+      // 옆 칸으로 넘어가면 이 칸에서 고른 예시는 따라가지 않는다. 칸에 깔아 둔 밑그림은 그 칸에 그대로 남는다.
+      onNavigate={number => { setGuideHint(null); setGuideExample(null); setGuideExampleMode(null); setSlotNumber(number); }}
       onImportDrawing={async () => { const picked = await pickImages(); return picked[0] ? await dataUrl(picked[0]) : null; }}
       cutouts={(store?.cutouts ?? []).map(c => ({ id: c.id, name: c.name, path: c.image.path }))}
       onKeepCutout={async data => keepCutout(data)}

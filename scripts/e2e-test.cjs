@@ -14,7 +14,7 @@ class File {
   bytesSync() { return files.get(this.uri); }
   delete() { files.delete(this.uri); }
 }
-const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } }, 'expo-image-picker': {}, 'expo-image-manipulator': {} });
+const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } }, 'expo-image-picker': {}, 'expo-image-manipulator': {}, 'expo-asset': { Asset: { fromModule: () => ({ downloadAsync: async () => ({ localUri: 'bundled://art', uri: 'bundled://art' }) }) } } });
 const { createProject, doneCount, duplicateCaptions, isDone, nextUnfinished, previousDrawn, reorderSlots, storeImagePaths } = load('src/project.ts');
 const { loadStore, saveStore, localFile } = load('src/services/storage.ts');
 const { saveDrawing } = load('src/services/images.ts');

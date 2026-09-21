@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, AppState, LayoutAnimation, Modal, View, Text, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, UIManager } from 'react-native';
-import { Keyboard, useWindowDimensions, type GestureResponderEvent } from 'react-native';
+import { Keyboard, useWindowDimensions, type GestureResponderEvent, type ImageSourcePropType } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -64,6 +64,12 @@ type Props = {
   // 표현 가이드에서 고른 표현(44.2차): 이름과 짧은 몸짓 힌트 한 줄만 받는다 — 가이드 전용 상태·패널은 두지 않는다.
   guideHint?: { name: string; hint: string } | null;
   onGuideHintDone?: () => void;
+  // 표현 가이드에서 고른 예시(45.17차). 그림은 앱에 함께 실린 번들 모듈이고, 없으면 가이드 화면이 고르지 못하게 막는다.
+  guideExample?: { id: string; title: string; hint: string; artwork: ImageSourcePropType } | null;
+  // 가이드 화면에서 무엇을 눌렀는지: 참고 창으로 보며 그릴지, 밑그림으로 깔지.
+  guideExampleMode?: 'watch' | 'underlay' | null;
+  // 번들 그림을 참고 사진과 같은 자리(세트의 referenceImages)로 들여온다 — 저장·복원은 기존 참고 정책 그대로다.
+  onImportGuideExample?: (artwork: ImageSourcePropType) => Promise<LocalImage | null>;
   savedMotions: SavedMotion[];
   onSaveMotion: (motion: Motion) => void;
   onForgetMotion: (id: string) => void;
@@ -139,7 +145,7 @@ const swatches = [
   '#765044', '#A77559', '#D7B79B', '#F0D8BF',
 ];
 
-export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, onSetReference, onCopyPrevious, onColorUsed, onClose, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
+export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, onSetReference, onCopyPrevious, onColorUsed, onClose, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<SaveAction>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
@@ -188,10 +194,16 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [refCategory, setRefCategory] = useState<string>(BUILTIN_REFERENCES.categories[0]);
   const [poseIndex, setPoseIndex] = useState(0);
   const [guideHintOpen, setGuideHintOpen] = useState(true);
+  // 표현 예시 참고 창(45.17차). 캔버스 위에 떠 있는 안내일 뿐이라 그림·썸네일·출력 어디에도 들어가지 않는다.
+  const [refWindow, setRefWindow] = useState<'open' | 'collapsed' | 'closed'>('closed');
+  const [refSpot, setRefSpot] = useState<{ x: number; y: number } | null>(null);
+  const guideUsed = useRef(false);
   const [showCanon, setShowCanon] = useState(false), [showQA, setShowQA] = useState(false), [qa, setQA] = useState<QA | undefined>(slot.qa);
   // 빈 칸을 열면 한 번 보여 주는 '이전 칸 그림으로 시작'. 닫거나 그리기 시작하면 사라진다.
   const [continueDismissed, setContinueDismissed] = useState(false);
   const [canvasArea, setCanvasArea] = useState(0);
+  // 참고 창을 화면 밖으로 내보내지 않으려면 캔버스 영역의 가로도 알아야 한다(정사각 변만으로는 모자란다).
+  const [canvasWide, setCanvasWide] = useState(0);
   // 굵기를 끄는 동안에만 보이는 크기 원(px). 손을 떼면 null.
   const [sizing, setSizing] = useState<number | null>(null);
   const [brushDetail, setBrushDetail] = useState(false);
@@ -539,6 +551,40 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     } catch (e) { Alert.alert('참고 사진을 넣지 못했어요', userMessage(e)); }
     finally { unlock(); }
   }
+  // 고른 표현을 밑그림으로 깐다. 새 길을 내지 않고 참고 사진과 똑같은 길을 쓴다:
+  // 참고 레이어는 그림 레이어와 따로 쌓이므로 기존 그림·문구·부분 움직임을 건드리지 않고,
+  // 최종 PNG·움직이는 파일·작품 썸네일에도 들어가지 않는다(캔버스가 화면에 그릴 때만 깔린다).
+  // 비율 유지·가운데 배치·기본 진하기 30% 도 기존 참고 레이어 규칙을 그대로 쓴다.
+  async function insertGuideUnderlay() {
+    if (!guideExample || !onImportGuideExample || inFlight.current) return;
+    inFlight.current = true; setBusy(true);
+    try {
+      const image = await onImportGuideExample(guideExample.artwork);
+      if (!image) return;
+      const id = 'ref-' + image.path;
+      send({ type: 'addReferences', references: [{ ...transform(id, '밑그림 · ' + guideExample.title), visible: false, opacity: .3, path: image.path, data: await dataUrl(image) }] });
+      // 보이게 하는 일은 참고 타일을 누를 때와 같은 명령에 맡긴다 — '한 번에 하나만 보인다'는 기존 규칙이 그대로 지켜진다.
+      send({ type: 'toggleReference', id });
+      setRefRail(true); setRefSource('mine'); setRefBrowse(false); setPanel(null); setDrawRail(false);
+    } catch (e) { Alert.alert('밑그림을 넣지 못했어요', userMessage(e)); }
+    finally { unlock(); }
+  }
+  // 가이드에서 고른 예시는 칸을 열 때 한 번만 쓴다. 다시 열거나 옆 칸으로 넘어갈 때 저절로 또 깔리지 않는다.
+  useEffect(() => {
+    if (!initialized || !guideExample || guideUsed.current) return;
+    guideUsed.current = true;
+    if (guideExampleMode === 'underlay') void insertGuideUnderlay();
+    else setRefWindow('open');
+  }, [initialized, guideExample, guideExampleMode]);
+  // 참고 창 크기와 머무를 수 있는 자리. 창은 늘 캔버스 영역 안에 있어 화면 밖으로 빠져나가지 않는다.
+  const refWide = Math.max(120, Math.min(190, Math.round((canvasWide || windowWidth) * .46)));
+  const refHigh = refWindow === 'collapsed' ? 40 : 40 + refWide;
+  const clampSpot = (x: number, y: number) => ({
+    x: Math.max(8, Math.min((canvasWide || windowWidth) - refWide - 8, x)),
+    y: Math.max(8, Math.min((canvasArea || windowHeight) - refHigh - 8, y)),
+  });
+  const refAt = refSpot ? clampSpot(refSpot.x, refSpot.y) : clampSpot(10, (canvasArea || windowHeight) - refHigh - 10);
+
   function removeReference(path: string, id: string) {
     Alert.alert('참고 삭제', '이 세트의 모든 칸에서 이 참고를 없앱니다.', [
       { text: '취소', style: 'cancel' },
@@ -702,7 +748,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       {/* 캔버스는 도구를 열고 닫아도 제자리다(45.5차). 색 패널 때문에 그림이 위로 뛰던 자리 이동을 없앴다 —
           "조절한다고 그림이 도망가면 안 된다". 패널은 아래에서 겹쳐 뜨고, 덮는 높이는 캔버스 절반을 넘지 않는다. */}
       <View style={{ flex: 1, alignItems: 'center', justifyContent: tab === 'motion' ? 'flex-start' : 'center', backgroundColor: C.surface2 }}
-        onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; const side = Math.floor(Math.min(w, h)); if (side > 0 && side !== canvasSide) setCanvasSide(side); if (h > 0 && Math.round(h) !== canvasArea) setCanvasArea(Math.round(h)); }}>
+        onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; const side = Math.floor(Math.min(w, h)); if (side > 0 && side !== canvasSide) setCanvasSide(side); if (h > 0 && Math.round(h) !== canvasArea) setCanvasArea(Math.round(h)); if (w > 0 && Math.round(w) !== canvasWide) setCanvasWide(Math.round(w)); }}>
         {/* 캔버스 틀: 네이티브 WebView 는 크기 지정을 무시하고 영역 전체를 채워, 캔버스가 위에 붙고 아래에 빈 띠가 남았다(40차 실기기 bounds 0,381–1080,1882).
             정사각 틀로 감싸 잘라 두면 WebView 가 틀만큼만 차지하고, 그리기 탭에서는 영역 가운데·움직이기 탭에서는 위에 선다. */}
         <View ref={canvasRef} collapsable={false} style={canvasSide ? { width: canvasSide, height: canvasSide, overflow: 'hidden', backgroundColor: C.surface2 } : { width: '100%', aspectRatio: 1, maxHeight: '100%', overflow: 'hidden' }}>
@@ -825,6 +871,16 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <MaterialCommunityIcons name="close" size={18} color={C.faint} />
           </Pressable>
         </View>}
+        {/* 표현 예시 참고 창(45.17차): 캔버스 위에 떠 있는 작은 창. 손잡이로 옮기고 접고 닫는다.
+            화면 위의 안내라서 작품·썸네일·출력 어디에도 들어가지 않는다 — 그림이 되는 것은 밑그림(참고 레이어)뿐이다.
+            창이 덮은 자리에서는 캔버스가 손가락을 받지 않아, 옮기는 손이 선을 긋지 않는다. */}
+        {!!guideExample && refWindow !== 'closed' && <GuideWindow
+          title={guideExample.title} hint={guideExample.hint} artwork={guideExample.artwork}
+          width={refWide} collapsed={refWindow === 'collapsed'} left={refAt.x} top={refAt.y}
+          onMove={(x, y) => setRefSpot(clampSpot(x, y))}
+          onCollapse={() => { ease(); setRefWindow(refWindow === 'collapsed' ? 'open' : 'collapsed'); }}
+          onClose={() => { ease(); setRefWindow('closed'); }}
+          onUnderlay={onImportGuideExample ? () => void insertGuideUnderlay() : undefined} />}
         {/* 표현 가이드 자리(다음 라운드). 꺼져 있으면 아무것도 그리지 않는다. */}
         {/* 표현 가이드("무엇을 그릴까?")는 홈의 '표현 가이드'에서 고른다(44차). 캔버스 위에는 띄우지 않는다. */}
 
@@ -1017,6 +1073,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {refRail && (refSource === 'mine' || !BUILTIN_REFERENCES.enabled) && <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'flex-start', gap: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
             <RailTile label="참고 사진 추가" caption="사진 추가" icon="plus" dashed onPress={() => void addReferences()} />
+            {/* 참고 창을 닫았어도 고른 표현은 이 칸에 남아 있다 — 다시 열 자리가 없어 길이 끊기지 않게. */}
+            {!!guideExample && <RailTile label={refWindow === 'closed' ? '표현 예시 참고 창 열기' : '표현 예시 참고 창 닫기'} caption="표현 예시" icon="lightbulb-on-outline"
+              selected={refWindow !== 'closed'} onPress={() => { ease(); setRefWindow(refWindow === 'closed' ? 'open' : 'closed'); }} />}
             {scene.references.map((ref, index) => {
               const image = slot.referenceImages.find(i => i.path === ref.path), active = ref.id === scene.activeReferenceId;
               return <RailTile key={ref.id} label={`참고 ${index + 1} 선택`} caption={`참고 ${index + 1}`} image={image ? imageUri(image.path) : undefined} icon="image-outline" selected={active} faded={!ref.visible}
@@ -1257,6 +1316,47 @@ function RailTile({ label, caption, image, icon, selected, dashed, faded, onPres
     </View>
     <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: selected ? '700' : '500', color: selected ? T.ink : T.muted }}>{caption}</Text>
   </Pressable>;
+}
+// 표현 예시를 보며 그리기 위한 작은 창(45.17차). 캔버스 위에 떠 있을 뿐 그림이 아니다 —
+// 저장되는 그림·움직이는 파일·작품 썸네일 어디에도 들어가지 않는다. 캔버스에 깔리는 것은 밑그림(참고 레이어)뿐이다.
+// 손잡이(위쪽 띠)에서만 끌어 옮긴다. 그림 자리를 끌어도 창이 따라가지 않아, 창을 짚은 손이 선을 긋지 않는다.
+// 창이 머무는 자리는 부모가 캔버스 영역 안으로 맞춰 준다(화면 밖으로 나가지 않는다).
+function GuideWindow({ title, hint, artwork, width, collapsed, left, top, onMove, onCollapse, onClose, onUnderlay }: {
+  title: string; hint: string; artwork: ImageSourcePropType; width: number; collapsed: boolean; left: number; top: number;
+  onMove: (x: number, y: number) => void; onCollapse: () => void; onClose: () => void; onUnderlay?: () => void;
+}) {
+  const from = useRef({ x: 0, y: 0, px: 0, py: 0 });
+  const drag = {
+    onStartShouldSetResponder: () => true,
+    onMoveShouldSetResponder: () => true,
+    onResponderTerminationRequest: () => false,
+    onResponderGrant: (e: GestureResponderEvent) => { from.current = { x: left, y: top, px: e.nativeEvent.pageX, py: e.nativeEvent.pageY }; },
+    onResponderMove: (e: GestureResponderEvent) => onMove(from.current.x + (e.nativeEvent.pageX - from.current.px), from.current.y + (e.nativeEvent.pageY - from.current.py)),
+  };
+  return <View testID="표현 예시 참고 창" style={{ position: 'absolute', left, top, width, borderRadius: 16, backgroundColor: T.floating, borderWidth: 1, borderColor: T.line, overflow: 'hidden', ...Elev[2] }}>
+    <View testID="표현 예시 손잡이" accessibilityLabel={'표현 예시 옮기기 · ' + title} style={{ flexDirection: 'row', alignItems: 'center', height: 38, paddingLeft: 8, gap: 2 }} {...drag}>
+      <MaterialCommunityIcons name="drag-horizontal-variant" size={16} color={T.faint} />
+      <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, fontWeight: '800', color: T.ink }}>{title}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={collapsed ? '표현 예시 펼치기' : '표현 예시 접기'} onPress={onCollapse} hitSlop={6} style={{ width: 30, height: 38, alignItems: 'center', justifyContent: 'center' }}>
+        <MaterialCommunityIcons name={collapsed ? 'chevron-down' : 'chevron-up'} size={18} color={T.muted} />
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="표현 예시 닫기" onPress={onClose} hitSlop={6} style={{ width: 30, height: 38, alignItems: 'center', justifyContent: 'center' }}>
+        <MaterialCommunityIcons name="close" size={16} color={T.muted} />
+      </Pressable>
+    </View>
+    {!collapsed && <>
+      <View style={{ width: '100%', height: width, backgroundColor: T.surface2, alignItems: 'center', justifyContent: 'center' }}>
+        <Image accessibilityIgnoresInvertColors accessibilityLabel={title + ' 예시 그림'} source={artwork} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+      </View>
+      <View style={{ paddingHorizontal: 10, paddingVertical: 7, gap: 6 }}>
+        <Text numberOfLines={2} style={{ fontSize: 11, color: T.muted }}>{hint}</Text>
+        {!!onUnderlay && <Pressable accessibilityRole="button" accessibilityLabel="이 예시를 밑그림으로 넣기" onPress={onUnderlay}
+          style={({ pressed }) => ({ minHeight: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : T.surface2 })}>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: T.ink }}>밑그림으로 넣기</Text>
+        </Pressable>}
+      </View>
+    </>}
+  </View>;
 }
 // Hand-drawn eye: filled pupil when shown, struck through when hidden.
 function EyeToggle({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
