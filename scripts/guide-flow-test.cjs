@@ -346,6 +346,48 @@ async function echoReferences(scene) {
   const painterSrc = fs.readFileSync('src/painter/painter.tsx', 'utf8');
   assert.ok(!/GuideWindow[\s\S]{0,400}toDataURL/.test(painterSrc), '참고 창은 그림으로 구워지지 않는다');
 
+  // ── 7. 실제 등록분으로 진입 확인(45.20) ───────────────────────────────────────────────
+  //   테스트용 자료가 아니라 **지금 제품에 등록된 그대로** 연다. ready=false 여도 막히지 않아야 한다.
+  //   홈 → 감정 → 표현 목록 → 참고 창 / 밑그림 까지 실제로 간다.
+  assert.equal(design.EXPRESSION_GUIDE.ready, false, '이 검사는 ready=false 상태에서 돈다');
+  const RealApp = loader(base)('App.tsx').default;
+  for (const [cardName, cardHint, exLabel] of [['안녕', '손 크게 흔들기', '손 흔들며'], ['잘 자', '이불 덮고 눕기', '이불 덮고']]) {
+    const project = createProject('진입 세트 ' + cardName, '콩이');
+    saveStore({ version: 1, revision: 100 + cardName.length, projects: [project], palette: [] });
+    commands.length = 0;
+    await render(RealApp);
+    await press('표현 가이드');
+    // 분류 칩을 눌러 그 감정이 있는 분류로 이동한다(임의 재분류 없이 등록된 분류 그대로).
+    const card = design.EXPRESSION_GUIDE.cards.find(c => c.name === cardName);
+    await press('표현 가이드 ' + card.category);
+    assert.equal(labelled(cardName + ' · ' + cardHint).length, 1, cardName + ': 카드가 보인다');
+    await press(cardName + ' · ' + cardHint);
+    const list = byTestID('표현 예시 목록');
+    assert.equal(list.length, 1, cardName + ': 표현 목록이 열린다(ready=false 여도 막히지 않는다)');
+    assert.equal(list[0].findAllByType('Image').length, card.examples.length, cardName + ': 등록된 표현 수만큼 그림이 뜬다');
+    assert.equal(texts(list[0]).filter(t => t === '그림 준비 중이에요').length, 0, cardName + ': 준비 중으로 막힌 표현이 없다');
+    // ① 참고하며 그리기
+    await press(exLabel + ' 참고하며 그리기');
+    await ready();
+    assert.equal(byTestID('표현 예시 참고 창').length, 1, cardName + ': 참고 창이 캔버스 위에 뜬다');
+    assert.ok(texts(byTestID('표현 예시 참고 창')[0]).includes(cardName + ' · ' + exLabel), cardName + ': 창 제목이 고른 표현이다');
+    await press('그리기 닫기');
+    // ② 밑그림으로 넣기
+    commands.length = 0; imported.length = 0;
+    await render(RealApp);
+    await press('표현 가이드');
+    await press('표현 가이드 ' + card.category);
+    await press(cardName + ' · ' + cardHint);
+    await press(exLabel + ' 밑그림으로 넣기');
+    await ready();
+    const put = sent().filter(m => m.type === 'addReferences');
+    assert.equal(put.length, 1, cardName + ': 밑그림이 깔린다');
+    assert.equal(put[0].references[0].opacity, .3, cardName + ': 기본 진하기 30%');
+    assert.equal(imported.length, 1, cardName + ': 고른 표현의 그림이 들어온다');
+    await press('그리기 닫기');
+  }
+  console.log('  진입 확인: ready=false 상태에서 홈 → 감정 → 표현 목록 → 참고 창 · 밑그림 모두 열림(안녕 · 잘 자)');
+
   await act(async () => tree.unmount());
   console.log('PASS: guide flow — 고마워 다섯 표현의 ID·이름·힌트, 그림 없는 표현의 준비 중과 잠긴 버튼, 고른 표현의 그림·힌트 전달, 참고 창 옮기기(화면 밖 이탈 없음)·접기·다시 열기·닫기와 캔버스 입력 분리, 밑그림의 기존 참고 레이어 재사용(30%·중앙·별도 그림 레이어·조절·삭제), 저장 그림·움직임·썸네일 제외를 확인했다. Native/WebView mocked.');
   process.exit(0);
