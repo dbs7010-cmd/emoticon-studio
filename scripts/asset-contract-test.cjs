@@ -53,7 +53,11 @@ const withSources = (on) => {
     source: on ? { uri: mark(name) } : null,
     ...(spec.sourceAfter !== undefined ? { sourceAfter: on ? { uri: mark(name) + '#after' } : null } : {}),
   }]));
-  const design = { ...slotSource, ASSET_SLOTS: slots, HOME_NOTICE: { ...slotSource.HOME_NOTICE, enabled: true, title: '공지', body: '한 줄' } };
+  const cards = slotSource.EXPRESSION_GUIDE.cards.map((card, index) => ({
+    ...card,
+    ...(on && index < 2 ? { artwork: { uri: mark('expressionGuideArtwork') + '#' + card.id } } : {}),
+  }));
+  const design = { ...slotSource, ASSET_SLOTS: slots, EXPRESSION_GUIDE: { ...slotSource.EXPRESSION_GUIDE, cards }, HOME_NOTICE: { ...slotSource.HOME_NOTICE, enabled: true, title: '공지', body: '한 줄' } };
   return loader({ ...base, './src/design/asset-slots': design, '../design/asset-slots': design })('App.tsx').default;
 };
 
@@ -77,7 +81,10 @@ const render = async App => { if (tree) await act(async () => tree.unmount()); a
 // 두 상태에서 같은 자리를 훑는다. seen: 어느 자리의 그림이 화면에 실제로 떴는가.
 async function walk(App, { sourcesOn }) {
   const seen = new Set();
-  const note = () => uris().forEach(u => { const hit = SLOTS.find(name => u === mark(name) || u === mark(name) + '#after'); if (hit) seen.add(u); });
+  const note = () => uris().forEach(u => {
+    const hit = SLOTS.find(name => u === mark(name) || u === mark(name) + '#after' || u.startsWith(mark(name) + '#'));
+    if (hit) { seen.add(u); seen.add(mark(hit)); }
+  });
 
   // ① 홈(세트 0) — 창작 표면 · 빈 상태 · 공지
   saveStore({ version: 1, revision: ++revision, projects: [], palette: [] });
@@ -89,6 +96,8 @@ async function walk(App, { sourcesOn }) {
   await press('표현 가이드');
   note();
   const guide = byTestID('asset-slot-expressionGuideArtwork').length;
+  const guideImages = uris().filter(uri => uri.startsWith(mark('expressionGuideArtwork') + '#'));
+  const guideLabels = labelled('안녕 · 손 크게 흔들기').length + labelled('고마워 · 두 손 모아 꾸벅').length;
   await press('홈으로');
 
   // ③ PRO 화면(전·후 두 장)
@@ -128,7 +137,7 @@ async function walk(App, { sourcesOn }) {
   note();
   const success = byTestID('asset-slot-exportSuccessArtwork').length;
 
-  return { seen, home, guide, poseCells, poseArt, sampleArt, success };
+  return { seen, home, guide, guideImages, guideLabels, poseCells, poseArt, sampleArt, success };
 }
 
 (async () => {
@@ -143,11 +152,22 @@ async function walk(App, { sourcesOn }) {
   }
   assert.equal(slotSource.ASSET_SLOTS.exportSuccessArtwork.display, '84×84', '문서 크기와 화면 크기(size=84)가 같다');
   assert.ok('sourceAfter' in slotSource.ASSET_SLOTS.proFeatureArtwork, 'PRO 비교는 전·후 두 장을 자리에서 받는다');
+  assert.equal(new Set(slotSource.EXPRESSION_GUIDE.cards.map(card => card.id)).size, 20, '표현 가이드 20개는 중복 없는 안정 ID를 가진다');
+  assert.deepEqual(slotSource.EXPRESSION_GUIDE.cards.map(({ category, name, hint }) => [category, name, hint]), [
+    ['기쁨·인사', '안녕', '손 크게 흔들기'], ['기쁨·인사', '고마워', '두 손 모아 꾸벅'], ['기쁨·인사', '좋아', '엄지 척'], ['기쁨·인사', '신나', '두 팔 번쩍'],
+    ['슬픔·미안', '미안해', '고개 푹 숙이기'], ['슬픔·미안', '슬퍼', '무릎 안고 앉기'], ['슬픔·미안', '흑흑', '눈물 훔치기'], ['슬픔·미안', '괜찮아?', '살짝 다가가기'],
+    ['화남·억울', '억울해', '팔짱 + 몸 돌리기'], ['화남·억울', '화났어', '주먹 불끈'], ['화남·억울', '흥', '고개 홱 돌리기'], ['화남·억울', '짜증나', '머리 감싸기'],
+    ['놀람·당황', '헉', '두 손으로 입 가리기'], ['놀람·당황', '뭐?', '몸 뒤로 젖히기'], ['놀람·당황', '당황', '땀 한 방울'], ['놀람·당황', '설마', '눈 동그랗게'],
+    ['일상', '잘 자', '이불 덮고 눕기'], ['일상', '배고파', '배 잡고 쓰러지기'], ['일상', '출발', '가방 메고 뛰기'], ['일상', '기다려', '손바닥 내밀기'],
+  ], '표현 가이드의 기존 분류·이름·힌트·순서');
 
   // ── 2. 그림을 넣으면 그 화면에 그 그림이 뜬다(자리 8개 전부) ───────────────────────────────
   const on = await walk(withSources(true), { sourcesOn: true });
   const missing = SLOTS.filter(name => !on.seen.has(mark(name)));
   assert.deepEqual(missing, [], '자리의 source 를 넣으면 그 화면이 그 그림을 그린다');
+  assert.equal(new Set(on.guideImages).size, 2, '서로 다른 두 표현 카드가 서로 다른 이미지를 그린다');
+  assert.ok(on.guide >= 2, '이미지가 없는 표현 카드는 기존 준비 중 자리표시를 유지한다');
+  assert.equal(on.guideLabels, 2, '이미지 연결 뒤에도 기존 카드 이름·힌트와 누르기 동작 입구가 유지된다');
   assert.ok(on.seen.has(mark('proFeatureArtwork') + '#after'), 'PRO 비교의 두 번째 장(sourceAfter)도 그려진다');
   assert.equal(on.poseArt, 1, '기본 레퍼런스 칸은 자리의 그림을 그린다');
   assert.equal(on.sampleArt, 1, '움직임 견본도 자리의 그림을 쓴다');
@@ -181,6 +201,6 @@ async function walk(App, { sourcesOn }) {
   assert.ok(/ASSET_SLOTS\.proFeatureArtwork\.source/.test(appSrc) && /ASSET_SLOTS\.proFeatureArtwork\.sourceAfter/.test(appSrc), 'PRO 비교는 자리에서 받는다');
 
   await act(async () => tree.unmount());
-  console.log('PASS: asset contract — 자리 8개(비율·표시 크기·권장 제작 해상도·안전 영역·바탕), source 를 넣으면 홈 히어로·빈 상태·공지·표현 가이드·기본 레퍼런스·움직임 견본·내보내기 완성·PRO 전후 두 장이 실제로 그려지고, 없으면 45.2 자리표시가 칸 수·자리 그대로 남는다. 화면 파일의 mascot 직접 참조 0. Native/WebView mocked.');
+  console.log('PASS: asset contract — 자리 8개 규격, 표현 가이드 20개 안정 ID·기존 순서/문구, 카드별 서로 다른 이미지와 이미지 없는 카드의 준비 중 자리표시, 나머지 자리의 source/placeholder 연결을 확인했다. 화면 파일의 mascot 직접 참조 0. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

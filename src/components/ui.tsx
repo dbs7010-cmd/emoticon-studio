@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, Image, Modal, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Image, Modal, Pressable, ScrollView, ActivityIndicator, type ImageSourcePropType } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { imageUri } from '../services/storage';
 import { ASSET_SLOTS, type AssetSlotName } from '../design/asset-slots';
@@ -167,10 +167,11 @@ export function StatusDot({ tone, size = 10 }: { tone: keyof typeof STATUS_TONE;
 }
 
 // 최종 일러스트 자리. 에셋이 없으면 따뜻한 도형으로 구성을 채운다 — 빈칸이나 회색 박스로 두지 않는다.
-export function AssetSlot({ name, size, style }: { name: AssetSlotName; size: number; style?: object }) {
+export function AssetSlot({ name, size, style, sourceOverride }: { name: AssetSlotName; size: number; style?: object; sourceOverride?: ImageSourcePropType | null }) {
   const spec = ASSET_SLOTS[name];
   const width = size, height = size / spec.aspectRatio;
-  if (spec.source) return <Image accessibilityIgnoresInvertColors source={spec.source} style={[{ width, height }, style]} resizeMode="contain" />;
+  const source = sourceOverride === undefined ? spec.source : sourceOverride;
+  if (source) return <Image accessibilityIgnoresInvertColors source={source} style={[{ width, height }, style]} resizeMode="contain" />;
   return <View testID={'asset-slot-' + name} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[{ width, height }, style]}>
     <View style={{ position: 'absolute', right: 0, bottom: 0, width: width * .82, height: width * .82, borderRadius: width, backgroundColor: '#FFE89A', opacity: .55 }} />
     <View style={{ position: 'absolute', left: width * .12, top: height * .18, width: width * .5, height: width * .5, borderRadius: width * .16, backgroundColor: '#FFFFFF', transform: [{ rotate: '-8deg' }], ...Elev[1] }} />

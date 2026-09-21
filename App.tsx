@@ -598,10 +598,10 @@ function Studio() {
             const cards = EXPRESSION_GUIDE.cards.filter(c => c.category === guideCategory);
             return cards.length
               ? <View testID="표현 가이드 카드" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-                  {cards.map(c => <Pressable key={c.name} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => startFromGuide(c)}
+                  {cards.map(c => <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => startFromGuide(c)}
                     style={({ pressed }) => ({ width: cardWidth, padding: 10, gap: 8, borderRadius: 20, backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: C.line })}>
                     <View style={{ width: frame, height: frame, borderRadius: 14, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      <AssetSlot name="expressionGuideArtwork" size={Math.round(frame * .8)} />
+                      <AssetSlot name="expressionGuideArtwork" size={Math.round(frame * .8)} sourceOverride={c.artwork ?? null} />
                     </View>
                     <View style={{ gap: 2, paddingHorizontal: 2, paddingBottom: 2 }}>
                       <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{c.name}</Text>

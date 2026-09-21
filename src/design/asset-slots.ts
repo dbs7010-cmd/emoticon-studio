@@ -14,6 +14,15 @@ export type AssetSlotSpec = {
   sourceAfter?: ImageSourcePropType | null;
 };
 
+export type ExpressionGuideCard = {
+  id: string;
+  category: string;
+  name: string;
+  hint: string;
+  // 파일이 실제로 들어온 카드에만 정적 require(...)를 넣는다. 없으면 기존 준비 중 자리표시를 쓴다.
+  artwork?: ImageSourcePropType;
+};
+
 export const ASSET_SLOTS = {
   // 홈 첫 화면 오른쪽. 창작 표면 위에 겹쳐 앉는 캐릭터. 표면 바탕이 비치도록 투명 PNG.
   // 40차 최종 배치(App.tsx): 창작 표면 오른쪽 위 right 14 · top 16, 화면폭 < 380dp 이면 96, 아니면 112. 아래 12% 는 행동 줄과 겹칠 수 있어 비운다.
@@ -44,22 +53,23 @@ export type AssetSlotName = keyof typeof ASSET_SLOTS;
 
 // 표현 가이드(44차 LOCK). 역할: "무엇을 그릴까?" — 홈의 '표현 가이드'에서 분류 → 표현 카드(그림 · 표현 이름 · 짧은 몸짓 힌트)로 훑는다.
 // "어떻게 그릴까?"는 기본 레퍼런스(그리기 화면 › 참고)가 맡는다. 캔버스 위에는 가이드를 띄우지 않는다. 긴 설명·대화형·생성 기능 없음.
-// ready=false 동안 카드 그림은 expressionGuideArtwork 자리표시. 카드 글자는 앱이 그린다(그림에 굽지 않는다).
+// ready=false 는 전체 목록이 아직 납품 완료되지 않았다는 뜻이다. 화면은 카드별 artwork 유무를 따로 판단한다.
+// artwork 가 없는 카드는 expressionGuideArtwork 규격의 기존 준비 중 자리표시를 쓴다. 카드 글자는 앱이 그린다(그림에 굽지 않는다).
 export const EXPRESSION_GUIDE = {
   ready: false,
   categories: ['기쁨·인사', '슬픔·미안', '화남·억울', '놀람·당황', '일상'] as const,
   cards: [
-    { category: '기쁨·인사', name: '안녕', hint: '손 크게 흔들기' }, { category: '기쁨·인사', name: '고마워', hint: '두 손 모아 꾸벅' },
-    { category: '기쁨·인사', name: '좋아', hint: '엄지 척' }, { category: '기쁨·인사', name: '신나', hint: '두 팔 번쩍' },
-    { category: '슬픔·미안', name: '미안해', hint: '고개 푹 숙이기' }, { category: '슬픔·미안', name: '슬퍼', hint: '무릎 안고 앉기' },
-    { category: '슬픔·미안', name: '흑흑', hint: '눈물 훔치기' }, { category: '슬픔·미안', name: '괜찮아?', hint: '살짝 다가가기' },
-    { category: '화남·억울', name: '억울해', hint: '팔짱 + 몸 돌리기' }, { category: '화남·억울', name: '화났어', hint: '주먹 불끈' },
-    { category: '화남·억울', name: '흥', hint: '고개 홱 돌리기' }, { category: '화남·억울', name: '짜증나', hint: '머리 감싸기' },
-    { category: '놀람·당황', name: '헉', hint: '두 손으로 입 가리기' }, { category: '놀람·당황', name: '뭐?', hint: '몸 뒤로 젖히기' },
-    { category: '놀람·당황', name: '당황', hint: '땀 한 방울' }, { category: '놀람·당황', name: '설마', hint: '눈 동그랗게' },
-    { category: '일상', name: '잘 자', hint: '이불 덮고 눕기' }, { category: '일상', name: '배고파', hint: '배 잡고 쓰러지기' },
-    { category: '일상', name: '출발', hint: '가방 메고 뛰기' }, { category: '일상', name: '기다려', hint: '손바닥 내밀기' },
-  ] as { category: string; name: string; hint: string }[],
+    { id: 'greeting-hello', category: '기쁨·인사', name: '안녕', hint: '손 크게 흔들기' }, { id: 'greeting-thanks', category: '기쁨·인사', name: '고마워', hint: '두 손 모아 꾸벅' },
+    { id: 'greeting-like', category: '기쁨·인사', name: '좋아', hint: '엄지 척' }, { id: 'greeting-excited', category: '기쁨·인사', name: '신나', hint: '두 팔 번쩍' },
+    { id: 'sad-sorry', category: '슬픔·미안', name: '미안해', hint: '고개 푹 숙이기' }, { id: 'sad-sad', category: '슬픔·미안', name: '슬퍼', hint: '무릎 안고 앉기' },
+    { id: 'sad-crying', category: '슬픔·미안', name: '흑흑', hint: '눈물 훔치기' }, { id: 'sad-are-you-okay', category: '슬픔·미안', name: '괜찮아?', hint: '살짝 다가가기' },
+    { id: 'angry-unfair', category: '화남·억울', name: '억울해', hint: '팔짱 + 몸 돌리기' }, { id: 'angry-angry', category: '화남·억울', name: '화났어', hint: '주먹 불끈' },
+    { id: 'angry-hmph', category: '화남·억울', name: '흥', hint: '고개 홱 돌리기' }, { id: 'angry-annoyed', category: '화남·억울', name: '짜증나', hint: '머리 감싸기' },
+    { id: 'surprise-gasp', category: '놀람·당황', name: '헉', hint: '두 손으로 입 가리기' }, { id: 'surprise-what', category: '놀람·당황', name: '뭐?', hint: '몸 뒤로 젖히기' },
+    { id: 'surprise-flustered', category: '놀람·당황', name: '당황', hint: '땀 한 방울' }, { id: 'surprise-no-way', category: '놀람·당황', name: '설마', hint: '눈 동그랗게' },
+    { id: 'daily-good-night', category: '일상', name: '잘 자', hint: '이불 덮고 눕기' }, { id: 'daily-hungry', category: '일상', name: '배고파', hint: '배 잡고 쓰러지기' },
+    { id: 'daily-depart', category: '일상', name: '출발', hint: '가방 메고 뛰기' }, { id: 'daily-wait', category: '일상', name: '기다려', hint: '손바닥 내밀기' },
+  ] as ExpressionGuideCard[],
 };
 // 기본 레퍼런스(44차 LOCK). 역할: "어떻게 그릴까?" — 그리기 화면 › 참고 › 기본 레퍼런스. 분류 칩 한 줄 + 3:4 썸네일 4열 격자.
 // V1 분류는 넷: 포즈 · 표정 · 손동작 · 소품·효과(소품과 효과는 합친다. '일상'은 포즈와 겹쳐 두지 않는다).
