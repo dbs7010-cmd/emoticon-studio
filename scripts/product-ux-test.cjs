@@ -92,7 +92,8 @@ async function ready() {
   return init;
 }
 const saved = async (dirty = true) => {
-  await message({ type: 'save', dirty, data: pngData, metrics, activeLayerId: scene.activeLayerId, caption: scene.caption || undefined, motion: scene.motion ?? null,
+  // 45.12: 엔진은 저장 요청 번호를 그대로 돌려준다.
+  await message({ type: 'save', token: (lastCommand('save') || {}).token, dirty, data: pngData, metrics, activeLayerId: scene.activeLayerId, caption: scene.caption || undefined, motion: scene.motion ?? null,
     gif: scene.motion ? { count: 9, fps: 12, loop: .8, delayMs: 83, data: 'data:image/gif;base64,R0lGODlh', bytes: 2048, droppedColours: 0, clipped: false } : undefined,
     layers: scene.layers.map(l => ({ ...publicLayer(l), data: pngData })), references: [] });
   await act(async () => {});

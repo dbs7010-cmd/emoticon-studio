@@ -86,8 +86,9 @@ const init=async()=>{
  await message(scene);await message({type:'initialized'});return m;
 };
 const publicLayer=l=>Object.fromEntries(['id','name','visible','opacity','x','y','scale','rotation'].map(k=>[k,l[k]]));
-const saved=async(dirty=true,shape=metrics)=>{
- await message({type:'save',dirty,data:'data:image/png;base64,'+png.toString('base64'),metrics:shape,activeLayerId:scene.activeLayerId,caption:scene.caption||undefined,motion:scene.motion||null,layers:scene.layers.map(l=>({...publicLayer(l),data:'data:image/png;base64,'+png.toString('base64')})),references:scene.references.map(l=>({...publicLayer(l),path:l.path}))});
+const saved=async(dirty=true,shape=metrics,token)=>{
+ // 엔진이 하는 그대로: 저장 요청에 붙어 온 번호를 응답에 그대로 돌려준다(45.12차).
+ await message({type:'save',token:token===undefined?(lastCommand('save')||{}).token:token,dirty,data:'data:image/png;base64,'+png.toString('base64'),metrics:shape,activeLayerId:scene.activeLayerId,caption:scene.caption||undefined,motion:scene.motion||null,layers:scene.layers.map(l=>({...publicLayer(l),data:'data:image/png;base64,'+png.toString('base64')})),references:scene.references.map(l=>({...publicLayer(l),path:l.path}))});
 };
 const blank={...metrics,coverage:0};
 // 저장 버튼은 없다. 작업은 앱을 내릴 때·주기·닫기·완성에 스스로 저장된다. 검사에서는 앱 내리기로 저장을 부른다.
@@ -585,6 +586,28 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
    assert.equal(sent().filter(m=>m.type==='save').length,after+1,'고르기를 끝내면 주기 자동저장이 돌아온다');
  }
  await saved();
+ // ── 45.12: 늦게 온 옛 저장 응답이 지금 저장으로 둔갑하지 않는다 ────────────────────────────
+ // 저장이 늦어 포기한 뒤(화면은 '저장이 늦어지고 있어요' 를 띄운다) 그 응답이 뒤늦게 도착하면,
+ // 그때 그린 그림 대신 옛 그림이 파일로 들어갈 수 있었다. 요청마다 번호를 붙여 막는다.
+ {
+  await autosave();
+  const token = lastCommand('save').token;
+  assert.ok(typeof token === 'number', '저장 요청에는 번호가 붙는다: ' + JSON.stringify(token));
+  const beforeStale = JSON.stringify(loadStore().store.projects);
+  const answered = () => sent().filter(m => m.type === 'saved').length;
+  const beforeAnswered = answered();
+  await saved(true, metrics, token - 1);            // 번호가 다른(옛) 응답
+  assert.equal(JSON.stringify(loadStore().store.projects), beforeStale, '옛 응답으로는 파일을 쓰지 않는다');
+  assert.equal(answered(), beforeAnswered, '옛 응답에 저장 완료라고 답하지도 않는다');
+  await saved(true, metrics, token);                // 지금 요청의 응답
+  const done = sent().filter(m => m.type === 'saved').at(-1);
+  assert.ok(done && done.token === token, '지금 응답에는 같은 번호로 답한다');
+  assert.notEqual(JSON.stringify(loadStore().store.projects), beforeStale, '지금 응답은 실제로 저장된다');
+  const next = (await (async () => { await autosave(); return lastCommand('save').token; })());
+  assert.ok(next > token, '다음 저장은 새 번호를 쓴다: ' + next + ' > ' + token);
+  await saved(false, metrics, next);
+ }
+
  assert.equal(labelled('저장').length,0,'there is no save button to manage: work saves itself');
  const beforeDouble=sent().filter(m=>m.type==='save').length;
  const closeButton=labelled('그리기 닫기')[0];

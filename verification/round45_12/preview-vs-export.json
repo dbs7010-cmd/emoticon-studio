@@ -1,0 +1,203 @@
+{
+ "note": "45.12 도톰 수정 뒤. 화면 캔버스 픽셀 vs 같은 순간 내보낸 PNG(캔버스를 거치지 않고 node 에서 직접 디코딩).",
+ "rows": [
+  {
+   "name": "en-basic",
+   "size": "360x360",
+   "changedPixels": 702,
+   "opaqueDiff": 685,
+   "maxDelta": 1,
+   "previewInk": 6119,
+   "exportInk": 6119,
+   "previewGlyph": 1932,
+   "exportGlyph": 1932
+  },
+  {
+   "name": "en-serif",
+   "size": "360x360",
+   "changedPixels": 778,
+   "opaqueDiff": 756,
+   "maxDelta": 1,
+   "previewInk": 6754,
+   "exportInk": 6754,
+   "previewGlyph": 1776,
+   "exportGlyph": 1775
+  },
+  {
+   "name": "en-thick",
+   "size": "360x360",
+   "changedPixels": 1342,
+   "opaqueDiff": 1327,
+   "maxDelta": 3,
+   "previewInk": 6879,
+   "exportInk": 6879,
+   "previewGlyph": 2732,
+   "exportGlyph": 2728
+  },
+  {
+   "name": "ko-basic",
+   "size": "360x360",
+   "changedPixels": 846,
+   "opaqueDiff": 825,
+   "maxDelta": 1,
+   "previewInk": 7901,
+   "exportInk": 7901,
+   "previewGlyph": 2589,
+   "exportGlyph": 2589
+  },
+  {
+   "name": "ko-serif",
+   "size": "360x360",
+   "changedPixels": 882,
+   "opaqueDiff": 869,
+   "maxDelta": 1,
+   "previewInk": 7280,
+   "exportInk": 7280,
+   "previewGlyph": 2044,
+   "exportGlyph": 2040
+  },
+  {
+   "name": "ko-thick",
+   "size": "360x360",
+   "changedPixels": 1718,
+   "opaqueDiff": 1699,
+   "maxDelta": 3,
+   "previewInk": 8790,
+   "exportInk": 8790,
+   "previewGlyph": 3834,
+   "exportGlyph": 3830
+  },
+  {
+   "name": "long-basic",
+   "size": "360x360",
+   "changedPixels": 892,
+   "opaqueDiff": 835,
+   "maxDelta": 2,
+   "previewInk": 5664,
+   "exportInk": 5664,
+   "previewGlyph": 1667,
+   "exportGlyph": 1667
+  },
+  {
+   "name": "long-serif",
+   "size": "360x360",
+   "changedPixels": 1186,
+   "opaqueDiff": 1144,
+   "maxDelta": 1,
+   "previewInk": 5762,
+   "exportInk": 5762,
+   "previewGlyph": 1421,
+   "exportGlyph": 1418
+  },
+  {
+   "name": "long-thick",
+   "size": "360x360",
+   "changedPixels": 1725,
+   "opaqueDiff": 1668,
+   "maxDelta": 3,
+   "previewInk": 6119,
+   "exportInk": 6119,
+   "previewGlyph": 2244,
+   "exportGlyph": 2236
+  },
+  {
+   "name": "mid-basic",
+   "size": "360x360",
+   "changedPixels": 640,
+   "opaqueDiff": 626,
+   "maxDelta": 1,
+   "previewInk": 9242,
+   "exportInk": 9242,
+   "previewGlyph": 3153,
+   "exportGlyph": 3152
+  },
+  {
+   "name": "mid-serif",
+   "size": "360x360",
+   "changedPixels": 1110,
+   "opaqueDiff": 1094,
+   "maxDelta": 1,
+   "previewInk": 9581,
+   "exportInk": 9581,
+   "previewGlyph": 2393,
+   "exportGlyph": 2387
+  },
+  {
+   "name": "mid-thick",
+   "size": "360x360",
+   "changedPixels": 1862,
+   "opaqueDiff": 1846,
+   "maxDelta": 3,
+   "previewInk": 9947,
+   "exportInk": 9947,
+   "previewGlyph": 4170,
+   "exportGlyph": 4167
+  },
+  {
+   "name": "num-basic",
+   "size": "360x360",
+   "changedPixels": 878,
+   "opaqueDiff": 854,
+   "maxDelta": 1,
+   "previewInk": 10153,
+   "exportInk": 10153,
+   "previewGlyph": 3321,
+   "exportGlyph": 3320
+  },
+  {
+   "name": "num-serif",
+   "size": "360x360",
+   "changedPixels": 5675,
+   "opaqueDiff": 3406,
+   "maxDelta": 255,
+   "previewInk": 10035,
+   "exportInk": 10047,
+   "previewGlyph": 2646,
+   "exportGlyph": 2623
+  },
+  {
+   "name": "num-thick",
+   "size": "360x360",
+   "changedPixels": 1971,
+   "opaqueDiff": 1952,
+   "maxDelta": 3,
+   "previewInk": 11330,
+   "exportInk": 11330,
+   "previewGlyph": 4894,
+   "exportGlyph": 4890
+  },
+  {
+   "name": "short-basic",
+   "size": "360x360",
+   "changedPixels": 319,
+   "opaqueDiff": 317,
+   "maxDelta": 1,
+   "previewInk": 3333,
+   "exportInk": 3333,
+   "previewGlyph": 1076,
+   "exportGlyph": 1076
+  },
+  {
+   "name": "short-serif",
+   "size": "360x360",
+   "changedPixels": 334,
+   "opaqueDiff": 330,
+   "maxDelta": 1,
+   "previewInk": 3084,
+   "exportInk": 3084,
+   "previewGlyph": 840,
+   "exportGlyph": 838
+  },
+  {
+   "name": "short-thick",
+   "size": "360x360",
+   "changedPixels": 674,
+   "opaqueDiff": 670,
+   "maxDelta": 3,
+   "previewInk": 3735,
+   "exportInk": 3735,
+   "previewGlyph": 1581,
+   "exportGlyph": 1580
+  }
+ ]
+}

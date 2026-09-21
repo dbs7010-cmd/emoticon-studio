@@ -68,7 +68,8 @@ const publicLayer = l => Object.fromEntries(['id', 'name', 'visible', 'opacity',
 const answerSave = async (dirty = true) => {
   const cmd = lastCommand('save');
   assert.ok(cmd, 'save 명령이 나갔다');
-  await message({ type: 'save', dirty, data: pngData, metrics, activeLayerId: scene.activeLayerId, caption: scene.caption || undefined, motion: scene.motion ?? null,
+  // 45.12: 엔진은 요청 번호를 그대로 돌려준다 — 화면은 번호가 맞는 응답만 받는다.
+  await message({ type: 'save', token: cmd.token, dirty, data: pngData, metrics, activeLayerId: scene.activeLayerId, caption: scene.caption || undefined, motion: scene.motion ?? null,
     gif: cmd.gif && scene.motion ? { count: 9, fps: 12, loop: .8, delayMs: 83, data: 'data:image/gif;base64,R0lGODlh', bytes: 2048, droppedColours: 0, clipped: false } : undefined,
     layers: scene.layers.map(l => ({ ...publicLayer(l), data: pngData })), references: [] });
 };

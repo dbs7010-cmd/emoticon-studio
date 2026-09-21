@@ -9,6 +9,8 @@ const canvas=document.getElementById('drawing'),surface=document.getElementById(
 const W=canvas.width,H=canvas.height;
 let tool='pen',brush='pen',color='#242424',penWidth=5,eraserWidth=20,zoom=1,active=false,last=null,pointer=null,history=[],future=[],dirty=false,loading=false,saving=false,layers=[],references=[],activeLayerId='draw-1',activeDrawLayerId='draw-1',activeReferenceId=null,strokePending=false,pendingFill=null,steady=null,caption=null,selection=null,marquee=null,dragging=null,grabbing=null,focusLayerId=null,pivotPick=null,pivotRole='pivot',motion=null,playing=false,playStart=0,rafId=null,smoothing=true,captionPicked=false,captionDrag=null,captionHandle=null,captionDismiss=false,probe=false;
 const touches=new Map();let multi=null,suppressDraw=false;
+// 저장 요청 번호. 화면이 보낸 번호를 그대로 돌려주고, 그 번호의 응답만 받는다 — 늦게 온 응답이 다음 저장을 끝내 버리지 않게.
+let saveToken=null;
 function send(m){window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify(m));}
 function bitmap(){const c=document.createElement('canvas');c.width=W;c.height=H;return c;}
 function copyOf(b){const c=bitmap();c.getContext('2d').drawImage(b,0,0);return c;}
@@ -25,17 +27,20 @@ function state(){send({type:'state',undo:history.length>0,redo:future.length>0,d
 function capFace(){const s=caption&&caption.style;
  if(s==='serif')return {w:'700',f:'serif',o:.22,bold:0};
  // bold: 글자 획을 얼마나 덧댈지(글자 크기 대비). 기기에 900 굵기가 없어도 이 값 때문에 확실히 굵어진다.
- if(s==='thick')return {w:'800',f:'system-ui, sans-serif',o:.24,bold:.075};
+ if(s==='thick')return {w:'800',f:'system-ui, sans-serif',o:.24,bold:.05};
  return {w:'700',f:'system-ui, sans-serif',o:.22,bold:0};}
 function capFont(px){const c=capFace();return c.w+' '+px+'px '+c.f;}
+// 덧대는 양은 글자 크기에 따라 조금 줄인다. 작은 글자는 획 사이 틈이 한두 픽셀뿐이라, 같은 비율로 덧대면 속이 막힌다(45.12차).
+function capBold(px){const b=capFace().bold||0;return b?b*Math.min(1,Math.max(.8,px/28)):0;}
 function captionSpot(g){
  if(!caption||!caption.text.trim())return null;
- const text=caption.text.trim(),room=W-32,face=capFace(),fat=face.bold||0;
+ const text=caption.text.trim(),room=W-32,face=capFace();
  // 글자가 실제로 덮는 자리는 획 + 흰 테두리다. 테두리는 절반씩 양쪽으로 나가므로 한 번 더해 준다.
- const edge=p=>Math.max(3,p*(face.o+fat));
+ // 덧대는 양은 크기마다 다르므로(capBold) 재는 크기에서 그때그때 구한다 — 그려지는 값과 같은 값으로 잰다.
+ const edge=p=>Math.max(3,p*(face.o+capBold(p)));
  let px=Math.round(H*.11),wide=0,shown=0;
- for(;px>10;px--){g.font=capFont(px);wide=g.measureText(text).width+px*fat;shown=wide+edge(px);if(shown<=room)break;}
- if(shown>room){px=Math.max(1,Math.floor(px*room/shown));g.font=capFont(px);wide=g.measureText(text).width+px*fat;}
+ for(;px>10;px--){g.font=capFont(px);wide=g.measureText(text).width+px*capBold(px);shown=wide+edge(px);if(shown<=room)break;}
+ if(shown>room){px=Math.max(1,Math.floor(px*room/shown));g.font=capFont(px);wide=g.measureText(text).width+px*capBold(px);}
  const x=W/2+(caption.dx||0),y=(caption.place==='top'?Math.round(H*.06):H-Math.round(H*.06))+(caption.dy||0);
  const scale=caption.scale||1,rot=caption.rot||0;
  // 글자 상자. 기준선이 위/아래로 갈리므로 상자의 세로 위치도 그에 맞춘다.
@@ -51,13 +56,13 @@ function drawCaption(g,d){
  const cx=spot.x,cy=spot.box.y+spot.box.h/2;
  g.translate(cx,cy);g.rotate(spot.rot*Math.PI/180);g.scale(spot.scale,spot.scale);g.translate(-cx,-cy);
  g.textAlign='center';g.textBaseline=caption.place==='top'?'top':'bottom';
- const face=capFace();
+ const face=capFace(),bold=capBold(spot.px);
  g.font=capFont(spot.px);
  g.lineJoin='round';g.lineCap='round';
  // 흰 테두리는 굵어진 글자 바깥을 감싸도록 덧댄 만큼 함께 넓힌다.
- g.lineWidth=Math.max(3,spot.px*(face.o+(face.bold||0)));g.strokeStyle='#FFFFFF';g.strokeText(spot.text,spot.x,spot.y);
+ g.lineWidth=Math.max(3,spot.px*(face.o+bold));g.strokeStyle='#FFFFFF';g.strokeText(spot.text,spot.x,spot.y);
  g.fillStyle=css(caption.color||'#242424');
- if(face.bold){g.lineWidth=spot.px*face.bold;g.strokeStyle=css(caption.color||'#242424');g.strokeText(spot.text,spot.x,spot.y);}
+ if(bold){g.lineWidth=spot.px*bold;g.strokeStyle=css(caption.color||'#242424');g.strokeText(spot.text,spot.x,spot.y);}
  g.fillText(spot.text,spot.x,spot.y);
  g.restore();
 }
@@ -93,6 +98,7 @@ function onCaptionHandle(p){const h=handlePoint();return !!h&&Math.hypot(p.x-h.x
 function clampCaption(){const spot=captionSpot(ctx);if(!spot)return;const cy=spot.box.y+spot.box.h/2;
  if(spot.x<0)caption.dx=(caption.dx||0)-spot.x;else if(spot.x>W)caption.dx=(caption.dx||0)-(spot.x-W);
  if(cy<0)caption.dy=(caption.dy||0)-cy;else if(cy>H)caption.dy=(caption.dy||0)-(cy-H);}
+function stale(m){return saveToken!==null&&m.token!==undefined&&m.token!==saveToken;}
 function defaults(id,name){return {id,name,visible:true,opacity:1,x:0,y:0,scale:1,rotation:0};}
 // 지금 있는 장과 겹치지 않는 가장 작은 번호. 이미 겹친 옛 저장본을 열어도 그 id 들을 모두 피한다.
 function nextLayerId(){let n=1;while(layers.some(l=>l.id==='draw-'+n))n++;return 'draw-'+n;}
@@ -776,7 +782,7 @@ function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.
 async function loadLayer(l){const b=bitmap();if(l.data){const i=await image(l.data),scale=Math.min(W/i.width,H/i.height),w=i.width*scale,h=i.height*scale;b.getContext('2d').drawImage(i,(W-w)/2,(H-h)/2,w,h);}return {...defaults(l.id,l.name),...l,bitmap:b,data:undefined};}
 function metrics(c){const g=c.getContext('2d',{willReadFrequently:true}),w=c.width,h=c.height,d=g.getImageData(0,0,w,h).data;let n=0,xs=0,ys=0,minX=w,minY=h,maxX=0,maxY=0,r=0,green=0,b=0,transparent=false;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=(y*w+x)*4;if(d[k+3]<255)transparent=true;if(d[k+3]>16){n++;xs+=x;ys+=y;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);r+=d[k];green+=d[k+1];b+=d[k+2];}}return {coverage:n/(w*h),centerX:n?xs/n/w:.5,centerY:n?ys/n/h:.5,width:n?(maxX-minX+1)/w:0,height:n?(maxY-minY+1)/h:0,color:n?[r/n/255,green/n/255,b/n/255]:[0,0,0],transparent};}
 async function command(m){try{
- if(saving&&!['saved','saveFailed','analyze'].includes(m.type))return;
+ if(saving&&!['saved','saveFailed','analyze','save'].includes(m.type))return;
  if(m.type==='init'){
    loading=true;const input=m.layers||[{...defaults('draw-1','그림 1'),data:m.drawing}];
    if(m.color)color=m.color;if(m.brush)applyBrush(m.brush);if(Number.isFinite(m.penWidth))penWidth=m.penWidth;if(Number.isFinite(m.eraserWidth))eraserWidth=m.eraserWidth;
@@ -897,9 +903,10 @@ async function command(m){try{
  if(m.type==='play'){startPlaying();}
  if(m.type==='stop'){stopPlaying();render();state();}
  if(m.type==='frames'){const was=playing;stopPlaying();send({type:'frames',id:m.id,gif:buildLoop(m.fps,!!m.sheets)});if(was)startPlaying();else{render();state();}}
- if(m.type==='save'){dry();if(selection)applySelection(false,'save');saving=true;const out=bitmap(),g=out.getContext('2d');layers.forEach(l=>composite(g,l));drawCaption(g);send({type:'save',dirty,data:out.toDataURL('image/png'),metrics:metrics(out),activeLayerId,caption,motion,gif:(m.gif&&motion)?buildLoop(12,false):undefined,layers:layers.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')})),references:references.map(l=>({...meta(l),path:l.path}))});}
- if(m.type==='saved'){saving=false;dirty=false;state();}
- if(m.type==='saveFailed'){saving=false;state();}
+ if(m.type==='save'){dry();if(selection)applySelection(false,'save');saving=true;saveToken=m.token===undefined?null:m.token;const out=bitmap(),g=out.getContext('2d');layers.forEach(l=>composite(g,l));drawCaption(g);send({type:'save',token:saveToken,dirty,data:out.toDataURL('image/png'),metrics:metrics(out),activeLayerId,caption,motion,gif:(m.gif&&motion)?buildLoop(12,false):undefined,layers:layers.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')})),references:references.map(l=>({...meta(l),path:l.path}))});}
+ // 번호가 다른 응답(먼저 보낸 저장의 뒤늦은 대답)은 흘려보낸다. 지금 저장의 대답만 상태를 바꾼다.
+ if(m.type==='saved'){if(stale(m))return;saving=false;saveToken=null;dirty=false;state();}
+ if(m.type==='saveFailed'){if(stale(m))return;saving=false;saveToken=null;state();}
  if(m.type==='probe'){probe=!!m.on;return;}
  if(m.type==='paper'){surface.classList.toggle('paper',!!m.on);return;}
  if(m.type==='analyze'){const i=await image(m.data),c=document.createElement('canvas');const scale=Math.min(1,720/Math.max(i.width,i.height));c.width=Math.max(1,Math.round(i.width*scale));c.height=Math.max(1,Math.round(i.height*scale));c.getContext('2d').drawImage(i,0,0,c.width,c.height);send({type:'analysis',id:m.id,metrics:metrics(c)});}

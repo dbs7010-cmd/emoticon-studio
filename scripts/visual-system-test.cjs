@@ -210,7 +210,7 @@ async function ready() {
   assert.deepEqual(motionOrder, ['보관한 움직임', '부분만 움직이기'], '재사용이 먼저, PRO 한 줄이 나중');
   await press('그리기');
   await press('그리기 닫기');
-  await message({ type: 'save', dirty: false, data: pngData, metrics: { coverage: .2 }, activeLayerId: 'draw-1', layers: [], references: [] });
+  await message({ type: 'save', token: (sent().filter(m => m.type === 'save').at(-1) || {}).token, dirty: false, data: pngData, metrics: { coverage: .2 }, activeLayerId: 'draw-1', layers: [], references: [] });
 
   // ── 8. 내보내기: 요약 표면이 먼저, 손볼 곳은 한 표면 ─────────────────────────────────────────
   await press('내보내기');

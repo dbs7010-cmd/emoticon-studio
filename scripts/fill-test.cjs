@@ -226,6 +226,18 @@ const drawing = id => sandbox.window.__layer(id);
   assert.equal(inked(boldStrokes).length, 1, '도톰은 글자 색으로 획을 한 번 덧대 굵게 만든다');
   assert.ok(inked(boldStrokes)[0].width > 0, '덧대는 획에는 두께가 있다: ' + inked(boldStrokes)[0].width);
   assert.equal(boldShot.getContext().__caption.text, '안녕하세요', '굵게 그려도 같은 글자를 같은 자리에 쓴다');
+
+  // 45.12: 덧대는 획은 글자 크기의 5% 이하이고, 작은 글자에서는 더 얇다(획 사이가 붙지 않게).
+  const px = stroke => Number(String(stroke.font).split('px')[0].split(' ').pop());
+  const boldOf = shot => { const list = (shot.getContext().__strokes || []).filter(s2 => s2.style.startsWith('#24')); return list.length ? list[0].width / px(list[0]) : 0; };
+  const bigRatio = boldOf(boldShot);
+  assert.ok(bigRatio > 0 && bigRatio <= .0501, '큰 글자의 덧댐은 5% 이하: ' + bigRatio.toFixed(4));
+  await command({ type: 'caption', caption: { text: '오늘 하루도 수고 많으셨어요 정말로', place: 'bottom', color: '#242424', style: 'thick' } });
+  const smallBold = await exportNow();
+  const smallRatio = boldOf(smallBold);
+  assert.ok(smallRatio > 0, '작은 글자도 덧대기는 한다(기본과 구별되어야 한다)');
+  assert.ok(smallRatio < bigRatio, '작은 글자는 덜 덧댄다: ' + smallRatio.toFixed(4) + ' < ' + bigRatio.toFixed(4));
+  assert.ok(smallRatio >= bigRatio * .75, '그렇다고 기본과 같아질 만큼 줄이지는 않는다: ' + smallRatio.toFixed(4));
   await command({ type: 'caption', caption: null });
 
   // ── 45.11: 칸 맞춤은 흰 테두리까지 센다 ──────────────────────────────────────────────
@@ -325,5 +337,55 @@ const drawing = id => sandbox.window.__layer(id);
   while (layerIds().length > 2) await command({ type: 'removeLayer', id: layerIds().at(-1) });
   await command({ type: 'duplicateLayer', id: layerIds()[0] });
   uniqueIds('복제');
+
+  // ── 45.12: 지운 장의 번호를 다시 써도 옛 부분 움직임이 새 장에 붙지 않는다 ────────────────
+  await command({ type: 'init' });
+  await command({ type: 'addLayer', id: 'draw-2', name: '그림 2' });
+  await command({ type: 'select', id: 'draw-2' });
+  line(60, 160, 300, 160);
+  await command({ type: 'motion', motion: { preset: 'none', parts: [{ id: 'part-A', layerId: 'draw-2', effect: 'sway', pivotX: .5, pivotY: .5, amount: 1, angle: 0, speed: .5, delay: 0 }] } });
+  assert.deepEqual((scene().motion.parts || []).map(p => p.layerId), ['draw-2'], '부분 움직임이 그 장을 가리킨다');
+  await command({ type: 'removeLayer', id: 'draw-2' });
+  assert.equal((scene().motion && scene().motion.parts) || null, null, '장을 지우면 그 장의 부분 움직임도 함께 지워진다');
+  await command({ type: 'addLayer' });
+  assert.deepEqual(scene().layers.map(l => l.id), ['draw-1', 'draw-2'], '빈 번호를 다시 쓴다');
+  assert.equal((scene().motion && scene().motion.parts) || null, null, '같은 번호의 새 장에 옛 움직임이 붙지 않는다');
+  assert.equal(scene().layers[1].id === 'draw-2' && inkOf('draw-2'), 0, '새 장은 비어 있다');
+  await command({ type: 'undo' });
+  await command({ type: 'undo' });
+  assert.deepEqual((scene().motion.parts || []).map(p => p.layerId), ['draw-2'], '되돌리면 장과 그 장의 움직임이 함께 돌아온다');
+  assert.ok(inkOf('draw-2') > 0, '되살아난 장에는 그림이 그대로 있다');
+  await command({ type: 'redo' });
+  assert.equal((scene().motion && scene().motion.parts) || null, null, '다시 실행하면 삭제가 그대로 다시 적용된다');
+
+  // ── 45.12: 저장 응답이 사라져도 다시 저장할 수 있고, 늦게 온 옛 응답은 무시한다 ──────────
+  // 예전에는 저장 중에 들어온 명령을 모두 버려서, 응답이 한 번 사라지면 화면이 20초(앱 쪽 시간초과)
+  // 동안 굳었다. 그동안 그은 획은 캔버스에 닿지도 않았다(verification/round45_12/save-lock-repro).
+  await command({ type: 'init' });
+  await command({ type: 'tool', tool: 'pen' });
+  line(60, 120, 300, 120);
+  assert.equal(scene().dirty, true, '그린 뒤에는 저장할 것이 있다');
+  const saveCount = () => messages.filter(m => m.type === 'save').length;
+  await command({ type: 'save', token: 11 });
+  assert.equal(messages.filter(m => m.type === 'save').at(-1).token, 11, '저장 응답에 요청 번호가 함께 온다');
+  const afterFirst = saveCount();
+  await command({ type: 'save', token: 12 });
+  assert.equal(saveCount(), afterFirst + 1, '응답이 오지 않아도 다시 저장하면 새 그림을 준다(재시도가 된다)');
+  assert.equal(messages.filter(m => m.type === 'save').at(-1).token, 12, '새 응답은 새 번호를 단다');
+  await command({ type: 'saved', token: 11 });
+  assert.equal(scene().dirty, true, '늦게 온 옛 응답은 지금 저장을 끝내지 못한다');
+  await command({ type: 'saveFailed', token: 11 });
+  assert.equal(scene().dirty, true, '늦게 온 옛 실패 응답도 지금 저장을 건드리지 않는다');
+  await command({ type: 'saved', token: 12 });
+  assert.equal(scene().dirty, false, '지금 응답이 와야 저장이 끝난다');
+  // 실패 응답은 저장하지 않은 그림을 그대로 둔다.
+  line(60, 200, 300, 200);
+  await command({ type: 'save', token: 13 });
+  await command({ type: 'saveFailed', token: 13 });
+  assert.equal(scene().dirty, true, '저장에 실패하면 저장할 것이 남아 있다고 말한다');
+  const beforeRetry = [...drawing('draw-1')];
+  line(60, 260, 300, 260);
+  assert.notDeepEqual([...drawing('draw-1')], beforeRetry, '실패 뒤에도 계속 그릴 수 있다');
+
   console.log('PASS: 새 장 id 가 겹치지 않는다(가운데·마지막·되풀이·저장 후·복제) · 장의 차례 바꾸기(앞으로·양 끝 멈춤·되돌리기) · flood fill stays inside closed line art, respects undo/redo, touches only the active drawing, never reaches references, and yields to multi-touch gestures; captions are painted into the export but never into a layer, survive undo, and travel with a copied cut. Canvas rasteriser is a test double; device test still required.');
 })().catch(e => { console.error(e); process.exitCode = 1; });

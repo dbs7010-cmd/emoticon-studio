@@ -223,6 +223,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 조용한 자동저장이 도는 동안 캔버스는 다른 명령을 받지 않는다. 그 사이 누른 도구·색·굵기는 버리지 않고 모았다가
   // 저장이 끝나면 보낸다. 자동저장 중에 누른 완성·닫기도 잃지 않고 저장이 끝난 뒤 이어서 한다.
   const held = useRef<object[]>([]), quiet = useRef(false), queued = useRef<SaveAction | null>(null);
+  // 저장 요청 번호(45.12차). 늦게 온 응답을 다음 저장의 응답으로 잘못 쓰지 않으려고 센다.
+  const saveToken = useRef(0);
   const saveRef = useRef<(action: SaveAction) => void>(() => {});
   const inject = (message: object) => web.current?.injectJavaScript(`window.command(${JSON.stringify(message)});true;`);
   const send = (message: { type: string } & Record<string, unknown>) => { if (quiet.current && !['save', 'saved', 'saveFailed'].includes(message.type)) { held.current.push(message); return; } inject(message); };
@@ -443,8 +445,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     // 자동저장('stay')은 화면을 잠그지 않는다. 칸을 떠나는 저장(닫기·완성·이동·공유)만 잠깐 잠근다.
     if (action === 'stay') quiet.current = true; else setBusy(true);
     setSaveMark('saving');
-    timeout.current = setTimeout(() => { send({ type: 'saveFailed' }); setSaveMark(null); unlock(); Alert.alert('저장이 늦어지고 있어요', '작업은 그대로 있어요. 잠시 뒤 다시 시도해 주세요.'); }, 20000);
-    send({ type: 'save', gif: !!scene.motion });
+    const token = ++saveToken.current;
+    timeout.current = setTimeout(() => { send({ type: 'saveFailed', token }); setSaveMark(null); unlock(); Alert.alert('저장이 늦어지고 있어요', '작업은 그대로 있어요. 잠시 뒤 다시 시도해 주세요.'); }, 20000);
+    send({ type: 'save', gif: !!scene.motion, token });
   }
   saveRef.current = save;
   // Copying is always something the user asks for, and it is always a separate document:
@@ -721,7 +724,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               setColorView('custom'); setPanel('color');
             }
             if (m.type === 'error') { unlock(); Alert.alert('그리지 못했어요', userMessage(m.message)); }
-            if (m.type === 'save' && inFlight.current) {
+            // 번호가 다른 저장 응답은 이미 포기한 요청의 뒤늦은 대답이다 — 지금 그림 대신 옛 그림을 쓰지 않도록 버린다.
+            if (m.type === 'save' && inFlight.current && m.token === saveToken.current) {
               try {
                 let action = nextAction.current;
                 // An empty canvas is not a finished cut. Keep the work, refuse the declaration only.
@@ -730,7 +734,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                 if (m.dirty !== false || action === 'stay' || action === 'share' || action === 'complete' || action === 'reference') {
                   const result = onSave(m, slot.dialogue, action === 'complete'); setQA(result);
                 }
-                send({ type: 'saved' }); unlock(); markSaved();
+                send({ type: 'saved', token: m.token }); unlock(); markSaved();
                 if (nextAction.current === 'complete' && blank) { Alert.alert('아직 빈 칸이에요', '선을 하나라도 그리면 완성할 수 있어요.'); return; }
                 if (action === 'motion') switchTab('draw');
                 else if (action === 'close') onClose();
@@ -738,7 +742,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                 else if (action === 'reference') onSetReference();
                 else if (typeof action === 'number') onNavigate(action);
                 else if (action === 'share') onShare().catch(e => Alert.alert('공유하지 못했어요', userMessage(e)));
-              } catch (e) { send({ type: 'saveFailed' }); setSaveMark(null); unlock(); Alert.alert('저장하지 못했어요', userMessage(e)); }
+              } catch (e) { send({ type: 'saveFailed', token: m.token }); setSaveMark(null); unlock(); Alert.alert('저장하지 못했어요', userMessage(e)); }
             }
           } catch (e) { unlock(); Alert.alert('그리지 못했어요', userMessage(e)); }
         }} style={{ flex: 1, backgroundColor: C.surface2 }} />
