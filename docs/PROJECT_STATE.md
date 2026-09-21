@@ -2515,3 +2515,34 @@ BrowserStack 추가 검증 중단. 28차는 **PARTIAL / MANUAL QA DEFERRED** 로
 - 화면/내보내기 캔버스의 글자 간격 차이(P3, 원인 미확정).
 - 이미 id 가 겹친 옛 저장본(P3, 45.11) — 자동 복구 없음.
 - `ux-test` 하네스가 App 트리를 모두 unmount 하지 않아 옛 타이머가 남는다(검사 편의 문제, 앱 누수 아님).
+
+## 45.14차 (2026-09-21) — 내부 검수 APK 확보 · 에셋 8자리 제작 규격 전달
+
+### DONE
+- **내부 검수 APK 를 실제로 만들었다**(코드 변경 없음). `BUILD SUCCESSFUL in 2m 59s`.
+  - 경로 `C:Devemoticon-studioandroidappuildoutputsapkeleaseapp-release.apk` · 소스 `0da0556`(추적 파일 변경 없음) · SOURCE_ID `dcef986f…`
+  - `com.emoticonstudio.app` · versionName 1.0.0 / versionCode 1 · minSdk 24 / target 36 · **ABI arm64-v8a 하나** · 38,549,950 바이트 · SHA-256 `a7bfebfe…`
+  - **내부 검수 설정 적용 확인**: APK 안 `assets/app.config` 의 `extra.internalReview = true`(빌드 때마다 `createExpoConfig` 가 다시 굽는다). 영수증 서버 주소는 비어 있다.
+  - 서명은 `CN=Android Debug` — **내부 검수용이고 스토어 업로드용이 아니다.** 배포용은 환경변수 없이 업로드 키로 `bundleRelease`(AAB).
+  - **빌드 성공은 앱 실행 PASS 가 아니다.** 기기에서 돌린 기록은 아직 없다.
+- **prebuild 는 다시 돌리지 않았다**(근거를 남김): 추적 중인 android 파일 0개(손댄 네이티브 없음), 지금 `android/` 는 이 프로젝트의 설정 플러그인이 적용된 생성물이며, 내부 검수 값은 prebuild 가 아니라 **빌드 시점**에 `expo-constants` 가 다시 굽는다. 환경변수는 그 빌드 셸 안에서만 설정했다.
+- **에셋 8자리를 제작 가능한 규격으로 정리**: `verification/round45_14/ASSET_SPEC.md`(화면·역할·표시 크기와 반응형 규칙·권장 원본·비율·형식·투명 여부·맞춤 방식과 잘림·앱이 그리는 글자·현재 유무·우선순위).
+  - 6자리는 `contain`(잘리지 않음), **`referencePoseThumbnail` 만 `cover` 라 3:4 가 아니면 잘린다.**
+  - `expressionGuideArtwork`(카드 20장)·`referencePoseThumbnail`(격자 전체)은 **코드가 자리 하나를 모든 칸에 쓴다** — 카드별·자세별 그림은 화면 연결이 더 필요(미확정).
+  - 임시 그림 두 장은 자리 비율과 맞지 않는다(`mascot-paper.png` 276×306 · `mascot-ink.png` 103×132). **공식 캐릭터 확정 아님.**
+  - **8장을 다 만들 필요는 없다**: P1 은 홈 첫 화면·PRO 전후 2장, P2 는 내보내기 축하와 기능 한 세트(가이드·레퍼런스), P3(없어도 됨)는 홈 빈 상태·공지(기능 꺼짐)·움직임 견본(임시로 성립). 출시를 막는 P0 는 이 8자리가 아니라 브랜드·스토어 에셋이다.
+- 코드 변경이 없어 전체 테스트를 다시 돌리지 않았다(45.13 에서 22/22 PASS · typecheck 0).
+
+### CURRENT
+- 손에 있는 것: 최신 소스로 만든 **내부 검수 APK 1개**(arm64), 실기기 검수표(`docs/MANUAL_QA.md` 45.13), 에셋 8자리 제작 규격(`verification/round45_14/ASSET_SPEC.md`).
+- 앱 수준(실기기) 동작은 여전히 **UNVERIFIED**.
+
+### NEXT
+1. 기기를 연결하면 `adb install -r`(덮어쓰기, 데이터 보존) 후 45.13 검수표 수행 — 3칸 제작 → 저장 → 재열기 → 내보내기 캡처.
+2. 에셋은 P1 두 자리(홈 첫 화면 · PRO 전후 2장)부터. 가이드·레퍼런스는 그림 여러 장 + 화면 연결을 함께 정한 뒤.
+3. 스토어 배포용 빌드는 업로드 키·영수증 서버가 준비된 뒤(`docs/RELEASE_SIGNING.md`).
+
+### BLOCKED
+- 기기: `adb devices` 1회 확인 — 없음. 반복 연결·AVD 재시도 없음.
+- 실결제·복원 검증: 내부 테스트 트랙 업로드 + 라이선스 테스터 + 영수증 서버 필요(검수용 PRO 로는 대신할 수 없다).
+- 다른 서명의 같은 패키지가 기기에 깔려 있으면 설치가 막힌다 — **앱 삭제·데이터 초기화로 풀지 않는다.** 사용자와 확인한다.
