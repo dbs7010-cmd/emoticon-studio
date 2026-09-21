@@ -82,7 +82,7 @@ export const EXPRESSION_GUIDE = {
         { id: 'greeting-hello-wave', label: '손 흔들며', hint: '손 흔들며 인사', artwork: require('../../assets/expression-guides/greeting-hello-wave.png') },
         { id: 'greeting-hello-peek', label: '빼꼼', hint: '빼꼼 보기', artwork: require('../../assets/expression-guides/greeting-hello-peek.png') },
         { id: 'greeting-hello-welcome', label: '양팔 벌려', hint: '양팔 벌려 환영', artwork: require('../../assets/expression-guides/greeting-hello-welcome.png') },
-        { id: 'greeting-hello-turn', label: '뒤돌아보며', hint: '뒤돌아보기', artwork: require('../../assets/expression-guides/greeting-hello-turn.png') },
+        { id: 'greeting-hello-turn', label: '고개를 돌려', hint: '몸은 앞을 향하고 고개는 옆으로 돌리기', artwork: require('../../assets/expression-guides/greeting-hello-turn.png') },
       ],
     }, {
       id: 'greeting-thanks', category: '기쁨·인사', name: '고마워', hint: '두 손 모아 꾸벅',
@@ -136,14 +136,14 @@ export const EXPRESSION_GUIDE = {
         { id: 'sad-crying-cover-face', label: '얼굴 가리고', hint: '얼굴 가리고 울기', artwork: require('../../assets/expression-guides/sad-crying-cover-face.png') },
         { id: 'sad-crying-loud', label: '서서 크게', hint: '서서 크게 울기', artwork: require('../../assets/expression-guides/sad-crying-loud.png') },
         { id: 'sad-crying-sob', label: '펑펑', hint: '펑펑 울기', artwork: require('../../assets/expression-guides/sad-crying-sob.png') },
-        { id: 'sad-crying-crouch', label: '웅크려', hint: '웅크려 울기', artwork: require('../../assets/expression-guides/sad-crying-crouch.png') },
+        { id: 'sad-crying-crouch', label: '웅크려', hint: '몸을 웅크리고 두 손 모으기', artwork: require('../../assets/expression-guides/sad-crying-crouch.png') },
       ],
     }, {
       id: 'sad-are-you-okay', category: '슬픔·미안', name: '괜찮아?', hint: '살짝 다가가기',
       examples: [
         { id: 'sad-are-you-okay-face', label: '걱정스러운 얼굴', hint: '걱정스러운 얼굴', artwork: require('../../assets/expression-guides/sad-are-you-okay-face.png') },
         { id: 'sad-are-you-okay-arms-crossed', label: '팔짱 끼고', hint: '팔짱 끼고 걱정', artwork: require('../../assets/expression-guides/sad-are-you-okay-arms-crossed.png') },
-        { id: 'sad-are-you-okay-chest', label: '가슴에 손 얹고', hint: '가슴에 손 얹고 걱정', artwork: require('../../assets/expression-guides/sad-are-you-okay-chest.png') },
+        { id: 'sad-are-you-okay-chest', label: '손끝으로 가리키며', hint: '한 손을 내려 손끝으로 가리키기', artwork: require('../../assets/expression-guides/sad-are-you-okay-chest.png') },
         { id: 'sad-are-you-okay-mouth', label: '입 가리고', hint: '입 가리고 걱정', artwork: require('../../assets/expression-guides/sad-are-you-okay-mouth.png') },
         { id: 'sad-are-you-okay-lean', label: '몸 숙여', hint: '몸 숙여 살피기', artwork: require('../../assets/expression-guides/sad-are-you-okay-lean.png') },
       ],
@@ -236,7 +236,7 @@ export const EXPRESSION_GUIDE = {
         { id: 'daily-depart-run-point', label: '앞을 가리키며', hint: '달리며 앞을 가리키기', artwork: require('../../assets/expression-guides/daily-depart-run-point.png') },
         { id: 'daily-depart-walk', label: '걸으며', hint: '걷기', artwork: require('../../assets/expression-guides/daily-depart-walk.png') },
         { id: 'daily-depart-wave-back', label: '뒤돌아 손 흔들며', hint: '뒤돌아 손 흔들기', artwork: require('../../assets/expression-guides/daily-depart-wave-back.png') },
-        { id: 'daily-depart-point-side', label: '옆을 가리키며', hint: '옆을 가리키기', artwork: require('../../assets/expression-guides/daily-depart-point-side.png') },
+        { id: 'daily-depart-point-side', label: '손바닥을 펴고', hint: '한 팔을 옆으로 뻗어 손바닥 펴기', artwork: require('../../assets/expression-guides/daily-depart-point-side.png') },
       ],
     }, {
       id: 'daily-wait', category: '일상', name: '기다려', hint: '손바닥 내밀기',
