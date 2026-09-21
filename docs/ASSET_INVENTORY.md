@@ -74,3 +74,44 @@ UI 로 해결되는 문제는 넣지 않았다. 이번 라운드에서 에셋을
 - 자리 8개가 **실제로 그 화면에서 소비되는지**는 `npm test` 의 `asset-contract-test` 가 매번 확인한다(그림을 넣으면 그려지고, 없으면 45.2 자리표시가 같은 칸 수·자리로 남는다).
 - **아직 못 본 것**: 실제 기기 화면에서의 크기감·잘림·대비. 8자리 모두 `docs/MANUAL_QA.md` 검수표의 화면(홈·참고·표현 가이드·움직이기·내보내기·PRO)에서 함께 확인된다.
 - 그림을 넣을 때는 `src/design/asset-slots.ts` 의 `source` 만 `require(...)` 로 바꾼다. 비율이 다른 그림을 넣지 않는다. 레이아웃은 고치지 않는다.
+
+---
+
+# 45.15 보완 — 누락 목록과 제작 단위 (2026-09-21)
+
+기존 결정을 바꾸지 않았다. 아래는 **지금 코드에서 뽑은 목록**과 **하나의 원본에서 파생되는 파일 묶음**이다.
+숫자 정정: 기본 레퍼런스 분류는 **4개**다 — `포즈 · 표정 · 손동작 · 소품·효과`. 네 번째 이름 안에 가운뎃점이 들어 있어 다섯 개로 읽히던 것을 바로잡는다(`BUILTIN_REFERENCES.categories.length === 4`).
+
+## A. 브랜드·스토어 — 원본 5개에서 파생 (FAIL 10건 ≠ 그림 10장)
+
+| 만들 원본 | 파생 파일(경로) | 크기·형식·투명 | 연결할 설정 | 기존 확정 디자인 |
+|---|---|---|---|---|
+| **① 마스코트 마크**(정사각 심볼 1장) | `assets/brand/app-icon.png` | 1024×1024 PNG · **알파 채널 없음** | `expo.icon`(파일만 넣으면 app.config.js 가 연결) | 없음 |
+| | `assets/brand/adaptive-foreground.png` | 1024×1024 PNG · **투명 필요**, 중요한 모양은 가운데 지름 약 66%(≈672px) 원 안 | `android.adaptiveIcon.foregroundImage` | 없음 |
+| | `assets/brand/splash-icon.png` | 1024×1024 PNG · 투명 필요 | `expo-splash-screen` 플러그인(모듈 설치 + 파일이 둘 다 있을 때 자동) | 없음 |
+| | `assets/store/play-icon-512.png` | 512×512 PNG · 알파 허용 · **1MB 이하** | 없음(Play Console 업로드) | 없음 |
+| **② 한 색 실루엣**(①에서 따되 단색으로 다시 그림) | `assets/brand/adaptive-monochrome.png` | 1024×1024 PNG · 투명 필요 | `android.adaptiveIcon.monochromeImage` | 없음 |
+| **③ 아이콘 뒷면**(그림 대신 **색 하나로 끝낼 수 있다**) | `assets/brand/adaptive-background.png` | 1024×1024 PNG · **투명 픽셀 없음** | `android.adaptiveIcon.backgroundImage`, 색만 쓰면 `assets/brand/brand.json` 의 `adaptiveBackgroundColor` | `app.json` 에 `backgroundColor: #F7F4EE` 가 이미 있다 |
+| **④ 피처 그래픽**(가로 배너 한 장) | `assets/store/feature-graphic.png`(또는 `.jpg`) | 1024×500 PNG(24-bit)/JPEG · **알파 없음** | 없음(Play Console 업로드) | 없음 |
+| **⑤ 실기기 스크린샷**(그림이 아니라 캡처) | `assets/store/screenshots/phone-01.png` … `phone-08` | 2~8장 · PNG/JPEG · 알파 없음 · 변 320~3840 · 긴 변 ≤ 짧은 변×2 · 1080×1920 권장 | 없음(Play Console 업로드) | 없음 — **사용자 기기 설치 뒤에만 가능** |
+| (선택) 브러시 견본 | `assets/brush/preset-{ink,soft,grain,marker}.png` | 300×84 PNG · 투명 | 아직 코드 연결 없음(Painter FREEZE) | 없음 · WARN P2 |
+
+### 프로젝트 자체 기준 vs 스토어 필수 요건
+- **Google Play 가 요구하는 것**(외부): 스토어 아이콘 512×512 32-bit PNG ≤1MB · 피처 그래픽 1024×500(JPEG/24-bit PNG, 알파 없음) · 휴대폰 스크린샷 2장 이상. (근거는 `assets/asset-contract.json` 각 항목의 `use` 에 적힌 원문 요약)
+- **Android 플랫폼이 요구하는 것**: 앱 아이콘 · 적응형 아이콘 앞면. 뒷면은 **색만으로도 된다**. 테마 아이콘(monochrome)은 Android 13+ 의 선택 기능이다.
+- **이 프로젝트의 자체 기준**: 위에 더해 monochrome 과 adaptive_background **파일**을 요구하고, 템플릿 이미지가 남아 있으면 FAIL 로 잡고(`app_config`), `android/` 의 템플릿 리소스 30개를 FAIL 로 센다(`native_resources`). 즉 **검사기가 P0 라고 해서 전부 스토어 필수는 아니다.**
+- 검사기의 나머지 두 FAIL 은 그림이 아니라 **그림을 넣은 뒤 하는 작업**이다: `npx expo install expo-splash-screen` · `npx expo prebuild --platform android --clean`. **45.15 에서는 실행하지 않았다.**
+
+## B. 표현 가이드 20장 — 목록은 이미 코드에 있다
+`EXPRESSION_GUIDE.cards`(분류 5 × 4장). 카드에는 `category · name · hint` 만 있고 **id 필드도 그림 필드도 없다**(화면은 `name` 을 key 로 쓴다). 그림을 카드마다 다르게 하려면 카드 데이터에 그림을 달고 화면이 그것을 읽게 해야 한다 — **지금 코드에는 없다(미정)**.
+그림 내용은 **이름 + 기존 힌트 그대로** 옮긴다. 표정 세부·소품·색처럼 원자료에 없는 것은 **미정**으로 둔다. 전체 20행은 `verification/round45_15/README.md` 의 표와 같다.
+
+## C. 기본 레퍼런스 32칸 — 목록이 아직 없다
+`BUILTIN_REFERENCES`: 분류 4 × `placeholderCount` 8 = **32칸**, 4열 격자. **칸마다의 이름·내용이 코드에 없다** — 화면이 읽어 주는 이름도 `"<분류> 기본 레퍼런스 <번호>"` 로 그때 만들어진다. 따라서 32칸의 **내용(어떤 자세·표정·손동작·소품인지)은 전부 미정**이고, 목록을 정하는 일이 그림 제작보다 먼저다.
+파일은 칸마다 두 벌이다.
+- **썸네일**: 3:4, 격자 칸(360dp 화면 78×104dp)에 `cover` 로 들어간다 → **3:4 가 아니면 가장자리가 잘린다.** 권장 192×255, 불투명 바탕 허용.
+- **캔버스용 원본**: 같은 그림의 큰 투명 PNG(권장 1080×1440, 같은 3:4). 캔버스(360×360)에서는 비율을 지켜 가운데로 맞춰 들어가고(`loadLayer` 가 `min(W/w, H/h)` 로 축소), 사용자가 위치·크기·진하기(기본 30%)를 조절한다.
+- 둘은 **같은 그림의 두 용도**다. 비율이 다르면 격자에서 본 것과 캔버스에 깔리는 것이 어긋난다.
+
+## D. PRO 전·후 비교 — 정지 교체안은 후보로 유지
+45.15 조사에서 정지 그림 두 장 교체를 후보로 두되 **확정하지 않는다.** 실제 움직임으로 보여 주는 최소안(기존 `MotionSample` 재사용 · 그림 2장 · 컴포넌트 두 곳 수정)은 `verification/round45_15/README.md` E 절에 적었다. **이번 라운드에서는 구현하지 않았다.**
