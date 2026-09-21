@@ -1,0 +1,148 @@
+{
+ "note": "화면 캔버스 픽셀 vs 같은 순간 내보낸 PNG 를 node 에서 직접 풀어 비교. Z-lossless 는 같은 캔버스의 픽셀과 그 캔버스의 PNG 비교(무손실 확인).",
+ "rows": [
+  {
+   "name": "en-basic",
+   "size": "360x360",
+   "changedPixels": 702,
+   "opaqueDiff": 685,
+   "maxDelta": 1,
+   "previewInk": 6119,
+   "exportInk": 6119,
+   "previewGlyph": 1932,
+   "exportGlyph": 1932
+  },
+  {
+   "name": "en-serif",
+   "size": "360x360",
+   "changedPixels": 778,
+   "opaqueDiff": 756,
+   "maxDelta": 1,
+   "previewInk": 6754,
+   "exportInk": 6754,
+   "previewGlyph": 1776,
+   "exportGlyph": 1775
+  },
+  {
+   "name": "en-thick",
+   "size": "360x360",
+   "changedPixels": 1601,
+   "opaqueDiff": 1582,
+   "maxDelta": 3,
+   "previewInk": 7174,
+   "exportInk": 7174,
+   "previewGlyph": 3108,
+   "exportGlyph": 3105
+  },
+  {
+   "name": "ko-basic",
+   "size": "360x360",
+   "changedPixels": 846,
+   "opaqueDiff": 825,
+   "maxDelta": 1,
+   "previewInk": 7901,
+   "exportInk": 7901,
+   "previewGlyph": 2589,
+   "exportGlyph": 2589
+  },
+  {
+   "name": "ko-serif",
+   "size": "360x360",
+   "changedPixels": 882,
+   "opaqueDiff": 869,
+   "maxDelta": 1,
+   "previewInk": 7280,
+   "exportInk": 7280,
+   "previewGlyph": 2044,
+   "exportGlyph": 2040
+  },
+  {
+   "name": "ko-thick",
+   "size": "360x360",
+   "changedPixels": 1938,
+   "opaqueDiff": 1919,
+   "maxDelta": 3,
+   "previewInk": 9093,
+   "exportInk": 9093,
+   "previewGlyph": 4413,
+   "exportGlyph": 4409
+  },
+  {
+   "name": "long-basic",
+   "size": "360x360",
+   "changedPixels": 892,
+   "opaqueDiff": 835,
+   "maxDelta": 2,
+   "previewInk": 5664,
+   "exportInk": 5664,
+   "previewGlyph": 1667,
+   "exportGlyph": 1667
+  },
+  {
+   "name": "long-serif",
+   "size": "360x360",
+   "changedPixels": 1186,
+   "opaqueDiff": 1144,
+   "maxDelta": 1,
+   "previewInk": 5762,
+   "exportInk": 5762,
+   "previewGlyph": 1421,
+   "exportGlyph": 1418
+  },
+  {
+   "name": "long-thick",
+   "size": "360x360",
+   "changedPixels": 1740,
+   "opaqueDiff": 1691,
+   "maxDelta": 3,
+   "previewInk": 6468,
+   "exportInk": 6468,
+   "previewGlyph": 2869,
+   "exportGlyph": 2866
+  },
+  {
+   "name": "num-basic",
+   "size": "360x360",
+   "changedPixels": 878,
+   "opaqueDiff": 854,
+   "maxDelta": 1,
+   "previewInk": 10153,
+   "exportInk": 10153,
+   "previewGlyph": 3321,
+   "exportGlyph": 3320
+  },
+  {
+   "name": "num-serif",
+   "size": "360x360",
+   "changedPixels": 5675,
+   "opaqueDiff": 3406,
+   "maxDelta": 255,
+   "previewInk": 10035,
+   "exportInk": 10047,
+   "previewGlyph": 2646,
+   "exportGlyph": 2623
+  },
+  {
+   "name": "num-thick",
+   "size": "360x360",
+   "changedPixels": 2288,
+   "opaqueDiff": 2274,
+   "maxDelta": 3,
+   "previewInk": 11870,
+   "exportInk": 11870,
+   "previewGlyph": 5522,
+   "exportGlyph": 5520
+  },
+  {
+   "name": "Z-lossless",
+   "size": "360x360",
+   "changedPixels": 0,
+   "opaqueDiff": 0,
+   "maxDelta": 0,
+   "previewInk": 30626,
+   "exportInk": 30626,
+   "previewGlyph": 12886,
+   "exportGlyph": 12886
+  }
+ ]
+}

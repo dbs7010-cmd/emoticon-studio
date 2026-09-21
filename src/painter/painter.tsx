@@ -386,7 +386,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     changeBrush(tool === 'eraser' ? { eraserWidth: value } : { width: value }, settle);
   }
   function changeTransform(id: string, patch: Partial<LayerTransform>) { send({ type: 'transform', id, ...patch }); }
-  function addDrawing() { send({ type: 'addLayer', id: 'draw-' + (scene.layers.length + 1), name: `그림 ${scene.layers.length + 1}` }); }
+  // 장을 지웠다 다시 추가해도 이미 쓰는 번호와 겹치지 않게, 비어 있는 가장 작은 번호를 쓴다(45.11차).
+  function addDrawing() { let n = 1; while (scene.layers.some(l => l.id === 'draw-' + n)) n++; send({ type: 'addLayer', id: 'draw-' + n, name: `그림 ${n}` }); }
   // The canvas holds the movement; this only asks it to change and to play while the tab is open.
   function switchTab(next: 'draw' | 'motion') {
     // 고르던 것이 남아 있으면 **탭을 넘기기 전에 내려놓는다.** 그냥 넘기면 점선·손잡이가 움직이기

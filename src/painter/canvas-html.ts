@@ -30,10 +30,12 @@ function capFace(){const s=caption&&caption.style;
 function capFont(px){const c=capFace();return c.w+' '+px+'px '+c.f;}
 function captionSpot(g){
  if(!caption||!caption.text.trim())return null;
- const text=caption.text.trim(),room=W-32,fat=capFace().bold||0;
- let px=Math.round(H*.11),wide=0;
- for(;px>10;px--){g.font=capFont(px);wide=g.measureText(text).width+px*fat;if(wide<=room)break;}
- if(wide>room){px=Math.max(1,Math.floor(px*room/wide));g.font=capFont(px);wide=g.measureText(text).width+px*fat;}
+ const text=caption.text.trim(),room=W-32,face=capFace(),fat=face.bold||0;
+ // 글자가 실제로 덮는 자리는 획 + 흰 테두리다. 테두리는 절반씩 양쪽으로 나가므로 한 번 더해 준다.
+ const edge=p=>Math.max(3,p*(face.o+fat));
+ let px=Math.round(H*.11),wide=0,shown=0;
+ for(;px>10;px--){g.font=capFont(px);wide=g.measureText(text).width+px*fat;shown=wide+edge(px);if(shown<=room)break;}
+ if(shown>room){px=Math.max(1,Math.floor(px*room/shown));g.font=capFont(px);wide=g.measureText(text).width+px*fat;}
  const x=W/2+(caption.dx||0),y=(caption.place==='top'?Math.round(H*.06):H-Math.round(H*.06))+(caption.dy||0);
  const scale=caption.scale||1,rot=caption.rot||0;
  // 글자 상자. 기준선이 위/아래로 갈리므로 상자의 세로 위치도 그에 맞춘다.
@@ -92,6 +94,9 @@ function clampCaption(){const spot=captionSpot(ctx);if(!spot)return;const cy=spo
  if(spot.x<0)caption.dx=(caption.dx||0)-spot.x;else if(spot.x>W)caption.dx=(caption.dx||0)-(spot.x-W);
  if(cy<0)caption.dy=(caption.dy||0)-cy;else if(cy>H)caption.dy=(caption.dy||0)-(cy-H);}
 function defaults(id,name){return {id,name,visible:true,opacity:1,x:0,y:0,scale:1,rotation:0};}
+// 지금 있는 장과 겹치지 않는 가장 작은 번호. 이미 겹친 옛 저장본을 열어도 그 id 들을 모두 피한다.
+function nextLayerId(){let n=1;while(layers.some(l=>l.id==='draw-'+n))n++;return 'draw-'+n;}
+function layerName(id){const n=String(id).slice(5);return '그림 '+(String(id).indexOf('draw-')===0&&n&&Number(n)>0?n:layers.length+1);}
 function activeDraw(){return layers.find(l=>l.id===activeDrawLayerId)||layers[0];}
 function activeReference(){return references.find(l=>l.id===activeReferenceId&&l.visible);}
 function selectDrawLayer(id){const target=layers.find(l=>l.id===id)||layers[0];if(target){activeLayerId=target.id;activeDrawLayerId=target.id;}}
@@ -627,8 +632,8 @@ function applySelection(toNewLayer,why){
  checkpoint();
  let into=target;
  if(toNewLayer){
-  const id='draw-'+(layers.length+1);
-  into={...defaults(id,'그림 '+(layers.length+1)),bitmap:bitmap()};
+  const id=nextLayerId();
+  into={...defaults(id,layerName(id)),bitmap:bitmap()};
   layers.push(into);selectDrawLayer(id);
  }
  drawSelection(into.bitmap.getContext('2d'));
@@ -815,18 +820,21 @@ async function command(m){try{
    const src=layers.find(l=>l.id===m.id)||activeDraw();
    if(!src){}
    else if(layers.length>=4){send({type:'error',message:'그림은 4장까지예요. 한 장을 지우고 다시 해 주세요.'});}
-   else{checkpoint();const id='draw-'+(layers.length+1);
-    const copy={...defaults(id,'그림 '+(layers.length+1)),bitmap:copyOf(src.bitmap)};
+   else{checkpoint();const id=nextLayerId();
+    const copy={...defaults(id,layerName(id)),bitmap:copyOf(src.bitmap)};
     layers.push(copy);selectDrawLayer(id);dirty=true;render();
     send({type:'duplicated',id});state();}
  }
  if(m.type==='importDrawing'){
    if(layers.length>=4){send({type:'error',message:'그림은 4장까지예요.'});}
-   else{checkpoint();const id='draw-'+(layers.length+1);
-    const added=await loadLayer({...defaults(id,'그림 '+(layers.length+1)),data:m.data});
+   else{checkpoint();const id=nextLayerId();
+    const added=await loadLayer({...defaults(id,layerName(id)),data:m.data});
     layers.push(added);selectDrawLayer(id);dirty=true;render();state();}
  }
- if(m.type==='addLayer'){if(layers.length<4){checkpoint();const l={...defaults(m.id,m.name),bitmap:bitmap()};layers.push(l);selectDrawLayer(l.id);render();state();}}
+ if(m.type==='addLayer'){if(layers.length<4){checkpoint();
+   const wanted=typeof m.id==='string'&&m.id&&!layers.some(l=>l.id===m.id)?m.id:nextLayerId();
+   const l={...defaults(wanted,wanted===m.id&&m.name?m.name:layerName(wanted)),bitmap:bitmap()};
+   layers.push(l);selectDrawLayer(l.id);render();state();}}
  if(m.type==='moveLayer'){
    const i=layers.findIndex(l=>l.id===m.id);
    if(i>=0){const to=Math.max(0,Math.min(layers.length-1,i+(m.by>0?1:-1)));

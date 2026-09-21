@@ -290,6 +290,16 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  await press('레이어 1 선택');
  scene={...scene,activeLayerId:'draw-1'};await message(scene);
 
+ // 45.11: 가운데 장을 지운 뒤 다시 추가할 때, 아직 남아 있는 장의 번호를 다시 쓰지 않는다.
+ // (옛 방식은 '장 수 + 1' 이라 draw-1·draw-3 에서 draw-3 을 또 지어, 새 획이 옛 그림 위에 얹혔다.)
+ const gapped=[{id:'draw-1',name:'그림 1',visible:true,opacity:1,x:0,y:0,scale:1,rotation:0},{id:'draw-3',name:'그림 3',visible:true,opacity:1,x:0,y:0,scale:1,rotation:0}];
+ scene={...scene,layers:gapped,activeLayerId:'draw-1'};await message(scene);
+ await press('레이어');
+ await press('레이어 추가');
+ assert.deepEqual(lastSent(),{type:'addLayer',id:'draw-2',name:'그림 2'},'비어 있는 번호를 쓴다 — 남아 있는 레이어와 겹치지 않는다');
+ await press('레이어');
+ scene={...scene,layers:[{id:'draw-1',name:'그림 1',visible:true,opacity:1,x:0,y:0,scale:1,rotation:0},{id:'draw-2',name:'그림 2',visible:true,opacity:1,x:0,y:0,scale:1,rotation:0}],activeLayerId:'draw-1'};await message(scene);
+
  // 숨긴 그림에 그으면 조용히 무시되던 것을, 이제는 화면이 말하고 되돌릴 수 있다.
  // 엔진은 실제로 숨겨진 레이어에서만 이 소식을 보낸다 — 화면 상태도 그렇게 둔다(45.2 검증).
  scene={...scene,layers:scene.layers.map(l=>l.id==='draw-1'?{...l,visible:false}:l)};await message(scene);

@@ -228,6 +228,18 @@ const drawing = id => sandbox.window.__layer(id);
   assert.equal(boldShot.getContext().__caption.text, '안녕하세요', '굵게 그려도 같은 글자를 같은 자리에 쓴다');
   await command({ type: 'caption', caption: null });
 
+  // ── 45.11: 칸 맞춤은 흰 테두리까지 센다 ──────────────────────────────────────────────
+  // 45.10 까지는 글자 획만 재서, 긴 문구가 16px 여백을 넘어 14px 자리까지 나왔다
+  // (verification/round45_11 의 실제 렌더 측정). 이제 테두리를 더한 폭으로 크기를 고른다.
+  await command({ type: 'caption', caption: { text: '오늘 하루도 수고 많으셨어', place: 'bottom', color: '#242424', style: 'serif' } });
+  const longShot = await exportNow();
+  const longCaption = longShot.getContext().__caption;
+  const longEdge = (longShot.getContext().__strokes || []).filter(s2 => s2.style === '#FFFFFF').at(-1);
+  assert.ok(longEdge, '문구에는 흰 테두리가 있다');
+  assert.ok(longCaption.width + longEdge.width <= SIZE - 32,
+    '글자와 테두리가 함께 칸 여백(16px) 안에 들어온다: ' + Math.round(longCaption.width + longEdge.width) + ' > ' + (SIZE - 32));
+  await command({ type: 'caption', caption: null });
+
   // 연필의 '겹쳐도 고르게 연하다'는 이 시험용 캔버스로는 잴 수 없다(drawImage 합성을 흉내 내지 않는다).
   // 실제 렌더 증거는 verification/round45_9/ 에 있다: 18px 에서 펜 평균알파 245 vs 연필 135, 한 획 안 겹침도 138 로 고름.
 
@@ -243,5 +255,75 @@ const drawing = id => sandbox.window.__layer(id);
   assert.deepEqual(order(), swapped, '맨 앞에서는 더 가지 않는다');
   await command({ type: 'undo' });
   assert.deepEqual(order(), stack, '되돌리기로 차례가 되돌아온다');
-  console.log('PASS: 장의 차례 바꾸기(앞으로·양 끝 멈춤·되돌리기) · flood fill stays inside closed line art, respects undo/redo, touches only the active drawing, never reaches references, and yields to multi-touch gestures; captions are painted into the export but never into a layer, survive undo, and travel with a copied cut. Canvas rasteriser is a test double; device test still required.');
+
+  // ── 45.11: 새 장의 id 는 이미 쓰는 id 와 겹치지 않는다 ─────────────────────────────────
+  // 예전에는 '장 수 + 1' 로 지어서, 가운데 장을 지우고 추가하면 같은 id 가 둘 생겼다.
+  // 그러면 새 획이 옛 그림 위에 얹히고, 숨김·지우기·부분 움직임이 엉뚱한 장을 잡았다.
+  await command({ type: 'init' });
+  const scene = () => messages.filter(m => m.type === 'state').at(-1);
+  const layerIds = () => scene().layers.map(l => l.id);
+  const uniqueIds = where => assert.equal(new Set(layerIds()).size, layerIds().length, where + ': 장 id 가 겹치지 않는다 (' + layerIds().join(',') + ')');
+  // 화면이 하는 그대로 id 를 지어 보낸다(painter.tsx addDrawing).
+  const appAdd = async () => { let n = 1; while (layerIds().includes('draw-' + n)) n++; await command({ type: 'addLayer', id: 'draw-' + n, name: '그림 ' + n }); };
+  const inkOf = id => { const b = drawing(id); let n = 0; for (let i = 3; i < b.length; i += 4) if (b[i] > 8) n++; return n; };
+  const scribble = async (id, y) => { await command({ type: 'select', id }); await command({ type: 'tool', tool: 'pen' }); await command({ type: 'color', color: '#000000' }); line(60, y, 300, y); };
+
+  await appAdd(); await appAdd();
+  assert.deepEqual(layerIds(), ['draw-1', 'draw-2', 'draw-3'], '세 장을 차례로 만든다');
+  await scribble('draw-1', 80); await scribble('draw-2', 160); await scribble('draw-3', 240);
+  const keptInk = inkOf('draw-3');
+  assert.ok(keptInk > 0, '마지막 장에 그림이 있다');
+  await command({ type: 'motion', motion: { preset: 'none', parts: [{ id: 'part-a', layerId: 'draw-3', effect: 'sway', pivotX: .5, pivotY: .5, amount: 1, angle: 0, speed: .5, delay: 0 }] } });
+
+  // ① 가운데 장을 지우고 추가 — 옛 id 로 돌아가지 않는다.
+  await command({ type: 'removeLayer', id: 'draw-2' });
+  assert.deepEqual(layerIds(), ['draw-1', 'draw-3'], '가운데 장만 지워진다');
+  assert.deepEqual(scene().motion.parts.map(p => p.layerId), ['draw-3'], '남은 장의 부분 움직임은 그대로다');
+  // 옛 방식(장 수 + 1)으로 보내 오는 경우까지 엔진이 막는지 여기서 본다.
+  await command({ type: 'addLayer', id: 'draw-' + (layerIds().length + 1), name: '그림 ' + (layerIds().length + 1) });
+  uniqueIds('가운데 지우고 추가');
+  assert.equal(layerIds().filter(id => id === 'draw-3').length, 1, '옛 draw-3 이 둘이 되지 않는다');
+  assert.equal(inkOf('draw-3'), keptInk, '먼저 그린 장의 그림이 그대로 남는다');
+  const fresh = layerIds().find(id => id !== 'draw-1' && id !== 'draw-3');
+  assert.equal(scene().activeLayerId, fresh, '새로 만든 빈 장이 선택된다');
+  assert.equal(inkOf(fresh), 0, '새 장은 비어 있다');
+  await scribble(fresh, 300);
+  assert.equal(inkOf('draw-3'), keptInk, '새 획은 옛 그림에 얹히지 않는다');
+  assert.deepEqual(scene().motion.parts.map(p => p.layerId), ['draw-3'], '부분 움직임이 가리키는 장이 바뀌지 않는다');
+
+  // ② 마지막 장을 지우고 추가 · ③ 지우고 추가를 되풀이해도 겹치지 않는다.
+  for (let round = 0; round < 3; round++) {
+    await command({ type: 'removeLayer', id: layerIds().at(-1) });
+    await appAdd();
+    uniqueIds('지우고 추가 ' + (round + 1) + '회');
+    assert.equal(inkOf('draw-3'), keptInk, '되풀이해도 옛 그림은 그대로다(' + (round + 1) + '회)');
+  }
+
+  // ④ 저장 → 다시 열기 → 추가. 옛 저장본의 id·차례·부분 움직임을 그대로 쓰고, 새 id 만 피해서 짓는다.
+  await command({ type: 'save' });
+  const reopenSave = messages.filter(m => m.type === 'save').at(-1);
+  await command({ type: 'saved' }); // 앱이 저장을 마치면 보내는 응답 — 이게 없으면 엔진이 저장 중으로 멈춰 있다.
+  assert.deepEqual(reopenSave.layers.map(l => l.id), layerIds(), '저장한 장 목록이 화면과 같다');
+  await command({ type: 'init', layers: reopenSave.layers, activeLayerId: reopenSave.activeLayerId, motion: reopenSave.motion });
+  await tick();
+  assert.deepEqual(layerIds(), reopenSave.layers.map(l => l.id), '다시 열어도 id 와 차례가 그대로다');
+  assert.deepEqual(scene().motion.parts.map(p => p.layerId), ['draw-3'], '다시 열어도 부분 움직임 대상이 그대로다');
+  const reopened = layerIds().slice();
+  await command({ type: 'removeLayer', id: reopened[0] });
+  await appAdd();
+  uniqueIds('저장본을 열고 지우고 추가');
+  assert.deepEqual(scene().motion.parts.map(p => p.layerId), ['draw-3'], '다른 장을 지워도 움직임 대상은 남는다');
+
+  // ⑤ 화면이 이미 쓰는 id 를 보내와도 엔진이 막는다(마지막 방어선).
+  const before = layerIds().slice();
+  if (before.length < 4) {
+    await command({ type: 'addLayer', id: before[0], name: '겹치는 이름' });
+    uniqueIds('겹치는 id 를 받아도');
+    assert.equal(layerIds().length, before.length + 1, '장은 하나만 늘어난다');
+  }
+  // 복제·붙이기도 같은 규칙을 쓴다(장이 넷이면 더 만들지 않으므로 한 장을 비운 뒤 확인).
+  while (layerIds().length > 2) await command({ type: 'removeLayer', id: layerIds().at(-1) });
+  await command({ type: 'duplicateLayer', id: layerIds()[0] });
+  uniqueIds('복제');
+  console.log('PASS: 새 장 id 가 겹치지 않는다(가운데·마지막·되풀이·저장 후·복제) · 장의 차례 바꾸기(앞으로·양 끝 멈춤·되돌리기) · flood fill stays inside closed line art, respects undo/redo, touches only the active drawing, never reaches references, and yields to multi-touch gestures; captions are painted into the export but never into a layer, survive undo, and travel with a copied cut. Canvas rasteriser is a test double; device test still required.');
 })().catch(e => { console.error(e); process.exitCode = 1; });
