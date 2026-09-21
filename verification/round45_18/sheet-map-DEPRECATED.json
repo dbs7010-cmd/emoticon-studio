@@ -1,0 +1,658 @@
+{
+  "status": "폐기(DEPRECATED)",
+  "deprecatedOn": "2026-09-22",
+  "reason": "생성 지시의 행별 항목 수 오류로 1행 5~9열 이후의 행·열 위치가 어긋난다. 이 표를 기준으로 자동 추출·명명·연결하지 않는다.",
+  "valid": "실제 그림으로 확인된 1행 5~9열 고마워 5종 매핑만 유효하다(greeting-thanks-polite / -moved / -friendly / -grand / -shy).",
+  "keptWhy": "원문을 이력으로 보존한다. 참고용이며 작업 기준이 아니다.",
+  "finalAssets": "최종 에셋은 별도로 제작해 같은 파일명으로 전달될 예정이다. 현재 시안을 확대·샤프닝해서 최종본으로 만들지 않는다.",
+  "archivedTable": [
+    {
+      "row": 1,
+      "col": 1,
+      "emotion": "안녕",
+      "action": "한 손 흔들며 인사",
+      "file": "greeting-hello-wave",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 1,
+      "col": 2,
+      "emotion": "안녕",
+      "action": "가장자리에서 얼굴과 손 빼꼼",
+      "file": "greeting-hello-peek",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 1,
+      "col": 3,
+      "emotion": "안녕",
+      "action": "두 팔 벌려 반기기",
+      "file": "greeting-hello-welcome",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 1,
+      "col": 4,
+      "emotion": "안녕",
+      "action": "가볍게 목례",
+      "file": "greeting-hello-nod",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 1,
+      "col": 5,
+      "emotion": "고마워",
+      "action": "두 손 모으고 정중하게 꾸벅",
+      "file": "greeting-thanks-polite",
+      "verified": "그림으로 확인됨"
+    },
+    {
+      "row": 1,
+      "col": 6,
+      "emotion": "고마워",
+      "action": "눈물 맺힌 얼굴로 선물 안기",
+      "file": "greeting-thanks-moved",
+      "verified": "그림으로 확인됨"
+    },
+    {
+      "row": 1,
+      "col": 7,
+      "emotion": "고마워",
+      "action": "웃으며 엄지 척",
+      "file": "greeting-thanks-friendly",
+      "verified": "그림으로 확인됨"
+    },
+    {
+      "row": 1,
+      "col": 8,
+      "emotion": "고마워",
+      "action": "바닥까지 과장된 큰절",
+      "file": "greeting-thanks-grand",
+      "verified": "그림으로 확인됨"
+    },
+    {
+      "row": 1,
+      "col": 9,
+      "emotion": "고마워",
+      "action": "수줍게 작은 하트 내밀기",
+      "file": "greeting-thanks-shy",
+      "verified": "그림으로 확인됨"
+    },
+    {
+      "row": 2,
+      "col": 1,
+      "emotion": "좋아",
+      "action": "기쁘게 엄지 척",
+      "file": "positive-like-thumb",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 2,
+      "col": 2,
+      "emotion": "좋아",
+      "action": "가슴 앞에서 두 주먹 꼭 쥐기",
+      "file": "positive-like-fists",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 2,
+      "col": 3,
+      "emotion": "좋아",
+      "action": "기뻐서 뛰기",
+      "file": "positive-like-jump",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 2,
+      "col": 4,
+      "emotion": "좋아",
+      "action": "눈 감고 만족스럽게 끄덕이기",
+      "file": "positive-like-nod",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 2,
+      "col": 5,
+      "emotion": "신나",
+      "action": "두 팔 번쩍",
+      "file": "positive-excited-arms",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 2,
+      "col": 6,
+      "emotion": "신나",
+      "action": "옆으로 덩실 춤추기",
+      "file": "positive-excited-dance",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 2,
+      "col": 7,
+      "emotion": "신나",
+      "action": "무릎 굽혀 폴짝 뛰기",
+      "file": "positive-excited-hop",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 2,
+      "col": 8,
+      "emotion": "신나",
+      "action": "제자리에서 두 발 동동",
+      "file": "positive-excited-feet",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 2,
+      "col": 9,
+      "emotion": "미안해",
+      "action": "고개 푹 숙이기",
+      "file": "apology-sorry-head",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 3,
+      "col": 1,
+      "emotion": "미안해",
+      "action": "두 손 모아 사과",
+      "file": "apology-sorry-hands",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 3,
+      "col": 2,
+      "emotion": "미안해",
+      "action": "눈치 보며 작게 손들기",
+      "file": "apology-sorry-timid",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 3,
+      "col": 3,
+      "emotion": "미안해",
+      "action": "허리를 깊게 숙여 사과",
+      "file": "apology-sorry-bow",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 3,
+      "col": 4,
+      "emotion": "슬퍼",
+      "action": "앉아서 무릎 안기",
+      "file": "sadness-sad-knees",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 3,
+      "col": 5,
+      "emotion": "슬퍼",
+      "action": "축 처진 뒷모습",
+      "file": "sadness-sad-back",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 3,
+      "col": 6,
+      "emotion": "슬퍼",
+      "action": "고개와 어깨 떨구기",
+      "file": "sadness-sad-slump",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 3,
+      "col": 7,
+      "emotion": "슬퍼",
+      "action": "앉아서 팔에 얼굴 묻기",
+      "file": "sadness-sad-buried",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 3,
+      "col": 8,
+      "emotion": "흑흑",
+      "action": "손으로 눈물 훔치기",
+      "file": "sadness-cry-wipe",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 3,
+      "col": 9,
+      "emotion": "흑흑",
+      "action": "두 손으로 얼굴 가리기",
+      "file": "sadness-cry-cover",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 4,
+      "col": 1,
+      "emotion": "흑흑",
+      "action": "눈물 뚝뚝 흘리기",
+      "file": "sadness-cry-tears",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 4,
+      "col": 2,
+      "emotion": "흑흑",
+      "action": "입 벌리고 울기",
+      "file": "sadness-cry-sob",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 4,
+      "col": 3,
+      "emotion": "괜찮아?",
+      "action": "몸 기울여 살피기",
+      "file": "concern-okay-lean",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 4,
+      "col": 4,
+      "emotion": "괜찮아?",
+      "action": "걱정하며 손 내밀기",
+      "file": "concern-okay-reach",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 4,
+      "col": 5,
+      "emotion": "괜찮아?",
+      "action": "옆으로 쪼그려 앉아 살피기",
+      "file": "concern-okay-crouch",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 4,
+      "col": 6,
+      "emotion": "괜찮아?",
+      "action": "걱정스러운 얼굴 확대",
+      "file": "concern-okay-face",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 4,
+      "col": 7,
+      "emotion": "억울해",
+      "action": "팔짱 끼고 몸 돌리기",
+      "file": "anger-unfair-crossed",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 4,
+      "col": 8,
+      "emotion": "억울해",
+      "action": "자신을 가리키며 항변",
+      "file": "anger-unfair-self",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 4,
+      "col": 9,
+      "emotion": "억울해",
+      "action": "두 손바닥 펴서 항변",
+      "file": "anger-unfair-palms",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 5,
+      "col": 1,
+      "emotion": "억울해",
+      "action": "입 꾹 다물고 눈물 참기",
+      "file": "anger-unfair-tears",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 5,
+      "col": 2,
+      "emotion": "화났어",
+      "action": "양옆에서 주먹 불끈",
+      "file": "anger-mad-fists",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 5,
+      "col": 3,
+      "emotion": "화났어",
+      "action": "허리에 손 얹기",
+      "file": "anger-mad-hips",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 5,
+      "col": 4,
+      "emotion": "화났어",
+      "action": "화나서 발 구르기",
+      "file": "anger-mad-stomp",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "emotion": "화났어",
+      "action": "얼굴 확대해 째려보기",
+      "file": "anger-mad-glare",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 5,
+      "col": 6,
+      "emotion": "흥",
+      "action": "고개 홱 돌리기",
+      "file": "anger-hmph-turn",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 5,
+      "col": 7,
+      "emotion": "흥",
+      "action": "등 돌리고 곁눈질",
+      "file": "anger-hmph-back",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 5,
+      "col": 8,
+      "emotion": "흥",
+      "action": "팔짱 끼고 턱 들기",
+      "file": "anger-hmph-chin",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 5,
+      "col": 9,
+      "emotion": "흥",
+      "action": "볼 부풀리기",
+      "file": "anger-hmph-cheeks",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 6,
+      "col": 1,
+      "emotion": "짜증나",
+      "action": "두 손으로 머리 감싸기",
+      "file": "frustration-annoyed-head",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 6,
+      "col": 2,
+      "emotion": "짜증나",
+      "action": "손으로 이마 짚기",
+      "file": "frustration-annoyed-facepalm",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 6,
+      "col": 3,
+      "emotion": "짜증나",
+      "action": "축 처져 한숨 쉬기",
+      "file": "frustration-annoyed-sigh",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 6,
+      "col": 4,
+      "emotion": "짜증나",
+      "action": "두 손으로 귀 막기",
+      "file": "frustration-annoyed-ears",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 6,
+      "col": 5,
+      "emotion": "헉",
+      "action": "두 손으로 입 가리기",
+      "file": "surprise-gasp-mouth",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 6,
+      "col": 6,
+      "emotion": "헉",
+      "action": "뒤로 움찔 물러서기",
+      "file": "surprise-gasp-recoil",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 6,
+      "col": 7,
+      "emotion": "헉",
+      "action": "눈 커진 얼굴 확대",
+      "file": "surprise-gasp-face",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 6,
+      "col": 8,
+      "emotion": "헉",
+      "action": "놀라서 작은 컵 놓치기",
+      "file": "surprise-gasp-drop",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 6,
+      "col": 9,
+      "emotion": "뭐?",
+      "action": "몸 뒤로 젖히기",
+      "file": "confusion-what-back",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 7,
+      "col": 1,
+      "emotion": "뭐?",
+      "action": "귀에 손 대고 되묻기",
+      "file": "confusion-what-ear",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 7,
+      "col": 2,
+      "emotion": "뭐?",
+      "action": "고개 갸웃",
+      "file": "confusion-what-tilt",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 7,
+      "col": 3,
+      "emotion": "뭐?",
+      "action": "눈 가늘게 뜨고 되묻기",
+      "file": "confusion-what-squint",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 7,
+      "col": 4,
+      "emotion": "당황",
+      "action": "땀 한 방울",
+      "file": "embarrassment-flustered-sweat",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 7,
+      "col": 5,
+      "emotion": "당황",
+      "action": "손을 어쩔 줄 몰라 허둥지둥",
+      "file": "embarrassment-flustered-hands",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 7,
+      "col": 6,
+      "emotion": "당황",
+      "action": "몸이 뻣뻣하게 굳기",
+      "file": "embarrassment-flustered-freeze",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 7,
+      "col": 7,
+      "emotion": "당황",
+      "action": "시선 피하기",
+      "file": "embarrassment-flustered-avert",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 7,
+      "col": 8,
+      "emotion": "설마",
+      "action": "믿기지 않아 눈 동그랗게",
+      "file": "disbelief-no-way-eyes",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 7,
+      "col": 9,
+      "emotion": "설마",
+      "action": "입에 손 대기",
+      "file": "disbelief-no-way-mouth",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 8,
+      "col": 1,
+      "emotion": "설마",
+      "action": "몸 앞으로 내밀어 확인",
+      "file": "disbelief-no-way-lean",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 8,
+      "col": 2,
+      "emotion": "설마",
+      "action": "고개 돌리며 손사래",
+      "file": "disbelief-no-way-deny",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 8,
+      "col": 3,
+      "emotion": "잘 자",
+      "action": "이불 덮고 자기",
+      "file": "daily-sleep-blanket",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 8,
+      "col": 4,
+      "emotion": "잘 자",
+      "action": "웅크려 자기",
+      "file": "daily-sleep-curl",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 8,
+      "col": 5,
+      "emotion": "잘 자",
+      "action": "베개 안고 자기",
+      "file": "daily-sleep-pillow",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 8,
+      "col": 6,
+      "emotion": "잘 자",
+      "action": "졸면서 작게 손 흔들기",
+      "file": "daily-sleep-wave",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 8,
+      "col": 7,
+      "emotion": "배고파",
+      "action": "배 잡고 쓰러지기",
+      "file": "daily-hungry-collapse",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 8,
+      "col": 8,
+      "emotion": "배고파",
+      "action": "빈 그릇 들기",
+      "file": "daily-hungry-bowl",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 8,
+      "col": 9,
+      "emotion": "배고파",
+      "action": "식탁에 턱 괴기",
+      "file": "daily-hungry-table",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 9,
+      "col": 1,
+      "emotion": "배고파",
+      "action": "배 문지르기",
+      "file": "daily-hungry-rub",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 9,
+      "col": 2,
+      "emotion": "출발",
+      "action": "가방 메고 뛰기",
+      "file": "daily-go-bag",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 9,
+      "col": 3,
+      "emotion": "출발",
+      "action": "앞을 가리키기",
+      "file": "daily-go-point",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 9,
+      "col": 4,
+      "emotion": "출발",
+      "action": "씩씩하게 걷기",
+      "file": "daily-go-march",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 9,
+      "col": 5,
+      "emotion": "출발",
+      "action": "돌아보며 손 흔들기",
+      "file": "daily-go-wave",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 9,
+      "col": 6,
+      "emotion": "기다려",
+      "action": "손바닥 앞으로 내밀기",
+      "file": "daily-wait-palm",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 9,
+      "col": 7,
+      "emotion": "기다려",
+      "action": "급히 붙잡으려 손 뻗기",
+      "file": "daily-wait-reach",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 9,
+      "col": 8,
+      "emotion": "기다려",
+      "action": "손목시계 가리키기",
+      "file": "daily-wait-watch",
+      "verified": "미확인 · 위치 어긋남"
+    },
+    {
+      "row": 9,
+      "col": 9,
+      "emotion": "기다려",
+      "action": "달려오며 기다려 달라고 손 뻗기",
+      "file": "daily-wait-run",
+      "verified": "미확인 · 위치 어긋남"
+    }
+  ]
+}
