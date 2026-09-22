@@ -63,8 +63,11 @@ async function ready() {
 
 (async () => {
   // ── 1. 토큰: 명세 값 · 한 벌 ─────────────────────────────────────────────────────────────
-  assert.equal(T.bg, '#FAF8F2'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.accent, '#FFD02F'); assert.equal(T.accentSoft, '#FFF2B6');
-  assert.equal(T.ink, '#171717'); assert.equal(T.line, '#E9E6DE');
+  // 명세 §2 색상표. 값이 되돌아가지 않게 못 박는다.
+  assert.equal(T.bg, '#FFFFFF'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.surface2, '#F5F6F8');
+  assert.equal(T.ink, '#17191D'); assert.equal(T.muted, '#555D69'); assert.equal(T.line, '#E3E6EC');
+  assert.equal(T.accent, '#FFD52A'); assert.equal(T.accentSoft, '#FFF3B0'); assert.equal(T.danger, '#B42318');
+  assert.equal(T.accentInk, '#17191D', '노랑 위 글자는 짙은 색이다(흰 글씨 금지)');
   assert.deepEqual(Object.values(T.radius), [8, 12, 16, 20, 24], '모서리는 8·12·16·20·24 한 벌');
   assert.deepEqual(Object.values(T.gap), [4, 8, 12, 16, 20, 24, 32], '간격은 4 기반 한 벌');
   for (const key of ['screenTitle', 'sectionTitle', 'cardTitle', 'body', 'bodySecondary', 'button', 'caption', 'micro']) assert.ok(Type[key]?.fontSize, 'Type.' + key);
@@ -115,7 +118,7 @@ async function ready() {
   assert.equal(byTestID('asset-slot-homeHeroArtwork').length, 1, '에셋이 없어도 오른쪽 자리는 도형으로 채운다');
   assert.equal(byTestID('홈 알림').length, 0, '알림 꺼짐 → 자리 없음');
   const primaryYellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
-  assert.deepEqual(primaryYellow, ['새 이모티콘 만들기'], '홈의 노랑 버튼은 하나');
+  assert.deepEqual(primaryYellow, ['새 이모티콘 만들기'], '홈의 노랑 버튼은 하나: ' + JSON.stringify(primaryYellow));
 
   // ── 44차: 세트가 늘어도 홈은 최근 넷 + 전체 보기. 여러 세트는 전체 작업, 세트 안 칸은 보드. 표현 가이드는 홈의 조용한 한 줄 ─────
   assert.equal(labelled('표현 가이드').length, 1, '홈에 표현 가이드 입구 한 줄');

@@ -42,6 +42,7 @@ const base = { ...mocks, './src/services/images': images, '../services/images': 
 const load = loader(base);
 const { saveStore, loadStore } = load('src/services/storage.ts');
 const { createProject } = load('src/project.ts');
+const { T } = load('src/components/ui.tsx');
 const App = load('App.tsx').default;
 // 공지가 켜진 홈은 같은 화면을 다른 자료로 그린 것이다. 자료(asset-slots)만 갈아끼워 같은 App 을 다시 그린다.
 const slotSource = load('src/design/asset-slots.ts');
@@ -260,7 +261,7 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
     assert.ok((styleOf(labelled(name)[0]).minHeight ?? 0) >= 44, name + ': 손가락 자리 유지');
   }
   await press('지우개');
-  assert.equal(styleOf(labelled('지우개')[0]).backgroundColor, '#FFF2B6', '고른 빠른 도구는 옅은 노랑으로 바로 구분된다');
+  assert.equal(styleOf(labelled('지우개')[0]).backgroundColor, T.accentSoft, '고른 빠른 도구는 옅은 노랑으로 바로 구분된다');
   assert.equal(styleOf(labelled('채우기')[0]).backgroundColor, 'transparent', '고르지 않은 것은 조용하다');
   await press('브러시');
 

@@ -1195,13 +1195,13 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
 
   // 노랑 위 글자는 한 가지 차콜로 고정한다. 자리마다 다른 갈색을 쓰면 역할이 흐려진다.
   const ui = require('fs').readFileSync('src/components/ui.tsx', 'utf8');
-  assert.ok(ui.includes("accentInk: '#20242C'"), '노랑 위 글자색이 #20242C 하나로 고정돼 있다');
-  assert.ok(ui.includes("accent: '#FFD02F'"), '강조는 40차 토큰의 primaryYellow 하나다');
+  assert.ok(ui.includes("accentInk: '#17191D'"), '노랑 위 글자색이 짙은 ink 하나로 고정돼 있다(명세 §2)');
+  assert.ok(ui.includes("accent: '#FFD52A'"), '강조는 명세 §2 의 primary 노랑 하나다');
 
   // PRO 는 행동 노랑과 다른 자리에 있어야 한다 — 누르는 곳처럼 보이면 안 된다.
   const app = require('fs').readFileSync('App.tsx', 'utf8');
   assert.ok(!/backgroundColor: C\.yellow \}\}><Text[^>]*>PRO</.test(app), 'PRO 표시가 행동 노랑을 쓰지 않는다');
-  console.log('  노랑 글자 0곳 · 노랑 위 글자 #20242C 고정 · PRO 역할 분리');
+  console.log('  노랑 글자 0곳 · 노랑 위 글자 #17191D 고정 · PRO 역할 분리');
 }
 
  console.log('PASS: one-tap start into an empty canvas, two tabs over one drawing, free effects that reach the canvas, PRO parts announced before use (free users go to PRO first, never blocked at save), a movement kept on a shelf and taken back down without touching the cut, a piece kept as its own picture and brought back, movement order changed by dragging, a batch preview that builds one cut for real without writing anything, empty canvas never counts as finished, 완성 declaration separate from autosave, autosave on backgrounding, one save per double tap, copy-previous as an independent document, captions saved with the drawing, temporary and adopted set references, re-edit returns a cut to 작업 중, board states, the last open cut returning to the board, export flow that only claims what it measured, share retry, legacy stores preserved and readable, guarded set deletion, save failure that never claims a completion, an unreadable store that names the cause and writes nothing. Native modules/WebView mocked; drawing and file delivery still require a device.');

@@ -8,34 +8,36 @@ import type { LocalImage } from '../types';
 // ── 임티제작소 디자인 토큰(40차) ──────────────────────────────────────────────────────────────
 // 한 벌의 색·글자·간격·모서리·그림자로 홈·보드·그리기·내보내기가 한 앱으로 읽히게 한다.
 //
-// 바탕은 따뜻한 크림, 표면은 흰색, 글자는 짙은 차콜. 강조는 노랑 하나이고 **CTA · 고른 것 · 진행 · 작은 브랜드 점**에만 쓴다.
+// 색은 명세 §2 표를 따른다: 흰 바탕 · 차가운 회색 계열 보조 · 노랑 하나로 강조(CTA · 고른 것 · 진행).
+// 창작 표면처럼 따뜻한 면은 강조 면으로만 남긴다. 색만으로 상태를 구분하지 않는다(테두리·체크·밑줄을 함께 쓴다).
 // 노랑 위 글자는 반드시 accentInk(짙은 색) — 흰 글자는 대비가 2:1 아래라 읽히지 않는다. 노랑을 글자색으로 쓰지 않는다.
 // 이 앱은 카카오 이모티콘 제출을 돕지만 카카오가 만든 앱이 아니다. 카카오의 노랑·로고·캐릭터·화면 구성을 따라 하지 않는다.
 export const T = {
-  bg: '#FAF8F2',            // appBackground
+  bg: '#FFFFFF',            // surface — 앱 기본 바탕(명세 §2)
   paper: '#FFFFFF',         // surfacePrimary
-  surface2: '#F5F3ED',      // surfaceSecondary — 세그먼트 바탕·빈 칸
+  surface2: '#F5F6F8',      // workspace — 캔버스 바깥·세그먼트 바탕·빈 칸(명세 §2)
   warm: '#FFF9E8',          // surfaceWarm — 창작 표면·제안
-  ink: '#171717',           // textPrimary
-  muted: '#66635D',         // textSecondary
-  faint: '#99958C',         // textMuted — 아주 작은 보조 글자와 비활성 아이콘
-  line: '#E9E6DE',          // borderSubtle
-  lineStrong: '#DAD5CA',
-  accent: '#FFD02F',        // primaryYellow
-  accentLine: '#F2C322',    // primaryYellowPressed
-  accentSoft: '#FFF2B6',    // primaryYellowSoft
-  accentInk: '#20242C',
-  accentBorder: '#F3D867', // 고른 표면(옅은 노랑)의 1px 가장자리
+  ink: '#17191D',           // ink — 본문·아이콘(명세 §2)
+  muted: '#555D69',         // secondary — 보조 설명(명세 §2)
+  faint: '#8B93A0',         // 아주 작은 보조 글자와 비활성 아이콘(secondary 에서 한 단계 옅게)
+  line: '#E3E6EC',          // border — 구분선(명세 §2)
+  lineStrong: '#CBD0DA',
+  accent: '#FFD52A',        // primary — 주요 CTA·도구 선택(명세 §2)
+  accentLine: '#F0C61E',    // primaryPressed
+  accentSoft: '#FFF3B0',    // selected — 선택 배경 보조(명세 §2)
+  accentInk: '#17191D',     // 노랑 위 글자는 언제나 짙은 색(흰 글씨 금지)
+  accentBorder: '#EFD25E', // 고른 표면(옅은 노랑)의 1px 가장자리
   warmLine: '#F4E6B8',      // 따뜻한 표면의 가장자리
   warmInk: '#8A6A00',       // 따뜻한 표면 위의 작은 머리글(노랑 계열 글자가 아닌 짙은 황갈색)
   floating: '#FFFFFFF7',    // 캔버스 위에 뜨는 흰 표면
-  yellow: '#FFD02F',
-  fill: '#F2EFE8', fillPressed: '#E8E4DA',
+  yellow: '#FFD52A',
+  fill: '#EFF1F5', fillPressed: '#E3E6EC',
   success: '#2F8A57', successSoft: '#E4F3EA',
   warning: '#A86400', warningSoft: '#FDF0D6',
-  danger: '#B3403A', dangerSoft: '#FBE4E1',
+  danger: '#B42318', dangerSoft: '#FBE4E1',   // danger(명세 §2)
   info: '#2C5F9E', infoSoft: '#EAF1FB',
   mint: '#E4F3EA', blue: '#EAF1FB', lavender: '#EFE8FB',
+  lilac: '#D9CFFF', sky: '#C9EBFF', coral: '#FFD5CF',   // 감정 그림 배경(명세 §2)
   radius: { xs: 8, sm: 12, md: 16, lg: 20, xl: 24 },
   gap: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
   tap: 48, // 편한 손가락 자리

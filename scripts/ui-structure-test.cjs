@@ -42,6 +42,7 @@ const base = { ...mocks, './src/services/images': images, '../services/images': 
 const load = loader(base);
 const { saveStore } = load('src/services/storage.ts');
 const { createProject } = load('src/project.ts');
+const { T } = load('src/components/ui.tsx');
 const App = load('App.tsx').default;
 // 공지가 켜진 홈은 같은 화면을 다른 자료로 그린 것이다. 자료(asset-slots)만 갈아끼워 같은 App 을 다시 그린다.
 const slotSource = load('src/design/asset-slots.ts');
@@ -108,7 +109,7 @@ const homeSections = () => {
         assert.ok(notice.findAll(n => n.type === 'Pressable').length <= 1, '공지의 행동은 많아야 하나');
         assert.ok(flat(notice.props.style).paddingVertical <= 12, '공지는 낮은 한 줄 배너');
       }
-      const yellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === '#FFD02F').map(n => n.props.accessibilityLabel);
+      const yellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
       assert.deepEqual(yellow, ['새 이모티콘 만들기'], '홈의 노랑 버튼은 하나(' + where + ')');
       if (count) {
         const shortcut = tree.root.findAll(n => n.type === 'Pressable' && /^세트 \d+ 이어서 만들기$/.test(n.props.accessibilityLabel ?? ''))[0];
@@ -226,7 +227,7 @@ const homeSections = () => {
   assert.equal(labelled('제안 기준으로 보기').length, 1, '펼치면 기준과 목록이 나온다');
   await press('제출 준비 접기');
   await press('자세히 보기');
-  const yellowExport = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === '#FFD02F').map(n => n.props.accessibilityLabel);
+  const yellowExport = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
   assert.deepEqual(yellowExport, ['파일 묶음 만들기'], '내보내기의 노랑 버튼도 하나');
 
   // 다 채운 세트: 같은 차례, 요약만 완성한 표정으로 바뀐다.

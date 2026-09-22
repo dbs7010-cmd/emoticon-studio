@@ -448,7 +448,7 @@ const saved = async (dirty = true) => {
   if (fs.existsSync('android/app/src/main/res/values/styles.xml')) assert.ok(!/Theme\.App\.SplashScreen[\s\S]*?splashscreen_logo[\s\S]*?<\/style>/.test(fs.readFileSync('android/app/src/main/res/values/styles.xml', 'utf8')), '생성된 android/ 에도 반영');
   assert.ok(/body\{margin:0;background:#F4F4F5/.test(fs.readFileSync('src/painter/canvas-html.ts', 'utf8')), '캔버스 WebView 바탕도 밝다');
   const root = tree.root.findAll(n => n.type === 'SafeAreaView')[0];
-  assert.equal(root.props.style.backgroundColor, '#FAF8F2', '앱 뿌리 화면 바탕은 40차 appBackground(밝은 크림)');
+  assert.equal(root.props.style.backgroundColor, '#FFFFFF', '앱 뿌리 화면 바탕은 명세 §2 surface(흰 바탕)');
 
   // ── 홈 위계(40차): 브랜드 머리 → 창작 표면(새 이모티콘 만들기) → 최근 작업 ─────────────────────────
   await press('뒤로');
