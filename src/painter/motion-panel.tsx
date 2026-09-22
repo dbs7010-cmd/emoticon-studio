@@ -136,7 +136,9 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{back.title}</Text>
     </Pressable>}
     {/* 손가락이 슬라이더나 순서 손잡이를 잡고 있는 동안에는 이 판이 따라 스크롤되면 안 된다. */}
-    <ScrollView keyboardShouldPersistTaps="handled" scrollEnabled={!holding && dragFrom === null} contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 20, gap: 10 }}>
+    {/* 판 높이가 정해져 있으므로 이 목록이 먼저 줄어들어야 한다(flex:1 · minHeight:0).
+        그래야 아래 완성 줄이 밖으로 밀려나지 않고, 목록 끝까지 스크롤로 닿을 수 있다. */}
+    <ScrollView style={{ flex: 1, minHeight: 0 }} keyboardShouldPersistTaps="handled" scrollEnabled={!holding && dragFrom === null} contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 20, gap: 10 }}>
     {view === 'basic' ? <>
     <View style={{ flexDirection: 'row', gap: 8 }}>
       <Pressable accessibilityRole="button" accessibilityLabel="움직임 없음" accessibilityState={{ selected: !base.preset }} onPress={clearPreset} style={quiet(!base.preset)}>
@@ -349,7 +351,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
 
     <View style={{ borderTopWidth: 1, borderColor: C.line, paddingTop: 8, paddingHorizontal: 12, paddingBottom: 8, backgroundColor: C.paper }}>
       <Pressable accessibilityRole="button" accessibilityLabel="완성 후 다음" disabled={completeBusy} onPress={onComplete}
-        style={({ pressed }) => ({ minHeight: 52, borderRadius: 14, flexDirection: 'row', gap: 6, backgroundColor: pressed ? C.accentLine : C.accent, alignItems: 'center', justifyContent: 'center', opacity: completeBusy ? .4 : 1 })}>
+        style={({ pressed }) => ({ minHeight: 52, borderRadius: C.radius.button, flexDirection: 'row', gap: 6, backgroundColor: pressed ? C.accentLine : C.accent, alignItems: 'center', justifyContent: 'center', opacity: completeBusy ? .4 : 1 })}>
         <Text numberOfLines={1} style={{ fontSize: 16, fontWeight: '800', color: C.accentInk }}>{completeTitle}</Text>
         <MaterialCommunityIcons name="arrow-right" size={18} color={C.accentInk} />
       </Pressable>

@@ -66,6 +66,10 @@ async function openPainter() {
   await act(async () => container.props.onLayout({ nativeEvent: { layout: area } }));
   return area;
 }
+const motionHeightOf = () => {
+  const dock = tree.root.findAll(n => n.type === 'View' && flat(n.props.style).position === 'absolute' && flat(n.props.style).zIndex === 20)[0];
+  return dock ? flat(dock.props.style).height : null;
+};
 const dockHeight = () => {
   // 패널은 기본 도구 줄 위(bottom: BASE_H) 또는 화면 바닥(움직이기·키보드)에 붙는다. 렌더된 높이/최대 높이를 읽는다.
   const docks = tree.root.findAll(n => n.type === 'View' && flat(n.props.style).position === 'absolute' && flat(n.props.style).zIndex === 20);
@@ -76,12 +80,39 @@ const dockHeight = () => {
   return { height: h, bottom: style.bottom ?? 0 };
 };
 
+
+// ── 글자 배율(안드로이드 '글자 크기' 설정) ────────────────────────────────────────────────────
+// RN 은 allowFontScaling 을 끄지 않는 한 fontSize 에 배율을 곱한다. 높이가 못 박힌 상자 안에서는
+// 글자가 늘어나도 상자가 늘지 않아 잘린다. 여기서는 렌더된 스타일로 그 조건만 찾는다.
+// **실기기 캡처가 아니다** — 실제 줄바꿈·글꼴 메트릭은 기기가 판정한다.
+const textOf = n => [n.props.children].flat(9).filter(x => typeof x === 'string' || typeof x === 'number').join('');
+function clipped(scale) {
+  const out = [];
+  for (const node of tree.root.findAll(n => n.type === 'Text')) {
+    const st = flat(node.props.style);
+    if (typeof st.fontSize !== 'number') continue;
+    if (node.props.allowFontScaling === false) continue;
+    const lines = node.props.numberOfLines ?? 1;
+    const need = Math.ceil((st.lineHeight ?? st.fontSize * 1.3) * scale) * lines;
+    // 이 글자를 감싸는 가장 가까운 '높이가 못 박힌' 상자를 찾는다. minHeight 는 늘어나므로 넘긴다.
+    for (let p = node.parent; p; p = p.parent) {
+      if (p.type !== 'View' && p.type !== 'Pressable') continue;
+      const ps = flat(typeof p.props.style === 'function' ? p.props.style({ pressed: false }) : p.props.style);
+      if (typeof ps.height !== 'number') { if (typeof ps.minHeight === 'number' || ps.flex) break; continue; }
+      const pad = (ps.paddingVertical ?? ps.padding ?? 0) * 2;
+      if (need > ps.height - pad + .01) out.push({ text: textOf(node).slice(0, 18), fontSize: st.fontSize, need, box: ps.height });
+      break;
+    }
+  }
+  return out;
+}
+
 const rows = [];
 (async () => {
   const p = createProject('매트릭스 세트', '콩이');
   p.slots = p.slots.map((s, i) => i < 3 ? { ...s, finalImage: { path: 'image-a.png', width: 360, height: 360 }, done: true } : s);
   const heights = [640, 720, 800, 900, 1000];
-  const widths = [360, 390, 412];
+  const widths = [320, 360, 390, 412];
   for (const height of heights) for (const width of widths) {
     viewport.width = width; viewport.height = height;
     files.clear();
@@ -133,6 +164,17 @@ const rows = [];
     row.motion = +(Math.max(0, motion - BASE_H - (area.height - side)) / side).toFixed(2);
     assert.ok(row.motion < .45, tag + ': 움직이기 패널이 캔버스를 45% 넘게 덮지 않는다: ' + row.motion);
     assert.equal(labelled('완성 후 다음').length, 1, tag + ': 움직이기에서도 완성 버튼');
+    // 겹침이 아니라 경계로 본다: 설정 목록은 줄어드는 스크롤이고(flex:1·minHeight:0),
+    // 완성 줄은 그 뒤에 오는 형제다. 그래서 목록이 길어져도 완성 줄을 밀어내지 못하고, 끝까지 스크롤로 닿는다.
+    const motionScroll = tree.root.findAll(n => n.type === 'ScrollView' && flat(n.props.style).flex === 1);
+    assert.equal(motionScroll.length, 1, tag + ': 움직이기 설정 목록은 줄어드는 스크롤 하나');
+    assert.equal(flat(motionScroll[0].props.style).minHeight, 0, tag + ': 목록이 내용 높이로 버티지 않는다');
+    assert.ok((flat(motionScroll[0].props.contentContainerStyle).paddingBottom ?? 0) >= 12, tag + ': 목록 끝에 여유가 있다');
+    const finishRow = tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === '완성 후 다음')[0];
+    for (let p = finishRow.parent; p; p = p.parent) {
+      if (p.type === 'ScrollView') assert.fail(tag + ': 완성 줄이 스크롤 안에 있으면 안 된다');
+      if (p.type === 'View' && flat(p.props.style).height === motionHeightOf()) break;
+    }
     await press('그리기');
     // 보드·내보내기: 격자 세 칸이 폭 안, 내보내기 결과 격자 칸 크기.
     await press('그리기 닫기');
@@ -146,17 +188,52 @@ const rows = [];
     const cells = tree.root.findAll(n => n.props.testID === '결과 격자')[0].findAll(n => n.type === 'Pressable');
     row.exportCell = flat(cells[0].props.style).width;
     assert.ok(row.exportCell >= 44, tag + ': 결과 격자 칸이 누를 수 있는 크기');
-    assert.ok(row.exportCell * 6 + 6 * 5 <= width - 32 + .01, tag + ': 결과 격자가 폭 안');
+    // 격자는 줄바꿈한다. 열 수를 못 박는 대신, 한 줄에 다섯 칸 이상이 폭 안에 들어가는지 본다.
+    const exportCols = Math.floor((width - 32 + 6) / (row.exportCell + 6));
+    assert.ok(exportCols >= 5, tag + ': 결과 격자 한 줄에 다섯 칸 이상(' + exportCols + ')');
+    assert.ok(row.exportCell * exportCols + 6 * (exportCols - 1) <= width - 32 + .01, tag + ': 결과 격자가 폭 안');
     await act(async () => tree.unmount());
     // 브러시·색·참고·레이어 시트도 캔버스를 절반 넘게 가리지 않는다(결과를 보면서 조절).
     for (const key of ['brush', 'color', 'reference', 'layers']) assert.ok(row[key] <= .5, tag + ': ' + key + ' 패널이 캔버스를 절반 넘게 가리지 않는다: ' + row[key]);
     rows.push(row);
   }
+  // ── 글자 배율 1.0 / 1.3 / 1.5 ────────────────────────────────────────────────────────────
+  const scaleRows = [];
+  for (const width of [320, 360, 390, 412]) {
+    viewport.width = width; viewport.height = 800;
+    files.clear();
+    saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8'] });
+    await act(async () => { tree = create(React.createElement(App)); });
+    // 홈 → 그리기 → 보드 → 내보내기 순서로 한 번씩 훑는다. 여는 데 실패하면 press 가 바로 멈춘다.
+    const screens = [
+      ['홈', async () => {}],
+      ['그리기', async () => { await press('매트릭스 세트 이어서 만들기'); }],
+      ['보드', async () => { await press('그리기 닫기'); }],
+      ['내보내기', async () => { await press('내보내기'); }],
+    ];
+    for (const [name, open] of screens) {
+      await open();
+      for (const scale of [1, 1.3, 1.5]) {
+        const bad = clipped(scale);
+        const seen = tree.root.findAll(n => n.type === 'Text' && typeof flat(n.props.style).fontSize === 'number').length;
+        scaleRows.push({ viewport: width + '×800', screen: name, scale, texts: seen, clipped: bad.length, worst: bad[0] ?? null });
+        assert.ok(seen >= 5, width + 'dp ' + name + ': 훑을 글자가 있어야 한다(' + seen + ')');
+        assert.equal(bad.length, 0, width + 'dp ' + name + ' 배율 ' + scale + ': 높이가 못 박힌 상자에서 글자가 잘린다 ' + JSON.stringify(bad.slice(0, 3)));
+      }
+    }
+    await act(async () => tree.unmount());
+  }
+  fs.mkdirSync('verification/round45_23', { recursive: true });
+  fs.writeFileSync('verification/round45_23/font-scale.json', JSON.stringify(scaleRows, null, 2));
+  for (const name of ['홈', '그리기', '보드', '내보내기'])
+    console.log('  글자 배율 ' + name.padEnd(5) + ' — 훑은 글자 ' + scaleRows.filter(r => r.screen === name).reduce((a, r) => Math.max(a, r.texts), 0) + '곳 · 1.0/1.3/1.5 에서 잘림 0곳');
+  console.log('  (렌더된 스타일 계산이다. 실기기 캡처가 아니다 — 실제 줄바꿈·글꼴 메트릭은 기기가 판정한다.)');
+
   const outDir = 'verification/round39';
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(outDir + '/viewport-matrix.json', JSON.stringify(rows, null, 2));
   console.log('  viewport  canvas share brush detail color ref layers motion kbRoom boardTile exportCell');
   for (const r of rows) console.log('  ' + [r.viewport.padEnd(9), String(r.canvas).padStart(6), String(r.canvasShare).padStart(5), r.brush, r.brushDetail, r.color, r.reference, r.layers, r.motion, r.captionKeyboardRoom, r.boardTile, r.exportCell].join('  '));
-  console.log('PASS: viewport matrix — 640/720/800/900/1000 × 360/390/412: 캔버스 280dp 이상, 굵기 띠 오른쪽 가장자리 20dp·캔버스 세로 40%, 도구 줄 두 줄 안 잘림, 브러시·색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침, 보드 세 칸·아래 줄, 내보내기 결과 격자. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).');
+  console.log('PASS: viewport matrix — 640/720/800/900/1000 × 320/360/390/412: 캔버스 280dp 이상, 굵기 띠 오른쪽 가장자리 20dp·캔버스 세로 40%, 도구 줄 두 줄 안 잘림, 브러시·색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침·설정 목록만 줄고 완성 줄은 스크롤 밖, 보드 세 칸·아래 줄, 내보내기 결과 격자 한 줄 다섯 칸 이상, 글자 배율 1.0/1.3/1.5 에서 높이 고정 상자 잘림 0곳. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

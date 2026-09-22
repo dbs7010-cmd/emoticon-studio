@@ -1037,7 +1037,8 @@ function Studio() {
               <Text style={{ flex: 1, fontSize: 16, fontWeight: '500', color: C.ink }}>{label}</Text>
               <Text style={{ flexShrink: 1, fontSize: 12, color: ok ? C.muted : colors.WARNING, textAlign: 'right' }}>{detail}</Text>
             </View>;
-            const cols = screenWidth >= 600 ? 8 : 6;
+            // 320dp 에서 6열이면 칸이 43dp 로 손가락보다 작아진다(45.23차 매트릭스). 좁은 화면만 5열로 줄인다.
+            const cols = screenWidth >= 600 ? 8 : screenWidth < 340 ? 5 : 6;
             const cell = Math.floor((screenWidth - T.gap.lg * 2 - 6 * (cols - 1)) / cols);
             const shownCheck = drawn.find(s => isDone(s)) ?? drawn[0];
             return <>

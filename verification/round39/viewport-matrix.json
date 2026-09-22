@@ -1,5 +1,19 @@
 [
   {
+    "viewport": "320×640",
+    "canvas": 320,
+    "canvasShare": 0.52,
+    "brush": 0.5,
+    "brushDetail": 0.5,
+    "color": 0.5,
+    "reference": 0.12,
+    "layers": 0.46,
+    "captionKeyboardRoom": 260,
+    "motion": 0.17,
+    "boardTile": 91,
+    "exportCell": 52
+  },
+  {
     "viewport": "360×640",
     "canvas": 360,
     "canvasShare": 0.58,
@@ -40,6 +54,20 @@
     "motion": 0.34,
     "boardTile": 121,
     "exportCell": 58
+  },
+  {
+    "viewport": "320×720",
+    "canvas": 320,
+    "canvasShare": 0.46,
+    "brush": 0.5,
+    "brushDetail": 0.5,
+    "color": 0.5,
+    "reference": 0,
+    "layers": 0.34,
+    "captionKeyboardRoom": 308,
+    "motion": 0,
+    "boardTile": 91,
+    "exportCell": 52
   },
   {
     "viewport": "360×720",
@@ -84,6 +112,20 @@
     "exportCell": 58
   },
   {
+    "viewport": "320×800",
+    "canvas": 320,
+    "canvasShare": 0.41,
+    "brush": 0.5,
+    "brushDetail": 0.5,
+    "color": 0.5,
+    "reference": 0,
+    "layers": 0.21,
+    "captionKeyboardRoom": 356,
+    "motion": 0,
+    "boardTile": 91,
+    "exportCell": 52
+  },
+  {
     "viewport": "360×800",
     "canvas": 360,
     "canvasShare": 0.46,
@@ -126,6 +168,20 @@
     "exportCell": 58
   },
   {
+    "viewport": "320×900",
+    "canvas": 320,
+    "canvasShare": 0.37,
+    "brush": 0.5,
+    "brushDetail": 0.5,
+    "color": 0.5,
+    "reference": 0,
+    "layers": 0.05,
+    "captionKeyboardRoom": 416,
+    "motion": 0,
+    "boardTile": 91,
+    "exportCell": 52
+  },
+  {
     "viewport": "360×900",
     "canvas": 360,
     "canvasShare": 0.41,
@@ -166,6 +222,20 @@
     "motion": 0,
     "boardTile": 121,
     "exportCell": 58
+  },
+  {
+    "viewport": "320×1000",
+    "canvas": 320,
+    "canvasShare": 0.33,
+    "brush": 0.5,
+    "brushDetail": 0.5,
+    "color": 0.5,
+    "reference": 0,
+    "layers": 0,
+    "captionKeyboardRoom": 476,
+    "motion": 0,
+    "boardTile": 91,
+    "exportCell": 52
   },
   {
     "viewport": "360×1000",
