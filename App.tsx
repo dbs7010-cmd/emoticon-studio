@@ -4,7 +4,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
-import { Action, AssetSlot, Dialog, Elev, Field, IconButton, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, userMessage } from './src/components/ui';
+import { Action, AssetSlot, Dialog, Elev, Field, IconButton, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage } from './src/components/ui';
 import { ASSET_SLOTS, EXPRESSION_GUIDE, HOME_NOTICE, type ExpressionExample, type ExpressionGuideCard } from './src/design/asset-slots';
 import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
 import { MotionBaker, type Baker } from './src/components/motion-baker';
@@ -22,6 +22,11 @@ import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, 
 
 const colors: Record<string, string> = { PASS: T.success, WARNING: STATUS_TONE.warn, FAIL: STATUS_TONE.fail, EMPTY: T.faint, DRAWING: T.info, REVIEW: '#8B6FCB', PLANNED: T.success };
 const C = T;
+// 감정 카드의 대표 그림을 꺼낸다. 홈 미리보기와 감정 목록이 같은 규칙을 쓴다.
+const coverOf = (card: ExpressionGuideCard) => card.artwork ?? card.examples?.find(x => x.id === card.cover)?.artwork ?? null;
+// 홈에 올리는 표현 가이드 미리보기 셋: 서로 다른 감정·자세를 고른다(명세 §5 — 기존 예시 최대 3개).
+const HOME_GUIDE_PREVIEW = ['greeting-hello', 'greeting-excited', 'daily-good-night'] as const;
+const PREVIEW_TINT = [T.lilac, T.sky, T.coral] as const;
 // 표현 선택의 '참고 vs 밑그림' 안내는 앱을 켠 뒤 처음 한 번만 보여 준다. 저장 파일에는 남기지 않는다.
 let guideTipShown = false;
 // A rough, hand-drawn mark: friendly, and never better drawn than the user's own work.
@@ -695,64 +700,10 @@ function Studio() {
             </Pressable>
             <IconButton label="설정" icon="cog-outline" color={C.muted} onPress={() => setSettings(true)} />
           </View>
-          {/* 첫 행동: 창작 표면. 에셋이 없어도 구성이 완성돼 보이고, 오른쪽 자리에 나중에 캐릭터가 앉는다. */}
-          <View testID="홈 창작 표면" style={{ borderRadius: 24, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine, overflow: 'hidden', padding: 20, paddingRight: 16, minHeight: 184, ...Elev[1] }}>
-            <View pointerEvents="none" style={{ position: 'absolute', right: -40, top: -56, width: 190, height: 190, borderRadius: 95, backgroundColor: '#FFEBA6', opacity: .6 }} />
-            <View pointerEvents="none" style={{ position: 'absolute', right: 70, bottom: -70, width: 140, height: 140, borderRadius: 70, backgroundColor: '#FFF4CF' }} />
-            {/* 그림 자리는 오른쪽 위. 아래 행동 줄(새 이모티콘 만들기 · 내 그림으로 시작)과 겹치지 않는다(40차 실기기 캡처에서 겹침 발견). */}
-            <AssetSlot name="homeHeroArtwork" size={screenWidth < 380 ? 96 : 112} style={{ position: 'absolute', right: 14, top: 16 }} />
-            <View style={{ maxWidth: screenWidth < 380 ? 200 : 230, gap: 6 }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: C.warmInk, letterSpacing: .2 }}>나만의 이모티콘 작업실</Text>
-              <Text style={{ fontSize: screenWidth < 360 ? 20 : 22, lineHeight: screenWidth < 360 ? 28 : 30, fontWeight: '800', color: C.ink, letterSpacing: -.5 }}>{'오늘의 표정을\n그려 볼까요?'}</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 16 }}>
-              <Action primary compact icon="plus" title="새 이모티콘 만들기" onPress={createNewProject} />
-              <Action variant="ghost" icon="image-outline" title="내 그림으로 시작" disabled={!!busy} onPress={startFromImage} />
-            </View>
-          </View>
           {/* 45.2차 홈 순서: 시작 → [세트가 없을 때 자리] → [공지 켜졌을 때] → 표현 가이드 → 최근 작업. 세트 수와 공지 상태가 순서를 바꾸지 않는다. */}
-          {!sortedProjects.length && <View style={{ alignItems: 'center', gap: 8, paddingVertical: 20, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong }}>
-            <AssetSlot name="homeEmptyArtwork" size={120} />
-            <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>첫 이모티콘 세트를 만들어 보세요</Text>
-            <Text style={{ fontSize: 12, color: C.muted }}>만든 세트가 여기에 모여요</Text>
-          </View>}
-          {/* 공지/이벤트: 켤 때만 한 줄 배너(그림 자리 · 제목 · 짧은 정보 · 넘어가기 하나). 꺼져 있으면 자리도 간격도 0. */}
-          {noticeOn && (() => {
-            const body = <>
-              <AssetSlot name="noticeArtwork" size={44} />
-              <View style={{ flex: 1, gap: 1 }}>
-                <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{HOME_NOTICE.title}</Text>
-                <Text numberOfLines={1} style={{ fontSize: 12, lineHeight: 17, color: C.muted }}>{HOME_NOTICE.body}</Text>
-              </View>
-              {!!HOME_NOTICE.link && <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />}
-            </>;
-            const row = { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line } as const;
-            // 넘어갈 곳이 있을 때만 누를 수 있는 줄이 된다. 행동은 최대 하나다.
-            return HOME_NOTICE.link
-              ? <Pressable testID="홈 알림" accessibilityRole="button" accessibilityLabel={HOME_NOTICE.title}
-                  onPress={() => { Linking.openURL(HOME_NOTICE.link!).catch(() => setNotice('링크를 열지 못했어요.')); }}
-                  style={({ pressed }) => ({ ...row, backgroundColor: pressed ? C.fill : C.paper })}>{body}</Pressable>
-              : <View testID="홈 알림" style={row}>{body}</View>;
-          })()}
-          {/* 주요 기능 진입: 표현 가이드 한 줄. 노랑을 쓰지 않는 조용한 줄 — 홈의 노랑 버튼은 '새 이모티콘 만들기' 하나. */}
-          <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드" onPress={() => setHomeView('guide')}
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 14, borderRadius: 20, backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: C.line })}>
-            <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}>
-              <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color={C.ink} />
-            </View>
-            <View style={{ flex: 1, gap: 1 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>표현 가이드</Text>
-              <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>무엇을 그릴지 막막할 때</Text>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
-          </Pressable>
-          {!!sortedProjects.length && <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 8 }}>
-            <Text style={{ flex: 1, fontSize: 17, fontWeight: '800', color: C.ink, letterSpacing: -.2 }}>최근 작업</Text>
-            {sortedProjects.length > HOME_RECENT && <Pressable accessibilityRole="button" accessibilityLabel="전체 작업 보기" onPress={() => setHomeView('all')} style={{ minHeight: T.tap, paddingLeft: 12, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>전체 보기 {sortedProjects.length}</Text>
-              <MaterialCommunityIcons name="chevron-right" size={16} color={C.muted} />
-            </Pressable>}
-          </View>}
+          {/* 명세 H01/H02 — 작업이 있으면 '이어서 만들기'가 맨 위에 오고, 소개용 큰 표면은 두지 않는다.
+              작업이 없을 때만 창작 표면이 첫 화면을 맡는다(빈 최근 작업 카드·0% 진행바는 만들지 않는다). */}
+          {!!sortedProjects.length && <Text style={[Type.sectionTitle, { marginTop: 2 }]}>이어서 만들기</Text>}
           {!!sortedProjects.length && <View style={{ gap: 12 }}>
             {sortedProjects.slice(0, HOME_RECENT).map(p => {
               const drawn = p.slots.filter(s => s.finalImage);
@@ -798,6 +749,74 @@ function Studio() {
               </Pressable>;
             })}
             </View>}
+          {/* 작업이 있을 때의 시작 줄: 큰 표면 대신 조용한 두 버튼. */}
+          {!!sortedProjects.length && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Action primary compact icon="plus" title="새 이모티콘 만들기" onPress={createNewProject} />
+            <Action variant="ghost" icon="image-outline" title="내 그림으로 시작" disabled={!!busy} onPress={startFromImage} />
+          </View>}
+          {!sortedProjects.length && <>
+          {/* 첫 행동: 창작 표면. 에셋이 없어도 구성이 완성돼 보이고, 오른쪽 자리에 나중에 캐릭터가 앉는다. */}
+          <View testID="홈 창작 표면" style={{ borderRadius: 24, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine, overflow: 'hidden', padding: 20, paddingRight: 16, minHeight: 184, ...Elev[1] }}>
+            <View pointerEvents="none" style={{ position: 'absolute', right: -40, top: -56, width: 190, height: 190, borderRadius: 95, backgroundColor: '#FFEBA6', opacity: .6 }} />
+            <View pointerEvents="none" style={{ position: 'absolute', right: 70, bottom: -70, width: 140, height: 140, borderRadius: 70, backgroundColor: '#FFF4CF' }} />
+            {/* 그림 자리는 오른쪽 위. 아래 행동 줄(새 이모티콘 만들기 · 내 그림으로 시작)과 겹치지 않는다(40차 실기기 캡처에서 겹침 발견). */}
+            <AssetSlot name="homeHeroArtwork" size={screenWidth < 380 ? 96 : 112} style={{ position: 'absolute', right: 14, top: 16 }} />
+            <View style={{ maxWidth: screenWidth < 380 ? 200 : 230, gap: 6 }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: C.warmInk, letterSpacing: .2 }}>나만의 이모티콘 작업실</Text>
+              <Text style={{ fontSize: screenWidth < 360 ? 20 : 22, lineHeight: screenWidth < 360 ? 28 : 30, fontWeight: '800', color: C.ink, letterSpacing: -.5 }}>{'오늘의 표정을\n그려 볼까요?'}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 16 }}>
+              <Action primary compact icon="plus" title="새 이모티콘 만들기" onPress={createNewProject} />
+              <Action variant="ghost" icon="image-outline" title="내 그림으로 시작" disabled={!!busy} onPress={startFromImage} />
+            </View>
+          </View>
+          </>}
+          {/* 공지/이벤트: 켤 때만 한 줄 배너(그림 자리 · 제목 · 짧은 정보 · 넘어가기 하나). 꺼져 있으면 자리도 간격도 0. */}
+          {noticeOn && (() => {
+            const body = <>
+              <AssetSlot name="noticeArtwork" size={44} />
+              <View style={{ flex: 1, gap: 1 }}>
+                <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{HOME_NOTICE.title}</Text>
+                <Text numberOfLines={1} style={{ fontSize: 12, lineHeight: 17, color: C.muted }}>{HOME_NOTICE.body}</Text>
+              </View>
+              {!!HOME_NOTICE.link && <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />}
+            </>;
+            const row = { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line } as const;
+            // 넘어갈 곳이 있을 때만 누를 수 있는 줄이 된다. 행동은 최대 하나다.
+            return HOME_NOTICE.link
+              ? <Pressable testID="홈 알림" accessibilityRole="button" accessibilityLabel={HOME_NOTICE.title}
+                  onPress={() => { Linking.openURL(HOME_NOTICE.link!).catch(() => setNotice('링크를 열지 못했어요.')); }}
+                  style={({ pressed }) => ({ ...row, backgroundColor: pressed ? C.fill : C.paper })}>{body}</Pressable>
+              : <View testID="홈 알림" style={row}>{body}</View>;
+          })()}
+          {/* 주요 기능 진입: 표현 가이드 한 줄. 노랑을 쓰지 않는 조용한 줄 — 홈의 노랑 버튼은 '새 이모티콘 만들기' 하나. */}
+          <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드" onPress={() => setHomeView('guide')}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 14, borderRadius: 20, backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: C.line })}>
+            <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}>
+              <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color={C.ink} />
+            </View>
+            <View style={{ flex: 1, gap: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>표현 가이드</Text>
+              <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>무엇을 그릴지 막막할 때</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+          </Pressable>
+          {/* 가이드가 무엇을 주는지 그림으로 한 번에 보인다. 기존 예시 셋을 서로 다른 보조색 위에 올린다. */}
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: -4 }}>
+            {HOME_GUIDE_PREVIEW.map((id, i) => {
+              const card = EXPRESSION_GUIDE.cards.find(c => c.id === id);
+              return <Pressable key={id} accessibilityRole="button" accessibilityLabel={(card?.name ?? '') + ' 표현 보기'}
+                onPress={() => { if (card?.examples?.length) { setHomeView('guide'); setGuideCategory(card.category); setGuideCard(card); } else setHomeView('guide'); }}
+                style={({ pressed }) => ({ flex: 1, aspectRatio: 1, borderRadius: 16, backgroundColor: PREVIEW_TINT[i], alignItems: 'center', justifyContent: 'center', opacity: pressed ? .8 : 1 })}>
+                <AssetSlot name="expressionGuideArtwork" size={64} sourceOverride={card ? coverOf(card) : null} />
+              </Pressable>;
+            })}
+          </View>
+          {sortedProjects.length > HOME_RECENT && <Pressable accessibilityRole="button" accessibilityLabel="전체 작업 보기" onPress={() => setHomeView('all')}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, minHeight: 52, borderRadius: 12, backgroundColor: pressed ? C.fill : 'transparent' })}>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: C.muted }}>전체 세트 보기 {sortedProjects.length}</Text>
+            <MaterialCommunityIcons name="chevron-right" size={16} color={C.muted} />
+          </Pressable>}
         </> : canonOpen ? <>
           {(() => {
             const pickReference = () => task('그림을 여는 중…', async () => { const images = await pickImages(); if (!images[0]) return; updateProject(p => ({ ...p, canon: { ...p.canon, image: images[0] } })); });

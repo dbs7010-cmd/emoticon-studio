@@ -81,10 +81,10 @@ const homeSections = () => {
   for (const n of all()) {
     const id = n.props?.testID, label = n.props?.accessibilityLabel;
     if (id === '홈 창작 표면') out.push('창작');
-    else if (id === 'asset-slot-homeEmptyArtwork') out.push('빈 상태');
     else if (id === '홈 알림') out.push('공지');
     else if (n.type === 'Pressable' && label === '표현 가이드') out.push('가이드');
-    else if (n.type === 'Text' && text(n) === '최근 작업') out.push('최근 작업');
+    else if (n.type === 'Pressable' && label === '새 이모티콘 만들기' && !out.includes('창작')) out.push('시작 줄');
+    else if (n.type === 'Text' && text(n) === '이어서 만들기') out.push('최근 작업');
     else if (n.type === 'Pressable' && /^세트 \d+$/.test(label ?? '')) out.push('카드');
   }
   return out.filter((s, i) => s !== '카드' || out[i - 1] !== '카드');
@@ -98,7 +98,10 @@ const homeSections = () => {
       const where = `세트 ${count} · 공지 ${on ? '켜짐' : '꺼짐'}`;
       setStore(makeProjects(count), revision++);
       await render(on ? AppNotice : App);
-      const want = ['창작', ...(count ? [] : ['빈 상태']), ...(on ? ['공지'] : []), '가이드', ...(count ? ['최근 작업', '카드'] : [])];
+      // 명세 H01: 작업이 없으면 창작 표면이 첫 화면. H02: 작업이 있으면 이어하기(최근 작업)가 맨 위.
+      const want = count
+        ? ['최근 작업', '카드', '시작 줄', ...(on ? ['공지'] : []), '가이드']
+        : ['창작', ...(on ? ['공지'] : []), '가이드'];
       assert.deepEqual(homeSections(), want, '홈 순서(' + where + ')');
       assert.equal(byTestID('홈 알림').length, on ? 1 : 0, '공지가 꺼지면 자리도 없다(' + where + ')');
       assert.equal(tree.root.findAll(n => n.type === 'Pressable' && /^세트 \d+$/.test(n.props.accessibilityLabel ?? '')).length, cards, '홈에는 가장 최근 세트 하나만(' + where + ')');

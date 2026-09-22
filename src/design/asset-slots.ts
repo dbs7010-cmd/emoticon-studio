@@ -47,8 +47,6 @@ export const ASSET_SLOTS = {
   // 홈 첫 화면 오른쪽. 창작 표면 위에 겹쳐 앉는 캐릭터. 표면 바탕이 비치도록 투명 PNG.
   // 40차 최종 배치(App.tsx): 창작 표면 오른쪽 위 right 14 · top 16, 화면폭 < 380dp 이면 96, 아니면 112. 아래 12% 는 행동 줄과 겹칠 수 있어 비운다.
   homeHeroArtwork: { aspectRatio: 1, display: '96×96 (폭 < 380dp) / 112×112 (그 외) — 표면 오른쪽 위', sourceSize: '336(@3x) · 224 · 112 / 마스터 1024', safeArea: '주 피사체는 칸의 오른쪽 79% × 위쪽 89% 안(왼쪽 21%·아래 11% 비움 — 제목·행동 줄 침범 방지)', background: 'transparent', source: null },
-  // 세트가 하나도 없을 때 최근 작업 자리. AssetSlot size 120 → 120×90.
-  homeEmptyArtwork: { aspectRatio: 4 / 3, display: '120×90 (점선 상자 안 가운데, 아래에 문구 두 줄)', sourceSize: '360×270(@3x) · 240×180 · 120×90 / 마스터 1280×960', safeArea: '가운데 80%', background: 'transparent', source: null },
   // 공식 알림 카드 왼쪽 작은 그림.
   noticeArtwork: { aspectRatio: 1, display: '44×44', sourceSize: '132(@3x) · 88 · 44 / 마스터 512', safeArea: '가운데 76%', background: 'transparent', source: null },
   // 기본 레퍼런스 한 칸. 2~2.5등신 관절 인형 전신이 들어가므로 세로형. 44차 LOCK: 참고 패널의 4열 격자(좌우 여백 12, 간격 8).

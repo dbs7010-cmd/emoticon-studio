@@ -87,8 +87,8 @@ async function ready() {
 
   // ── 2. 에셋 자리: 비율·표시 크기·안전 영역·바탕 규격이 모두 있다 ─────────────────────────────
   // 44차 LOCK: 표현 가이드 카드 그림 자리가 생겼다. 쓰지 않는 자리는 두지 않는다.
-  const names = ['homeHeroArtwork', 'homeEmptyArtwork', 'noticeArtwork', 'referencePoseThumbnail', 'expressionGuideArtwork', 'motionExampleArtwork', 'exportSuccessArtwork', 'proFeatureArtwork'];
-  assert.deepEqual(Object.keys(slots.ASSET_SLOTS).sort(), [...names].sort(), '에셋 자리 8개');
+  const names = ['homeHeroArtwork', 'noticeArtwork', 'referencePoseThumbnail', 'expressionGuideArtwork', 'motionExampleArtwork', 'exportSuccessArtwork', 'proFeatureArtwork'];
+  assert.deepEqual(Object.keys(slots.ASSET_SLOTS).sort(), [...names].sort(), '에셋 자리 7개(빈 상태 카드는 명세 H01 에서 없앴다)');
   for (const name of names) { const s = slots.ASSET_SLOTS[name]; assert.ok(s.aspectRatio > 0 && s.display && s.safeArea && ['transparent', 'opaque'].includes(s.background), name + ' 규격'); }
   assert.equal(slots.ASSET_SLOTS.referencePoseThumbnail.aspectRatio, 3 / 4, '관절 인형 전신은 세로형 3:4');
   assert.equal(slots.ASSET_SLOTS.expressionGuideArtwork.aspectRatio, 1, '표현 가이드 카드 그림은 1:1');
@@ -111,11 +111,12 @@ async function ready() {
   saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
   await act(async () => { tree = create(React.createElement(App)); });
   assert.equal(texts()[0], '임티제작소', '첫 글자는 브랜드');
-  const heroAt = tree.root.findAll(n => n.type === 'Pressable').findIndex(n => n.props.accessibilityLabel === '새 이모티콘 만들기');
+  // 명세 H02: 작업이 있으면 이어하기가 맨 위다. 소개용 큰 표면은 작업 목록 위에 두지 않는다.
+  const startAt = tree.root.findAll(n => n.type === 'Pressable').findIndex(n => n.props.accessibilityLabel === '새 이모티콘 만들기');
   const cardAt = tree.root.findAll(n => n.type === 'Pressable').findIndex(n => n.props.accessibilityLabel === '시각 세트');
-  assert.ok(heroAt >= 0 && heroAt < cardAt, '창작 표면이 최근 작업보다 먼저');
-  assert.equal(byTestID('홈 창작 표면').length, 1);
-  assert.equal(byTestID('asset-slot-homeHeroArtwork').length, 1, '에셋이 없어도 오른쪽 자리는 도형으로 채운다');
+  assert.ok(cardAt >= 0 && cardAt < startAt, '최근 작업이 시작 줄보다 먼저(H02)');
+  assert.equal(byTestID('홈 창작 표면').length, 0, '작업이 있으면 소개용 큰 표면을 두지 않는다');
+  assert.ok(texts().includes('이어서 만들기'), '맨 위 제목은 이어서 만들기');
   assert.equal(byTestID('홈 알림').length, 0, '알림 꺼짐 → 자리 없음');
   const primaryYellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
   assert.deepEqual(primaryYellow, ['새 이모티콘 만들기'], '홈의 노랑 버튼은 하나: ' + JSON.stringify(primaryYellow));

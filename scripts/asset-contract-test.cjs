@@ -44,7 +44,7 @@ const { createProject } = plain('src/project.ts');
 const slotSource = plain('src/design/asset-slots.ts');
 
 // 자리 8개. 각각 어느 화면에서 그려지는지가 계약의 핵심이다.
-const SLOTS = ['homeHeroArtwork', 'homeEmptyArtwork', 'noticeArtwork', 'referencePoseThumbnail', 'expressionGuideArtwork', 'motionExampleArtwork', 'exportSuccessArtwork', 'proFeatureArtwork'];
+const SLOTS = ['homeHeroArtwork', 'noticeArtwork', 'referencePoseThumbnail', 'expressionGuideArtwork', 'motionExampleArtwork', 'exportSuccessArtwork', 'proFeatureArtwork'];
 const mark = name => 'slot://' + name;
 // 같은 앱을 자료만 바꿔 두 번 그린다: ① 그림이 들어온 상태 ② 아직 자리표시인 상태.
 const withSources = (on) => {
@@ -92,7 +92,7 @@ async function walk(App, { sourcesOn }) {
   saveStore({ version: 1, revision: ++revision, projects: [], palette: [] });
   await render(App);
   note();
-  const home = { hero: byTestID('asset-slot-homeHeroArtwork').length, empty: byTestID('asset-slot-homeEmptyArtwork').length, notice: byTestID('asset-slot-noticeArtwork').length };
+  const home = { hero: byTestID('asset-slot-homeHeroArtwork').length, notice: byTestID('asset-slot-noticeArtwork').length };
 
   // ② 표현 가이드 카드
   await press('표현 가이드');
@@ -144,7 +144,7 @@ async function walk(App, { sourcesOn }) {
 
 (async () => {
   // ── 1. 계약 자료: 자리마다 비율·표시 크기·권장 제작 해상도·안전 영역·바탕이 모두 적혀 있다 ─────
-  assert.deepEqual(Object.keys(slotSource.ASSET_SLOTS).sort(), [...SLOTS].sort(), '에셋 자리 8개');
+  assert.deepEqual(Object.keys(slotSource.ASSET_SLOTS).sort(), [...SLOTS].sort(), '에셋 자리 7개(빈 상태 카드는 명세 H01 에서 없앴다)');
   for (const name of SLOTS) {
     const spec = slotSource.ASSET_SLOTS[name];
     assert.ok(spec.aspectRatio > 0, name + ': 비율');
@@ -177,10 +177,10 @@ async function walk(App, { sourcesOn }) {
   // ── 3. 그림이 아직 없으면 45.2 자리표시가 그대로다(레이아웃·칸 수 불변) ────────────────────
   const off = await walk(withSources(false), { sourcesOn: false });
   assert.equal(off.seen.size, 0, '자리표시 상태에서는 에셋 그림이 없다');
-  assert.deepEqual(off.home, { hero: 1, empty: 1, notice: 1 }, '홈: 창작 표면·빈 상태·공지 모두 도형 자리표시가 그대로 그려진다');
+  assert.deepEqual(off.home, { hero: 1, notice: 1 }, '홈: 창작 표면·공지 자리표시가 그대로 그려진다');
   assert.ok(off.guide >= 4, '표현 가이드 카드마다 자리표시가 남는다');
   assert.equal(off.success, 1, '내보내기 완성 자리표시가 남는다');
-  assert.deepEqual(on.home, { hero: 0, empty: 0, notice: 0 }, '그림이 들어오면 같은 자리를 그림이 대신한다(칸은 그대로)');
+  assert.deepEqual(on.home, { hero: 0, notice: 0 }, '그림이 들어오면 같은 자리를 그림이 대신한다(칸은 그대로)');
   assert.equal(on.success, 0, '내보내기 완성 자리도 그림으로 바뀐다');
   assert.equal(off.poseCells, on.poseCells, '기본 레퍼런스 칸 수가 그림 때문에 늘거나 줄지 않는다');
   assert.equal(off.poseArt, 0, '그림이 없으면 관절 인형 자리표시가 남는다');

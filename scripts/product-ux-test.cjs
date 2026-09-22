@@ -453,7 +453,8 @@ const saved = async (dirty = true) => {
   // ── 홈 위계(40차): 브랜드 머리 → 창작 표면(새 이모티콘 만들기) → 최근 작업 ─────────────────────────
   await press('뒤로');
   const home = tree.root.findAll(n => n.type === 'Pressable' && ['새 이모티콘 세트', '새 이모티콘 만들기'].includes(n.props.accessibilityLabel)).map(n => n.props.accessibilityLabel);
-  assert.deepEqual(home, ['새 이모티콘 만들기', '새 이모티콘 세트'], '첫 행동(새 이모티콘 만들기)이 최근 작업보다 먼저');
+  // 명세 H02: 이어하기가 먼저다. 시작 줄은 그 아래에 조용히 선다.
+  assert.deepEqual(home, ['새 이모티콘 세트', '새 이모티콘 만들기'], '최근 작업이 시작 줄보다 먼저');
   assert.ok(texts().includes('임티제작소'), '홈 머리는 브랜드가 먼저');
   assert.equal(tree.root.findAll(n => n.props.testID === '홈 알림').length, 0, '알림이 꺼져 있으면 자리도 없다');
   const page = tree.root.findAll(n => n.type === 'ScrollView' && Array.isArray(n.props.contentContainerStyle))[0];
