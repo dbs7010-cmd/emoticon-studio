@@ -145,6 +145,9 @@ const swatches = [
   '#765044', '#A77559', '#D7B79B', '#F0D8BF',
 ];
 
+// 기본 레퍼런스 32칸은 아직 칸별 자료도 고르는 동작도 없다(자리표시뿐).
+// 명세 E05: 미완성 격자를 사용자 화면에 보이지 않는다. 자료는 그대로 두고 화면에서만 감춘다.
+const BUILTIN_READY: boolean = BUILTIN_REFERENCES.enabled && BUILTIN_REFERENCES.ready;
 export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, onSetReference, onCopyPrevious, onColorUsed, onClose, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<SaveAction>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -588,7 +591,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     else setRefWindow('open');
   }, [initialized, guideExample, guideExampleMode]);
   // 참고 창 크기와 머무를 수 있는 자리. 창은 늘 캔버스 영역 안에 있어 화면 밖으로 빠져나가지 않는다.
-  const refWide = Math.max(120, Math.min(190, Math.round((canvasWide || windowWidth) * .46)));
+  // 명세 E05: clamp(112dp, 캔버스폭의 36%, 144dp). 예전 46%(최대 190)는 캔버스를 너무 많이 덮었다.
+  const refWide = Math.max(112, Math.min(144, Math.round((canvasSide || canvasWide || windowWidth) * .36)));
   const refHigh = refWindow === 'collapsed' ? 40 : 40 + refWide;
   const clampSpot = (x: number, y: number) => ({
     x: Math.max(8, Math.min((canvasWide || windowWidth) - refWide - 8, x)),
@@ -1066,10 +1070,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             {scene.layers.length < 4 && <Pressable accessibilityRole="button" accessibilityLabel="레이어 추가" onPress={addDrawing} style={{ minHeight: C.tap, flexDirection: 'row', gap: 6, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="plus" size={16} color={C.muted} /><Text style={{ fontSize: 13, fontWeight: '600', color: C.muted }}>레이어 추가</Text></Pressable>}
           </ScrollView>
         </View>}
-        {refRail && BUILTIN_REFERENCES.enabled && <View style={{ paddingHorizontal: 12, paddingTop: 12 }}>
+        {refRail && BUILTIN_READY && <View style={{ paddingHorizontal: 12, paddingTop: 12 }}>
           <Segmented dense value={refSource} onChange={next => { setRefSource(next); setRefBrowse(true); }} items={[{ key: 'mine', label: '내 사진', icon: 'image-outline' }, { key: 'builtin', label: '기본 레퍼런스', icon: 'human-handsup' }]} />
         </View>}
-        {refRail && refSource === 'builtin' && BUILTIN_REFERENCES.enabled && (refBrowse
+        {refRail && refSource === 'builtin' && BUILTIN_READY && (refBrowse
           ? <BuiltinReferences maxHeight={Math.max(120, Math.min(260, coverRoom() - 110))} category={refCategory} onCategory={setRefCategory} onPick={pickBuiltinReference} />
           : <View style={{ paddingHorizontal: 12, paddingTop: 8, paddingBottom: 10, gap: 6 }}>
               <PoseStrip category={refCategory} index={poseIndex} count={BUILTIN_REFERENCES.placeholderCount} onIndex={movePose} />
@@ -1081,7 +1085,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                 </Pressable>
               </View>
             </View>)}
-        {refRail && (refSource === 'mine' || !BUILTIN_REFERENCES.enabled) && <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {refRail && (refSource === 'mine' || !BUILTIN_READY) && <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'flex-start', gap: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
             <RailTile label="참고 사진 추가" caption="사진 추가" icon="plus" dashed onPress={() => void addReferences()} />
             {/* 참고 창을 닫았어도 고른 표현은 이 칸에 남아 있다 — 다시 열 자리가 없어 길이 끊기지 않게. */}

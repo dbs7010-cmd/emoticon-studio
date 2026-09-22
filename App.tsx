@@ -22,6 +22,8 @@ import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, 
 
 const colors: Record<string, string> = { PASS: T.success, WARNING: STATUS_TONE.warn, FAIL: STATUS_TONE.fail, EMPTY: T.faint, DRAWING: T.info, REVIEW: '#8B6FCB', PLANNED: T.success };
 const C = T;
+// 표현 선택의 '참고 vs 밑그림' 안내는 앱을 켠 뒤 처음 한 번만 보여 준다. 저장 파일에는 남기지 않는다.
+let guideTipShown = false;
 // A rough, hand-drawn mark: friendly, and never better drawn than the user's own work.
 function Doodle() {
   return <View style={{ width: 96, height: 64, alignItems: 'center', justifyContent: 'center' }}>
@@ -72,6 +74,10 @@ function Studio() {
   // 표현 가이드는 창작자의 내비게이션이다(45.17차): 감정을 고르면 그 감정의 여러 표현을 펼쳐 보고,
   // 예시 하나를 고른 다음 '참고하며 그리기' 또는 '밑그림으로 넣기'로 그리기 화면에 들어간다.
   const [guideCard, setGuideCard] = useState<ExpressionGuideCard | null>(null);
+  // 고른 표현(G02). 고르기만으로는 편집에 들어가지 않고, 고른 뒤에 아래 두 행동이 열린다.
+  const [guidePick, setGuidePick] = useState<string | null>(null);
+  // 두 행동의 차이는 처음 한 번만 알려 준다. 앱을 다시 켜기 전까지 다시 뜨지 않는다.
+  const [guideTip] = useState(() => !guideTipShown);
   const [guideExample, setGuideExample] = useState<{ id: string; title: string; hint: string; artwork: ImageSourcePropType } | null>(null);
   const [guideExampleMode, setGuideExampleMode] = useState<'watch' | 'underlay' | null>(null);
   // 가이드에서 고른 표현 한 줄. Painter 가 힌트로 한 번 보여 주고 끝난다 — 저장 구조에는 남기지 않는다(44.2차).
@@ -594,7 +600,7 @@ function Studio() {
             <IconButton label={guideCard ? '표현 가이드로' : '홈으로'} icon="chevron-left" color={C.ink} onPress={() => guideCard ? setGuideCard(null) : setHomeView('home')} />
             <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{guideCard ? guideCard.name : '표현 가이드'}</Text>
           </View>
-          <Text style={{ fontSize: 13, color: C.muted, marginTop: -8 }}>{guideCard ? '같은 말도 표정과 자세에 따라 달라져요' : '무엇을 그릴지 골라 보세요'}</Text>
+          <Text style={{ fontSize: 13, lineHeight: 20, color: C.muted, marginTop: -8 }}>{guideCard ? '같은 말도 표정과 자세에 따라 달라져요' : '어떤 마음인가요?'}</Text>
           {!guideCard && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }} style={{ marginHorizontal: -16, flexGrow: 0 }}>
             <View style={{ width: 10 }} />
             {EXPRESSION_GUIDE.categories.map(name => { const on = guideCategory === name;
@@ -604,46 +610,71 @@ function Studio() {
               </Pressable>; })}
             <View style={{ width: 10 }} />
           </ScrollView>}
-          {/* 예시 목록(45.17차): 한 감정 아래의 여러 표현. 그림이 아직 없는 예시는 '준비 중'으로 두고 두 버튼을 잠근다. */}
-          {!!guideCard && <View testID="표현 예시 목록" style={{ gap: 10 }}>
-            {(guideCard.examples ?? []).map(x => { const has = !!x.artwork;
-              return <View key={x.id} style={{ flexDirection: 'row', gap: 12, padding: 10, borderRadius: 20, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
-                <View style={{ width: 92, height: 92, borderRadius: 14, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  <AssetSlot name="expressionGuideArtwork" size={74} sourceOverride={x.artwork ?? null} />
+          {/* G02 표현 선택: 2열 격자에서 하나를 고르고, 고른 뒤에 행동한다(고르기만으로 편집에 들어가지 않는다). */}
+          {!!guideCard && (() => {
+            const list = guideCard.examples ?? [];
+            const cell = Math.floor((screenWidth - 32 - 12) / 2);
+            const picked = list.find(x => x.id === guidePick) ?? null;
+            const ready = !!picked?.artwork;
+            return <>
+              <View testID="표현 예시 목록" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                {list.map(x => { const on = x.id === guidePick, has = !!x.artwork;
+                  return <Pressable key={x.id} accessibilityRole="button" accessibilityLabel={`${x.label} 고르기`}
+                    accessibilityState={{ selected: on, disabled: !has }} disabled={!has}
+                    onPress={() => setGuidePick(x.id)}
+                    style={({ pressed }) => ({ width: cell, padding: 8, gap: 6, borderRadius: 16, backgroundColor: pressed ? C.fill : C.paper,
+                      borderWidth: on ? 2 : 1, borderColor: on ? C.ink : C.line, opacity: has ? 1 : .55 })}>
+                    <View style={{ width: cell - 18, height: cell - 18, borderRadius: 12, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                      <AssetSlot name="expressionGuideArtwork" size={Math.round((cell - 18) * .84)} sourceOverride={x.artwork ?? null} />
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 2, paddingBottom: 2 }}>
+                      {on && <MaterialCommunityIcons name="check" size={15} color={C.ink} />}
+                      <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: on ? '800' : '700', color: has ? C.ink : C.faint }}>{x.label}</Text>
+                    </View>
+                    {!has && <Text style={{ paddingHorizontal: 2, fontSize: 11, color: C.faint }}>그림 준비 중이에요</Text>}
+                  </Pressable>; })}
+              </View>
+              {/* 고른 표현의 설명과 두 행동. 고르기 전에는 눌리지 않는다. */}
+              <View testID="표현 고른 뒤" style={{ gap: 10, marginTop: 4 }}>
+                <Text numberOfLines={2} style={{ fontSize: 13, lineHeight: 19, color: picked ? C.ink : C.muted }}>
+                  {picked ? picked.hint : '표현을 골라 주세요'}
+                </Text>
+                {guideTip && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>참고는 옆에 두고 보고, 밑그림은 캔버스에 겹쳐 놓고 그려요</Text>}
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <Pressable accessibilityRole="button" accessibilityLabel="참고 보기" accessibilityState={{ disabled: !ready }} disabled={!ready}
+                    onPress={() => { guideTipShown = true; startFromGuide(guideCard!, picked!, 'watch'); }}
+                    style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
+                      backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: ready ? C.lineStrong : C.line, opacity: ready ? 1 : .5 })}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: ready ? C.ink : C.faint }}>참고 보기</Text>
+                  </Pressable>
+                  <Pressable accessibilityRole="button" accessibilityLabel="밑그림 넣기" accessibilityState={{ disabled: !ready }} disabled={!ready}
+                    onPress={() => { guideTipShown = true; startFromGuide(guideCard!, picked!, 'underlay'); }}
+                    style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
+                      backgroundColor: !ready ? C.fill : pressed ? C.accentSoft : C.accent, opacity: ready ? 1 : .6 })}>
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: ready ? C.accentInk : C.faint }}>밑그림 넣기</Text>
+                  </Pressable>
                 </View>
-                <View style={{ flex: 1, gap: 4, justifyContent: 'center' }}>
-                  <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{x.label}</Text>
-                  <Text numberOfLines={2} style={{ fontSize: 12, color: C.muted }}>{x.hint}</Text>
-                  {has
-                    ? <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
-                        <Pressable accessibilityRole="button" accessibilityLabel={`${x.label} 참고하며 그리기`} onPress={() => startFromGuide(guideCard, x, 'watch')}
-                          style={({ pressed }) => ({ flex: 1, minHeight: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : C.surface2 })}>
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>참고하며 그리기</Text>
-                        </Pressable>
-                        <Pressable accessibilityRole="button" accessibilityLabel={`${x.label} 밑그림으로 넣기`} onPress={() => startFromGuide(guideCard, x, 'underlay')}
-                          style={({ pressed }) => ({ flex: 1, minHeight: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : C.ink })}>
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: C.paper }}>밑그림으로 넣기</Text>
-                        </Pressable>
-                      </View>
-                    : <Text style={{ fontSize: 12, fontWeight: '700', color: C.faint, marginTop: 2 }}>그림 준비 중이에요</Text>}
-                </View>
-              </View>; })}
-          </View>}
+              </View>
+            </>;
+          })()}
           {!guideCard && (() => {
             const cardWidth = Math.floor((screenWidth - 32 - 12) / 2), frame = cardWidth - 20;
             const cards = EXPRESSION_GUIDE.cards.filter(c => c.category === guideCategory);
             return cards.length
               ? <View testID="표현 가이드 카드" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-                  {cards.map(c => <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => c.examples?.length ? setGuideCard(c) : startFromGuide(c)}
+                  {cards.map(c => { const count = c.examples?.length ?? 0;
+                    // 대표 그림은 이 감정의 예시 중 cover 가 가리키는 것을 그대로 쓴다(카드 전용 그림이 오면 artwork 가 먼저다).
+                    const cover = c.artwork ?? c.examples?.find(x => x.id === c.cover)?.artwork ?? null;
+                    return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => { c.examples?.length ? setGuideCard(c) : startFromGuide(c); }}
                     style={({ pressed }) => ({ width: cardWidth, padding: 10, gap: 8, borderRadius: 20, backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: C.line })}>
                     <View style={{ width: frame, height: frame, borderRadius: 14, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      <AssetSlot name="expressionGuideArtwork" size={Math.round(frame * .8)} sourceOverride={c.artwork ?? null} />
+                      <AssetSlot name="expressionGuideArtwork" size={Math.round(frame * .8)} sourceOverride={cover} />
                     </View>
                     <View style={{ gap: 2, paddingHorizontal: 2, paddingBottom: 2 }}>
                       <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{c.name}</Text>
-                      <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{c.hint}</Text>
+                      <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{count ? count + '가지 표현' : '준비 중'}</Text>
                     </View>
-                  </Pressable>)}
+                  </Pressable>; })}
                 </View>
               : <Text style={{ paddingVertical: 24, textAlign: 'center', fontSize: 13, color: C.muted }}>이 분류에는 아직 표현이 없어요</Text>;
           })()}

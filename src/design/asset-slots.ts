@@ -23,6 +23,9 @@ export type ExpressionGuideCard = {
   artwork?: ImageSourcePropType;
   // 45.17차: 한 감정 아래의 여러 표현(표정·자세·구도). 없으면 카드는 예전처럼 바로 그리기로 간다.
   examples?: ExpressionExample[];
+  // 감정 목록에서 이 카드를 대표하는 예시의 id. 그 예시의 그림을 그대로 쓴다 —
+  // 같은 그림을 한 번 더 require 하지 않으므로 묶음에 두 번 들어가지 않는다.
+  cover?: string;
 };
 
 // 표현 가이드는 창작자의 내비게이션이다: 한 감정에서 여러 표현을 보고 골라 자기 캐릭터로 응용한다.
@@ -77,7 +80,7 @@ export const EXPRESSION_GUIDE = {
   categories: ['기쁨·인사', '슬픔·미안', '화남·억울', '놀람·당황', '일상'] as const,
   cards: [
     {
-      id: 'greeting-hello', category: '기쁨·인사', name: '안녕', hint: '손 크게 흔들기',
+      id: 'greeting-hello', category: '기쁨·인사', name: '안녕', hint: '손 크게 흔들기', cover: 'greeting-hello-wave',
       examples: [
         { id: 'greeting-hello-wave', label: '손 흔들며', hint: '손 흔들며 인사', artwork: require('../../assets/expression-guides/greeting-hello-wave.png') },
         { id: 'greeting-hello-peek', label: '빼꼼', hint: '빼꼼 보기', artwork: require('../../assets/expression-guides/greeting-hello-peek.png') },
@@ -85,7 +88,7 @@ export const EXPRESSION_GUIDE = {
         { id: 'greeting-hello-turn', label: '고개를 돌려', hint: '몸은 앞을 향하고 고개는 옆으로 돌리기', artwork: require('../../assets/expression-guides/greeting-hello-turn.png') },
       ],
     }, {
-      id: 'greeting-thanks', category: '기쁨·인사', name: '고마워', hint: '두 손 모아 꾸벅',
+      id: 'greeting-thanks', category: '기쁨·인사', name: '고마워', hint: '두 손 모아 꾸벅', cover: 'greeting-thanks-polite',
       // 45.17차 첫 흐름. 카드의 이름·힌트·차례는 그대로 두고 표현 다섯 갈래만 아래에 달았다.
       examples: [
         { id: 'greeting-thanks-polite', label: '정중하게', hint: '두 손 모으고 깊게 꾸벅', artwork: require('../../assets/expression-guides/greeting-thanks-polite.png') },
@@ -96,14 +99,14 @@ export const EXPRESSION_GUIDE = {
       ],
     },
     {
-      id: 'greeting-like', category: '기쁨·인사', name: '좋아', hint: '엄지 척',
+      id: 'greeting-like', category: '기쁨·인사', name: '좋아', hint: '엄지 척', cover: 'greeting-like-thumb',
       examples: [
         { id: 'greeting-like-thumb', label: '엄지척', hint: '엄지척 미소', artwork: require('../../assets/expression-guides/greeting-like-thumb.png') },
         { id: 'greeting-like-hands', label: '두 손 모아', hint: '두 손 모아 기쁨', artwork: require('../../assets/expression-guides/greeting-like-hands.png') },
         { id: 'greeting-like-content', label: '여유롭게', hint: '눈 감고 여유', artwork: require('../../assets/expression-guides/greeting-like-content.png') },
       ],
     }, {
-      id: 'greeting-excited', category: '기쁨·인사', name: '신나', hint: '두 팔 번쩍',
+      id: 'greeting-excited', category: '기쁨·인사', name: '신나', hint: '두 팔 번쩍', cover: 'greeting-excited-cheer',
       examples: [
         { id: 'greeting-excited-jump', label: '점프하며', hint: '신나서 점프', artwork: require('../../assets/expression-guides/greeting-excited-jump.png') },
         { id: 'greeting-excited-cheer', label: '양팔 들고', hint: '양팔 들고 환호', artwork: require('../../assets/expression-guides/greeting-excited-cheer.png') },
@@ -111,14 +114,14 @@ export const EXPRESSION_GUIDE = {
       ],
     },
     {
-      id: 'sad-sorry', category: '슬픔·미안', name: '미안해', hint: '고개 푹 숙이기',
+      id: 'sad-sorry', category: '슬픔·미안', name: '미안해', hint: '고개 푹 숙이기', cover: 'sad-sorry-deep-bow',
       examples: [
         { id: 'sad-sorry-please', label: '두 손 모아', hint: '두 손 모아 부탁', artwork: require('../../assets/expression-guides/sad-sorry-please.png') },
         { id: 'sad-sorry-deep-bow', label: '깊게 숙여', hint: '깊게 숙이기', artwork: require('../../assets/expression-guides/sad-sorry-deep-bow.png') },
         { id: 'sad-sorry-timid', label: '주눅 들어', hint: '주눅 들어 몸 숙이기', artwork: require('../../assets/expression-guides/sad-sorry-timid.png') },
       ],
     }, {
-      id: 'sad-sad', category: '슬픔·미안', name: '슬퍼', hint: '무릎 안고 앉기',
+      id: 'sad-sad', category: '슬픔·미안', name: '슬퍼', hint: '무릎 안고 앉기', cover: 'sad-sad-hug-knees',
       examples: [
         { id: 'sad-sad-downcast', label: '풀이 죽어', hint: '풀이 죽어 서기', artwork: require('../../assets/expression-guides/sad-sad-downcast.png') },
         { id: 'sad-sad-gesture', label: '손짓하며', hint: '슬픈 표정으로 손짓', artwork: require('../../assets/expression-guides/sad-sad-gesture.png') },
@@ -130,7 +133,7 @@ export const EXPRESSION_GUIDE = {
       ],
     },
     {
-      id: 'sad-crying', category: '슬픔·미안', name: '흑흑', hint: '눈물 훔치기',
+      id: 'sad-crying', category: '슬픔·미안', name: '흑흑', hint: '눈물 훔치기', cover: 'sad-crying-wipe',
       examples: [
         { id: 'sad-crying-wipe', label: '눈물 닦으며', hint: '눈물 닦기', artwork: require('../../assets/expression-guides/sad-crying-wipe.png') },
         { id: 'sad-crying-cover-face', label: '얼굴 가리고', hint: '얼굴 가리고 울기', artwork: require('../../assets/expression-guides/sad-crying-cover-face.png') },
@@ -139,7 +142,7 @@ export const EXPRESSION_GUIDE = {
         { id: 'sad-crying-crouch', label: '웅크려', hint: '몸을 웅크리고 두 손 모으기', artwork: require('../../assets/expression-guides/sad-crying-crouch.png') },
       ],
     }, {
-      id: 'sad-are-you-okay', category: '슬픔·미안', name: '괜찮아?', hint: '살짝 다가가기',
+      id: 'sad-are-you-okay', category: '슬픔·미안', name: '괜찮아?', hint: '살짝 다가가기', cover: 'sad-are-you-okay-lean',
       examples: [
         { id: 'sad-are-you-okay-face', label: '걱정스러운 얼굴', hint: '걱정스러운 얼굴', artwork: require('../../assets/expression-guides/sad-are-you-okay-face.png') },
         { id: 'sad-are-you-okay-arms-crossed', label: '팔짱 끼고', hint: '팔짱 끼고 걱정', artwork: require('../../assets/expression-guides/sad-are-you-okay-arms-crossed.png') },
@@ -149,12 +152,12 @@ export const EXPRESSION_GUIDE = {
       ],
     },
     {
-      id: 'angry-unfair', category: '화남·억울', name: '억울해', hint: '팔짱 + 몸 돌리기',
+      id: 'angry-unfair', category: '화남·억울', name: '억울해', hint: '팔짱 + 몸 돌리기', cover: 'angry-unfair-stomp',
       examples: [
         { id: 'angry-unfair-stomp', label: '속상해서', hint: '속상해서 발 구르기', artwork: require('../../assets/expression-guides/angry-unfair-stomp.png') },
       ],
     }, {
-      id: 'angry-angry', category: '화남·억울', name: '화났어', hint: '주먹 불끈',
+      id: 'angry-angry', category: '화남·억울', name: '화났어', hint: '주먹 불끈', cover: 'angry-angry-stand',
       examples: [
         { id: 'angry-angry-stand', label: '버티고 서서', hint: '화난 자세', artwork: require('../../assets/expression-guides/angry-angry-stand.png') },
         { id: 'angry-angry-hips', label: '허리에 손 얹고', hint: '허리에 손 얹고 화남', artwork: require('../../assets/expression-guides/angry-angry-hips.png') },
@@ -163,7 +166,7 @@ export const EXPRESSION_GUIDE = {
       ],
     },
     {
-      id: 'angry-hmph', category: '화남·억울', name: '흥', hint: '고개 홱 돌리기',
+      id: 'angry-hmph', category: '화남·억울', name: '흥', hint: '고개 홱 돌리기', cover: 'angry-hmph-turn',
       examples: [
         { id: 'angry-hmph-turn', label: '고개 돌리고', hint: '고개 돌리고 콧김', artwork: require('../../assets/expression-guides/angry-hmph-turn.png') },
         { id: 'angry-hmph-back', label: '등 돌리고', hint: '등 돌리고 콧김', artwork: require('../../assets/expression-guides/angry-hmph-back.png') },
@@ -171,7 +174,7 @@ export const EXPRESSION_GUIDE = {
         { id: 'angry-hmph-pout', label: '볼 부풀리고', hint: '볼 부풀리고 삐짐', artwork: require('../../assets/expression-guides/angry-hmph-pout.png') },
       ],
     }, {
-      id: 'angry-annoyed', category: '화남·억울', name: '짜증나', hint: '머리 감싸기',
+      id: 'angry-annoyed', category: '화남·억울', name: '짜증나', hint: '머리 감싸기', cover: 'angry-annoyed-head',
       examples: [
         { id: 'angry-annoyed-head', label: '머리 감싸고', hint: '머리 감싸고 화남', artwork: require('../../assets/expression-guides/angry-annoyed-head.png') },
         { id: 'angry-annoyed-facepalm', label: '이마 짚고', hint: '이마 짚기', artwork: require('../../assets/expression-guides/angry-annoyed-facepalm.png') },
@@ -180,7 +183,7 @@ export const EXPRESSION_GUIDE = {
       ],
     },
     {
-      id: 'surprise-gasp', category: '놀람·당황', name: '헉', hint: '두 손으로 입 가리기',
+      id: 'surprise-gasp', category: '놀람·당황', name: '헉', hint: '두 손으로 입 가리기', cover: 'surprise-gasp-mouth',
       examples: [
         { id: 'surprise-gasp-mouth', label: '입 가리고', hint: '입 가리고 놀라기', artwork: require('../../assets/expression-guides/surprise-gasp-mouth.png') },
         { id: 'surprise-gasp-point', label: '가리키며', hint: '깜짝 놀라 가리키기', artwork: require('../../assets/expression-guides/surprise-gasp-point.png') },
@@ -188,7 +191,7 @@ export const EXPRESSION_GUIDE = {
         { id: 'surprise-gasp-drop', label: '물건 떨어뜨리며', hint: '물건 떨어뜨려 놀람', artwork: require('../../assets/expression-guides/surprise-gasp-drop.png') },
       ],
     }, {
-      id: 'surprise-what', category: '놀람·당황', name: '뭐?', hint: '몸 뒤로 젖히기',
+      id: 'surprise-what', category: '놀람·당황', name: '뭐?', hint: '몸 뒤로 젖히기', cover: 'surprise-what-tilt',
       examples: [
         { id: 'surprise-what-tilt', label: '고개 갸웃', hint: '고개 갸웃하며 의문', artwork: require('../../assets/expression-guides/surprise-what-tilt.png') },
         { id: 'surprise-what-scratch', label: '머리 긁적이며', hint: '머리 긁적이며 의문', artwork: require('../../assets/expression-guides/surprise-what-scratch.png') },
@@ -197,7 +200,7 @@ export const EXPRESSION_GUIDE = {
       ],
     },
     {
-      id: 'surprise-flustered', category: '놀람·당황', name: '당황', hint: '땀 한 방울',
+      id: 'surprise-flustered', category: '놀람·당황', name: '당황', hint: '땀 한 방울', cover: 'surprise-flustered-sweat',
       examples: [
         { id: 'surprise-flustered-shrug', label: '어쩔 줄 몰라', hint: '어쩔 줄 몰라 양손 들기', artwork: require('../../assets/expression-guides/surprise-flustered-shrug.png') },
         { id: 'surprise-flustered-sweat', label: '식은땀', hint: '식은땀 긴장', artwork: require('../../assets/expression-guides/surprise-flustered-sweat.png') },
@@ -206,14 +209,14 @@ export const EXPRESSION_GUIDE = {
         { id: 'surprise-flustered-glance', label: '옆눈질', hint: '옆눈질하기', artwork: require('../../assets/expression-guides/surprise-flustered-glance.png') },
       ],
     }, {
-      id: 'surprise-no-way', category: '놀람·당황', name: '설마', hint: '눈 동그랗게',
+      id: 'surprise-no-way', category: '놀람·당황', name: '설마', hint: '눈 동그랗게', cover: 'surprise-no-way-face',
       examples: [
         { id: 'surprise-no-way-face', label: '놀란 얼굴', hint: '깜짝 놀란 얼굴', artwork: require('../../assets/expression-guides/surprise-no-way-face.png') },
         { id: 'surprise-no-way-refuse', label: '손 내저으며', hint: '두 손 내저으며 거절', artwork: require('../../assets/expression-guides/surprise-no-way-refuse.png') },
       ],
     },
     {
-      id: 'daily-good-night', category: '일상', name: '잘 자', hint: '이불 덮고 눕기',
+      id: 'daily-good-night', category: '일상', name: '잘 자', hint: '이불 덮고 눕기', cover: 'daily-good-night-blanket',
       examples: [
         { id: 'daily-good-night-blanket', label: '이불 덮고', hint: '이불 덮고 잠자기', artwork: require('../../assets/expression-guides/daily-good-night-blanket.png') },
         { id: 'daily-good-night-curl', label: '웅크려', hint: '웅크려 잠자기', artwork: require('../../assets/expression-guides/daily-good-night-curl.png') },
@@ -223,14 +226,14 @@ export const EXPRESSION_GUIDE = {
         { id: 'daily-good-night-table', label: '책상에 엎드려', hint: '책상에 엎드리기', artwork: require('../../assets/expression-guides/daily-good-night-table.png') },
       ],
     }, {
-      id: 'daily-hungry', category: '일상', name: '배고파', hint: '배 잡고 쓰러지기',
+      id: 'daily-hungry', category: '일상', name: '배고파', hint: '배 잡고 쓰러지기', cover: 'daily-hungry-ache',
       examples: [
         { id: 'daily-hungry-bowl', label: '그릇 들고', hint: '그릇 들고 난감', artwork: require('../../assets/expression-guides/daily-hungry-bowl.png') },
         { id: 'daily-hungry-ache', label: '배 잡고', hint: '배를 잡고 아파하기', artwork: require('../../assets/expression-guides/daily-hungry-ache.png') },
       ],
     },
     {
-      id: 'daily-depart', category: '일상', name: '출발', hint: '가방 메고 뛰기',
+      id: 'daily-depart', category: '일상', name: '출발', hint: '가방 메고 뛰기', cover: 'daily-depart-run',
       examples: [
         { id: 'daily-depart-run', label: '달리며', hint: '달리기', artwork: require('../../assets/expression-guides/daily-depart-run.png') },
         { id: 'daily-depart-run-point', label: '앞을 가리키며', hint: '달리며 앞을 가리키기', artwork: require('../../assets/expression-guides/daily-depart-run-point.png') },
@@ -239,7 +242,7 @@ export const EXPRESSION_GUIDE = {
         { id: 'daily-depart-point-side', label: '손바닥을 펴고', hint: '한 팔을 옆으로 뻗어 손바닥 펴기', artwork: require('../../assets/expression-guides/daily-depart-point-side.png') },
       ],
     }, {
-      id: 'daily-wait', category: '일상', name: '기다려', hint: '손바닥 내밀기',
+      id: 'daily-wait', category: '일상', name: '기다려', hint: '손바닥 내밀기', cover: 'daily-wait-palm',
       examples: [
         { id: 'daily-wait-palm', label: '손바닥 내밀어', hint: '손바닥 내밀어 멈춤', artwork: require('../../assets/expression-guides/daily-wait-palm.png') },
         { id: 'daily-wait-reach', label: '손 뻗어', hint: '앞으로 손 뻗기', artwork: require('../../assets/expression-guides/daily-wait-reach.png') },

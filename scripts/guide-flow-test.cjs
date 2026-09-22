@@ -1,5 +1,5 @@
 // 45.17차 표현 가이드 흐름. "표현 가이드는 창작자의 내비게이션이다" 를 화면 동작으로 확인한다.
-//   감정 선택 → 여러 표현 보기 → 예시 선택 → ① 참고하며 그리기(떠 있는 작은 창) / ② 밑그림으로 넣기(참고 레이어).
+//   감정 선택 → 표현 격자에서 하나 고르기 → ① 참고 보기(떠 있는 작은 창) / ② 밑그림 넣기(참고 레이어).
 //   그림이 아직 없는 예시는 '준비 중'이고 두 버튼이 아예 없다 — 없는 파일을 require 하지 않는다.
 //   밑그림은 기존 참고 레이어 길을 그대로 쓴다: 그림 레이어와 따로 쌓이고, 최종 PNG·움직이는 파일·썸네일에 들어가지 않는다.
 const assert = require('node:assert/strict');
@@ -219,9 +219,13 @@ async function echoReferences(scene) {
   const blank = byTestID('표현 예시 목록');
   assert.equal(blank.length, 1, '감정을 고르면 그 감정의 여러 표현이 펼쳐진다');
   const blankTexts = texts(blank[0]);
-  for (const x of card.examples) { assert.ok(blankTexts.includes(x.label), x.label + ' 이름'); assert.ok(blankTexts.includes(x.hint), x.label + ' 힌트'); }
+  // 격자에는 짧은 이름만 둔다. 설명(hint)은 고른 뒤 아래 상태줄에서 한 줄로 읽힌다(아래 3절이 본다).
+  for (const x of card.examples) assert.ok(blankTexts.includes(x.label), x.label + ' 이름');
   assert.equal(blankTexts.filter(t => t === '그림 준비 중이에요').length, 5, '그림이 없는 표현 다섯은 모두 준비 중이다');
-  assert.equal(labelled('정중하게 참고하며 그리기').length + labelled('정중하게 밑그림으로 넣기').length, 0, '그림이 없으면 두 버튼이 아예 없다(눌러서 빈 창이 뜨지 않는다)');
+  assert.equal(labelled('정중하게 고르기')[0].props.accessibilityState.disabled, true, '그림이 없는 표현은 고를 수 없다');
+  assert.equal(labelled('참고 보기')[0].props.accessibilityState.disabled, true, '아무것도 못 골랐으니 참고 보기가 잠겨 있다');
+  assert.equal(labelled('밑그림 넣기')[0].props.accessibilityState.disabled, true, '밑그림 넣기도 잠겨 있다');
+  assert.ok(texts(byTestID('표현 고른 뒤')[0]).includes('표현을 골라 주세요'), '무엇을 해야 하는지 알려 준다');
   await press('표현 가이드로');
   assert.equal(byTestID('표현 예시 목록').length, 0, '뒤로 누르면 감정 목록으로 돌아온다');
   assert.equal(byTestID('표현 가이드 카드').length, 1, '돌아온 자리는 기존 카드 격자 그대로다');
@@ -237,13 +241,18 @@ async function echoReferences(scene) {
   const shown = list.findAllByType('Image').map(n => n.props.source && n.props.source.uri).filter(Boolean);
   assert.deepEqual(shown, ['test-art://greeting-thanks-polite', 'test-art://greeting-thanks-friendly'], '그림은 자기 표현 칸에만, 차례대로 뜬다');
   assert.equal(texts(list).filter(t => t === '그림 준비 중이에요').length, 3, '그림이 없는 나머지 셋은 준비 중 그대로다');
-  assert.equal(labelled('정중하게 참고하며 그리기').length, 1, '그림이 있으면 ① 참고하며 그리기');
-  assert.equal(labelled('정중하게 밑그림으로 넣기').length, 1, '그림이 있으면 ② 밑그림으로 넣기');
-  assert.equal(labelled('감격해서 참고하며 그리기').length, 0, '그림 없는 표현에는 버튼이 생기지 않는다');
+  assert.equal(labelled('정중하게 고르기')[0].props.accessibilityState.disabled, false, '그림이 있으면 고를 수 있다');
+  assert.equal(labelled('감격해서 고르기')[0].props.accessibilityState.disabled, true, '그림 없는 표현은 잠겨 있다');
+  await press('정중하게 고르기');
+  assert.equal(labelled('정중하게 고르기')[0].props.accessibilityState.selected, true, '고른 표현에 선택 표시');
+  assert.ok(texts(byTestID('표현 고른 뒤')[0]).includes('두 손 모으고 깊게 꾸벅'), '고른 표현의 설명이 아래에 뜬다');
+  assert.equal(labelled('참고 보기')[0].props.accessibilityState.disabled, false, '고른 뒤에 참고 보기가 열린다');
+  assert.equal(labelled('밑그림 넣기')[0].props.accessibilityState.disabled, false, '고른 뒤에 밑그림 넣기가 열린다');
+  assert.equal(tree.root.findAllByType('WebView').length, 0, '고르기만으로는 그리기에 들어가지 않는다');
 
-  // ── 4. ① 참고하며 그리기: 떠 있는 작은 창 ─────────────────────────────────────────────
+  // ── 4. ① 참고 보기: 떠 있는 작은 창 ────────────────────────────────────────────────────
   commands.length = 0;
-  await press('정중하게 참고하며 그리기');
+  await press('참고 보기');
   await ready();
   const win = () => byTestID('표현 예시 참고 창')[0];
   assert.ok(win(), '고른 표현이 캔버스 위 작은 창으로 뜬다');
@@ -283,12 +292,13 @@ async function echoReferences(scene) {
   await press('표현 예시 참고 창 열기');
   assert.equal(byTestID('표현 예시 참고 창').length, 1, '닫은 뒤에도 참고 줄에서 다시 열 수 있다(길이 끊기지 않는다)');
 
-  // ── 5. ② 밑그림으로 넣기: 기존 참고 레이어 길을 그대로 쓴다 ───────────────────────────────
+  // ── 5. ② 밑그림 넣기: 기존 참고 레이어 길을 그대로 쓴다 ──────────────────────────────────
   commands.length = 0; imported.length = 0;
   await render(App);
   await press('표현 가이드');
   await press('고마워 · 두 손 모아 꾸벅');
-  await press('친근하게 밑그림으로 넣기');
+  await press('친근하게 고르기');
+  await press('밑그림 넣기');
   let scene = await ready();
   const added = sent().filter(m => m.type === 'addReferences');
   assert.equal(added.length, 1, '밑그림은 한 번만 깔린다');
@@ -375,9 +385,11 @@ async function echoReferences(scene) {
     const list = byTestID('표현 예시 목록');
     assert.equal(list.length, 1, cardName + ': 표현 목록이 열린다(ready=false 여도 막히지 않는다)');
     assert.equal(list[0].findAllByType('Image').length, card.examples.length, cardName + ': 등록된 표현 수만큼 그림이 뜬다');
+    assert.equal(labelled(cardName + ' · ' + cardHint).length, 0, cardName + ': 표현 목록에서는 감정 카드가 사라진다');
     assert.equal(texts(list[0]).filter(t => t === '그림 준비 중이에요').length, 0, cardName + ': 준비 중으로 막힌 표현이 없다');
     // ① 참고하며 그리기
-    await press(exLabel + ' 참고하며 그리기');
+    await press(exLabel + ' 고르기');
+    await press('참고 보기');
     await ready();
     assert.equal(byTestID('표현 예시 참고 창').length, 1, cardName + ': 참고 창이 캔버스 위에 뜬다');
     assert.ok(texts(byTestID('표현 예시 참고 창')[0]).includes(cardName + ' · ' + exLabel), cardName + ': 창 제목이 고른 표현이다');
@@ -388,7 +400,8 @@ async function echoReferences(scene) {
     await press('표현 가이드');
     await press('표현 가이드 ' + card.category);
     await press(cardName + ' · ' + cardHint);
-    await press(exLabel + ' 밑그림으로 넣기');
+    await press(exLabel + ' 고르기');
+    await press('밑그림 넣기');
     await ready();
     const put = sent().filter(m => m.type === 'addReferences');
     assert.equal(put.length, 1, cardName + ': 밑그림이 깔린다');

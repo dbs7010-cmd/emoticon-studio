@@ -47,6 +47,9 @@ const App = load('App.tsx').default;
 const slotSource = load('src/design/asset-slots.ts');
 const noticeOn = { ...slotSource, HOME_NOTICE: { ...slotSource.HOME_NOTICE, enabled: true, title: '첫 공지', body: '짧은 정보 한 줄' } };
 const AppNotice = loader({ ...base, './src/design/asset-slots': noticeOn, '../design/asset-slots': noticeOn })('App.tsx').default;
+// 기본 레퍼런스는 아직 준비 중이라 제품 화면에서 감춰 둔다. 안쪽 동작은 ready 를 켠 이 자료로 검사한다.
+const builtinOn = { ...slotSource, BUILTIN_REFERENCES: { ...slotSource.BUILTIN_REFERENCES, ready: true } };
+const AppBuiltin = loader({ ...base, './src/design/asset-slots': builtinOn, '../design/asset-slots': builtinOn })('App.tsx').default;
 
 let tree, scene;
 const flat = style => Object.assign({}, ...[style].flat(9).filter(Boolean).map(s => typeof s === 'function' ? s({ pressed: false }) : s));
@@ -162,31 +165,13 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.equal(labelled('브러시')[0].props.accessibilityState.selected, true, '쓰던 도구로 돌아온다');
   assert.equal(labelled('팔레트 닫기').length, 0, '패널도 내려가 캔버스로 돌아온다');
 
-  // ── 6. 기본 레퍼런스: 고른 뒤에는 좌우로 넘겨 자세를 바꾼다(분류 안, 끝에서 멈춤, 획은 생기지 않는다) ──
+  // ── 6. 기본 레퍼런스: 아직 준비 중이라 제품 화면에는 이 갈래가 없다 ─────────────────────────
+  //   칸별 자료도 고르는 동작도 없는 격자를 사용자에게 보이지 않는다(자료는 지우지 않았다).
+  //   안쪽 동작(자세 넘기기·다시 찾기)은 ready 를 켠 자료로 파일 끝에서 그대로 검사한다.
   await press('참고');
-  await press('기본 레퍼런스');
-  await press('포즈 기본 레퍼런스 1 준비 중');
-  const strip = () => byTestID('자세 넘기기')[0];
-  const at = () => Number(texts().filter(t => t.endsWith(' / 8')).at(-1).split(' / ')[0]);
-  assert.ok(strip(), '고른 뒤에는 자세 넘기기 줄이 나온다');
-  assert.equal(at(), 1, '고른 자세가 첫 번째');
-  const swipe = async (dx) => {
-    const drawing = sent().filter(m => ['down', 'move', 'up', 'fill'].includes(m.type)).length;
-    await act(async () => strip().props.onResponderGrant({ nativeEvent: { pageX: 200 } }));
-    await act(async () => strip().props.onResponderMove({ nativeEvent: { pageX: 200 + dx } }));
-    await act(async () => strip().props.onResponderRelease({ nativeEvent: { pageX: 200 + dx } }));
-    assert.equal(sent().filter(m => ['down', 'move', 'up', 'fill'].includes(m.type)).length, drawing, '넘기는 손가락은 그림을 그리지 않는다');
-  };
-  await swipe(-80);
-  assert.equal(at(), 2, '왼쪽으로 넘기면 다음 자세');
-  await swipe(80);
-  assert.equal(at(), 1, '오른쪽으로 넘기면 이전 자세');
-  await swipe(80);
-  assert.equal(at(), 1, '첫 자세에서 더 뒤로 가지 않는다(돌지 않는다)');
-  for (let i = 0; i < 9; i++) await swipe(-80);
-  assert.equal(at(), 8, '마지막 자세에서 더 앞으로 가지 않는다');
-  await press('기본 레퍼런스 다시 찾기');
-  assert.equal(byTestID('기본 레퍼런스 격자').length, 1, '다시 찾기로 격자가 돌아온다');
+  assert.equal(labelled('기본 레퍼런스').length, 0, '준비 중인 기본 레퍼런스 갈래는 화면에 없다');
+  assert.equal(byTestID('기본 레퍼런스 격자').length, 0, '준비 중인 격자도 없다');
+  assert.equal(labelled('참고 사진 추가').length, 1, '내 사진 참고는 그대로 쓸 수 있다');
   await press('참고');
 
   // ── 7. 선택 → 움직이기: 그림은 그대로다 ──────────────────────────────────────────────────────
@@ -347,6 +332,37 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   await ready();
   const fresh = sent().filter(m => m.type === 'init').at(-1);
   assert.deepEqual(fresh.layers.map(l => l.id), ['draw-1'], '새 칸은 그림 한 장으로 시작한다');
+  // ── 8. 기본 레퍼런스 안쪽 동작: ready 를 켠 자료로 그대로 검사한다(감췄다고 검사를 없애지 않는다) ──
+  await render(AppBuiltin);
+  await press('편의 세트');
+  await act(async () => byTestID('slot-1')[0].props.onPress());
+  await ready();
+  await press('참고');
+  await press('기본 레퍼런스');
+  await press('포즈 기본 레퍼런스 1');
+  const strip = () => byTestID('자세 넘기기')[0];
+  const at = () => Number(texts().filter(t => t.endsWith(' / 8')).at(-1).split(' / ')[0]);
+  assert.ok(strip(), '고른 뒤에는 자세 넘기기 줄이 나온다');
+  assert.equal(at(), 1, '고른 자세가 첫 번째');
+  const swipe = async (dx) => {
+    const drawing = sent().filter(m => ['down', 'move', 'up', 'fill'].includes(m.type)).length;
+    await act(async () => strip().props.onResponderGrant({ nativeEvent: { pageX: 200 } }));
+    await act(async () => strip().props.onResponderMove({ nativeEvent: { pageX: 200 + dx } }));
+    await act(async () => strip().props.onResponderRelease({ nativeEvent: { pageX: 200 + dx } }));
+    assert.equal(sent().filter(m => ['down', 'move', 'up', 'fill'].includes(m.type)).length, drawing, '넘기는 손가락은 그림을 그리지 않는다');
+  };
+  await swipe(-80);
+  assert.equal(at(), 2, '왼쪽으로 넘기면 다음 자세');
+  await swipe(80);
+  assert.equal(at(), 1, '오른쪽으로 넘기면 이전 자세');
+  await swipe(80);
+  assert.equal(at(), 1, '첫 자세에서 더 뒤로 가지 않는다(돌지 않는다)');
+  for (let i = 0; i < 9; i++) await swipe(-80);
+  assert.equal(at(), 8, '마지막 자세에서 더 앞으로 가지 않는다');
+  await press('기본 레퍼런스 다시 찾기');
+  assert.equal(byTestID('기본 레퍼런스 격자').length, 1, '다시 찾기로 격자가 돌아온다');
+  await press('참고');
+
   await act(async () => tree.unmount());
   console.log('PASS: convenience — 새 칸 한 장·옛 다중 장 저장본과 부분 움직임 참조 보존, 레이어 차례 앞으로/뒤로(양 끝 멈춤), 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 선 종류 실제 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, 색상환 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
   process.exit(0);

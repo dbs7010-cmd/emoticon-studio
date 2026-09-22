@@ -171,18 +171,13 @@ const saved = async (dirty = true) => {
   assert.deepEqual(lastCommand('zoom'), { type: 'zoom', zoom: 1 }, '누르면 캔버스가 100% 로 돌아간다');
   assert.equal(labelled('원래 크기로 보기').length, 0, '100% 로 돌아오면 표시가 사라진다');
 
-  // ── 44.2차 참고: 찾는 동안에는 4열 격자, 고르면 격자가 물러나고 캔버스가 넓어진다 ─────────────────────
+  // ── 44.2차 참고 ─────────────────────────────────────────────────────────────────────
+  //   기본 레퍼런스 32칸은 칸별 자료도 고르는 동작도 없어 제품 화면에서 감춰 뒀다.
+  //   격자·고르기·다시 찾기의 기존 동작은 ready 를 켠 자료로 convenience-test 8절이 그대로 검사한다.
   await press('참고');
-  await press('기본 레퍼런스');
-  const refGrid = () => tree.root.findAll(n => n.props.testID === '기본 레퍼런스 격자');
-  assert.equal(refGrid().length, 1, '참고 › 기본 레퍼런스: 탐색용 격자');
-  assert.ok(tree.root.findAll(n => n.props.testID === '기본 레퍼런스 자리').length >= 4, '격자에 칸이 있다');
-  await press('포즈 기본 레퍼런스 1 준비 중');
-  assert.equal(refGrid().length, 0, '고르면 큰 격자는 접힌다(캔버스에서 맞추는 단계)');
-  assert.equal(labelled('기본 레퍼런스 다시 찾기').length, 1, '다시 찾기로 언제든 격자를 연다');
-  await press('기본 레퍼런스 다시 찾기');
-  assert.equal(refGrid().length, 1, '다시 찾기를 누르면 같은 4열 격자가 돌아온다');
-  await press('내 사진');
+  assert.equal(labelled('기본 레퍼런스').length, 0, '준비 중인 기본 레퍼런스 갈래는 제품 화면에 없다');
+  assert.equal(tree.root.findAll(n => n.props.testID === '기본 레퍼런스 격자').length, 0, '준비 중인 격자도 없다');
+  assert.equal(labelled('참고 사진 추가').length, 1, '내 사진 참고는 그대로다');
   await press('참고');
 
   // ── 2. 잠금 밀도: 색 ─────────────────────────────────────────────────────────────────────
@@ -469,7 +464,8 @@ const saved = async (dirty = true) => {
   await press('안녕 · 손 크게 흔들기');
   // 45.19 에셋 삽입 뒤: 감정을 고르면 그 감정의 표현 목록이 먼저 펼쳐진다(확정된 흐름).
   assert.equal(tree.root.findAll(n => n.props.testID === '표현 예시 목록').length, 1, '감정을 고르면 표현 목록이 펼쳐진다');
-  await press('손 흔들며 참고하며 그리기');
+  await press('손 흔들며 고르기');
+  await press('참고 보기');
   assert.equal(tree.root.findAllByType('WebView').length, 1, '표현을 고르면 그리기 화면이 열린다');
   await ready();
   const guideLine = () => tree.root.findAll(n => n.type === 'Text' && [n.props.children].flat(9).filter(x => typeof x === 'string').join('').includes('손 크게 흔들기'));

@@ -137,7 +137,11 @@ async function ready() {
     await press('홈으로');
     await press('표현 가이드');
     assert.equal(byTestID('표현 가이드 카드').length, 1, '표현 가이드: 카드 격자');
-    assert.equal(byTestID('asset-slot-expressionGuideArtwork').length, 4, '카드마다 그림 자리(분류당 4)');
+    // 45.22: 감정 카드는 그 감정의 대표 예시 그림을 쓴다 — 스무 장이 같은 자리표시로 보이던 것을 없앴다.
+    const guideCards = byTestID('표현 가이드 카드')[0];
+    assert.equal(byTestID('asset-slot-expressionGuideArtwork').length, 0, '대표 그림이 있으니 자리표시가 남지 않는다');
+    assert.equal(guideCards.findAllByType('Image').length, 4, '카드마다 대표 그림(분류당 4)');
+    assert.equal(new Set(guideCards.findAllByType('Image').map(n => n.props.source)).size, 4, '네 카드가 서로 다른 대표 그림을 쓴다');
     await press('표현 가이드 화남·억울');
     assert.equal(tree.root.findAll(n => n.props.accessibilityLabel === '억울해 · 팔짱 + 몸 돌리기').length, 1, '분류를 바꾸면 그 분류의 표현 카드');
     assert.equal(tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).length, 0, '가이드 화면에 노랑 버튼 없음');
@@ -146,7 +150,8 @@ async function ready() {
     await press('억울해 · 팔짱 + 몸 돌리기');
     // 45.19 에셋 삽입 뒤: 감정을 고르면 그 감정의 표현 목록이 먼저 펼쳐지고, 표현을 골라야 그리기로 간다.
     assert.equal(byTestID('표현 예시 목록').length, 1, '감정을 고르면 표현 목록이 펼쳐진다');
-    await press('속상해서 참고하며 그리기');
+    await press('속상해서 고르기');
+    await press('참고 보기');
     assert.equal(tree.root.findAllByType('WebView').length, 1, '표현을 고르면 그리기 화면이 열린다');
     assert.equal(hintLine().length, 1, '고른 표현이 캔버스 위 한 줄 힌트로 따라온다');
     assert.equal(labelled('표현 힌트 닫기').length, 1, '힌트는 바로 닫을 수 있다');

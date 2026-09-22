@@ -53,11 +53,13 @@ const withSources = (on) => {
     source: on ? { uri: mark(name) } : null,
     ...(spec.sourceAfter !== undefined ? { sourceAfter: on ? { uri: mark(name) + '#after' } : null } : {}),
   }]));
-  const cards = slotSource.EXPRESSION_GUIDE.cards.map((card, index) => ({
-    ...card,
-    ...(on && index < 2 ? { artwork: { uri: mark('expressionGuideArtwork') + '#' + card.id } } : {}),
-  }));
-  const design = { ...slotSource, ASSET_SLOTS: slots, EXPRESSION_GUIDE: { ...slotSource.EXPRESSION_GUIDE, cards }, HOME_NOTICE: { ...slotSource.HOME_NOTICE, enabled: true, title: '공지', body: '한 줄' } };
+  // on: 앞의 두 카드에 카드 전용 그림을 건다(나머지는 대표 예시 그림으로 내려간다).
+  // off: 카드 그림도 예시 그림도 없는 상태 — 이때만 따뜻한 자리표시가 남는다.
+  const cards = slotSource.EXPRESSION_GUIDE.cards.map((card, index) => on
+    ? { ...card, ...(index < 2 ? { artwork: { uri: mark('expressionGuideArtwork') + '#' + card.id } } : {}) }
+    : { ...card, artwork: undefined, examples: undefined });
+  // 기본 레퍼런스는 제품 화면에서 감춰 뒀지만(미완성), 자리 계약은 ready 를 켠 자료로 계속 본다.
+  const design = { ...slotSource, ASSET_SLOTS: slots, EXPRESSION_GUIDE: { ...slotSource.EXPRESSION_GUIDE, cards }, BUILTIN_REFERENCES: { ...slotSource.BUILTIN_REFERENCES, ready: true }, HOME_NOTICE: { ...slotSource.HOME_NOTICE, enabled: true, title: '공지', body: '한 줄' } };
   return loader({ ...base, './src/design/asset-slots': design, '../design/asset-slots': design })('App.tsx').default;
 };
 
@@ -166,7 +168,7 @@ async function walk(App, { sourcesOn }) {
   const missing = SLOTS.filter(name => !on.seen.has(mark(name)));
   assert.deepEqual(missing, [], '자리의 source 를 넣으면 그 화면이 그 그림을 그린다');
   assert.equal(new Set(on.guideImages).size, 2, '서로 다른 두 표현 카드가 서로 다른 이미지를 그린다');
-  assert.ok(on.guide >= 2, '이미지가 없는 표현 카드는 기존 준비 중 자리표시를 유지한다');
+  assert.equal(on.guide, 0, '카드 전용 그림이 없어도 대표 예시 그림이 있으면 자리표시가 남지 않는다');
   assert.equal(on.guideLabels, 2, '이미지 연결 뒤에도 기존 카드 이름·힌트와 누르기 동작 입구가 유지된다');
   assert.ok(on.seen.has(mark('proFeatureArtwork') + '#after'), 'PRO 비교의 두 번째 장(sourceAfter)도 그려진다');
   assert.equal(on.poseArt, 1, '기본 레퍼런스 칸은 자리의 그림을 그린다');
