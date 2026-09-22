@@ -1007,7 +1007,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                 <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: C.muted }}>{title}</Text>
               </Pressable>)}
           </View>
-          <View style={{ flexDirection: 'row', gap: 6 }}>
+          <View style={{ flexDirection: 'row', gap: 6, paddingVertical: 2 }}>
             <Minor title="내 그림으로 보관" onPress={() => void keepCutout()} />
             <Minor title="새 레이어로 분리" onPress={() => send({ type: 'selectApply', toNewLayer: true })} />
           </View>
@@ -1172,21 +1172,26 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         <View testID="도구 줄" style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingTop: 6, gap: 6 }}>
           {(() => { const on = tool === 'pen', open = panel === 'brush';
             return <Pressable accessibilityRole="button" accessibilityLabel="브러시" accessibilityState={{ selected: on, expanded: on ? open : undefined }} onPress={() => selectTool('pen')}
-              style={({ pressed }) => ({ flex: 1.4, minHeight: C.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 6, borderRadius: 14, backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
+              style={({ pressed }) => ({ flex: 1.4, minHeight: C.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 6, borderRadius: 14,
+                borderWidth: 1, borderColor: open ? C.lineStrong : 'transparent',
+                backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
               <MaterialCommunityIcons name={brushIcon} size={20} color={on ? C.ink : C.muted} />
               <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{narrow ? '브러시' : brushTitle}</Text>
               {on && <MaterialCommunityIcons name={open ? 'chevron-down' : 'chevron-up'} size={14} color={C.muted} />}
             </Pressable>; })()}
           <Pressable accessibilityRole="button" accessibilityLabel="색" accessibilityState={{ expanded: panel === 'color' }}
             onPress={() => { ease(); setPanel(panel === 'color' ? null : 'color'); setDrawRail(false); setRefRail(false); setCaptionOpen(false); }}
-            style={({ pressed }) => ({ flex: 1.1, minHeight: C.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 6, borderRadius: 14, backgroundColor: panel === 'color' ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
+            style={({ pressed }) => ({ flex: 1.1, minHeight: C.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 6, borderRadius: 14,
+              borderWidth: 1, borderColor: panel === 'color' ? C.lineStrong : 'transparent',
+              backgroundColor: pressed ? C.fill : 'transparent' })}>
             <View style={{ width: 22, height: 22, borderRadius: 11, padding: 2, backgroundColor: C.paper, borderWidth: 1, borderColor: C.lineStrong }}>
               <View style={{ flex: 1, borderRadius: 9, backgroundColor: color }} />
             </View>
             <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: panel === 'color' ? '800' : '600', color: panel === 'color' ? C.ink : C.muted }}>색</Text>
+            <MaterialCommunityIcons name={panel === 'color' ? 'chevron-down' : 'chevron-up'} size={14} color={C.muted} />
           </Pressable>
           {/* 빠른 모드: 눌러서 모드만 바꾼다. 브러시·색보다 작고 조용하지만 숨기지 않는다. */}
-          <View testID="빠른 모드" style={{ flexDirection: 'row', alignItems: 'center', gap: narrow ? 6 : 2, paddingLeft: 2, borderLeftWidth: 1, borderColor: C.line }}>
+          <View testID="빠른 모드" style={{ flexDirection: 'row', alignItems: 'center', gap: narrow ? 6 : 2, paddingLeft: 2, paddingRight: narrow ? 3 : 1, borderLeftWidth: 1, borderColor: C.line }}>
             {/* 지우개·채우기는 그림만으로 뜻이 통해 이름을 떼고, '선택'은 아이콘만으로는 알기 어려워 짧은 이름을 남긴다(45.6차).
                 이름을 떼도 접근성 이름은 그대로라 스크린 리더와 자동 검사는 같은 말을 듣는다. */}
             {quickTools.map(([key, title, icon, showTitle]) => { const on = tool === key;
@@ -1489,11 +1494,10 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
         최근 쓴 색이 가장 먼저다 — 한 번 누르면 그 색으로 돌아가 바로 그린다. 예전에는 따로 한 줄을 차지해 패널이 캔버스를
         더 가리고 팔레트 마지막 줄이 도구 줄 경계에서 잘렸다(43차 실기기). 직접 선택에서는 이 자리에 색 값이 보인다. */}
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48 }}>
-      <View style={{ width: 30, height: 30, borderRadius: 15, padding: 3, backgroundColor: T.paper, borderWidth: 1, borderColor: T.lineStrong }}>
-        <View style={{ flex: 1, borderRadius: 12, backgroundColor: color }} />
-      </View>
+      {view === 'palette' && <Text style={{ fontSize: 12, fontWeight: '700', color: T.muted }}>최근</Text>}
+      {view === 'palette' && !recent.length && <Text style={{ flex: 1, fontSize: 12, color: T.faint }}>아직 쓴 색이 없어요</Text>}
       {view === 'palette' && recent.length
-        ? <ScrollView testID="최근 색" horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center', gap: 12, paddingHorizontal: 2 }}>
+        ? <ScrollView testID="최근 색" horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center', gap: 12, paddingHorizontal: 6, paddingVertical: 6 }}>
             {recent.slice(0, 7).map(c => <Swatch round key={'r' + c} label={'최근 색 ' + c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
           </ScrollView>
         : view === 'custom'
@@ -1504,10 +1508,15 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
           : <Text accessibilityLabel="지금 색 값" style={{ flex: 1, fontSize: 13, fontWeight: '600', color: T.muted, letterSpacing: .4 }}>{color.toUpperCase()}</Text>}
       {/* 누르면 예전처럼 캔버스를 눌러 집고, 누른 채 캔버스로 끌면 끌리는 자리 색을 바로 집는다(45.4차). */}
       <View {...eyedropHandlers} accessibilityRole="button" accessibilityLabel="스포이드" accessibilityHint="누른 채 그림 위로 끌면 그 자리 색을 집어요"
-        style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}>
-        <MaterialCommunityIcons name="eyedropper-variant" size={20} color={T.ink} />
+        style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+        <MaterialCommunityIcons name="eyedropper-variant" size={19} color={T.ink} />
+        <Text style={{ fontSize: 9, fontWeight: '600', color: T.muted }}>집기</Text>
       </View>
-      <IconButton label={kept ? '내 팔레트에 있음' : '내 팔레트에 저장'} icon={kept ? 'check' : 'palette-swatch-outline'} size={20} color={kept ? T.success : T.ink} disabled={kept} onPress={() => onSave(color)} />
+      <Pressable accessibilityRole="button" accessibilityLabel={kept ? '내 팔레트에 있음' : '내 팔레트에 저장'} disabled={kept} onPress={() => onSave(color)}
+        style={({ pressed }) => ({ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: 12, backgroundColor: pressed ? T.fill : 'transparent' })}>
+        <MaterialCommunityIcons name={kept ? 'check' : 'palette-swatch-outline'} size={19} color={kept ? T.success : T.ink} />
+        <Text style={{ fontSize: 9, fontWeight: '600', color: kept ? T.success : T.muted }}>{kept ? '있음' : '담기'}</Text>
+      </Pressable>
       <IconButton label="팔레트 닫기" icon="chevron-down" color={T.muted} onPress={onClose} />
     </View>
     <Segmented dense value={view} onChange={onView} items={[{ key: 'palette', label: '팔레트' }, { key: 'custom', label: '직접 선택' }]} />
@@ -1519,7 +1528,7 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
             <Text style={{ fontSize: 11, fontWeight: '800', color: T.muted }}>{tidy ? '끝' : '정리'}</Text>
           </Pressable>}
         </View>
-        {saved.length ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+        {saved.length ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 6, margin: -6 }}>
           {saved.map(c => tidy
             ? <Pressable key={'u' + c} accessibilityRole="button" accessibilityLabel={'내 팔레트 ' + c + ' 지우기'} onPress={() => onForget(c)} hitSlop={6}
                 style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: c, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#00000033' }}>
@@ -1528,8 +1537,11 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
             : <Swatch key={'u' + c} label={'내 팔레트 ' + c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
         </View> : null}
       </View>}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-        {swatches.map(c => <Swatch key={c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
+      <View style={{ gap: 4 }}>
+        <Text style={{ fontSize: 11, fontWeight: '700', color: T.muted }}>기본 색</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 6, margin: -6 }}>
+          {swatches.map(c => <Swatch key={c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
+        </View>
       </View>
     </> : <>
       {/* 직접 선택(45.4차): 색상환 하나로 계열·진하기를, 옆 막대로 밝기·투명도를. 한 화면에 다 들어와 스크롤이 필요 없다. */}

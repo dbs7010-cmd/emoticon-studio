@@ -3,7 +3,7 @@
 // **실기기 캡처도 아니다** — 아래 '이 그림의 한계'를 읽어라.
 const fs = require('node:fs');
 const path = require('node:path');
-const { walk, SCREENS, viewport } = require('./_harness.cjs');
+const { walk, SCREENS, viewport, deviceArt } = require('./_harness.cjs');
 
 const OUT = 'verification/round45_23/screens';
 const WIDTH = 390, HEIGHT = 844;
@@ -39,6 +39,39 @@ const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(
 // ── 노드 → HTML ──────────────────────────────────────────────────────────────────────────
 const BOX = new Set(['View', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'SafeAreaView', 'SafeAreaProvider', 'Modal', 'Host']);
 let modals = [];
+const assets = { ok: 0, missing: [] };
+// 정적 require → screens/assets/ 로 복사한 뒤 상대 경로로 가리킨다. HTML 을 그대로 열어도, 서버로 띄워도 보인다.
+const copied = new Map();
+function assetSrc(source) {
+  const one = Array.isArray(source) ? source[0] : source;
+  if (!one) return null;
+  if (typeof one === 'string') return one.startsWith('data:') ? one : null;
+  if (one.uri) {
+    const uri = String(one.uri);
+    if (uri.startsWith('data:')) return uri;
+    // 기기에 저장된 작품. 이 검토에서는 실제 파일을 하나 넣어 두었으므로 그것을 가리킨다.
+    const real = deviceArt[uri.split('/').pop()];
+    return real ? copy(real) : null;
+  }
+  return one.__asset ? copy(one.__asset) : null;
+}
+function copy(file) {
+  if (!file || !fs.existsSync(file)) return null;
+  if (!copied.has(file)) {
+    const name = path.basename(file);
+    fs.mkdirSync(path.join(OUT, 'assets'), { recursive: true });
+    fs.copyFileSync(file, path.join(OUT, 'assets', name));
+    copied.set(file, 'assets/' + name);
+  }
+  return copied.get(file);
+}
+function describeSource(source) {
+  const one = Array.isArray(source) ? source[0] : source;
+  if (!one) return '그림 없음';
+  if (one.uri) return '기기에 저장된 그림 (' + String(one.uri).split('/').pop() + ')';
+  if (one.__asset) return '번들 파일을 찾지 못함: ' + path.basename(one.__asset);
+  return '알 수 없는 원본';
+}
 function render(node, flat) {
   if (node === null || node === undefined || node === false) return '';
   if (Array.isArray(node)) return node.map(c => render(c, flat)).join('');
@@ -48,6 +81,10 @@ function render(node, flat) {
   if (typeof type !== 'string') return kids();           // 합성 컴포넌트는 자식만 본다
   const style = flat(typeof p.style === 'function' ? p.style({ pressed: false }) : p.style);
   const title = p.accessibilityLabel ? ` title="${esc(p.accessibilityLabel)}"` : '';
+  const slop = typeof p.hitSlop === 'number' ? { top: p.hitSlop, bottom: p.hitSlop, left: p.hitSlop, right: p.hitSlop }
+    : p.hitSlop ? { top: 0, bottom: 0, left: 0, right: 0, ...p.hitSlop } : null;
+  const press = typeof p.onPress === 'function'
+    ? ` data-press="1"${slop ? ` data-slop="${slop.top},${slop.right},${slop.bottom},${slop.left}"` : ''}` : '';
 
   if (type === 'Text') {
     const s = css({ fontFamily: null, ...style });
@@ -58,15 +95,25 @@ function render(node, flat) {
     return `<i class="mdi mdi-${esc(p.name)}" style="font-size:${size}px;line-height:${size}px;color:${p.color ?? 'currentColor'};flex-shrink:0"></i>`;
   }
   if (type === 'Image') {
-    // 그림 자체는 이 렌더에 없다(번들 에셋·기기 파일). 자리와 크기만 정직하게 표시한다.
-    return `<div class="img" style="${css(style)}"${title}><span>그림</span></div>`;
+    // 번들에 들어가는 정적 require 는 실제 파일로 풀어 그대로 보여 준다(load-ts 가 경로를 남긴다).
+    // 기기에만 있는 파일(작품 썸네일 등)은 이 렌더에 존재하지 않으므로 그 사실을 적는다.
+    const src = assetSrc(p.source);
+    const fit = style.resizeMode === 'cover' ? 'cover' : 'contain';
+    if (src) { assets.ok++; return `<img class="real" src="${src}" style="${css(style)};object-fit:${fit}"${title} alt="${esc(p.accessibilityLabel ?? '')}">`; }
+    assets.missing.push(describeSource(p.source));
+    return `<div class="img none" style="${css(style)}"${title}><span>이 렌더에 없는 그림<br><small>${esc(describeSource(p.source))}</small></span></div>`;
   }
   if (type === 'TextInput') {
     const shown = p.value || p.placeholder || '';
     return `<div class="input" style="${css(style)}"${title}>${esc(shown)}</div>`;
   }
   if (type === 'WebView') {
-    return `<div class="canvas"><span>그리기 캔버스<br><small>실제 그림은 기기의 WebView 가 그린다</small></span></div>`;
+    // 캔버스 안은 기존 엔진(canvas-html.ts)에 앱과 같은 init → save 를 보내 받은 합성 PNG 다.
+    // 따로 그린 가짜가 아니다. 바탕(투명 바둑판·정사각 면)은 엔진 자신의 CSS 를 옮겼다.
+    const shot = fs.existsSync(path.join(OUT, 'assets', 'canvas-sample.png')) ? 'assets/canvas-sample.png' : null;
+    return shot
+      ? `<div class="canvas"><div class="surface"><img src="${shot}" alt="엔진이 그린 시험 그림"></div></div>`
+      : `<div class="canvas nofile"><span>엔진 시험 그림이 없다<br><small>scripts/_canvas.cjs 를 먼저 돌린다</small></span></div>`;
   }
   if (type === 'Slider') return `<div class="slider"></div>`;
   if (type === 'StatusBar') return '';
@@ -80,7 +127,7 @@ function render(node, flat) {
     const content = { ...(p.horizontal ? { flexDirection: 'row' } : {}), ...flat(p.contentContainerStyle) };
     const inner = type === 'ScrollView'
       ? `<div class="box" style="${css(content)}">${kids()}</div>` : kids();
-    return `<div class="${cls}" style="${css(style)}"${title}>${inner}</div>`;
+    return `<div class="${cls}" style="${css(style)}"${title}${press}>${inner}</div>`;
   }
   return `<div class="box" style="${css(style)}"${title}>${kids()}</div>`;
 }
@@ -98,10 +145,16 @@ const PAGE = (id, title, body) => `<!doctype html>
   .box { display:flex; box-sizing:border-box; }
   .scroll { overflow:visible; }
   .t { display:inline; box-sizing:border-box; white-space:pre-wrap; word-break:keep-all; }
-  .img { display:flex; align-items:center; justify-content:center; background:#EFF1F5; color:#8B93A0; font-size:10px; box-sizing:border-box; }
+  .img { display:flex; align-items:center; justify-content:center; text-align:center; background:#EFF1F5; color:#8B93A0; font-size:9px; line-height:1.3; box-sizing:border-box; }
+  .img.none { background:repeating-linear-gradient(45deg,#F6E6E6 0 6px,#EFF1F5 6px 12px); color:#B42318; }
+  img.real { display:block; box-sizing:border-box; }
   .input { display:flex; align-items:center; color:#17191D; box-sizing:border-box; }
-  .canvas { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; color:#8B93A0; font-size:12px; line-height:1.6;
-            background:repeating-conic-gradient(#F2F3F6 0% 25%, #FFFFFF 0% 50%) 50%/16px 16px; }
+  /* 엔진 자신의 바탕: 바깥은 #F4F4F5, 정사각 그림 면은 흰색 + 투명 바둑판(28px). canvas-html.ts 에서 옮겼다. */
+  .canvas { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; color:#8B93A0; font-size:12px; line-height:1.6; background:#F4F4F5; }
+  .canvas .surface { aspect-ratio:1; max-width:100%; max-height:100%; height:100%; background-color:#FFFFFF;
+    background-image:conic-gradient(#F1F1F3 25%, transparent 0 50%, #F1F1F3 0 75%, transparent 0); background-size:28px 28px; }
+  .canvas .surface img { width:100%; height:100%; display:block; object-fit:contain; }
+  .canvas.nofile { background:repeating-linear-gradient(45deg,#F6E6E6 0 6px,#EFF1F5 6px 12px); color:#B42318; }
   .slider { height:4px; background:#CBD0DA; border-radius:2px; align-self:stretch; }
   .modal { position:absolute; inset:0; display:flex; flex-direction:column; z-index:50; }
 </style></head>
@@ -116,13 +169,13 @@ const PAGE = (id, title, body) => `<!doctype html>
   fs.mkdirSync(OUT, { recursive: true });
   const made = [];
   await walk(WIDTH, async (id, title, tree, flat) => {
-    modals = [];
+    modals = []; assets.ok = 0; assets.missing = [];
     const main = render(tree.toJSON(), flat);
     const body = main + modals.map(m => `<div class="modal">${m}</div>`).join('');
     const file = path.join(OUT, id + '.html');
     fs.writeFileSync(file, PAGE(id, title, body));
-    made.push({ id, title, file: id + '.html', bytes: fs.statSync(file).size });
-    console.log('  ' + id.padEnd(16) + title);
+    made.push({ id, title, file: id + '.html', bytes: fs.statSync(file).size, realImages: assets.ok, missingImages: assets.missing.slice() });
+    console.log('  ' + id.padEnd(16) + ('실제 그림 ' + assets.ok + '장').padEnd(14) + (assets.missing.length ? '· 이 렌더에 없는 그림 ' + assets.missing.length + '장' : '') + '  ' + title);
   });
   // 비교용 목록: 한 줄에 하나씩, 열어 볼 링크와 함께.
   const index = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>임티제작소 화면 목록 · 390dp</title>

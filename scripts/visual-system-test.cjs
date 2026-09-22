@@ -182,9 +182,22 @@ async function ready() {
   // ── 5. 그리기: 선 종류는 세그먼트 하나 · 도구는 테두리 박스가 아니다 ───────────────────────────
   await act(async () => tree.root.findAll(n => n.props.testID === 'slot-3')[0].props.onPress());
   await ready();
-  for (const label of ['브러시', '지우개', '채우기', '선택', '색']) assert.equal(flat(labelled(label)[0].props.style).borderWidth ?? 0, 0, label + ' 도구에 카드 테두리가 없다');
+  // 쉬고 있는 도구에는 보이는 테두리가 없다(테두리 1px 은 자리만 잡아 두고 색이 투명이라 보이지 않는다 — 상태가 바뀌어도 칸이 움직이지 않게).
+  const seen = st => (st.borderWidth ?? 0) === 0 || st.borderColor === 'transparent' ? 0 : st.borderWidth;
+  for (const label of ['브러시', '지우개', '채우기', '선택', '색']) assert.equal(seen(flat(labelled(label)[0].props.style)), 0, label + ' 도구에 카드 테두리가 없다');
   assert.equal(flat(labelled('브러시')[0].props.style).backgroundColor, T.accentSoft, '고른 도구만 옅은 노랑 표면');
   assert.equal(flat(labelled('지우개')[0].props.style).backgroundColor, 'transparent', '고르지 않은 도구는 투명');
+  // 노랑은 '지금 그리는 도구' 하나만 쓴다. 열린 보조 패널은 테두리와 펼침 화살표로 말한다.
+  assert.equal(flat(labelled('색')[0].props.style).backgroundColor, 'transparent', '색은 도구가 아니라 패널 입구 — 노랑을 쓰지 않는다');
+  await press('색');
+  assert.equal(flat(labelled('색')[0].props.style).backgroundColor, 'transparent', '색 패널을 열어도 노랑이 되지 않는다');
+  assert.ok(seen(flat(labelled('색')[0].props.style)) > 0, '열린 패널은 테두리로 말한다');
+  assert.equal(flat(labelled('브러시')[0].props.style).backgroundColor, T.accentSoft, '색을 열어도 활성 도구(펜)는 그대로 노랑');
+  const yellowTools = ['브러시', '지우개', '채우기', '선택', '색'].filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accentSoft);
+  assert.deepEqual(yellowTools, ['브러시'], '도구 줄의 노랑은 한 곳뿐: ' + JSON.stringify(yellowTools));
+  await press('지우개');
+  assert.deepEqual(['브러시', '지우개', '채우기', '선택', '색'].filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accentSoft), ['지우개'], '지우개로 바꾸면 노랑도 하나만 따라 옮긴다');
+  await press('브러시');
   assert.equal(flat(labelled('되돌리기')[0].props.style).backgroundColor, 'transparent', '되돌리기는 도구처럼 보이지 않는 조용한 아이콘');
   await press('브러시');
   const seg = tree.root.findAll(n => n.type === 'View' && n.props.testID === '선 종류')[0];

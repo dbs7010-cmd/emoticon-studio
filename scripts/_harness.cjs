@@ -1,6 +1,10 @@
 // 대체 렌더 공용 장치. 실제 App 을 react-test-renderer 로 그리고, 명세가 말하는 화면들을 차례로 연다.
 // **실기기 캡처가 아니다** — 네이티브·WebView 는 흉내이고, 픽셀·글꼴·손가락 판정은 기기가 한다.
 // 쓰는 쪽: const { walk } = require('./_harness.cjs'); walk(390, (id, title, tree, flat) => { ... });
+const fsNode = require('node:fs');
+const pathNode = require('node:path');
+// 칸 그림으로 쓸 실제 파일. 이미 저장소에 있는 표현 가이드 그림을 빌려 쓴다(새로 그리지 않는다).
+const SLOT_ART = pathNode.resolve(__dirname, '..', 'assets', 'expression-guides', 'greeting-thanks-polite.png');
 const React = require('react');
 const { create, act } = require('react-test-renderer');
 const { loader } = require('./load-ts.cjs');
@@ -148,7 +152,7 @@ function seed(count) {
   second.updatedAt = '2026-09-01T00:00:00.000Z';
   // 검수용 PRO 를 켜 둔다 — 결제 없이 PRO 화면(부분 움직임)까지 그려 보기 위해서다. 구매가 아니다.
   // 칸이 가리키는 그림 파일을 실제로 둔다 — 없으면 내보내기가 '파일을 찾을 수 없어요'에서 멈춘다.
-  files.set('document/emoticon-studio/a.png', png);
+  files.set('document/emoticon-studio/a.png', fsNode.readFileSync(SLOT_ART));
   saveStore({ version: 1, revision: 1, projects: count === 0 ? [] : count === 1 ? [p] : [p, second], palette: ['#54A9E8', '#E94F4F'], reviewUnlock: true });
 }
 
@@ -162,4 +166,4 @@ async function walk(width, cb) {
   await unmount();
 }
 
-module.exports = { alerts, closePainter, debugFiles: () => [...files.keys()].map(k => [k, String(files.get(k))]), walk, SCREENS, flat, viewport, press, tap, fresh, unmount, ready, seed, get tree() { return tree; } };
+module.exports = { deviceArt: { 'a.png': SLOT_ART }, alerts, closePainter, debugFiles: () => [...files.keys()].map(k => [k, String(files.get(k))]), walk, SCREENS, flat, viewport, press, tap, fresh, unmount, ready, seed, get tree() { return tree; } };

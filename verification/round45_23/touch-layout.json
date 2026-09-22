@@ -1,0 +1,452 @@
+[
+  {
+    "id": "guide-emotions",
+    "name": "표현 가이드 기쁨·인사",
+    "why": "고침: 위아래 hitSlop 4",
+    "boxW": 79.4,
+    "boxH": 40,
+    "slop": {
+      "top": 4,
+      "right": 0,
+      "bottom": 4,
+      "left": 0
+    },
+    "tapW": 79.4,
+    "tapH": 48,
+    "clipW": 79.4,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-color",
+    "name": "팔레트",
+    "why": "고침: 세그먼트 위아래 hitSlop 4",
+    "boxW": 176,
+    "boxH": 40,
+    "slop": {
+      "top": 4,
+      "right": 0,
+      "bottom": 4,
+      "left": 0
+    },
+    "tapW": 176,
+    "tapH": 48,
+    "clipW": 176,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-color",
+    "name": "직접 선택",
+    "why": "고침: 세그먼트 위아래 hitSlop 4",
+    "boxW": 176,
+    "boxH": 40,
+    "slop": {
+      "top": 4,
+      "right": 0,
+      "bottom": 4,
+      "left": 0
+    },
+    "tapW": 176,
+    "tapH": 48,
+    "clipW": 176,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-color",
+    "name": "색 #54A9E8",
+    "why": "고침: 견본 36dp · 간격 12",
+    "boxW": 36,
+    "boxH": 36,
+    "slop": {
+      "top": 6,
+      "right": 6,
+      "bottom": 6,
+      "left": 6
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-color",
+    "name": "스포이드",
+    "why": "이번 라운드: 라벨 추가",
+    "boxW": 48,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-color",
+    "name": "내 팔레트에 저장",
+    "why": "이번 라운드: 라벨 추가 · IconButton → Pressable",
+    "boxW": 48,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-color",
+    "name": "색",
+    "why": "이번 라운드: 노랑 → 테두리",
+    "boxW": 96.9,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 96.9,
+    "tapH": 48,
+    "clipW": 96.9,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-color",
+    "name": "팔레트 닫기",
+    "why": "고침 대상 옆자리 확인",
+    "boxW": 48,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-brush",
+    "name": "브러시 닫기",
+    "why": "고침: hitSlop 2",
+    "boxW": 44,
+    "boxH": 44,
+    "slop": {
+      "top": 2,
+      "right": 2,
+      "bottom": 2,
+      "left": 2
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-brush",
+    "name": "세부 설정",
+    "why": "고침: 위아래 hitSlop 2",
+    "boxW": 358,
+    "boxH": 44,
+    "slop": {
+      "top": 2,
+      "right": 0,
+      "bottom": 2,
+      "left": 0
+    },
+    "tapW": 358,
+    "tapH": 48,
+    "clipW": 358,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-brush",
+    "name": "패널 닫고 그리기로",
+    "why": "미지정 7건",
+    "boxW": 390,
+    "boxH": 629,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 390,
+    "tapH": 629,
+    "clipW": 390,
+    "clipH": 629,
+    "overlaps": []
+  },
+  {
+    "id": "draw-reference",
+    "name": "참고 닫기",
+    "why": "고침: hitSlop 2",
+    "boxW": 44,
+    "boxH": 44,
+    "slop": {
+      "top": 2,
+      "right": 2,
+      "bottom": 2,
+      "left": 2
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-layers",
+    "name": "레이어 닫기",
+    "why": "고침: hitSlop 2",
+    "boxW": 44,
+    "boxH": 44,
+    "slop": {
+      "top": 2,
+      "right": 2,
+      "bottom": 2,
+      "left": 2
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-selection",
+    "name": "내 그림으로 보관",
+    "why": "고침: 위아래 hitSlop 2",
+    "boxW": 184,
+    "boxH": 44,
+    "slop": {
+      "top": 2,
+      "right": 0,
+      "bottom": 2,
+      "left": 0
+    },
+    "tapW": 184,
+    "tapH": 48,
+    "clipW": 184,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-selection",
+    "name": "새 레이어로 분리",
+    "why": "고침: 위아래 hitSlop 2",
+    "boxW": 184,
+    "boxH": 44,
+    "slop": {
+      "top": 2,
+      "right": 0,
+      "bottom": 2,
+      "left": 0
+    },
+    "tapW": 184,
+    "tapH": 48,
+    "clipW": 184,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-base",
+    "name": "지우개",
+    "why": "고침: 좌우 hitSlop 1",
+    "boxW": 46,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 1,
+      "bottom": 0,
+      "left": 1
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-base",
+    "name": "채우기",
+    "why": "고침: 좌우 hitSlop 1",
+    "boxW": 46,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 1,
+      "bottom": 0,
+      "left": 1
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-base",
+    "name": "선택",
+    "why": "고침: 좌우 hitSlop 1",
+    "boxW": 46,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 1,
+      "bottom": 0,
+      "left": 1
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "home-work",
+    "name": "검토 세트 이어서 만들기",
+    "why": "고침: 위아래 hitSlop 2",
+    "boxW": 109.4,
+    "boxH": 44,
+    "slop": {
+      "top": 2,
+      "right": 0,
+      "bottom": 2,
+      "left": 0
+    },
+    "tapW": 109.4,
+    "tapH": 48,
+    "clipW": 109.4,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "home-work",
+    "name": "검토 세트",
+    "why": "미지정 7건",
+    "boxW": 358,
+    "boxH": 235,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 358,
+    "tapH": 235,
+    "clipW": 358,
+    "clipH": 235,
+    "overlaps": []
+  },
+  {
+    "id": "home-empty",
+    "name": "안녕 표현 보기",
+    "why": "미지정 7건",
+    "boxW": 114,
+    "boxH": 114,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 114,
+    "tapH": 114,
+    "clipW": 114,
+    "clipH": 114,
+    "overlaps": []
+  },
+  {
+    "id": "home-empty",
+    "name": "신나 표현 보기",
+    "why": "미지정 7건",
+    "boxW": 114,
+    "boxH": 114,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 114,
+    "tapH": 114,
+    "clipW": 114,
+    "clipH": 114,
+    "overlaps": []
+  },
+  {
+    "id": "home-empty",
+    "name": "잘 자 표현 보기",
+    "why": "미지정 7건",
+    "boxW": 114,
+    "boxH": 114,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 114,
+    "tapH": 114,
+    "clipW": 114,
+    "clipH": 114,
+    "overlaps": []
+  },
+  {
+    "id": "pro",
+    "name": "월간 고르기",
+    "why": "미지정 7건",
+    "boxW": 175,
+    "boxH": 92,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 175,
+    "tapH": 92,
+    "clipW": 175,
+    "clipH": 92,
+    "overlaps": []
+  },
+  {
+    "id": "pro",
+    "name": "연간 고르기",
+    "why": "미지정 7건",
+    "boxW": 175,
+    "boxH": 92,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 175,
+    "tapH": 92,
+    "clipW": 175,
+    "clipH": 92,
+    "overlaps": []
+  }
+]

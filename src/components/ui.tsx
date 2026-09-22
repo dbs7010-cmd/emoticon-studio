@@ -118,7 +118,8 @@ export function IconButton({ label, icon, onPress, disabled, size = 22, color = 
 // 세 개의 독립 카드처럼 보이면 안 된다.
 export type SegmentItem<K extends string> = { key: K; label: string; icon?: IconName; image?: number; a11y?: string };
 export function Segmented<K extends string>({ items, value, onChange, testID, dense }: { items: SegmentItem<K>[]; value: K | null; onChange: (key: K) => void; testID?: string; dense?: boolean }) {
-  return <View testID={testID} style={{ flexDirection: 'row', padding: 3, borderRadius: 14, backgroundColor: T.surface2 }}>
+  // 칸의 위아래 hitSlop 이 이 상자 밖으로 나가면 안드로이드가 잘라낸다. 그만큼 안쪽 여백을 둔다.
+  return <View testID={testID} style={{ flexDirection: 'row', paddingHorizontal: 3, paddingVertical: dense ? 4 : 2, borderRadius: 14, backgroundColor: T.surface2 }}>
     {items.map(item => { const on = item.key === value;
       return <Pressable key={item.key} accessibilityRole="button" accessibilityLabel={item.a11y ?? item.label} accessibilityState={{ selected: on }} onPress={() => onChange(item.key)}
         hitSlop={{ top: dense ? 4 : 2, bottom: dense ? 4 : 2 }}
