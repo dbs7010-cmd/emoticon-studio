@@ -54,6 +54,8 @@ function Studio() {
   const [projectId, setProjectId] = useState<string | null>(null), [slotNumber, setSlotNumber] = useState<number | null>(null), [canonOpen, setCanonOpen] = useState(false), [painting, setPainting] = useState(false);
   const [busy, setBusy] = useState('');
   const [menu, setMenu] = useState(false);
+  // 명세 H03: 새 세트는 이름을 확인하고 만든다. 이 값이 있는 동안에도 저장소는 그대로다 — '만들기'를 눌러야 세트가 생긴다.
+  const [newSetName, setNewSetName] = useState<string | null>(null);
   const [manageId, setManageId] = useState<string | null>(null), [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [screen, setScreen] = useState<'board' | 'export' | 'batch' | 'extras'>('board');
   const [batchSource, setBatchSource] = useState<number | null>(null), [batchPicked, setBatchPicked] = useState<number[]>([]);
@@ -273,15 +275,21 @@ function Studio() {
     return { layers, caption: source.work.caption };
   }
 
-  function createNewProject() {
+  // 겹치지 않는 기본 이름. 예전부터 쓰던 규칙 그대로다.
+  function defaultSetName() {
     const taken = new Set((current.current?.projects ?? []).map(p => p.projectName));
     let name = '새 이모티콘 세트';
     for (let n = 2; taken.has(name); n++) name = `새 이모티콘 세트 ${n}`;
-    const p = createProject(name, '');
-    // Nothing is asked for first: the new set opens on its own empty canvas.
-    try { commit(s => ({ ...s, projects: [...s.projects, p] })); setProjectId(p.id); setScreen('board'); setSlotNumber(1); setPainting(true); }
+    return name;
+  }
+  // 실제로 세트를 만들어 1번 칸을 연다. 저장 의미는 예전과 같다(칸 수·기본값 불변).
+  function createProjectNow(name: string) {
+    const p = createProject(name.trim() || defaultSetName(), '');
+    try { commit(s => ({ ...s, projects: [...s.projects, p] })); setNewSetName(null); setProjectId(p.id); setScreen('board'); setSlotNumber(1); setPainting(true); }
     catch (e) { Alert.alert('세트를 만들지 못했어요', userMessage(e)); }
   }
+  // 명세 H03: 먼저 이름을 보여 주고 확인을 받는다. 여기서 되돌아가도 빈 세트가 남지 않는다.
+  function createNewProject() { setNewSetName(defaultSetName()); }
   // 표현 가이드에서 고른 표현으로 바로 그리러 간다. 새 흐름을 만들지 않고, 이어서 만들기·새 세트 만들기와 같은 길을 쓴다(44.2차).
   // 예시를 함께 고른 경우에도 새 흐름을 만들지 않는다 — 대상 칸을 정하는 길은 예전 그대로다(44.2차).
   function startFromGuide(card: { name: string; hint: string }, example?: ExpressionExample, mode?: 'watch' | 'underlay') {
@@ -293,7 +301,7 @@ function Studio() {
     setGuideCard(null);
     setHomeView('home');
     const target = sortedProjects[0];
-    if (!target) { createNewProject(); return; }
+    if (!target) { createProjectNow(defaultSetName()); return; }
     const open = nextUnfinished(target, target.lastSlot ?? 0);
     setProjectId(target.id); setScreen('board');
     // 칸이 다 찬 세트에서는 완성한 칸을 대신 열지 않는다 — 보드를 보여 주고 고를 사람에게 맡긴다(45.1차).
@@ -306,10 +314,7 @@ function Studio() {
       const picked = await pickImages();
       if (!picked[0]) return;
       const data = await dataUrl(picked[0]);
-      const taken = new Set((current.current?.projects ?? []).map(p => p.projectName));
-      let name = '새 이모티콘 세트';
-      for (let n = 2; taken.has(name); n++) name = `새 이모티콘 세트 ${n}`;
-      const p = createProject(name, '');
+      const p = createProject(defaultSetName(), '');
       commit(s => ({ ...s, projects: [...s.projects, p] }));
       setPendingImport(data); setProjectId(p.id); setScreen('board'); setSlotNumber(1); setPainting(true);
     });
@@ -1240,6 +1245,12 @@ function Studio() {
       })()}
     </KeyboardAvoidingView>
 
+    {newSetName !== null && <Dialog title="새 이모티콘 세트" onClose={() => setNewSetName(null)}>
+      <Text style={styles.muted}>이름을 정하면 {SPEC.count}칸짜리 빈 세트를 만들어요. 이름은 나중에도 바꿀 수 있어요.</Text>
+      <Field label="세트 이름" value={newSetName} onChangeText={setNewSetName} multiline={false} />
+      <Action primary icon="plus" title="만들기" onPress={() => createProjectNow(newSetName)} />
+      <Action title="취소" onPress={() => setNewSetName(null)} />
+    </Dialog>}
     {managed && !pendingDelete && <Dialog title="세트 관리" onClose={() => setManageId(null)}>
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{managed.projectName}</Text>
       <Text style={styles.muted}>{doneCount(managed)} / {managed.slots.length} 완성</Text>

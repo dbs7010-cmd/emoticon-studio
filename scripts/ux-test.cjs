@@ -113,9 +113,19 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  assert.equal(labelled('내 그림으로 시작').length,1,'and a way to start from a picture');
  assert.ok(!shown().some(t=>t.includes('멈춰있는 이모티콘')&&t.includes('360')),'홈이 모든 세트를 정지형 32칸이라고 말하지 않는다');
 
+ // 명세 H03: 이름을 한 번 확인하고 만든다. 확인 전에는 세트가 생기지 않는다.
+ const setsBefore=loadStore().store.projects.length;
  await press('새 이모티콘 만들기');
- assert.equal(tree.root.findAll(n=>n.type==='TextInput').length,0,'a new set asks for nothing before it opens');
- assert.equal(tree.root.findAllByType('WebView').length,1,'one tap lands on an empty canvas, not on a board');
+ assert.equal(loadStore().store.projects.length,setsBefore,'묻는 동안에는 빈 세트가 생기지 않는다');
+ const nameBox=tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='세트 이름');
+ assert.equal(nameBox.length,1,'이름 한 줄만 묻는다');
+ assert.ok(/^새 이모티콘 세트/.test(nameBox[0].props.value),'기본 이름이 이미 적혀 있다');
+ await press('취소');
+ assert.equal(loadStore().store.projects.length,setsBefore,'되돌아가도 빈 세트가 남지 않는다');
+ await press('새 이모티콘 만들기');
+ await press('만들기');
+ assert.equal(loadStore().store.projects.length,setsBefore+1,'만들기를 눌렀을 때 하나만 생긴다');
+ assert.equal(tree.root.findAllByType('WebView').length,1,'만들면 바로 빈 캔버스로 간다');
  assert.equal(fresh().projectName,'새 이모티콘 세트','and the set names itself');
  assert.equal(fresh().canon.image,undefined,'with no reference picture required');
  assert.equal(fresh().slots.filter(s=>s.finalImage).length,0,'and nothing drawn yet');
@@ -1031,7 +1041,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  for(const width of [320,360,390,412]){
   viewport.width=width;
   await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
-  await press('새 이모티콘 만들기');await init();
+  await press('새 이모티콘 만들기');await press('만들기');await init();
   // The three brush options share one row; width and smoothing belong to that panel.
   assert.equal(labelled('선 보정').length,0,'기본 화면에는 독립 선 보정 줄이 없다');
   assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='선 종류').length,0,'선 종류 카드는 기본 화면에서 접혀 있다 at '+width+'dp');

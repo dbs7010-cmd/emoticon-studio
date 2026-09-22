@@ -107,6 +107,7 @@ const saved = async (dirty = true) => {
   const noPaywall = where => assert.equal(labelled('PRO 닫기').length, 0, 'FREE 핵심 흐름에 결제 화면이 끼어들지 않는다: ' + where);
   collect();
   await press('새 이모티콘 만들기');
+  await press('만들기');
   await ready();
   collect();
 
