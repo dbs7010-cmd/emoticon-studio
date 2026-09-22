@@ -676,6 +676,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
         </Pressable>}
     <Pressable accessibilityRole="button" accessibilityLabel="세부 설정" accessibilityState={{ expanded: brushDetail }} onPress={() => { ease(); setBrushDetail(!brushDetail); }}
+      hitSlop={{ top: 2, bottom: 2 }}
       style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4, borderTopWidth: 1, borderColor: C.line }}>
       <MaterialCommunityIcons name="tune-variant" size={18} color={C.muted} />
       <Text style={{ fontSize: 13, fontWeight: '600', color: C.ink }}>세부 설정</Text>
@@ -1185,11 +1186,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: panel === 'color' ? '800' : '600', color: panel === 'color' ? C.ink : C.muted }}>색</Text>
           </Pressable>
           {/* 빠른 모드: 눌러서 모드만 바꾼다. 브러시·색보다 작고 조용하지만 숨기지 않는다. */}
-          <View testID="빠른 모드" style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingLeft: 2, borderLeftWidth: 1, borderColor: C.line }}>
+          <View testID="빠른 모드" style={{ flexDirection: 'row', alignItems: 'center', gap: narrow ? 6 : 2, paddingLeft: 2, borderLeftWidth: 1, borderColor: C.line }}>
             {/* 지우개·채우기는 그림만으로 뜻이 통해 이름을 떼고, '선택'은 아이콘만으로는 알기 어려워 짧은 이름을 남긴다(45.6차).
                 이름을 떼도 접근성 이름은 그대로라 스크린 리더와 자동 검사는 같은 말을 듣는다. */}
             {quickTools.map(([key, title, icon, showTitle]) => { const on = tool === key;
               return <Pressable key={key} testID={'빠른 ' + title} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: on }} onPress={() => selectTool(key)}
+                hitSlop={{ left: narrow ? 3 : 1, right: narrow ? 3 : 1 }}
                 style={({ pressed }) => ({ width: narrow ? 42 : 46, minHeight: C.tap, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
                 <MaterialCommunityIcons name={icon} size={on ? 20 : 19} color={on ? C.ink : C.muted} />
                 {showTitle && <Text numberOfLines={1} style={{ fontSize: 10, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{title}</Text>}
@@ -1491,8 +1493,8 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
         <View style={{ flex: 1, borderRadius: 12, backgroundColor: color }} />
       </View>
       {view === 'palette' && recent.length
-        ? <ScrollView testID="최근 색" horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center', gap: 8, paddingHorizontal: 2 }}>
-            {recent.slice(0, 7).map(c => <Swatch round key={'r' + c} label={'최근 색 ' + c} color={c} size={30} selected={same(c, color)} onPress={() => quick(c)} />)}
+        ? <ScrollView testID="최근 색" horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center', gap: 12, paddingHorizontal: 2 }}>
+            {recent.slice(0, 7).map(c => <Swatch round key={'r' + c} label={'최근 색 ' + c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
           </ScrollView>
         : view === 'custom'
           ? <TextInput accessibilityLabel="HEX 색 값" value={hex} onChangeText={typed} autoCapitalize="characters" autoCorrect={false} maxLength={9}
@@ -1517,17 +1519,17 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
             <Text style={{ fontSize: 11, fontWeight: '800', color: T.muted }}>{tidy ? '끝' : '정리'}</Text>
           </Pressable>}
         </View>
-        {saved.length ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+        {saved.length ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
           {saved.map(c => tidy
             ? <Pressable key={'u' + c} accessibilityRole="button" accessibilityLabel={'내 팔레트 ' + c + ' 지우기'} onPress={() => onForget(c)} hitSlop={6}
-                style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: c, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#00000033' }}>
+                style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: c, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#00000033' }}>
                 <MaterialCommunityIcons name="close" size={16} color={light(c) ? '#1B1B1D' : '#FFFFFF'} />
               </Pressable>
-            : <Swatch key={'u' + c} label={'내 팔레트 ' + c} color={c} size={30} selected={same(c, color)} onPress={() => quick(c)} />)}
+            : <Swatch key={'u' + c} label={'내 팔레트 ' + c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
         </View> : null}
       </View>}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-        {swatches.map(c => <Swatch key={c} color={c} size={30} selected={same(c, color)} onPress={() => quick(c)} />)}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+        {swatches.map(c => <Swatch key={c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
       </View>
     </> : <>
       {/* 직접 선택(45.4차): 색상환 하나로 계열·진하기를, 옆 막대로 밝기·투명도를. 한 화면에 다 들어와 스크롤이 필요 없다. */}
@@ -1591,7 +1593,7 @@ function Step({ label, sign, onPress }: { label: string; sign: string; onPress: 
 }
 // 보조 행동(secondary). 흰 표면 + 옅은 선 하나. 위험한 일만 옅은 빨강.
 function Minor({ title, onPress, danger }: { title: string; onPress: () => void; danger?: boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderWidth: danger ? 0 : 1, borderColor: T.line, backgroundColor: danger ? T.dangerSoft : pressed ? T.fill : T.paper, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 13, fontWeight: '700', color: danger ? T.danger : T.ink }}>{title}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} hitSlop={{ top: 2, bottom: 2 }} style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderWidth: danger ? 0 : 1, borderColor: T.line, backgroundColor: danger ? T.dangerSoft : pressed ? T.fill : T.paper, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 13, fontWeight: '700', color: danger ? T.danger : T.ink }}>{title}</Text></Pressable>;
 }
 // 메뉴 한 줄. 카드도 알약도 아니다 — 목록의 한 줄이다. 아이콘은 뜻을 보조할 뿐이라 이름을 늘 함께
 // 적는다. 아이콘만 보고 뜻을 추측하게 하지 않는다. 모두 같은 집합(MaterialCommunityIcons)에서 쓰고,

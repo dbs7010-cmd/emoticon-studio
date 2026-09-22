@@ -216,6 +216,22 @@ async function openPainter() {
   await press('브러시 닫기');
   await press('색');
   assert.equal(labelled('색 #54A9E8').length, 1, '무료: 팔레트 견본');
+  // 견본은 보이는 크기보다 크게 눌린다. 손가락 자리 = 견본 + hitSlop 양쪽 = 48dp 여야 하고,
+  // 이웃과의 간격(격자 gap)이 그보다 좁으면 두 견본의 누를 자리가 겹친다 — 그 상태를 막는다.
+  {
+    const one = labelled('색 #54A9E8')[0];
+    const box = Object.assign({}, ...[one.props.style].flat(9).filter(Boolean));
+    const slop = typeof one.props.hitSlop === 'number' ? one.props.hitSlop : 0;
+    const tap = box.width + slop * 2;
+    assert.ok(tap >= 48, '색 견본을 누를 자리는 48dp 이상: ' + tap);
+    let gap;
+    for (let p = one.parent; p; p = p.parent) {
+      const st = Object.assign({}, ...[p.props?.style].flat(9).filter(Boolean));
+      if (st.flexWrap === 'wrap') { gap = st.gap; break; }
+    }
+    assert.ok(typeof gap === 'number', '견본 격자를 찾았다');
+    assert.ok(box.width + gap >= tap, '이웃 견본과 누를 자리가 겹치지 않는다 (간격 ' + gap + ' · 자리 ' + tap + ')');
+  }
   assert.equal(icons(tree.root, 'lock-outline'), 0, '무료: 색 패널에도 자물쇠가 없다');
   await dropTap();
   assert.deepEqual(lastCommand('eyedrop'), { type: 'eyedrop', on: true }, '무료: 스포이드를 쓴다');

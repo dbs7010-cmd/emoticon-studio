@@ -121,6 +121,7 @@ export function Segmented<K extends string>({ items, value, onChange, testID, de
   return <View testID={testID} style={{ flexDirection: 'row', padding: 3, borderRadius: 14, backgroundColor: T.surface2 }}>
     {items.map(item => { const on = item.key === value;
       return <Pressable key={item.key} accessibilityRole="button" accessibilityLabel={item.a11y ?? item.label} accessibilityState={{ selected: on }} onPress={() => onChange(item.key)}
+        hitSlop={{ top: dense ? 4 : 2, bottom: dense ? 4 : 2 }}
         style={{ flex: 1, minHeight: dense ? 40 : 44, borderRadius: 11, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6,
           backgroundColor: on ? T.accentSoft : 'transparent', borderWidth: on ? 1 : 0, borderColor: on ? T.accentBorder : 'transparent' }}>
         {!!item.image && <Image source={item.image} style={{ width: 13, height: 18, opacity: on ? 1 : .7 }} resizeMode="contain" />}
@@ -146,7 +147,7 @@ export function SheetHeader({ title, onClose, closeLabel, closeIcon = 'close', r
     <View style={{ position: 'absolute', top: 6, left: 0, right: 0, alignItems: 'center' }} pointerEvents="none"><View style={{ width: 32, height: 4, borderRadius: 2, backgroundColor: T.line }} /></View>
     <Text numberOfLines={1} style={{ flex: 1, fontSize: 15, fontWeight: '800', color: T.ink }}>{title}</Text>
     {right}
-    <Pressable accessibilityRole="button" accessibilityLabel={closeLabel ?? title + ' 닫기'} onPress={onClose}
+    <Pressable accessibilityRole="button" accessibilityLabel={closeLabel ?? title + ' 닫기'} onPress={onClose} hitSlop={2}
       style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : 'transparent' })}>
       <MaterialCommunityIcons name={closeIcon} size={20} color={T.muted} />
     </Pressable>

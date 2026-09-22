@@ -618,6 +618,7 @@ function Studio() {
             <View style={{ width: 10 }} />
             {EXPRESSION_GUIDE.categories.map(name => { const on = guideCategory === name;
               return <Pressable key={name} accessibilityRole="button" accessibilityLabel={'표현 가이드 ' + name} accessibilityState={{ selected: on }} onPress={() => setGuideCategory(name)}
+                hitSlop={{ top: 4, bottom: 4 }}
                 style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: on ? C.ink : C.surface2 }}>
                 <Text style={{ fontSize: 13, fontWeight: on ? '700' : '600', color: on ? C.paper : C.muted }}>{name}</Text>
               </Pressable>; })}
@@ -745,7 +746,7 @@ function Studio() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text style={{ flex: 1, fontSize: 12, color: C.muted, fontWeight: '600' }}><Text style={{ color: C.ink, fontWeight: '700' }}>{done}개 완성</Text>{working ? ` · ${working}개 작업 중` : ''}</Text>
                     <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 이어서 만들기`} onPress={() => { setProjectId(p.id); setScreen('board'); setSlotNumber(nextUnfinished(p, p.lastSlot ?? 0) ?? p.lastSlot ?? 1); setPainting(true); }}
-                      style={{ minHeight: 44, justifyContent: 'center' }}>
+                      hitSlop={{ top: 2, bottom: 2 }} style={{ minHeight: 44, justifyContent: 'center' }}>
                       {/* 카드를 누르면 세트가 열린다 — 이 줄은 그 안의 지름길이라 더 조용하다(45.2차). */}
                       <View style={{ height: 34, paddingLeft: 10, paddingRight: 6, borderRadius: 17, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
                         <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{done || working ? '이어서 만들기' : '그리기 시작'}</Text>
