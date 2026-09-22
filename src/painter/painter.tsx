@@ -200,6 +200,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 표현 예시 참고 창(45.17차). 캔버스 위에 떠 있는 안내일 뿐이라 그림·썸네일·출력 어디에도 들어가지 않는다.
   const [refWindow, setRefWindow] = useState<'open' | 'collapsed' | 'closed'>('closed');
   const [refSpot, setRefSpot] = useState<{ x: number; y: number } | null>(null);
+  // 사용자가 잡아 늘린 참고 창 폭. 정하지 않았으면 기본값(캔버스폭의 36%)을 쓴다.
+  const [refPicked, setRefPicked] = useState<number | null>(null);
   const guideUsed = useRef(false);
   // 이 칸에 깔아 둔 밑그림의 참고 id. 같은 예시를 또 눌러도 그림이 두 장 쌓이지 않게 한다.
   const guideLaid = useRef<string | null>(null);
@@ -616,8 +618,11 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     else setRefWindow('open');
   }, [initialized, guideExample, guideExampleMode]);
   // 참고 창 크기와 머무를 수 있는 자리. 창은 늘 캔버스 영역 안에 있어 화면 밖으로 빠져나가지 않는다.
-  // 명세 E05: clamp(112dp, 캔버스폭의 36%, 144dp). 예전 46%(최대 190)는 캔버스를 너무 많이 덮었다.
-  const refWide = Math.max(112, Math.min(144, Math.round((canvasSide || canvasWide || windowWidth) * .36)));
+  // 명세 E05: 기본은 clamp(112dp, 캔버스폭의 36%, 144dp). 예전 46%(최대 190)는 캔버스를 너무 많이 덮었다.
+  // 사용자가 우하단 손잡이로 늘리면 그 폭을 쓰되, 최소 112 · 최대 캔버스폭 60% 를 넘지 않는다.
+  const refBase = Math.max(112, Math.min(144, Math.round((canvasSide || canvasWide || windowWidth) * .36)));
+  const refMax = Math.max(112, Math.round((canvasSide || canvasWide || windowWidth) * .6));
+  const refWide = Math.max(112, Math.min(refMax, refPicked ?? refBase));
   const refHigh = refWindow === 'collapsed' ? 40 : 40 + refWide;
   const clampSpot = (x: number, y: number) => ({
     x: Math.max(8, Math.min((canvasWide || windowWidth) - refWide - 8, x)),
@@ -918,6 +923,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           title={guideExample.title} hint={guideExample.hint} artwork={guideExample.artwork}
           width={refWide} collapsed={refWindow === 'collapsed'} left={refAt.x} top={refAt.y}
           onMove={(x, y) => setRefSpot(clampSpot(x, y))}
+          onResize={next => setRefPicked(Math.max(112, Math.min(refMax, Math.round(next))))}
           onCollapse={() => { ease(); setRefWindow(refWindow === 'collapsed' ? 'open' : 'collapsed'); }}
           onClose={() => { ease(); setRefWindow('closed'); }}
           onUnderlay={onImportGuideExample ? () => void insertGuideUnderlay() : undefined} />}
@@ -1366,11 +1372,20 @@ function RailTile({ label, caption, image, icon, selected, dashed, faded, onPres
 // 저장되는 그림·움직이는 파일·작품 썸네일 어디에도 들어가지 않는다. 캔버스에 깔리는 것은 밑그림(참고 레이어)뿐이다.
 // 손잡이(위쪽 띠)에서만 끌어 옮긴다. 그림 자리를 끌어도 창이 따라가지 않아, 창을 짚은 손이 선을 긋지 않는다.
 // 창이 머무는 자리는 부모가 캔버스 영역 안으로 맞춰 준다(화면 밖으로 나가지 않는다).
-function GuideWindow({ title, hint, artwork, width, collapsed, left, top, onMove, onCollapse, onClose, onUnderlay }: {
+function GuideWindow({ title, hint, artwork, width, collapsed, left, top, onMove, onResize, onCollapse, onClose, onUnderlay }: {
   title: string; hint: string; artwork: ImageSourcePropType; width: number; collapsed: boolean; left: number; top: number;
-  onMove: (x: number, y: number) => void; onCollapse: () => void; onClose: () => void; onUnderlay?: () => void;
+  onMove: (x: number, y: number) => void; onResize: (width: number) => void; onCollapse: () => void; onClose: () => void; onUnderlay?: () => void;
 }) {
   const from = useRef({ x: 0, y: 0, px: 0, py: 0 });
+  const grew = useRef({ w: 0, px: 0 });
+  // 크기 손잡이: 옮기기와 같은 방식(손가락을 이 자리에서 잡는다)이라 캔버스로 새지 않는다.
+  const grow = {
+    onStartShouldSetResponder: () => true,
+    onMoveShouldSetResponder: () => true,
+    onResponderTerminationRequest: () => false,
+    onResponderGrant: (e: GestureResponderEvent) => { grew.current = { w: width, px: e.nativeEvent.pageX }; },
+    onResponderMove: (e: GestureResponderEvent) => onResize(grew.current.w + (e.nativeEvent.pageX - grew.current.px)),
+  };
   const drag = {
     onStartShouldSetResponder: () => true,
     onMoveShouldSetResponder: () => true,
@@ -1392,6 +1407,9 @@ function GuideWindow({ title, hint, artwork, width, collapsed, left, top, onMove
     {!collapsed && <>
       <View style={{ width: '100%', height: width, backgroundColor: T.surface2, alignItems: 'center', justifyContent: 'center' }}>
         <Image accessibilityIgnoresInvertColors accessibilityLabel={title + ' 예시 그림'} source={artwork} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+      </View>
+      <View testID="표현 예시 크기 손잡이" accessibilityLabel="표현 예시 창 크기 조절" style={{ position: 'absolute', right: 0, bottom: 0, width: 48, height: 48, alignItems: 'flex-end', justifyContent: 'flex-end', padding: 6 }} {...grow}>
+        <MaterialCommunityIcons name="resize-bottom-right" size={16} color={T.faint} />
       </View>
       <View style={{ paddingHorizontal: 10, paddingVertical: 7, gap: 6 }}>
         <Text numberOfLines={2} style={{ fontSize: 11, color: T.muted }}>{hint}</Text>

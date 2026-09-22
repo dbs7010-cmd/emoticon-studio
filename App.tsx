@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Alert, AppState, BackHandler, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, Image, useWindowDimensions, type ImageSourcePropType } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import Constants from 'expo-constants';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import { Action, AssetSlot, Dialog, Elev, Field, IconButton, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage } from './src/components/ui';
@@ -22,6 +23,8 @@ import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, 
 
 const colors: Record<string, string> = { PASS: T.success, WARNING: STATUS_TONE.warn, FAIL: STATUS_TONE.fail, EMPTY: T.faint, DRAWING: T.info, REVIEW: '#8B6FCB', PLANNED: T.success };
 const C = T;
+// 설정 화면에 보여 줄 앱 버전. app.json 의 값을 그대로 읽는다.
+const appVersion = Constants.expoConfig?.version ?? '—';
 // 감정 카드의 대표 그림을 꺼낸다. 홈 미리보기와 감정 목록이 같은 규칙을 쓴다.
 const coverOf = (card: ExpressionGuideCard) => card.artwork ?? card.examples?.find(x => x.id === card.cover)?.artwork ?? null;
 // 홈에 올리는 표현 가이드 미리보기 셋: 서로 다른 감정·자세를 고른다(명세 §5 — 기존 예시 최대 3개).
@@ -1282,6 +1285,11 @@ function Studio() {
           <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.paperTexture !== false ? 18 : 0 }} />
         </View>
       </Pressable>
+      {/* 앱 정보: 실제 설정에 적힌 버전만 보여 준다. 없는 도움말·백업 버튼은 만들지 않는다(명세 T01). */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, borderTopWidth: 1, borderColor: C.line }}>
+        <Text style={{ flex: 1, fontSize: 13, color: C.muted }}>버전</Text>
+        <Text accessibilityLabel={'앱 버전 ' + appVersion} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{appVersion}</Text>
+      </View>
       <Pressable accessibilityRole="button" accessibilityLabel="PRO 이용" onPress={() => { setSettings(false); setProSheet(true); }}
         style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? T.fill : 'transparent' })}>
         <MaterialCommunityIcons name="star-four-points-outline" size={19} color={C.muted} />
