@@ -31,8 +31,14 @@ function css(style) {
   if (!('position' in style)) out.unshift('position:relative');
   // CSS 는 border-style 이 없으면 두께를 무시한다(기본값 none). RN 은 두께만 주면 실선이다.
   // 이것을 옮기지 않아 지금까지 **모든 테두리가 그림에서 빠져 있었다**.
-  const anyBorder = ['borderWidth', 'borderTopWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderRightWidth'].some(k => style[k]);
-  if (anyBorder && !style.borderStyle) out.push('border-style:solid');
+  // 한쪽 두께만 준 경우(예: 아래 선 하나) 나머지 세 변은 0 으로 못 박아야 한다 —
+  // CSS 는 border-style 이 켜지면 두께를 적지 않은 변에 기본값(medium)을 넣어 네모가 생긴다.
+  const sides = ['borderTopWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderRightWidth'];
+  const anyBorder = style.borderWidth || sides.some(k => style[k]);
+  if (anyBorder && !style.borderStyle) {
+    out.unshift('border-style:solid');
+    if (!style.borderWidth) out.unshift('border-width:0');
+  }
   if (style.flex === 1 && style.minHeight === undefined) out.push('min-height:0', 'min-width:0');
   // 그림자는 층을 가르는 용도라 옅게 옮긴다.
   if (style.shadowOpacity) out.push(`box-shadow:0 ${(style.shadowOffset?.height ?? 1)}px ${(style.shadowRadius ?? 2) * 2}px rgba(23,25,29,${style.shadowOpacity})`);

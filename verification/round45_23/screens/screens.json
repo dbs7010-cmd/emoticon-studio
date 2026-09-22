@@ -51,7 +51,7 @@
     "id": "draw-base",
     "title": "그리기 · 기본",
     "file": "draw-base.html",
-    "bytes": 53461,
+    "bytes": 53506,
     "realImages": 18,
     "missingImages": []
   },
@@ -59,7 +59,7 @@
     "id": "draw-brush",
     "title": "그리기 · 브러시",
     "file": "draw-brush.html",
-    "bytes": 60202,
+    "bytes": 60277,
     "realImages": 21,
     "missingImages": []
   },
@@ -67,7 +67,7 @@
     "id": "draw-color",
     "title": "그리기 · 색",
     "file": "draw-color.html",
-    "bytes": 64822,
+    "bytes": 64882,
     "realImages": 18,
     "missingImages": []
   },
@@ -75,7 +75,7 @@
     "id": "draw-reference",
     "title": "그리기 · 참고",
     "file": "draw-reference.html",
-    "bytes": 54633,
+    "bytes": 54693,
     "realImages": 18,
     "missingImages": []
   },
@@ -83,7 +83,7 @@
     "id": "draw-layers",
     "title": "그리기 · 레이어",
     "file": "draw-layers.html",
-    "bytes": 56447,
+    "bytes": 56507,
     "realImages": 18,
     "missingImages": []
   },
@@ -91,7 +91,7 @@
     "id": "draw-caption",
     "title": "그리기 · 문구 + 키보드",
     "file": "draw-caption.html",
-    "bytes": 49988,
+    "bytes": 50018,
     "realImages": 18,
     "missingImages": []
   },
@@ -99,7 +99,7 @@
     "id": "draw-selection",
     "title": "그리기 · 선택과 변형",
     "file": "draw-selection.html",
-    "bytes": 56523,
+    "bytes": 56583,
     "realImages": 18,
     "missingImages": []
   },
@@ -107,7 +107,7 @@
     "id": "motion-base",
     "title": "움직이기",
     "file": "motion-base.html",
-    "bytes": 51296,
+    "bytes": 51356,
     "realImages": 21,
     "missingImages": []
   },
@@ -115,7 +115,7 @@
     "id": "motion-parts",
     "title": "움직이기 · 부분 움직임",
     "file": "motion-parts.html",
-    "bytes": 48827,
+    "bytes": 48887,
     "realImages": 18,
     "missingImages": []
   },
@@ -123,7 +123,7 @@
     "id": "export-before",
     "title": "내보내기 · 만들기 전",
     "file": "export-before.html",
-    "bytes": 25053,
+    "bytes": 25068,
     "realImages": 18,
     "missingImages": []
   },
@@ -131,7 +131,7 @@
     "id": "export-result",
     "title": "내보내기 · 결과",
     "file": "export-result.html",
-    "bytes": 26636,
+    "bytes": 26651,
     "realImages": 18,
     "missingImages": []
   },
@@ -139,7 +139,7 @@
     "id": "settings",
     "title": "설정",
     "file": "settings.html",
-    "bytes": 20131,
+    "bytes": 20161,
     "realImages": 7,
     "missingImages": []
   },

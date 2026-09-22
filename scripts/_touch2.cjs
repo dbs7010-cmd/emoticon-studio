@@ -10,6 +10,22 @@ const PORT = Number(process.argv[2] || 4651);
 
 // [화면, 접근성 이름, 왜 대상인가]
 const TARGETS = [
+  // ── 45.24 에서 손댄 것만 ────────────────────────────────────────────────────────────────
+  ['draw-color', '스포이드', '45.24: 이름 집기 → 색 추출'],
+  ['draw-color', '내 팔레트에 저장', '45.24: 이름 담기 → 색 저장'],
+  ['draw-base', '지우개', '45.24: 이름을 다시 붙였다'],
+  ['draw-base', '채우기', '45.24: 이름을 다시 붙였다'],
+  ['draw-base', '선택', '45.24: 같은 줄 이웃'],
+  ['draw-color', '색 #54A9E8', '45.24: 견본이 스크롤 안으로 들어갔다'],
+  ['draw-color', '팔레트', '45.24: 탭이 스크롤 밖으로 고정됐다'],
+  ['draw-color', '색', '45.24: 판 높이가 낮아졌다'],
+  ['home-empty', '안녕 표현 보기', '45.24: 이름 한 줄이 들어갔다'],
+  ['home-empty', '신나 표현 보기', '45.24: 이름 한 줄이 들어갔다'],
+  ['home-empty', '잘 자 표현 보기', '45.24: 이름 한 줄이 들어갔다'],
+  ['pro', '월간 고르기', '45.24: 비교 그림이 바뀐 화면'],
+  ['pro', '연간 고르기', '45.24: 비교 그림이 바뀐 화면'],
+];
+const OLD_TARGETS = [
   ['guide-emotions', '표현 가이드 기쁨·인사', '고침: 위아래 hitSlop 4'],
   ['draw-color', '팔레트', '고침: 세그먼트 위아래 hitSlop 4'],
   ['draw-color', '직접 선택', '고침: 세그먼트 위아래 hitSlop 4'],
@@ -37,6 +53,7 @@ const TARGETS = [
   ['pro', '연간 고르기', '미지정 7건'],
 ];
 
+void OLD_TARGETS;
 const MEASURE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>손가락 자리 재는 중</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 <style>body{font:13px/1.7 system-ui;background:#14161A;color:#E7E9EE;padding:16px}
@@ -89,7 +106,7 @@ const server = http.createServer((req, res) => {
       const rows = JSON.parse(body);
       fs.writeFileSync('verification/round45_23/touch-layout.json', JSON.stringify(rows, null, 2));
       const lines = [];
-      lines.push('  실제 배치로 다시 잰 손가락 자리 — 고친 버튼과 크기 미지정 7건만 (' + rows.length + '개)');
+      lines.push('  실제 배치로 다시 잰 손가락 자리 — 45.24 에서 손댄 버튼만 (' + rows.length + '개)');
       lines.push('  이름                         배치       hitSlop      누를 자리   부모에 잘린 뒤  겹침');
       let bad = 0;
       for (const r of rows) {
