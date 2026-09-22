@@ -990,7 +990,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           completeTitle={completeTitle} onComplete={() => save('complete')} completeBusy={busy || !initialized} />
       </View> : <View style={dock} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
         {scene.selection ? <View style={{ maxHeight: panelRoom(0.5) }}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 8, gap: 8 }}>
+          {/* 명세 E08: 여기서 하는 일은 아직 임시다. 무엇이 임시인지 글로 말하고, 나가는 길은 취소·적용 둘뿐이다. */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingTop: 10 }}>
+            <MaterialCommunityIcons name="selection-drag" size={16} color={C.muted} />
+            <Text numberOfLines={1} accessibilityLabel="고른 부분은 적용해야 그림에 남아요" style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.muted }}>고른 부분을 바꾸는 중 · 적용해야 그림에 남아요</Text>
+          </View>
+          {/* 판 높이가 정해져 있으므로 이 목록이 먼저 줄어야 아래 취소·적용이 밀려나지 않는다. */}
+          <ScrollView style={{ flexShrink: 1, minHeight: 0 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 8, gap: 8 }}>
           {/* 옮기기는 캔버스에서 끌어서 한다. 여기에는 누르는 변형만 둔다. */}
           <View style={{ flexDirection: 'row', gap: 6 }}>
             {([['작게', 'magnify-minus-outline', { scale: .9 }], ['크게', 'magnify-plus-outline', { scale: 1.1 }], ['왼쪽 회전', 'rotate-left', { rot: -15 }], ['오른쪽 회전', 'rotate-right', { rot: 15 }], ['좌우 반전', 'flip-horizontal', { flip: true }]] as const).map(([title, icon, change]) =>
@@ -1075,6 +1081,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <Minor title="참고 삭제" danger onPress={() => { const image = slot.referenceImages.find(i => i.path === selectedReference.path); if (image) removeReference(image.path, selectedReference.id); }} />
           </View>
         </Sheet> : <>
+        {drawRail && <SheetHeader title="레이어" closeLabel="레이어 닫기" closeIcon="chevron-down" onClose={() => { ease(); setDrawRail(false); }} />}
         {drawRail && <View style={{ maxHeight: Math.min(188, coverRoom()) }}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8, gap: 6 }}>
             {scene.layers.map(layer => {
@@ -1106,6 +1113,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             {scene.layers.length < 4 && <Pressable accessibilityRole="button" accessibilityLabel="레이어 추가" onPress={addDrawing} style={{ minHeight: C.tap, flexDirection: 'row', gap: 6, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="plus" size={16} color={C.muted} /><Text style={{ fontSize: 13, fontWeight: '600', color: C.muted }}>레이어 추가</Text></Pressable>}
           </ScrollView>
         </View>}
+        {refRail && <SheetHeader title="참고" closeLabel="참고 닫기" closeIcon="chevron-down" onClose={() => { ease(); setRefRail(false); }} />}
         {refRail && BUILTIN_READY && <View style={{ paddingHorizontal: 12, paddingTop: 12 }}>
           <Segmented dense value={refSource} onChange={next => { setRefSource(next); setRefBrowse(true); }} items={[{ key: 'mine', label: '내 사진', icon: 'image-outline' }, { key: 'builtin', label: '기본 레퍼런스', icon: 'human-handsup' }]} />
         </View>}

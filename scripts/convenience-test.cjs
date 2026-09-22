@@ -389,6 +389,20 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   await androidBack();
   assert.equal(tree.root.findAllByType('WebView').length, 0, '더 닫을 것이 없으면 그리기를 벗어난다');
 
+  // E04: 열리는 판은 모두 같은 방식으로 닫힌다 — 이름 붙은 닫기 하나 · 손가락이 닿는 크기.
+  await act(async () => byTestID('slot-1')[0].props.onPress());
+  await ready();
+  for (const [open, close, mark] of [['브러시', '브러시 닫기', '세부 설정'], ['색', '팔레트 닫기', '최근 색'], ['참고', '참고 닫기', '참고 사진 추가'], ['레이어', '레이어 닫기', '레이어 추가']]) {
+    await press(open);
+    const found = tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === close);
+    assert.equal(found.length, 1, open + ': 닫기 하나');
+    const box = flat(found[0].props.style);
+    assert.ok((box.width ?? box.minWidth ?? 0) >= 40 && (box.height ?? box.minHeight ?? 0) >= 40, open + ': 닫기가 손가락 크기 (' + JSON.stringify([box.width, box.height]) + ')');
+    await press(close);
+    assert.equal(tree.root.findAll(n => (n.type === 'Pressable' || n.type === 'View') && n.props.accessibilityLabel === mark).length, 0, open + ': 닫기를 누르면 닫힌다');
+  }
+  await androidBack();
+
   // E07: 키보드가 열린 동안 취소와 적용이 함께 있다.
   await act(async () => byTestID('slot-1')[0].props.onPress());
   await ready();
