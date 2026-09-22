@@ -52,3 +52,20 @@
 **위의 모든 렌더 근거는 대체 렌더다. 실기기 캡처가 아니다.** 실제 App 트리를 `react-test-renderer` 로 그려 스타일과 구조를 읽은 것이고, 픽셀·줄바꿈·글꼴 메트릭·손가락 판정은 기기가 해야 한다.
 
 **DEVICE-UX 는 UNVERIFIED 로 남는다.** 실제 Android 화면을 보지 못했으므로 사용성 PASS 라고 적지 않는다. 지난 라운드의 PASS 를 이번 판의 PASS 로 다시 쓰지 않는다.
+
+## APK
+
+| | |
+|---|---|
+| 파일 | `dist/emoticon-studio-1.0.0-vc1-internal-review-c70b8c5-arm64.apk` |
+| 크기 | 39,578,139 바이트 |
+| 소스 커밋 | `c70b8c5` (이후 `2130fa2`·`998b11d` 는 문서와 빈 파일 정리뿐이라 앱 코드가 같다) |
+| SOURCE_ID | `af3398e39e6320e902e620e7deee79f8c884cbf3fe71e4769da4052741ddd688` |
+| 구성 | 내부 검수(`EMOTICON_INTERNAL_REVIEW=1`) · arm64-v8a · 디버그 서명 |
+| 빌드 | `gradlew.bat :app:assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a` · BUILD SUCCESSFUL in 11m 50s |
+
+**서명이 `CN=Android Debug` 라 스토어에 올릴 수 없다. 내부 검수용이고 공개 배포·외부 공유는 하지 않는다.**
+
+이번 라운드 변경이 실제로 이 APK 안에 들어갔는지, 번들 문자열로 확인했다 — `apk-strings.txt`. 설치해 본 것이 아니라 파일을 뜯어 본 것이다.
+
+기존 APK 다섯 개는 그대로 둔다.
