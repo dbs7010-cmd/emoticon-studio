@@ -1212,7 +1212,8 @@ function Studio() {
                   ? <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%', opacity: done ? 1 : .72 }} resizeMode="contain" />
                   : adding
                     ? <View style={{ alignItems: 'center', gap: 4 }}><View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="plus" size={18} color={C.accentInk} /></View><Text style={{ fontSize: 11, color: C.ink, fontWeight: '700' }}>그림 추가</Text></View>
-                    : null}
+                    // 명세 S01: 빈 칸은 '+' 로 분명히 알린다. 누르면 예전과 똑같이 그 칸이 열린다(동작은 그대로).
+                    : <MaterialCommunityIcons name="plus" size={22} color={C.lineStrong} />}
                 {(done || working) && <View pointerEvents="none" style={{ position: 'absolute', right: 6, top: 6 }}><StatusDot tone={done ? 'done' : 'working'} /></View>}
                 {(s.status === 'FAIL' || s.status === 'WARNING') && <View pointerEvents="none" style={{ position: 'absolute', right: 6, bottom: 6 }}><StatusDot tone={s.status === 'FAIL' ? 'fail' : 'warn'} /></View>}
               </View>

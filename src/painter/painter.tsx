@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, AppState, LayoutAnimation, Modal, View, Text, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, UIManager } from 'react-native';
+import { Alert, AppState, BackHandler, LayoutAnimation, Modal, View, Text, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, UIManager } from 'react-native';
 import { Keyboard, useWindowDimensions, type GestureResponderEvent, type ImageSourcePropType } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
@@ -257,6 +257,31 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   };
 
   useEffect(() => () => { if (timeout.current) clearTimeout(timeout.current); }, []);
+  // 명세 E04: Android 뒤로는 **열려 있는 것부터** 닫는다. 급한 것(임시 편집)이 먼저다.
+  // 아무것도 열려 있지 않을 때만 화면 밖으로 나간다 — 그때는 기존 닫기 경로(자동저장)를 그대로 탄다.
+  const backRef = useRef<() => boolean>(() => false);
+  backRef.current = () => {
+    if (busy) return true;                                   // 저장 중에는 아무 일도 하지 않는다
+    if (cutoutPicker) { setCutoutPicker(false); return true; }
+    if (showCanon) { setShowCanon(false); return true; }
+    if (layerMenu) { setLayerMenu(null); return true; }
+    if (captionOpen) { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); return true; }
+    if (scene.selection) { send({ type: 'selectCancel' }); return true; }   // 임시 편집은 버리기 전에 되돌린다
+    if (panel) { ease(); setPanel(null); return true; }
+    if (drawRail) { ease(); setDrawRail(false); return true; }
+    if (refRail) { ease(); setRefRail(false); return true; }
+    if (refWindow !== 'closed') { ease(); setRefWindow('closed'); return true; }
+    if (tab === 'motion') { switchTab('draw'); return true; }
+    return false;                                            // 화면을 벗어나는 것은 아래 useEffect 가 맡는다
+  };
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (backRef.current()) return true;
+      onClose();
+      return true;
+    });
+    return () => sub.remove();
+  }, []);
   // Unsaved strokes must survive the app being swapped away or killed, so keep the work on disk
   // without ever interrupting the drawing rhythm. Both paths reuse the ordinary save pipeline.
   const autosave = useRef(() => {});
@@ -989,6 +1014,11 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color, borderWidth: 2, borderColor: '#FFFFFF', ...{ shadowColor: '#000', shadowOpacity: .15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } } }} />
             <TextInput accessibilityLabel="문구 내용" value={captionDraft} onChangeText={setCaptionDraft} multiline={false} autoFocus returnKeyType="done" onSubmitEditing={() => applyCaption(captionDraft)} placeholder="예: 고마워" placeholderTextColor={C.faint} style={{ flex: 1, fontSize: 17, minHeight: C.tap, borderRadius: 14, paddingHorizontal: 14, backgroundColor: C.surface2, color: C.ink }} />
             {typing && <IconButton label="키보드 닫기" icon="keyboard-close" color={C.muted} size={20} onPress={() => Keyboard.dismiss()} />}
+            {/* 명세 E07: 키보드 바로 위에 취소·적용을 함께 둔다. 키보드를 닫는 것만으로는 적용도 삭제도 되지 않는다. */}
+            {typing && <Pressable accessibilityRole="button" accessibilityLabel="문구 취소" onPress={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); }}
+              style={({ pressed }) => ({ minHeight: C.tap, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper, alignItems: 'center', justifyContent: 'center' })}>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>취소</Text>
+            </Pressable>}
             {typing && <Pressable accessibilityRole="button" accessibilityLabel="문구 적용" onPress={() => applyCaption(captionDraft)}
               style={({ pressed }) => ({ minHeight: C.tap, paddingHorizontal: 16, borderRadius: 14, backgroundColor: pressed ? C.accentLine : C.accent, alignItems: 'center', justifyContent: 'center' })}>
               <Text style={{ fontSize: 15, fontWeight: '800', color: C.accentInk }}>적용</Text>

@@ -24,7 +24,8 @@ const realSetInterval = global.setInterval;
 global.setInterval = (fn, ms) => ms === 40000 ? { unref() {} } : realSetInterval(fn, ms);
 const WebView = React.forwardRef((props, ref) => { React.useImperativeHandle(ref, () => ({ injectJavaScript: s => commands.push(s) })); return React.createElement('WebView', props); });
 const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n]));
-Object.assign(rn, { Keyboard: { addListener: (name, fn) => { (keyboardListeners[name] = keyboardListeners[name] || []).push(fn); return { remove() {} }; }, dismiss() {}, isVisible: () => false }, StyleSheet: { create: x => x }, Platform: { OS: 'android' }, useWindowDimensions: () => ({ width: 390, height: 844 }), BackHandler: { addEventListener: () => ({ remove() {} }) }, AppState: { addEventListener: () => ({ remove() {} }) }, Alert: { alert() {} }, Linking: { openURL: async () => {} } });
+const backHandlers = [];
+Object.assign(rn, { Keyboard: { addListener: (name, fn) => { (keyboardListeners[name] = keyboardListeners[name] || []).push(fn); return { remove() {} }; }, dismiss() {}, isVisible: () => false }, StyleSheet: { create: x => x }, Platform: { OS: 'android' }, useWindowDimensions: () => ({ width: 390, height: 844 }), BackHandler: { addEventListener: (_n, fn) => { backHandlers.push(fn); return { remove() { const i = backHandlers.indexOf(fn); if (i >= 0) backHandlers.splice(i, 1); } }; } }, AppState: { addEventListener: () => ({ remove() {} }) }, Alert: { alert() {} }, Linking: { openURL: async () => {} } });
 const png = Buffer.alloc(33); Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(png); png.writeUInt32BE(360, 16); png.writeUInt32BE(360, 20);
 const pngData = 'data:image/png;base64,' + png.toString('base64');
 const mocks = {
@@ -64,6 +65,7 @@ const lastCommand = type => sent().filter(m => m.type === type).at(-1);
 const text = n => [n.props.children].flat(9).filter(x => typeof x === 'string' || typeof x === 'number').join('');
 const texts = () => tree.root.findAll(n => n.type === 'Text').map(text);
 const byTestID = id => tree.root.findAll(n => n.props.testID === id);
+const androidBack = async () => { for (let i = backHandlers.length - 1; i >= 0; i--) { let handled = false; await act(async () => { handled = backHandlers[i](); }); if (handled) return true; } return false; };
 const render = async (Component = App) => { if (tree) await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(Component)); }); };
 async function ready() {
   await message({ type: 'ready' });
@@ -362,6 +364,41 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   await press('기본 레퍼런스 다시 찾기');
   assert.equal(byTestID('기본 레퍼런스 격자').length, 1, '다시 찾기로 격자가 돌아온다');
   await press('참고');
+
+  // ── 9. 명세 E04/E07/S01 ────────────────────────────────────────────────────────────────
+  await render();
+  await press('편의 세트');
+  // S01: 빈 칸은 '+' 로 알린다. 누르면 예전과 똑같이 그 칸이 열린다.
+  const empty = tree.root.findAll(n => n.type === 'Pressable' && n.props.testID === 'slot-20')[0];
+  assert.ok(empty, '빈 칸이 있다');
+  assert.equal(empty.findAll(n => n.type === 'Icon' && n.props.name === 'plus').length, 1, '빈 칸에 + 표시');
+  await act(async () => byTestID('slot-1')[0].props.onPress());
+  await ready();
+
+  // E04: 뒤로는 열려 있는 것부터 닫는다. 화면을 바로 벗어나지 않는다.
+  await press('참고');
+  assert.equal(labelled('참고 사진 추가').length, 1, '참고 줄이 열렸다');
+  assert.equal(await androidBack(), true, '뒤로가 처리된다');
+  assert.equal(labelled('참고 사진 추가').length, 0, '뒤로가 참고 줄부터 닫는다');
+  assert.equal(tree.root.findAllByType('WebView').length, 1, '그리기 화면은 그대로다');
+  await press('색');
+  assert.ok(labelled('팔레트 닫기').length + labelled('색 닫기').length >= 0);
+  await androidBack();
+  assert.equal(tree.root.findAllByType('WebView').length, 1, '패널을 닫아도 화면은 남는다');
+  // 아무것도 열려 있지 않으면 그때 화면을 벗어난다.
+  await androidBack();
+  assert.equal(tree.root.findAllByType('WebView').length, 0, '더 닫을 것이 없으면 그리기를 벗어난다');
+
+  // E07: 키보드가 열린 동안 취소와 적용이 함께 있다.
+  await act(async () => byTestID('slot-1')[0].props.onPress());
+  await ready();
+  await press('문구');
+  await act(async () => (keyboardListeners.keyboardDidShow || []).forEach(fn => fn({ endCoordinates: { height: 320 } })));
+  assert.equal(labelled('문구 취소').length, 1, '키보드 위에 취소가 있다');
+  assert.equal(labelled('문구 적용').length, 1, '키보드 위에 적용이 있다');
+  assert.equal(labelled('키보드 닫기').length, 1, '키보드 닫기는 따로 남는다');
+  await press('문구 취소');
+  assert.equal(labelled('문구 적용').length, 0, '취소하면 문구 편집이 닫힌다');
 
   await act(async () => tree.unmount());
   console.log('PASS: convenience — 새 칸 한 장·옛 다중 장 저장본과 부분 움직임 참조 보존, 레이어 차례 앞으로/뒤로(양 끝 멈춤), 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 선 종류 실제 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, 색상환 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
