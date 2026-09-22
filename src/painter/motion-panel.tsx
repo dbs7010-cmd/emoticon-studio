@@ -136,7 +136,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{back.title}</Text>
     </Pressable>}
     {/* 손가락이 슬라이더나 순서 손잡이를 잡고 있는 동안에는 이 판이 따라 스크롤되면 안 된다. */}
-    <ScrollView keyboardShouldPersistTaps="handled" scrollEnabled={!holding && dragFrom === null} contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 12, gap: 10 }}>
+    <ScrollView keyboardShouldPersistTaps="handled" scrollEnabled={!holding && dragFrom === null} contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 20, gap: 10 }}>
     {view === 'basic' ? <>
     <View style={{ flexDirection: 'row', gap: 8 }}>
       <Pressable accessibilityRole="button" accessibilityLabel="움직임 없음" accessibilityState={{ selected: !base.preset }} onPress={clearPreset} style={quiet(!base.preset)}>

@@ -273,6 +273,21 @@ const closePainter = async () => { await press('그리기 닫기'); await answer
   assert.equal(doneCount(end), 0, '움직임 저장이 완성 수를 바꾸지 않는다');
   assert.deepEqual(end.brush, { preset: 'marker', opacity: .5, stabilizer: 'strong' }, '움직임 저장이 브러시 설정을 건드리지 않는다');
   assert.ok(end.slots.filter(isAnimated).map(s => s.number).join() === '1,2', '움직이는 칸은 1·2번뿐(3번은 없앴다)');
+
+  // 45.22: 완료 줄이 조절 막대를 덮지 않는다. 겹쳐 띄우지 않고 스크롤의 형제로 두므로 구조적으로 가릴 수 없다.
+  await restart();
+  await openSlot(1);
+  await press('움직이기');
+  const complete = labelled('완성 후 다음')[0];
+  assert.ok(complete, '움직이기 화면에도 완료 줄이 있다');
+  const scrolls = tree.root.findAllByType('ScrollView');
+  assert.ok(scrolls.length >= 1, '설정부는 스크롤된다');
+  for (const sv of scrolls) assert.equal(sv.findAll(n => n === complete).length, 0, '완료 줄은 스크롤 안에 있지 않다(따로 선다)');
+  for (const sv of scrolls) {
+    const pad = Object.assign({}, ...[sv.props.contentContainerStyle].flat(9).filter(Boolean));
+    if (pad.paddingBottom !== undefined) assert.ok(pad.paddingBottom >= 16, '마지막 조절 막대가 아래 줄에 바짝 붙지 않는다: ' + pad.paddingBottom);
+  }
+  await press('그리기');
   await act(async () => tree.unmount());
   console.log('PASS: motion v1 — 통통·흔들기·두근거리기 각각 고르는 즉시 미리보기(설정은 고른 뒤)·속도·세기·칸 닫기로 저장·재시작 복원·그대로 닫아도 유지, 움직임 없음(그림·문구 유지), 빈 칸·이전 버전 저장본, PRO 부분 2개·차례로·시작 간격·세부 조절은 펼쳐야 보임·끌기/버튼 순서 바꾸기·저장, PRO 종료 뒤: 저장된 PRO 움직임 유지, 부분 움직임 입구·PRO 보관 움직임은 누르는 순간 안내(칸 불변), 무료 효과 변경 저장은 막히지 않음, 32칸·다른 칸·완성 수·브러시 설정 불변. Native/WebView mocked.');
   process.exit(0);
