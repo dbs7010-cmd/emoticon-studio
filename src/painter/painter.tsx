@@ -198,6 +198,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [refWindow, setRefWindow] = useState<'open' | 'collapsed' | 'closed'>('closed');
   const [refSpot, setRefSpot] = useState<{ x: number; y: number } | null>(null);
   const guideUsed = useRef(false);
+  // 이 칸에 깔아 둔 밑그림의 참고 id. 같은 예시를 또 눌러도 그림이 두 장 쌓이지 않게 한다.
+  const guideLaid = useRef<string | null>(null);
   const [showCanon, setShowCanon] = useState(false), [showQA, setShowQA] = useState(false), [qa, setQA] = useState<QA | undefined>(slot.qa);
   // 빈 칸을 열면 한 번 보여 주는 '이전 칸 그림으로 시작'. 닫거나 그리기 시작하면 사라진다.
   const [continueDismissed, setContinueDismissed] = useState(false);
@@ -557,11 +559,20 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 비율 유지·가운데 배치·기본 진하기 30% 도 기존 참고 레이어 규칙을 그대로 쓴다.
   async function insertGuideUnderlay() {
     if (!guideExample || !onImportGuideExample || inFlight.current) return;
+    // 이 칸에 이미 깔아 둔 밑그림이 있으면 같은 그림을 또 들이지 않는다. 숨겨 뒀다면 다시 보여 주기만 한다.
+    const already = guideLaid.current && scene.references.some(r => r.id === guideLaid.current) ? guideLaid.current : null;
+    if (already) {
+      const shown = scene.references.find(r => r.id === already);
+      if (!shown?.visible || scene.activeReferenceId !== already) send({ type: 'toggleReference', id: already });
+      setRefRail(true); setRefSource('mine'); setRefBrowse(false); setPanel(null); setDrawRail(false);
+      return;
+    }
     inFlight.current = true; setBusy(true);
     try {
       const image = await onImportGuideExample(guideExample.artwork);
       if (!image) return;
       const id = 'ref-' + image.path;
+      guideLaid.current = id;
       send({ type: 'addReferences', references: [{ ...transform(id, '밑그림 · ' + guideExample.title), visible: false, opacity: .3, path: image.path, data: await dataUrl(image) }] });
       // 보이게 하는 일은 참고 타일을 누를 때와 같은 명령에 맡긴다 — '한 번에 하나만 보인다'는 기존 규칙이 그대로 지켜진다.
       send({ type: 'toggleReference', id });

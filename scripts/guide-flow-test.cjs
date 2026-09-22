@@ -307,6 +307,16 @@ async function echoReferences(scene) {
   // 위치·크기·진하기·숨김·삭제는 기존 참고 조절이 맡는다.
   assert.ok(byTestID('참고 진하기').length >= 1, '진하기 조절이 붙어 있다');
   assert.equal(labelled('참고 숨기기').length, 1, '숨기기가 붙어 있다');
+
+  // 같은 예시를 또 눌러도 밑그림이 두 장 쌓이지 않는다(45.21). 숨겨 뒀다면 다시 보여 주기만 한다.
+  await press('표현 예시 참고 창 열기');
+  const beforeAgain = sent().filter(m => m.type === 'addReferences').length;
+  const importedBefore = imported.length;
+  await press('이 예시를 밑그림으로 넣기');
+  assert.equal(sent().filter(m => m.type === 'addReferences').length, beforeAgain, '이미 깔린 밑그림을 또 들이지 않는다');
+  assert.equal(imported.length, importedBefore, '그림을 다시 들여오지도 않는다');
+  assert.equal(scene.references.length, 1, '참고는 한 장 그대로다');
+
   await press('참고 관리');
   assert.ok(labelled('참고 삭제').length >= 1, '삭제가 붙어 있다');
 
@@ -387,6 +397,76 @@ async function echoReferences(scene) {
     await press('그리기 닫기');
   }
   console.log('  진입 확인: ready=false 상태에서 홈 → 감정 → 표현 목록 → 참고 창 · 밑그림 모두 열림(안녕 · 잘 자)');
+
+  // ── 8. Android 릴리스에서 번들 그림 들여오기(45.21) ──────────────────────────────────
+  //   실기기에서 '밑그림을 넣지 못했어요' 가 났다. 원인은 릴리스 빌드에서만 생기는 조건이다:
+  //   번들 그림이 drawable 리소스로 들어가면 expo-asset 이 <Image> 호환을 위해
+  //   **파일 경로가 아니라 스킴 없는 리소스 이름**을 localUri 에 넣고 downloaded=true 로 표시한다.
+  //   그러면 downloadAsync 가 그냥 돌아오고 실제 파일이 없어, 그 값을 파일로 아는 쪽이 실패한다.
+  //   45.20 까지의 mock 은 언제나 file URI 를 돌려줘서 이 조건을 통과시켰다. 여기서 실제 동작을 흉내 낸다.
+  {
+    const made = [];
+    const manipulated = [];
+    // 릴리스의 expo-asset 을 그대로 흉내 낸다: 리소스 이름 + downloaded=true.
+    // 표시를 지우고 downloadAsync 를 다시 부를 때만 진짜 파일이 생긴다.
+    const releaseAsset = (name) => ({
+      uri: name, localUri: name, downloaded: true, hash: 'h', type: 'png',
+      async downloadAsync() {
+        if (this.downloaded) return this;             // 표시가 남아 있으면 아무 일도 하지 않는다
+        this.localUri = 'file:///cache/' + name + '.png';
+        this.downloaded = true;
+        return this;
+      },
+    });
+    let asset = releaseAsset('assets_expressionguides_greetinghellowave');
+    const releaseMocks = {
+      ...mocks,
+      'expo-asset': { Asset: { fromModule: () => asset } },
+      'expo-image-manipulator': {
+        SaveFormat: { PNG: 'png' },
+        ImageManipulator: {
+          manipulate(uri) {
+            manipulated.push(uri);
+            // 네이티브는 이 문자열을 Uri 로 파싱해 이미지 로더에 넘긴다.
+            // 스킴이 없으면 파일 경로로 읽혀 실패한다 — 실기기에서 난 그 오류다.
+            if (!String(uri).includes(':')) throw new Error('Could not load image from url: ' + uri);
+            return {
+              renderAsync: async () => ({
+                saveAsync: async () => ({ uri: 'file:///cache/out.png', width: 132, height: 132 }),
+                release() {},
+              }),
+              release() {},
+            };
+          },
+        },
+      },
+      'expo-file-system': {
+        Directory, Paths: { document: 'document' },
+        File: class { constructor(...parts) { this.uri = parts.map(x => x.uri ?? x).join('/'); }
+          get name() { return this.uri.split('/').pop(); }
+          copy(dest) { made.push([this.uri, dest.name]); } },
+      },
+    };
+    const releaseImages = loader(releaseMocks)('src/services/images.ts');
+
+    const out = await releaseImages.importBundledImage(1);
+    assert.equal(manipulated.length, 1, '그림은 한 번만 연다');
+    assert.ok(manipulated[0].includes(':'), '릴리스에서도 스킴 있는 파일 경로를 넘겨야 한다(리소스 이름을 그대로 넘기면 기기에서 실패한다): ' + manipulated[0]);
+    assert.equal(manipulated[0], 'file:///cache/assets_expressionguides_greetinghellowave.png', '리소스 이름이 아니라 내려받은 파일을 쓴다');
+    assert.equal(made.length, 1, '앱 저장소로 한 번 복사한다');
+    assert.deepEqual([out.width, out.height], [132, 132], '크기를 그대로 가져온다');
+    assert.ok(out.path && !out.path.includes('/'), '앱 저장소 파일 이름을 돌려준다');
+
+    // 내려받기까지 실패하면 조용히 넘어가지 않고 어느 칸에서 막혔는지 짧은 한글로 알린다.
+    asset = { uri: 'assets_broken', localUri: 'assets_broken', downloaded: true, async downloadAsync() { return this; } };
+    let failed = null;
+    try { await loader(releaseMocks)('src/services/images.ts').importBundledImage(1); }
+    catch (e) { failed = String(e.message); }
+    assert.ok(failed, '파일을 못 만들면 실패로 알린다');
+    assert.ok(/1단계/.test(failed), '몇 단계에서 막혔는지 알린다: ' + failed);
+    assert.ok(/[가-힣]/.test(failed) && !/file:|http|Error|undefined/.test(failed), '사용자에게 내부 경로·오류 원문을 보여 주지 않는다: ' + failed);
+  }
+  console.log('  릴리스 조건: 리소스 이름을 파일로 오해하지 않고 내려받아 쓴다 · 실패 시 단계만 한글로 알린다');
 
   await act(async () => tree.unmount());
   console.log('PASS: guide flow — 고마워 다섯 표현의 ID·이름·힌트, 그림 없는 표현의 준비 중과 잠긴 버튼, 고른 표현의 그림·힌트 전달, 참고 창 옮기기(화면 밖 이탈 없음)·접기·다시 열기·닫기와 캔버스 입력 분리, 밑그림의 기존 참고 레이어 재사용(30%·중앙·별도 그림 레이어·조절·삭제), 저장 그림·움직임·썸네일 제외를 확인했다. Native/WebView mocked.');

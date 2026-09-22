@@ -25,18 +25,46 @@ export async function pickImages(multiple = false): Promise<LocalImage[]> {
 // 앱에 함께 실린 그림(표현 가이드 예시 등)을 참고 사진과 같은 자리로 들여온다.
 // 고른 사진과 똑같이 PNG 한 장으로 옮겨 놓아야, 참고 레이어의 저장·복원·삭제가 기존 정책 그대로 돈다
 // (저장 파일은 LocalImage 경로로 참고를 찾는다 — 번들 모듈은 경로가 없어 그대로는 쓸 수 없다).
+// 단계별 표시. 기기에서 막혔을 때 어느 칸에서 멈췄는지 짧은 한글로만 알린다 —
+// 내부 경로·네이티브 오류 원문은 화면에 내보내지 않고 로그로만 남긴다.
+async function stage<T>(step: 1 | 2 | 3, what: string, run: () => Promise<T> | T): Promise<T> {
+  try { return await run(); }
+  catch (e) {
+    console.warn('[emoticon-studio] importBundledImage ' + step, e);
+    throw new Error(`${what} (${step}단계)`);
+  }
+}
+
 export async function importBundledImage(module: ImageSourcePropType): Promise<LocalImage> {
   // 정적 require(...) 로 들어온 번들 그림은 실행 시점에 숫자 손잡이다. 자리 정의가 쓰는 넓은 타입을 그대로 받고 여기서 좁힌다.
-  const asset = await Asset.fromModule(module as number).downloadAsync();
-  const uri = asset.localUri ?? asset.uri;
-  if (!uri) throw new Error('그림 파일을 찾지 못했습니다.');
-  const context = ImageManipulator.manipulate(uri);
-  const rendered = await context.renderAsync();
-  const png = await rendered.saveAsync({ format: SaveFormat.PNG });
-  const destination = newImageFile();
-  new File(png.uri).copy(destination);
-  context.release(); rendered.release();
-  return { path: destination.name, width: png.width, height: png.height };
+  const asset = Asset.fromModule(module as number);
+  // Android 릴리스에서 번들 그림은 drawable 리소스로 들어간다. 그때 expo-asset 은 <Image> 호환을 위해
+  // **파일 경로가 아니라 리소스 이름**(스킴 없는 문자열)을 localUri 에 넣고 '내려받음'으로 표시해 버린다.
+  // 그러면 downloadAsync 가 그냥 돌아와 실제 파일이 만들어지지 않고, 그 이름을 파일로 아는 쪽(ImageManipulator)이 실패한다.
+  // 네이티브 쪽은 이 이름을 읽을 수 있으므로, 표시만 지워 한 번 제대로 내려받게 한다.
+  if (asset.downloaded && asset.localUri && !asset.localUri.includes(':')) {
+    asset.downloaded = false;
+    asset.localUri = null;
+  }
+  const uri = await stage(1, '그림을 찾지 못했어요', async () => {
+    await asset.downloadAsync();
+    const found = asset.localUri ?? asset.uri;
+    // 여기서부터는 파일을 읽는 단계라 스킴이 없는 값은 파일이 아니다. 조용히 넘기지 않는다.
+    if (!found || !found.includes(':')) throw new Error('no file uri');
+    return found;
+  });
+  const png = await stage(2, '그림을 파일로 옮기지 못했어요', async () => {
+    const context = ImageManipulator.manipulate(uri);
+    const rendered = await context.renderAsync();
+    const saved = await rendered.saveAsync({ format: SaveFormat.PNG });
+    context.release(); rendered.release();
+    return saved;
+  });
+  return stage(3, '앱에 저장하지 못했어요', () => {
+    const destination = newImageFile();
+    new File(png.uri).copy(destination);
+    return { path: destination.name, width: png.width, height: png.height };
+  });
 }
 export async function dataUrl(image: LocalImage): Promise<string> {
   if (Math.max(image.width, image.height) > 720) {
