@@ -44,3 +44,21 @@ CSS 는 `border-style` 이 없으면 두께를 무시한다. 이것을 옮기지
 
 - 위 그림은 모두 **대체 렌더**다. 실제 App 을 그려 노드와 스타일을 옮긴 것이고, 그림과 캔버스는 실제 번들 PNG·실제 엔진 출력이지만 **실기기 캡처가 아니다**.
 - **Android 확인 결과: 없음.** 실기기 사용성·실제 터치는 이번에도 검증하지 않았다. 손가락 자리는 '계산상 충족, 실제 터치 미검증'이다.
+
+## APK
+
+| | |
+|---|---|
+| 파일 | `dist/emoticon-studio-1.0.0-vc1-internal-review-de39300-arm64.apk` |
+| 크기 | 39,565,923 바이트 |
+| SHA-256 | `e90e50cd7e86f20dcdec6e09d64cea227c916808e9d544e9d46c536024c86d8e` |
+| 소스 커밋 | `de39300` |
+| SOURCE_ID | `bb84aecb9b2e053606c1b3cd8d50ba13cbc71fbd249f296417fe3766c858f9e5` |
+| 구성 | 내부 검수(`EMOTICON_INTERNAL_REVIEW=1`) · arm64-v8a · 디버그 서명 |
+| 빌드 | `gradlew.bat :app:assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a` · BUILD SUCCESSFUL in 5m 53s |
+
+이번 변경이 실제로 들어갔는지 번들 문자열로 확인했다 — `apk-strings.txt` (8개 모두 있음). 설치해 본 것이 아니라 파일을 뜯어 본 것이다.
+
+**서명이 `CN=Android Debug` 라 스토어에 올릴 수 없다. 내부 검수용이고 공개 배포·외부 공유는 하지 않는다.**
+
+기존 APK 6개는 그대로 두었다. 사용자 데이터·저장 schema·권한은 건드리지 않았다.
