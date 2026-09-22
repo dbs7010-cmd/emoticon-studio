@@ -15,7 +15,7 @@ const PX = new Set(['width', 'height', 'minWidth', 'minHeight', 'maxWidth', 'max
   'borderWidth', 'borderTopWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderRightWidth', 'borderRadius', 'fontSize', 'lineHeight', 'letterSpacing']);
 const PAIRS = { marginHorizontal: ['margin-left', 'margin-right'], marginVertical: ['margin-top', 'margin-bottom'], paddingHorizontal: ['padding-left', 'padding-right'], paddingVertical: ['padding-top', 'padding-bottom'] };
 const RENAME = { backgroundColor: 'background-color', borderColor: 'border-color', borderRadius: 'border-radius', borderWidth: 'border-width', borderTopWidth: 'border-top-width', borderBottomWidth: 'border-bottom-width', borderLeftWidth: 'border-left-width', borderRightWidth: 'border-right-width', flexDirection: 'flex-direction', justifyContent: 'justify-content', alignItems: 'align-items', alignSelf: 'align-self', flexWrap: 'flex-wrap', flexGrow: 'flex-grow', flexShrink: 'flex-shrink', flexBasis: 'flex-basis', fontSize: 'font-size', fontWeight: 'font-weight', lineHeight: 'line-height', letterSpacing: 'letter-spacing', textAlign: 'text-align', zIndex: 'z-index', aspectRatio: 'aspect-ratio', minWidth: 'min-width', minHeight: 'min-height', maxWidth: 'max-width', maxHeight: 'max-height', marginTop: 'margin-top', marginBottom: 'margin-bottom', marginLeft: 'margin-left', marginRight: 'margin-right', paddingTop: 'padding-top', paddingBottom: 'padding-bottom', paddingLeft: 'padding-left', paddingRight: 'padding-right', textDecorationLine: 'text-decoration-line', textTransform: 'text-transform' };
-const SKIP = new Set(['resizeMode', 'shadowColor', 'shadowOffset', 'shadowOpacity', 'shadowRadius', 'elevation', 'textAlignVertical', 'includeFontPadding', 'fontFamily', 'transform', 'borderStyle', 'borderCurve', 'objectFit']);
+const SKIP = new Set(['resizeMode', 'shadowColor', 'shadowOffset', 'shadowOpacity', 'shadowRadius', 'elevation', 'textAlignVertical', 'includeFontPadding', 'fontFamily', 'transform', 'borderCurve', 'objectFit']);
 
 function css(style) {
   const out = [];
@@ -29,6 +29,10 @@ function css(style) {
   if (!('flexDirection' in style)) out.unshift('flex-direction:column');
   if (!('flexShrink' in style) && !('flex' in style)) out.unshift('flex-shrink:0');
   if (!('position' in style)) out.unshift('position:relative');
+  // CSS 는 border-style 이 없으면 두께를 무시한다(기본값 none). RN 은 두께만 주면 실선이다.
+  // 이것을 옮기지 않아 지금까지 **모든 테두리가 그림에서 빠져 있었다**.
+  const anyBorder = ['borderWidth', 'borderTopWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderRightWidth'].some(k => style[k]);
+  if (anyBorder && !style.borderStyle) out.push('border-style:solid');
   if (style.flex === 1 && style.minHeight === undefined) out.push('min-height:0', 'min-width:0');
   // 그림자는 층을 가르는 용도라 옅게 옮긴다.
   if (style.shadowOpacity) out.push(`box-shadow:0 ${(style.shadowOffset?.height ?? 1)}px ${(style.shadowRadius ?? 2) * 2}px rgba(23,25,29,${style.shadowOpacity})`);

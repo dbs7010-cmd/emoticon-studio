@@ -253,10 +253,14 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.deepEqual(lastCommand('captionPick'), { type: 'captionPick', on: true }, '적용한 글씨는 골라진 채로 캔버스에 남는다');
   assert.equal(lastCommand('caption').caption.text, '안녕', '고친 글자가 캔버스로 간다');
 
-  // ── 12. 45.6 빠른 도구: 뜻이 분명한 것은 아이콘만, 접근성 이름은 그대로 ─────────────────────
-  assert.equal(byTestID('빠른 지우개')[0].findAll(n => n.type === 'Text').length, 0, '지우개는 그림만으로 통한다');
-  assert.equal(byTestID('빠른 채우기')[0].findAll(n => n.type === 'Text').length, 0, '채우기도 이름을 떼었다');
-  assert.equal(byTestID('빠른 선택')[0].findAll(n => n.type === 'Text').length, 1, '선택은 아이콘만으로 알기 어려워 짧은 이름을 남긴다');
+  // ── 12. 빠른 도구: 한 줄 안에서는 모두 같은 규칙으로 읽힌다(45.24 정정) ─────────────────────
+  // 45.6차에는 지우개·채우기의 이름을 떼었다. 그러나 같은 줄의 펜·색·선택에는 이름이 있어
+  // 세 칸만 규칙이 달랐다. 이름을 다시 붙여 줄 전체가 한 가지 방식으로 읽히게 한다.
+  for (const name of ['지우개', '채우기', '선택']) {
+    const cell = byTestID('빠른 ' + name)[0];
+    const shown = cell.findAll(n => n.type === 'Text').map(n => [n.props.children].flat(9).filter(x => typeof x === 'string').join(''));
+    assert.deepEqual(shown, [name], name + ': 아이콘 옆에 짧은 이름이 보인다');
+  }
   for (const name of ['지우개', '채우기', '선택']) {
     assert.equal(labelled(name).length, 1, name + ': 접근성 이름은 그대로 하나');
     assert.ok((styleOf(labelled(name)[0]).minHeight ?? 0) >= 44, name + ': 손가락 자리 유지');

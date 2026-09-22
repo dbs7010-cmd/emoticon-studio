@@ -169,10 +169,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 키보드가 올라오면 남는 자리가 적다. 제목·입력칸·고정된 적용이 들어갈 만큼만 쓰고 나머지는 구른다.
   // 짧은 화면(640dp급)에서는 화면 비율만으로 잡으면 패널이 캔버스를 80% 넘게 덮는다(39차 화면 매트릭스).
   // 그래서 캔버스 아래 남는 자리 + 캔버스 절반을 넘지 않게 한 번 더 누른다 — 조절하는 동안 결과가 보이게.
-  const coverRoom = () => canvasSide ? Math.max(160, Math.round((canvasArea - canvasSide) / 2 + canvasSide * .5)) : Infinity;
-  const panelRoom = (share: number) => typing
+  const coverRoom = (cover = .5) => canvasSide ? Math.max(160, Math.round((canvasArea - canvasSide) / 2 + canvasSide * cover)) : Infinity;
+  const panelRoom = (share: number, cover = .5) => typing
     ? 240
-    : Math.min(coverRoom(), Math.max(160, Math.round(windowHeight * share) - insets.bottom));
+    : Math.min(coverRoom(cover), Math.max(160, Math.round(windowHeight * share) - insets.bottom));
   // 세트에서 마지막으로 쓴 선 종류·굵기와 앱을 켠 동안 고른 도구로 연다 — 24칸을 그리는 동안 매번 다시 고르지 않는다.
   const startBrush = cleanBrush(brushSettings);
   const [tool, setTool] = useState<Tool>(initialTool && initialTool !== 'select' ? initialTool : 'pen'), [brush, setBrush] = useState<Brush>(startBrush.base ?? 'pen'), [color, setColor] = useState(palette[0] ?? '#242424');
@@ -706,11 +706,29 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const raised = dockOpen || tab === 'motion';
   const dock = { position: 'absolute', left: 0, right: 0, bottom: tab === 'draw' && !typing ? BASE_H : 0, zIndex: 20, borderTopWidth: raised ? 1 : 0, borderLeftWidth: raised ? 1 : 0, borderRightWidth: raised ? 1 : 0, borderColor: C.line, borderTopLeftRadius: raised ? 24 : 0, borderTopRightRadius: raised ? 24 : 0, overflow: 'hidden', backgroundColor: C.paper, flexShrink: 0 } as const;
   const narrow = windowWidth < 360;
+  // 머리줄이 두 줄로 갈릴지는 '실제로 잰 폭'으로 정한다 — 화면이 좁아서든 글자가 커서든 같은 규칙이다.
+  const [headW, setHeadW] = useState(0), [tabsW, setTabsW] = useState(0), [aidsW, setAidsW] = useState(0);
+  const headStacked = tab === 'draw' && headW > 0 && tabsW > 0 && aidsW > 0 && tabsW + aidsW + 12 > headW;
   // 위 줄의 '레이어'는 지금 어느 장을 쓰는지 말한다 — 열지 않아도 읽힌다(45.5차).
   const drawLayers = scene.layers.filter(l => l.id.startsWith('draw-'));
   const layerAt = (id: string) => scene.layers.findIndex(l => l.id === id);
   const activeLayerAt = drawLayers.findIndex(l => l.id === scene.activeLayerId);
   const layerBadge = drawLayers.length > 1 && activeLayerAt >= 0 ? '레이어 ' + (activeLayerAt + 1) : '레이어';
+  // 보조 도구 묶음. 한 줄에 설 때나 두 줄로 내려올 때나 같은 것이라, 잰 폭이 자리에 따라 달라지지 않는다.
+  const aidRow = <View onLayout={e => { const w = Math.ceil(e.nativeEvent.layout.width); if (w !== aidsW) setAidsW(w); }} style={{ flexDirection: 'row', alignItems: 'center' }}>
+      {/* 그림을 돕는 것끼리 한 무리(45.5차): 가져오는 것(참고) · 쌓는 것(레이어) · 얹는 것(문구).
+          아래 도구 줄은 '지금 그리는 손'만 다룬다. 레이어는 몇 번째를 쓰는 중인지 여기서 바로 읽힌다. */}
+      {tab === 'draw' && ([['참고', refRail || showCanon, 'image-outline', '참고', () => { ease(); setRefRail(!refRail); setRefBrowse(true); setDrawRail(false); setPanel(null); setCaptionOpen(false); }],
+         ['레이어', drawRail, 'layers-outline', layerBadge, () => { ease(); setDrawRail(!drawRail); setRefRail(false); setPanel(null); setCaptionOpen(false); }],
+         ['문구', panel === 'caption' || !!scene.captionPicked, 'format-text', '문구', () => { if (panel === 'caption') { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); } else { setDrawRail(false); setRefRail(false); openCaption(); } }]] as const).map(([label, on, icon, title, run]) =>
+        <Pressable key={label} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }} onPress={run}
+          style={{ minHeight: 48, paddingHorizontal: narrow ? 1 : 2, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ height: 32, paddingHorizontal: narrow ? 6 : 8, borderRadius: 16, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: on ? C.accentSoft : 'transparent' }}>
+            {!narrow && <MaterialCommunityIcons name={icon} size={16} color={on ? C.ink : C.muted} />}
+            <Text style={{ fontSize: 13, fontWeight: on ? '700' : '600', color: on ? C.ink : C.muted }}>{title}</Text>
+          </View>
+        </Pressable>)}
+  </View>;
   const emptyCut = !slot.work && !slot.finalImage;
   // 제안할 수 있는 상태(continueAvailable)와 지금 캔버스에 보이는지(offerContinue)를 나눈다. 더보기 메뉴는 앞의 것으로 가려서,
   // 메뉴를 여는 순간 같은 기능의 두 번째 입구가 생기지 않게 한다.
@@ -751,7 +769,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const brushIcon: IconName = effectiveBrush.preset ? 'brush-variant' : brush === 'pen' ? 'fountain-pen-tip' : brush === 'brush' ? 'brush' : 'pencil';
   // 아래 줄은 '지금 그리는 손'이다: 브러시와 색이 주인공, 나머지 셋은 모드를 바꾸는 빠른 칸(45.5차).
   // 네 번째 값: 아이콘 옆에 이름을 남길지. 처음 보는 사람이 그림만으로 알 수 있는 것은 이름을 떼고, 애매한 것만 남긴다.
-  const quickTools: [Tool, string, IconName, boolean][] = [['eraser', '지우개', 'eraser', false], ['fill', '채우기', 'format-color-fill', false], ['select', '선택', 'select-drag', true]];
+  const quickTools: [Tool, string, IconName, boolean][] = [['eraser', '지우개', 'eraser', true], ['fill', '채우기', 'format-color-fill', true], ['select', '선택', 'select-drag', true]];
   const brushTitle = effectiveBrush.preset ? (PRO_BRUSHES.find(p => p.key === effectiveBrush.preset)?.title ?? '브러시') : (BRUSHES.find(b => b.key === brush)?.title ?? '브러시');
   return <Modal onRequestClose={() => { if (Keyboard.isVisible()) { Keyboard.dismiss(); return; } if (panel) { ease(); setPanel(null); return; } if (drawRail || refRail) { ease(); setDrawRail(false); setRefRail(false); return; } if (showCanon) { setShowCanon(false); return; } save('close'); }} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -768,27 +786,26 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         </View>
         <Bar label="더보기" icon="dots-horizontal" active={panel === 'more'} onPress={() => { setPanel(panel === 'more' ? null : 'more'); setDrawRail(false); setRefRail(false); }} />
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: C.line, backgroundColor: C.paper, paddingHorizontal: 6 }}>
-        {([['draw', '그리기'], ['motion', '움직이기']] as const).map(([key, title]) =>
-          <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: tab === key }}
-            onPress={() => switchTab(key)}
-            style={{ minHeight: 48, paddingHorizontal: narrow ? 9 : 12, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 15, fontWeight: tab === key ? '800' : '600', color: tab === key ? C.ink : C.faint }}>{title}</Text>
-            <View pointerEvents="none" style={{ position: 'absolute', left: narrow ? 9 : 12, right: narrow ? 9 : 12, bottom: 0, height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: tab === key ? C.accent : 'transparent' }} />
-          </Pressable>)}
-        <View style={{ flex: 1 }} />
-        {/* 그림을 돕는 것끼리 한 무리(45.5차): 가져오는 것(참고) · 쌓는 것(레이어) · 얹는 것(문구).
-            아래 도구 줄은 '지금 그리는 손'만 다룬다. 레이어는 몇 번째를 쓰는 중인지 여기서 바로 읽힌다. */}
-        {tab === 'draw' && ([['참고', refRail || showCanon, 'image-outline', '참고', () => { ease(); setRefRail(!refRail); setRefBrowse(true); setDrawRail(false); setPanel(null); setCaptionOpen(false); }],
-           ['레이어', drawRail, 'layers-outline', layerBadge, () => { ease(); setDrawRail(!drawRail); setRefRail(false); setPanel(null); setCaptionOpen(false); }],
-           ['문구', panel === 'caption' || !!scene.captionPicked, 'format-text', '문구', () => { if (panel === 'caption') { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); } else { setDrawRail(false); setRefRail(false); openCaption(); } }]] as const).map(([label, on, icon, title, run]) =>
-          <Pressable key={label} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }} onPress={run}
-            style={{ minHeight: 48, paddingHorizontal: narrow ? 1 : 2, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ height: 32, paddingHorizontal: narrow ? 6 : 8, borderRadius: 16, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: on ? C.accentSoft : 'transparent' }}>
-              {!narrow && <MaterialCommunityIcons name={icon} size={16} color={on ? C.ink : C.muted} />}
-              <Text style={{ fontSize: 13, fontWeight: on ? '700' : '600', color: on ? C.ink : C.muted }}>{title}</Text>
-            </View>
-          </Pressable>)}
+      {/* 모드(그리기·움직이기)와 보조(참고·레이어·문구)는 캔버스를 지키려고 한 줄에 선다.
+          다만 둘이 폭을 넘으면 글자나 손가락 자리를 줄이지 않고 두 줄로 바꾼다 — 320dp 나 큰 글자에서 겹치던 자리다.
+          재는 것은 실제 배치 폭이라 글자 배율이 커져도 같은 규칙으로 갈린다(45.24). */}
+      <View onLayout={e => { const w = Math.round(e.nativeEvent.layout.width); if (w !== headW) setHeadW(w); }}
+        style={{ borderBottomWidth: 1, borderColor: C.line, backgroundColor: C.paper, paddingHorizontal: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View onLayout={e => { const w = Math.ceil(e.nativeEvent.layout.width); if (w !== tabsW) setTabsW(w); }} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {([['draw', '그리기'], ['motion', '움직이기']] as const).map(([key, title]) =>
+            <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: tab === key }}
+              onPress={() => switchTab(key)}
+              style={{ minHeight: 48, paddingHorizontal: narrow ? 9 : 12, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 15, fontWeight: tab === key ? '800' : '600', color: tab === key ? C.ink : C.faint }}>{title}</Text>
+              <View pointerEvents="none" style={{ position: 'absolute', left: narrow ? 9 : 12, right: narrow ? 9 : 12, bottom: 0, height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: tab === key ? C.accent : 'transparent' }} />
+            </Pressable>)}
+          <View style={{ flex: 1 }} />
+          </View>
+          <View style={{ flex: 1 }} />
+          {!headStacked && aidRow}
+        </View>
+        {headStacked && <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', borderTopWidth: 1, borderColor: C.line }}>{aidRow}</View>}
       </View>
 
       {/* 캔버스는 도구를 열고 닫아도 제자리다(45.5차). 색 패널 때문에 그림이 위로 뛰던 자리 이동을 없앴다 —
@@ -1016,7 +1033,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <Pressable accessibilityRole="button" accessibilityLabel="선택 취소" onPress={() => { tap('button:선택 취소'); send({ type: 'selectCancel' }); }} style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>취소</Text></Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel="선택 적용" onPress={() => { tap('button:선택 적용'); send({ type: 'selectApply' }); }} style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 14, backgroundColor: pressed ? C.accentLine : C.accent, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 15, fontWeight: '800', color: C.accentInk }}>적용</Text></Pressable>
           </View>
-        </View> : panel === 'color' ? <View style={{ maxHeight: panelRoom(0.42) }}><ScrollView keyboardShouldPersistTaps="handled" scrollEnabled={!dropping}><ColorPanel color={color} recent={palette} saved={userPalette} view={colorView} onView={setColorView} onPick={pickColor} onEyedrop={startEyedrop} eyedropHandlers={eyedropHandlers} onSave={onSaveUserColor} onForget={onRemoveUserColor} onClose={() => { ease(); setPanel(null); }} /></ScrollView></View>
+        </View> : panel === 'color' ? <View style={{ maxHeight: panelRoom(0.38, 0.44) }}><ColorPanel scrollable={!dropping} color={color} recent={palette} saved={userPalette} view={colorView} onView={setColorView} onPick={pickColor} onEyedrop={startEyedrop} eyedropHandlers={eyedropHandlers} onSave={onSaveUserColor} onForget={onRemoveUserColor} onClose={() => { ease(); setPanel(null); }} /></View>
         : panel === 'caption' ? <View style={{ backgroundColor: C.paper, maxHeight: panelRoom(0.5) }}>
           {/* 미확정 변경은 '문구 적용'으로만 확정된다. 닫으면 고치던 글자는 버려지고 화면의 문구는 그대로 남는다.
               키보드가 올라오면 머리·지우기·아래 버튼을 접고 입력 한 줄(색 · 입력 · 키보드 닫기 · 적용)만 남긴다 —
@@ -1470,8 +1487,10 @@ type ColorPanelProps = {
   view: 'palette' | 'custom'; onView: (view: 'palette' | 'custom') => void;
   onPick: (c: string, settle?: boolean) => void; onEyedrop: () => void; eyedropHandlers: Record<string, unknown>; onSave: (c: string) => void; onForget: (c: string) => void;
   onClose: () => void;
+  // 스포이드를 끌고 있는 동안에는 견본 목록이 따라 스크롤되면 안 된다.
+  scrollable: boolean;
 };
-function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eyedropHandlers, onSave, onForget, onClose }: ColorPanelProps) {
+function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eyedropHandlers, onSave, onForget, onClose, scrollable }: ColorPanelProps) {
   // 견본 한 번 = 고르고 닫기. 상세 조절 = 고르고 머무르기.
   const quick = (c: string) => { onPick(c); onClose(); };
   const [value, setValue] = useState(() => Math.max(.15, hsvOf(color).v));
@@ -1489,7 +1508,7 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
   const channel = (key: 'r' | 'g' | 'b' | 'a', n: number) => onPick(toHex({ ...rgba, [key]: n }), false);
   const action = { flex: 1, minHeight: 44, flexDirection: 'row', gap: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center' } as const;
 
-  return <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12, gap: 12 }}>
+  return <View style={{ flexShrink: 1, minHeight: 0, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8, gap: 8 }}>
     {/* 머리 한 줄: 지금 색 · 최근 쓴 색 · 스포이드 · 내 팔레트 저장 · 닫기. 두 갈래 어디에서나 같은 자리.
         최근 쓴 색이 가장 먼저다 — 한 번 누르면 그 색으로 돌아가 바로 그린다. 예전에는 따로 한 줄을 차지해 패널이 캔버스를
         더 가리고 팔레트 마지막 줄이 도구 줄 경계에서 잘렸다(43차 실기기). 직접 선택에서는 이 자리에 색 값이 보인다. */}
@@ -1510,16 +1529,20 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
       <View {...eyedropHandlers} accessibilityRole="button" accessibilityLabel="스포이드" accessibilityHint="누른 채 그림 위로 끌면 그 자리 색을 집어요"
         style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', gap: 1 }}>
         <MaterialCommunityIcons name="eyedropper-variant" size={19} color={T.ink} />
-        <Text style={{ fontSize: 9, fontWeight: '600', color: T.muted }}>집기</Text>
+        <Text numberOfLines={1} style={{ fontSize: 9, fontWeight: '600', color: T.muted }}>색 추출</Text>
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel={kept ? '내 팔레트에 있음' : '내 팔레트에 저장'} disabled={kept} onPress={() => onSave(color)}
         style={({ pressed }) => ({ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: 12, backgroundColor: pressed ? T.fill : 'transparent' })}>
         <MaterialCommunityIcons name={kept ? 'check' : 'palette-swatch-outline'} size={19} color={kept ? T.success : T.ink} />
-        <Text style={{ fontSize: 9, fontWeight: '600', color: kept ? T.success : T.muted }}>{kept ? '있음' : '담기'}</Text>
+        <Text numberOfLines={1} style={{ fontSize: 9, fontWeight: '600', color: kept ? T.success : T.muted }}>{kept ? '저장됨' : '색 저장'}</Text>
       </Pressable>
       <IconButton label="팔레트 닫기" icon="chevron-down" color={T.muted} onPress={onClose} />
     </View>
     <Segmented dense value={view} onChange={onView} items={[{ key: 'palette', label: '팔레트' }, { key: 'custom', label: '직접 선택' }]} />
+    {/* 여기서부터가 스크롤 자리다. 견본이 많아도 머리줄과 탭은 밀려나지 않고,
+        마지막 줄은 아래 여백(16) 덕분에 도구 줄 경계에 딱 붙지 않는다(43차 실기기에서 잘리던 자리). */}
+    <ScrollView testID="색 견본 스크롤" style={{ flexShrink: 1, minHeight: 0 }} scrollEnabled={scrollable} keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator contentContainerStyle={{ gap: 12, paddingTop: 4, paddingBottom: 16 }}>
     {view === 'palette' ? <>
       {!!saved.length && <View style={{ gap: 4 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -1554,6 +1577,7 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
         </View>
       </View>
     </>}
+    </ScrollView>
   </View>;
 }
 // 작은 정사각 견본. 동그라미를 길게 늘어놓는 대신 규칙적인 격자로 세운다 — 눈이 줄과 칸을 따라가고,
@@ -1561,8 +1585,9 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
 // 어두운 색 위에서 잘 보이지 않는다.
 function Swatch({ color, selected, onPress, size = 34, label, round }: { color: string; selected: boolean; onPress: () => void; size?: number; label?: string; round?: boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label ?? '색 ' + color} accessibilityState={{ selected }} onPress={onPress} hitSlop={6}
+    // 흰색·아주 밝은 색은 옅은 테두리로는 바탕과 구분되지 않아 빈칸처럼 보인다. 밝은 색에만 또렷한 선을 준다.
     style={{ width: size, height: size, borderRadius: round ? size / 2 : 9, backgroundColor: color, alignItems: 'center', justifyContent: 'center',
-      borderWidth: selected ? 2.5 : 1, borderColor: selected ? T.ink : '#17171718' }}>
+      borderWidth: selected ? 2.5 : 1, borderColor: selected ? T.ink : light(color) ? T.lineStrong : '#17171718' }}>
     {selected && <MaterialCommunityIcons name="check" size={Math.round(size * .5)} color={light(color) ? '#1B1B1D' : '#FFFFFF'} />}
   </Pressable>;
 }

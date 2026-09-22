@@ -216,6 +216,25 @@ async function openPainter() {
   await press('브러시 닫기');
   await press('색');
   assert.equal(labelled('색 #54A9E8').length, 1, '무료: 팔레트 견본');
+  // 패널은 세 자리로 갈린다: 늘 보이는 머리줄 · 스크롤하는 견본 · 패널 밖의 고정 도구 줄.
+  // 예전에는 패널 전체가 한 스크롤 안이라, 마지막 견본을 보러 내려가면 최근 색과 탭까지 함께 밀려 올라갔다.
+  {
+    const scroll = tree.root.findAll(n => n.type === 'ScrollView' && n.props.testID === '색 견본 스크롤');
+    assert.equal(scroll.length, 1, '견본 스크롤은 하나');
+    const box = Object.assign({}, ...[scroll[0].props.style].flat(9).filter(Boolean));
+    assert.equal(box.flexShrink, 1, '견본 자리가 먼저 줄어든다');
+    assert.equal(box.minHeight, 0, '내용 높이로 버티지 않는다');
+    const pad = Object.assign({}, ...[scroll[0].props.contentContainerStyle].flat(9).filter(Boolean));
+    assert.ok((pad.paddingBottom ?? 0) >= 12, '마지막 줄 아래에 여유가 있다: ' + pad.paddingBottom);
+    const inScroll = label => scroll[0].findAll(n => n.props.accessibilityLabel === label || n.props.testID === label).length;
+    // 머리줄과 탭은 스크롤 밖에 있어 어디까지 내려가도 제자리다.
+    for (const fixed of ['최근 색', '스포이드', '내 팔레트에 저장', '팔레트 닫기', '팔레트', '직접 선택'])
+      assert.equal(inScroll(fixed), 0, fixed + ': 머리줄·탭은 스크롤 밖');
+    // 마지막 견본은 스크롤 안이라 끝까지 내려가면 온전히 보인다.
+    const swatchNames = scroll[0].findAll(n => n.type === 'Pressable' && /^색 #/.test(n.props.accessibilityLabel ?? '')).map(n => n.props.accessibilityLabel);
+    assert.ok(swatchNames.length >= 20, '기본 색 견본이 스크롤 안에 모두 있다: ' + swatchNames.length);
+    assert.ok(swatchNames.at(-1), '마지막 견본도 스크롤 안이라 끝까지 내려가면 온전히 보인다: ' + swatchNames.at(-1));
+  }
   // 견본은 보이는 크기보다 크게 눌린다. 손가락 자리 = 견본 + hitSlop 양쪽 = 48dp 여야 하고,
   // 이웃과의 간격(격자 gap)이 그보다 좁으면 두 견본의 누를 자리가 겹친다 — 그 상태를 막는다.
   {

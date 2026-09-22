@@ -195,8 +195,46 @@ const rows = [];
     await act(async () => tree.unmount());
     // 브러시·색·참고·레이어 시트도 캔버스를 절반 넘게 가리지 않는다(결과를 보면서 조절).
     for (const key of ['brush', 'color', 'reference', 'layers']) assert.ok(row[key] <= .5, tag + ': ' + key + ' 패널이 캔버스를 절반 넘게 가리지 않는다: ' + row[key]);
+    // 색 패널은 안쪽이 스스로 스크롤하므로 더 낮게 세운다 — 엔진이 1배보다 작게 줄이지 못하고 캔버스도 움직일 수 없어,
+    // 판을 낮추는 것이 그림을 더 보이게 하는 유일한 길이다(45.24).
+    assert.ok(row.color <= .45, tag + ': 색 패널은 캔버스를 45% 넘게 가리지 않는다: ' + row.color);
     rows.push(row);
   }
+  // ── 머리줄: 넘치면 두 줄로 갈린다(글자나 손가락 자리를 줄이지 않는다) ─────────────────────────
+  viewport.width = 320; viewport.height = 800;
+  files.clear();
+  saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8'] });
+  await openPainter();
+  const headOf = () => tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && flat(n.props.style).borderBottomWidth === 1)[0];
+  const aidNames = () => ['참고', '레이어', '문구'].map(l => labelled(l).length);
+  assert.deepEqual(aidNames(), [1, 1, 1], '보조 셋이 모두 있다');
+  const rowsIn = head => head.findAll(n => n.type === 'View' && flat(n.props.style).flexDirection === 'row' && n.parent === head).length;
+  // 아직 아무것도 재지 않았으면 예전처럼 한 줄이다.
+  assert.equal(rowsIn(headOf()), 1, '재기 전에는 한 줄');
+  // 한 번 그릴 때마다 노드가 새로 생기므로 그때그때 다시 찾아 보낸다.
+  const measure = async (headWidth, tabsWidth, aidsWidth) => {
+    for (const [pick, width] of [[h => h, headWidth], [h => h.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && n !== h)[0], tabsWidth],
+                                 [h => h.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && n !== h)[1], aidsWidth]]) {
+      const node = pick(headOf());
+      if (!node) continue;
+      const fn = node.props.onLayout;
+      await act(async () => { fn({ nativeEvent: { layout: { width, height: 48 } } }); });
+    }
+  };
+  // 넉넉하면 한 줄 그대로.
+  await measure(320, 120, 150);
+  assert.equal(rowsIn(headOf()), 1, '들어가면 한 줄을 지킨다');
+  assert.deepEqual(aidNames(), [1, 1, 1], '한 줄에서도 보조 셋이 그대로');
+  // 넘치면 두 줄. 글자 크기나 손가락 자리는 그대로여야 한다.
+  const tapBefore = ['참고', '레이어', '문구'].map(l => flat(labelled(l)[0].props.style).minHeight);
+  await measure(320, 200, 180);
+  assert.equal(rowsIn(headOf()), 2, '넘치면 두 줄로 갈린다');
+  assert.deepEqual(aidNames(), [1, 1, 1], '두 줄이 되어도 보조 셋은 그대로 하나씩');
+  assert.deepEqual(['참고', '레이어', '문구'].map(l => flat(labelled(l)[0].props.style).minHeight), tapBefore, '두 줄로 가도 손가락 자리를 줄이지 않는다');
+  assert.deepEqual(tapBefore, [48, 48, 48], '보조 도구 손가락 자리 48dp');
+  await act(async () => tree.unmount());
+  console.log('  머리줄 — 들어가면 한 줄 · 넘치면 두 줄 · 손가락 자리 48dp 불변');
+
   // ── 글자 배율 1.0 / 1.3 / 1.5 ────────────────────────────────────────────────────────────
   const scaleRows = [];
   for (const width of [320, 360, 390, 412]) {

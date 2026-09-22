@@ -816,8 +816,9 @@ function Studio() {
               const card = EXPRESSION_GUIDE.cards.find(c => c.id === id);
               return <Pressable key={id} accessibilityRole="button" accessibilityLabel={(card?.name ?? '') + ' 표현 보기'}
                 onPress={() => { if (card?.examples?.length) { setHomeView('guide'); setGuideCategory(card.category); setGuideCard(card); } else setHomeView('guide'); }}
-                style={({ pressed }) => ({ flex: 1, aspectRatio: 1, borderRadius: 16, backgroundColor: PREVIEW_TINT[i], alignItems: 'center', justifyContent: 'center', opacity: pressed ? .8 : 1 })}>
-                <AssetSlot name="expressionGuideArtwork" size={64} sourceOverride={card ? coverOf(card) : null} />
+                style={({ pressed }) => ({ flex: 1, aspectRatio: 1, borderRadius: 16, backgroundColor: PREVIEW_TINT[i], alignItems: 'center', justifyContent: 'center', gap: 2, opacity: pressed ? .8 : 1 })}>
+                <AssetSlot name="expressionGuideArtwork" size={56} sourceOverride={card ? coverOf(card) : null} />
+                <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{card?.name ?? ''}</Text>
               </Pressable>;
             })}
           </View>
@@ -1320,9 +1321,24 @@ function Studio() {
           <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink, lineHeight: 30, letterSpacing: -.5 }}>{'더 섬세하게 움직이고\n여러 칸을 한 번에'}</Text>
           {/* proFeatureArtwork 자리(16:9). 지금은 앱 기본 캐릭터 두 장으로 전후를 보여 준다. */}
           <View accessibilityLabel="움직임 전후 미리보기" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 14, aspectRatio: 16 / 9, maxHeight: 214, borderRadius: 24, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
-            <View style={{ alignItems: 'center', gap: 5 }}><Image source={ASSET_SLOTS.proFeatureArtwork.source ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" /><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>전체 움직임</Text></View>
+            {/* 왼쪽·오른쪽은 같은 그림이다. 달라지는 것은 '무엇이 움직이는가'뿐이라, 그 차이만 앱이 그린다. */}
+            <View style={{ alignItems: 'center', gap: 5 }}>
+              <View style={{ width: 86, height: 86 }}>
+                <Image accessibilityIgnoresInvertColors source={ASSET_SLOTS.proFeatureArtwork.source ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
+                {/* 전체가 함께 움직인다: 그림 전체를 한 테두리로 감싼다. */}
+                <View pointerEvents="none" style={{ position: 'absolute', left: 2, top: 2, right: 2, bottom: 2, borderRadius: 14, borderWidth: 2, borderColor: C.warmInk }} />
+              </View>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>전체 움직임</Text>
+            </View>
             <MaterialCommunityIcons name="arrow-right" size={24} color={C.ink} />
-            <View style={{ alignItems: 'center', gap: 5 }}><Image source={ASSET_SLOTS.proFeatureArtwork.sourceAfter ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" /><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>눈·팔·몸만</Text></View>
+            <View style={{ alignItems: 'center', gap: 5 }}>
+              <View style={{ width: 86, height: 86 }}>
+                <Image accessibilityIgnoresInvertColors source={ASSET_SLOTS.proFeatureArtwork.sourceAfter ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
+                {/* 고른 곳만 움직인다: 흔드는 손 자리 하나만 감싼다. */}
+                <View pointerEvents="none" style={{ position: 'absolute', left: 6, top: 20, width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: C.warmInk }} />
+              </View>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>부분 움직임</Text>
+            </View>
           </View>
           {/* 실제로 PRO 인 것만 적는다. 그리기 기본 도구(진하기·보정·스포이드·팔레트·RGB)는 무료라 넣지 않는다. */}
           {([['부분만 움직이기 · 두 모습 번갈아', '손, 귀, 꼬리처럼 원하는 곳만 따로, 차례로', 'hand-back-right-outline'],

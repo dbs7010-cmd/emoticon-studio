@@ -61,10 +61,12 @@ export const ASSET_SLOTS = {
   // 내보내기에서 모든 칸이 완성됐을 때 요약 표면 오른쪽.
   exportSuccessArtwork: { aspectRatio: 1, display: '84×84', sourceSize: '252(@3x) · 168 · 84 / 마스터 1024', safeArea: '가운데 84%', background: 'transparent', source: null },
   // PRO 화면 위쪽 비교(App.tsx proSheet). 16:9 따뜻한 표면(폭 화면-32, 최대 높이 214, 안쪽 여백 14)은 앱이 그리고,
-  // 그 안에 1:1 그림 두 장(86×86, 왼쪽 '전체 움직임' · 오른쪽 '눈·팔·몸만')과 화살표·라벨이 들어간다. 지금은 mascot-paper / mascot-ink.
-  proFeatureArtwork: { aspectRatio: 1, display: '86×86 두 장(전·후) — 16:9 표면 안, 가운데 화살표·아래 라벨은 앱이 그림', sourceSize: '258(@3x) · 172 · 86 × 2 / 마스터 1024 × 2', safeArea: '가운데 84%, 두 장이 같은 캐릭터·같은 크기·같은 바닥선', background: 'transparent',
-    // 최종 그림이 올 때까지 앱 기본 캐릭터 두 장을 쓴다. 화면은 이 두 줄만 보므로 파일만 바꾸면 PRO 화면이 바뀐다.
-    source: require('../../assets/art/mascot-paper.png'), sourceAfter: require('../../assets/art/mascot-ink.png') },
+  // 그 안에 1:1 그림 두 장(86×86, 왼쪽 '전체 움직임' · 오른쪽 '부분 움직임')과 화살표·부분 표시·라벨이 들어간다.
+  // 두 장은 **같은 그림**이다 — 바뀌는 것은 캐릭터가 아니라 무엇이 움직이느냐이기 때문이다.
+  proFeatureArtwork: { aspectRatio: 1, display: '86×86 같은 그림 두 장(전체 움직임·부분 움직임) — 16:9 표면 안, 가운데 화살표·부분 표시·아래 라벨은 앱이 그림', sourceSize: '258(@3x) · 172 · 86 × 2 / 마스터 1024 × 2', safeArea: '가운데 84%, 두 장이 같은 캐릭터·같은 크기·같은 바닥선', background: 'transparent',
+    // 두 쪽은 **같은 그림**이다. 달라지는 것은 캐릭터가 아니라 '무엇이 움직이는가'이고, 그 차이는 앱이 그리는 부분 표시와 라벨이 말한다.
+    // 이미 있는 표현 가이드 그림(손 흔들기)을 쓴다 — 손만 따로 움직이는 예가 부분 움직임과 그대로 맞는다.
+    source: require('../../assets/expression-guides/greeting-hello-wave.png'), sourceAfter: require('../../assets/expression-guides/greeting-hello-wave.png') },
 } satisfies Record<string, AssetSlotSpec>;
 
 export type AssetSlotName = keyof typeof ASSET_SLOTS;

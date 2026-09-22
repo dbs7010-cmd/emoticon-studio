@@ -106,7 +106,13 @@ async function walk(App, { sourcesOn }) {
   await press('PRO 보기');
   note();
   const proLabels = tree.root.findAll(n => n.type === 'Text').map(n => [n.props.children].flat(9).filter(x => typeof x === 'string').join(''));
-  assert.ok(proLabels.includes('전체 움직임') && proLabels.includes('눈·팔·몸만'), 'PRO 비교 표면은 두 상태 모두에서 그대로 있다');
+  assert.ok(proLabels.includes('전체 움직임') && proLabels.includes('부분 움직임'), 'PRO 비교 표면은 두 상태 모두에서 그대로 있다');
+  // 비교 그림은 같은 캐릭터·같은 크기여야 차이가 '움직이는 방식'으로 읽힌다. 예전에는 다른 마스코트 두 장이었다.
+  const proSlot = slotSource.ASSET_SLOTS.proFeatureArtwork;
+  assert.equal(proSlot.source, proSlot.sourceAfter, 'PRO 비교는 같은 그림 두 장이다');
+  const proImages = tree.root.findAll(n => n.type === 'Image' && [86].includes((Object.assign({}, ...[n.props.style].flat(9).filter(Boolean))).width));
+  assert.equal(proImages.length, 2, '비교 그림은 두 장');
+  assert.deepEqual(proImages.map(n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean)).height), [86, 86], '두 장이 같은 크기');
   await press('PRO 닫기');
 
   // ④ 그리기: 빈 칸의 움직임 견본 · 기본 레퍼런스 격자
@@ -194,7 +200,7 @@ async function walk(App, { sourcesOn }) {
     assert.ok(!/\bMASCOT\b/.test(src), file + ': MASCOT 직접 참조가 없다');
   }
   const slotsSrc = fs.readFileSync('src/design/asset-slots.ts', 'utf8');
-  assert.ok(/mascot-paper\.png/.test(slotsSrc) && /mascot-ink\.png/.test(slotsSrc), '지금 쓰는 자리표시 그림은 asset-slots 한 곳에만 있다');
+  assert.ok(/mascot-paper\.png/.test(slotsSrc), '지금 쓰는 자리표시 그림은 asset-slots 한 곳에만 있다');
   const motionSrc = fs.readFileSync('src/painter/motion-panel.tsx', 'utf8');
   assert.ok(/ASSET_SLOTS\.motionExampleArtwork\.source/.test(motionSrc), '움직임 견본은 자리에서 받는다');
   const painterSrc = fs.readFileSync('src/painter/painter.tsx', 'utf8');
