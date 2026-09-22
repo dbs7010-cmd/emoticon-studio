@@ -38,7 +38,7 @@ export const T = {
   info: '#2C5F9E', infoSoft: '#EAF1FB',
   mint: '#E4F3EA', blue: '#EAF1FB', lavender: '#EFE8FB',
   lilac: '#D9CFFF', sky: '#C9EBFF', coral: '#FFD5CF',   // 감정 그림 배경(명세 §2)
-  radius: { xs: 8, sm: 12, md: 16, lg: 20, xl: 24 },
+  radius: { xs: 8, sm: 12, md: 16, lg: 20, xl: 24, chip: 10, button: 12, card: 16 },
   gap: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
   tap: 48, // 편한 손가락 자리
 };
@@ -47,9 +47,10 @@ const C = T;
 // 글자 위계. 굵기 하나로 위계를 만들지 않는다 — 크기·굵기·색·줄 간격을 함께 쓴다. 설명문은 굵게 쓰지 않는다.
 export const Type = {
   screenTitle: { fontSize: 24, lineHeight: 32, fontWeight: '800', color: T.ink, letterSpacing: -0.4 },
-  sectionTitle: { fontSize: 17, lineHeight: 24, fontWeight: '800', color: T.ink, letterSpacing: -0.2 },
-  cardTitle: { fontSize: 15, lineHeight: 21, fontWeight: '700', color: T.ink },
-  body: { fontSize: 14, lineHeight: 21, fontWeight: '400', color: T.ink },
+  screenName: { fontSize: 20, lineHeight: 27, fontWeight: '800', color: T.ink, letterSpacing: -0.4 },
+  sectionTitle: { fontSize: 18, lineHeight: 25, fontWeight: '800', color: T.ink, letterSpacing: -0.2 },
+  cardTitle: { fontSize: 16, lineHeight: 22, fontWeight: '700', color: T.ink },
+  body: { fontSize: 16, lineHeight: 24, fontWeight: '400', color: T.ink },
   bodySecondary: { fontSize: 13, lineHeight: 19, fontWeight: '400', color: T.muted },
   button: { fontSize: 15, lineHeight: 20, fontWeight: '700', color: T.ink },
   caption: { fontSize: 12, lineHeight: 17, fontWeight: '500', color: T.muted },
@@ -90,7 +91,7 @@ export function Action({ title, onPress, disabled = false, primary = false, busy
   const tint = kind === 'primary' ? T.accentInk : kind === 'danger' ? T.danger : T.ink;
   return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ disabled: off, busy }} disabled={off} onPress={onPress}
     style={({ pressed }) => ({
-      minHeight: kind === 'primary' && !compact ? 52 : T.tap, borderRadius: kind === 'primary' ? 14 : T.radius.sm,
+      minHeight: kind === 'primary' && !compact ? 52 : T.tap, borderRadius: T.radius.button,
       flexDirection: 'row', gap: T.gap.sm, alignItems: 'center', justifyContent: 'center', paddingHorizontal: kind === 'ghost' ? T.gap.sm : T.gap.lg,
       backgroundColor: kind === 'primary' ? (off ? '#F4ECCB' : pressed ? T.accentLine : T.accent)
         : kind === 'danger' ? T.dangerSoft
@@ -235,9 +236,9 @@ export const styles = StyleSheet.create({
   page: { padding: T.gap.lg, gap: T.gap.md, paddingBottom: 28, backgroundColor: C.bg },
   card: { padding: T.gap.lg, gap: T.gap.sm, backgroundColor: C.paper, borderRadius: T.radius.lg, borderWidth: 1, borderColor: C.line },
   title: { fontSize: 24, fontWeight: '800', color: C.ink, letterSpacing: -0.4 },
-  subtitle: { fontSize: 17, fontWeight: '800', color: C.ink },
-  label: { fontSize: 12, fontWeight: '700', color: C.muted },
+  subtitle: { fontSize: 18, fontWeight: '800', color: C.ink },
+  label: { fontSize: 13, fontWeight: '700', color: C.muted },
   input: { fontSize: 16, minHeight: T.tap, borderWidth: 1, borderColor: C.line, borderRadius: T.radius.sm, padding: T.gap.md, backgroundColor: '#FFFFFF', color: C.ink },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
-  muted: { color: C.muted, fontSize: 14, lineHeight: 21 },
+  muted: { color: C.muted, fontSize: 16, lineHeight: 24 },
 });

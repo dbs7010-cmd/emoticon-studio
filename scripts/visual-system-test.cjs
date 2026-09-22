@@ -68,7 +68,12 @@ async function ready() {
   assert.equal(T.ink, '#17191D'); assert.equal(T.muted, '#555D69'); assert.equal(T.line, '#E3E6EC');
   assert.equal(T.accent, '#FFD52A'); assert.equal(T.accentSoft, '#FFF3B0'); assert.equal(T.danger, '#B42318');
   assert.equal(T.accentInk, '#17191D', '노랑 위 글자는 짙은 색이다(흰 글씨 금지)');
-  assert.deepEqual(Object.values(T.radius), [8, 12, 16, 20, 24], '모서리는 8·12·16·20·24 한 벌');
+  assert.deepEqual([T.radius.xs, T.radius.sm, T.radius.md, T.radius.lg, T.radius.xl], [8, 12, 16, 20, 24], '모서리는 8·12·16·20·24 한 벌');
+  // 명세 §2 는 쓰임새로 부른다: 카드16 · 버튼12 · 칩10.
+  assert.deepEqual([T.radius.card, T.radius.button, T.radius.chip], [16, 12, 10], '카드16·버튼12·칩10');
+  // 명세 §2 글자 위계. 제목24 · 화면명20 · 섹션18 · 본문16 · 버튼15 · 보조13 · 도구12.
+  assert.deepEqual([Type.screenTitle.fontSize, Type.screenName.fontSize, Type.sectionTitle.fontSize, Type.body.fontSize, Type.button.fontSize, Type.bodySecondary.fontSize, Type.caption.fontSize],
+    [24, 20, 18, 16, 15, 13, 12], '글자 크기 한 벌');
   assert.deepEqual(Object.values(T.gap), [4, 8, 12, 16, 20, 24, 32], '간격은 4 기반 한 벌');
   for (const key of ['screenTitle', 'sectionTitle', 'cardTitle', 'body', 'bodySecondary', 'button', 'caption', 'micro']) assert.ok(Type[key]?.fontSize, 'Type.' + key);
   assert.ok(Elev[1].shadowOpacity <= .08 && Elev[2].shadowOpacity <= .12, '그림자는 옅다(짙은 drop shadow 금지)');
