@@ -474,14 +474,18 @@ const saved = async (dirty = true) => {
   await press('참고 보기');
   assert.equal(tree.root.findAllByType('WebView').length, 1, '표현을 고르면 그리기 화면이 열린다');
   await ready();
+  // 45.25: 고른 표현은 캔버스 밖 참고 자리가 들고 간다. 예전의 캔버스 위 한 줄 토스트는 같은 말이 두 번 서지 않게 물러난다.
   const guideLine = () => tree.root.findAll(n => n.type === 'Text' && [n.props.children].flat(9).filter(x => typeof x === 'string').join('').includes('손 크게 흔들기'));
-  assert.equal(guideLine().length, 1, '고른 표현이 한 줄 힌트로 따라온다');
+  const refSpotOf = () => tree.root.findAll(n => n.props.testID === '표현 예시 참고 자리');
+  assert.equal(refSpotOf().length, 1, '고른 표현이 캔버스 밖 참고 자리로 따라온다');
+  assert.ok(tree.root.findAll(n => n.type === 'Text' && [n.props.children].flat(9).filter(x => typeof x === 'string').join('').includes('안녕 · ')).length >= 1, '무엇을 고른 것인지 그 자리에 적혀 있다');
+  assert.equal(guideLine().length, 0, '같은 말을 캔버스 위에 또 띄우지 않는다');
   await press('문구');
   await act(async () => tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용')[0].props.onChangeText('안 눌렀어'));
   await press('완성 후 다음');
   assert.equal(lastCommand('caption').caption.text, '안 눌렀어', '적용을 누르지 않아도 저장 전에 문구가 캔버스로 확정된다');
   await saved(true);
-  assert.equal(guideLine().length, 0, '다음 칸으로 넘어가면 같은 힌트가 다시 뜨지 않는다');
+  assert.equal(refSpotOf().length, 0, '다음 칸으로 넘어가면 참고 자리가 따라오지 않는다');
   // 다음 칸은 아직 캔버스가 준비되기 전이라 닫기는 저장 없이 바로 끝난다.
   await press('그리기 닫기');
   await press('뒤로');

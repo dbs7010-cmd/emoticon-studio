@@ -118,7 +118,7 @@ const SCREENS = [
   ['set-detail', '세트 상세(보드)', async () => { await press('표현 가이드로'); await press('홈으로'); await press('검토 세트 이어서 만들기'); await ready(); await closePainter(); }],
   ['draw-base', '그리기 · 기본', async () => { await tap('slot-1'); await ready(); }],
   ['draw-brush', '그리기 · 브러시', async () => { await press('브러시'); }],
-  ['draw-color', '그리기 · 색', async () => { await press('브러시 닫기'); await press('색'); }],
+  ['draw-color', '그리기 · 색', async () => { await press('색'); }],
   ['draw-reference', '그리기 · 참고', async () => { await press('팔레트 닫기'); await press('참고'); }],
   ['draw-layers', '그리기 · 레이어', async () => { await press('참고 닫기'); await press('레이어'); }],
   ['draw-caption', '그리기 · 문구 + 키보드', async () => {
@@ -137,6 +137,18 @@ const SCREENS = [
   // 설정을 먼저 연다. 여기서 검수용 PRO 를 꺼야 PRO 화면이 '사기 전' 모습으로 그려진다.
   ['settings', '설정', async () => { await press('뒤로'); await press('뒤로'); await press('설정'); }],
   ['pro', 'PRO', async () => { await press('검수용 PRO 켜기'); await press('PRO 이용'); }],
+  // 브러시 네 상태(45.25차 6번). 참고 자리를 세우려면 표현 가이드에서 들어가야 한다.
+  ['draw-brush-2', '그리기 · 브러시 선택', async () => {
+    await press('PRO 닫기');
+    await press('표현 가이드'); await press('고마워 · 두 손 모아 꾸벅'); await press('정중하게 고르기'); await press('참고 보기');
+    await ready();
+    await press('브러시');
+  }],
+  ['draw-brush-detail', '그리기 · 브러시 세부 설정', async () => { await press('세부 설정'); }],
+  ['draw-ref-and-brush', '그리기 · 참고와 브러시 함께', async () => {
+    // 세부 설정이 열린 채로 두면 판이 길어진다 — 기본 선택판만 연 모습으로 견준다.
+    await press('세부 설정'); await press('브러시 닫기'); await press('브러시');
+  }],
 ];
 
 function seed(count) {

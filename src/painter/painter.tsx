@@ -749,7 +749,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     // 끌어서 집는 동안에는 안내 대신 집히는 색을 보여 준다 — 같은 자리에 둘이 겹치지 않게(45.4 실기기).
     : (scene.picking && !dropping) ? 'eyedrop'
     // 가이드에서 고른 표현이 이전 칸 제안보다 앞이다 — 방금 사용자가 고른 이 칸의 할 일이라서. 닫으면 그 아래가 보인다.
-    : (guideHint && guideHintOpen && !scene.dirty) ? 'guide'
+    // 참고 자리가 서 있으면 같은 말이 거기 적혀 있다 — 캔버스 위에 또 띄우지 않는다(45.25차).
+    : (guideHint && guideHintOpen && !scene.dirty && !(guideExample && refWindow !== 'closed')) ? 'guide'
     : offerContinue ? 'previous'
     : (zoomHint && zoom <= 1.05) ? 'zoomHint'
     : null;
