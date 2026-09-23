@@ -3,7 +3,10 @@
 // **실기기 캡처도 아니다** — 아래 '이 그림의 한계'를 읽어라.
 const fs = require('node:fs');
 const path = require('node:path');
+const { execSync } = require('node:child_process');
 const { walk, SCREENS, viewport, deviceArt } = require('./_harness.cjs');
+// 찍은 소스를 그림에 박아 둔다 — 이전 회차 화면과 섞이지 않게.
+const COMMIT = (() => { try { return execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim(); } catch { return '?'; } })();
 
 const OUT = 'verification/round45_23/screens';
 const WIDTH = 390, HEIGHT = 844;
@@ -169,9 +172,9 @@ const PAGE = (id, title, body) => `<!doctype html>
   .modal { position:absolute; inset:0; display:flex; flex-direction:column; z-index:50; }
 </style></head>
 <body>
-<h1>${esc(title)}  ·  ${WIDTH}dp</h1>
+<h1>${esc(title)}  ·  ${WIDTH}dp  ·  <span style="font-weight:400;color:#9BA2AE">B 현재 구현 · ${COMMIT}</span></h1>
 <div class="phone">${body}</div>
-<p class="meta">대체 렌더입니다. 실제 소스를 그려 나온 노드와 스타일을 그대로 옮긴 것이고, 실기기 캡처가 아닙니다.<br>
+<p class="meta">B — 현재 구현(${COMMIT})의 대체 렌더입니다. 실제 소스를 그려 나온 노드와 스타일을 그대로 옮긴 것이고, 실기기 캡처가 아닙니다.<br>
 그림 에셋·그리기 캔버스·글꼴 메트릭·실제 스크롤 잘림은 이 그림으로 판정할 수 없습니다. 화면 id: <code>${esc(id)}</code></p>
 </body></html>`;
 

@@ -3,7 +3,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const DIR = 'verification/round45_23/screens';
+const DIR = process.argv[3] || 'verification/round45_23/screens';   // 찍을 폴더(기본: 제품 화면)
 const PORT = Number(process.argv[2] || 4631);
 const list = JSON.parse(fs.readFileSync(path.join(DIR, 'screens.json'), 'utf8'));
 
