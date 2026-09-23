@@ -124,14 +124,19 @@ const rows = [];
     const tag = `${width}×${height}`;
     // 기본 Painter: 캔버스가 한 변 280dp 이상. 굵기 조절은 도구 줄 안에 있고 캔버스 영역 위에는 없다(43.1차).
     assert.ok(side >= 280, tag + ': 캔버스 한 변 280dp 이상, got ' + side);
-    // 45.4: 굵기는 캔버스 오른쪽 가장자리의 좁은 띠에서 세로로 끈다. 띠는 20dp 폭 · 캔버스 세로 40% 로 그림 자리를 거의 쓰지 않는다.
+    // 45.25 정정: 굵기는 캔버스 **밖** 오른쪽 칸에서 세로로 끈다. 예전에는 캔버스 영역 가장자리에 겹쳐 있었다 —
+    // 좁긴 해도 그림 위였다. 이제 제 칸을 쓰고, 캔버스는 그만큼 좁아진 자리에 정사각으로 다시 맞춰진다.
     const sizer = tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '브러시 굵기')[0];
-    assert.ok(sizer, tag + ': 굵기 띠');
+    assert.ok(sizer, tag + ': 굵기 조절대');
     const bandStyle = flat(sizer.props.style);
-    assert.ok(bandStyle.width <= 24 && bandStyle.right === 0, tag + ': 좁은 띠가 오른쪽 가장자리에');
+    assert.ok(bandStyle.width <= 28, tag + ': 조절대는 좁은 칸이다: ' + bandStyle.width);
+    assert.notEqual(bandStyle.position, 'absolute', tag + ': 캔버스 위에 겹치지 않는다');
+    const canvasFrame = tree.root.findAll(n => n.type === 'View' && n.props.collapsable === false)[0];
+    assert.equal(canvasFrame.findAll(n => n.props.testID === '굵기 띠').length, 0, tag + ': 캔버스 틀 안에 조절대가 없다');
     assert.ok(side * .4 >= 48, tag + ': 띠의 세로 길이가 손가락보다 길다(' + Math.round(side * .4) + 'dp)');
     const canvasArea = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
-    assert.equal(canvasArea.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 1, tag + ': 굵기 띠는 캔버스 가장자리에 하나');
+    assert.equal(canvasArea.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 0, tag + ': 굵기 조절대는 캔버스 영역 밖에 있다');
+    assert.equal(tree.root.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 1, tag + ': 조절대는 화면에 하나');
     // 기본 도구 줄: 두 줄(48dp) + 여백이 BASE_H 안에 들어간다 — 완성 버튼이 잘리지 않는다.
     assert.ok(6 + 48 + 6 + 48 <= BASE_H, tag + ': 기본 도구 줄 두 줄이 잘리지 않는다');
     for (const l of ['브러시', '지우개', '채우기', '선택', '색', '되돌리기', '다시 실행', '완성 후 다음']) assert.equal(labelled(l).length, 1, tag + ': ' + l);

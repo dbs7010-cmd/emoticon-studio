@@ -211,7 +211,7 @@ async function ready() {
   // 45.6: 칸 안에 실제 획 견본 + 도구 표시 + 이름이 들어가 52dp 로 조금 높아졌다(여전히 카드 세 장이 아니라 한 줄 고르개).
   assert.ok(cells.every(n => { const h = flat(n.props.style).minHeight ?? 0; return h >= 40 && h <= 56; }), '낮고 넓다(40~56dp)');
   assert.ok(cells.every(n => n.findAll(x => x.type === 'Image').length === 1), '칸마다 그 브러시의 실제 획 견본');
-  assert.equal(labelled('고급 브러시 PRO').length, 1, '고급 브러시는 네 번째 칸이 아니라 아래 한 줄');
+  assert.equal(labelled('고급 브러시').length, 1, '고급 브러시는 네 번째 칸이 아니라 아래 한 줄');
   assert.equal(labelled('선 보정').length, 0, '진하기·보정은 세부 설정 안');
   await press('브러시 닫기');
 

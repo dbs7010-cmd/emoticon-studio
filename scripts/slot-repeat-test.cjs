@@ -91,7 +91,7 @@ const writeCaption = async text => {
 
   // 칸 1: 한 번만 고르는 설정.
   scene = { ...scene, dirty: true, undo: true }; await message(scene);
-  await press('브러시'); await press('연필'); await press('브러시 닫기');
+  await press('브러시'); await press('연필');   // 고르면 선택판이 스스로 닫힌다(45.25)
   const sizer = () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '브러시 굵기')[0];
   drags++;
   await act(async () => sizer().props.onResponderGrant({ nativeEvent: { pageY: 400 } }));

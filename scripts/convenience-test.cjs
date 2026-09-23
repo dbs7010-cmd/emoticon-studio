@@ -231,7 +231,9 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.ok(kinds.every(n => (styleOf(n).minHeight ?? 0) >= 44), '누르는 자리는 44dp 이상');
   await press('붓');
   assert.equal(lastCommand('brush').brush, 'brush', '견본을 누르면 그 선으로 바뀐다');
-  await press('브러시 닫기');
+  // 45.25: 고르면 선택판이 스스로 닫힌다 — 고른 뒤에 할 일은 그리는 것이다.
+  assert.equal(labelled('브러시 닫기').length, 0, '브러시를 고르면 선택판이 닫힌다');
+  assert.equal(byTestID('선 종류').length, 0, '선택판이 물러나 캔버스가 다시 드러난다');
 
   // ── 11. 문구: 색이 실제로 바뀌고, 키보드가 닫히면 남는 것이 없다 ─────────────────────────────
   scene = { ...scene, caption: { text: '고마워', place: 'bottom', color: '#242424' } };

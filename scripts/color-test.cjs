@@ -1,5 +1,5 @@
 // 색·브러시 화면 검사 — 38차부터 색(스포이드·내 팔레트·RGB·투명도)과 진하기·선 보정은 무료다. PRO 는 고급 브러시 네 가지뿐이고,
-// 무료 사용자에게는 브러시 시트에 '고급 브러시 PRO' 한 줄로만 보인다. 실제 동작(값이 캔버스·저장소로 가는가)을 본다.
+// 무료 사용자에게는 브러시 시트에 '고급 브러시' 한 줄로만 보인다. 실제 동작(값이 캔버스·저장소로 가는가)을 본다.
 // 네이티브 모듈과 WebView 는 흉내다. 캔버스 엔진 쪽은 color-engine-test, Android 화면은 실기기 검수가 맡는다.
 const assert = require('node:assert/strict');
 const React = require('react');
@@ -154,13 +154,18 @@ async function openPainter() {
   // 브러시 도구는 이미 골라져 있다. 한 번 더 누르면 브러시 설정이 열린다.
   const brushCmd = () => lastCommand('brushSettings');
   await press('브러시');
+  // 45.25: 고급 브러시는 기본 영역이 아니라 세부 설정 안에서 고른다 — 무료 브러시와 자리를 다투지 않게.
+  assert.equal(labelled('브러시 매끈한 잉크').length, 0, '기본 영역에는 고급 브러시가 늘어서지 않는다');
+  await press('고급 브러시');
   for (const t of ['매끈한 잉크', '부드러운 펜', '결 연필', '마커']) assert.equal(labelled('브러시 ' + t).length, 1, 'PRO 고급 브러시 ' + t);
   assert.equal(icons(tree.root, 'lock-outline'), 0, 'PRO 사용자에게 자물쇠가 없다');
   await press('브러시 마커');
   assert.equal(brushCmd().preset, 'marker', '프리셋이 캔버스로 간다');
   assert.ok(labelled('펜').every(n => !n.props.accessibilityState.selected), '기본 펜 카드는 선택에서 내려온다');
-  assert.equal(labelled('브러시 닫기').length, 1, '프리셋을 골라도 설정은 열려 있다');
-  assert.equal(labelled('굵기 12').length, 0, '굵기는 브러시 설정에 없다 — 캔버스 가장자리에서 바꾼다');
+  // 45.25: 브러시를 고르면 그 도구가 켜지고 선택판은 닫힌다 — 고른 뒤에 할 일은 그리는 것이다.
+  assert.equal(labelled('브러시 닫기').length, 0, '프리셋을 고르면 선택판이 닫힌다');
+  await press('브러시');
+  assert.equal(labelled('굵기 12').length, 0, '굵기는 브러시 설정에 없다 — 캔버스 밖 조절대에서 바꾼다');
   assert.equal(range('진하기').length, 0, '진하기는 세부 설정 안에 접혀 있다');
   await press('세부 설정');
   await nudge('진하기', 'decrement', 50);
@@ -180,7 +185,7 @@ async function openPainter() {
   await press('브러시'); await press('연필');
   assert.equal(brushCmd().preset, null, '기본 연필을 고르면 프리셋에서 내려온다');
   assert.equal(lastCommand('brush').brush, 'pencil');
-  await press('브러시 마커'); await press('브러시 닫기');
+  await press('브러시'); await press('고급 브러시'); await press('브러시 마커');   // 고르면 판이 닫히므로 따로 닫지 않는다
   assert.equal(loadStore().store.projects[0].brush.preset, 'marker');
   await act(async () => tree.unmount());
 
@@ -197,7 +202,7 @@ async function openPainter() {
   assert.equal(labelled('브러시 마커').length, 0, '무료: 잠긴 고급 브러시 카드를 줄지어 보여 주지 않는다');
   assert.equal(tree.root.findAll(n => n.type === 'Text' && String(n.children?.join('')) === 'PRO').length, 1, '무료: PRO 표시는 고급 브러시 한 줄뿐이다');
   const before = sent().filter(m => m.type === 'brushSettings').length;
-  await press('고급 브러시 PRO');
+  await press('고급 브러시');
   assert.equal(labelled('PRO 닫기').length, 1, '무료: 고급 브러시는 PRO 안내로 간다');
   assert.equal(sent().filter(m => m.type === 'brushSettings').length, before, '무료: 안내를 여는 것만으로 캔버스가 바뀌지 않는다');
   await press('PRO 닫기');

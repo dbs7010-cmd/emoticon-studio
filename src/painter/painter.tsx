@@ -336,6 +336,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   function selectBrush(value: Brush) {
     changeBrush({ preset: undefined, base: value }); setBrush(value); send({ type: 'brush', brush: value });
     if (tool !== 'pen') { setTool('pen'); send({ type: 'tool', tool: 'pen' }); onToolChange?.('pen'); }
+    // 고르면 바로 그릴 수 있게 판을 닫는다(45.25차). 세부 설정은 열려 있었더라도 함께 접힌다.
+    ease(); setPanel(null); setBrushDetail(false);
   }
   // 막대를 끄는 동안에는 매 순간 저장 파일을 쓰지 않는다. 손이 멈추고 잠시 뒤 한 번만 최근 색에 남긴다.
   const remember = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -367,6 +369,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     if (!pro) { onRequestPro(); return; }
     changeBrush({ preset: key });
     setTool('pen'); send({ type: 'tool', tool: 'pen' });
+    // 기본 브러시와 같은 규칙: 고르면 바로 그릴 수 있게 판을 닫는다(45.25차).
+    ease(); setPanel(null); setBrushDetail(false);
   }
   const brushKey = JSON.stringify(effectiveBrush);
   useEffect(() => {
@@ -644,31 +648,24 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         return <Pressable key={b.key} accessibilityRole="button" accessibilityLabel={b.title} accessibilityState={{ selected: on }} onPress={() => selectBrush(b.key)}
           style={({ pressed }) => ({ flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 5, borderRadius: 11, backgroundColor: on ? C.paper : pressed ? C.fill : 'transparent', borderWidth: 0, ...(on ? Elev[1] : null) })}>
           {/* 획 견본은 지금 쓰는 색으로 칠해진다 — 이름을 읽기 전에 "이 브러시는 이런 선"이 먼저 보인다(45.6차). */}
-          <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '84%', height: 16, tintColor: on ? color : C.lineStrong }} resizeMode="contain" />
+          {/* 45.25: 고르지 않은 것도 같은 잉크로 그린다. 흐리게 하면 '못 쓰는 것'처럼 읽혀 견줄 수가 없다. */}
+          <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '84%', height: 18, tintColor: color }} resizeMode="contain" />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
             <MaterialCommunityIcons name={face} size={12} color={on ? C.ink : C.muted} />
             <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
           </View>
         </Pressable>; })}
     </View>
-    {pro
-      ? <View testID="고급 브러시" style={{ flexDirection: 'row', gap: 6 }}>
-          {PRO_BRUSHES.map(b => { const on = effectiveBrush.preset === b.key;
-            return <Pressable key={b.key} accessibilityRole="button" accessibilityLabel={'브러시 ' + b.title} accessibilityState={{ selected: on }} onPress={() => selectPreset(b.key)}
-              style={{ flex: 1, minHeight: 52, paddingHorizontal: 4, borderRadius: 12, borderWidth: 1, borderColor: on ? C.accentBorder : C.line, backgroundColor: on ? C.accentSoft : C.paper, alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-              <View style={{ width: '62%', backgroundColor: color, ...b.sample }} />
-              <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
-            </Pressable>; })}
-        </View>
-      // 무료 브러시와 같은 무게로 경쟁하지 않는 한 줄. 누르면 PRO 안내로 간다.
-      : <Pressable accessibilityRole="button" accessibilityLabel="고급 브러시 PRO" onPress={onRequestPro}
-          style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4, borderRadius: 12, backgroundColor: pressed ? C.fill : 'transparent' })}>
-          <MaterialCommunityIcons name="brush-variant" size={18} color={C.muted} />
-          <Text style={{ fontSize: 13, fontWeight: '600', color: C.ink }}>고급 브러시</Text>
-          <ProTag />
-          <View style={{ flex: 1 }} />
-          <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
-        </Pressable>}
+    {/* 기본 영역은 펜·붓·연필만 맡는다(45.25차). 고급 브러시는 작은 진입점 한 줄로 두고,
+        실제 고르기는 세부 설정 안에서 한다 — 무료 브러시와 같은 무게로 자리를 다투지 않게. */}
+    <Pressable accessibilityRole="button" accessibilityLabel="고급 브러시" onPress={() => { if (!pro) { onRequestPro(); return; } ease(); setBrushDetail(true); }}
+      style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4, borderRadius: 12, backgroundColor: pressed ? C.fill : 'transparent' })}>
+      <MaterialCommunityIcons name="brush-variant" size={18} color={C.muted} />
+      <Text style={{ fontSize: 13, fontWeight: '600', color: C.ink }}>고급 브러시</Text>
+      {!pro && <ProTag />}
+      <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.faint, textAlign: 'right' }}>{pro ? (PRO_BRUSHES.find(b => b.key === effectiveBrush.preset)?.title ?? '고르지 않음') : '4종'}</Text>
+      <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+    </Pressable>
     <Pressable accessibilityRole="button" accessibilityLabel="세부 설정" accessibilityState={{ expanded: brushDetail }} onPress={() => { ease(); setBrushDetail(!brushDetail); }}
       hitSlop={{ top: 2, bottom: 2 }}
       style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4, borderTopWidth: 1, borderColor: C.line }}>
@@ -677,7 +674,19 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.faint, textAlign: 'right' }}>진하기 {Math.round(effectiveBrush.opacity * 100)}% · 선 보정 {stabName}</Text>
       <MaterialCommunityIcons name={brushDetail ? 'chevron-up' : 'chevron-down'} size={18} color={C.faint} />
     </Pressable>
-    {brushDetail && <View style={{ gap: 4 }}>
+    {brushDetail && <View style={{ gap: 8 }}>
+      {/* 고급 브러시는 여기서 고른다(PRO 일 때만). 고르면 기본 브러시와 같은 규칙으로 판이 닫힌다. */}
+      {pro && <View style={{ gap: 4 }}>
+        <Text style={{ fontSize: 11, fontWeight: '700', color: C.muted }}>고급 브러시</Text>
+      ? <View testID="고급 브러시" style={{ flexDirection: 'row', gap: 6 }}>
+          {PRO_BRUSHES.map(b => { const on = effectiveBrush.preset === b.key;
+            return <Pressable key={b.key} accessibilityRole="button" accessibilityLabel={'브러시 ' + b.title} accessibilityState={{ selected: on }} onPress={() => selectPreset(b.key)}
+              style={{ flex: 1, minHeight: 52, paddingHorizontal: 4, borderRadius: 12, borderWidth: 1, borderColor: on ? C.accentBorder : C.line, backgroundColor: on ? C.accentSoft : C.paper, alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+              <View style={{ width: '62%', backgroundColor: color, ...b.sample }} />
+              <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
+            </Pressable>; })}
+        </View>
+      </View>}
       <Range label="진하기" value={Math.round(effectiveBrush.opacity * 100)} min={5} max={100} step={1} onChange={n => changeBrush({ opacity: Math.round(n) / 100 }, false)} display={Math.round(effectiveBrush.opacity * 100) + '%'} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Pressable accessibilityRole="switch" accessibilityLabel="선 보정" accessibilityState={{ checked: stab !== 'off' }} onPress={() => changeBrush({ stabilizer: stab === 'off' ? 'light' : 'off' })}
@@ -814,6 +823,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         onCollapse={() => { ease(); setRefWindow(refWindow === 'collapsed' ? 'open' : 'collapsed'); }}
         onClose={() => { ease(); setRefWindow('closed'); }}
         onUnderlay={onImportGuideExample ? () => void insertGuideUnderlay() : undefined} />}
+      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: C.surface2 }}>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: tab === 'motion' ? 'flex-start' : 'center', backgroundColor: C.surface2 }}
         onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; const side = Math.floor(Math.min(w, h)); if (side > 0 && side !== canvasSide) setCanvasSide(side); if (h > 0 && Math.round(h) !== canvasArea) setCanvasArea(Math.round(h)); if (w > 0 && Math.round(w) !== canvasWide) setCanvasWide(Math.round(w)); }}>
         {/* 캔버스 틀: 네이티브 WebView 는 크기 지정을 무시하고 영역 전체를 채워, 캔버스가 위에 붙고 아래에 빈 띠가 남았다(40차 실기기 bounds 0,381–1080,1882).
@@ -883,12 +893,6 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {panelCovering && <Pressable testID="패널 닫기 막" accessibilityRole="button" accessibilityLabel="패널 닫고 그리기로"
           onPress={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); setDrawRail(false); }}
           style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />}
-        {/* 굵기(45.4차): 캔버스 오른쪽 가장자리에서 세로로 끈다. 위로 굵게, 아래로 가늘게.
-            43차에 문제가 된 '왼쪽 전체 높이 띠'와 달리 좁고(20dp) 가운데 40% 높이만 차지해 그림 자리를 거의 건드리지 않는다.
-            브러시·지우개일 때만 나오고, 패널·선택·스포이드·문구 선택 중에는 사라진다. */}
-        {tab === 'draw' && (tool === 'pen' || tool === 'eraser') && initialized && !panelCovering && !refRail
-          && !scene.picking && !scene.captionPicked && !scene.selection && panel !== 'more'
-          && <EdgeSize label={tool === 'eraser' ? '지우개 굵기' : '브러시 굵기'} value={width} color={color} eraser={tool === 'eraser'} onChange={setWidth} onActive={setSizing} />}
         {/* 굵기를 끄는 동안의 크기 원과 px. 조절은 캔버스 가장자리 띠에서 한다. */}
         {sizing !== null && <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
           {/* 짙은 반투명 떠 있는 표시. 밝은 그림·흰 캔버스 어디서나 원과 숫자가 읽힌다. 손을 떼면 바로 사라진다. */}
@@ -989,6 +993,16 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           </ScrollView>
           </View>
         </View>}
+      </View>
+      {/* 굵기(45.25차): 캔버스 **밖** 오른쪽 칸에서 세로로 끈다. 위로 굵게, 아래로 가늘게.
+          예전에는 캔버스 영역 가장자리에 겹쳐 있었다 — 좁긴 해도 그림 위였다.
+          브러시·지우개일 때만 나오고, 패널·선택·스포이드·문구 선택 중에는 칸만 남기고 비운다(도구 줄이 흔들리지 않게).
+          굵기 수치와 원형 미리보기는 끄는 동안 캔버스 가운데에 뜬다. */}
+      {tab === 'draw' && <View style={{ width: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: C.surface2 }}>
+        {(tool === 'pen' || tool === 'eraser') && initialized && !panelCovering && !refRail
+            && !scene.picking && !scene.captionPicked && !scene.selection && panel !== 'more'
+            && <EdgeSize label={tool === 'eraser' ? '지우개 굵기' : '브러시 굵기'} value={width} color={color} eraser={tool === 'eraser'} onChange={setWidth} onActive={setSizing} />}
+      </View>}
       </View>
 
       {tab === 'motion' ? <View style={[dock, { height: motionHeight, flexShrink: 0 }]} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
@@ -1378,8 +1392,8 @@ function EdgeSize({ label, value, color, eraser, onChange, onActive }: { label: 
     onResponderRelease={e => { moveTo(e.nativeEvent.pageY, true); start.current = null; setHolding(false); onActive(null); }}
     onResponderTerminate={() => { start.current = null; setHolding(false); onActive(null); onChange(value, true); }}
     testID="굵기 띠"
-    style={{ position: 'absolute', right: 0, top: '30%', bottom: '30%', width: 20, alignItems: 'center', justifyContent: 'center' }}>
-    <View pointerEvents="none" style={{ width: 20, flex: 1, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, backgroundColor: holding ? '#17171722' : '#17171710', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+    style={{ width: 26, height: '44%', minHeight: 120, alignItems: 'center', justifyContent: 'center' }}>
+    <View pointerEvents="none" style={{ width: 20, flex: 1, borderRadius: 10, backgroundColor: holding ? '#17171722' : '#17171710', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
       <MaterialCommunityIcons name="chevron-up" size={12} color={T.muted} />
       <View style={{ width: dot, height: dot, borderRadius: 8, backgroundColor: eraser ? T.paper : color, borderWidth: 1, borderColor: T.lineStrong }} />
       <MaterialCommunityIcons name="chevron-down" size={12} color={T.muted} />

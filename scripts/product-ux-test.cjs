@@ -127,6 +127,9 @@ const saved = async (dirty = true) => {
   assert.ok(proMarks() <= 1, '브러시 설정: PRO 표시는 한 줄 이하, got ' + proMarks());
   assert.equal(labelled('브러시 마커').length, 0, '잠긴 고급 브러시를 무료 브러시와 같은 무게로 늘어놓지 않는다');
   await press('붓');
+  // 45.25: 고르면 선택판이 닫힌다. 세부 설정을 보려면 다시 연다 — 그것이 '고르기'와 '맞추기'를 가르는 자리다.
+  assert.equal(labelled('세부 설정').length, 0, '브러시를 고르면 선택판이 닫힌다');
+  await press('브러시');
   // 브러시 시트는 브러시를 고르는 곳: 굵기 줄이 없고, 진하기·보정은 세부 설정 안에 접혀 있다.
   assert.equal(labelled('굵기 24').length, 0, '굵기 버튼 줄은 브러시 시트에 없다');
   assert.equal(ranges('진하기').length, 0, '진하기는 처음에 접혀 있다');
@@ -138,10 +141,10 @@ const saved = async (dirty = true) => {
   await press('브러시');
   assert.equal(labelled('브러시 닫기').length, 0, '다시 누르면 닫힌다');
 
-  // ── 굵기(45.4차: 캔버스 오른쪽 가장자리의 좁은 띠에서 세로로 끈다. 평소에는 조용하고, 끄는 동안에만 크기와 px) ──
+  // ── 굵기(45.25차: 캔버스 **밖** 오른쪽 칸에서 세로로 끈다. 평소에는 조용하고, 끄는 동안에만 크기와 px) ──
   assert.equal(tree.root.findAll(n => n.props.testID === '굵기 미리보기').length, 0, '평소에는 큰 숫자나 굵기 패널이 떠 있지 않다');
   assert.equal(ranges('브러시 굵기')[0].findAll(n => n.type === 'Text').length, 0, '평소의 띠는 숫자 없이 점 하나로 조용하다');
-  assert.ok(ranges('브러시 굵기')[0].props.style.width <= 24, '띠는 좁다(그림 자리를 거의 쓰지 않는다)');
+  assert.ok(ranges('브러시 굵기')[0].props.style.width <= 28, '조절대는 좁은 칸이다');
   let during = await dragSize('브러시 굵기', 400, 333);
   assert.deepEqual(during, ['24px'], '끄는 동안에만 크기 원과 px 이 보인다');
   assert.equal(tree.root.findAll(n => n.props.testID === '굵기 미리보기').length, 0, '손을 떼면 사라진다');
@@ -364,11 +367,12 @@ const saved = async (dirty = true) => {
   const area = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
   await act(async () => area.props.onLayout({ nativeEvent: { layout: { width: 360, height: 353 } } }));
   assert.equal(ranges('브러시 굵기').length, 1, '짧은 화면에서도 굵기 조절이 있다');
-  // 45.4: 굵기 띠는 캔버스 영역 안에 있되, 오른쪽 가장자리 20dp 만 쓰고 세로로도 가운데 일부만 차지한다(그림 자리를 가리지 않는다).
-  const band = area.findAll(n => n.props.accessibilityLabel === '브러시 굵기' || n.props.accessibilityLabel === '지우개 굵기');
-  assert.equal(band.length, 1, '굵기 띠는 캔버스 가장자리에 하나');
-  assert.ok(band[0].props.style.width <= 24 && band[0].props.style.right === 0, '좁은 띠가 오른쪽 가장자리에 붙는다');
-  assert.equal(band[0].props.style.top, '30%', '세로로도 가운데 일부만 차지한다');
+  // 45.25 정정: 굵기 조절대는 캔버스 영역 **밖** 오른쪽 칸에 선다. 그림 위에 겹치는 것이 아니라 제 자리를 쓴다.
+  assert.equal(area.findAll(n => n.props.accessibilityLabel === '브러시 굵기' || n.props.accessibilityLabel === '지우개 굵기').length, 0, '조절대는 캔버스 영역 안에 없다');
+  const band = tree.root.findAll(n => n.props.accessibilityLabel === '브러시 굵기' || n.props.accessibilityLabel === '지우개 굵기');
+  assert.equal(band.length, 1, '조절대는 화면에 하나');
+  assert.ok(band[0].props.style.width <= 28, '좁은 칸이다');
+  assert.notEqual(band[0].props.style.position, 'absolute', '캔버스 위에 겹치지 않는다');
   await press('움직이기');
   const motionBox = tree.root.findAll(n => n.type === 'View' && Array.isArray(n.props.style) && n.props.style.some(s => s && typeof s.height === 'number' && s.flexShrink === 0))[0];
   const motionHeight = Object.assign({}, ...motionBox.props.style).height;
@@ -410,7 +414,7 @@ const saved = async (dirty = true) => {
   const flowA = await bench(async () => {
     await press('이전 칸 그림으로 시작'); await act(async () => {});
     scene = { ...scene, dirty: true, undo: true }; await message(scene);
-    await press('브러시'); await press('연필'); await press('브러시 닫기');
+    await press('브러시'); await press('연필');   // 고르면 선택판이 스스로 닫힌다(45.25)
     await dragSize('브러시 굵기', 400, 390);
     await press('색'); await press('최근 색 #54A9E8');
     await press('문구');

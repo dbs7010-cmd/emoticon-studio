@@ -1046,11 +1046,12 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   assert.equal(labelled('선 보정').length,0,'기본 화면에는 독립 선 보정 줄이 없다');
   assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='선 종류').length,0,'선 종류 카드는 기본 화면에서 접혀 있다 at '+width+'dp');
   assert.ok(!shown().some(t=>t==='PRO'),'작업 화면 기본 상태에 PRO 표시가 없다 at '+width+'dp');
-  // 45.4: 굵기는 도구 줄의 칸이 아니라 캔버스 오른쪽 가장자리의 좁은 띠에서 세로로 끈다.
+  // 45.25 정정: 굵기는 캔버스 **밖** 오른쪽 칸에서 세로로 끈다(예전에는 캔버스 가장자리에 겹쳐 있었다).
   const edge=()=>tree.root.findAll(n=>n.type==='View'&&n.props.accessibilityRole==='adjustable'&&n.props.accessibilityLabel==='브러시 굵기')[0];
   const sizer=edge();
-  assert.ok(sizer,'캔버스 가장자리 굵기 띠가 있다 at '+width+'dp');
-  assert.ok(styleOf(sizer).width<=24&&styleOf(sizer).right===0,'좁은 띠로 오른쪽 가장자리에 붙는다 at '+width+'dp');
+  assert.ok(sizer,'굵기 조절대가 있다 at '+width+'dp');
+  assert.ok(styleOf(sizer).width<=28,'조절대는 좁은 칸이다 at '+width+'dp');
+  assert.notEqual(styleOf(sizer).position,'absolute','캔버스 위에 겹치지 않는다 at '+width+'dp');
   await act(async()=>sizer.props.onResponderGrant({nativeEvent:{pageY:400}}));
   await act(async()=>sizer.props.onResponderMove({nativeEvent:{pageY:340}}));
   await act(async()=>sizer.props.onResponderRelease({nativeEvent:{pageY:340}}));
