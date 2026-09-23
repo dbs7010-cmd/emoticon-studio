@@ -840,7 +840,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     <Bar label="다시 실행" icon="redo-variant" disabled={!initialized || !scene.redo || busy} onPress={() => send({ type: 'redo' })} />
     <Pressable accessibilityRole="button" accessibilityLabel="완성 후 다음" accessibilityHint={'이 칸을 완성으로 표시하고 저장한 뒤 ' + (completeTitle.includes('전체') ? '전체 보기로 가요' : '다음 칸으로 가요')}
       disabled={busy || !initialized} onPress={() => save('complete')}
-      style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, marginLeft: 2, borderRadius: C.radius.button, flexDirection: 'row', gap: 4,
+      hitSlop={{ top: 4, bottom: 4 }}
+      style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 12, marginLeft: 2, borderRadius: C.radius.button, flexDirection: 'row', gap: 4,
         alignItems: 'center', justifyContent: 'center', backgroundColor: busy || !initialized ? C.fill : pressed ? C.accentLine : C.accent })}>
       <Text numberOfLines={1} style={{ color: C.accentInk, fontWeight: '800', fontSize: 14 }}>완성</Text>
       <MaterialCommunityIcons name="arrow-right" size={16} color={C.accentInk} />
@@ -1287,7 +1288,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         <View testID="색과 굵기" style={{ flexDirection: 'row', alignItems: 'center', gap: narrow ? 6 : 10, paddingHorizontal: 12, paddingTop: 6 }}>
           <Pressable accessibilityRole="button" accessibilityLabel="색" accessibilityState={{ expanded: panel === 'color' }}
             onPress={() => { ease(); setPanel(panel === 'color' ? null : 'color'); setDrawRail(false); setRefRail(false); setCaptionOpen(false); }}
-            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            // 보이는 크기는 32 지만 누르는 자리는 48×48 이다(양쪽 8 씩). 줄의 좌우 여백이 그만큼 있어 이웃과 겹치지 않는다.
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={({ pressed }) => ({ width: 32, height: 32, borderRadius: 16, padding: 3, backgroundColor: C.paper,
               borderWidth: panel === 'color' ? 2 : 1, borderColor: panel === 'color' ? C.ink : C.lineStrong, opacity: pressed ? .7 : 1 })}>
             <View style={{ flex: 1, borderRadius: 13, backgroundColor: color }} />
@@ -1507,7 +1509,7 @@ function GuideStrip({ title, hint, artwork, collapsed, onCollapse, onClose, onUn
       <View style={{ flex: 1, gap: 8 }}>
         <Text numberOfLines={3} style={{ fontSize: 13, lineHeight: 19, color: T.muted }}>{hint}</Text>
         {!!onUnderlay && <Pressable accessibilityRole="button" accessibilityLabel="이 예시를 밑그림으로 넣기" onPress={onUnderlay}
-          style={({ pressed }) => ({ minHeight: 44, borderRadius: T.radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : T.surface2 })}>
+          style={({ pressed }) => ({ minHeight: T.tap, borderRadius: T.radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : T.surface2 })}>
           <Text style={{ fontSize: 13, fontWeight: '700', color: T.ink }}>밑그림으로 넣기</Text>
         </Pressable>}
       </View>

@@ -1,8 +1,8 @@
 {
-  "total": 203,
-  "ok": 196,
+  "total": 194,
+  "ok": 189,
   "small": 0,
-  "unknown": 7,
+  "unknown": 5,
   "rows": [
     {
       "name": "01번 칸 열기",
@@ -471,6 +471,18 @@
       "tapH": 48
     },
     {
+      "name": "결제 없이 검수용 PRO 켜기",
+      "screen": "pro",
+      "boxW": null,
+      "boxH": 48,
+      "padX": 32,
+      "padY": 0,
+      "grows": null,
+      "hitSlop": null,
+      "tapW": null,
+      "tapH": 48
+    },
+    {
       "name": "고마워 · 두 손 모아 꾸벅",
       "screen": "guide-emotions",
       "boxW": 173,
@@ -528,6 +540,18 @@
       "grows": null,
       "hitSlop": null,
       "tapW": 48,
+      "tapH": 48
+    },
+    {
+      "name": "그리기 도구 펜",
+      "screen": "draw-base",
+      "boxW": null,
+      "boxH": 48,
+      "padX": 0,
+      "padY": 0,
+      "grows": "flex:1",
+      "hitSlop": null,
+      "tapW": null,
       "tapH": 48
     },
     {
@@ -781,6 +805,18 @@
       "tapH": 48
     },
     {
+      "name": "마커",
+      "screen": "draw-base",
+      "boxW": null,
+      "boxH": 62,
+      "padX": 0,
+      "padY": 0,
+      "grows": "flex:1",
+      "hitSlop": null,
+      "tapW": null,
+      "tapH": 62
+    },
+    {
       "name": "만들기",
       "screen": "new-set",
       "boxW": null,
@@ -865,6 +901,57 @@
       "tapH": 52
     },
     {
+      "name": "보정 강",
+      "screen": "draw-brush-detail",
+      "boxW": null,
+      "boxH": 40,
+      "padX": 12,
+      "padY": 0,
+      "grows": "flex:1",
+      "hitSlop": {
+        "top": 4,
+        "bottom": 4,
+        "left": 0,
+        "right": 0
+      },
+      "tapW": null,
+      "tapH": 48
+    },
+    {
+      "name": "보정 약",
+      "screen": "draw-brush-detail",
+      "boxW": null,
+      "boxH": 40,
+      "padX": 12,
+      "padY": 0,
+      "grows": "flex:1",
+      "hitSlop": {
+        "top": 4,
+        "bottom": 4,
+        "left": 0,
+        "right": 0
+      },
+      "tapW": null,
+      "tapH": 48
+    },
+    {
+      "name": "보정 중",
+      "screen": "draw-brush-detail",
+      "boxW": null,
+      "boxH": 40,
+      "padX": 12,
+      "padY": 0,
+      "grows": "flex:1",
+      "hitSlop": {
+        "top": 4,
+        "bottom": 4,
+        "left": 0,
+        "right": 0
+      },
+      "tapW": null,
+      "tapH": 48
+    },
+    {
       "name": "부가 이미지 만들기",
       "screen": "export-before",
       "boxW": null,
@@ -889,40 +976,40 @@
       "tapH": 52
     },
     {
-      "name": "붓",
+      "name": "브러시 거친 선",
       "screen": "draw-brush",
-      "boxW": null,
-      "boxH": 52,
+      "boxW": "31.5%",
+      "boxH": 62,
       "padX": 0,
-      "padY": 10,
-      "grows": "flex:1",
-      "hitSlop": null,
-      "tapW": null,
-      "tapH": 52
-    },
-    {
-      "name": "브러시",
-      "screen": "draw-base",
-      "boxW": null,
-      "boxH": 48,
-      "padX": 12,
       "padY": 0,
-      "grows": "flex:1.4",
+      "grows": null,
       "hitSlop": null,
-      "tapW": null,
-      "tapH": 48
+      "tapW": "31.5%00",
+      "tapH": 62
     },
     {
       "name": "브러시 결 연필",
       "screen": "draw-brush",
-      "boxW": null,
-      "boxH": 52,
-      "padX": 8,
+      "boxW": "31.5%",
+      "boxH": 62,
+      "padX": 0,
       "padY": 0,
-      "grows": "flex:1",
+      "grows": null,
       "hitSlop": null,
-      "tapW": null,
-      "tapH": 52
+      "tapW": "31.5%00",
+      "tapH": 62
+    },
+    {
+      "name": "브러시 납작펜",
+      "screen": "draw-brush",
+      "boxW": "31.5%",
+      "boxH": 62,
+      "padX": 0,
+      "padY": 0,
+      "grows": null,
+      "hitSlop": null,
+      "tapW": "31.5%00",
+      "tapH": 62
     },
     {
       "name": "브러시 닫기",
@@ -944,38 +1031,122 @@
     {
       "name": "브러시 마커",
       "screen": "draw-brush",
-      "boxW": null,
-      "boxH": 52,
-      "padX": 8,
+      "boxW": "31.5%",
+      "boxH": 62,
+      "padX": 0,
       "padY": 0,
-      "grows": "flex:1",
+      "grows": null,
       "hitSlop": null,
-      "tapW": null,
-      "tapH": 52
+      "tapW": "31.5%00",
+      "tapH": 62
     },
     {
       "name": "브러시 매끈한 잉크",
       "screen": "draw-brush",
-      "boxW": null,
-      "boxH": 52,
-      "padX": 8,
+      "boxW": "31.5%",
+      "boxH": 62,
+      "padX": 0,
       "padY": 0,
-      "grows": "flex:1",
+      "grows": null,
       "hitSlop": null,
-      "tapW": null,
-      "tapH": 52
+      "tapW": "31.5%00",
+      "tapH": 62
     },
     {
       "name": "브러시 부드러운 펜",
       "screen": "draw-brush",
-      "boxW": null,
-      "boxH": 52,
-      "padX": 8,
+      "boxW": "31.5%",
+      "boxH": 62,
+      "padX": 0,
       "padY": 0,
-      "grows": "flex:1",
+      "grows": null,
       "hitSlop": null,
-      "tapW": null,
-      "tapH": 52
+      "tapW": "31.5%00",
+      "tapH": 62
+    },
+    {
+      "name": "브러시 붓",
+      "screen": "draw-brush",
+      "boxW": "31.5%",
+      "boxH": 62,
+      "padX": 0,
+      "padY": 0,
+      "grows": null,
+      "hitSlop": null,
+      "tapW": "31.5%00",
+      "tapH": 62
+    },
+    {
+      "name": "브러시 에어브러시",
+      "screen": "draw-brush",
+      "boxW": "31.5%",
+      "boxH": 62,
+      "padX": 0,
+      "padY": 0,
+      "grows": null,
+      "hitSlop": null,
+      "tapW": "31.5%00",
+      "tapH": 62
+    },
+    {
+      "name": "브러시 연필",
+      "screen": "draw-brush",
+      "boxW": "31.5%",
+      "boxH": 62,
+      "padX": 0,
+      "padY": 0,
+      "grows": null,
+      "hitSlop": null,
+      "tapW": "31.5%00",
+      "tapH": 62
+    },
+    {
+      "name": "브러시 전체",
+      "screen": "draw-base",
+      "boxW": 54,
+      "boxH": 62,
+      "padX": 0,
+      "padY": 0,
+      "grows": null,
+      "hitSlop": null,
+      "tapW": 54,
+      "tapH": 62
+    },
+    {
+      "name": "브러시 캘리그래피",
+      "screen": "draw-brush",
+      "boxW": "31.5%",
+      "boxH": 62,
+      "padX": 0,
+      "padY": 0,
+      "grows": null,
+      "hitSlop": null,
+      "tapW": "31.5%00",
+      "tapH": 62
+    },
+    {
+      "name": "브러시 크레용",
+      "screen": "draw-brush",
+      "boxW": "31.5%",
+      "boxH": 62,
+      "padX": 0,
+      "padY": 0,
+      "grows": null,
+      "hitSlop": null,
+      "tapW": "31.5%00",
+      "tapH": 62
+    },
+    {
+      "name": "브러시 펜",
+      "screen": "draw-brush",
+      "boxW": "31.5%",
+      "boxH": 62,
+      "padX": 0,
+      "padY": 0,
+      "grows": null,
+      "hitSlop": null,
+      "tapW": "31.5%00",
+      "tapH": 62
     },
     {
       "name": "새 레이어로 분리",
@@ -1009,438 +1180,42 @@
     {
       "name": "색",
       "screen": "draw-base",
+      "boxW": 32,
+      "boxH": 32,
+      "padX": 6,
+      "padY": 6,
+      "grows": null,
+      "hitSlop": {
+        "top": 8,
+        "bottom": 8,
+        "left": 8,
+        "right": 8
+      },
+      "tapW": 48,
+      "tapH": 48
+    },
+    {
+      "name": "선 보정",
+      "screen": "draw-brush-detail",
       "boxW": null,
       "boxH": 48,
-      "padX": 12,
+      "padX": 2,
       "padY": 0,
-      "grows": "flex:1.1",
+      "grows": null,
       "hitSlop": null,
       "tapW": null,
       "tapH": 48
     },
     {
-      "name": "색 #171717",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #4B4B4B",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #50C7C2",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #54A9E8",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #5D87D6",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #65C47A",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #66BE9B",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #6D72D9",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #765044",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #858585",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #9870D8",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #A77559",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #A8D85F",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #BF6AD5",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #C9C9C9",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #D7B79B",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #E768AD",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #E94F4F",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #F0D8BF",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #FF6E7A",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #FF8C69",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #FFAA4D",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #FFD15C",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
-      "name": "색 #FFFFFF",
-      "screen": "draw-color",
-      "boxW": 36,
-      "boxH": 36,
-      "padX": 0,
-      "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 6,
-        "bottom": 6,
-        "left": 6,
-        "right": 6
-      },
-      "tapW": 48,
-      "tapH": 48
-    },
-    {
       "name": "선택",
       "screen": "draw-base",
-      "boxW": 46,
+      "boxW": null,
       "boxH": 48,
       "padX": 0,
       "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 0,
-        "bottom": 0,
-        "left": 1,
-        "right": 1
-      },
-      "tapW": 48,
+      "grows": "flex:1",
+      "hitSlop": null,
+      "tapW": null,
       "tapH": 48
     },
     {
@@ -1965,28 +1740,16 @@
       "tapH": 48
     },
     {
-      "name": "연간 고르기",
-      "screen": "pro",
-      "boxW": null,
-      "boxH": null,
-      "padX": 28,
-      "padY": 28,
-      "grows": "flex:1 · 여백 28",
-      "hitSlop": null,
-      "tapW": null,
-      "tapH": null
-    },
-    {
       "name": "연필",
-      "screen": "draw-brush",
+      "screen": "draw-base",
       "boxW": null,
-      "boxH": 52,
+      "boxH": 62,
       "padX": 0,
-      "padY": 10,
+      "padY": 0,
       "grows": "flex:1",
       "hitSlop": null,
       "tapW": null,
-      "tapH": 52
+      "tapH": 62
     },
     {
       "name": "오른쪽 회전",
@@ -2004,13 +1767,18 @@
       "name": "완성 후 다음",
       "screen": "draw-base",
       "boxW": null,
-      "boxH": 48,
-      "padX": 16,
+      "boxH": 44,
+      "padX": 24,
       "padY": 0,
-      "grows": "flex:1",
-      "hitSlop": null,
+      "grows": null,
+      "hitSlop": {
+        "top": 4,
+        "bottom": 4,
+        "left": 0,
+        "right": 0
+      },
       "tapW": null,
-      "tapH": 48
+      "tapH": 52
     },
     {
       "name": "왼쪽 회전",
@@ -2061,16 +1829,16 @@
       "tapH": 48
     },
     {
-      "name": "월간 고르기",
-      "screen": "pro",
+      "name": "이 예시를 밑그림으로 넣기",
+      "screen": "draw-brush-2",
       "boxW": null,
-      "boxH": null,
-      "padX": 28,
-      "padY": 28,
-      "grows": "flex:1 · 여백 28",
+      "boxH": 48,
+      "padX": 0,
+      "padY": 0,
+      "grows": null,
       "hitSlop": null,
       "tapW": null,
-      "tapH": null
+      "tapH": 48
     },
     {
       "name": "이어서 그리기",
@@ -2195,18 +1963,13 @@
     {
       "name": "지우개",
       "screen": "draw-base",
-      "boxW": 46,
+      "boxW": null,
       "boxH": 48,
       "padX": 0,
       "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 0,
-        "bottom": 0,
-        "left": 1,
-        "right": 1
-      },
-      "tapW": 48,
+      "grows": "flex:1",
+      "hitSlop": null,
+      "tapW": null,
       "tapH": 48
     },
     {
@@ -2282,18 +2045,13 @@
     {
       "name": "채우기",
       "screen": "draw-base",
-      "boxW": 46,
+      "boxW": null,
       "boxH": 48,
       "padX": 0,
       "padY": 0,
-      "grows": null,
-      "hitSlop": {
-        "top": 0,
-        "bottom": 0,
-        "left": 1,
-        "right": 1
-      },
-      "tapW": 48,
+      "grows": "flex:1",
+      "hitSlop": null,
+      "tapW": null,
       "tapH": 48
     },
     {
@@ -2457,15 +2215,15 @@
     },
     {
       "name": "펜",
-      "screen": "draw-brush",
+      "screen": "draw-base",
       "boxW": null,
-      "boxH": 52,
+      "boxH": 62,
       "padX": 0,
-      "padY": 10,
+      "padY": 0,
       "grows": "flex:1",
       "hitSlop": null,
       "tapW": null,
-      "tapH": 52
+      "tapH": 62
     },
     {
       "name": "표현 가이드",
@@ -2577,6 +2335,40 @@
       "tapH": 48
     },
     {
+      "name": "표현 예시 닫기",
+      "screen": "draw-brush-2",
+      "boxW": 44,
+      "boxH": 44,
+      "padX": 0,
+      "padY": 0,
+      "grows": null,
+      "hitSlop": {
+        "top": 2,
+        "bottom": 2,
+        "left": 2,
+        "right": 2
+      },
+      "tapW": 48,
+      "tapH": 48
+    },
+    {
+      "name": "표현 예시 접기",
+      "screen": "draw-brush-2",
+      "boxW": 44,
+      "boxH": 44,
+      "padX": 0,
+      "padY": 0,
+      "grows": null,
+      "hitSlop": {
+        "top": 2,
+        "bottom": 2,
+        "left": 2,
+        "right": 2
+      },
+      "tapW": 48,
+      "tapH": 48
+    },
+    {
       "name": "홈 공지 미리 보기",
       "screen": "settings",
       "boxW": null,
@@ -2637,11 +2429,11 @@
       "tapH": 48
     },
     {
-      "name": "PRO 시작하기",
-      "screen": "pro",
+      "name": "PRO 이용",
+      "screen": "settings",
       "boxW": null,
       "boxH": 52,
-      "padX": 32,
+      "padX": 0,
       "padY": 0,
       "grows": null,
       "hitSlop": null,
@@ -2649,11 +2441,11 @@
       "tapH": 52
     },
     {
-      "name": "PRO 이용",
-      "screen": "settings",
+      "name": "PRO 한 번 구매하기",
+      "screen": "pro",
       "boxW": null,
       "boxH": 52,
-      "padX": 0,
+      "padX": 32,
       "padY": 0,
       "grows": null,
       "hitSlop": null,
