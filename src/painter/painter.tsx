@@ -598,23 +598,36 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       setRefRail(true); setRefSource('mine'); setRefBrowse(false); setPanel(null); setDrawRail(false);
       return;
     }
+    // 장이 이미 다 찼으면 **아무것도 하기 전에** 말한다(45.26차 정정).
+    // 예전에는 밑그림만 깔고 빈 장을 못 만든 채 끝냈다 — 참고는 늘었는데 그 위에 그릴 곳이 없는 반쪽 상태였다.
+    // 그것을 성공으로 치지 않는다: 참고도 장도 건드리지 않고 돌아간다.
+    if (scene.layers.length >= 4) {
+      Alert.alert('그림 장이 가득 찼어요', '밑그림을 깔면 그 위에 새로 그릴 장이 한 장 필요해요. 지금은 네 장이 모두 차 있어 넣지 않았어요 — 레이어에서 쓰지 않는 장을 지우고 다시 눌러 주세요. 지금 그림은 그대로예요.');
+      return;
+    }
     inFlight.current = true; setBusy(true);
+    // 되돌릴 거리를 적어 둔다. 중간에 어긋나면 이번에 더한 것만 걷어내고 넣기 전으로 돌린다.
+    let laidId: string | null = null;
     try {
       const image = await onImportGuideExample(guideExample.artwork);
       if (!image) return;
       const id = 'ref-' + image.path;
-      guideLaid.current = id;
       send({ type: 'addReferences', references: [{ ...transform(id, '밑그림 · ' + guideExample.title), visible: false, opacity: .3, path: image.path, data: await dataUrl(image) }] });
+      laidId = id;
       // 보이게 하는 일은 참고 타일을 누를 때와 같은 명령에 맡긴다 — '한 번에 하나만 보인다'는 기존 규칙이 그대로 지켜진다.
       send({ type: 'toggleReference', id });
-      // 밑그림을 깔았으면 그 위에 바로 그릴 빈 장을 하나 만든다(45.25차).
-      // 예전에는 밑그림만 깔리고 손이 닿는 곳이 이미 그린 장이라, 따라 그리면 그 장을 덮어썼다.
+      // 밑그림을 깔았으면 그 위에 바로 그릴 빈 장을 하나 만든다.
       // 엔진이 새 장을 맨 위에 놓고 바로 고른다(addLayer → selectDrawLayer). 기존 장은 건드리지 않는다.
-      // 실패하면 여기까지 오지 않으므로 빈 장만 남는 일은 없다. 같은 밑그림을 다시 보이는 길은 위에서 이미 돌아갔다.
-      if (scene.layers.length < 4) addDrawing();
-      else Alert.alert('그림 장이 가득 찼어요', '밑그림은 깔았어요. 그 위에 새로 그릴 장은 더 만들 수 없어요 — 레이어에서 쓰지 않는 장을 지우면 만들 수 있어요. 지금 그림은 그대로예요.');
+      addDrawing();
+      guideLaid.current = id;
+      laidId = null;                    // 여기까지 오면 되돌릴 것이 없다
       setRefRail(true); setRefSource('mine'); setRefBrowse(false); setPanel(null); setDrawRail(false);
-    } catch (e) { Alert.alert('밑그림을 넣지 못했어요', userMessage(e)); }
+    } catch (e) {
+      // 이번에 더한 참고만 걷어내고 넣기 전 상태로 돌린다. 기존 그림·참고는 건드리지 않는다.
+      if (laidId) send({ type: 'removeReference', id: laidId });
+      guideLaid.current = null;
+      Alert.alert('밑그림을 넣지 못했어요', userMessage(e));
+    }
     finally { unlock(); }
   }
   // 가이드에서 고른 예시는 칸을 열 때 한 번만 쓴다. 다시 열거나 옆 칸으로 넘어갈 때 저절로 또 깔리지 않는다.

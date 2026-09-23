@@ -370,10 +370,13 @@ async function echoReferences(scene) {
       layers: [1, 2, 3, 4].map(n => ({ id: 'draw-' + n, name: '그림 ' + n, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 })), references: [] });
     await message({ type: 'initialized' });
     await act(async () => {});
-    assert.equal(sent().filter(m => m.type === 'addReferences').length, 1, '장이 다 차도 밑그림은 들어간다');
-    assert.equal(sent().filter(m => m.type === 'addLayer').length, 0, '더 만들 수 없을 때는 빈 장을 만들지 않는다');
-    assert.equal(sent().filter(m => ['removeLayer', 'importDrawing'].includes(m.type)).length, 0, '기존 그림을 지우거나 덮어쓰지 않는다');
-    assert.equal(alerts.length, 1, '왜 못 만드는지 한 번 말한다');
+    // 45.26 정정: '밑그림만 들어가고 빈 장은 없음'은 성공이 아니다. 아무것도 하기 전에 말하고 돌아간다.
+    assert.equal(sent().filter(m => m.type === 'addReferences').length, 0, '장이 다 찼으면 밑그림도 넣지 않는다');
+    assert.equal(sent().filter(m => m.type === 'addLayer').length, 0, '빈 장도 만들지 않는다');
+    assert.equal(sent().filter(m => ['removeLayer', 'importDrawing', 'removeReference'].includes(m.type)).length, 0, '기존 그림·참고를 건드리지 않는다');
+    assert.equal(imported.length, 0, '그림 파일을 들여오지도 않는다 — 넣기 전에 멈춘다');
+    assert.equal(alerts.length, 1, '왜 넣지 않았는지 한 번 말한다');
+    assert.ok(alerts[0][1].includes('넣지 않았어요'), '넣지 않았다고 분명히 말한다: ' + alerts[0][1]);
     assert.ok(alerts[0][1].includes('지금 그림은 그대로'), '기존 그림이 안전하다고 알린다: ' + alerts[0][1]);
   }
   // ② 넣기 자체가 실패하면 참고도 빈 장도 남지 않는다.
@@ -387,7 +390,7 @@ async function echoReferences(scene) {
     await press('밑그림 넣기');
     await ready();
     await act(async () => {});
-    assert.equal(sent().filter(m => m.type === 'addReferences').length, 0, '실패하면 참고가 들어가지 않는다');
+    assert.equal(sent().filter(m => m.type === 'addReferences').length, 0, '들여오기부터 실패하면 참고가 들어가지 않는다');
     assert.equal(sent().filter(m => m.type === 'addLayer').length, 0, '실패하면 빈 장도 남지 않는다');
     assert.equal(alerts.length, 1, '실패는 한 번 알린다');
     failImport = false;
