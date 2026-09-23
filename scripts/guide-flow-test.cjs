@@ -26,6 +26,7 @@ global.setInterval = (fn, ms) => ms === 40000 ? { unref() {} } : realSetInterval
 const WebView = React.forwardRef((props, ref) => { React.useImperativeHandle(ref, () => ({ injectJavaScript: s => commands.push(s) })); return React.createElement('WebView', props); });
 const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n]));
 const alerts = [];
+let failImport = false;   // 넣기가 실패했을 때 부분 성공이 남지 않는지 보려고 켠다
 Object.assign(rn, {
   Keyboard: { addListener: () => ({ remove() {} }), dismiss() {}, isVisible: () => false },
   StyleSheet: { create: x => x }, Platform: { OS: 'android' },
@@ -51,7 +52,7 @@ const real = loader(mocks)('src/services/images.ts');
 const imported = [];
 const images = {
   dataUrl: async () => pngData, pickImages: async () => [],
-  importBundledImage: async module => { imported.push(module); return { path: 'guide-' + (imported.length) + '.png', width: 1024, height: 1024 }; },
+  importBundledImage: async module => { if (failImport) throw new Error('그림을 찾지 못했어요 (1단계)'); imported.push(module); return { path: 'guide-' + (imported.length) + '.png', width: 1024, height: 1024 }; },
   savePainterWork: (...a) => real.savePainterWork(...a), saveCutout: (...a) => real.saveCutout(...a),
   saveMotionLoop: () => ({ path: 'moving.gif', width: 360, height: 360 }), saveSubmitLoop: () => undefined,
 };
@@ -351,6 +352,56 @@ async function echoReferences(scene) {
   assert.equal(scene.references.length, 1, '참고는 한 장 그대로다');
   assert.equal(sent().filter(m => m.type === 'addLayer').length, layersBefore, '같은 밑그림을 다시 보일 때는 빈 장도 만들지 않는다');
 
+  // ── 5-b. 부분 성공이 없는가 (45.26) ────────────────────────────────────────────────
+  // ① 그림 장이 네 장이면 빈 장을 더 만들 수 없다. 그때 참고만 들어가고 **말없이** 끝나면
+  //    사용자는 왜 따라 그릴 수 없는지 모른다. 밑그림은 들어가되 이유를 말해야 한다.
+  {
+    commands.length = 0; imported.length = 0; alerts.length = 0;
+    await render(App);
+    await press('표현 가이드');
+    await press('고마워 · 두 손 모아 꾸벅');
+    await press('정중하게 고르기');   // 이 스위트에서 그림이 걸린 것은 -polite/-friendly 둘뿐
+    await press('밑그림 넣기');
+    // 기기가 '이미 네 장'이라고 답한다.
+    await message({ type: 'ready' });
+    const init = sent().filter(m => m.type === 'init').at(-1);
+    void init;
+    await message({ type: 'state', undo: false, redo: false, dirty: false, activeLayerId: 'draw-4', activeReferenceId: null, caption: null, motion: null,
+      layers: [1, 2, 3, 4].map(n => ({ id: 'draw-' + n, name: '그림 ' + n, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 })), references: [] });
+    await message({ type: 'initialized' });
+    await act(async () => {});
+    assert.equal(sent().filter(m => m.type === 'addReferences').length, 1, '장이 다 차도 밑그림은 들어간다');
+    assert.equal(sent().filter(m => m.type === 'addLayer').length, 0, '더 만들 수 없을 때는 빈 장을 만들지 않는다');
+    assert.equal(sent().filter(m => ['removeLayer', 'importDrawing'].includes(m.type)).length, 0, '기존 그림을 지우거나 덮어쓰지 않는다');
+    assert.equal(alerts.length, 1, '왜 못 만드는지 한 번 말한다');
+    assert.ok(alerts[0][1].includes('지금 그림은 그대로'), '기존 그림이 안전하다고 알린다: ' + alerts[0][1]);
+  }
+  // ② 넣기 자체가 실패하면 참고도 빈 장도 남지 않는다.
+  {
+    commands.length = 0; imported.length = 0; alerts.length = 0;
+    failImport = true;
+    await render(App);
+    await press('표현 가이드');
+    await press('고마워 · 두 손 모아 꾸벅');
+    await press('친근하게 고르기');
+    await press('밑그림 넣기');
+    await ready();
+    await act(async () => {});
+    assert.equal(sent().filter(m => m.type === 'addReferences').length, 0, '실패하면 참고가 들어가지 않는다');
+    assert.equal(sent().filter(m => m.type === 'addLayer').length, 0, '실패하면 빈 장도 남지 않는다');
+    assert.equal(alerts.length, 1, '실패는 한 번 알린다');
+    failImport = false;
+  }
+
+  await render(App);
+  await press('표현 가이드');
+  await press('고마워 · 두 손 모아 꾸벅');
+  await press('친근하게 고르기');
+  await press('밑그림 넣기');
+  await ready();
+  await echoReferences({ type: 'state', undo: false, redo: false, dirty: false, activeLayerId: 'draw-1', activeReferenceId: null, caption: null, motion: null,
+    layers: [{ id: 'draw-1', name: '그림 1', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 }], references: [] });
+  if (!labelled('참고 관리').length) await press('참고');
   await press('참고 관리');
   assert.ok(labelled('참고 삭제').length >= 1, '삭제가 붙어 있다');
 
