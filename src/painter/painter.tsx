@@ -640,13 +640,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const stabName = effectiveBrush.stabilizer === 'off' ? '끔' : STAB_LEVELS.find(([level]) => level === effectiveBrush.stabilizer)?.[1] ?? '약';
   // 선 종류는 하나의 낮고 넓은 세그먼트다. 독립 카드 세 장으로 두지 않는다(40차). 고급 브러시는 네 번째 칸이 아니라 아래 조용한 한 줄.
   const stab = effectiveBrush.stabilizer;
-  const brushSheet = <View style={{ gap: 8, paddingHorizontal: 16, paddingBottom: 6 }}>
+  const brushSheet = <View style={{ gap: 4, paddingHorizontal: 12, paddingBottom: 4 }}>
     {/* 선 종류(45.5차): 글자를 읽지 않아도 어떤 선이 나오는지 보이게 — 칸마다 그 브러시의 실제 선 견본. */}
-    <View testID="선 종류" style={{ flexDirection: 'row', padding: 3, borderRadius: 14, backgroundColor: C.surface2 }}>
+    <View testID="선 종류" style={{ flexDirection: 'row', padding: 3, borderRadius: C.radius.button, backgroundColor: C.surface2 }}>
       {BRUSHES.map(b => { const on = !effectiveBrush.preset && brush === b.key;
         const face: IconName = b.key === 'pen' ? 'fountain-pen-tip' : b.key === 'brush' ? 'brush' : 'pencil';
         return <Pressable key={b.key} accessibilityRole="button" accessibilityLabel={b.title} accessibilityState={{ selected: on }} onPress={() => selectBrush(b.key)}
-          style={({ pressed }) => ({ flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 5, borderRadius: 11, backgroundColor: on ? C.paper : pressed ? C.fill : 'transparent', borderWidth: 0, ...(on ? Elev[1] : null) })}>
+          style={({ pressed }) => ({ flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', gap: 2, paddingVertical: 3, borderRadius: C.radius.chip, backgroundColor: on ? C.paper : pressed ? C.fill : 'transparent', borderWidth: 0, ...(on ? Elev[1] : null) })}>
           {/* 획 견본은 지금 쓰는 색으로 칠해진다 — 이름을 읽기 전에 "이 브러시는 이런 선"이 먼저 보인다(45.6차). */}
           {/* 45.25: 고르지 않은 것도 같은 잉크로 그린다. 흐리게 하면 '못 쓰는 것'처럼 읽혀 견줄 수가 없다. */}
           <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '84%', height: 18, tintColor: color }} resizeMode="contain" />
@@ -659,8 +659,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     {/* 기본 영역은 펜·붓·연필만 맡는다(45.25차). 고급 브러시는 작은 진입점 한 줄로 두고,
         실제 고르기는 세부 설정 안에서 한다 — 무료 브러시와 같은 무게로 자리를 다투지 않게. */}
     <Pressable accessibilityRole="button" accessibilityLabel="고급 브러시" onPress={() => { if (!pro) { onRequestPro(); return; } ease(); setBrushDetail(true); }}
-      style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4, borderRadius: 12, backgroundColor: pressed ? C.fill : 'transparent' })}>
-      <MaterialCommunityIcons name="brush-variant" size={18} color={C.muted} />
+      hitSlop={{ top: 2, bottom: 2 }}
+      style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4, borderRadius: C.radius.button, backgroundColor: pressed ? C.fill : 'transparent' })}>
+      <MaterialCommunityIcons name="brush-variant" size={17} color={C.muted} />
       <Text style={{ fontSize: 13, fontWeight: '600', color: C.ink }}>고급 브러시</Text>
       {!pro && <ProTag />}
       <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.faint, textAlign: 'right' }}>{pro ? (PRO_BRUSHES.find(b => b.key === effectiveBrush.preset)?.title ?? '고르지 않음') : '4종'}</Text>

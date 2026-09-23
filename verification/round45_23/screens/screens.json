@@ -59,7 +59,7 @@
     "id": "draw-brush",
     "title": "그리기 · 브러시",
     "file": "draw-brush.html",
-    "bytes": 58727,
+    "bytes": 58747,
     "realImages": 21,
     "missingImages": []
   },
@@ -155,7 +155,7 @@
     "id": "draw-brush-2",
     "title": "그리기 · 브러시 선택",
     "file": "draw-brush-2.html",
-    "bytes": 62702,
+    "bytes": 61701,
     "realImages": 22,
     "missingImages": []
   },
@@ -163,7 +163,7 @@
     "id": "draw-brush-detail",
     "title": "그리기 · 브러시 세부 설정",
     "file": "draw-brush-detail.html",
-    "bytes": 66409,
+    "bytes": 65408,
     "realImages": 22,
     "missingImages": []
   },
@@ -171,7 +171,7 @@
     "id": "draw-ref-and-brush",
     "title": "그리기 · 참고와 브러시 함께",
     "file": "draw-ref-and-brush.html",
-    "bytes": 62728,
+    "bytes": 61727,
     "realImages": 22,
     "missingImages": []
   }
