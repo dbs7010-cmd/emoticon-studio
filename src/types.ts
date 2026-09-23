@@ -89,7 +89,9 @@ export type BrushSettings = { preset?: 'ink' | 'soft' | 'grain' | 'marker' | 'ca
 // Only a store receipt may set this. `source` exists so a hand written file cannot claim PRO.
 export type Entitlement = {
   // 라이선스 테스터·내부 테스트 구매로 열린 이용권. 화면이 그렇게 말하기 위한 표시다.
-  test?: boolean; plan: 'free' | 'monthly' | 'yearly'; source: 'none' | 'store'; verified?: boolean; expiresAt?: string; checkedAt?: string };
+  // 'lifetime' = 한 번 사면 끝나는 비소모성 일회성 PRO(45.28차). 'monthly'·'yearly' 는 팔지 않지만,
+  // 예전 저장본을 그대로 읽기 위해 남겨 둔다 — 저장된 이용권을 지우거나 바꾸지 않는다.
+  test?: boolean; plan: 'free' | 'monthly' | 'yearly' | 'lifetime'; source: 'none' | 'store'; verified?: boolean; expiresAt?: string; checkedAt?: string };
 export type SavedMotion = { id: string; name: string; motion: Motion };
 // A piece someone cut out of a drawing and kept. It is a copy: the drawing it came from is unchanged.
 export type Cutout = { id: string; name: string; image: LocalImage };

@@ -17,7 +17,7 @@ import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, saveSt
 import { exportSet, decodeDataUrl, type HandoffFrames } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinals, inspectImage } from './src/services/qa';
-import { PLANS, REVIEW_BUILD_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, purchase, refreshEntitlement, restore, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
+import { PLANS, PRICES_ARE_PROPOSED, PRICE_IS_CANDIDATE_NOTE, REVIEW_BUILD_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, purchase, purchaseHistoryUrl, refreshEntitlement, restore, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
 import { PRESETS } from './src/painter/motion-panel';
 import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, PainterWork } from './src/types';
 
@@ -67,7 +67,6 @@ function Studio() {
   // 화면을 떠날 때 버린다 — 확인하기 전에는 저장된 작품이 한 글자도 바뀌지 않는다.
   const [batchPreview, setBatchPreview] = useState<{ number: number; data: string; loop: number; bytes: number } | null>(null);
   const [previewing, setPreviewing] = useState(false);
-  const [plan, setPlan] = useState<'monthly' | 'yearly'>('monthly');
   const [stage, setStage] = useState<'proposal' | 'release'>('proposal');
   // 제출 화면의 규격 원문은 접어 둔다 — 요약은 위에 늘 보이고, 원문은 필요할 때 펼친다.
   const [specOpen, setSpecOpen] = useState(false);
@@ -110,7 +109,8 @@ function Studio() {
   const [lastTool, setLastTool] = useState<Tool>('pen');
   // 결제 한 번의 상태. 화면은 이 값 하나로 무엇을 보여 줄지 정한다(가격 불러오기 → 결제 → 결과).
   const [payment, setPayment] = useState<Payment>({ phase: 'idle' });
-  const [prices, setPrices] = useState<Partial<Record<'monthly' | 'yearly', string>> | null>(null);
+  // 일회성 PRO 하나의 스토어 가격. 없으면 화면은 후보 가격을 '미확정'이라고 적는다.
+  const [prices, setPrices] = useState<{ lifetime?: string } | null>(null);
   const resetPayment = () => setPayment({ phase: 'idle' });
   const entitlement = store?.entitlement;
   // 내부 검수 빌드에서만 검수용 해제가 함께 인정된다. 출시 구성에서는 reviewUnlocked() 가 늘 거짓이라
@@ -131,7 +131,7 @@ function Studio() {
     setPayment({ phase: 'loading' });
     const result = await storePrices();
     if (result.state === 'ok') {
-      setPrices(Object.fromEntries(result.products.map(p => [p.plan, p.localizedPrice])));
+      setPrices({ lifetime: result.products.find(p => p.plan === 'lifetime')?.localizedPrice });
       setPayment(now => now.phase === 'loading' ? { phase: 'ready' } : now);
     } else {
       setPrices(null);
@@ -422,9 +422,9 @@ function Studio() {
     ...project.slots.filter(s => s.finalImage && s.qa?.status === 'FAIL').map(s => ({ label: `${pad(s.number)}번 검사`, status: 'FAIL' as const, detail: '자동 검사에서 문제가 나왔어요.', slot: s.number })),
   ];
   // A purchase only ever lands here, and only after the store and our receipt server both said yes.
-  async function startPurchase(plan: 'monthly' | 'yearly') {
+  async function startPurchase() {
     setPayment({ phase: 'buying' });
-    settlePayment(await purchase(plan), 'bought');
+    settlePayment(await purchase(), 'bought');
   }
   async function restorePro() {
     setPayment({ phase: 'restoring' });
@@ -1347,7 +1347,7 @@ function Studio() {
           {/* 실제로 PRO 인 것만 적는다. 그리기 기본 도구(진하기·보정·스포이드·팔레트·RGB)는 무료라 넣지 않는다. */}
           {([['부분만 움직이기 · 두 모습 번갈아', '손, 귀, 꼬리처럼 원하는 곳만 따로, 차례로', 'hand-back-right-outline'],
              ['여러 칸에 같은 움직임 한 번에', '보관한 움직임을 고른 칸 전부에', 'content-duplicate'],
-             ['고급 브러시 4종', '매끈한 잉크, 부드러운 펜, 결 연필, 마커', 'brush-variant']] as const).map(([title, hint, icon]) =>
+             ['고급 브러시 8종', '매끈한 잉크, 부드러운 펜, 결 연필, 캘리그래피, 크레용, 에어브러시, 납작펜, 거친 선', 'brush-variant']] as const).map(([title, hint, icon]) =>
             <View key={title} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
               <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name={icon} size={19} color={C.ink} /></View>
               <View style={{ flex: 1 }}>
@@ -1361,18 +1361,20 @@ function Studio() {
           </View>
           {entitlementLabel(entitlement) !== '무료' && <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>}
           {expiredButRemembered(entitlement) && <Text style={{ fontSize: 12, color: C.ink }}>기간이 끝나도 이미 만든 움직임은 계속 재생되고 내보낼 수 있어요.</Text>}
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {PLANS.map(p => <Pressable key={p.id} accessibilityRole="radio" accessibilityLabel={`${p.label} 고르기`} accessibilityState={{ checked: plan === p.id }} onPress={() => setPlan(p.id)}
-              style={{ flex: 1, borderWidth: 1, borderColor: plan === p.id ? C.accentBorder : C.line, borderRadius: 16, padding: 14, gap: 2, backgroundColor: plan === p.id ? C.accentSoft : C.paper }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: plan === p.id ? C.ink : C.muted }}>{p.label}</Text>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: C.ink }}>{prices?.[p.id] || p.proposedPrice}</Text>
-              <Text style={{ fontSize: 10, color: C.muted }}>{prices?.[p.id] ? '스토어 가격' : '출시 제안가 · 미확정'}</Text>
-            </Pressable>)}
+          {/* 파는 것은 하나다: 한 번 구매하면 계속 쓰는 PRO. 고르는 줄이 아니라 값을 적는 칸이다.
+              스토어 가격이 오면 그것을 적고, 없으면 후보 가격임을 분명히 적는다(하드코딩한 판매가가 아니다). */}
+          <View accessibilityRole="summary" accessibilityLabel={'PRO 가격 ' + (prices?.lifetime || PLANS[0].proposedPrice)}
+            style={{ borderWidth: 1, borderColor: C.accentBorder, borderRadius: 16, padding: 14, gap: 2, backgroundColor: C.accentSoft }}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{PLANS[0].label}</Text>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink }}>{prices?.lifetime || PLANS[0].proposedPrice}</Text>
+            <Text style={{ fontSize: 10, color: C.muted }}>{prices?.lifetime ? '스토어 가격' : (PRICES_ARE_PROPOSED ? '후보 가격 · 미확정' : '출시 가격')}</Text>
+            {!prices?.lifetime && <Text style={{ fontSize: 10, color: C.muted, lineHeight: 15 }}>{PRICE_IS_CANDIDATE_NOTE}</Text>}
+            <Text style={{ fontSize: 11, color: C.muted }}>구독이 아니라 한 번만 결제해요. 정기 결제나 해지가 없어요.</Text>
           </View>
           <PaymentStatus payment={payment} onRestore={() => void restorePro()} onRetry={() => void loadPrices()} />
           {payment.phase === 'bought' || payment.phase === 'restored'
             ? <Action primary title="PRO로 만들러 가기" onPress={() => { setProSheet(false); resetPayment(); }} />
-            : <Action primary title="PRO 시작하기" busy={payment.phase === 'buying'} disabled={!prices || payment.phase === 'loading' || payment.phase === 'restoring' || isPro(entitlement)} onPress={() => void startPurchase(plan)} />}
+            : <Action primary title="PRO 한 번 구매하기" busy={payment.phase === 'buying'} disabled={!prices?.lifetime || payment.phase === 'loading' || payment.phase === 'restoring' || isPro(entitlement)} onPress={() => void startPurchase()} />}
           {/* 내부 검수 빌드에서는 이 기기에서 결제를 열 수 없는 일이 흔하다. 잠금에 부딪힌 검수자가
               설정 깊은 곳의 토글을 찾아 헤매지 않도록, 막힌 바로 그 자리에서 켤 수 있게 한다.
               출시 구성에서는 internalReviewBuild() 가 거짓이라 이 줄이 아예 그려지지 않는다. 구매가 아니다. */}
@@ -1380,8 +1382,11 @@ function Studio() {
             onPress={() => { try { commit(st => ({ ...st, reviewUnlock: true })); setProSheet(false); resetPayment(); setNotice(REVIEW_BUILD_NOTE); } catch (e) { setNotice('검수용 PRO 를 켜지 못했어요. ' + userMessage(e)); } }} />}
           <Action title="무료로 계속하기" onPress={() => { setProSheet(false); resetPayment(); }} />
           <Pressable accessibilityRole="button" accessibilityLabel="구매 복원" disabled={payment.phase === 'buying' || payment.phase === 'restoring'} onPress={() => void restorePro()} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{payment.phase === 'restoring' ? '구매 내역을 확인하는 중…' : '구매 복원'}</Text></Pressable>
-          {isPro(entitlement) && !!entitlement && entitlement.plan !== 'free' && <Pressable accessibilityRole="button" accessibilityLabel="구독 관리" onPress={() => { Linking.openURL(subscriptionManageUrl(entitlement.plan === 'yearly' ? 'yearly' : 'monthly')).catch(() => setPayment({ phase: 'failed', problem: 'store-unavailable' })); }} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>구독 관리 · 해지</Text></Pressable>}
-          <Text style={{ fontSize: 10, color: C.muted, lineHeight: 16 }}>해지해도 남은 기간까지는 이용할 수 있어요. 기간이 끝나도 작품과 파일은 지우지 않아요.</Text>
+          {/* 일회성 구매에는 해지가 없다. 영수증·환불은 스토어의 구매 내역에서 본다.
+              예전 구독 저장본을 가진 사람에게는 구독 관리 길도 함께 둔다 — 길을 막지 않는다. */}
+          {isPro(entitlement) && !!entitlement && entitlement.plan === 'lifetime' && <Pressable accessibilityRole="button" accessibilityLabel="구매 내역" onPress={() => { Linking.openURL(purchaseHistoryUrl()).catch(() => setPayment({ phase: 'failed', problem: 'store-unavailable' })); }} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>구매 내역 보기</Text></Pressable>}
+          {isPro(entitlement) && !!entitlement && (entitlement.plan === 'monthly' || entitlement.plan === 'yearly') && <Pressable accessibilityRole="button" accessibilityLabel="구독 관리" onPress={() => { Linking.openURL(subscriptionManageUrl('pro_' + entitlement.plan)).catch(() => setPayment({ phase: 'failed', problem: 'store-unavailable' })); }} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>구독 관리 · 해지</Text></Pressable>}
+          <Text style={{ fontSize: 10, color: C.muted, lineHeight: 16 }}>한 번 구매하면 같은 스토어 계정에서 계속 쓸 수 있어요. 기기를 바꾸거나 다시 설치하면 구매 복원을 눌러 주세요. 작품과 파일은 어떤 경우에도 지우지 않아요.</Text>
         </ScrollView>
       </SafeAreaView>
     </Modal>}
@@ -1476,7 +1481,7 @@ function paymentView(payment: Payment): PaymentView | null {
     case 'restored': return { tone: 'good', icon: 'check-circle-outline', title: 'PRO를 다시 켰어요', next: '이 기기에서도 PRO 기능을 쓸 수 있어요.' };
     case 'cancelled': return { tone: 'plain', icon: 'close-circle-outline', title: '결제를 취소했어요', next: '결제는 진행되지 않았어요. 언제든 다시 시작할 수 있어요.' };
     case 'pending': return { tone: 'plain', icon: 'timer-sand', title: '결제를 처리하는 중이에요', next: '스토어에서 결제가 끝나면 구매 복원을 눌러 주세요.', action: 'restore' };
-    case 'none': return { tone: 'plain', icon: 'magnify', title: '복원할 구매가 없어요', next: '지금 Play 스토어 계정에서 구독한 PRO를 찾지 못했어요. 다른 계정으로 구독했다면 그 계정으로 바꿔 주세요.' };
+    case 'none': return { tone: 'plain', icon: 'magnify', title: '복원할 구매가 없어요', next: '지금 Play 스토어 계정에서 구매한 PRO를 찾지 못했어요. 다른 계정으로 구매했다면 그 계정으로 바꿔 주세요.' };
     case 'unavailable': case 'failed': { const t = problemText(payment.problem ?? 'unknown'); return { tone: 'warn', icon: 'alert-circle-outline', title: t.title, next: t.next, action: t.action }; }
     default: return null;
   }

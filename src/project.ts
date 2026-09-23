@@ -171,7 +171,8 @@ export function parseStore(raw: string): Store {
   }
   const ent = value.entitlement;
   if (ent !== undefined) {
-    if (!['free', 'monthly', 'yearly'].includes(ent.plan) || !['none', 'store'].includes(ent.source)) throw new Error('이용권 데이터가 손상되었습니다.');
+    // 'lifetime' 이 지금 파는 일회성 PRO 다. 'monthly'·'yearly' 는 팔지 않지만 예전 저장본을 그대로 읽는다.
+    if (!['free', 'monthly', 'yearly', 'lifetime'].includes(ent.plan) || !['none', 'store'].includes(ent.source)) throw new Error('이용권 데이터가 손상되었습니다.');
     if (ent.verified !== undefined && typeof ent.verified !== 'boolean') throw new Error('이용권 검증 표시가 손상되었습니다.');
     for (const when of [ent.expiresAt, ent.checkedAt]) if (when !== undefined && Number.isNaN(new Date(when).getTime())) throw new Error('이용권 날짜가 손상되었습니다.');
   }

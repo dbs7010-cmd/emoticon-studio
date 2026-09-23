@@ -14,9 +14,10 @@ export type ReceiptRequest = {
   packageName?: string;
 };
 // 서버가 돌려줘야 하는 모양. 이 모양이 아니면 거절한다 — 반쯤 맞는 대답을 믿지 않는다.
+export type PlanName = 'monthly' | 'yearly' | 'lifetime';
 export type ReceiptVerdict = {
   verified: boolean;
-  plan: 'monthly' | 'yearly';
+  plan: PlanName;
   expiresAt?: string;
   // 라이선스 테스터·내부 테스트 구매인지(Play API 의 testPurchase). 받아들일지 말지는 **서버가**
   // 정한다 — 앱이 일괄 거절하면 우리 내부 테스트와 심사에서 결제 흐름이 막히기 때문이다.
@@ -37,7 +38,8 @@ export type ReceiptOptions = {
   timeoutMs?: number;
 };
 
-const PLANS = ['monthly', 'yearly'] as const;
+// 'lifetime' 이 지금 파는 것이다. 구독 두 이름은 예전 영수증을 읽기 위해 남는다.
+const PLANS = ['monthly', 'yearly', 'lifetime'] as const;
 
 // 서버 대답을 통째로 믿지 않고 한 조각씩 확인한다. 하나라도 어긋나면 거절이다.
 export function readVerdict(value: unknown): ReceiptVerdict | null {
@@ -50,7 +52,7 @@ export function readVerdict(value: unknown): ReceiptVerdict | null {
   }
   if (v.sandbox !== undefined && typeof v.sandbox !== 'boolean') return null;
   if (v.reason !== undefined && typeof v.reason !== 'string') return null;
-  return { verified: v.verified, plan: v.plan as 'monthly' | 'yearly', expiresAt: v.expiresAt as string | undefined, sandbox: v.sandbox as boolean | undefined, reason: v.reason as string | undefined };
+  return { verified: v.verified, plan: v.plan as PlanName, expiresAt: v.expiresAt as string | undefined, sandbox: v.sandbox as boolean | undefined, reason: v.reason as string | undefined };
 }
 
 export async function verifyReceipt(request: ReceiptRequest, options: ReceiptOptions = {}): Promise<ReceiptResult> {

@@ -10,26 +10,32 @@
 // answer becomes an entitlement. A purchase is finished (acknowledged) only after that answer.
 import { Platform } from 'react-native';
 
-export const PRODUCT_IDS = { monthly: 'pro_monthly', yearly: 'pro_yearly' } as const;
+// 45.28: PRO 는 **한 번 사면 끝나는 비소모성 일회성 상품** 하나다(구독 아님). 소비되지 않으므로
+// 스토어 계정에 계속 남고, 다시 설치해도 복원으로 돌아온다.
+export const PRODUCT_IDS = { lifetime: 'pro_lifetime' } as const;
 export type PlanId = keyof typeof PRODUCT_IDS;
-export const planOf = (productId: string): PlanId | null =>
-  productId === PRODUCT_IDS.yearly ? 'yearly' : productId === PRODUCT_IDS.monthly ? 'monthly' : null;
+// 예전 구독 상품 id. **새로 팔지 않는다.** 스토어 계정이나 저장본에 남아 있을 수 있어 복원에서
+// 알아보기만 한다 — 남의 구매를 못 본 척해서 이용권을 잃게 하지 않는다.
+export const LEGACY_PRODUCT_IDS: Record<string, string> = { pro_monthly: 'monthly', pro_yearly: 'yearly' };
+export const isOurProduct = (productId: string): boolean =>
+  productId === PRODUCT_IDS.lifetime || productId in LEGACY_PRODUCT_IDS;
 
 // What went wrong, in words the screen can turn into a next step. Raw store codes stay in here.
 export type StoreProblem = 'store-missing' | 'network' | 'store-unavailable' | 'not-found' | 'already-owned' | 'unknown';
 
-export type StoreProduct = { id: string; plan: PlanId; title: string; localizedPrice: string; offerToken?: string };
+export type StoreProduct = { id: string; plan: PlanId; title: string; localizedPrice: string };
 // Only the fields this app relies on. `purchaseToken` is the Android purchase token (Play) and the
 // signed transaction (JWS) on iOS.
 export type StorePurchase = { productId: string; purchaseToken?: string | null; purchaseState?: string; transactionDate?: number; isSuspendedAndroid?: boolean | null; platform?: string };
 export type ProductsResult = { state: 'ok'; products: StoreProduct[] } | { state: 'unavailable'; problem: StoreProblem };
+// 상품 id 를 그대로 들고 다닌다 — 서버가 무엇을 확인해야 하는지는 상품 id 가 말한다.
 export type PurchaseResult =
-  | { state: 'purchased'; plan: PlanId; token: string; purchase: StorePurchase }
+  | { state: 'purchased'; productId: string; token: string; purchase: StorePurchase }
   | { state: 'cancelled' }
   | { state: 'pending' }
   | { state: 'unavailable'; problem: StoreProblem };
 export type RestoreResult =
-  | { state: 'found'; plan: PlanId; token: string; purchase: StorePurchase }
+  | { state: 'found'; productId: string; token: string; purchase: StorePurchase }
   | { state: 'none' }
   | { state: 'unavailable'; problem: StoreProblem };
 
@@ -87,12 +93,12 @@ export async function listProducts(): Promise<ProductsResult> {
   if (!iap) return { state: 'unavailable', problem: 'store-missing' };
   try {
     await connect(iap);
-    const found = (await iap.fetchProducts({ skus: [PRODUCT_IDS.monthly, PRODUCT_IDS.yearly], type: 'subs' })) ?? [];
+    // 일회성 상품은 'in-app' 이다. 구독 offer token 이 없고, 있어야 할 것도 아니다.
+    const found = (await iap.fetchProducts({ skus: [PRODUCT_IDS.lifetime], type: 'in-app' })) ?? [];
     const products = found.flatMap((p: any): StoreProduct[] => {
-      const id = String(p?.id ?? p?.productId ?? ''), plan = planOf(id);
-      if (!plan) return [];
-      const offer = Array.isArray(p.subscriptionOffers) ? p.subscriptionOffers.find((o: any) => o?.offerTokenAndroid) : undefined;
-      return [{ id, plan, title: String(p.title ?? ''), localizedPrice: String(p.displayPrice ?? ''), offerToken: offer?.offerTokenAndroid ?? undefined }];
+      const id = String(p?.id ?? p?.productId ?? '');
+      if (id !== PRODUCT_IDS.lifetime) return [];
+      return [{ id, plan: 'lifetime', title: String(p.title ?? ''), localizedPrice: String(p.displayPrice ?? '') }];
     });
     if (!products.length) return { state: 'unavailable', problem: 'not-found' };
     return { state: 'ok', products };
@@ -104,19 +110,17 @@ export async function listProducts(): Promise<ProductsResult> {
 
 // The store answers a purchase through listeners, not through the returned promise. This waits for
 // the first answer about *our* product, then lets go of both listeners.
-export async function buy(plan: PlanId, options: { timeoutMs?: number } = {}): Promise<PurchaseResult> {
+export async function buy(options: { timeoutMs?: number } = {}): Promise<PurchaseResult> {
   const iap = loadModule();
   if (!iap) return { state: 'unavailable', problem: 'store-missing' };
-  const sku = PRODUCT_IDS[plan];
+  const sku = PRODUCT_IDS.lifetime;
   try {
     await connect(iap);
-    // Play subscriptions must name an offer; the token comes from the product the store just listed.
-    let offerToken: string | undefined;
+    // 일회성 상품은 스토어에 등록되어 있어야 살 수 있다. 목록에 없으면 그 사실대로 알린다.
     if (Platform.OS === 'android') {
       const listed = await listProducts();
       if (listed.state !== 'ok') return listed;
-      offerToken = listed.products.find(p => p.id === sku)?.offerToken;
-      if (!offerToken) return { state: 'unavailable', problem: 'not-found' };
+      if (!listed.products.some(p => p.id === sku)) return { state: 'unavailable', problem: 'not-found' };
     }
     return await new Promise<PurchaseResult>(resolve => {
       let settled = false;
@@ -128,18 +132,15 @@ export async function buy(plan: PlanId, options: { timeoutMs?: number } = {}): P
         if (purchase.purchaseState === 'pending') return finish({ state: 'pending' });
         const token = tokenOf(purchase);
         if (!token) return finish({ state: 'pending' });
-        finish({ state: 'purchased', plan, token, purchase });
+        finish({ state: 'purchased', productId: sku, token, purchase });
       }));
       subs.push(iap.purchaseErrorListener((error: unknown) => {
         const problem = problemOf(error);
         finish(problem === 'cancelled' ? { state: 'cancelled' } : problem === 'pending' ? { state: 'pending' } : { state: 'unavailable', problem });
       }));
       iap.requestPurchase({
-        type: 'subs',
-        request: {
-          apple: { sku },
-          google: { skus: [sku], subscriptionOffers: offerToken ? [{ sku, offerToken }] : undefined },
-        },
+        type: 'in-app',
+        request: { apple: { sku }, google: { skus: [sku] } },
       }).catch((error: unknown) => {
         const problem = problemOf(error);
         finish(problem === 'cancelled' ? { state: 'cancelled' } : problem === 'pending' ? { state: 'pending' } : { state: 'unavailable', problem });
@@ -160,20 +161,21 @@ export async function ownedPurchase(): Promise<RestoreResult> {
     await connect(iap);
     const owned = (await iap.getAvailablePurchases()) ?? [];
     const live = (owned as StorePurchase[])
-      .filter(p => planOf(p?.productId) && p.purchaseState !== 'pending' && !p.isSuspendedAndroid && tokenOf(p))
-      .sort((a, b) => (b.transactionDate ?? 0) - (a.transactionDate ?? 0));
+      .filter(p => isOurProduct(String(p?.productId ?? '')) && p.purchaseState !== 'pending' && !p.isSuspendedAndroid && tokenOf(p))
+      // 일회성 PRO 가 있으면 그것이 먼저다. 그다음은 최근 것.
+      .sort((a, b) => (b.productId === PRODUCT_IDS.lifetime ? 1 : 0) - (a.productId === PRODUCT_IDS.lifetime ? 1 : 0) || (b.transactionDate ?? 0) - (a.transactionDate ?? 0));
     const match = live[0];
     if (!match) return { state: 'none' };
-    return { state: 'found', plan: planOf(match.productId)!, token: tokenOf(match), purchase: match };
+    return { state: 'found', productId: String(match.productId), token: tokenOf(match), purchase: match };
   } catch (e) {
     const problem = problemOf(e);
     return { state: 'unavailable', problem: problem === 'cancelled' || problem === 'pending' ? 'unknown' : problem };
   }
 }
 
-// Acknowledge a subscription after our server confirmed it. Play refunds purchases left
-// unacknowledged for 3 days, so an unverified one is deliberately left open: it comes back through
-// `ownedPurchase` and is confirmed on the next restore or app start.
+// 서버가 확인한 뒤에만 구매를 확정(acknowledge)한다. Play 는 3일 동안 확정되지 않은 구매를 자동
+// 환불하므로, 확인되지 않은 것은 일부러 열어 둔다 — `ownedPurchase` 로 다시 올라와 다음 복원이나
+// 앱 시작에서 확인된다. **isConsumable: false** — 비소모성이라 소비 처리하지 않는다(다시 팔지 않는다).
 export async function finishPurchase(purchase: StorePurchase): Promise<boolean> {
   const iap = loadModule();
   if (!iap) return false;

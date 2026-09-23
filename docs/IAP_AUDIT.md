@@ -56,3 +56,56 @@ PRO 화면(App.tsx)
 - 병합 매니페스트에 `com.android.vending.BILLING` 포함, APK `assets/app.config` 는 `internalReview:false`, `receiptEndpoint` 없음(주소 미주입 → 앱은 구매를 확인하지 못한다고 안내).
 - APK SHA-256 decff80862265b83526de622fa96905baa715443f4cc35fa1c1866d73a12f5ff, SOURCE_ID 3ebf3796bf4eae2a2e56dc73deee300092b46a1d21aa230839e5b78520db9d73. debug keystore 서명 — 업로드 불가.
 - `app.json` 에 `expo-iap` 플러그인을 넣었지만 `android/` 는 이번에 다시 prebuild 하지 않았다. 권한은 Play Billing 라이브러리 매니페스트 병합으로 들어왔다. 다음 정식 빌드(EAS/prebuild) 때 플러그인 적용 결과를 재확인한다.
+
+---
+
+# 45.28차 — 구독 → **비소모성 일회성 PRO** 전환 (2026-09-24)
+
+## 무엇이 바뀌었나
+
+| 항목 | 이전(구독) | 지금(일회성) |
+|---|---|---|
+| 상품 | `pro_monthly` · `pro_yearly` (subs) | **`pro_lifetime` 하나** (in-app, 비소모성) |
+| 조회 | `fetchProducts({ type:'subs' })` + offer token | `fetchProducts({ type:'in-app' })`, offer token 없음 |
+| 결제 요청 | `requestPurchase({ type:'subs', google:{ subscriptionOffers } })` | `requestPurchase({ type:'in-app', google:{ skus:['pro_lifetime'] } })` |
+| 확정 | `finishTransaction({ isConsumable:false })` | 같음 — **소비 처리하지 않는다**(다시 팔지 않는다) |
+| 서버 조회 | `purchases.subscriptionsv2.get` | `purchases.products.get`(상품 id + 토큰) |
+| 판정 | 상태 ACTIVE/GRACE + 만료 시각 | `purchaseState === 0`(구매됨) · 기한 없음 |
+| 이용권 | `plan:'monthly'|'yearly'` + `expiresAt` | `plan:'lifetime'`, **`expiresAt` 없음** |
+| 해지 | 스토어 구독 관리 | 해지 없음 — 스토어 **구매 내역**으로 안내 |
+| 화면 | 월간·연간 두 카드에서 고르기 | 값 하나. "구독이 아니라 한 번만 결제해요" |
+
+예전 `monthly`·`yearly` 는 **팔지 않지만 읽는다**: 저장된 이용권, 스토어에 남은 구독, 서버 판정 규칙을
+그대로 두었다. 이미 가진 권한을 못 본 척해 잃게 하지 않는다(`iap-test` 가 두 경우를 함께 검사한다).
+
+## 가격 — **후보이고 확정이 아니다**
+
+`PLANS[0].proposedPrice = '14,900원'`, `PRICES_ARE_PROPOSED = true`. 화면은 스토어가 상품을 목록에
+올려 주기 전까지 **'후보 가격 · 미확정'** 과 `PRICE_IS_CANDIDATE_NOTE`("아직 확정된 판매가가
+아니에요…")를 함께 적는다. 스토어 가격이 오면 그 값으로 바뀌고 표시도 '스토어 가격'이 된다.
+어디에도 이 숫자를 최종 판매가로 못 박은 곳이 없다.
+
+## 자동 검사로 확인한 것
+
+- `iap-test` — in-app 조회, `type:'in-app'` 요청·offer 없음, 서버 확인 뒤에만 이용권·확정,
+  `isConsumable:false`, 기한 없는 이용권이 40년 뒤에도 PRO, 일회성 우선 복원 + 예전 구독도 복원,
+  재설치 자동 복원, 환불·다른 계정이면 종료(기록 보존), 화면(가격·성공·구매 내역·취소·실패·복원·
+  결제 불가 시 후보 가격·버튼 꺼짐), 오류 코드 노출 없음.
+- `server-test` — 일회성 판정: 구매됨만 통과·기한 없음·취소/보류/다른 상품/구독 응답 거절·
+  테스트 구매는 서버 설정이 정한다. 예전 구독 판정은 그대로.
+- `pro-test` · `review-pro-test` — 권한 규칙과 내부 검수 PRO 분리 그대로.
+
+## 지금도 막혀 있는 것 (외부 · 우리가 코드로 풀 수 없다)
+
+| 막힌 것 | 무엇이 필요한가 | 지금 상태 |
+|---|---|---|
+| 스토어 계정 요건 | Play Console 개발자 계정, 앱 등록, **`pro_lifetime` 앱 내 상품 등록**(비소모성), 라이선스 테스터 등록 | 없음 — 상품이 없으면 `listProducts` 가 `not-found`, 화면은 구매 버튼을 꺼 둔다 |
+| 실제 구매 | 위 계정 + Play 스토어에서 받은 앱(내부 테스트 트랙) + 기기의 Play 로그인 | 미검증. 가짜 스토어로만 확인했다 |
+| 영수증 확인 서버 | 서버 배포(HTTPS), `GOOGLE_SERVICE_ACCOUNT_JSON`, `ANDROID_PACKAGE_NAME`, 빌드 시 `EMOTICON_RECEIPT_ENDPOINT` | 코드만 있음. 주소가 없으면 앱은 **이용권을 만들지 않는다**(`not-configured`) |
+| 업로드 서명 | `EMOTICON_UPLOAD_STORE_FILE`·`_STORE_PASSWORD`·`_KEY_ALIAS`·`_KEY_PASSWORD` | 없음 — `release-check` SIGNING FAIL[EXTERNAL] |
+| 브랜드 에셋 | 아이콘·스플래시·피처 그래픽·스크린샷 | `release-check` ASSETS BLOCKED |
+| iOS | `ios/` 프로젝트, App Store Server API 판정 | 없음 |
+
+**막히지 않은 것**: 저장(로컬 파일)과 내보내기(파일 묶음)는 무료 기능이고 스토어 계정과 무관하다.
+`export-test`·`spec-test`·`e2e-test` 가 그대로 통과한다 — PRO 가 없어도, 결제 모듈이 없어도 한 세트를
+끝까지 그려 워터마크 없이 내보낼 수 있다. 이용권이 끝나도 이미 만든 PRO 움직임은 재생·내보내기가 된다.

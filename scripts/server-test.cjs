@@ -40,4 +40,26 @@ const internal = decide(test, ask, { now, acceptTestPurchases: true });
 assert.equal(internal.verified, true, '내부 테스트 설정에서는 받는다 — 아니면 우리가 결제 흐름을 확인할 수 없다');
 assert.equal(internal.sandbox, true, '그때도 테스트 구매 표시는 남는다');
 
-console.log('PASS: 서버 판정 — 살아 있는 구독만 통과, 상품·기간·상태가 어긋나면 거절, 테스트 구매는 서버 설정이 정하고 그 사실이 응답에 남는다. 실제 스토어 호출은 서비스 계정 키가 있어야 하므로 여기서 검증하지 않는다.');
+// ── 비소모성 일회성 상품(45.28차) ────────────────────────────────────────────────────────────
+// Play 의 purchases.products 응답: purchaseState 0 = 구매됨 · 1 = 취소됨 · 2 = 보류,
+// purchaseType 0 = 라이선스 테스터. 기간이 없으므로 expiresAt 을 주지 않는다.
+const askOnce = { productId: 'pro_lifetime', purchaseToken: 'token', platform: 'android' };
+const boughtOnce = (over = {}) => ({ productId: 'pro_lifetime', purchaseState: 0, consumptionState: 0, acknowledgementState: 1, ...over });
+
+const once = decide(boughtOnce(), askOnce, { now });
+assert.equal(once.verified, true, '구매된 일회성 상품은 통과한다');
+assert.equal(once.plan, 'lifetime', '일회성 상품의 플랜 이름');
+assert.equal(once.expiresAt, undefined, '한 번 사면 끝나므로 기한을 주지 않는다');
+// 먼 미래 시각으로 물어도 통과한다 — 기간이라는 개념이 없다.
+assert.equal(decide(boughtOnce(), askOnce, { now: '2099-01-01T00:00:00Z' }).verified, true, '몇 년이 지나도 통과한다');
+assert.equal(decide(boughtOnce({ purchaseState: 1 }), askOnce, { now }).verified, false, '취소된 구매는 거절');
+assert.equal(decide(boughtOnce({ purchaseState: 2 }), askOnce, { now }).verified, false, '보류 중인 결제는 거절');
+assert.equal(decide(boughtOnce({ productId: 'other_app_product' }), askOnce, { now }).verified, false, '다른 상품이면 거절');
+assert.equal(decide(null, askOnce, { now }).verified, false, '응답이 없으면 거절');
+// 구독 응답 모양이 잘못 올라와도 통과시키지 않는다(purchaseState 가 0 이 아니다).
+assert.equal(decide(live(), askOnce, { now }).verified, false, '일회성 상품에 구독 응답이 오면 거절');
+const onceTest = boughtOnce({ purchaseType: 0 });
+assert.deepEqual([decide(onceTest, askOnce, { now }).verified, decide(onceTest, askOnce, { now }).sandbox], [false, true], '운영 설정에서는 테스트 구매를 받지 않고, 그 사실은 남긴다');
+assert.equal(decide(onceTest, askOnce, { now, acceptTestPurchases: true }).verified, true, '내부 테스트 설정에서는 받는다');
+
+console.log('PASS: 서버 판정 — 비소모성 일회성 상품은 구매 상태만 보고 기한 없이 통과(취소·보류·다른 상품·구독 응답은 거절), 예전 구독은 살아 있는 것만 통과하고 상품·기간·상태가 어긋나면 거절, 테스트 구매는 서버 설정이 정하고 그 사실이 응답에 남는다. 실제 스토어 호출은 서비스 계정 키가 있어야 하므로 여기서 검증하지 않는다.');
