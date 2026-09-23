@@ -68,7 +68,8 @@ const withArt = on => {
   const cards = design.EXPRESSION_GUIDE.cards.map(card => card.examples ? {
     ...card,
     // 실제 납품분을 먼저 비운다 — 이 스위트는 '그림이 있다/없다'는 구조를 보는 것이지 납품 여부를 보는 게 아니다.
-    examples: card.examples.map(({ artwork: _delivered, ...x }) => on && (x.id.endsWith('-polite') || x.id.endsWith('-friendly')) ? { ...x, artwork: art(x.id) } : x),
+    // 표시용(display)도 함께 비운다 — 납품분 그림이 이 스위트의 '그림 없음' 상태를 덮지 않게.
+    examples: card.examples.map(({ artwork: _delivered, display: _shown, ...x }) => on && (x.id.endsWith('-polite') || x.id.endsWith('-friendly')) ? { ...x, artwork: art(x.id) } : x),
   } : card);
   const patched = { ...design, EXPRESSION_GUIDE: { ...design.EXPRESSION_GUIDE, cards } };
   return loader({ ...base, './src/design/asset-slots': patched, '../design/asset-slots': patched })('App.tsx').default;

@@ -1,0 +1,330 @@
+{
+  "made": [
+    {
+      "name": "angry-angry-hips.png",
+      "fill": 35.6
+    },
+    {
+      "name": "angry-angry-stand.png",
+      "fill": 30.6
+    },
+    {
+      "name": "angry-angry-stomp.png",
+      "fill": 27.2
+    },
+    {
+      "name": "angry-hmph-arms-crossed.png",
+      "fill": 31.1
+    },
+    {
+      "name": "angry-hmph-back.png",
+      "fill": 25
+    },
+    {
+      "name": "angry-unfair-stomp.png",
+      "fill": 22.1
+    },
+    {
+      "name": "daily-depart-point-side.png",
+      "fill": 29.9
+    },
+    {
+      "name": "daily-depart-run-point.png",
+      "fill": 25.1
+    },
+    {
+      "name": "daily-depart-run.png",
+      "fill": 23.1
+    },
+    {
+      "name": "daily-depart-walk.png",
+      "fill": 23.9
+    },
+    {
+      "name": "daily-depart-wave-back.png",
+      "fill": 19.5
+    },
+    {
+      "name": "daily-good-night-blanket.png",
+      "fill": 11.6
+    },
+    {
+      "name": "daily-good-night-curl.png",
+      "fill": 34.5
+    },
+    {
+      "name": "daily-good-night-hug.png",
+      "fill": 25.7
+    },
+    {
+      "name": "daily-good-night-lie-down.png",
+      "fill": 22.7
+    },
+    {
+      "name": "daily-good-night-table.png",
+      "fill": 15.6
+    },
+    {
+      "name": "daily-hungry-ache.png",
+      "fill": 26
+    },
+    {
+      "name": "daily-hungry-bowl.png",
+      "fill": 26.8
+    },
+    {
+      "name": "daily-wait-call.png",
+      "fill": 24.7
+    },
+    {
+      "name": "daily-wait-hands.png",
+      "fill": 20.1
+    },
+    {
+      "name": "daily-wait-palm.png",
+      "fill": 23.4
+    },
+    {
+      "name": "daily-wait-reach.png",
+      "fill": 25.2
+    },
+    {
+      "name": "daily-wait-startled.png",
+      "fill": 24.2
+    },
+    {
+      "name": "greeting-excited-cheer.png",
+      "fill": 24.2
+    },
+    {
+      "name": "greeting-excited-dance.png",
+      "fill": 24.3
+    },
+    {
+      "name": "greeting-excited-jump.png",
+      "fill": 23.1
+    },
+    {
+      "name": "greeting-hello-peek.png",
+      "fill": 16.7
+    },
+    {
+      "name": "greeting-hello-turn.png",
+      "fill": 27.2
+    },
+    {
+      "name": "greeting-hello-wave.png",
+      "fill": 27.7
+    },
+    {
+      "name": "greeting-hello-welcome.png",
+      "fill": 25.7
+    },
+    {
+      "name": "greeting-like-content.png",
+      "fill": 21
+    },
+    {
+      "name": "greeting-like-hands.png",
+      "fill": 22.5
+    },
+    {
+      "name": "greeting-like-thumb.png",
+      "fill": 35.7
+    },
+    {
+      "name": "greeting-thanks-friendly.png",
+      "fill": 27.7
+    },
+    {
+      "name": "greeting-thanks-grand.png",
+      "fill": 18.9
+    },
+    {
+      "name": "greeting-thanks-moved.png",
+      "fill": 22.2
+    },
+    {
+      "name": "greeting-thanks-polite.png",
+      "fill": 19.6
+    },
+    {
+      "name": "greeting-thanks-shy.png",
+      "fill": 21.7
+    },
+    {
+      "name": "sad-are-you-okay-arms-crossed.png",
+      "fill": 23
+    },
+    {
+      "name": "sad-crying-cover-face.png",
+      "fill": 21.3
+    },
+    {
+      "name": "sad-crying-crouch.png",
+      "fill": 24
+    },
+    {
+      "name": "sad-crying-loud.png",
+      "fill": 37.3
+    },
+    {
+      "name": "sad-crying-sob.png",
+      "fill": 21.3
+    },
+    {
+      "name": "sad-crying-wipe.png",
+      "fill": 25.4
+    },
+    {
+      "name": "sad-sad-crouch.png",
+      "fill": 24.8
+    },
+    {
+      "name": "sad-sad-downcast.png",
+      "fill": 20.3
+    },
+    {
+      "name": "sad-sad-gesture.png",
+      "fill": 32.3
+    },
+    {
+      "name": "sad-sad-hug-knees.png",
+      "fill": 22.7
+    },
+    {
+      "name": "sad-sad-sit-back.png",
+      "fill": 24.7
+    },
+    {
+      "name": "sad-sad-slump.png",
+      "fill": 25.9
+    },
+    {
+      "name": "sad-sad-teary.png",
+      "fill": 39.1
+    },
+    {
+      "name": "sad-sorry-deep-bow.png",
+      "fill": 18.7
+    },
+    {
+      "name": "sad-sorry-please.png",
+      "fill": 32.1
+    },
+    {
+      "name": "sad-sorry-timid.png",
+      "fill": 22.8
+    },
+    {
+      "name": "surprise-flustered-shrug.png",
+      "fill": 29.7
+    },
+    {
+      "name": "surprise-flustered-shy.png",
+      "fill": 26.8
+    },
+    {
+      "name": "surprise-flustered-tremble.png",
+      "fill": 25.9
+    },
+    {
+      "name": "surprise-gasp-drop.png",
+      "fill": 24.7
+    },
+    {
+      "name": "surprise-gasp-mouth.png",
+      "fill": 26
+    },
+    {
+      "name": "surprise-gasp-point.png",
+      "fill": 27.2
+    },
+    {
+      "name": "surprise-no-way-refuse.png",
+      "fill": 25.7
+    },
+    {
+      "name": "surprise-what-scratch.png",
+      "fill": 28.9
+    },
+    {
+      "name": "surprise-what-tilt.png",
+      "fill": 30.6
+    }
+  ],
+  "skipped": [
+    {
+      "name": "angry-angry-face.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "angry-annoyed-ears.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "angry-annoyed-facepalm.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (3.6%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "angry-annoyed-head.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "angry-annoyed-sigh.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "angry-hmph-pout.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "angry-hmph-turn.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "daily-good-night-drowsy.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "sad-are-you-okay-chest.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "sad-are-you-okay-face.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "sad-are-you-okay-lean.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "sad-are-you-okay-mouth.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (3.1%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "surprise-flustered-glance.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "surprise-flustered-sweat.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.1%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "surprise-gasp-face.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (1.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "surprise-no-way-face.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.4%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "surprise-what-question.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    },
+    {
+      "name": "surprise-what-side-eye.png",
+      "why": "몸 안으로 닫힌 자리가 거의 없다 (0.0%) — 선이 끊겼을 수 있다"
+    }
+  ]
+}

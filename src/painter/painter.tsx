@@ -65,7 +65,7 @@ type Props = {
   guideHint?: { name: string; hint: string } | null;
   onGuideHintDone?: () => void;
   // 표현 가이드에서 고른 예시(45.17차). 그림은 앱에 함께 실린 번들 모듈이고, 없으면 가이드 화면이 고르지 못하게 막는다.
-  guideExample?: { id: string; title: string; hint: string; artwork: ImageSourcePropType } | null;
+  guideExample?: { id: string; title: string; hint: string; artwork: ImageSourcePropType; display?: ImageSourcePropType } | null;
   // 가이드 화면에서 무엇을 눌렀는지: 참고 창으로 보며 그릴지, 밑그림으로 깔지.
   guideExampleMode?: 'watch' | 'underlay' | null;
   // 번들 그림을 참고 사진과 같은 자리(세트의 referenceImages)로 들여온다 — 저장·복원은 기존 참고 정책 그대로다.
@@ -938,7 +938,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             화면 위의 안내라서 작품·썸네일·출력 어디에도 들어가지 않는다 — 그림이 되는 것은 밑그림(참고 레이어)뿐이다.
             창이 덮은 자리에서는 캔버스가 손가락을 받지 않아, 옮기는 손이 선을 긋지 않는다. */}
         {!!guideExample && refWindow !== 'closed' && <GuideWindow
-          title={guideExample.title} hint={guideExample.hint} artwork={guideExample.artwork}
+          title={guideExample.title} hint={guideExample.hint} artwork={guideExample.display ?? guideExample.artwork}
           width={refWide} collapsed={refWindow === 'collapsed'} left={refAt.x} top={refAt.y}
           onMove={(x, y) => setRefSpot(clampSpot(x, y))}
           onResize={next => setRefPicked(Math.max(112, Math.min(refMax, Math.round(next))))}

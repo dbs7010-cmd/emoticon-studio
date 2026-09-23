@@ -26,7 +26,10 @@ const C = T;
 // 설정 화면에 보여 줄 앱 버전. app.json 의 값을 그대로 읽는다.
 const appVersion = Constants.expoConfig?.version ?? '—';
 // 감정 카드의 대표 그림을 꺼낸다. 홈 미리보기와 감정 목록이 같은 규칙을 쓴다.
-const coverOf = (card: ExpressionGuideCard) => card.artwork ?? card.examples?.find(x => x.id === card.cover)?.artwork ?? null;
+// 카드 위에 보여 줄 그림. 표시용이 있으면 그것을 쓴다 — 몸 안이 흰색이라 카드 색이 캐릭터로 비치지 않는다.
+// 밑그림으로 깔 때는 이 함수를 쓰지 않는다(원본 artwork 그대로).
+const shownArt = (x?: { artwork?: ImageSourcePropType; display?: ImageSourcePropType } | null) => x?.display ?? x?.artwork ?? null;
+const coverOf = (card: ExpressionGuideCard) => card.artwork ?? shownArt(card.examples?.find(x => x.id === card.cover)) ?? null;
 // 홈에 올리는 표현 가이드 미리보기 셋: 서로 다른 감정·자세를 고른다(명세 §5 — 기존 예시 최대 3개).
 const HOME_GUIDE_PREVIEW = ['greeting-hello', 'greeting-excited', 'daily-good-night'] as const;
 const PREVIEW_TINT = [T.lilac, T.sky, T.coral] as const;
@@ -88,7 +91,8 @@ function Studio() {
   const [guidePick, setGuidePick] = useState<string | null>(null);
   // 두 행동의 차이는 처음 한 번만 알려 준다. 앱을 다시 켜기 전까지 다시 뜨지 않는다.
   const [guideTip] = useState(() => !guideTipShown);
-  const [guideExample, setGuideExample] = useState<{ id: string; title: string; hint: string; artwork: ImageSourcePropType } | null>(null);
+  // artwork = 캔버스에 깔 원본 · display = 보여 줄 그림(몸 안 흰색). 둘을 섞지 않는다.
+  const [guideExample, setGuideExample] = useState<{ id: string; title: string; hint: string; artwork: ImageSourcePropType; display?: ImageSourcePropType } | null>(null);
   const [guideExampleMode, setGuideExampleMode] = useState<'watch' | 'underlay' | null>(null);
   // 가이드에서 고른 표현 한 줄. Painter 가 힌트로 한 번 보여 주고 끝난다 — 저장 구조에는 남기지 않는다(44.2차).
   const [guideHint, setGuideHint] = useState<{ name: string; hint: string } | null>(null);
@@ -296,7 +300,7 @@ function Studio() {
     setGuideHint(card);
     // 그림이 아직 없는 예시는 가이드 화면에서 고를 수 없으므로 여기까지 오지 않는다.
     const artwork = example?.artwork;
-    setGuideExample(example && artwork ? { id: example.id, title: card.name + ' · ' + example.label, hint: example.hint, artwork } : null);
+    setGuideExample(example && artwork ? { id: example.id, title: card.name + ' · ' + example.label, hint: example.hint, artwork, display: example.display } : null);
     setGuideExampleMode(example && artwork ? mode ?? 'watch' : null);
     setGuideCard(null);
     setHomeView('home');
@@ -639,7 +643,7 @@ function Studio() {
                     style={({ pressed }) => ({ width: cell, padding: 8, gap: 6, borderRadius: 16, backgroundColor: pressed ? C.fill : C.paper,
                       borderWidth: on ? 2 : 1, borderColor: on ? C.ink : C.line, opacity: has ? 1 : .55 })}>
                     <View style={{ width: cell - 18, height: cell - 18, borderRadius: 12, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      <AssetSlot name="expressionGuideArtwork" size={Math.round((cell - 18) * .84)} sourceOverride={x.artwork ?? null} />
+                      <AssetSlot name="expressionGuideArtwork" size={Math.round((cell - 18) * .84)} sourceOverride={shownArt(x)} />
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 2, paddingBottom: 2 }}>
                       {on && <MaterialCommunityIcons name="check" size={15} color={C.ink} />}
@@ -678,7 +682,7 @@ function Studio() {
               ? <View testID="표현 가이드 카드" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
                   {cards.map(c => { const count = c.examples?.length ?? 0;
                     // 대표 그림은 이 감정의 예시 중 cover 가 가리키는 것을 그대로 쓴다(카드 전용 그림이 오면 artwork 가 먼저다).
-                    const cover = c.artwork ?? c.examples?.find(x => x.id === c.cover)?.artwork ?? null;
+                    const cover = c.artwork ?? shownArt(c.examples?.find(x => x.id === c.cover)) ?? null;
                     return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => { c.examples?.length ? setGuideCard(c) : startFromGuide(c); }}
                     style={({ pressed }) => ({ width: cardWidth, padding: 10, gap: 8, borderRadius: T.radius.card, backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: C.line })}>
                     <View style={{ width: frame, height: frame, borderRadius: 14, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -1369,6 +1373,11 @@ function Studio() {
           {payment.phase === 'bought' || payment.phase === 'restored'
             ? <Action primary title="PRO로 만들러 가기" onPress={() => { setProSheet(false); resetPayment(); }} />
             : <Action primary title="PRO 시작하기" busy={payment.phase === 'buying'} disabled={!prices || payment.phase === 'loading' || payment.phase === 'restoring' || isPro(entitlement)} onPress={() => void startPurchase(plan)} />}
+          {/* 내부 검수 빌드에서는 이 기기에서 결제를 열 수 없는 일이 흔하다. 잠금에 부딪힌 검수자가
+              설정 깊은 곳의 토글을 찾아 헤매지 않도록, 막힌 바로 그 자리에서 켤 수 있게 한다.
+              출시 구성에서는 internalReviewBuild() 가 거짓이라 이 줄이 아예 그려지지 않는다. 구매가 아니다. */}
+          {internalReviewBuild() && !pro && <Action icon="key-variant" title="결제 없이 검수용 PRO 켜기"
+            onPress={() => { try { commit(st => ({ ...st, reviewUnlock: true })); setProSheet(false); resetPayment(); setNotice(REVIEW_BUILD_NOTE); } catch (e) { setNotice('검수용 PRO 를 켜지 못했어요. ' + userMessage(e)); } }} />}
           <Action title="무료로 계속하기" onPress={() => { setProSheet(false); resetPayment(); }} />
           <Pressable accessibilityRole="button" accessibilityLabel="구매 복원" disabled={payment.phase === 'buying' || payment.phase === 'restoring'} onPress={() => void restorePro()} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{payment.phase === 'restoring' ? '구매 내역을 확인하는 중…' : '구매 복원'}</Text></Pressable>
           {isPro(entitlement) && !!entitlement && entitlement.plan !== 'free' && <Pressable accessibilityRole="button" accessibilityLabel="구독 관리" onPress={() => { Linking.openURL(subscriptionManageUrl(entitlement.plan === 'yearly' ? 'yearly' : 'monthly')).catch(() => setPayment({ phase: 'failed', problem: 'store-unavailable' })); }} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>구독 관리 · 해지</Text></Pressable>}
