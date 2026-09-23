@@ -97,7 +97,13 @@ async function echoReferences(scene) {
   const refs = added.references.map(r => ({ id: r.id, name: r.name, visible: false, opacity: r.opacity, x: r.x, y: r.y, scale: r.scale, rotation: r.rotation, path: r.path }));
   const toggled = sent().filter(m => m.type === 'toggleReference').at(-1);
   if (toggled) refs.forEach(r => { if (r.id === toggled.id) r.visible = true; });
-  const next = { ...scene, references: refs, activeReferenceId: toggled ? toggled.id : null };
+  let layers = scene.layers;
+  for (const m of sent().filter(m => m.type === 'addLayer')) {
+    if (layers.some(l => l.id === m.id) || layers.length >= 4) continue;
+    layers = [...layers, { id: m.id, name: m.name, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 }];
+  }
+  const active = layers.at(-1)?.id ?? scene.activeLayerId;
+  const next = { ...scene, layers, activeLayerId: active, references: refs, activeReferenceId: toggled ? toggled.id : null };
   await message(next);
   return next;
 }
@@ -251,47 +257,56 @@ async function echoReferences(scene) {
   assert.equal(labelled('밑그림 넣기')[0].props.accessibilityState.disabled, false, '고른 뒤에 밑그림 넣기가 열린다');
   assert.equal(tree.root.findAllByType('WebView').length, 0, '고르기만으로는 그리기에 들어가지 않는다');
 
-  // ── 4. ① 참고 보기: 떠 있는 작은 창 ────────────────────────────────────────────────────
+  // ── 4. ① 참고 보기: 캔버스 밖 전용 자리 (45.25 정정) ─────────────────────────────────
+  // 예전에는 캔버스 위에 떠 있는 창이었다. 실기기에서 그리는 자리를 덮어, 참고를 보려면 그림을 가려야 했다.
+  // 이제 캔버스 **밖**에 제 자리로 선다. 옮기고 크기를 맞추는 일은 사라졌다 — 자리가 정해져 있기 때문이다.
   commands.length = 0;
   await press('참고 보기');
   await ready();
-  const win = () => byTestID('표현 예시 참고 창')[0];
-  assert.ok(win(), '고른 표현이 캔버스 위 작은 창으로 뜬다');
-  assert.equal(win().findAllByType('Image')[0].props.source.uri, 'test-art://greeting-thanks-polite', '창에 뜨는 그림은 고른 표현의 것이다');
-  assert.ok(texts(win()).includes('고마워 · 정중하게'), '창 제목은 감정 · 표현이다');
-  assert.ok(texts(win()).includes('두 손 모으고 깊게 꾸벅'), '고른 표현의 힌트가 그대로 전달된다');
-  assert.notEqual(win().props.pointerEvents, 'none', '창은 손가락을 받는다 — 덮은 자리에서 캔버스가 대신 받지 않는다');
-
-  // 옮기기: 손잡이에서만 끌린다. 끄는 동안 캔버스로 나가는 명령이 없다.
-  const handle = () => byTestID('표현 예시 손잡이')[0];
-  assert.equal(handle().props.onStartShouldSetResponder(), true, '손잡이가 손가락을 잡는다(캔버스로 흘러가지 않는다)');
-  const spotOf = () => ({ x: win().props.style.left, y: win().props.style.top });
-  const width = win().props.style.width;
-  const before = spotOf(), quiet = commands.length;
-  await act(async () => { handle().props.onResponderGrant({ nativeEvent: { pageX: 100, pageY: 100 } }); });
-  await act(async () => { handle().props.onResponderMove({ nativeEvent: { pageX: 130, pageY: 60 } }); });
-  const moved = spotOf();
-  assert.deepEqual([moved.x - before.x, moved.y - before.y], [30, -40], '손잡이를 끌면 창이 손가락만큼 움직인다');
-  assert.equal(commands.length, quiet, '창을 옮기는 동안 캔버스로 나간 명령이 없다(선이 그어지지 않는다)');
-  // 화면 밖으로 내보내지 않는다.
-  await act(async () => { handle().props.onResponderMove({ nativeEvent: { pageX: 9000, pageY: 9000 } }); });
-  const far = spotOf();
-  assert.ok(far.x >= 8 && far.x + width <= 390, '오른쪽으로 아무리 끌어도 창이 화면 밖으로 나가지 않는다: ' + far.x);
-  assert.ok(far.y >= 8 && far.y <= 844, '세로도 화면 안에 남는다: ' + far.y);
-  await act(async () => { handle().props.onResponderMove({ nativeEvent: { pageX: -9000, pageY: -9000 } }); });
-  assert.deepEqual([spotOf().x, spotOf().y], [8, 8], '왼쪽·위로 끌어도 가장자리에서 멈춘다');
+  const spot = () => byTestID('표현 예시 참고 자리')[0];
+  assert.ok(spot(), '고른 표현이 캔버스 밖 제 자리에 선다');
+  assert.equal(byTestID('표현 예시 참고 창').length, 0, '캔버스 위에 떠 있던 창은 더 이상 없다');
+  assert.equal(spot().findAllByType('Image')[0].props.source.uri, 'test-art://greeting-thanks-polite', '자리에 뜨는 그림은 고른 표현의 것이다');
+  assert.ok(texts(spot()).includes('고마워 · 정중하게'), '제목은 감정 · 표현이다');
+  assert.ok(texts(spot()).includes('두 손 모으고 깊게 꾸벅'), '고른 표현의 힌트가 그대로 전달된다');
+  // 캔버스 밖이라는 것을 자리로 확인한다: 참고 자리와 캔버스 틀이 같은 줄에 겹쳐 있지 않다.
+  const canvasFrame = tree.root.findAll(n => n.type === 'View' && n.props.collapsable === false)[0];
+  assert.ok(canvasFrame, '캔버스 틀을 찾았다');
+  assert.equal(spot().findAllByType('WebView').length, 0, '참고 자리 안에 캔버스가 들어 있지 않다');
+  assert.equal(canvasFrame.findAll(n => n.props.testID === '표현 예시 참고 자리').length, 0, '캔버스 틀 안에도 참고 자리가 들어 있지 않다');
+  // 자리가 정해져 있으니 옮기거나 크기를 맞출 일이 없다 — 창을 짚은 손이 선을 그을 걱정도 함께 사라졌다.
+  assert.equal(byTestID('표현 예시 손잡이').length, 0, '옮기는 손잡이가 없다');
+  assert.equal(byTestID('표현 예시 크기 손잡이').length, 0, '크기 손잡이도 없다');
+  // 참고 자리가 서면 아래 캔버스 영역이 그만큼 줄어야 한다. 기기가 주는 크기를 넣어 확인한다.
+  // 덮어 뜨는 판(브러시·색)과 달리 이것은 **일부러** 캔버스를 줄인다 — 그래야 참고가 그림을 가리지 않는다.
+  {
+    const area = () => tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
+    const square = () => tree.root.findAll(n => n.type === 'View' && n.props.collapsable === false)[0];
+    await act(async () => area().props.onLayout({ nativeEvent: { layout: { width: 390, height: 300 } } }));
+    const withRef = { ...square().props.style };
+    assert.equal(withRef.width, withRef.height, '줄어든 자리에서도 캔버스는 정사각이다');
+    assert.equal(withRef.width, 300, '남은 높이에 맞춰진다(min(폭, 높이))');
+    await press('표현 예시 닫기');
+    await act(async () => area().props.onLayout({ nativeEvent: { layout: { width: 390, height: 420 } } }));
+    const without = { ...square().props.style };
+    assert.equal(without.width, without.height, '닫은 뒤에도 정사각이다');
+    assert.ok(without.width > withRef.width, '참고를 닫으면 캔버스가 다시 커진다: ' + withRef.width + ' → ' + without.width);
+  }
 
   // 접기 → 다시 펼치기 → 닫기 → 참고 줄에서 다시 열기
+  // 참고 줄이 이미 열려 있을 수도 있다 — 타일이 보일 때까지만 연다.
+  if (!labelled('표현 예시 참고 자리 열기').length) await press('참고');
+  await press('표현 예시 참고 자리 열기');
   await press('표현 예시 접기');
-  assert.equal(win().findAllByType('Image').length, 0, '접으면 그림이 물러나고 손잡이 줄만 남는다');
-  assert.ok(texts(win()).includes('고마워 · 정중하게'), '접혀 있어도 무엇을 고른 것인지 읽힌다');
+  assert.equal(spot().findAllByType('Image').length, 0, '접으면 그림이 물러나고 머리줄만 남는다');
+  assert.ok(texts(spot()).includes('고마워 · 정중하게'), '접혀 있어도 무엇을 고른 것인지 읽힌다');
   await press('표현 예시 펼치기');
-  assert.equal(win().findAllByType('Image').length, 1, '다시 열면 그림이 돌아온다');
+  assert.equal(spot().findAllByType('Image').length, 1, '다시 열면 그림이 돌아온다');
   await press('표현 예시 닫기');
-  assert.equal(byTestID('표현 예시 참고 창').length, 0, '닫으면 창이 사라진다');
-  await press('참고');
-  await press('표현 예시 참고 창 열기');
-  assert.equal(byTestID('표현 예시 참고 창').length, 1, '닫은 뒤에도 참고 줄에서 다시 열 수 있다(길이 끊기지 않는다)');
+  assert.equal(byTestID('표현 예시 참고 자리').length, 0, '닫으면 자리가 사라진다');
+  if (!labelled('표현 예시 참고 자리 열기').length) await press('참고');
+  await press('표현 예시 참고 자리 열기');
+  assert.equal(byTestID('표현 예시 참고 자리').length, 1, '닫은 뒤에도 참고 줄에서 다시 열 수 있다(길이 끊기지 않는다)');
 
   // ── 5. ② 밑그림 넣기: 기존 참고 레이어 길을 그대로 쓴다 ──────────────────────────────────
   commands.length = 0; imported.length = 0;
@@ -311,22 +326,30 @@ async function echoReferences(scene) {
   assert.ok(put.name.indexOf('밑그림 · ') === 0, '레이어 이름으로 밑그림임이 드러난다: ' + put.name);
   assert.equal(put.id, 'ref-' + put.path, '참고 ID 규칙(ref-<파일>)을 그대로 따른다 — 저장·복원이 같은 길로 돈다');
   assert.equal(sent().filter(m => m.type === 'toggleReference').at(-1).id, put.id, '깔자마자 이 밑그림이 보인다');
-  assert.equal(sent().filter(m => ['addLayer', 'removeLayer', 'importDrawing'].includes(m.type)).length, 0, '밑그림은 그림 레이어를 만들거나 지우거나 덮어쓰지 않는다');
+  // 45.25 정정: 밑그림을 깔면 그 위에 **빈 장을 하나** 만든다. 예전에는 아무것도 만들지 않아,
+  // 따라 그리면 손이 닿는 곳이 이미 그린 장이라 그 장을 덮어썼다. 지우거나 덮어쓰는 명령은 여전히 없다.
+  const madeLayers = sent().filter(m => m.type === 'addLayer');
+  assert.equal(madeLayers.length, 1, '밑그림 한 번에 빈 장도 한 장만 생긴다');
+  assert.equal(sent().filter(m => ['removeLayer', 'importDrawing'].includes(m.type)).length, 0, '기존 그림 장을 지우거나 덮어쓰지 않는다');
+  assert.ok(sent().findIndex(m => m.type === 'addLayer') > sent().findIndex(m => m.type === 'addReferences'), '빈 장은 밑그림이 깔린 뒤에 생긴다(실패하면 생기지 않는다)');
   scene = await echoReferences(scene);
-  assert.equal(scene.layers.length, 1, '그림 레이어는 그대로 한 장이다 — 실제 그림은 따로 그린다');
-  assert.equal(scene.activeLayerId, 'draw-1', '손이 가는 곳은 여전히 그림 레이어다');
+  assert.equal(scene.layers.length, 2, '밑그림 위에 빈 장이 한 장 생긴다');
+  assert.equal(scene.activeLayerId, 'draw-2', '손이 가는 곳은 그 새 빈 장이다 — 바로 따라 그릴 수 있다');
+  assert.equal(scene.layers[0].id, 'draw-1', '먼저 있던 장은 그대로 아래에 남는다');
   // 위치·크기·진하기·숨김·삭제는 기존 참고 조절이 맡는다.
   assert.ok(byTestID('참고 진하기').length >= 1, '진하기 조절이 붙어 있다');
   assert.equal(labelled('참고 숨기기').length, 1, '숨기기가 붙어 있다');
 
   // 같은 예시를 또 눌러도 밑그림이 두 장 쌓이지 않는다(45.21). 숨겨 뒀다면 다시 보여 주기만 한다.
-  await press('표현 예시 참고 창 열기');
+  await press('표현 예시 참고 자리 열기');
   const beforeAgain = sent().filter(m => m.type === 'addReferences').length;
   const importedBefore = imported.length;
   await press('이 예시를 밑그림으로 넣기');
+  const layersBefore = sent().filter(m => m.type === 'addLayer').length;
   assert.equal(sent().filter(m => m.type === 'addReferences').length, beforeAgain, '이미 깔린 밑그림을 또 들이지 않는다');
   assert.equal(imported.length, importedBefore, '그림을 다시 들여오지도 않는다');
   assert.equal(scene.references.length, 1, '참고는 한 장 그대로다');
+  assert.equal(sent().filter(m => m.type === 'addLayer').length, layersBefore, '같은 밑그림을 다시 보일 때는 빈 장도 만들지 않는다');
 
   await press('참고 관리');
   assert.ok(labelled('참고 삭제').length >= 1, '삭제가 붙어 있다');
@@ -392,8 +415,8 @@ async function echoReferences(scene) {
     await press(exLabel + ' 고르기');
     await press('참고 보기');
     await ready();
-    assert.equal(byTestID('표현 예시 참고 창').length, 1, cardName + ': 참고 창이 캔버스 위에 뜬다');
-    assert.ok(texts(byTestID('표현 예시 참고 창')[0]).includes(cardName + ' · ' + exLabel), cardName + ': 창 제목이 고른 표현이다');
+    assert.equal(byTestID('표현 예시 참고 자리').length, 1, cardName + ': 참고가 캔버스 밖 제 자리에 선다');
+    assert.ok(texts(byTestID('표현 예시 참고 자리')[0]).includes(cardName + ' · ' + exLabel), cardName + ': 제목이 고른 표현이다');
     await press('그리기 닫기');
     // ② 밑그림으로 넣기
     commands.length = 0; imported.length = 0;

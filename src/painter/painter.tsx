@@ -199,9 +199,6 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [guideHintOpen, setGuideHintOpen] = useState(true);
   // 표현 예시 참고 창(45.17차). 캔버스 위에 떠 있는 안내일 뿐이라 그림·썸네일·출력 어디에도 들어가지 않는다.
   const [refWindow, setRefWindow] = useState<'open' | 'collapsed' | 'closed'>('closed');
-  const [refSpot, setRefSpot] = useState<{ x: number; y: number } | null>(null);
-  // 사용자가 잡아 늘린 참고 창 폭. 정하지 않았으면 기본값(캔버스폭의 36%)을 쓴다.
-  const [refPicked, setRefPicked] = useState<number | null>(null);
   const guideUsed = useRef(false);
   // 이 칸에 깔아 둔 밑그림의 참고 id. 같은 예시를 또 눌러도 그림이 두 장 쌓이지 않게 한다.
   const guideLaid = useRef<string | null>(null);
@@ -606,6 +603,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       send({ type: 'addReferences', references: [{ ...transform(id, '밑그림 · ' + guideExample.title), visible: false, opacity: .3, path: image.path, data: await dataUrl(image) }] });
       // 보이게 하는 일은 참고 타일을 누를 때와 같은 명령에 맡긴다 — '한 번에 하나만 보인다'는 기존 규칙이 그대로 지켜진다.
       send({ type: 'toggleReference', id });
+      // 밑그림을 깔았으면 그 위에 바로 그릴 빈 장을 하나 만든다(45.25차).
+      // 예전에는 밑그림만 깔리고 손이 닿는 곳이 이미 그린 장이라, 따라 그리면 그 장을 덮어썼다.
+      // 엔진이 새 장을 맨 위에 놓고 바로 고른다(addLayer → selectDrawLayer). 기존 장은 건드리지 않는다.
+      // 실패하면 여기까지 오지 않으므로 빈 장만 남는 일은 없다. 같은 밑그림을 다시 보이는 길은 위에서 이미 돌아갔다.
+      if (scene.layers.length < 4) addDrawing();
+      else Alert.alert('그림 장이 가득 찼어요', '밑그림은 깔았어요. 그 위에 새로 그릴 장은 더 만들 수 없어요 — 레이어에서 쓰지 않는 장을 지우면 만들 수 있어요. 지금 그림은 그대로예요.');
       setRefRail(true); setRefSource('mine'); setRefBrowse(false); setPanel(null); setDrawRail(false);
     } catch (e) { Alert.alert('밑그림을 넣지 못했어요', userMessage(e)); }
     finally { unlock(); }
@@ -620,15 +623,6 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 참고 창 크기와 머무를 수 있는 자리. 창은 늘 캔버스 영역 안에 있어 화면 밖으로 빠져나가지 않는다.
   // 명세 E05: 기본은 clamp(112dp, 캔버스폭의 36%, 144dp). 예전 46%(최대 190)는 캔버스를 너무 많이 덮었다.
   // 사용자가 우하단 손잡이로 늘리면 그 폭을 쓰되, 최소 112 · 최대 캔버스폭 60% 를 넘지 않는다.
-  const refBase = Math.max(112, Math.min(144, Math.round((canvasSide || canvasWide || windowWidth) * .36)));
-  const refMax = Math.max(112, Math.round((canvasSide || canvasWide || windowWidth) * .6));
-  const refWide = Math.max(112, Math.min(refMax, refPicked ?? refBase));
-  const refHigh = refWindow === 'collapsed' ? 40 : 40 + refWide;
-  const clampSpot = (x: number, y: number) => ({
-    x: Math.max(8, Math.min((canvasWide || windowWidth) - refWide - 8, x)),
-    y: Math.max(8, Math.min((canvasArea || windowHeight) - refHigh - 8, y)),
-  });
-  const refAt = refSpot ? clampSpot(refSpot.x, refSpot.y) : clampSpot(10, (canvasArea || windowHeight) - refHigh - 10);
 
   function removeReference(path: string, id: string) {
     Alert.alert('참고 삭제', '이 세트의 모든 칸에서 이 참고를 없앱니다.', [
@@ -810,6 +804,16 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
 
       {/* 캔버스는 도구를 열고 닫아도 제자리다(45.5차). 색 패널 때문에 그림이 위로 뛰던 자리 이동을 없앴다 —
           "조절한다고 그림이 도망가면 안 된다". 패널은 아래에서 겹쳐 뜨고, 덮는 높이는 캔버스 절반을 넘지 않는다. */}
+      {/* 참고 자리(45.25차). 예전에는 캔버스 위에 떠 있어 그리는 자리를 덮었다 —
+          이제 캔버스 밖 제 자리에 선다. 이 줄이 자리를 차지하면 아래 캔버스 영역이 그만큼 줄고,
+          정사각 캔버스는 줄어든 자리에 다시 맞춰진다(canvasSide = min(폭, 높이)).
+          그림 자체는 여전히 360×360 이고 저장 좌표도 그대로다 — 보이는 크기만 달라진다. */}
+      {!!guideExample && refWindow !== 'closed' && <GuideStrip
+        title={guideExample.title} hint={guideExample.hint} artwork={guideExample.display ?? guideExample.artwork}
+        collapsed={refWindow === 'collapsed'}
+        onCollapse={() => { ease(); setRefWindow(refWindow === 'collapsed' ? 'open' : 'collapsed'); }}
+        onClose={() => { ease(); setRefWindow('closed'); }}
+        onUnderlay={onImportGuideExample ? () => void insertGuideUnderlay() : undefined} />}
       <View style={{ flex: 1, alignItems: 'center', justifyContent: tab === 'motion' ? 'flex-start' : 'center', backgroundColor: C.surface2 }}
         onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; const side = Math.floor(Math.min(w, h)); if (side > 0 && side !== canvasSide) setCanvasSide(side); if (h > 0 && Math.round(h) !== canvasArea) setCanvasArea(Math.round(h)); if (w > 0 && Math.round(w) !== canvasWide) setCanvasWide(Math.round(w)); }}>
         {/* 캔버스 틀: 네이티브 WebView 는 크기 지정을 무시하고 영역 전체를 채워, 캔버스가 위에 붙고 아래에 빈 띠가 남았다(40차 실기기 bounds 0,381–1080,1882).
@@ -937,14 +941,6 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {/* 표현 예시 참고 창(45.17차): 캔버스 위에 떠 있는 작은 창. 손잡이로 옮기고 접고 닫는다.
             화면 위의 안내라서 작품·썸네일·출력 어디에도 들어가지 않는다 — 그림이 되는 것은 밑그림(참고 레이어)뿐이다.
             창이 덮은 자리에서는 캔버스가 손가락을 받지 않아, 옮기는 손이 선을 긋지 않는다. */}
-        {!!guideExample && refWindow !== 'closed' && <GuideWindow
-          title={guideExample.title} hint={guideExample.hint} artwork={guideExample.display ?? guideExample.artwork}
-          width={refWide} collapsed={refWindow === 'collapsed'} left={refAt.x} top={refAt.y}
-          onMove={(x, y) => setRefSpot(clampSpot(x, y))}
-          onResize={next => setRefPicked(Math.max(112, Math.min(refMax, Math.round(next))))}
-          onCollapse={() => { ease(); setRefWindow(refWindow === 'collapsed' ? 'open' : 'collapsed'); }}
-          onClose={() => { ease(); setRefWindow('closed'); }}
-          onUnderlay={onImportGuideExample ? () => void insertGuideUnderlay() : undefined} />}
         {/* 표현 가이드 자리(다음 라운드). 꺼져 있으면 아무것도 그리지 않는다. */}
         {/* 표현 가이드("무엇을 그릴까?")는 홈의 '표현 가이드'에서 고른다(44차). 캔버스 위에는 띄우지 않는다. */}
 
@@ -1151,7 +1147,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'flex-start', gap: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
             <RailTile label="참고 사진 추가" caption="사진 추가" icon="plus" dashed onPress={() => void addReferences()} />
             {/* 참고 창을 닫았어도 고른 표현은 이 칸에 남아 있다 — 다시 열 자리가 없어 길이 끊기지 않게. */}
-            {!!guideExample && <RailTile label={refWindow === 'closed' ? '표현 예시 참고 창 열기' : '표현 예시 참고 창 닫기'} caption="표현 예시" icon="lightbulb-on-outline"
+            {!!guideExample && <RailTile label={refWindow === 'closed' ? '표현 예시 참고 자리 열기' : '표현 예시 참고 자리 닫기'} caption="표현 예시" icon="lightbulb-on-outline"
               selected={refWindow !== 'closed'} onPress={() => { ease(); setRefWindow(refWindow === 'closed' ? 'open' : 'closed'); }} />}
             {scene.references.map((ref, index) => {
               const image = slot.referenceImages.find(i => i.path === ref.path), active = ref.id === scene.activeReferenceId;
@@ -1400,57 +1396,40 @@ function RailTile({ label, caption, image, icon, selected, dashed, faded, onPres
     <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: selected ? '700' : '500', color: selected ? T.ink : T.muted }}>{caption}</Text>
   </Pressable>;
 }
-// 표현 예시를 보며 그리기 위한 작은 창(45.17차). 캔버스 위에 떠 있을 뿐 그림이 아니다 —
-// 저장되는 그림·움직이는 파일·작품 썸네일 어디에도 들어가지 않는다. 캔버스에 깔리는 것은 밑그림(참고 레이어)뿐이다.
-// 손잡이(위쪽 띠)에서만 끌어 옮긴다. 그림 자리를 끌어도 창이 따라가지 않아, 창을 짚은 손이 선을 긋지 않는다.
-// 창이 머무는 자리는 부모가 캔버스 영역 안으로 맞춰 준다(화면 밖으로 나가지 않는다).
-function GuideWindow({ title, hint, artwork, width, collapsed, left, top, onMove, onResize, onCollapse, onClose, onUnderlay }: {
-  title: string; hint: string; artwork: ImageSourcePropType; width: number; collapsed: boolean; left: number; top: number;
-  onMove: (x: number, y: number) => void; onResize: (width: number) => void; onCollapse: () => void; onClose: () => void; onUnderlay?: () => void;
+// 표현 예시를 보며 그리는 자리(45.25차). 캔버스 **밖**에 선다 — 예전에는 캔버스 위에 떠 있어
+// 그리는 자리를 덮었고, 옮기고 크기를 맞추는 일까지 사람이 해야 했다.
+// 이 줄이 자리를 차지하면 아래 캔버스 영역이 그만큼 줄고 정사각 캔버스가 다시 맞춰진다.
+// 그림 자체(360×360)와 저장 좌표는 그대로다. 저장되는 그림·움직이는 파일·썸네일에는 들어가지 않는다.
+function GuideStrip({ title, hint, artwork, collapsed, onCollapse, onClose, onUnderlay }: {
+  title: string; hint: string; artwork: ImageSourcePropType; collapsed: boolean;
+  onCollapse: () => void; onClose: () => void; onUnderlay?: () => void;
 }) {
-  const from = useRef({ x: 0, y: 0, px: 0, py: 0 });
-  const grew = useRef({ w: 0, px: 0 });
-  // 크기 손잡이: 옮기기와 같은 방식(손가락을 이 자리에서 잡는다)이라 캔버스로 새지 않는다.
-  const grow = {
-    onStartShouldSetResponder: () => true,
-    onMoveShouldSetResponder: () => true,
-    onResponderTerminationRequest: () => false,
-    onResponderGrant: (e: GestureResponderEvent) => { grew.current = { w: width, px: e.nativeEvent.pageX }; },
-    onResponderMove: (e: GestureResponderEvent) => onResize(grew.current.w + (e.nativeEvent.pageX - grew.current.px)),
-  };
-  const drag = {
-    onStartShouldSetResponder: () => true,
-    onMoveShouldSetResponder: () => true,
-    onResponderTerminationRequest: () => false,
-    onResponderGrant: (e: GestureResponderEvent) => { from.current = { x: left, y: top, px: e.nativeEvent.pageX, py: e.nativeEvent.pageY }; },
-    onResponderMove: (e: GestureResponderEvent) => onMove(from.current.x + (e.nativeEvent.pageX - from.current.px), from.current.y + (e.nativeEvent.pageY - from.current.py)),
-  };
-  return <View testID="표현 예시 참고 창" style={{ position: 'absolute', left, top, width, borderRadius: 16, backgroundColor: T.floating, borderWidth: 1, borderColor: T.line, overflow: 'hidden', ...Elev[2] }}>
-    <View testID="표현 예시 손잡이" accessibilityLabel={'표현 예시 옮기기 · ' + title} style={{ flexDirection: 'row', alignItems: 'center', height: 38, paddingLeft: 8, gap: 2 }} {...drag}>
-      <MaterialCommunityIcons name="drag-horizontal-variant" size={16} color={T.faint} />
-      <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, fontWeight: '800', color: T.ink }}>{title}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel={collapsed ? '표현 예시 펼치기' : '표현 예시 접기'} onPress={onCollapse} hitSlop={6} style={{ width: 30, height: 38, alignItems: 'center', justifyContent: 'center' }}>
+  return <View testID="표현 예시 참고 자리" style={{ borderBottomWidth: 1, borderColor: T.line, backgroundColor: T.paper }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, paddingLeft: 12, paddingRight: 2, gap: 2 }}>
+      <MaterialCommunityIcons name="lightbulb-on-outline" size={15} color={T.muted} />
+      <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, fontWeight: '800', color: T.ink, marginLeft: 4 }}>{title}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={collapsed ? '표현 예시 펼치기' : '표현 예시 접기'} onPress={onCollapse}
+        style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }} hitSlop={2}>
         <MaterialCommunityIcons name={collapsed ? 'chevron-down' : 'chevron-up'} size={18} color={T.muted} />
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="표현 예시 닫기" onPress={onClose} hitSlop={6} style={{ width: 30, height: 38, alignItems: 'center', justifyContent: 'center' }}>
-        <MaterialCommunityIcons name="close" size={16} color={T.muted} />
+      <Pressable accessibilityRole="button" accessibilityLabel="표현 예시 닫기" onPress={onClose}
+        style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }} hitSlop={2}>
+        <MaterialCommunityIcons name="close" size={17} color={T.muted} />
       </Pressable>
     </View>
-    {!collapsed && <>
-      <View style={{ width: '100%', height: width, backgroundColor: T.surface2, alignItems: 'center', justifyContent: 'center' }}>
+    {/* 펼친 모습: 그림은 왼쪽에 작게, 할 말과 행동은 오른쪽에. 가로로 눕혀 세로 자리를 아낀다. */}
+    {!collapsed && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingBottom: 10 }}>
+      <View style={{ width: 96, height: 96, borderRadius: T.radius.sm, backgroundColor: T.surface2, overflow: 'hidden' }}>
         <Image accessibilityIgnoresInvertColors accessibilityLabel={title + ' 예시 그림'} source={artwork} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
       </View>
-      <View testID="표현 예시 크기 손잡이" accessibilityLabel="표현 예시 창 크기 조절" style={{ position: 'absolute', right: 0, bottom: 0, width: 48, height: 48, alignItems: 'flex-end', justifyContent: 'flex-end', padding: 6 }} {...grow}>
-        <MaterialCommunityIcons name="resize-bottom-right" size={16} color={T.faint} />
-      </View>
-      <View style={{ paddingHorizontal: 10, paddingVertical: 7, gap: 6 }}>
-        <Text numberOfLines={2} style={{ fontSize: 11, color: T.muted }}>{hint}</Text>
+      <View style={{ flex: 1, gap: 8 }}>
+        <Text numberOfLines={3} style={{ fontSize: 13, lineHeight: 19, color: T.muted }}>{hint}</Text>
         {!!onUnderlay && <Pressable accessibilityRole="button" accessibilityLabel="이 예시를 밑그림으로 넣기" onPress={onUnderlay}
-          style={({ pressed }) => ({ minHeight: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : T.surface2 })}>
-          <Text style={{ fontSize: 12, fontWeight: '700', color: T.ink }}>밑그림으로 넣기</Text>
+          style={({ pressed }) => ({ minHeight: 44, borderRadius: T.radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : T.surface2 })}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: T.ink }}>밑그림으로 넣기</Text>
         </Pressable>}
       </View>
-    </>}
+    </View>}
   </View>;
 }
 // Hand-drawn eye: filled pupil when shown, struck through when hidden.

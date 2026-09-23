@@ -207,6 +207,9 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
     const square = areaNode.findAll(n => n.type === 'View' && !Array.isArray(n.props.style) && n.props.style?.overflow === 'hidden' && typeof n.props.style?.width === 'number')[0];
     return { align: areaNode.props.style.justifyContent, w: square?.props.style.width, h: square?.props.style.height };
   };
+  // 45.25 정정: '캔버스 자리 고정'은 **덮어 뜨는 판**에만 걸리는 규칙이다.
+  // 브러시·색·레이어·문구는 캔버스 위에 겹쳐 뜨므로 캔버스가 움직이면 안 된다(조절하는데 그림이 도망가면 안 된다).
+  // 참고 자리는 캔버스 **밖**에 서는 것이라 일부러 캔버스를 줄인다 — 그것은 guide-flow-test 가 본다.
   // 브러시 패널을 열려면 먼저 브러시가 골라져 있어야 한다(다시 누르기 = 설정 열기).
   if (!labelled('브러시')[0].props.accessibilityState.selected) await press('브러시');
   const before = canvasBox();
