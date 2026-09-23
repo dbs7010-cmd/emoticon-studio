@@ -1,0 +1,98 @@
+[
+  {
+    "kind": "pen",
+    "stages": {
+      "during": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6877
+      },
+      "committed": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6877
+      },
+      "reopened": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6877
+      }
+    }
+  },
+  {
+    "kind": "brush",
+    "stages": {
+      "during": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 255,
+        "ink": 9538
+      },
+      "committed": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 255,
+        "ink": 9538
+      },
+      "reopened": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 255,
+        "ink": 9538
+      }
+    }
+  },
+  {
+    "kind": "pencil",
+    "stages": {
+      "during": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 140,
+        "ink": 6859
+      },
+      "committed": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 140,
+        "ink": 6859
+      },
+      "reopened": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 140,
+        "ink": 6859
+      }
+    }
+  }
+]

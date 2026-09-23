@@ -18,7 +18,7 @@ const HOST = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>
 const log = document.getElementById('log'), engine = document.getElementById('engine');
 const kinds = ['pen', 'brush', 'pencil'];
 let at = 0, waiting = null;
-const post = m => engine.contentWindow.command(m);
+const post = m => engine.contentWindow.command(m);   // 약속을 돌려준다 — 반드시 await 한다
 const wait = type => new Promise(r => { waiting = { type, r }; });
 window.addEventListener('message', e => {
   let m; try { m = JSON.parse(e.data); } catch { return; }
@@ -41,14 +41,16 @@ const curve = [];
 for (let i = 0; i <= 40; i++) { const t = i / 40; curve.push([0.08 + 0.84 * t, 0.5 + 0.26 * Math.sin(t * Math.PI * 1.6 - 0.5)]); }
 async function start() {
   for (const kind of kinds) {
-    post({ type: 'init', id: 'stroke-' + kind, layers: [{ id: 'draw-1', name: '그림 1', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 }],
+    await post({ type: 'init', id: 'stroke-' + kind, layers: [{ id: 'draw-1', name: '그림 1', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 }],
       color: '#17191D', penWidth: 14, brush: { preset: null, opacity: 1, stabilizer: 'light', smoothing: true } });
     await wait('initialized');
-    post({ type: 'brush', brush: kind });
-    post({ type: 'tool', tool: 'pen' });
+    await post({ type: 'brush', brush: kind });
+    await post({ type: 'tool', tool: 'pen' });
+    // 줄 세운 명령이 모두 처리된 뒤에 긋는다.
+    await new Promise(r => setTimeout(r, 50));
     stroke(curve);
     await new Promise(r => setTimeout(r, 200));
-    post({ type: 'save', token: ++at });
+    await post({ type: 'save', token: ++at });
     const saved = await wait('save');
     // 저장 잠금을 풀어 준다 — 앱이 보내는 답과 같다. 풀지 않으면 다음 획이 무시된다(loading||saving).
     post({ type: 'saved', token: saved.token });

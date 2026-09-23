@@ -199,6 +199,20 @@ async function walk(App, { sourcesOn }) {
     assert.ok(!/mascot-(paper|ink)\.png/.test(src), file + ': mascot 그림을 직접 참조하지 않는다(자리에서 받는다)');
     assert.ok(!/\bMASCOT\b/.test(src), file + ': MASCOT 직접 참조가 없다');
   }
+  // 브러시 획 견본 셋은 **엔진이 그은 것**이고 서로 달라야 한다(45.26).
+  // 45.25 에는 셋 중 둘이 같아 보였는데, 원인은 엔진이 아니라 견본을 만들던 쪽이 명령 줄서기를
+  // 기다리지 않아 앞 브러시로 그은 것이었다. 여기서 '서로 다름'을 못 박아 같은 실수를 다시 못 하게 한다.
+  {
+    const png = f => { const b = fs.readFileSync(f); return { w: b.readUInt32BE(16), h: b.readUInt32BE(20), bytes: b.length, raw: b }; };
+    const pen = png('assets/art/stroke-pen.png'), brush = png('assets/art/stroke-brush.png'), pencil = png('assets/art/stroke-pencil.png');
+    assert.ok(!pen.raw.equals(brush.raw), '펜과 붓의 획 견본이 같은 파일이 아니다');
+    assert.ok(!pen.raw.equals(pencil.raw), '펜과 연필의 획 견본이 같은 파일이 아니다');
+    // 붓은 더 굵게 긋는다(엔진: penWidth × 1.4). 잘라낸 테두리는 획 반지름만큼만 커지므로 '더 크다'만 본다.
+    // 실제 굵기·알파 수치는 scripts/_brush-pipeline.cjs 가 재어 verification/round45_26 에 남긴다.
+    assert.ok(brush.h > pen.h && brush.w > pen.w, '붓 견본이 펜보다 굵다: ' + pen.w + '×' + pen.h + ' → ' + brush.w + '×' + brush.h);
+    // 연필은 굵기가 같고 옅기만 하다 — 테두리 크기는 펜과 같아야 한다.
+    assert.deepEqual([pencil.w, pencil.h], [pen.w, pen.h], '연필 견본은 펜과 같은 굵기다(옅기만 다르다)');
+  }
   const slotsSrc = fs.readFileSync('src/design/asset-slots.ts', 'utf8');
   assert.ok(/mascot-paper\.png/.test(slotsSrc), '지금 쓰는 자리표시 그림은 asset-slots 한 곳에만 있다');
   const motionSrc = fs.readFileSync('src/painter/motion-panel.tsx', 'utf8');
