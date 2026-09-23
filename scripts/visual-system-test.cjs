@@ -179,40 +179,46 @@ async function ready() {
   const dock = byTestID('board-action-dock')[0];
   assert.equal(flat(dock.props.style).borderTopLeftRadius, 24, '보드 아래 줄은 떠 있는 표면');
 
-  // ── 5. 그리기: 선 종류는 세그먼트 하나 · 도구는 테두리 박스가 아니다 ───────────────────────────
+  // ── 5. 그리기: 브러시 카드 셋 · 색·굵기 한 줄 · 도구 네 칸 (45.28차 승인 보드) ─────────────
   await act(async () => tree.root.findAll(n => n.props.testID === 'slot-3')[0].props.onPress());
   await ready();
-  // 쉬고 있는 도구에는 보이는 테두리가 없다(테두리 1px 은 자리만 잡아 두고 색이 투명이라 보이지 않는다 — 상태가 바뀌어도 칸이 움직이지 않게).
+  // 쉬고 있는 도구에는 보이는 테두리가 없다(테두리 1px 은 자리만 잡아 두고 색이 투명이라 보이지 않는다).
   const seen = st => (st.borderWidth ?? 0) === 0 || st.borderColor === 'transparent' ? 0 : st.borderWidth;
-  for (const label of ['브러시', '지우개', '채우기', '선택', '색']) assert.equal(seen(flat(labelled(label)[0].props.style)), 0, label + ' 도구에 카드 테두리가 없다');
-  assert.equal(flat(labelled('브러시')[0].props.style).backgroundColor, T.accentSoft, '고른 도구만 옅은 노랑 표면');
+  const TOOLS = ['그리기 도구 펜', '지우개', '채우기', '선택'];
+  for (const label of TOOLS) assert.equal(seen(flat(labelled(label)[0].props.style)), 0, label + ' 도구에 카드 테두리가 없다');
+  assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.accentSoft, '고른 도구만 옅은 노랑 표면');
   assert.equal(flat(labelled('지우개')[0].props.style).backgroundColor, 'transparent', '고르지 않은 도구는 투명');
-  // 노랑은 '지금 그리는 도구' 하나만 쓴다. 열린 보조 패널은 테두리와 펼침 화살표로 말한다.
-  assert.equal(flat(labelled('색')[0].props.style).backgroundColor, 'transparent', '색은 도구가 아니라 패널 입구 — 노랑을 쓰지 않는다');
+  // 노랑은 '지금 그리는 도구' 하나만 쓴다. 색은 도구가 아니라 패널 입구라 테두리로 말한다.
+  const colorBtn = () => flat(labelled('색')[0].props.style);
+  assert.notEqual(colorBtn().backgroundColor, T.accentSoft, '색은 도구가 아니라 패널 입구 — 노랑을 쓰지 않는다');
+  const colorRest = seen(colorBtn());
   await press('색');
-  assert.equal(flat(labelled('색')[0].props.style).backgroundColor, 'transparent', '색 패널을 열어도 노랑이 되지 않는다');
-  assert.ok(seen(flat(labelled('색')[0].props.style)) > 0, '열린 패널은 테두리로 말한다');
-  assert.equal(flat(labelled('브러시')[0].props.style).backgroundColor, T.accentSoft, '색을 열어도 활성 도구(펜)는 그대로 노랑');
-  const yellowTools = ['브러시', '지우개', '채우기', '선택', '색'].filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accentSoft);
-  assert.deepEqual(yellowTools, ['브러시'], '도구 줄의 노랑은 한 곳뿐: ' + JSON.stringify(yellowTools));
+  assert.notEqual(colorBtn().backgroundColor, T.accentSoft, '색 패널을 열어도 노랑이 되지 않는다');
+  assert.ok(seen(colorBtn()) > colorRest, '열린 패널은 더 굵은 테두리로 말한다');
+  assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.accentSoft, '색을 열어도 활성 도구(펜)는 그대로 노랑');
+  const yellowTools = TOOLS.filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accentSoft);
+  assert.deepEqual(yellowTools, [TOOLS[0]], '도구 줄의 노랑은 한 곳뿐: ' + JSON.stringify(yellowTools));
   await press('지우개');
-  assert.deepEqual(['브러시', '지우개', '채우기', '선택', '색'].filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accentSoft), ['지우개'], '지우개로 바꾸면 노랑도 하나만 따라 옮긴다');
-  await press('브러시');
-  assert.equal(flat(labelled('되돌리기')[0].props.style).backgroundColor, 'transparent', '되돌리기는 도구처럼 보이지 않는 조용한 아이콘');
-  await press('브러시');
-  const seg = tree.root.findAll(n => n.type === 'View' && n.props.testID === '선 종류')[0];
-  const segStyle = flat(seg.props.style);
-  assert.equal(segStyle.backgroundColor, T.surface2, '선 종류는 한 바탕 위의 세그먼트');
-  const cells = seg.findAll(n => n.type === 'Pressable');
-  assert.deepEqual(cells.map(n => n.props.accessibilityLabel), ['펜', '붓', '연필']);
-  assert.ok(cells.every(n => flat(n.props.style).flex === 1), '세 칸이 한 줄을 나눠 쓴다');
-  const unselected = cells.filter(n => !n.props.accessibilityState.selected);
-  assert.ok(unselected.every(n => (flat(n.props.style).borderWidth ?? 0) === 0 && flat(n.props.style).backgroundColor === 'transparent'), '고르지 않은 칸은 테두리도 바탕도 없다 — 세 장의 카드가 아니다');
-  // 45.6: 칸 안에 실제 획 견본 + 도구 표시 + 이름이 들어가 52dp 로 조금 높아졌다(여전히 카드 세 장이 아니라 한 줄 고르개).
-  assert.ok(cells.every(n => { const h = flat(n.props.style).minHeight ?? 0; return h >= 40 && h <= 56; }), '낮고 넓다(40~56dp)');
-  assert.ok(cells.every(n => n.findAll(x => x.type === 'Image').length === 1), '칸마다 그 브러시의 실제 획 견본');
-  assert.equal(labelled('고급 브러시').length, 1, '고급 브러시는 네 번째 칸이 아니라 아래 한 줄');
+  assert.deepEqual(TOOLS.filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accentSoft), ['지우개'], '지우개로 바꾸면 노랑도 하나만 따라 옮긴다');
+  await press(TOOLS[0]);
+  const undoBg = flat(labelled('되돌리기')[0].props.style).backgroundColor;
+  assert.ok(!undoBg || undoBg === 'transparent', '되돌리기는 도구처럼 보이지 않는 조용한 아이콘(바탕이 없다): ' + undoBg);
+  // 빠른 브러시 카드 셋은 늘 캔버스 아래에 서 있고, 골라진 하나만 노랗다.
+  const quick = byTestID('빠른 브러시')[0].findAll(n => n.type === 'Pressable' && n.props.testID);
+  assert.equal(quick.length, 3, '빠른 브러시 카드는 세 장: ' + quick.length);
+  assert.ok(quick.every(n => flat(n.props.style).flex === 1), '세 장이 한 줄을 나눠 쓴다');
+  assert.ok(quick.every(n => { const h = flat(n.props.style).minHeight ?? 0; return h >= 56 && h <= 72; }), '획 견본이 보일 만큼 높다(56~72dp)');
+  assert.ok(quick.every(n => n.findAll(x => x.type === 'Image').length === 1), '카드마다 그 브러시의 실제 획 견본');
+  assert.equal(quick.filter(n => flat(n.props.style).backgroundColor === T.accentSoft).length, 1, '빠른 줄의 노랑도 한 장뿐');
+  // 전체 목록: 무료 4 + PRO 8 을 한 판에. 쓸 수 있는 것은 흐리게 죽이지 않는다.
+  await press('브러시 전체');
+  const listCards = byTestID('브러시 목록')[0].findAll(n => n.type === 'Pressable');
+  assert.equal(listCards.length, 12, '전체 목록은 무료 4 + PRO 8 = 12장: ' + listCards.length);
+  for (const t of ['펜', '연필', '붓', '마커'])
+    assert.equal(flat(labelled('브러시 ' + t)[0].props.style).opacity ?? 1, 1, '쓸 수 있는 브러시 ' + t + ' 카드를 흐리게 하지 않는다');
   assert.equal(labelled('선 보정').length, 0, '진하기·보정은 세부 설정 안');
+  await press('세부 설정');
+  assert.equal(labelled('선 보정').length, 1, '세부 설정을 펼치면 선 보정이 나온다');
   await press('브러시 닫기');
 
   // ── 6. 문구: 키보드가 올라오면 입력 한 줄(머리·지우기·큰 적용 버튼 접힘) ──────────────────────
@@ -253,6 +259,6 @@ async function ready() {
   assert.deepEqual(yellowOnExport, ['파일 묶음 만들기'], '내보내기의 노랑 버튼은 하나');
   await act(async () => tree.unmount());
 
-  console.log('PASS: visual system — 토큰(색·모서리 8/12/16/20/24·간격 4 기반·옅은 그림자·글자 위계 8단), 2px 노랑 선택 박스·900 굵기 남발 없음, 화면 하드코딩 색 ' + hex + '곳(39차 56, 견본·토큰 정의 제외), 에셋 자리 8개 규격(44차 표현 가이드 카드 포함)·캔버스 가이드 힌트 없음·알림 꺼짐·레퍼런스 V1 분류 넷, 홈 브랜드→창작 표면→최근 작업·노랑 버튼 1, 세트 12개여도 홈은 가장 최근 하나+전체 보기·전체 작업→보드→뒤로 전체 작업·표현 가이드 분류/카드, 보드 글자 배지 없음·떠 있는 아래 줄, 도구 dock 테두리 없음·고른 도구만 노랑 표면·되돌리기 조용, 선 종류 세그먼트 하나(펜·붓·연필, 비선택 투명), 문구 키보드 한 줄, 움직임 없음 좁게, 내보내기 요약→격자·제출 준비·노랑 1. Native/WebView mocked.');
+  console.log('PASS: visual system — 토큰(색·모서리 8/12/16/20/24·간격 4 기반·옅은 그림자·글자 위계 8단), 2px 노랑 선택 박스·900 굵기 남발 없음, 화면 하드코딩 색 ' + hex + '곳(39차 56, 견본·토큰 정의 제외), 에셋 자리 8개 규격(44차 표현 가이드 카드 포함)·캔버스 가이드 힌트 없음·알림 꺼짐·레퍼런스 V1 분류 넷, 홈 브랜드→창작 표면→최근 작업·노랑 버튼 1, 세트 12개여도 홈은 가장 최근 하나+전체 보기·전체 작업→보드→뒤로 전체 작업·표현 가이드 분류/카드, 보드 글자 배지 없음·떠 있는 아래 줄, 도구 네 칸 테두리 없음·고른 도구만 노랑 표면·되돌리기 조용, 빠른 브러시 카드 셋(획 견본·노랑 하나)·전체 목록 무료4+PRO8, 문구 키보드 한 줄, 움직임 없음 좁게, 내보내기 요약→격자·제출 준비·노랑 1. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

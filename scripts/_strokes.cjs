@@ -16,7 +16,13 @@ const HOST = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>
 <body><div id="log">엔진을 띄우는 중…</div><iframe id="engine" src="engine.html"></iframe>
 <script>
 const log = document.getElementById('log'), engine = document.getElementById('engine');
-const kinds = ['pen', 'brush', 'pencil'];
+// 12종. base = 엔진 기본 브러시, preset = 엔진 PRESETS key. 같은 곡선·같은 굵기로 긋는다.
+const kinds = [
+  ['pen', { base: 'pen' }], ['pencil', { base: 'pencil' }], ['brush', { base: 'brush' }],
+  ['marker', { preset: 'marker' }], ['ink', { preset: 'ink' }], ['soft', { preset: 'soft' }], ['grain', { preset: 'grain' }],
+  ['calligraphy', { preset: 'calligraphy' }], ['crayon', { preset: 'crayon' }], ['airbrush', { preset: 'airbrush' }],
+  ['chisel', { preset: 'chisel' }], ['rough', { preset: 'rough' }],
+];
 let at = 0, waiting = null;
 const post = m => engine.contentWindow.command(m);   // 약속을 돌려준다 — 반드시 await 한다
 const wait = type => new Promise(r => { waiting = { type, r }; });
@@ -40,11 +46,11 @@ function stroke(points) {
 const curve = [];
 for (let i = 0; i <= 40; i++) { const t = i / 40; curve.push([0.08 + 0.84 * t, 0.5 + 0.26 * Math.sin(t * Math.PI * 1.6 - 0.5)]); }
 async function start() {
-  for (const kind of kinds) {
+  for (const [kind, how] of kinds) {
     await post({ type: 'init', id: 'stroke-' + kind, layers: [{ id: 'draw-1', name: '그림 1', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 }],
-      color: '#17191D', penWidth: 14, brush: { preset: null, opacity: 1, stabilizer: 'light', smoothing: true } });
+      color: '#17191D', penWidth: 14, brush: { preset: how.preset ?? null, opacity: 1, stabilizer: 'light', smoothing: true } });
     await wait('initialized');
-    await post({ type: 'brush', brush: kind });
+    await post({ type: 'brush', brush: how.base ?? 'pen' });
     await post({ type: 'tool', tool: 'pen' });
     // 줄 세운 명령이 모두 처리된 뒤에 긋는다.
     await new Promise(r => setTimeout(r, 50));

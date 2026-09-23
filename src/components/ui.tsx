@@ -187,7 +187,8 @@ export function AssetSlot({ name, size, style, sourceOverride }: { name: AssetSl
 }
 
 // 앱 색의 슬라이더. 트랙 · 채워진 부분 · 손잡이. 줄 어디를 끌어도 움직인다.
-export function Range({ label, value, min, max, step, onChange, display, testID, onActive }: { label?: string; value: number; min: number; max: number; step?: number; onChange: (n: number) => void; display?: string; testID?: string; onActive?: (active: boolean) => void }) {
+// hideLabel: 이름을 옆 글자로 또 적지 않고 접근성 이름으로만 남긴다(굵기 줄처럼 이미 옆에 이름이 있는 자리).
+export function Range({ label, hideLabel, value, min, max, step, onChange, display, testID, onActive }: { label?: string; hideLabel?: boolean; value: number; min: number; max: number; step?: number; onChange: (n: number) => void; display?: string; testID?: string; onActive?: (active: boolean) => void }) {
   const [width, setWidth] = React.useState(0);
   const ratio = Math.max(0, Math.min(1, (value - min) / (max - min || 1)));
   const from = (x: number) => { if (width > 0) onChange(min + Math.max(0, Math.min(1, x / width)) * (max - min)); };
@@ -197,7 +198,7 @@ export function Range({ label, value, min, max, step, onChange, display, testID,
     onChange(Math.max(min, Math.min(max, value + by * jump)));
   };
   return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
-    {!!label && <Text style={{ width: 40, fontSize: 12, fontWeight: '600', color: T.muted }}>{label}</Text>}
+    {!!label && !hideLabel && <Text style={{ width: 40, fontSize: 12, fontWeight: '600', color: T.muted }}>{label}</Text>}
     <View testID={testID} accessibilityRole="adjustable" accessibilityLabel={label} accessibilityValue={{ min, max, now: value }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={e => { if (e.nativeEvent.actionName === 'increment') nudge(1); if (e.nativeEvent.actionName === 'decrement') nudge(-1); }}

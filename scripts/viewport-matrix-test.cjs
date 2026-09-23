@@ -47,6 +47,7 @@ const { BASE_H } = load('src/painter/painter.tsx');
 
 let tree;
 const labelled = label => tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === label);
+const byTestID = id => tree.root.findAll(n => n.props.testID === id);
 const press = async label => { const m = labelled(label); assert.equal(m.length, 1, 'button ' + label + ' (' + m.length + ') at ' + JSON.stringify(viewport)); await act(async () => m[0].props.onPress()); };
 const message = async m => { await act(async () => tree.root.findByType('WebView').props.onMessage({ nativeEvent: { data: JSON.stringify(m) } })); };
 const flat = style => Object.assign({}, ...[style].flat(9).filter(Boolean));
@@ -124,27 +125,29 @@ const rows = [];
     const tag = `${width}×${height}`;
     // 기본 Painter: 캔버스가 한 변 280dp 이상. 굵기 조절은 도구 줄 안에 있고 캔버스 영역 위에는 없다(43.1차).
     assert.ok(side >= 280, tag + ': 캔버스 한 변 280dp 이상, got ' + side);
-    // 45.25 정정: 굵기는 캔버스 **밖** 오른쪽 칸에서 세로로 끈다. 예전에는 캔버스 영역 가장자리에 겹쳐 있었다 —
-    // 좁긴 해도 그림 위였다. 이제 제 칸을 쓰고, 캔버스는 그만큼 좁아진 자리에 정사각으로 다시 맞춰진다.
+    // 45.28: 굵기는 승인 보드대로 색과 같은 줄에서 **가로로** 끈다(세로 조절대는 없앴다).
+    // 여전히 캔버스 밖이고, 캔버스 위에 겹치지 않으며 화면에 하나뿐이다.
     const sizer = tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '브러시 굵기')[0];
     assert.ok(sizer, tag + ': 굵기 조절대');
     const bandStyle = flat(sizer.props.style);
-    assert.ok(bandStyle.width <= 28, tag + ': 조절대는 좁은 칸이다: ' + bandStyle.width);
+    assert.ok((bandStyle.height ?? 0) >= 44, tag + ': 조절대는 손가락이 닿는 높이다: ' + bandStyle.height);
+    assert.equal(bandStyle.flex, 1, tag + ': 조절대는 줄의 남는 폭을 다 쓴다');
     assert.notEqual(bandStyle.position, 'absolute', tag + ': 캔버스 위에 겹치지 않는다');
     const canvasFrame = tree.root.findAll(n => n.type === 'View' && n.props.collapsable === false)[0];
-    assert.equal(canvasFrame.findAll(n => n.props.testID === '굵기 띠').length, 0, tag + ': 캔버스 틀 안에 조절대가 없다');
-    assert.ok(side * .4 >= 48, tag + ': 띠의 세로 길이가 손가락보다 길다(' + Math.round(side * .4) + 'dp)');
+    assert.equal(canvasFrame.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 0, tag + ': 캔버스 틀 안에 조절대가 없다');
+    assert.equal(byTestID('굵기 수치').length, 1, tag + ': 굵기는 숫자로도 말한다');
     const canvasArea = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
     assert.equal(canvasArea.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 0, tag + ': 굵기 조절대는 캔버스 영역 밖에 있다');
     assert.equal(tree.root.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 1, tag + ': 조절대는 화면에 하나');
-    // 기본 도구 줄: 두 줄(48dp) + 여백이 BASE_H 안에 들어간다 — 완성 버튼이 잘리지 않는다.
-    assert.ok(6 + 48 + 6 + 48 <= BASE_H, tag + ': 기본 도구 줄 두 줄이 잘리지 않는다');
-    for (const l of ['브러시', '지우개', '채우기', '선택', '색', '되돌리기', '다시 실행', '완성 후 다음']) assert.equal(labelled(l).length, 1, tag + ': ' + l);
+    // 기본 도구 줄 세 줄(브러시 카드 62 + 색·굵기 44 + 도구 48)과 줄 사이 여백이 BASE_H 안에 들어간다 — 아래가 잘리지 않는다.
+    assert.ok(6 + 62 + 6 + 44 + 4 + 48 <= BASE_H, tag + ': 기본 도구 줄 세 줄이 잘리지 않는다');
+    for (const l of ['그리기 도구 펜', '지우개', '채우기', '선택', '색', '브러시 전체', '되돌리기', '다시 실행', '완성 후 다음']) assert.equal(labelled(l).length, 1, tag + ': ' + l);
+    assert.equal(byTestID('빠른 브러시')[0].findAll(n => n.type === 'Pressable' && n.props.testID).length, 3, tag + ': 빠른 브러시 카드 셋');
     // 각 패널이 가리는 캔버스 비율(패널 높이 - 캔버스 아래 남는 자리) / 캔버스 높이.
     const below = Math.max(0, (area.height - side) / 2);
     const covered = h => +(Math.max(0, h - below) / side).toFixed(2);
-    await press('브러시'); row.brush = covered(dockHeight().height);
-    assert.equal(labelled('펜').length + labelled('붓').length + labelled('연필').length, 3, tag + ': 브러시 시트 선 종류');
+    await press('브러시 전체'); row.brush = covered(dockHeight().height);
+    assert.equal(byTestID('브러시 목록')[0].findAll(n => n.type === 'Pressable').length, 12, tag + ': 전체 목록 무료 4 + PRO 8');
     await press('세부 설정'); row.brushDetail = covered(dockHeight().height);
     await press('브러시 닫기');
     await press('색'); row.color = covered(dockHeight().height);
@@ -168,18 +171,16 @@ const rows = [];
     const motion = dockHeight().height;
     row.motion = +(Math.max(0, motion - BASE_H - (area.height - side)) / side).toFixed(2);
     assert.ok(row.motion < .45, tag + ': 움직이기 패널이 캔버스를 45% 넘게 덮지 않는다: ' + row.motion);
-    assert.equal(labelled('완성 후 다음').length, 1, tag + ': 움직이기에서도 완성 버튼');
+    // 45.28: 완성은 머리줄 하나뿐이다 — 움직이기 탭의 큰 완성 줄은 없앴다(두 개가 아니다).
+    assert.equal(labelled('완성 후 다음').length, 1, tag + ': 움직이기에서도 완성 버튼은 머리줄에 하나');
     // 겹침이 아니라 경계로 본다: 설정 목록은 줄어드는 스크롤이고(flex:1·minHeight:0),
-    // 완성 줄은 그 뒤에 오는 형제다. 그래서 목록이 길어져도 완성 줄을 밀어내지 못하고, 끝까지 스크롤로 닿는다.
+    // 완성은 스크롤 밖 머리줄에 있다. 그래서 목록이 길어져도 완성을 밀어내지 못하고, 끝까지 스크롤로 닿는다.
     const motionScroll = tree.root.findAll(n => n.type === 'ScrollView' && flat(n.props.style).flex === 1);
     assert.equal(motionScroll.length, 1, tag + ': 움직이기 설정 목록은 줄어드는 스크롤 하나');
     assert.equal(flat(motionScroll[0].props.style).minHeight, 0, tag + ': 목록이 내용 높이로 버티지 않는다');
     assert.ok((flat(motionScroll[0].props.contentContainerStyle).paddingBottom ?? 0) >= 12, tag + ': 목록 끝에 여유가 있다');
     const finishRow = tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === '완성 후 다음')[0];
-    for (let p = finishRow.parent; p; p = p.parent) {
-      if (p.type === 'ScrollView') assert.fail(tag + ': 완성 줄이 스크롤 안에 있으면 안 된다');
-      if (p.type === 'View' && flat(p.props.style).height === motionHeightOf()) break;
-    }
+    for (let p = finishRow.parent; p; p = p.parent) assert.notEqual(p.type, 'ScrollView', tag + ': 완성은 스크롤 안에 있으면 안 된다');
     await press('그리기');
     // 보드·내보내기: 격자 세 칸이 폭 안, 내보내기 결과 격자 칸 크기.
     await press('그리기 닫기');
@@ -202,7 +203,10 @@ const rows = [];
     for (const key of ['brush', 'color', 'reference', 'layers']) assert.ok(row[key] <= .5, tag + ': ' + key + ' 패널이 캔버스를 절반 넘게 가리지 않는다: ' + row[key]);
     // 색 패널은 안쪽이 스스로 스크롤하므로 더 낮게 세운다 — 엔진이 1배보다 작게 줄이지 못하고 캔버스도 움직일 수 없어,
     // 판을 낮추는 것이 그림을 더 보이게 하는 유일한 길이다(45.24).
-    assert.ok(row.color <= .45, tag + ': 색 패널은 캔버스를 45% 넘게 가리지 않는다: ' + row.color);
+    // 45.28: 승인 보드대로 SV 사각(132dp)이 들어오면서, 가장 짧은 화면에서는 판이 최소 높이(160dp)에 걸린다.
+    // 그보다 낮추면 사각이 손톱만큼만 보여 쓸 수 없다 — 그래서 640dp급에서만 한도를 48% 로 둔다.
+    const colorCap = height <= 660 ? .48 : .45;
+    assert.ok(row.color <= colorCap, tag + ': 색 패널은 캔버스를 ' + Math.round(colorCap * 100) + '% 넘게 가리지 않는다: ' + row.color);
     rows.push(row);
   }
   // ── 머리줄: 넘치면 두 줄로 갈린다(글자나 손가락 자리를 줄이지 않는다) ─────────────────────────
@@ -277,6 +281,6 @@ const rows = [];
   fs.writeFileSync(outDir + '/viewport-matrix.json', JSON.stringify(rows, null, 2));
   console.log('  viewport  canvas share brush detail color ref layers motion kbRoom boardTile exportCell');
   for (const r of rows) console.log('  ' + [r.viewport.padEnd(9), String(r.canvas).padStart(6), String(r.canvasShare).padStart(5), r.brush, r.brushDetail, r.color, r.reference, r.layers, r.motion, r.captionKeyboardRoom, r.boardTile, r.exportCell].join('  '));
-  console.log('PASS: viewport matrix — 640/720/800/900/1000 × 320/360/390/412: 캔버스 280dp 이상, 굵기 띠 오른쪽 가장자리 20dp·캔버스 세로 40%, 도구 줄 두 줄 안 잘림, 브러시·색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침·설정 목록만 줄고 완성 줄은 스크롤 밖, 보드 세 칸·아래 줄, 내보내기 결과 격자 한 줄 다섯 칸 이상, 글자 배율 1.0/1.3/1.5 에서 높이 고정 상자 잘림 0곳. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).');
+  console.log('PASS: viewport matrix — 640/720/800/900/1000 × 320/360/390/412: 캔버스 280dp 이상, 굵기 조절대는 색과 같은 줄에서 가로로·캔버스 밖 하나, 도구 줄 세 줄 안 잘림, 브러시·색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침·설정 목록만 줄고 완성 줄은 스크롤 밖, 보드 세 칸·아래 줄, 내보내기 결과 격자 한 줄 다섯 칸 이상, 글자 배율 1.0/1.3/1.5 에서 높이 고정 상자 잘림 0곳. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

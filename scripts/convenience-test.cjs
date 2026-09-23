@@ -110,7 +110,7 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
 
   // ── 1. 패널을 연 채 캔버스를 누르면: 패널만 닫힌다. 그 손가락은 그림에 닿지 않는다 ──────────────
   const veil = () => byTestID('패널 닫기 막');
-  const openers = [['브러시', '브러시 닫기'], ['색', '팔레트 닫기'], ['문구', '문구 닫기'], ['레이어', null]];
+  const openers = [['브러시 전체', '브러시 닫기'], ['색', '팔레트 닫기'], ['문구', '문구 닫기'], ['레이어', null]];
   for (const [open, close] of openers) {
     await press(open);
     assert.equal(veil().length, 1, open + ': 캔버스에 닫기 막이 생긴다');
@@ -129,7 +129,7 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
     await act(async () => veil()[0].props.onPress());
     assert.equal(sent().filter(m => ['fill', 'down', 'up', 'move'].includes(m.type)).length, before, tool + ': 패널을 닫는 터치가 그림을 바꾸지 않는다');
   }
-  await press('브러시');
+  await press('브러시 전체');
 
   // ── 3. 패널을 여닫아도 확대·이동은 그대로 ────────────────────────────────────────────────────
   await message({ type: 'zoom', zoom: 2 });
@@ -141,14 +141,14 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.ok(texts().includes('200%'), '돌아와도 같은 배율');
   await message({ type: 'zoom', zoom: 1 });
 
-  // ── 4. 색상환: 고른 색이 캔버스로 가고, 칸을 옮겨도 최근 색으로 남는다 ─────────────────────────
-  await press('색');
-  await press('직접 선택');
-  const wheel = () => anyLabel('색상환')[0];
-  await act(async () => wheel().props.onResponderGrant({ nativeEvent: { locationX: 128, locationY: 66 } }));
-  await act(async () => wheel().props.onResponderRelease({ nativeEvent: { locationX: 128, locationY: 66 } }));
+  // ── 4. SV 사각: 고른 색이 캔버스로 가고, 칸을 옮겨도 최근 색으로 남는다 ────────────────────────
+  await press('색');   // 45.28: 패널은 SV 사각 + 색상 막대로 열린다
+  const field = () => anyLabel('색 사각판')[0];
+  await act(async () => field().props.onLayout({ nativeEvent: { layout: { width: 240, height: 132 } } }));
+  await act(async () => field().props.onResponderGrant({ nativeEvent: { locationX: 200, locationY: 30 } }));
+  await act(async () => field().props.onResponderRelease({ nativeEvent: { locationX: 200, locationY: 30 } }));
   const picked = lastCommand('color').color;
-  assert.ok(picked, '색상환에서 고른 색이 캔버스로 간다');
+  assert.ok(picked, 'SV 사각에서 고른 색이 캔버스로 간다');
   await new Promise(r => setTimeout(r, 900));
   assert.equal(loadStore().store.palette[0], picked, '손을 멈추면 최근 색에 남는다');
   await press('팔레트 닫기');
@@ -164,7 +164,10 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   await act(async () => dropper().props.onResponderRelease({ nativeEvent: { pageX: 120, pageY: 220 } }));
   assert.equal(lastCommand('color').color.slice(0, 7), '#123456', '뗀 자리 색이 그리기 색이 된다');
   assert.deepEqual(lastCommand('eyedrop'), { type: 'eyedrop', on: false }, '스포이드는 꺼진다');
-  assert.equal(labelled('브러시')[0].props.accessibilityState.selected, true, '쓰던 도구로 돌아온다');
+  {
+    const tools = ['그리기 도구 펜', '지우개', '채우기', '선택'].filter(n => labelled(n)[0]?.props.accessibilityState?.selected);
+    assert.equal(tools.length, 1, '쓰던 도구 하나만 골라져 있다: ' + JSON.stringify(tools));
+  }
   assert.equal(labelled('팔레트 닫기').length, 0, '패널도 내려가 캔버스로 돌아온다');
 
   // ── 6. 기본 레퍼런스: 아직 준비 중이라 제품 화면에는 이 갈래가 없다 ─────────────────────────
@@ -188,18 +191,17 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
 
   // 앞 단계에서 켜 둔 선택은 끄고 본다(선택 중에는 아래 줄이 선택 도구 줄로 바뀐다).
   scene = { ...scene, selection: null }; await message(scene);
-  // ── 8. 45.5 정보구조: 문구는 위 줄에 하나, 아래 줄은 브러시·색이 주인공 ─────────────────────
+  // ── 8. 45.28 정보구조: 승인 보드 01 배치 — 브러시 카드 · 색과 굵기 한 줄 · 도구 네 칸 ────────
   const top = () => byTestID('도구 줄')[0];
-  const quick = () => byTestID('빠른 모드')[0];
+  const quick = () => byTestID('빠른 브러시')[0];
   assert.equal(labelled('문구').length, 1, '문구 입구는 하나');
   assert.equal(top().findAll(n => n.props.accessibilityLabel === '문구').length, 0, '문구는 아래 도구 줄에 없다');
   assert.deepEqual(top().findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel).map(n => n.props.accessibilityLabel),
-    ['브러시', '색', '지우개', '채우기', '선택'], '아래 줄: 브러시·색 다음에 빠른 모드 셋');
-  assert.deepEqual(quick().findAll(n => n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['지우개', '채우기', '선택'], '빠른 모드는 셋뿐(중복 없음)');
+    ['그리기 도구 펜', '지우개', '채우기', '선택'], '아래 줄: 네 칸 균등');
+  assert.deepEqual(quick().findAll(n => n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['펜', '연필', '마커', '브러시 전체'], '빠른 브러시 셋 + 전체');
   const cell = label => top().findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === label)[0];
-  assert.ok(styleOf(cell('브러시')).flex > (styleOf(cell('지우개')).flex ?? 0), '브러시가 빠른 모드보다 크게 선다');
-  assert.ok(styleOf(cell('색')).flex >= 1 && !styleOf(cell('지우개')).flex, '색도 넓게, 빠른 모드는 좁은 칸');
-  for (const name of ['지우개', '채우기', '선택']) assert.ok((styleOf(cell(name)).minHeight ?? 0) >= 44, name + ': 손가락 자리는 그대로');
+  assert.equal(styleOf(cell('그리기 도구 펜')).flex, styleOf(cell('지우개')).flex, '네 칸이 같은 폭으로 선다');
+  for (const name of ['그리기 도구 펜', '지우개', '채우기', '선택']) assert.ok((styleOf(cell(name)).minHeight ?? 0) >= 44, name + ': 손가락 자리는 그대로');
 
   // ── 9. 도구를 열고 닫아도 캔버스는 제자리 ───────────────────────────────────────────────────
   const canvasBox = () => {
@@ -210,12 +212,11 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   // 45.25 정정: '캔버스 자리 고정'은 **덮어 뜨는 판**에만 걸리는 규칙이다.
   // 브러시·색·레이어·문구는 캔버스 위에 겹쳐 뜨므로 캔버스가 움직이면 안 된다(조절하는데 그림이 도망가면 안 된다).
   // 참고 자리는 캔버스 **밖**에 서는 것이라 일부러 캔버스를 줄인다 — 그것은 guide-flow-test 가 본다.
-  // 브러시 패널을 열려면 먼저 브러시가 골라져 있어야 한다(다시 누르기 = 설정 열기).
-  if (!labelled('브러시')[0].props.accessibilityState.selected) await press('브러시');
+  // 45.28: '브러시 전체'는 언제든 전체 목록을 연다(도구를 먼저 고를 필요가 없다).
   const before = canvasBox();
   const zooms = () => sent().filter(m => m.type === 'zoom').length;
   const zoomBefore = zooms();
-  for (const [open, close] of [['브러시', '브러시 닫기'], ['색', '팔레트 닫기'], ['레이어', null], ['문구', '문구 닫기']]) {
+  for (const [open, close] of [['브러시 전체', '브러시 닫기'], ['색', '팔레트 닫기'], ['레이어', null], ['문구', '문구 닫기']]) {
     await press(open);
     assert.deepEqual(canvasBox(), before, open + ': 패널을 열어도 캔버스 자리·크기가 그대로');
     if (close) await press(close); else await act(async () => veil()[0].props.onPress());
@@ -223,17 +224,21 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   }
   assert.equal(zooms(), zoomBefore, '패널을 여닫는 동안 확대·이동 값을 건드리지 않는다');
 
-  // ── 10. 선 종류: 이름만이 아니라 실제 선 견본으로 고른다 ─────────────────────────────────────
-  await press('브러시');
-  const kinds = byTestID('선 종류')[0].findAll(n => n.type === 'Pressable');
-  assert.deepEqual(kinds.map(n => n.props.accessibilityLabel), ['펜', '붓', '연필'], '선 종류 셋');
-  for (const k of kinds) assert.equal(k.findAll(n => n.type === 'Image').length, 1, k.props.accessibilityLabel + ': 실제 선 견본이 보인다');
-  assert.ok(kinds.every(n => (styleOf(n).minHeight ?? 0) >= 44), '누르는 자리는 44dp 이상');
-  await press('붓');
-  assert.equal(lastCommand('brush').brush, 'brush', '견본을 누르면 그 선으로 바뀐다');
-  // 45.25: 고르면 선택판이 스스로 닫힌다 — 고른 뒤에 할 일은 그리는 것이다.
-  assert.equal(labelled('브러시 닫기').length, 0, '브러시를 고르면 선택판이 닫힌다');
-  assert.equal(byTestID('선 종류').length, 0, '선택판이 물러나 캔버스가 다시 드러난다');
+  // ── 10. 브러시: 이름만이 아니라 실제 엔진 획으로 고른다(45.28 승인 보드) ───────────────
+  // 빠른 선택 줄은 늘 보인다. 카드를 누르면 바로 그 브러시가 되고 판은 열리지 않는다.
+  {
+    const quickRow = byTestID('빠른 브러시')[0].findAll(n => n.type === 'Pressable').slice(0, 3);
+    for (const k of quickRow) assert.equal(k.findAll(n => n.type === 'Image').length, 1, k.props.accessibilityLabel + ': 실제 엔진 획 견본이 보인다');
+    assert.ok(quickRow.every(n => (styleOf(n).minHeight ?? 0) >= 44), '누르는 자리는 44dp 이상');
+    await press('연필');
+    assert.equal(lastCommand('brush').brush, 'pencil', '카드를 누르면 그 브러시로 바뀐다');
+    assert.equal(byTestID('브러시 목록').length, 0, '카드를 눌러도 판이 열리지 않는다');
+    // 이미 고른 카드를 다시 누르면 세부 설정이 열린다.
+    await press('연필');
+    assert.equal(byTestID('브러시 목록').length, 1, '고른 카드를 다시 누르면 설정이 열린다');
+    assert.equal(labelled('선 보정').length, 1, '세부 설정이 펼쳐져 있다');
+    await press('브러시 닫기');
+  }
 
   // ── 11. 문구: 색이 실제로 바뀌고, 키보드가 닫히면 남는 것이 없다 ─────────────────────────────
   scene = { ...scene, caption: { text: '고마워', place: 'bottom', color: '#242424' } };
@@ -258,11 +263,11 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.deepEqual(lastCommand('captionPick'), { type: 'captionPick', on: true }, '적용한 글씨는 골라진 채로 캔버스에 남는다');
   assert.equal(lastCommand('caption').caption.text, '안녕', '고친 글자가 캔버스로 간다');
 
-  // ── 12. 빠른 도구: 한 줄 안에서는 모두 같은 규칙으로 읽힌다(45.24 정정) ─────────────────────
+  // ── 12. 도구 줄: 네 칸 모두 아이콘 옆에 짧은 이름이 보인다(45.28 승인 보드) ─────────────
   // 45.6차에는 지우개·채우기의 이름을 떼었다. 그러나 같은 줄의 펜·색·선택에는 이름이 있어
   // 세 칸만 규칙이 달랐다. 이름을 다시 붙여 줄 전체가 한 가지 방식으로 읽히게 한다.
   for (const name of ['지우개', '채우기', '선택']) {
-    const cell = byTestID('빠른 ' + name)[0];
+    const cell = byTestID('도구 ' + name)[0];
     const shown = cell.findAll(n => n.type === 'Text').map(n => [n.props.children].flat(9).filter(x => typeof x === 'string').join(''));
     assert.deepEqual(shown, [name], name + ': 아이콘 옆에 짧은 이름이 보인다');
   }
@@ -273,7 +278,7 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   await press('지우개');
   assert.equal(styleOf(labelled('지우개')[0]).backgroundColor, T.accentSoft, '고른 빠른 도구는 옅은 노랑으로 바로 구분된다');
   assert.equal(styleOf(labelled('채우기')[0]).backgroundColor, 'transparent', '고르지 않은 것은 조용하다');
-  await press('브러시');
+  await press('브러시 전체');
 
   // ── 13. 문구 글씨체: 고르면 캔버스에 바로, 저장에도 남고, 없던 저장본도 그대로 열린다 ─────────
   scene = { ...scene, caption: { text: '고마워', place: 'bottom', color: '#242424', style: 'basic' } };
@@ -401,7 +406,7 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   // E04: 열리는 판은 모두 같은 방식으로 닫힌다 — 이름 붙은 닫기 하나 · 손가락이 닿는 크기.
   await act(async () => byTestID('slot-1')[0].props.onPress());
   await ready();
-  for (const [open, close, mark] of [['브러시', '브러시 닫기', '세부 설정'], ['색', '팔레트 닫기', '최근 색'], ['참고', '참고 닫기', '참고 사진 추가'], ['레이어', '레이어 닫기', '레이어 추가']]) {
+  for (const [open, close, mark] of [['브러시 전체', '브러시 닫기', '세부 설정'], ['색', '팔레트 닫기', '최근 색'], ['참고', '참고 닫기', '참고 사진 추가'], ['레이어', '레이어 닫기', '레이어 추가']]) {
     await press(open);
     const found = tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === close);
     assert.equal(found.length, 1, open + ': 닫기 하나');
@@ -424,6 +429,6 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.equal(labelled('문구 적용').length, 0, '취소하면 문구 편집이 닫힌다');
 
   await act(async () => tree.unmount());
-  console.log('PASS: convenience — 새 칸 한 장·옛 다중 장 저장본과 부분 움직임 참조 보존, 레이어 차례 앞으로/뒤로(양 끝 멈춤), 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 선 종류 실제 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, 색상환 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
+  console.log('PASS: convenience — 새 칸 한 장·옛 다중 장 저장본과 부분 움직임 참조 보존, 레이어 차례 앞으로/뒤로(양 끝 멈춤), 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 브러시 카드의 실제 획 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, SV 사각 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

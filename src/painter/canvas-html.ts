@@ -124,7 +124,13 @@ const PRESETS={
  ink:{alpha:1,width:1,cap:'round',taper:16},
  soft:{alpha:1,width:1.35,soft:true},
  grain:{alpha:.85,width:.75,cap:'round',texture:true},
- marker:{alpha:.55,width:2,cap:'butt'}
+ marker:{alpha:.55,width:2,cap:'butt'},
+ // 45.28차에 더한 PRO 네 종. 기존 네 종의 값은 건드리지 않았다 — 저장된 작품의 외형이 바뀌면 안 된다.
+ calligraphy:{alpha:1,width:1.15,cap:'butt',taper:22},
+ crayon:{alpha:.8,width:1.6,cap:'round',texture:true},
+ airbrush:{alpha:.45,width:2.4,soft:true},
+ chisel:{alpha:1,width:1.9,cap:'butt'},
+ rough:{alpha:.9,width:1.1,cap:'round',texture:true,taper:10}
 };
 // 선 보정 강도. light 는 예전 값 그대로다(무료 '선 보정' 켜짐과 같다).
 const STAB={light:.55,medium:.3,strong:.16};

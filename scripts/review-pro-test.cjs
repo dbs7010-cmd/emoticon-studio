@@ -108,8 +108,8 @@ async function openPainter() {
     await press(labelled('PRO 닫기').length ? 'PRO 닫기' : 'PRO 알아보기');
     if (labelled('PRO 닫기').length) await press('PRO 닫기');
     await press('그리기');
-    await press('브러시');
-    assert.equal(labelled('고급 브러시').length, 1, '꺼짐: 고급 브러시도 잠겨 있다');
+    await press('브러시 전체');
+    assert.equal(labelled('브러시 매끈한 잉크').length, 1, '꺼짐: 고급 브러시도 잠겨 있다');
     await press('브러시 닫기');
 
     // ── 2-b. 막힌 그 자리에서 바로 켤 수 있다 ───────────────────────────────────────────
@@ -136,7 +136,7 @@ async function openPainter() {
     await press('그리기');
 
     // ── 3. 켜면 같은 자리에서 실제로 열린다 ──────────────────────────────────────────────
-    await press('브러시');
+    await press('브러시 전체');
     await press('브러시 닫기');
     await press('그리기 닫기');
     await message({ type: 'save', token: sent().filter(m => m.type === 'save').at(-1)?.token, dirty: false, data: pngData, metrics: { coverage: .2 }, activeLayerId: 'draw-1', layers: [], references: [] });
@@ -156,9 +156,8 @@ async function openPainter() {
     assert.ok(texts().includes('두 모습 번갈아'), '켜짐: 부분 움직임 화면에 실제로 들어간다');
     await press('움직임 처음으로');
     await press('그리기');
-    await press('브러시');
-    assert.equal(labelled('고급 브러시').length, 1, '켜짐: 고급 브러시 줄은 그대로 있다');
-    await press('고급 브러시');
+    await press('브러시 전체');
+    assert.equal(labelled('브러시 매끈한 잉크').length, 1, '켜짐: 고급 브러시 줄은 그대로 있다');
     assert.ok(labelled('브러시 매끈한 잉크').length >= 1, '켜짐: 고급 브러시를 실제로 고를 수 있다');
     await press('브러시 닫기');
 

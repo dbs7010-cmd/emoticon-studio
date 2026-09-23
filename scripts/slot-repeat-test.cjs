@@ -91,14 +91,16 @@ const writeCaption = async text => {
 
   // 칸 1: 한 번만 고르는 설정.
   scene = { ...scene, dirty: true, undo: true }; await message(scene);
-  await press('브러시'); await press('연필');   // 고르면 선택판이 스스로 닫힌다(45.25)
+  await press('브러시 전체'); await press('브러시 연필');   // 전체 목록에서 고르면 판이 스스로 닫힌다(45.25)
+  // 굵기는 색과 같은 줄의 가로 막대다(45.28). 폭을 알려 준 뒤 3/4 자리를 눌러 끈다.
   const sizer = () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '브러시 굵기')[0];
   drags++;
-  await act(async () => sizer().props.onResponderGrant({ nativeEvent: { pageY: 400 } }));
-  await act(async () => sizer().props.onResponderMove({ nativeEvent: { pageY: 370 } }));
-  await act(async () => sizer().props.onResponderRelease({ nativeEvent: { pageY: 370 } }));
+  await act(async () => sizer().props.onLayout({ nativeEvent: { layout: { width: 240, height: 44 } } }));
+  await act(async () => sizer().props.onResponderGrant({ nativeEvent: { locationX: 120 } }));
+  await act(async () => sizer().props.onResponderMove({ nativeEvent: { locationX: 180 } }));
+  await act(async () => sizer().props.onResponderRelease({ nativeEvent: { locationX: 180 } }));
   const width1 = lastCommand('brush')?.width ?? lastCommand('tool')?.width;
-  await press('색'); await press('색 #E94F4F'); if (labelled('팔레트 닫기').length) await press('팔레트 닫기');
+  await press('색'); await press('팔레트'); await press('색 #E94F4F'); if (labelled('팔레트 닫기').length) await press('팔레트 닫기');
   await writeCaption('칸 1');
   await press('움직이기'); await press('통통');
   scene = { ...scene, motion: lastCommand('motion').motion }; await message(scene);
@@ -117,7 +119,7 @@ const writeCaption = async text => {
     const brushNow = sent().filter(m => m.type === 'brush' || m.type === 'tool').at(-1) || init;
     assert.ok(JSON.stringify(init).includes('pencil') || JSON.stringify(brushNow).includes('pencil'), n + '칸: 연필 유지');
     if (width1 != null) assert.ok(JSON.stringify(init).includes('"width":' + width1) || JSON.stringify(brushNow).includes('"width":' + width1), n + '칸: 굵기 유지 ' + width1);
-    assert.equal(labelled('브러시').length, 1, n + '칸: 브러시 도구');
+    assert.equal(labelled('브러시 전체').length, 1, n + '칸: 브러시 도구');
     await writeCaption('칸 ' + n);
     await press('움직이기');
     assert.equal(labelled('직전 칸 움직임 다시 쓰기').length, 1, n + '칸: 직전 칸 움직임 행');

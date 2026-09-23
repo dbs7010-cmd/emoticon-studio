@@ -79,17 +79,13 @@ type Props = {
   onForgetMotion: (id: string) => void;
   onRequestPro: () => void;
   thumbs: Record<string, string>;
-  // 그리기 탭과 같은 자리·같은 이름의 확정 버튼. 움직임은 고르는 즉시 칸에 들어가 있고, 이 버튼이 칸을 끝낸다.
-  completeTitle: string;
-  onComplete: () => void;
-  completeBusy: boolean;
 };
 
 
 // 움직이기 화면. 결과(캔버스와 효과 견본)가 먼저이고 설정은 고른 다음에 나온다.
 // 무료 효과는 누르는 즉시 칸에 들어간다. PRO(부분 움직임·두 모습)는 **들어가기 전에** PRO 라고 알리고,
 // 무료 사용자는 입구에서 PRO 안내로 간다 — 만들고 난 뒤 저장할 때 막지 않는다.
-export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, previousMotion, pivotPick, pivotRole, onPickPivot, onFocusPart, onDuplicateForPose, onEditPose, savedMotions, onSaveMotion, onUseMotion, onForgetMotion, onChange, onRequestPro, thumbs, completeTitle, onComplete, completeBusy }: Props) {
+export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, previousMotion, pivotPick, pivotRole, onPickPivot, onFocusPart, onDuplicateForPose, onEditPose, savedMotions, onSaveMotion, onUseMotion, onForgetMotion, onChange, onRequestPro, thumbs }: Props) {
   const [view, setView] = React.useState<'basic' | 'parts' | 'pose' | 'shelf'>('basic');
   const base: Motion = motion ?? { version: 1, speed: .5, strength: .5, captionMoves: false };
   const set = (patch: Partial<Motion>) => onChange({ ...base, ...patch });
@@ -349,13 +345,6 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     </View>}
     </ScrollView>
 
-    <View style={{ borderTopWidth: 1, borderColor: C.line, paddingTop: 8, paddingHorizontal: 12, paddingBottom: 8, backgroundColor: C.paper }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="완성 후 다음" disabled={completeBusy} onPress={onComplete}
-        style={({ pressed }) => ({ minHeight: 52, borderRadius: C.radius.button, flexDirection: 'row', gap: 6, backgroundColor: pressed ? C.accentLine : C.accent, alignItems: 'center', justifyContent: 'center', opacity: completeBusy ? .4 : 1 })}>
-        <Text numberOfLines={1} style={{ fontSize: 16, fontWeight: '800', color: C.accentInk }}>{completeTitle}</Text>
-        <MaterialCommunityIcons name="arrow-right" size={18} color={C.accentInk} />
-      </Pressable>
-    </View>
   </View>;
 }
 

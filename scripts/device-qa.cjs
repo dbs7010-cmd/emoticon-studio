@@ -27,10 +27,11 @@ const ADB = process.env.ADB || path.join(process.env.ANDROID_HOME || 'C:\\Androi
 // 현재 UI 라벨(38.5차). 옛 라벨(펜 굵기·저장·제출 준비·문구 위치 조절·움직임 적용·＋ 새 세트)은 쓰지 않는다.
 const L = {
   newSet: '새 이모티콘 만들기',fromImage: '내 그림으로 시작', settings: '설정', proEntry: 'PRO 보기',
-  toolBrush: '브러시', toolEraser: '지우개', toolFill: '채우기', toolSelect: '선택', color: '색',
+  toolPen: '그리기 도구 펜', toolEraser: '지우개', toolFill: '채우기', toolSelect: '선택', color: '색',
+  brushAll: '브러시 전체', quickPen: '펜',
   tabDraw: '그리기', tabMotion: '움직이기', reference: '참고', layers: '레이어', caption: '문구',
   complete: '완성 후 다음', close: '그리기 닫기', more: '더보기', undo: '되돌리기', redo: '다시 실행',
-  brushClose: '브러시 닫기', pencil: '연필', brushVariant: '붓', proBrush: '고급 브러시', brushDetail: '세부 설정',
+  brushClose: '브러시 닫기', pencil: '연필', brushVariant: '브러시 붓', proBrush: '브러시 매끈한 잉크', brushDetail: '세부 설정',
   brushSize: '브러시 굵기', eraserSize: '지우개 굵기',
   swatch: '색 #54A9E8', recentPrefix: '최근 색 ', paletteClose: '팔레트 닫기',
   previousStart: '이전 칸 그림으로 시작', previousSkip: '이전 칸 그림 안 쓰기',
@@ -49,6 +50,8 @@ function labelsMissingFromSource() {
     if (key === 'swatch') return !source.includes("'색 ' + c");
     if (key === 'recentPrefix') return !source.includes("'최근 색 ' + c");
     if (key === 'saveMark') return !source.includes("'저장됨'");
+    // 브러시 이름은 목록에서 '브러시 ' + 이름으로 조립된다. 접두사와 그 이름이 소스에 있으면 된다.
+    if (key === 'brushVariant' || key === 'proBrush') return !(source.includes("'브러시 ' + b.title") && source.includes("'" + label.replace('브러시 ', '') + "'"));
     if (key === 'brushClose') return !(source.includes("title + ' 닫기'") && source.includes('title="브러시"'));
     return !(source.includes(`"${label}"`) || source.includes(`'${label}'`) || source.includes(`>${label}<`) || source.includes(`\`${label}\``) || new RegExp(`[\\['"]${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]`).test(source));
   }).map(([key, label]) => `${key}=${label}`);
@@ -163,7 +166,7 @@ function run(argv) {
     return { samples, worst };
   });
   r.step('03-home', () => { sleep(1500); r.must(L.newSet); r.must(L.fromImage); });
-  r.step('04-new-set-canvas', () => { r.tap(L.newSet); sleep(3500); for (const l of [L.toolBrush, L.toolEraser, L.toolFill, L.toolSelect, L.color, L.reference, L.layers, L.caption, L.tabMotion, L.complete]) r.must(l); });
+  r.step('04-new-set-canvas', () => { r.tap(L.newSet); sleep(3500); for (const l of [L.toolPen, L.toolEraser, L.toolFill, L.toolSelect, L.color, L.brushAll, L.quickPen, L.pencil, L.reference, L.layers, L.caption, L.tabMotion, L.complete, L.undo, L.redo]) r.must(l); });
   // 40차: 캔버스가 영역 가운데로 옮겨졌다. 고정 좌표 대신 실제 캔버스(가장 큰 WebView) 안 가운데에 긋는다.
   r.step('05-draw-stroke', () => {
     const web = nodes().filter(n => /WebView/.test(n.cls)).sort((a, b) => (b.x2 - b.x1) * (b.y2 - b.y1) - (a.x2 - a.x1) * (a.y2 - a.y1))[0];
@@ -173,10 +176,10 @@ function run(argv) {
     shell(`input swipe ${web.x1 + Math.round(w * .18)} ${web.y1 + Math.round(h * .18)} ${web.x1 + Math.round(w * .42)} ${web.y1 + Math.round(h * .42)} 400`); sleep(600);
     return { canvas: [web.x1, web.y1, web.x2, web.y2] };
   });
-  r.step('06-brush-retap-sheet', () => { r.tap(L.toolBrush); r.must(L.brushClose); r.must(L.pencil); r.must(L.brushDetail); r.tap(L.brushVariant); r.tap(L.brushClose); });
+  r.step('06-brush-list-and-detail', () => { r.tap(L.brushAll); r.must(L.brushClose); r.must(L.brushVariant); r.must(L.brushDetail); r.tap(L.brushVariant); r.must(L.brushSize); r.tap(L.quickPen); r.tap(L.quickPen); r.must(L.brushDetail); r.tap(L.brushClose); });
   r.step('07-canvas-size-drag', () => { r.swipeOn(L.brushSize, -120); r.must(L.brushSize); });
   r.step('08-color-and-recent', () => { r.tap(L.color); r.tap(L.swatch); r.tap(L.color); const recent = nodes().filter(n => n.desc.startsWith(L.recentPrefix)); if (!recent.length) throw new Error('최근 색이 없음'); shell(`input keyevent KEYCODE_BACK`); sleep(400); return recent.map(n => n.desc); });
-  r.step('09-eraser-same-control', () => { r.tap(L.toolEraser); r.tap(L.toolEraser); r.must(L.eraserSize); if (find(L.brushClose)) throw new Error('지우개가 시트를 열었다'); r.swipeOn(L.eraserSize, 80); r.tap(L.toolBrush); r.must(L.brushSize); });
+  r.step('09-eraser-same-control', () => { r.tap(L.toolEraser); r.tap(L.toolEraser); r.must(L.eraserSize); if (find(L.brushClose)) throw new Error('지우개가 시트를 열었다'); r.swipeOn(L.eraserSize, 80); r.tap(L.toolPen); r.must(L.brushSize); });
   r.step('10-undo-redo', () => { r.tap(L.undo); r.tap(L.redo); });
   r.step('11-reference-layers', () => { r.tap(L.reference); r.tap(L.reference); r.tap(L.layers); r.tap(L.layers); });
   r.step('12-caption-direct', () => {
@@ -206,10 +209,10 @@ function run(argv) {
     if (live.length < 3) throw new Error('캔버스 미리보기가 움직이지 않는 효과: ' + JSON.stringify(moving));
     return { canvasChangeBetweenFrames: moving };
   });
-  r.step('13b-back-to-draw', () => { tapFrac(.093, .131); sleep(900); r.must(L.toolBrush); });
+  r.step('13b-back-to-draw', () => { tapFrac(.093, .131); sleep(900); r.must(L.toolPen); });
   r.step('14-complete-next', () => { r.tap(L.complete); sleep(3000); r.must(L.previousStart); });
   // 직전 칸 움직임 행은 움직이는 패널 안이라 읽을 수 없다 → 캡처를 남기고(사람이 아니라 AI 가 캡처를 본다), 행 유무는 product-ux-test 가 판정.
-  r.step('15-previous-start-and-motion-panel', () => { r.tap(L.previousStart); sleep(1500); r.must(L.toolBrush); r.tap(L.tabMotion); sleep(1500); r.shot('15-motion-with-previous'); const d = motionDelta(); tapFrac(.093, .131); r.must(L.complete); return { canvasChangeBetweenFrames: d }; });
+  r.step('15-previous-start-and-motion-panel', () => { r.tap(L.previousStart); sleep(1500); r.must(L.toolPen); r.tap(L.tabMotion); sleep(1500); r.shot('15-motion-with-previous'); const d = motionDelta(); tapFrac(.093, .131); r.must(L.complete); return { canvasChangeBetweenFrames: d }; });
   r.step('16-board', () => { r.tap(L.close); sleep(2500); r.must(L.continueDraw); r.must(L.exportEntry); });
   r.step('17-export', () => {
     r.tap(L.exportEntry); sleep(1500); r.shot('17-export-top');

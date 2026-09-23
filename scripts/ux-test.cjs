@@ -239,7 +239,10 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  // 기기 사진에서 선택 편집 중에 PRO 안내가 떠 있었다. 그건 그 칸에 이미 PRO 움직임이 있어서였고,
  // 선택 자체는 무료여야 한다. 그리고 선택 중에는 아래에 같은 버튼 줄이 두 번 보이면 안 된다.
  scene={...scene,selection:{box:{x:10,y:10,w:60,h:60},dx:0,dy:0,scale:1,rot:0,flip:1}};await message(scene);
- assert.equal(labelled('완성 후 다음').length,0,'선택 편집 중에는 완성 버튼이 겹쳐 나오지 않는다');
+ // 45.28 정정: 완성은 머리줄로 올라갔다(승인 보드 01). 선택 판의 취소·적용과 자리가 갈려 겹치지 않는다.
+ assert.equal(labelled('완성 후 다음').length,1,'완성은 머리줄에 하나만 있다');
+ assert.equal(labelled('선택 취소').length,1,'선택 판은 제 취소를 가진다');
+ assert.equal(labelled('선택 적용').length,1,'선택 판은 제 적용을 가진다');
  for(const tool of ['작게','크게','왼쪽 회전','오른쪽 회전','좌우 반전'])assert.equal(labelled(tool).length,1,'선택 변형 버튼: '+tool);
  assert.equal(labelled('이동').length,0,'눌러도 아무 일 없는 이동 버튼은 없다');
  assert.ok(!shown().some(t=>t.includes('끌어서 해요')),'나쁜 UI를 설명하던 문장이 없다');
@@ -288,9 +291,13 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  // 사용자 평가: "레이어가 그림을 가려 무엇을 편집하는지 보기 어렵다". 패널은 캔버스 위에 떠서는 안
  // 되고, 도구가 있던 아래 자리를 대신 써야 한다. 그리고 고르면 접히면서 그 그림에 바로 그려져야 한다.
  await press('레이어');
- const floating=tree.root.findAll(n=>n.type==='View'&&!!n.props.style&&n.props.style.position==='absolute'&&(n.props.style.elevation??0)>0);
- assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+floating.length+'개가 떠 있음');
- assert.equal(labelled('브러시').length,1,'기본 도구바의 브러시는 패널이 열려도 하나만 남는다');
+ // 찾는 것은 '캔버스를 덮는 판'이다. 막대 손잡이 같은 작은 점은 판이 아니다(45.28: 굵기 막대가 아래 줄로 내려왔다).
+ const floating=tree.root.findAll(n=>n.type==='View'&&!!n.props.style&&n.props.style.position==='absolute'&&(n.props.style.elevation??0)>0
+   &&!(typeof n.props.style.width==='number'&&n.props.style.width<=48));
+assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+floating.length+'개가 떠 있음');
+ // 45.28: 아래 줄은 브러시 빠른 선택 카드 셋 + '전체' 입구다. 판이 열려도 그 줄은 그대로 남는다.
+ assert.equal(labelled('브러시 전체').length,1,'전체 입구는 판이 열려도 하나만 남는다');
+ assert.equal(tree.root.findAll(n=>n.props.testID==='빠른 브러시').length,1,'빠른 선택 줄도 그대로 있다');
  assert.equal(labelled('색').length,1,'지금 색도 계속 보인다');
  assert.equal(labelled('레이어 1 선택').length,1,'기본 이름 "그림 1"은 칸 이름과 헷갈리지 않게 레이어로 부른다');
  assert.equal(lastCommand('layerThumbs').size,72,'패널을 열 때 캔버스에 작은 그림을 달라고 한다');
@@ -302,7 +309,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  await press('레이어 2 선택');
  assert.deepEqual(lastSent(),{type:'select',id:'draw-2'},'고르면 그 그림이 그리는 대상이 된다');
  assert.equal(labelled('레이어 1 선택').length,0,'패널은 접힌다');
- assert.equal(labelled('브러시').length,1,'도구가 돌아온다');
+ assert.equal(labelled('브러시 전체').length,1,'도구 줄이 돌아온다');
  scene={...scene,activeLayerId:'draw-2'};await message(scene);
  await press('레이어');
  await press('레이어 1 선택');
@@ -395,7 +402,10 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  assert.equal(labelled('색 #54A9E8').length,0,'기본 도구 줄에 색 견본이 늘어서 있지 않다');
  assert.equal(labelled('색').length,1,'대신 팔레트를 여는 자리가 하나 있다');
  await press('색');
- assert.ok(labelled('색 #54A9E8').length>=1,'열면 팔레트 견본이 나온다');
+ // 45.28(승인 보드 01): 패널은 SV 사각 + 색상 막대로 열린다. 견본 격자는 '팔레트' 갈래에 그대로다.
+ assert.equal(tree.root.findAll(n=>n.props&&n.props.accessibilityLabel==='색 사각판').length,1,'열면 SV 사각이 먼저다');
+ await press('팔레트');
+ assert.ok(labelled('색 #54A9E8').length>=1,'팔레트 갈래에 견본이 나온다');
  // 견본 한 번이면 색이 정해지고 **패널이 닫혀 바로 그리기로 돌아간다.** 예전에는 색을 고른 뒤
  // 펜을 다시 눌러야 했다. 그 불편이 이번 승인의 핵심이다.
  await press('색 #54A9E8');
@@ -405,10 +415,11 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  assert.equal(labelled('색').length,1,'그리기 줄로 돌아왔다');
  // 상세 조절은 여러 번 만져 봐야 하므로 패널을 유지한다.
  await press('색');
- await press('직접 선택');
+ await press('직접 선택');   // 앞에서 견본을 보려고 팔레트로 건너갔으니 되돌아온다
  assert.equal(tree.root.findAll(n=>n.props&&n.props.accessibilityLabel==='HEX 색 값').length,1,'HEX 로 정확한 값을 넣을 수 있다');
- // 45.4: 계열은 긴 막대 줄이 아니라 둥근 색상환 하나로 고른다.
- assert.equal(tree.root.findAll(n=>n.props&&n.props.accessibilityLabel==='색상환').length,1,'계열·진하기는 색상환 하나로 고른다');
+ // 45.28: 계열은 색상 막대에서, 선명함·밝기는 SV 사각에서.
+ assert.equal(tree.root.findAll(n=>n.props&&n.props.accessibilityLabel==='색 사각판').length,1,'선명함·밝기는 SV 사각 하나로 고른다');
+ assert.equal(tree.root.findAll(n=>n.props&&n.props.accessibilityLabel==='색 계열 막대').length,1,'계열은 색상 막대 하나로 고른다');
  assert.equal(tree.root.findAll(n=>n.props&&n.props.accessibilityLabel==='HEX 색 값').length,1,'상세 조절 중에는 패널이 유지된다');
  await press('팔레트');
  assert.ok(labelled('색 #54A9E8').every(n=>n.props.accessibilityState.selected),'다시 열어도 고른 색이 선택으로 표시된다');
@@ -495,9 +506,10 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  // 화면에 KeyboardAvoidingView 는 둘이다(홈 하나, 페인터 하나). 문구 적용을 품은 쪽이 페인터다.
  const kav = () => tree.root.findAll(n=>n.type==='KeyboardAvoidingView').filter(n=>n.findAll(c=>c.type==='Pressable'&&c.props.accessibilityLabel==='문구 적용').length===1).at(-1);
  const keyboardTo = async height => { await act(async () => { for (const fn of keyboardListeners[height > 0 ? 'keyboardDidShow' : 'keyboardDidHide'] || []) fn({ endCoordinates: { height } }); }); };
- const toolRow = () => ['브러시','지우개','채우기','선택'].filter(name => labelled(name).length > 0);
+ // 45.28: 아래 도구 줄은 네 칸 균등(펜·지우개·채우기·선택)이다.
+ const toolRow = () => ['펜','지우개','채우기','선택'].filter(name => labelled(name).length > 0);
  await press('문구');
- assert.deepEqual(toolRow(),['브러시','지우개','채우기','선택'],'키보드 전에는 하단 도구바가 그대로 있다');
+ assert.deepEqual(toolRow(),['펜','지우개','채우기','선택'],'키보드 전에는 하단 도구바가 그대로 있다');
  assert.equal(kav().props.behavior,'height','Android absolute dock는 높이 조정으로 키보드를 피한다');
  await keyboardTo(320);
  assert.equal(labelled('키보드 닫기').length,1,'패널 취소와 별도의 키보드 닫기');
@@ -506,7 +518,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  assert.deepEqual(toolRow(),[],'대신 하단 도구바는 글자를 치는 동안 비켜준다');
  await keyboardTo(0);
  assert.equal(kav().props.behavior,'height','키보드 복원은 동일한 높이 조정 호스트에서 처리한다');
- assert.deepEqual(toolRow(),['브러시','지우개','채우기','선택'],'그리고 하단 도구바가 제자리로 돌아온다');
+ assert.deepEqual(toolRow(),['펜','지우개','채우기','선택'],'그리고 하단 도구바가 제자리로 돌아온다');
  assert.equal(labelled('문구 적용').length,1,'문구 패널은 그대로 열려 있다 — 키보드를 닫은 것이 취소는 아니다');
  await press('문구 닫기');
 
@@ -1046,27 +1058,26 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   assert.equal(labelled('선 보정').length,0,'기본 화면에는 독립 선 보정 줄이 없다');
   assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='선 종류').length,0,'선 종류 카드는 기본 화면에서 접혀 있다 at '+width+'dp');
   assert.ok(!shown().some(t=>t==='PRO'),'작업 화면 기본 상태에 PRO 표시가 없다 at '+width+'dp');
-  // 45.25 정정: 굵기는 캔버스 **밖** 오른쪽 칸에서 세로로 끈다(예전에는 캔버스 가장자리에 겹쳐 있었다).
-  const edge=()=>tree.root.findAll(n=>n.type==='View'&&n.props.accessibilityRole==='adjustable'&&n.props.accessibilityLabel==='브러시 굵기')[0];
-  const sizer=edge();
-  assert.ok(sizer,'굵기 조절대가 있다 at '+width+'dp');
-  assert.ok(styleOf(sizer).width<=28,'조절대는 좁은 칸이다 at '+width+'dp');
-  assert.notEqual(styleOf(sizer).position,'absolute','캔버스 위에 겹치지 않는다 at '+width+'dp');
-  await act(async()=>sizer.props.onResponderGrant({nativeEvent:{pageY:400}}));
-  await act(async()=>sizer.props.onResponderMove({nativeEvent:{pageY:340}}));
-  await act(async()=>sizer.props.onResponderRelease({nativeEvent:{pageY:340}}));
-  assert.ok(lastCommand('width').width>6,'위로 끌면 굵어진다 at '+width+'dp');
-  await press('브러시');
-  assert.equal(edge(),undefined,'패널이 열린 동안에는 굵기 띠가 캔버스를 건드리지 않는다 at '+width+'dp');
-  const brushRow=tree.root.findAll(n=>n.type==='View'&&n.props.testID==='선 종류')[0];
-  assert.equal(styleOf(brushRow).flexDirection,'row');
-  assert.deepEqual(brushRow.findAll(n=>n.type==='Pressable').map(n=>n.props.accessibilityLabel),['펜','붓','연필']);
-  assert.equal(labelled('굵기 12').length,0,'굵기 버튼 줄은 브러시 설정에 없다 at '+width+'dp');
-  await press('세부 설정');
-  assert.equal(labelled('선 보정').length,1,'세부 설정을 펼치면 보정이 있다');
+  // 45.28 정정: 승인 보드 01 대로 굵기는 캔버스 **아래** 가로 한 줄이다(색 동그라미 · 막대 · 수치).
+  //   세로 조절대는 없앴다 — 조절대가 둘이면 어느 쪽이 지금 값인지 알 수 없다.
+  const sizer=()=>tree.root.findAll(n=>n.props.accessibilityRole==='adjustable'&&/굵기$/.test(n.props.accessibilityLabel??''))[0];
+  assert.ok(sizer(),'굵기 막대가 있다 at '+width+'dp');
+  assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 띠').length,0,'세로 조절대는 없다 at '+width+'dp');
+  assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 수치').length,1,'굵기 수치가 한 곳에 보인다 at '+width+'dp');
+  // 빠른 선택 줄: 카드 셋 + 전체 입구.
+  const quick=tree.root.findAll(n=>n.props.testID==='빠른 브러시')[0];
+  assert.ok(quick,'빠른 브러시 줄이 있다 at '+width+'dp');
+  assert.deepEqual(quick.findAll(n=>n.type==='Pressable').map(n=>n.props.accessibilityLabel),['펜','연필','마커','브러시 전체'],'처음에는 펜·연필·마커 at '+width+'dp');
+  // 전체 목록에서 고르면 빠른 줄의 한 자리가 바뀌고 목록은 닫힌다.
+  await press('브러시 전체');
+  assert.ok(tree.root.findAll(n=>n.props.testID==='브러시 목록').length===1,'전체 목록이 열린다');
+  assert.equal(labelled('브러시 붓').length,1,'무료 4종이 목록에 있다');
+  await press('브러시 붓');
+  assert.equal(tree.root.findAll(n=>n.props.testID==='브러시 목록').length,0,'고르면 목록이 닫힌다 at '+width+'dp');
+  assert.ok(tree.root.findAll(n=>n.props.testID==='빠른 브러시')[0].findAll(n=>n.type==='Pressable').map(n=>n.props.accessibilityLabel).includes('붓'),'고른 브러시가 빠른 줄에 들어온다');
   await press('연필');
   assert.equal(lastCommand('brush').brush,'pencil');
-  assert.ok(labelled('브러시')[0].props.accessibilityState.selected,'브러시 도구가 그대로 골라져 있다');
+  assert.ok(labelled('그리기 도구 펜')[0].props.accessibilityState.selected,'그리기 도구(펜)가 그대로 골라져 있다');
   const targets=tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel&&!n.props.disabled);
   assert.ok(targets.length>10,'there is something to audit at '+width+'dp');
   for(const node of targets){

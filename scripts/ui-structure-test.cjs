@@ -131,14 +131,18 @@ const homeSections = () => {
   await act(async () => byTestID('slot-2')[0].props.onPress());
   await ready();
   const topSlot = () => all().filter(n => ['View', 'Pressable'].includes(n.type) && flat(n.props.style).position === 'absolute' && flat(n.props.style).top === 8 && flat(n.props.style).left === 12);
-  const dockTools = () => ['브러시', '지우개', '채우기', '선택', '문구', '색'].filter(name => labelled(name).length === 1);
+  const DRAW_TOOLS = ['그리기 도구 펜', '지우개', '채우기', '선택'];
+  const dockTools = () => DRAW_TOOLS.filter(name => labelled(name).length === 1);
   const openPanels = () => ['브러시 닫기', '팔레트 닫기', '문구 닫기', '더보기 닫기'].filter(name => labelled(name).length === 1);
   const railOpen = () => ['참고', '레이어'].filter(name => labelled(name)[0].props.accessibilityState.selected);
-  assert.deepEqual(dockTools(), ['브러시', '지우개', '채우기', '선택', '문구', '색'], '도구 줄: 그리는 것 넷 + 문구 + 색');
-  assert.equal(anyLabel('브러시 굵기').length, 1, '굵기는 도구 줄이 아니라 행동 줄에 그대로 있다(7번째 도구가 아니다)');
+  assert.deepEqual(dockTools(), DRAW_TOOLS, '도구 줄: 그리는 것 넷');
+  // 브러시 카드 셋과 '전체' 입구, 색, 굵기는 캔버스 아래 제자리에 늘 있다(45.28차 승인 보드).
+  assert.equal(byTestID('빠른 브러시')[0].findAll(n => n.type === 'Pressable' && n.props.testID).length, 3, '빠른 브러시 카드 셋은 상시 노출');
+  for (const name of ['브러시 전체', '색', '문구']) assert.equal(labelled(name).length, 1, name + ' 진입점은 그대로 있다');
+  assert.equal(anyLabel('브러시 굵기').length, 1, '굵기는 도구 줄이 아니라 색과 같은 줄에 있다(다섯째 도구가 아니다)');
   assert.ok(topSlot().length <= 1, '기본 상태: 캔버스 알림은 많아야 하나');
   assert.equal(openPanels().length + railOpen().length, 0, '기본 상태에서 열린 패널 없음');
-  for (const [open, close] of [['브러시', '브러시 닫기'], ['색', '팔레트 닫기'], ['문구', '문구 닫기'], ['더보기', '더보기 닫기']]) {
+  for (const [open, close] of [['브러시 전체', '브러시 닫기'], ['색', '팔레트 닫기'], ['문구', '문구 닫기'], ['더보기', '더보기 닫기']]) {
     await press(open);
     assert.deepEqual(openPanels(), [close], open + ': 한 번에 한 패널만 화면을 쓴다');
     assert.deepEqual(railOpen(), [], open + ': 패널을 열면 참고·레이어 줄은 닫힌다');
@@ -156,7 +160,7 @@ const homeSections = () => {
   await press('참고');
   await press('선택');
   assert.equal(anyLabel('브러시 굵기').length + anyLabel('지우개 굵기').length, 0, '선택 도구에는 굵기가 없다 — 지금 쓰는 것만 보인다');
-  await press('브러시');
+  await press('브러시 전체');
   await message({ type: 'zoom', zoom: 2 });
   assert.equal(labelled('원래 크기로 보기').length, 1, '확대 중에만 배율 표시');
   assert.ok(texts().includes('200%'), '배율은 숫자로 말한다');
