@@ -8,8 +8,9 @@ const { walk, SCREENS, viewport, deviceArt } = require('./_harness.cjs');
 // 찍은 소스를 그림에 박아 둔다 — 이전 회차 화면과 섞이지 않게.
 const COMMIT = (() => { try { return execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim(); } catch { return '?'; } })();
 
-const OUT = 'verification/round45_23/screens';
-const WIDTH = 390, HEIGHT = 844;
+// 폴더와 폭을 인자로 받는다: node scripts/_screens.cjs [폴더] [폭] [높이]
+const OUT = process.argv[2] || 'verification/round45_23/screens';
+const WIDTH = Number(process.argv[3] || 390), HEIGHT = Number(process.argv[4] || 844);
 
 // ── RN 스타일 → CSS ───────────────────────────────────────────────────────────────────────
 const PX = new Set(['width', 'height', 'minWidth', 'minHeight', 'maxWidth', 'maxHeight', 'top', 'left', 'right', 'bottom', 'gap', 'rowGap', 'columnGap',
@@ -156,7 +157,8 @@ const PAGE = (id, title, body) => `<!doctype html>
   .meta { color:#9BA2AE; font-size:12px; margin:0 0 4px; text-align:center; max-width:${WIDTH * 1.4}px; line-height:1.6 }
   .phone { width:${WIDTH}px; height:${HEIGHT}px; display:flex; flex-direction:column; background:#FFFFFF; overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,.45); position:relative; }
   .box { display:flex; box-sizing:border-box; }
-  .scroll { overflow:visible; }
+  /* RN 의 ScrollView 는 제 상자를 넘는 내용을 잘라 낸다. 잘라 주지 않으면 줄어든 목록이 아래 고정 줄 위로 흘러넘쳐, 기기에서는 나지 않는 겹침이 그림에만 생긴다(45.28차). */
+  .scroll { overflow:hidden; }
   .t { display:inline; box-sizing:border-box; white-space:pre-wrap; word-break:keep-all; }
   .img { display:flex; align-items:center; justify-content:center; text-align:center; background:#EFF1F5; color:#8B93A0; font-size:9px; line-height:1.3; box-sizing:border-box; }
   .img.none { background:repeating-linear-gradient(45deg,#F6E6E6 0 6px,#EFF1F5 6px 12px); color:#B42318; }

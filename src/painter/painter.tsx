@@ -1166,7 +1166,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           </View>}
         </View>
 
-        : panel === 'brush' ? <Sheet tall room={coverRoom()} title="브러시" onClose={() => { ease(); setPanel(null); }}>
+        : panel === 'brush' ? <Sheet tall plain room={coverRoom()} title="브러시" onClose={() => { ease(); setPanel(null); }}>
           {brushSheet}
         </Sheet>
         : panel === 'reference' && selectedReference ? <Sheet room={coverRoom()} title="참고 사진" onClose={() => { ease(); setPanel(null); }}>
@@ -1529,11 +1529,13 @@ function EyeToggle({ label, on, onPress }: { label: string; on: boolean; onPress
 // 바탕을 어둡게 하는 것은 ⋯ 작업 도구처럼 **고르는 일 자체에 집중하는 자리**뿐이다.
 // 높이는 내용에 맞추고, 길면 패널 안에서 스크롤한다 — 패널이 화면을 다 먹지 않는다.
 // tall: 설정이 여러 줄인 펜 설정용. 조절이 스크롤 아래로 묻히지 않도록 화면 절반까지 쓴다(캔버스 크기는 그대로 — 패널은 겹쳐 뜬다).
-function Sheet({ title, onClose, children, tall, room = Infinity }: { title: string; onClose: () => void; children: React.ReactNode; tall?: boolean; room?: number }) {
+// plain: 안에서 스스로 구르는 판(브러시 목록처럼). 시트가 또 한 겹 스크롤을 씌우면 안쪽의 '줄어드는
+// 목록 + 고정 줄' 규칙이 죽어, 아래 고정 줄(세부 설정)이 화면 밖으로 밀려난다(45.28차에 실제로 그랬다).
+function Sheet({ title, onClose, children, tall, room = Infinity, plain }: { title: string; onClose: () => void; children: React.ReactNode; tall?: boolean; room?: number; plain?: boolean }) {
   const { height } = useWindowDimensions();
   return <View style={{ backgroundColor: T.paper, maxHeight: Math.min(room, tall ? Math.min(440, Math.max(300, Math.round(height * .5))) : Math.min(300, Math.max(190, height - 440))) }}>
     <SheetHeader title={title} onClose={onClose} />
-    <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>{children}</ScrollView>
+    {plain ? children : <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>{children}</ScrollView>}
   </View>;
 }
 // 색 패널. 캔버스를 덮지 않고 **아래 도구 자리를 대신 차지한다.** 그림을 보면서 색을 고를 수 있어야
@@ -1629,14 +1631,14 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
     </> : <>
       {/* 직접 선택(45.28차, 승인 보드 01): 프리셋 한 줄 · SV 사각 + 색상 막대. 밝기는 사각의 세로축이라
           따로 막대를 두지 않는다 — 같은 값을 두 곳에서 조절하지 않게. 투명도는 그대로 남는다. */}
-      {!!recent.length && <View style={{ gap: 4 }}>
+      <ColorField color={color} onPick={(c, settle) => onPick(keepAlpha(c), settle)} />
+      <HueBar color={color} onPick={(c, settle) => onPick(keepAlpha(c), settle)} />
+      {!!recent.length && <View style={{ gap: 2 }}>
         <Text style={{ fontSize: 11, fontWeight: '700', color: T.muted }}>최근</Text>
-        <ScrollView testID="최근 색" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', gap: 12, paddingHorizontal: 6, paddingVertical: 6 }}>
+        <ScrollView testID="최근 색" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', gap: 12, paddingHorizontal: 6, paddingVertical: 4 }}>
           {recent.slice(0, 7).map(c => <Swatch round key={'c' + c} label={'최근 색 ' + c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
         </ScrollView>
       </View>}
-      <ColorField color={color} onPick={(c, settle) => onPick(keepAlpha(c), settle)} />
-      <HueBar color={color} onPick={(c, settle) => onPick(keepAlpha(c), settle)} />
       <Range label="투명도" value={percent} min={5} max={100} step={1} onChange={n => channel('a', Math.round(n) * 2.55)} display={percent + '%'} />
     </>}
     </ScrollView>
@@ -1657,7 +1659,7 @@ function Swatch({ color, selected, onPress, size = 34, label, round }: { color: 
 // 조각을 돌려 원을 만든다(각 조각은 아래쪽 끝 = 원 가운데를 축으로 돈다). 가운데로 갈수록 흰 막이 덮여 옅어진다.
 // SV 사각(가로 = 선명함 · 세로 = 밝기)과 색상 막대. 승인 보드 01 의 색 시트 배치 그대로다.
 // 그라디언트 그림 없이 세우려고 색 띠를 여러 칸으로 나눠 붙인다 — 칸 수는 눈에만 관계하고 손가락과는 무관하다.
-const SAT_STEPS = 14, VAL_STEPS = 12, HUE_STEPS = 24, FIELD_H = 132;
+const SAT_STEPS = 20, VAL_STEPS = 16, HUE_STEPS = 30, FIELD_H = 116;
 function ColorField({ color, onPick }: { color: string; onPick: (c: string, settle?: boolean) => void }) {
   const [size, setSize] = useState({ w: 0, h: FIELD_H });
   const { h, s, v } = hsvOf(color);
