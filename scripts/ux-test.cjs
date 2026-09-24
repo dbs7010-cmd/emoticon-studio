@@ -308,10 +308,12 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  scene={...scene,layers:[...scene.layers,{id:'draw-2',name:'그림 2',visible:true,opacity:1,x:0,y:0,scale:1,rotation:0}]};await message(scene);
  await press('레이어 2 선택');
  assert.deepEqual(lastSent(),{type:'select',id:'draw-2'},'고르면 그 그림이 그리는 대상이 된다');
- assert.equal(labelled('레이어 1 선택').length,0,'패널은 접힌다');
- assert.equal(labelled('브러시 전체').length,1,'도구 줄이 돌아온다');
+ // 45.35 §7: '레이어 선택만으로 창이 갑자기 닫히지 않음'. 예전에는 고르는 순간 닫혀서
+ // **무엇을 골랐는지 확인할 수 없었고**, 순서를 바꾸거나 보임을 끄려면 매번 다시 열어야 했다.
+ // 그림이 가려지지 않는 것은 패널이 캔버스 위에 뜨지 않는 것으로 이미 지켜진다(바로 위 검사).
+ assert.equal(labelled('레이어 1 선택').length,1,'고른 뒤에도 판이 열려 있어 이어서 만질 수 있다');
+ assert.equal(labelled('브러시 전체').length,1,'아래 도구 줄은 그대로 있다');
  scene={...scene,activeLayerId:'draw-2'};await message(scene);
- await press('레이어');
  await press('레이어 1 선택');
  scene={...scene,activeLayerId:'draw-1'};await message(scene);
 
@@ -319,7 +321,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  // (옛 방식은 '장 수 + 1' 이라 draw-1·draw-3 에서 draw-3 을 또 지어, 새 획이 옛 그림 위에 얹혔다.)
  const gapped=[{id:'draw-1',name:'그림 1',visible:true,opacity:1,x:0,y:0,scale:1,rotation:0},{id:'draw-3',name:'그림 3',visible:true,opacity:1,x:0,y:0,scale:1,rotation:0}];
  scene={...scene,layers:gapped,activeLayerId:'draw-1'};await message(scene);
- await press('레이어');
+ // 판은 앞에서 고른 뒤에도 열려 있다(45.35) — 여기서 또 누르면 도리어 닫힌다.
  await press('레이어 추가');
  assert.deepEqual(lastSent(),{type:'addLayer',id:'draw-2',name:'그림 2'},'비어 있는 번호를 쓴다 — 남아 있는 레이어와 겹치지 않는다');
  await press('레이어');
@@ -1097,12 +1099,18 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   assert.equal(labelled('선 보정').length,0,'기본 화면에는 독립 선 보정 줄이 없다');
   assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='선 종류').length,0,'선 종류 카드는 기본 화면에서 접혀 있다 at '+width+'dp');
   assert.ok(!shown().some(t=>t==='PRO'),'작업 화면 기본 상태에 PRO 표시가 없다 at '+width+'dp');
-  // 45.28 정정: 승인 보드 01 대로 굵기는 캔버스 **아래** 가로 한 줄이다(색 동그라미 · 막대 · 수치).
-  //   세로 조절대는 없앴다 — 조절대가 둘이면 어느 쪽이 지금 값인지 알 수 없다.
+  // 45.35 승인 시안: 굵기와 불투명도는 캔버스 **왼쪽 밖**의 세로 조절대다. 아래 가로 두 줄은 없앴다.
+  //   조절대는 하나뿐이고(둘이면 어느 쪽이 지금 값인지 알 수 없다), 값은 손잡이 옆 말풍선에만 적힌다.
   const sizer=()=>tree.root.findAll(n=>n.props.accessibilityRole==='adjustable'&&/굵기$/.test(n.props.accessibilityLabel??''))[0];
-  assert.ok(sizer(),'굵기 막대가 있다 at '+width+'dp');
-  assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 띠').length,0,'세로 조절대는 없다 at '+width+'dp');
-  assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 수치').length,1,'굵기 수치가 한 곳에 보인다 at '+width+'dp');
+  assert.ok(sizer(),'굵기 조절대가 있다 at '+width+'dp');
+  assert.equal(tree.root.findAll(n=>n.props.testID==='조절대').length,1,'왼쪽 조절대는 한 기둥이다 at '+width+'dp');
+  assert.equal(tree.root.findAll(n=>n.props.accessibilityRole==='adjustable'&&/굵기$/.test(n.props.accessibilityLabel??'')).length,1,'굵기를 바꾸는 자리는 하나뿐이다 at '+width+'dp');
+  assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='굵기 말풍선').length,1,'굵기 값이 손잡이 옆 한 곳에 보인다 at '+width+'dp');
+  assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='불투명도 말풍선').length,1,'불투명도 값도 손잡이 옆 한 곳에 보인다 at '+width+'dp');
+  assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 미리보기').length,0,'캔버스 한가운데 검은 미리보기 상자는 없다 at '+width+'dp');
+  assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 띠').length,0,'캔버스 가장자리 굵기 띠도 없다 at '+width+'dp');
+  // 손잡이와 말풍선은 레이아웃을 재기 전에도 제자리에 있다(비율 자리) — 처음 한 번 비어 보이지 않는다.
+  assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 조절대 손잡이').length,1,'굵기 손잡이가 처음부터 보인다 at '+width+'dp');
   // 빠른 선택 줄: 카드 셋 + 전체 입구.
   const quick=tree.root.findAll(n=>n.props.testID==='빠른 브러시')[0];
   assert.ok(quick,'빠른 브러시 줄이 있다 at '+width+'dp');

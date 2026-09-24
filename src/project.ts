@@ -1,4 +1,5 @@
 import { KAKAO_STATIC_SPEC as SPEC } from './constants/kakao-spec';
+import { MOTION_PRESETS } from './types';
 import type { LocalImage, Motion, Project, Slot, Store } from './types';
 
 export function createProject(projectName: string, characterName: string): Project {
@@ -111,7 +112,9 @@ export function parseStore(raw: string): Store {
       if (s.motion !== undefined) {
         const m = s.motion;
         if (m.version !== 1) throw new Error('움직임 데이터가 손상되었습니다.');
-        if (m.preset !== undefined && !['bounce', 'shake', 'pulse'].includes(m.preset)) throw new Error('움직임 종류가 손상되었습니다.');
+        // 종류 목록은 types.ts 한 곳에서 온다. 여기에 또 적으면 화면이 내놓는 것과 저장이 받는 것이
+        // 갈라진다 — 45.34 에서 실제로 갈라져 늘린 세 가지가 저장되지 않았다(45.35 에서 고침).
+        if (m.preset !== undefined && !(MOTION_PRESETS as readonly string[]).includes(m.preset)) throw new Error('움직임 종류가 손상되었습니다.');
         if (![m.speed, m.strength].every(n => Number.isFinite(n) && n >= 0 && n <= 1)) throw new Error('움직임 세기 데이터가 손상되었습니다.');
         if (m.play !== undefined && !['together', 'sequence'].includes(m.play)) throw new Error('움직임 재생 순서가 손상되었습니다.');
         if (m.captionMoves !== undefined && typeof m.captionMoves !== 'boolean') throw new Error('문구 움직임 데이터가 손상되었습니다.');

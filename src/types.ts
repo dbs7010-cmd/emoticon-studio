@@ -25,7 +25,11 @@ export type PainterExport = { data: string; metrics: Metrics; layers: (LayerTran
 // and a cut with no motion is exactly the still cut it always was.
 // 45.34: 셋에서 여섯으로. 기존 셋의 id 는 그대로 둔다 — 저장된 칸이 읽히지 않으면 안 된다.
 // 새로 더한 셋은 float(둥실) · tilt(까딱) · jitter(부르르) 다.
-export type MotionPreset = 'bounce' | 'shake' | 'pulse' | 'float' | 'tilt' | 'jitter';
+// 저장 검증이 읽는 **유일한 목록**이다. 45.34 에서 종류를 셋에서 여섯으로 늘렸을 때
+// 이 자리가 아니라 project.ts 안에 글자로 박힌 옛 셋만 남아 있어서, 둥실·까딱·부르르를
+// 고르면 저장이 거부됐다 — "움직임 종류가 손상되었습니다". 늘릴 자리는 여기 하나뿐이어야 한다.
+export const MOTION_PRESETS = ['bounce', 'shake', 'pulse', 'float', 'tilt', 'jitter'] as const;
+export type MotionPreset = typeof MOTION_PRESETS[number];
 export type PartEffect = 'rotate' | 'move' | 'scale';
 // One drawing layer moving on its own. `amount` is degrees for rotate, a fraction of the canvas
 // for move, and a scale delta for scale; `angle` is the direction a move travels in.

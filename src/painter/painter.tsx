@@ -99,14 +99,12 @@ type SaveAction = 'stay' | 'close' | 'share' | 'complete' | 'reference' | 'motio
 export type Tool = 'pen' | 'fill' | 'eraser' | 'select';
 type Brush = 'pen' | 'brush' | 'pencil';
 type Panel = 'color' | 'width' | 'brush' | 'reference' | 'more' | 'caption' | null;
-// 캔버스 아래 기본 도구 줄의 높이. 늘 같은 높이라 패널을 열고 닫아도 캔버스가 움직이지 않는다.
-// 즐겨찾기 카드(62) + 색·굵기(32) + 불투명도(30) + 도구 네 칸(48) + 줄 사이 여백.
-// 45.34: 불투명도를 세부 설정 안에서 꺼내 기본 화면에 두었다 — 그리는 내내 쓰는 조절이라
-// 두 단계 안에 숨겨 둘 것이 아니다. 목표 범위 208~224dp 안이다.
-export const BASE_H = 218;
-// 전체 브러시 목록이 열려 있는 동안의 하단 높이. 즐겨찾기 줄(62 + 줄 사이 6)을 뺀다 —
-// 목록이 바로 위에 떠 있는데 같은 브러시 셋을 아래에 또 두면 자리만 먹는다.
-export const BASE_H_LIST = BASE_H - 68;
+// 캔버스 아래 기본 도구 줄의 높이. **늘 같은 높이다** — 어떤 도구 창을 열고 닫아도 캔버스의
+// 크기·자리·배율이 달라지지 않는다(45.35 §4). 45.34 는 브러시 목록이 열리면 즐겨찾기 줄을
+// 접어 이 높이를 줄였는데, 그러면 여는 순간 캔버스가 커졌다가 닫으면 작아진다. 목록이 이제
+// 화면 전체를 덮는 창이라 아래 줄이 보이지도 않으므로, 접을 이유 자체가 없어졌다.
+// 즐겨찾기 카드(62) + 도구 네 칸(52) + 줄 사이 여백.
+export const BASE_H = 142;
 const transform = (id: string, name: string): LayerTransform => ({ id, name, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 });
 const source = { html: canvasHtml };
 const C = T;
@@ -180,6 +178,76 @@ export const PRO_BRUSH_KEYS = CATALOG.filter(b => b.pro).map(b => b.key);
 const QUICK_DEFAULT: BrushKey[] = ['pen', 'pencil2', 'marker2'];
 // 승인 보드는 아래 도구 줄에 '펜'을 쓴다. 위 카드에도 '펜'이 있어 글자만으로는 둘이 같아 보인다 —
 // 보이는 글자는 보드대로 두고, 읽어 주는 이름만 '그리기 도구 펜'으로 갈라 둘을 구분한다.
+// ── 왼쪽 세로 조절대(45.35 승인 시안) ─────────────────────────────────────────────────────
+// 위가 굵기, 아래가 불투명도. **캔버스 밖** 제 자리에 서기 때문에 끄는 동안 그림이 가려지지 않는다 —
+// 예전에는 캔버스 한가운데에 검은 미리보기 상자가 떴고, 정작 고치는 중인 그림을 덮었다.
+//
+// 끊기지 않는 비결은 '부모를 다시 그리지 않는 것'이다. 끄는 동안의 값은 이 부품 안에만 있고,
+// 손을 떼는 순간 한 번만 위로 올린다. 그래서 끄는 내내 편집 화면 전체가 다시 그려지지도,
+// WebView 에 중간값 메시지가 쌓이지도 않는다. 최종값은 손을 떼는 그 순간 반드시 올라간다.
+// 지연 보간·debounce·setTimeout 은 쓰지 않는다 — 늦게 반영하는 것이 아니라 아예 보내지 않는다.
+// 굵기는 어차피 **다음 첫 획**부터 쓰이므로, 끄는 도중의 값을 엔진이 알 이유가 없다.
+export const RAIL_W = 64;
+// 손잡이는 흰 세로 캡슐(시안). 홈 가운데에 얹히고, 가운데에 잉크색 표시가 하나 있다.
+const RAIL_HANDLE_H = 34, RAIL_HANDLE_W = 20, RAIL_GROOVE_X = 7, RAIL_GROOVE_W = 6;
+// 말풍선은 손잡이 오른쪽에 붙어 함께 오르내린다. 손잡이 자리에 매여 있으므로 조절이 끝나면
+// 남아 떠도는 표시가 없다.
+const RAIL_BUBBLE_X = RAIL_HANDLE_W, RAIL_BUBBLE_H = 22;
+// 0~1 을 퍼센트 글자로. 자리를 비율로 잡아야 첫 그림부터 맞고, 레이아웃을 재기 전에도 비어 보이지 않는다.
+const pct = (r: number) => (Math.max(0, Math.min(1, r)) * 100).toFixed(2) + '%' as `${number}%`;
+function VSlider({ label, value, min, max, step = 1, onCommit, bubble, disabled, testID, a11yLabel }: {
+  label: string; value: number; min: number; max: number; step?: number;
+  onCommit: (n: number) => void; bubble: (n: number) => React.ReactNode;
+  disabled?: boolean; testID?: string; a11yLabel?: string;
+}) {
+  // 끄는 동안의 값. null 이면 위에서 내려온 값을 그대로 보여 준다.
+  const [live, setLive] = useState<number | null>(null);
+  const [h, setH] = useState(0);
+  const shown = live ?? value;
+  const span = max - min || 1;
+  const travel = Math.max(1, h - RAIL_HANDLE_H);
+  const ratio = Math.max(0, Math.min(1, (shown - min) / span));
+  const quantize = (n: number) => Math.max(min, Math.min(max, Math.round(n / step) * step));
+  // 위로 갈수록 큰 값. 손잡이의 가운데가 손가락을 따라온다.
+  const at = (y: number) => { if (h <= 0) return; setLive(quantize(min + (1 - Math.max(0, Math.min(1, (y - RAIL_HANDLE_H / 2) / travel))) * span)); };
+  const settle = () => { if (live !== null) onCommit(live); setLive(null); };
+  const nudge = (by: number) => onCommit(quantize(value + by * step));
+  return <View style={{ flex: 1 }}>
+    <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '700', color: disabled ? T.faint : T.muted, paddingBottom: 4 }}>{label}</Text>
+    <View testID={testID} accessibilityRole="adjustable" accessibilityLabel={a11yLabel ?? label}
+      accessibilityState={{ disabled }} accessibilityValue={{ min, max, now: Math.round(shown) }}
+      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      accessibilityHint={disabled ? undefined : '누른 채 위아래로 끌어서 바꿔요'}
+      onAccessibilityAction={e => { if (disabled) return; if (e.nativeEvent.actionName === 'increment') nudge(1); if (e.nativeEvent.actionName === 'decrement') nudge(-1); }}
+      onLayout={e => { const n = Math.round(e.nativeEvent.layout.height); if (n > 0 && n !== h) setH(n); }}
+      onStartShouldSetResponder={() => !disabled} onMoveShouldSetResponder={() => !disabled} onResponderTerminationRequest={() => false}
+      onResponderGrant={e => at(e.nativeEvent.locationY)}
+      onResponderMove={e => at(e.nativeEvent.locationY)}
+      onResponderRelease={settle} onResponderTerminate={settle}
+      style={{ flex: 1 }}>
+      {/* 손잡이가 오르내리는 자리. 위아래로 손잡이 절반만큼 들여 두면 손잡이가 끝에서 잘리지 않는다. */}
+      <View pointerEvents="none" style={{ flex: 1, marginVertical: RAIL_HANDLE_H / 2 }}>
+        {/* 홈: 얇고 부드러운 회색. 들여 둔 만큼 도로 늘려 기둥 전체를 지난다. */}
+        <View style={{ position: 'absolute', left: RAIL_GROOVE_X, top: -RAIL_HANDLE_H / 2, bottom: -RAIL_HANDLE_H / 2, width: RAIL_GROOVE_W, borderRadius: RAIL_GROOVE_W / 2, backgroundColor: T.surface2 }} />
+        {/* 아래에서 지금 값까지만 노랑이 찬다. */}
+        <View style={{ position: 'absolute', left: RAIL_GROOVE_X, width: RAIL_GROOVE_W, top: pct(1 - ratio), bottom: -RAIL_HANDLE_H / 2, borderRadius: RAIL_GROOVE_W / 2, backgroundColor: disabled ? T.lineStrong : T.accent }} />
+        {/* 손잡이. 누르는 동안에도 크기는 그대로다 — 테두리 색만 짙어진다. */}
+        <View testID={testID ? testID + ' 손잡이' : undefined}
+          style={{ position: 'absolute', left: 0, bottom: pct(ratio), marginBottom: -RAIL_HANDLE_H / 2, width: RAIL_HANDLE_W, height: RAIL_HANDLE_H, borderRadius: RAIL_HANDLE_W / 2,
+            alignItems: 'center', justifyContent: 'center', backgroundColor: T.paper,
+            borderWidth: 1, borderColor: live !== null ? T.ink : T.lineStrong, ...Elev[1] }}>
+          <View style={{ width: 2, height: 12, borderRadius: 1, backgroundColor: disabled ? T.faint : T.ink }} />
+        </View>
+        {!disabled && <View style={{ position: 'absolute', left: RAIL_BUBBLE_X, bottom: pct(ratio), marginBottom: -RAIL_BUBBLE_H / 2 }}>{bubble(shown)}</View>}
+      </View>
+    </View>
+  </View>;
+}
+// 말풍선 껍데기. 모서리·테두리·글자를 다른 도구와 같은 언어로 쓴다.
+function RailBubble({ children, testID }: { children: React.ReactNode; testID?: string }) {
+  return <View testID={testID} style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height: RAIL_BUBBLE_H, paddingHorizontal: 5,
+    borderRadius: 10, backgroundColor: T.paper, borderWidth: 1, borderColor: T.line, ...Elev[1] }}>{children}</View>;
+}
 const ALL_TOOLS: [Tool, string, IconName, string][] = [['pen', '펜', 'fountain-pen-tip', '그리기 도구 펜'], ['eraser', '지우개', 'eraser', '지우개'], ['fill', '채우기', 'format-color-fill', '채우기'], ['select', '선택', 'select-drag', '선택']];
 const STAB_LEVELS = [['light', '약'], ['medium', '중'], ['strong', '강']] as const;
 // 저장된 브러시 설정을 믿지 않고 한 칸씩 읽는다. 낯선 값은 없는 것으로 본다.
@@ -228,8 +296,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 그래서 캔버스 아래 남는 자리 + 캔버스 절반을 넘지 않게 한 번 더 누른다 — 조절하는 동안 결과가 보이게.
   const coverRoom = (cover = .5) => {
     if (!canvasSide) return Infinity;
-    // 접은 줄만큼을 도로 빼서 '줄이 있을 때'의 캔버스를 되살린다.
-    const area = canvasArea - (panel === 'brush' ? BASE_H - BASE_H_LIST : 0);
+    const area = canvasArea;
     const side = Math.min(canvasSide, Math.max(0, area));
     // 패널이 너무 납작해지지 않게 160dp 아래로는 내리지 않는다 — 다만 그 하한이
     // '캔버스 절반' 보다 크면 규칙 자체를 깨게 된다(320dp 화면: 절반이 156dp).
@@ -276,6 +343,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   });
   // 즐겨찾기 편집 모드. 평소에는 줄을 누르면 그 브러시로 그리고, 편집 중에는 어느 칸에 넣을지 묻는다.
   const [favEdit, setFavEdit] = useState(false);
+  // 브러시 창에서 보고 있는 분류. 세부 설정에 들어갔다 나와도 이 값이 남아 있어 제자리로 돌아온다.
+  const [brushGroup, setBrushGroup] = useState<Group>('선');
   // 즐겨찾기를 바꾸는 유일한 길. 사용자가 누른 것만 여기로 온다.
   function pinBrush(slot: number, key: BrushKey) {
     const next = quickBrushes.map((k, i) => i === slot ? key : k);
@@ -292,8 +361,6 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [canvasArea, setCanvasArea] = useState(0);
   // 참고 창을 화면 밖으로 내보내지 않으려면 캔버스 영역의 가로도 알아야 한다(정사각 변만으로는 모자란다).
   const [canvasWide, setCanvasWide] = useState(0);
-  // 굵기를 끄는 동안에만 보이는 크기 원(px). 손을 떼면 null.
-  const [sizing, setSizing] = useState<number | null>(null);
   const [brushDetail, setBrushDetail] = useState(false);
   // 저장 확신: 저장 중에는 작은 구름, 끝나면 체크가 잠깐 보였다가 사라진다. 늘 붙어 있는 '저장됨' 글자는 없다.
   const [saveMark, setSaveMark] = useState<'saving' | 'done' | null>(null);
@@ -322,6 +389,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const selectedReference = scene.references.find(r => r.id === scene.activeReferenceId);
 
   const width = tool === 'eraser' ? eraserWidth : penWidth;
+  // 조절대가 실제로 뜻을 갖는 때. 채우기·선택·글씨 손질·스포이드 중에는 바꿀 것이 없으므로 비활성으로 둔다 —
+  // 자리는 그대로 남아 화면이 흔들리지 않고, 글자는 읽을 수 있을 만큼만 옅다.
+  const editing = !scene.captionPicked && !scene.selection && !scene.picking;
+  const sizable = (tool === 'pen' || tool === 'eraser') && editing;
+  const inkable = tool === 'pen' && editing;
+  // 말풍선 안의 원. 굵기를 눈으로 가늠하게 하되 말풍선 크기는 바뀌지 않도록 4~12 안에 둔다.
+  const dotFor = (n: number) => Math.max(4, Math.min(12, Math.round(3 + n * 9 / 48)));
   const tap = (name: string) => { if (PROBE) console.log('SELPROBE ' + JSON.stringify({ type: 'ui', what: name, t: Date.now() })); };
   // 조용한 자동저장이 도는 동안 캔버스는 다른 명령을 받지 않는다. 그 사이 누른 도구·색·굵기는 버리지 않고 모았다가
   // 저장이 끝나면 보낸다. 자동저장 중에 누른 완성·닫기도 잃지 않고 저장이 끝난 뒤 이어서 한다.
@@ -347,6 +421,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 명세 E04: Android 뒤로는 **열려 있는 것부터** 닫는다. 급한 것(임시 편집)이 먼저다.
   // 아무것도 열려 있지 않을 때만 화면 밖으로 나간다 — 그때는 기존 닫기 경로(자동저장)를 그대로 탄다.
   const backRef = useRef<() => boolean>(() => false);
+  // 브러시 창을 닫는 길은 하나뿐이다 — 편집 모드·고정 중·세부 설정까지 함께 내려놓는다.
+  const closeBrushRef = useRef<() => void>(() => {});
   backRef.current = () => {
     if (busy) return true;                                   // 저장 중에는 아무 일도 하지 않는다
     if (cutoutPicker) { setCutoutPicker(false); return true; }
@@ -354,6 +430,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     if (layerMenu) { setLayerMenu(null); return true; }
     if (captionOpen) { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); return true; }
     if (scene.selection) { send({ type: 'selectCancel' }); return true; }   // 임시 편집은 버리기 전에 되돌린다
+    // 브러시 창 안에서 한 단계 들어가 있으면 창을 닫기 전에 그 단계부터 되돌린다.
+    if (panel === 'brush' && brushDetail) { ease(); setBrushDetail(false); return true; }
+    if (panel === 'brush') { closeBrushRef.current(); return true; }
     if (panel) { ease(); setPanel(null); return true; }
     if (drawRail) { ease(); setDrawRail(false); return true; }
     if (refRail) { ease(); setRefRail(false); return true; }
@@ -762,115 +841,138 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     ]);
   }
 
-  // 브러시 시트의 할 일은 '브러시 고르기'다. 굵기는 캔버스 가장자리에서, 진하기·선 보정은 세부 설정 안에서 바꾼다.
-  // 세부 설정을 열지 않아도 저장된 값은 그대로 적용된다.
-  const stabName = effectiveBrush.stabilizer === 'off' ? '끔' : STAB_LEVELS.find(([level]) => level === effectiveBrush.stabilizer)?.[1] ?? '약';
-  // 선 종류는 하나의 낮고 넓은 세그먼트다. 독립 카드 세 장으로 두지 않는다(40차). 고급 브러시는 네 번째 칸이 아니라 아래 조용한 한 줄.
+  // 지금 그리고 있는 브러시. 세부 설정 화면의 제목과 견본이 이 브러시를 가리킨다.
+  const currentBrushKey = (CATALOG.find(b => isBrushOn(b.key)) ?? CATALOG[0]).key;
+  // ── 브러시 창(45.35 승인 시안) ─────────────────────────────────────────────────────────
+  // 아래에서 올라오는 얕은 판이 아니라 **넓은 독립 창**이다. 뒤의 캔버스는 가볍게 어두워질 뿐
+  // 크기도 배율도 그대로다. 창 높이는 미리 정해 두어, 목록과 세부 설정을 오가도 창이 커졌다
+  // 작아졌다 하지 않는다. 보통 세로 화면에서 네 줄이 통째로 보이는 높이를 아래에서 보장한다.
+  const brushRoom = Math.max(160, windowHeight - insets.top - insets.bottom - 16);
+  const BRUSH_ROW_H = 70;
+  const brushWindowH = Math.min(brushRoom, Math.max(Math.round(brushRoom * .62), 48 + 48 + BRUSH_ROW_H * 4 + 12));
+  const closeBrush = () => { ease(); setPanel(null); setFavEdit(false); setPinning(null); setBrushDetail(false); };
+  closeBrushRef.current = closeBrush;
   const stab = effectiveBrush.stabilizer;
-  // 전체 브러시 목록(45.31차). 30종을 선·채색·질감·효과로 나눠 놓는다 — 평면 목록 서른 줄이 아니다.
-  // 고르는 것과 즐겨찾기에 고정하는 것은 **다른 행동**이다: 카드를 누르면 고르고, 압정을 누르면 칸을 고른다.
-  // 잠긴 브러시도 이름과 실제 획 견본이 그대로 읽힌다.
-  const brushSheet = <View style={{ flexShrink: 1, minHeight: 0, paddingHorizontal: 12, paddingBottom: 6, gap: 6 }}>
-    {favEdit && !pinning && <Text style={{ fontSize: 12, color: C.muted }}>넣을 브러시를 고르면 1·2·3번 칸 중에 고를 수 있어요.</Text>}
-    {/* 어느 칸에 넣을지. 지금 그 칸에 무엇이 있는지 함께 보여 준다 — 무엇과 바뀌는지 알고 눌러야 한다. */}
-    {!!pinning && <View style={{ gap: 6, paddingVertical: 4, paddingHorizontal: 10, borderRadius: C.radius.md, backgroundColor: C.surface2 }}>
-      <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>‘{brushInfo(pinning).title}’ 를 어느 칸에 넣을까요?</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        {quickBrushes.map((k, i) => <Pressable key={i} accessibilityRole="button" accessibilityLabel={(i + 1) + '번 칸 — 지금 ' + brushInfo(k).title + ' · 여기에 넣기'}
-          onPress={() => { pinBrush(i, pinning); setPinning(null); }}
-          style={({ pressed }) => ({ flex: 1, minHeight: C.tap, paddingHorizontal: 6, borderRadius: C.radius.button, alignItems: 'center', justifyContent: 'center',
-            borderWidth: 1, borderColor: C.lineStrong, backgroundColor: pressed ? C.fill : C.paper })}>
-          <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{i + 1}번 칸</Text>
-          <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted }}>지금 {brushInfo(k).title}</Text>
-        </Pressable>)}
-        <Pressable accessibilityRole="button" accessibilityLabel="즐겨찾기 고정 취소" onPress={() => setPinning(null)}
-          style={{ minHeight: C.tap, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>취소</Text>
-        </Pressable>
-      </View>
-    </View>}
-    <ScrollView testID="브러시 목록" style={{ flexShrink: 1, minHeight: 0 }} showsVerticalScrollIndicator
-      contentContainerStyle={{ gap: 10, paddingTop: 2, paddingBottom: 12 }}>
-      {!!effectiveBrush.preset && effectiveBrush.preset in RETIRED &&
-        <Text style={{ fontSize: 11, color: C.muted }}>지금은 예전 브러시 ‘{RETIRED[effectiveBrush.preset]}’ 로 그리고 있어요. 그대로 쓸 수 있어요.</Text>}
-      {GROUPS.map(groupName => {
-        const group = CATALOG.filter(b => b.group === groupName);
-        if (!group.length) return null;
-        const paid = group.filter(b => b.pro).length;
-        return <View key={groupName} style={{ gap: 6 }}>
+  const brushWindow = panel !== 'brush' ? null : <View testID="브러시 창 배경" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 40, backgroundColor: '#12151A59' }}>
+    <Pressable accessibilityRole="button" accessibilityLabel="브러시 창 바깥 닫기" onPress={closeBrush} style={{ flex: 1 }} />
+    <View testID="브러시 창" accessibilityViewIsModal style={{ height: brushWindowH, marginHorizontal: 8, marginBottom: 8, borderRadius: 20, overflow: 'hidden', backgroundColor: C.paper, ...Elev[2] }}>
+      <SheetHeader
+        title={brushDetail ? brushInfo(currentBrushKey).title : favEdit ? '즐겨찾기 편집' : '브러시'}
+        closeLabel="브러시 닫기" onClose={closeBrush}
+        left={brushDetail ? <IconButton label="브러시 목록으로" icon="chevron-left" size={22} color={C.ink} onPress={() => { ease(); setBrushDetail(false); }} /> : undefined}
+        right={brushDetail ? undefined : <Pressable accessibilityRole="button" accessibilityLabel={favEdit ? '즐겨찾기 편집 끝내기' : '즐겨찾기 편집'}
+          accessibilityState={{ selected: favEdit }}
+          onPress={() => { ease(); setFavEdit(!favEdit); setPinning(null); }}
+          style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, borderRadius: C.radius.button, alignItems: 'center', justifyContent: 'center',
+            backgroundColor: favEdit ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{favEdit ? '끝내기' : '즐겨찾기 편집'}</Text>
+        </Pressable>} />
+
+      {/* 목록 쪽은 세부 설정에 들어가도 **살아 있다**(보이지만 않는다) — 돌아오면 보던 분류와
+          구르던 자리가 그대로다. 다시 만들면 맨 위로 튕긴다. */}
+      <View style={{ flex: 1, minHeight: 0, display: brushDetail ? 'none' : 'flex' }}>
+        {favEdit && !pinning && <Text style={{ fontSize: 12, color: C.muted, paddingHorizontal: 16, paddingBottom: 6 }}>넣을 브러시를 고르면 1·2·3번 칸 중에 고를 수 있어요.</Text>}
+        {/* 어느 칸에 넣을지. 지금 그 칸에 무엇이 있는지 함께 보여 준다 — 무엇과 바뀌는지 알고 눌러야 한다. */}
+        {!!pinning && <View style={{ gap: 6, marginHorizontal: 12, marginBottom: 6, paddingVertical: 6, paddingHorizontal: 10, borderRadius: C.radius.md, backgroundColor: C.surface2 }}>
+          <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>‘{brushInfo(pinning).title}’ 를 어느 칸에 넣을까요?</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{groupName}</Text>
-            <Text style={{ flex: 1, fontSize: 11, color: C.faint }}>무료 {group.length - paid} · PRO {paid}</Text>
+            {quickBrushes.map((k, i) => <Pressable key={i} accessibilityRole="button" accessibilityLabel={(i + 1) + '번 칸 — 지금 ' + brushInfo(k).title + ' · 여기에 넣기'}
+              onPress={() => { pinBrush(i, pinning); setPinning(null); }}
+              style={({ pressed }) => ({ flex: 1, minHeight: C.tap, paddingHorizontal: 6, borderRadius: C.radius.button, alignItems: 'center', justifyContent: 'center',
+                borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper })}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{i + 1}번 칸</Text>
+              <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted }}>지금 {brushInfo(k).title}</Text>
+            </Pressable>)}
+            <Pressable accessibilityRole="button" accessibilityLabel="즐겨찾기 고정 취소" onPress={() => setPinning(null)}
+              style={{ minHeight: C.tap, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>취소</Text>
+            </Pressable>
           </View>
-          {/* 한 줄에 한 브러시(45.34). 작은 칸에 든 V자 견본으로는 브러시끼리 구별되지 않았다 —
-              이름 칸과 견본 칸을 나누고, 견본이 가로폭을 넓게 써서 실제 획의 성질이 보이게 한다.
-              줄 전체가 고르기다. 잠긴 것도 이름과 견본이 선명하다 — 흐리게 지우지 않는다. */}
-          <View style={{ gap: 6 }}>
-            {group.map(b => { const on = isBrushOn(b.key), locked = b.pro && !pro, fav = quickBrushes.indexOf(b.key);
-              return <Pressable key={b.key} testID={'브러시 줄 ' + b.title}
-                accessibilityRole="button"
-                accessibilityLabel={(favEdit ? '즐겨찾기에 넣기 ' : '브러시 ') + b.title}
-                accessibilityValue={{ text: (b.pro ? 'PRO' : '무료') + (fav >= 0 ? ' · 즐겨찾기 ' + (fav + 1) + '번' : '') }}
-                accessibilityHint={favEdit ? '누르면 어느 칸에 넣을지 고를 수 있어요' : locked ? 'PRO 브러시예요' : b.use}
-                accessibilityState={{ selected: on }}
-                onPress={() => { if (favEdit) { setPinning(b.key); return; } pickFromAll(b.key); }}
-                style={({ pressed }) => ({ minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 12, paddingRight: 10,
-                  borderRadius: C.radius.button, borderWidth: 1, borderColor: on && !favEdit ? C.accentBorder : C.line,
-                  backgroundColor: on && !favEdit ? C.accentSoft : pressed ? C.fill : C.paper })}>
-                {/* 이름 칸 — 견본과 겹치지 않는 제 자리를 갖는다. */}
-                <View style={{ width: 104 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                    <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 14, fontWeight: on ? '800' : '700', color: C.ink }}>{b.title}</Text>
-                    {b.pro && <View style={{ paddingHorizontal: 5, paddingVertical: 1, borderRadius: 5, backgroundColor: C.warmLine }}>
-                      <Text style={{ fontSize: 9, fontWeight: '800', color: C.warmInk, letterSpacing: .3 }}>PRO</Text>
-                    </View>}
-                  </View>
-                  {fav >= 0 && <Text style={{ fontSize: 11, color: C.muted }}>즐겨찾기 {fav + 1}번</Text>}
-                </View>
-                {/* 견본 칸 — 남은 가로폭을 전부 쓴다. */}
-                <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
-                  <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '100%', height: 30, tintColor: color }} resizeMode="contain" />
-                </View>
-                {favEdit && <MaterialCommunityIcons name={fav >= 0 ? 'pin' : 'pin-outline'} size={18} color={fav >= 0 ? C.ink : C.faint} />}
-              </Pressable>; })}
-          </View>
-        </View>; })}
-      {/* 고른 브러시가 무엇에 쓰는 것인지 한 줄로. 카드마다 설명을 붙이면 목록이 읽히지 않는다. */}
-      <Text testID="브러시 쓰임" style={{ fontSize: 11, color: C.muted }}>{(CATALOG.find(b => isBrushOn(b.key)) ?? CATALOG[0]).use}</Text>
-    </ScrollView>
-    <Pressable accessibilityRole="button" accessibilityLabel="세부 설정" accessibilityState={{ expanded: brushDetail }} onPress={() => { ease(); setBrushDetail(!brushDetail); }}
-      hitSlop={{ top: 2, bottom: 2 }}
-      style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4, borderTopWidth: 1, borderColor: C.line }}>
-      <MaterialCommunityIcons name="tune-variant" size={18} color={C.muted} />
-      <Text style={{ fontSize: 13, fontWeight: '600', color: C.ink }}>세부 설정</Text>
-      <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.faint, textAlign: 'right' }}>진하기 {Math.round(effectiveBrush.opacity * 100)}% · 선 보정 {STAB_LEVELS.find(([k]) => k === stab)?.[1] ?? '끔'}</Text>
-      <MaterialCommunityIcons name={brushDetail ? 'chevron-up' : 'chevron-down'} size={18} color={C.faint} />
-    </Pressable>
-    {brushDetail && <View style={{ gap: 4 }}>
-      <Range label="진하기" value={Math.round(effectiveBrush.opacity * 100)} min={5} max={100} step={1} onChange={n => changeBrush({ opacity: Math.round(n) / 100 }, false)} display={Math.round(effectiveBrush.opacity * 100) + '%'} />
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Pressable accessibilityRole="switch" accessibilityLabel="선 보정" accessibilityState={{ checked: stab !== 'off' }} onPress={() => changeBrush({ stabilizer: stab === 'off' ? 'light' : 'off' })}
-          style={{ minHeight: C.tap, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 2 }}>
-          <Switch on={stab !== 'off'} />
-          <Text style={{ fontSize: 12, fontWeight: '600', color: C.muted }}>선 보정</Text>
-        </Pressable>
-        {stab !== 'off' && <View style={{ flex: 1 }}>
-          <Segmented dense value={stab} onChange={level => changeBrush({ stabilizer: level })} items={STAB_LEVELS.map(([level, name]) => ({ key: level, label: name, a11y: '보정 ' + name }))} />
         </View>}
+        {/* 분류: 선·채색·질감·효과. 한 분류 안에서는 마지막 줄까지 한 번의 스크롤로 닿는다. */}
+        <View testID="브러시 분류" style={{ flexDirection: 'row', paddingHorizontal: 8, borderBottomWidth: 1, borderColor: C.line }}>
+          {GROUPS.map(g => { const on = g === brushGroup;
+            return <Pressable key={g} accessibilityRole="button" accessibilityLabel={'브러시 분류 ' + g} accessibilityState={{ selected: on }}
+              onPress={() => setBrushGroup(g)}
+              style={({ pressed }) => ({ flex: 1, minHeight: C.tap, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : 'transparent' })}>
+              <Text style={{ fontSize: 14, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{g}</Text>
+              <View pointerEvents="none" style={{ position: 'absolute', left: 10, right: 10, bottom: 0, height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: on ? C.accent : 'transparent' }} />
+            </Pressable>; })}
+        </View>
+        {!!effectiveBrush.preset && effectiveBrush.preset in RETIRED &&
+          <Text style={{ fontSize: 11, color: C.muted, paddingHorizontal: 16, paddingTop: 6 }}>지금은 예전 브러시 ‘{RETIRED[effectiveBrush.preset]}’ 로 그리고 있어요. 그대로 쓸 수 있어요.</Text>}
+        {/* 한 줄에 한 브러시. 줄마다 카드를 두르지 않는다 — 얇은 구분선과 여백으로만 가른다.
+            고른 줄만 옅은 노랑과 체크다. 잠긴 것도 이름과 견본이 선명하다 — 흐리게 지우지 않는다. */}
+        <ScrollView testID="브러시 목록" style={{ flex: 1, minHeight: 0 }} showsVerticalScrollIndicator contentContainerStyle={{ paddingBottom: 8 }}>
+          {CATALOG.filter(b => b.group === brushGroup).map(b => { const on = isBrushOn(b.key), fav = quickBrushes.indexOf(b.key);
+            return <Pressable key={b.key} testID={'브러시 줄 ' + b.title}
+              accessibilityRole="button"
+              accessibilityLabel={(favEdit ? '즐겨찾기에 넣기 ' : '브러시 ') + b.title}
+              accessibilityValue={{ text: (b.pro ? 'PRO' : '무료') + (fav >= 0 ? ' · 즐겨찾기 ' + (fav + 1) + '번' : '') }}
+              accessibilityHint={favEdit ? '누르면 어느 칸에 넣을지 고를 수 있어요' : b.pro && !pro ? 'PRO 브러시예요' : b.use}
+              accessibilityState={{ selected: on }}
+              onPress={() => { if (favEdit) { setPinning(b.key); return; } pickFromAll(b.key); }}
+              style={({ pressed }) => ({ minHeight: BRUSH_ROW_H, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 16, paddingRight: 10,
+                borderBottomWidth: 1, borderColor: C.line,
+                backgroundColor: on && !favEdit ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
+              {/* 이름 칸 — 견본과 겹치지 않는 제 자리를 갖는다. */}
+              <View style={{ width: 96 }}>
+                <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: on ? '800' : '700', color: C.ink }}>{b.title}</Text>
+                {fav >= 0 && <Text style={{ fontSize: 11, color: C.muted }}>즐겨찾기 {fav + 1}번</Text>}
+              </View>
+              {/* 견본 칸 — 남은 가로폭을 전부 쓴다. 실제 브러시 엔진이 낸 획이다. */}
+              <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+                <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '100%', height: 34, tintColor: color }} resizeMode="contain" />
+              </View>
+              {b.pro && <ProTag />}
+              {/* 표시 자리는 고르든 말든 같은 너비다 — 고를 때 줄 안이 밀리지 않는다. */}
+              <View style={{ width: 24, alignItems: 'center', justifyContent: 'center' }}>
+                {favEdit ? <MaterialCommunityIcons name={fav >= 0 ? 'pin' : 'pin-outline'} size={18} color={fav >= 0 ? C.ink : C.faint} />
+                  : on ? <MaterialCommunityIcons name="check" size={20} color={C.ink} /> : null}
+              </View>
+            </Pressable>; })}
+        </ScrollView>
+        {/* 세부 설정은 같은 창의 **다른 화면**이다. 목록 창 안에 조절을 쌓아 두지 않는다. */}
+        <Pressable accessibilityRole="button" accessibilityLabel="세부 설정" accessibilityHint="진하기와 선 보정을 바꿔요"
+          onPress={() => { ease(); setBrushDetail(true); }}
+          style={({ pressed }) => ({ minHeight: C.tap, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16,
+            borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper })}>
+          <MaterialCommunityIcons name="tune-variant" size={18} color={C.muted} />
+          <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>세부 설정</Text>
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.faint, textAlign: 'right' }}>진하기 {Math.round(effectiveBrush.opacity * 100)}% · 선 보정 {STAB_LEVELS.find(([k]) => k === stab)?.[1] ?? '끔'}</Text>
+          <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+        </Pressable>
       </View>
-    </View>}
+
+      {/* 세부 설정 화면. 같은 창 안에서 바뀌고, 뒤로 가면 목록의 분류와 자리가 그대로 돌아온다. */}
+      {brushDetail && <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 12 }} showsVerticalScrollIndicator={false}>
+        <Text style={{ fontSize: 12, color: C.muted }}>{brushInfo(currentBrushKey).use}</Text>
+        <View style={{ height: 40, borderRadius: C.radius.button, backgroundColor: C.surface2, justifyContent: 'center', paddingHorizontal: 10 }}>
+          <Image accessibilityIgnoresInvertColors accessibilityLabel="지금 브러시 획 견본" source={brushInfo(currentBrushKey).stroke} style={{ width: '100%', height: 28, tintColor: color }} resizeMode="contain" />
+        </View>
+        <Range label="진하기" value={Math.round(effectiveBrush.opacity * 100)} min={5} max={100} step={1} onChange={n => changeBrush({ opacity: Math.round(n) / 100 }, false)} onActive={a => { if (a === false) changeBrush({ opacity: effectiveBrush.opacity }, true); }} display={Math.round(effectiveBrush.opacity * 100) + '%'} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Pressable accessibilityRole="switch" accessibilityLabel="선 보정" accessibilityState={{ checked: stab !== 'off' }} onPress={() => changeBrush({ stabilizer: stab === 'off' ? 'light' : 'off' })}
+            style={{ minHeight: C.tap, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 2 }}>
+            <Switch on={stab !== 'off'} />
+            <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>선 보정</Text>
+          </Pressable>
+          {stab !== 'off' && <View style={{ flex: 1 }}>
+            <Segmented dense value={stab} onChange={level => changeBrush({ stabilizer: level })} items={STAB_LEVELS.map(([level, name]) => ({ key: level, label: name, a11y: '보정 ' + name }))} />
+          </View>}
+        </View>
+      </ScrollView>}
+    </View>
   </View>;
-  // 전체 목록이 열렸으면 즐겨찾기 줄을 접는다 — 아래 줄의 실제 높이가 그만큼 준다.
-  const quickHidden = panel === 'brush';
-  const baseH = quickHidden ? BASE_H_LIST : BASE_H;
   // 캔버스가 주인공이다. 아래 기본 도구 줄(baseH)은 늘 같은 높이로 자리를 차지하고, 패널은 그 위에 겹쳐 뜬다.
-  const dockOpen = !!scene.selection || (!!panel && panel !== 'more') || drawRail || refRail || !!scene.captionPicked;
+  // 브러시 창은 45.35 부터 화면 전체를 덮는 독립 창이라 아래 판에 들지 않는다.
+  const dockOpen = !!scene.selection || (!!panel && panel !== 'more' && panel !== 'brush') || drawRail || refRail || !!scene.captionPicked;
   // 움직이기 탭에서는 캔버스를 위로 붙이고, 패널은 캔버스 아래 남는 자리(+ 기본 도구 줄 자리)를 쓴다 — 미리보기를 가리지 않는다.
   // 남는 자리가 작은 화면에서만 최소 높이만큼 캔버스 아래쪽에 겹친다.
-  const motionHeight = Math.max(250, Math.min(Math.round(windowHeight * .55), Math.round(canvasArea - (canvasSide ?? canvasArea)) + baseH));
+  const motionHeight = Math.max(250, Math.min(Math.round(windowHeight * .55), Math.round(canvasArea - (canvasSide ?? canvasArea)) + BASE_H));
   // 패널 표면: 흰 표면 + 위쪽 24 둥글기 + 옅은 선 하나. 떠 있는 표면이지만 캔버스 위 그림자는 두지 않는다(그림이 흐려 보인다).
   const raised = dockOpen || tab === 'motion';
-  const dock = { position: 'absolute', left: 0, right: 0, bottom: tab === 'draw' && !typing ? baseH : 0, zIndex: 20, borderTopWidth: raised ? 1 : 0, borderLeftWidth: raised ? 1 : 0, borderRightWidth: raised ? 1 : 0, borderColor: C.line, borderTopLeftRadius: raised ? 24 : 0, borderTopRightRadius: raised ? 24 : 0, overflow: 'hidden', backgroundColor: C.paper, flexShrink: 0 } as const;
+  const dock = { position: 'absolute', left: 0, right: 0, bottom: tab === 'draw' && !typing ? BASE_H : 0, zIndex: 20, borderTopWidth: raised ? 1 : 0, borderLeftWidth: raised ? 1 : 0, borderRightWidth: raised ? 1 : 0, borderColor: C.line, borderTopLeftRadius: raised ? 24 : 0, borderTopRightRadius: raised ? 24 : 0, overflow: 'hidden', backgroundColor: C.paper, flexShrink: 0 } as const;
   const narrow = windowWidth < 360;
   // 머리줄이 두 줄로 갈릴지는 '실제로 잰 폭'으로 정한다 — 화면이 좁아서든 글자가 커서든 같은 규칙이다.
   const [headW, setHeadW] = useState(0), [tabsW, setTabsW] = useState(0), [aidsW, setAidsW] = useState(0);
@@ -903,7 +1005,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const offerContinue = continueAvailable && tab === 'draw' && !panel && !refRail && !drawRail;
   // 작업 패널(브러시·색·문구·참고 관리)과 레이어 줄이 열려 있으면, 캔버스를 누르는 첫 손가락은 '패널 닫기'다(45.4차).
   // 참고 줄은 제외한다 — 참고는 캔버스 위에서 옮기고 키우는 중이라 손가락이 캔버스로 가야 한다.
-  const panelCovering = tab === 'draw' && ((!!panel && panel !== 'more') || drawRail);
+  const panelCovering = tab === 'draw' && ((!!panel && panel !== 'more' && panel !== 'brush') || drawRail);
   // 캔버스 위에는 한 번에 한 가지만 말한다(45.2차). 위에서부터 급한 순서로 하나를 고른다.
   const canvasMessage: 'saving' | 'hidden' | 'eyedrop' | 'previous' | 'guide' | 'zoomHint' | null =
     tab !== 'draw' ? null
@@ -957,7 +1059,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 320dp 급에서는 재 보기 전에도 분명히 모자라므로 바로 내린다 — 이름을 글자 단위로 쌓거나
   // 손가락 자리를 줄이는 대신 줄을 하나 더 쓴다(45.29차).
   const cmdStacked = narrow || (topW > 0 && cmdW > 0 && cmdW + 44 + 28 + 44 + 96 > topW);
-  return <Modal onRequestClose={() => { if (Keyboard.isVisible()) { Keyboard.dismiss(); return; } if (panel) { ease(); setPanel(null); return; } if (drawRail || refRail) { ease(); setDrawRail(false); setRefRail(false); return; } if (showCanon) { setShowCanon(false); return; } save('close'); }} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+  return <Modal onRequestClose={() => { if (Keyboard.isVisible()) { Keyboard.dismiss(); return; } if (panel === 'brush' && brushDetail) { ease(); setBrushDetail(false); return; } if (panel === 'brush') { closeBrush(); return; } if (panel) { ease(); setPanel(null); return; } if (drawRail || refRail) { ease(); setDrawRail(false); setRefRail(false); return; } if (showCanon) { setShowCanon(false); return; } save('close'); }} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       {/* 머리: 닫기 · 세트 이름과 칸 번호 · 되돌리기 · 다시 · 더보기. 저장 버튼은 없다 — 작업은 자동저장된다. */}
       <View onLayout={e => { const w = Math.round(e.nativeEvent.layout.width); if (w !== topW) setTopW(w); }}
@@ -1010,11 +1112,32 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         onCollapse={() => { ease(); setRefWindow(refWindow === 'collapsed' ? 'open' : 'collapsed'); }}
         onClose={() => { ease(); setRefWindow('closed'); }}
         onUnderlay={onImportGuideExample ? () => void insertGuideUnderlay() : undefined} />}
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: tab === 'motion' ? 'flex-start' : 'center', backgroundColor: C.surface2 }}
+      {/* 왼쪽 조절대 + 캔버스. 조절대는 **늘 같은 자리를 차지한다** — 움직이기 탭에서 내용만 비우고
+          자리는 남겨, 탭을 오가도 정사각 캔버스의 크기가 달라지지 않는다. */}
+      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: C.bg }}>
+      <View testID="조절대" style={{ width: RAIL_W, paddingLeft: 4, paddingTop: 10, paddingBottom: 14 }}>
+        {tab === 'draw' && !typing && <>
+          <VSlider testID="굵기 조절대" label="굵기" a11yLabel={tool === 'eraser' ? '지우개 굵기' : '브러시 굵기'}
+            value={width} min={1} max={48} step={1} disabled={!sizable}
+            onCommit={n => setWidth(n, true)}
+            bubble={n => <RailBubble testID="굵기 말풍선">
+              <View style={{ width: dotFor(n), height: dotFor(n), borderRadius: dotFor(n) / 2, backgroundColor: tool === 'eraser' ? C.paper : color, borderWidth: 1, borderColor: C.lineStrong }} />
+              <Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>{Math.round(n)}</Text>
+            </RailBubble>} />
+          <View style={{ height: 14 }} />
+          <VSlider testID="불투명도 조절대" label="불투명도" a11yLabel="브러시 불투명도"
+            value={Math.round((effectiveBrush.opacity ?? 1) * 100)} min={10} max={100} step={5} disabled={!inkable}
+            onCommit={n => changeBrush({ opacity: Math.max(.1, Math.min(1, n / 100)) }, true)}
+            bubble={n => <RailBubble testID="불투명도 말풍선">
+              <Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>{Math.round(n)}%</Text>
+            </RailBubble>} />
+        </>}
+      </View>
+      <View testID="캔버스 영역" style={{ flex: 1, alignItems: 'center', justifyContent: tab === 'motion' ? 'flex-start' : 'center', backgroundColor: C.bg }}
         onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; const side = Math.floor(Math.min(w, h)); if (side > 0 && side !== canvasSide) setCanvasSide(side); if (h > 0 && Math.round(h) !== canvasArea) setCanvasArea(Math.round(h)); if (w > 0 && Math.round(w) !== canvasWide) setCanvasWide(Math.round(w)); }}>
         {/* 캔버스 틀: 네이티브 WebView 는 크기 지정을 무시하고 영역 전체를 채워, 캔버스가 위에 붙고 아래에 빈 띠가 남았다(40차 실기기 bounds 0,381–1080,1882).
             정사각 틀로 감싸 잘라 두면 WebView 가 틀만큼만 차지하고, 그리기 탭에서는 영역 가운데·움직이기 탭에서는 위에 선다. */}
-        <View ref={canvasRef} collapsable={false} style={canvasSide ? { width: canvasSide, height: canvasSide, overflow: 'hidden', backgroundColor: C.surface2 } : { width: '100%', aspectRatio: 1, maxHeight: '100%', overflow: 'hidden' }}>
+        <View ref={canvasRef} collapsable={false} style={canvasSide ? { width: canvasSide, height: canvasSide, overflow: 'hidden', backgroundColor: C.paper } : { width: '100%', aspectRatio: 1, maxHeight: '100%', overflow: 'hidden' }}>
         <WebView ref={web} source={source} originWhitelist={['about:*']} javaScriptEnabled scrollEnabled={false} onShouldStartLoadWithRequest={r => r.url === 'about:blank'} onError={e => { unlock(); setInitialized(false); Alert.alert('그리기 화면을 열지 못했어요', userMessage(e.nativeEvent.description, '닫았다가 다시 열어 주세요.')); }} onMessage={event => {
           try {
             const m = JSON.parse(event.nativeEvent.data);
@@ -1062,7 +1185,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               } catch (e) { send({ type: 'saveFailed', token: m.token }); setSaveMark(null); unlock(); Alert.alert('저장하지 못했어요', userMessage(e)); }
             }
           } catch (e) { unlock(); Alert.alert('그리지 못했어요', userMessage(e)); }
-        }} style={{ flex: 1, backgroundColor: C.surface2 }} />
+        }} style={{ flex: 1, backgroundColor: C.paper }} />
         </View>
 
         {/* 스포이드를 끄는 동안(45.4차): 집는 자리에 고리, 손가락에 가리지 않게 위쪽에 지금 읽힌 색과 값. */}
@@ -1079,14 +1202,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {panelCovering && <Pressable testID="패널 닫기 막" accessibilityRole="button" accessibilityLabel="패널 닫고 그리기로"
           onPress={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); setDrawRail(false); }}
           style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />}
-        {/* 굵기를 끄는 동안의 크기 원과 px. 조절은 캔버스 가장자리 띠에서 한다. */}
-        {sizing !== null && <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-          {/* 짙은 반투명 떠 있는 표시. 밝은 그림·흰 캔버스 어디서나 원과 숫자가 읽힌다. 손을 떼면 바로 사라진다. */}
-          <View testID="굵기 미리보기" style={{ alignItems: 'center', justifyContent: 'center', gap: 8, minWidth: 88, minHeight: 88, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 20, backgroundColor: '#171717C7' }}>
-            <View style={{ width: Math.max(2, sizing * (canvasSide ?? KAKAO_STATIC_SPEC.width) / KAKAO_STATIC_SPEC.width), height: Math.max(2, sizing * (canvasSide ?? KAKAO_STATIC_SPEC.width) / KAKAO_STATIC_SPEC.width), borderRadius: 999, backgroundColor: tool === 'eraser' ? '#FFFFFF' : color, borderWidth: 1.5, borderColor: '#FFFFFFB3' }} />
-            <Text style={{ fontSize: 13, fontWeight: '700', color: '#FFFFFF', letterSpacing: .3 }}>{sizing}px</Text>
-          </View>
-        </View>}
+        {/* 45.35: 굵기를 끄는 동안 캔버스 한가운데에 뜨던 검은 상자를 없앴다. 값은 왼쪽 조절대의
+            손잡이 옆 말풍선이 말한다 — 고치는 중인 그림을 덮지 않는다. */}
         {/* 확대한 동안에만: 작은 배율 표시. 누르면 100%. 캔버스 위 빈 띠에 뜨고, 띠가 없는 짧은 화면에서만 캔버스 모서리에 걸린다. */}
         {tab === 'draw' && zoom > 1.05 && <Pressable accessibilityRole="button" accessibilityLabel="원래 크기로 보기" onPress={resetZoom} hitSlop={8}
           style={({ pressed }) => ({ position: 'absolute', top: 8, right: 12, minHeight: 32, paddingHorizontal: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: pressed ? C.fill : C.floating, borderWidth: 1, borderColor: C.line })}>
@@ -1179,6 +1296,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           </ScrollView>
           </View>
         </View>}
+      </View>
       </View>
 
       {tab === 'motion' ? <View style={[dock, { height: motionHeight, flexShrink: 0 }]} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
@@ -1275,44 +1393,36 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           </View>}
         </View>
 
-        : panel === 'brush' ? <Sheet tall plain room={coverRoom()} title={favEdit ? '즐겨찾기 편집' : '브러시'}
-            closeLabel="브러시 닫기"
-            onClose={() => { ease(); setPanel(null); setFavEdit(false); setPinning(null); setBrushDetail(false); }}
-            right={<Pressable accessibilityRole="button" accessibilityLabel={favEdit ? '즐겨찾기 편집 끝내기' : '즐겨찾기 편집'}
-              accessibilityState={{ selected: favEdit }}
-              onPress={() => { ease(); setFavEdit(!favEdit); setPinning(null); }}
-              style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, borderRadius: C.radius.button, alignItems: 'center', justifyContent: 'center',
-                borderWidth: 1, borderColor: favEdit ? C.accentBorder : C.line, backgroundColor: favEdit ? C.accentSoft : pressed ? C.fill : C.paper })}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{favEdit ? '끝내기' : '즐겨찾기 편집'}</Text>
-            </Pressable>}>
-          {brushSheet}
-        </Sheet>
         : panel === 'reference' && selectedReference ? <Sheet room={coverRoom()} title="참고 사진" onClose={() => { ease(); setPanel(null); }}>
           <View style={{ paddingHorizontal: 8, gap: 8 }}>
           <Minor title="위치 초기화" onPress={() => { changeTransform(selectedReference.id, { x: 0, y: 0, scale: 1, rotation: 0 }); setPanel(null); }} />
           <Minor title="참고 삭제" danger onPress={() => { const image = slot.referenceImages.find(i => i.path === selectedReference.path); if (image) removeReference(image.path, selectedReference.id); }} />
           </View>
         </Sheet> : <>
-        {drawRail && <SheetHeader title="레이어" closeLabel="레이어 닫기" closeIcon="chevron-down" onClose={() => { ease(); setDrawRail(false); }} />}
-        {drawRail && <View style={{ maxHeight: Math.min(188, coverRoom()) }}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8, gap: 6 }}>
+        {drawRail && <SheetHeader title="레이어" closeLabel="레이어 닫기" closeIcon="chevron-down" onClose={() => { ease(); setDrawRail(false); }}
+          right={scene.layers.filter(l => l.id.startsWith('draw-')).length < 4
+            ? <IconButton testID="레이어 추가" label="레이어 추가" icon="plus" size={22} color={C.ink} onPress={addDrawing} />
+            : undefined} />}
+        {drawRail && <View style={{ maxHeight: Math.min(280, coverRoom()) }}>
+          <ScrollView showsVerticalScrollIndicator contentContainerStyle={{ paddingBottom: 8 }}>
             {scene.layers.map(layer => {
               const active = layer.id === scene.activeLayerId, name = layerLabel(layer.name);
-              return <View key={layer.id} style={{ paddingBottom: layerMenu === layer.id ? 6 : 0, borderRadius: 14, borderWidth: 1, borderColor: active ? C.accentBorder : C.line, backgroundColor: active ? C.accentSoft : C.paper }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 4 }}>
+              return <View key={layer.id} style={{ paddingBottom: layerMenu === layer.id ? 6 : 0, borderBottomWidth: 1, borderColor: C.line, backgroundColor: active ? C.accentSoft : 'transparent' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 4 }}>
+                {/* 고른다고 판이 닫히지 않는다 — 어느 장을 골랐는지 보고 이어서 순서·보임을 만질 수 있어야 한다. */}
                 <Pressable accessibilityRole="button" accessibilityLabel={`${name} 선택`} accessibilityState={{ selected: active }}
-                  onPress={() => { send({ type: 'select', id: layer.id }); setDrawRail(false); }}
-                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, paddingLeft: 6 }}>
-                  <View style={{ width: 36, height: 36, borderRadius: 9, backgroundColor: C.surface2, overflow: 'hidden', opacity: layer.visible ? 1 : .35 }}>
+                  onPress={() => send({ type: 'select', id: layer.id })}
+                  style={({ pressed }) => ({ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingLeft: 16, backgroundColor: pressed ? C.fill : 'transparent' })}>
+                  <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, overflow: 'hidden', opacity: layer.visible ? 1 : .35 }}>
                     {thumbs[layer.id] ? <Image source={{ uri: thumbs[layer.id] }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : null}
                   </View>
-                  <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: active ? '700' : '500', color: layer.visible ? C.ink : C.faint }}>{name}</Text>
-                  {active && <MaterialCommunityIcons name="pencil" size={16} color={C.ink} />}
+                  <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: active ? '800' : '600', color: layer.visible ? C.ink : C.faint }}>{name}</Text>
+                  <View style={{ width: 18, alignItems: 'center' }}>{active ? <MaterialCommunityIcons name="pencil" size={16} color={C.ink} /> : null}</View>
                 </Pressable>
                 <EyeToggle label={`${name} ${layer.visible ? '숨기기' : '보이기'}`} on={layer.visible} onPress={() => changeTransform(layer.id, { visible: !layer.visible })} />
                 <Pressable accessibilityRole="button" accessibilityLabel={`${name} 관리`} onPress={() => setLayerMenu(layerMenu === layer.id ? null : layer.id)} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="dots-horizontal" size={20} color={C.muted} /></Pressable>
               </View>
-            {layerMenu === layer.id && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 6 }}>
+            {layerMenu === layer.id && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16 }}>
               {/* 겹치는 차례(45.7차): 위로/아래로 대신 '앞으로 보내기·뒤로 보내기' — 목록의 방향을 몰라도 결과가 그려진다. */}
               {scene.layers.length > 1 && layerAt(layer.id) < scene.layers.length - 1 && <Minor title="앞으로 보내기" onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: 1 }); }} />}
               {scene.layers.length > 1 && layerAt(layer.id) > 0 && <Minor title="뒤로 보내기" onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: -1 }); }} />}
@@ -1322,7 +1432,6 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             </View>}
             </View>;
             })}
-            {scene.layers.length < 4 && <Pressable accessibilityRole="button" accessibilityLabel="레이어 추가" onPress={addDrawing} style={{ minHeight: C.tap, flexDirection: 'row', gap: 6, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="plus" size={16} color={C.muted} /><Text style={{ fontSize: 13, fontWeight: '600', color: C.muted }}>레이어 추가</Text></Pressable>}
           </ScrollView>
         </View>}
         {refRail && <SheetHeader title="참고" closeLabel="참고 닫기" closeIcon="chevron-down" onClose={() => { ease(); setRefRail(false); }} />}
@@ -1375,7 +1484,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           늘 같은 높이(BASE_H)로 캔버스 아래 제자리를 차지한다. 움직이기 탭·키보드 입력 중에는 내용만 비우고 자리는 남긴다.
           윗줄: 도구와 색. 이미 고른 도구를 다시 누르면 그 설정이 열린다. 아랫줄: 이 칸을 끝내는 행동 하나. */}
       {/* 문구를 입력하는 동안에는 도구 줄 자리를 비우지 않고 접는다 — 빈 흰 띠(40차 캡처) 대신 캔버스가 그만큼 커져 고치는 글씨가 보인다. */}
-      <View style={{ height: typing ? 0 : baseH, borderTopWidth: typing ? 0 : 1, borderColor: C.line, backgroundColor: C.paper }} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
+      <View style={{ height: typing ? 0 : BASE_H, borderTopWidth: typing ? 0 : 1, borderColor: C.line, backgroundColor: C.paper }} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
         {tab === 'draw' && !typing && <>
         {/* 윗줄(45.5차): 손이 가장 자주 가는 둘 — 지금 브러시와 지금 색 — 이 넓게 서고,
             지우개·채우기·선택은 옆의 작은 '빠른 모드' 셋으로 붙는다. 여섯 칸을 똑같이 나눈 도구 메뉴가 아니다.
@@ -1383,76 +1492,55 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {/* ── 승인 보드 01 배치(45.28차) ──────────────────────────────────────────────
             ① 브러시 빠른 선택 카드 3 + '전체'  ② 지금 색 + 굵기 한 줄  ③ 펜·지우개·채우기·선택 네 칸.
             되돌리기·다시 실행·완성은 머리줄로 올라갔다 — 여기서는 '무엇으로 그릴까'만 다룬다. */}
-        {!quickHidden && <View testID="빠른 브러시" style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingTop: 6 }}>
+        {/* ── 승인 시안의 아래 줄(45.35) ──────────────────────────────────────────────
+            ① 즐겨찾기 세 칸 + 전체  ② 펜·지우개·채우기·선택 + 지금 색.
+            굵기와 불투명도는 왼쪽 조절대로 올라갔다 — 아래에 두 줄로 눕혀 두지 않는다.
+            큰 둥근 카드와 굵은 외곽선을 걷고, 고른 칸만 옅은 노랑과 짧은 밑줄로 말한다. */}
+        <View testID="빠른 브러시" style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingTop: 6 }}>
           {quickBrushes.map(key => { const b = brushInfo(key), on = isBrushOn(key);
             return <Pressable key={key} testID={'빠른 브러시 ' + b.title} accessibilityRole="button" accessibilityLabel={b.title}
               accessibilityState={{ selected: on }} accessibilityHint={on ? '다시 누르면 세부 설정이 열려요' : undefined}
               onPress={() => pickBrush(key)}
-              style={({ pressed }) => ({ flex: 1, minHeight: 62, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: C.radius.button,
-                borderWidth: 1, borderColor: on ? C.accentBorder : C.line, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.paper })}>
-              <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '78%', height: 18, tintColor: color }} resizeMode="contain" />
+              style={({ pressed }) => ({ flex: 1, minHeight: 62, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: C.radius.button,
+                backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
+              <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '76%', height: 20, tintColor: color }} resizeMode="contain" />
               <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
+              <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 5, height: 2, borderRadius: 1, backgroundColor: on ? C.accent : 'transparent' }} />
             </Pressable>; })}
-          <Pressable accessibilityRole="button" accessibilityLabel="브러시 전체" accessibilityState={{ expanded: false }}
-            onPress={() => { ease(); setPanel('brush'); setDrawRail(false); setRefRail(false); setCaptionOpen(false); }}
-            style={({ pressed }) => ({ width: 54, minHeight: 62, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: C.radius.button,
-              borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper })}>
-            <MaterialCommunityIcons name="dots-grid" size={18} color={C.muted} />
+          <Pressable accessibilityRole="button" accessibilityLabel="브러시 전체" accessibilityState={{ expanded: panel === 'brush' }}
+            onPress={() => { ease(); setPanel('brush'); setBrushDetail(false); setBrushGroup(brushInfo(currentBrushKey).group); setDrawRail(false); setRefRail(false); setCaptionOpen(false); }}
+            style={({ pressed }) => ({ width: 56, minHeight: 62, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: C.radius.button,
+              backgroundColor: pressed ? C.fill : 'transparent' })}>
+            <MaterialCommunityIcons name="dots-grid" size={20} color={C.muted} />
             <Text style={{ fontSize: 11, fontWeight: '600', color: C.muted }}>전체</Text>
           </Pressable>
-        </View>}
-        {/* ② 지금 색과 굵기. 승인 보드처럼 한 줄이다 — 세로 조절대는 없앴다. */}
-        <View testID="색과 굵기" style={{ flexDirection: 'row', alignItems: 'center', gap: narrow ? 6 : 10, paddingHorizontal: 12, paddingTop: 6 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="색" accessibilityState={{ expanded: panel === 'color' }}
-            onPress={() => { ease(); setPanel(panel === 'color' ? null : 'color'); setDrawRail(false); setRefRail(false); setCaptionOpen(false); }}
-            // 보이는 크기는 32 지만 누르는 자리는 48×48 이다(양쪽 8 씩). 줄의 좌우 여백이 그만큼 있어 이웃과 겹치지 않는다.
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            style={({ pressed }) => ({ width: 32, height: 32, borderRadius: 16, padding: 3, backgroundColor: C.paper,
-              borderWidth: panel === 'color' ? 2 : 1, borderColor: panel === 'color' ? C.ink : C.lineStrong, opacity: pressed ? .7 : 1 })}>
-            <View style={{ flex: 1, borderRadius: 13, backgroundColor: color }} />
-          </Pressable>
-          {/* 굵기는 그리거나 지울 때만 쓴다 — 채우기·선택, 글씨·선택 손질, 스포이드 중에는 칸만 남기고 비운다
-              (줄 높이가 흔들리지 않게). 지금 쓰지 않는 조절을 늘어놓지 않는다. */}
-          {(tool === 'pen' || tool === 'eraser') && !scene.captionPicked && !scene.selection && !scene.picking ? <>
-            {!narrow && <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>굵기</Text>}
-            <View style={{ flex: 1 }}>
-              <Range hideLabel label={tool === 'eraser' ? '지우개 굵기' : '브러시 굵기'} value={width} min={1} max={48} step={1}
-                onChange={n => { setWidth(n, false); setSizing(Math.max(1, Math.min(48, Math.round(n)))); }}
-                onActive={active => { if (active === false) { setWidth(width, true); setSizing(null); } }} />
-            </View>
-            <Text testID="굵기 수치" style={{ fontSize: 14, fontWeight: '800', color: C.ink, minWidth: 24, textAlign: 'right' }}>{width}</Text>
-          </> : <View style={{ flex: 1, minHeight: 32 }} />}
         </View>
-        {/* ③ 불투명도. 굵기 줄과 같은 칸 나눔이라 두 조절대의 왼쪽 끝이 맞는다.
-            브러시가 가진 제 진하기(프리셋 alpha)와 사용자가 정하는 이 값은 **다른 것**이고 곱해진다 —
-            여기서 100% 는 '브러시가 원래 내는 진하기 그대로'라는 뜻이지 '완전 불투명'이 아니다.
-            지우개에는 뜻이 없으므로 칸만 남기고 비운다(줄 높이가 흔들리지 않게). */}
-        <View testID="불투명도" style={{ flexDirection: 'row', alignItems: 'center', gap: narrow ? 6 : 10, paddingHorizontal: 12, paddingTop: 4 }}>
-          <View style={{ width: 32 }} />
-          {tool === 'pen' && !scene.captionPicked && !scene.selection && !scene.picking ? <>
-            {!narrow && <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>불투명도</Text>}
-            <View style={{ flex: 1 }}>
-              <Range hideLabel label="불투명도" value={Math.round((effectiveBrush.opacity ?? 1) * 100)} min={10} max={100} step={5}
-                onChange={n => changeBrush({ opacity: Math.max(.1, Math.min(1, n / 100)) }, false)}
-                onActive={active => { if (active === false) changeBrush({ opacity: effectiveBrush.opacity ?? 1 }, true); }} />
-            </View>
-            <Text testID="불투명도 수치" style={{ fontSize: 14, fontWeight: '800', color: C.ink, minWidth: 40, textAlign: 'right' }}>{Math.round((effectiveBrush.opacity ?? 1) * 100)}%</Text>
-          </> : <View style={{ flex: 1, minHeight: 26 }} />}
-        </View>
-        {/* ④ 도구 네 칸. 활성 도구는 연한 노랑 배경, 열린 설정 판은 테두리로 따로 말한다. */}
-        <View testID="도구 줄" style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingTop: 4 }}>
+        {/* ② 도구 네 칸과 지금 색. 색은 오른쪽 끝에 동그라미 하나로 선다(시안). */}
+        <View testID="도구 줄" style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 8, paddingTop: 6 }}>
           {ALL_TOOLS.map(([key, title, icon, a11y]) => { const on = tool === key;
             return <Pressable key={key} testID={'도구 ' + title} accessibilityRole="button" accessibilityLabel={a11y} accessibilityState={{ selected: on }}
               onPress={() => selectTool(key)}
-              style={({ pressed }) => ({ flex: 1, minHeight: C.tap, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: C.radius.button,
+              style={({ pressed }) => ({ flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: C.radius.button,
                 backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
-              <MaterialCommunityIcons name={icon} size={on ? 21 : 20} color={on ? C.ink : C.muted} />
+              <MaterialCommunityIcons name={icon} size={20} color={on ? C.ink : C.muted} />
               <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{title}</Text>
+              <View pointerEvents="none" style={{ position: 'absolute', left: 14, right: 14, bottom: 3, height: 2, borderRadius: 1, backgroundColor: on ? C.accent : 'transparent' }} />
             </Pressable>; })}
+          <Pressable testID="지금 색" accessibilityRole="button" accessibilityLabel="색" accessibilityValue={{ text: color.toUpperCase() }} accessibilityState={{ expanded: panel === 'color' }}
+            accessibilityHint="누르면 색을 골라요"
+            onPress={() => { ease(); setPanel(panel === 'color' ? null : 'color'); setDrawRail(false); setRefRail(false); setCaptionOpen(false); }}
+            style={({ pressed }) => ({ width: 52, height: 52, alignItems: 'center', justifyContent: 'center', opacity: pressed ? .7 : 1 })}>
+            <View testID="지금 색 고리" style={{ width: 36, height: 36, borderRadius: 18, padding: 3, backgroundColor: C.paper,
+              borderWidth: panel === 'color' ? 2 : 1, borderColor: panel === 'color' ? C.ink : C.lineStrong }}>
+              <View style={{ flex: 1, borderRadius: 15, backgroundColor: color }} />
+            </View>
+          </Pressable>
         </View>
         </>}
       </View>
     </KeyboardAvoidingView>
+    {/* 브러시 창은 머리줄·캔버스·아래 줄을 모두 덮는 독립 창이다(승인 시안). */}
+    {brushWindow}
 
     {cutoutPicker && <Dialog title="그림 가져오기" onClose={() => setCutoutPicker(false)}>
       {cutouts.map(cut => <View key={cut.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -1573,36 +1661,8 @@ function PoseStrip({ category, index, count, onIndex }: { category: string; inde
 export const widthToRatio = (w: number) => Math.sqrt(Math.max(0, (w - 1) / 47));
 export const ratioToWidth = (r: number) => Math.max(1, Math.min(48, Math.round(1 + 47 * r * r)));
 export const SIZE_TRAVEL = 180;
-// 캔버스 가장자리 굵기 띠(45.4차). 평소에는 지금 굵기를 점 하나로만 말하고, 누른 채 세로로 끌면 굵기가 바뀐다.
-// 여기서 시작한 손가락만 굵기 조절이 된다 — 캔버스 다른 곳에서 시작한 획에는 영향이 없다.
-function EdgeSize({ label, value, color, eraser, onChange, onActive }: { label: string; value: number; color: string; eraser: boolean; onChange: (value: number, settle: boolean) => void; onActive: (value: number | null) => void }) {
-  const start = useRef<{ y: number; r: number } | null>(null);
-  const [holding, setHolding] = useState(false);
-  const ratio = widthToRatio(value), dot = Math.round(4 + 12 * ratio);
-  const moveTo = (pageY: number | undefined, settle: boolean) => {
-    const from = start.current; if (!from) return;
-    // 위로 끌면 굵게(화면 y 는 아래로 커진다).
-    const next = ratioToWidth(Math.max(0, Math.min(1, from.r + (from.y - (pageY ?? from.y)) / SIZE_TRAVEL)));
-    onChange(next, settle); onActive(settle ? null : next);
-  };
-  return <View accessibilityRole="adjustable" accessibilityLabel={label} accessibilityHint="누른 채 위아래로 끌어서 굵기를 바꿔요"
-    accessibilityValue={{ min: 1, max: 48, now: value, text: value + 'px' }}
-    accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-    onAccessibilityAction={e => onChange(Math.max(1, Math.min(48, value + (e.nativeEvent.actionName === 'increment' ? 1 : -1))), true)}
-    onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderTerminationRequest={() => false}
-    onResponderGrant={e => { start.current = { y: e.nativeEvent.pageY ?? 0, r: ratio }; setHolding(true); onActive(value); }}
-    onResponderMove={e => moveTo(e.nativeEvent.pageY, false)}
-    onResponderRelease={e => { moveTo(e.nativeEvent.pageY, true); start.current = null; setHolding(false); onActive(null); }}
-    onResponderTerminate={() => { start.current = null; setHolding(false); onActive(null); onChange(value, true); }}
-    testID="굵기 띠"
-    style={{ width: 26, height: '44%', minHeight: 120, alignItems: 'center', justifyContent: 'center' }}>
-    <View pointerEvents="none" style={{ width: 20, flex: 1, borderRadius: 10, backgroundColor: holding ? '#17171722' : '#17171710', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-      <MaterialCommunityIcons name="chevron-up" size={12} color={T.muted} />
-      <View style={{ width: dot, height: dot, borderRadius: 8, backgroundColor: eraser ? T.paper : color, borderWidth: 1, borderColor: T.lineStrong }} />
-      <MaterialCommunityIcons name="chevron-down" size={12} color={T.muted} />
-    </View>
-  </View>;
-}
+// 45.35: 캔버스 가장자리 굵기 띠(45.4차)는 왼쪽 세로 조절대가 대신한다. 쓰이지 않는 부품을 남겨 두면
+// 다음 사람이 어느 쪽이 진짜인지 알 수 없다.
 // 참고 줄의 칸 하나: 그림(또는 아이콘) 위, 짧은 이름 아래.
 function RailTile({ label, caption, image, icon, selected, dashed, faded, onPress }: { label: string; caption: string; image?: string; icon?: IconName; selected?: boolean; dashed?: boolean; faded?: boolean; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!selected }} onPress={onPress} style={{ width: 64, alignItems: 'center', gap: 4 }}>
@@ -1764,10 +1824,9 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
         </View>
       </View>
     </> : <>
-      {/* 직접 선택(45.28차, 승인 보드 01): 프리셋 한 줄 · SV 사각 + 색상 막대. 밝기는 사각의 세로축이라
+      {/* 직접 선택(45.35 승인 시안): 넓은 SV 사각판 + 오른쪽 세로 색상 막대. 밝기는 사각판의 세로축이라
           따로 막대를 두지 않는다 — 같은 값을 두 곳에서 조절하지 않게. 투명도는 그대로 남는다. */}
-      <ColorField color={color} onPick={(c, settle) => onPick(keepAlpha(c), settle)} />
-      <HueBar color={color} onPick={(c, settle) => onPick(keepAlpha(c), settle)} />
+      <ColorArea color={color} onPick={(c, settle) => onPick(keepAlpha(c), settle)} />
       {!!recent.length && <View style={{ gap: 2 }}>
         <Text style={{ fontSize: 11, fontWeight: '700', color: T.muted }}>최근</Text>
         <ScrollView testID="최근 색" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', gap: 12, paddingHorizontal: 6, paddingVertical: 4 }}>
@@ -1790,11 +1849,32 @@ function Swatch({ color, selected, onPress, size = 34, label, round }: { color: 
     {selected && <MaterialCommunityIcons name="check" size={Math.round(size * .5)} color={light(color) ? '#1B1B1D' : '#FFFFFF'} />}
   </Pressable>;
 }
-// 색상환(45.4차). 스마트폰에서 색을 고르는 가장 익숙한 모양이고, 긴 막대 세 줄보다 자리를 적게 쓴다.
-// 조각을 돌려 원을 만든다(각 조각은 아래쪽 끝 = 원 가운데를 축으로 돈다). 가운데로 갈수록 흰 막이 덮여 옅어진다.
-// SV 사각(가로 = 선명함 · 세로 = 밝기)과 색상 막대. 승인 보드 01 의 색 시트 배치 그대로다.
-// 그라디언트 그림 없이 세우려고 색 띠를 여러 칸으로 나눠 붙인다 — 칸 수는 눈에만 관계하고 손가락과는 무관하다.
-const SAT_STEPS = 20, VAL_STEPS = 16, HUE_STEPS = 30, FIELD_H = 116;
+// ── 색 고르는 판(45.35 승인 시안) ─────────────────────────────────────────────────────────
+// 왼쪽에 넓은 SV 사각판, 오른쪽에 세로 색상 막대. 시안 그대로의 배치다.
+//
+// 예전에는 사각판을 가로 20칸·세로 16칸의 작은 네모로, 색상 막대를 30칸으로 이어 붙였다.
+// 칸마다 색이 한 번에 뛰므로 **계단식 색 타일**로 보였다 — 사용자가 지적한 그 문제다.
+// 이제는 아주 작은 PNG 두 장(흰색이 사라지는 가로 · 검정이 짙어지는 세로)을 바탕색 위에 늘려
+// 덮는다. 늘릴 때 기기가 픽셀 사이를 메우므로 단이 생기지 않는다. 두 장은 색과 무관해서
+// 어떤 색상에서도 같은 판이 나온다 — 색을 바꿀 때마다 그림을 다시 만들지 않는다.
+// (그라디언트 라이브러리를 새로 넣지 않는다: 네이티브 구성이 달라진다.)
+const FIELD_H = 150, HUE_W = 44, HUE_BAR_W = 22, KNOB = 24;
+const SAT_MASK = require('../../assets/art/field-sat.png');
+const VAL_MASK = require('../../assets/art/field-val.png');
+const HUE_MASK = require('../../assets/art/hue-bar-v.png');
+// 손잡이는 흰 고리 + 고른 색 + 얇은 짙은 테두리. 두 겹이라 흰 색 위에서도 검은 색 위에서도 보인다.
+function Knob({ color, left, top }: { color: string; left: number | `${number}%`; top: number | `${number}%` }) {
+  return <View pointerEvents="none" style={{ position: 'absolute', left, top, marginLeft: -KNOB / 2, marginTop: -KNOB / 2, width: KNOB, height: KNOB, borderRadius: KNOB / 2,
+    backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', ...Elev[2] }}>
+    <View style={{ width: KNOB - 7, height: KNOB - 7, borderRadius: KNOB, backgroundColor: color, borderWidth: 1, borderColor: '#1717194D' }} />
+  </View>;
+}
+function ColorArea({ color, onPick }: { color: string; onPick: (c: string, settle?: boolean) => void }) {
+  return <View style={{ flexDirection: 'row', gap: 10 }}>
+    <View style={{ flex: 1 }}><ColorField color={color} onPick={onPick} /></View>
+    <HueBar color={color} onPick={onPick} />
+  </View>;
+}
 function ColorField({ color, onPick }: { color: string; onPick: (c: string, settle?: boolean) => void }) {
   const [size, setSize] = useState({ w: 0, h: FIELD_H });
   const { h, s, v } = hsvOf(color);
@@ -1803,7 +1883,6 @@ function ColorField({ color, onPick }: { color: string; onPick: (c: string, sett
     const sat = Math.max(0, Math.min(1, x / size.w)), val = Math.max(.04, Math.min(1, 1 - y / size.h));
     onPick(hsv(h, sat, val), settle);
   };
-  const knob = { x: s * size.w, y: (1 - v) * size.h };
   return <View accessibilityRole="adjustable" accessibilityLabel="색 사각판" accessibilityHint="누르거나 끌어서 선명함과 밝기를 골라요"
     accessibilityValue={{ text: color }}
     onLayout={e => { const w = Math.floor(e.nativeEvent.layout.width), hh = Math.floor(e.nativeEvent.layout.height); if (w > 0 && (w !== size.w || hh !== size.h)) setSize({ w, h: hh }); }}
@@ -1811,33 +1890,28 @@ function ColorField({ color, onPick }: { color: string; onPick: (c: string, sett
     onResponderGrant={e => at(e.nativeEvent.locationX, e.nativeEvent.locationY, false)}
     onResponderMove={e => at(e.nativeEvent.locationX, e.nativeEvent.locationY, false)}
     onResponderRelease={e => at(e.nativeEvent.locationX, e.nativeEvent.locationY, true)}
-    style={{ height: FIELD_H, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: T.line, backgroundColor: T.paper }}>
-    <View pointerEvents="none" style={{ flex: 1, flexDirection: 'row' }}>
-      {Array.from({ length: SAT_STEPS }, (_, i) => <View key={i} style={{ flex: 1, backgroundColor: hsv(h, (i + .5) / SAT_STEPS, 1) }} />)}
-    </View>
-    {/* 아래로 갈수록 검어지는 막(밝기). */}
-    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}>
-      {Array.from({ length: VAL_STEPS }, (_, i) => <View key={i} style={{ flex: 1, backgroundColor: '#000000', opacity: (i / (VAL_STEPS - 1)) * .92 }} />)}
-    </View>
-    {size.w > 0 && <View pointerEvents="none" style={{ position: 'absolute', left: knob.x - 11, top: knob.y - 11, width: 22, height: 22, borderRadius: 11, borderWidth: 3, borderColor: '#FFFFFF', backgroundColor: color, ...Elev[2] }} />}
+    style={{ height: FIELD_H, borderRadius: T.radius.sm, overflow: 'hidden', borderWidth: 1, borderColor: T.line, backgroundColor: hsv(h, 1, 1) }}>
+    <Image accessibilityIgnoresInvertColors source={SAT_MASK} resizeMode="stretch" style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} />
+    <Image accessibilityIgnoresInvertColors source={VAL_MASK} resizeMode="stretch" style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} />
+    <Knob color={color} left={pct(s)} top={pct(1 - v)} />
   </View>;
 }
 function HueBar({ color, onPick }: { color: string; onPick: (c: string, settle?: boolean) => void }) {
-  const [width, setWidth] = useState(0);
+  const [height, setHeight] = useState(FIELD_H);
   const { h, s, v } = hsvOf(color);
-  const at = (x: number, settle: boolean) => { if (width <= 0) return; onPick(hsv(Math.max(0, Math.min(1, x / width)) * 360, s || 1, v || 1), settle); };
+  const at = (y: number, settle: boolean) => { if (height <= 0) return; onPick(hsv(Math.max(0, Math.min(1, y / height)) * 360, s || 1, v || 1), settle); };
   return <View accessibilityRole="adjustable" accessibilityLabel="색 계열 막대" accessibilityHint="누르거나 끌어서 색 계열을 골라요"
     accessibilityValue={{ text: Math.round(h) + '도' }}
-    onLayout={e => { const w = Math.floor(e.nativeEvent.layout.width); if (w > 0 && w !== width) setWidth(w); }}
+    onLayout={e => { const hh = Math.floor(e.nativeEvent.layout.height); if (hh > 0 && hh !== height) setHeight(hh); }}
     onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderTerminationRequest={() => false}
-    onResponderGrant={e => at(e.nativeEvent.locationX, false)}
-    onResponderMove={e => at(e.nativeEvent.locationX, false)}
-    onResponderRelease={e => at(e.nativeEvent.locationX, true)}
-    style={{ height: T.tap, justifyContent: 'center' }}>
-    <View pointerEvents="none" style={{ height: 20, borderRadius: 10, overflow: 'hidden', flexDirection: 'row', borderWidth: 1, borderColor: T.line }}>
-      {Array.from({ length: HUE_STEPS }, (_, i) => <View key={i} style={{ flex: 1, backgroundColor: hsv((i + .5) * (360 / HUE_STEPS), 1, 1) }} />)}
+    onResponderGrant={e => at(e.nativeEvent.locationY, false)}
+    onResponderMove={e => at(e.nativeEvent.locationY, false)}
+    onResponderRelease={e => at(e.nativeEvent.locationY, true)}
+    style={{ width: HUE_W, height: FIELD_H, alignItems: 'center' }}>
+    <View pointerEvents="none" style={{ width: HUE_BAR_W, height: '100%', borderRadius: HUE_BAR_W / 2, overflow: 'hidden', borderWidth: 1, borderColor: T.line }}>
+      <Image accessibilityIgnoresInvertColors source={HUE_MASK} resizeMode="stretch" style={{ width: '100%', height: '100%' }} />
     </View>
-    {width > 0 && <View pointerEvents="none" style={{ position: 'absolute', left: (h / 360) * width - 11, width: 22, height: 22, borderRadius: 11, borderWidth: 3, borderColor: '#FFFFFF', backgroundColor: hsv(h, 1, 1), ...Elev[2] }} />}
+    <Knob color={hsv(h, 1, 1)} left={HUE_W / 2} top={pct(h / 360)} />
   </View>;
 }
 // Secondary to the slider, but it guarantees size stays adjustable on any device.

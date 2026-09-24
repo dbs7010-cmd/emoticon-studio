@@ -143,10 +143,11 @@ export function Chip({ label, on, onPress, icon, wide, a11y }: { label: string; 
 }
 
 // 시트·패널 머리: 제목 하나 + 선택 보조 동작 + 닫기. 모든 패널이 같은 머리를 쓴다.
-export function SheetHeader({ title, onClose, closeLabel, closeIcon = 'close', right }: { title: string; onClose: () => void; closeLabel?: string; closeIcon?: IconName; right?: React.ReactNode }) {
-  return <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingLeft: T.gap.lg, paddingRight: 4 }}>
-    <View style={{ position: 'absolute', top: 6, left: 0, right: 0, alignItems: 'center' }} pointerEvents="none"><View style={{ width: 32, height: 4, borderRadius: 2, backgroundColor: T.line }} /></View>
-    <Text numberOfLines={1} style={{ flex: 1, fontSize: 15, fontWeight: '800', color: T.ink }}>{title}</Text>
+export function SheetHeader({ title, onClose, closeLabel, closeIcon = 'close', right, left, grab = true }: { title: string; onClose: () => void; closeLabel?: string; closeIcon?: IconName; right?: React.ReactNode; left?: React.ReactNode; grab?: boolean }) {
+  return <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingLeft: left ? 2 : T.gap.lg, paddingRight: 4 }}>
+    {grab && <View style={{ position: 'absolute', top: 6, left: 0, right: 0, alignItems: 'center' }} pointerEvents="none"><View style={{ width: 32, height: 4, borderRadius: 2, backgroundColor: T.line }} /></View>}
+    {left}
+    <Text numberOfLines={1} style={{ flex: 1, fontSize: 17, fontWeight: '800', color: T.ink }}>{title}</Text>
     {right}
     <Pressable accessibilityRole="button" accessibilityLabel={closeLabel ?? title + ' 닫기'} onPress={onClose} hitSlop={2}
       style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : 'transparent' })}>

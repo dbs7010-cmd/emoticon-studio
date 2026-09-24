@@ -91,7 +91,8 @@ const writeCaption = async text => {
 
   // 칸 1: 한 번만 고르는 설정.
   scene = { ...scene, dirty: true, undo: true }; await message(scene);
-  await press('브러시 전체'); await press('브러시 연필');   // 전체 목록에서 고르면 판이 스스로 닫힌다(45.25)
+  // 45.35: 목록이 선·채색·질감·효과 갈래로 나뉘었다(승인 시안). 연필은 질감에 있다.
+  await press('브러시 전체'); await press('브러시 분류 질감'); await press('브러시 연필');   // 전체 목록에서 고르면 판이 스스로 닫힌다(45.25)
   // 굵기는 색과 같은 줄의 가로 막대다(45.28). 폭을 알려 준 뒤 3/4 자리를 눌러 끈다.
   const sizer = () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '브러시 굵기')[0];
   drags++;

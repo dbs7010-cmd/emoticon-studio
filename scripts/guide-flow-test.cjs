@@ -281,7 +281,8 @@ async function echoReferences(scene) {
   // 참고 자리가 서면 아래 캔버스 영역이 그만큼 줄어야 한다. 기기가 주는 크기를 넣어 확인한다.
   // 덮어 뜨는 판(브러시·색)과 달리 이것은 **일부러** 캔버스를 줄인다 — 그래야 참고가 그림을 가리지 않는다.
   {
-    const area = () => tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
+    // 45.35: 왼쪽 조절대의 홈도 flex:1 + onLayout 이라, 캔버스 영역은 이름으로 집는다.
+    const area = () => tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
     const square = () => tree.root.findAll(n => n.type === 'View' && n.props.collapsable === false)[0];
     await act(async () => area().props.onLayout({ nativeEvent: { layout: { width: 390, height: 300 } } }));
     const withRef = { ...square().props.style };

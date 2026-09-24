@@ -27,7 +27,7 @@
     "viewport": "320×800",
     "screen": "그리기",
     "scale": 1,
-    "texts": 56,
+    "texts": 58,
     "clipped": 0,
     "worst": null
   },
@@ -35,7 +35,7 @@
     "viewport": "320×800",
     "screen": "그리기",
     "scale": 1.3,
-    "texts": 56,
+    "texts": 58,
     "clipped": 0,
     "worst": null
   },
@@ -43,7 +43,7 @@
     "viewport": "320×800",
     "screen": "그리기",
     "scale": 1.5,
-    "texts": 56,
+    "texts": 58,
     "clipped": 0,
     "worst": null
   },

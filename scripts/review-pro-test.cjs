@@ -109,6 +109,8 @@ async function openPainter() {
     if (labelled('PRO 닫기').length) await press('PRO 닫기');
     await press('그리기');
     await press('브러시 전체');
+    // 45.35: 목록이 선·채색·질감·효과 갈래로 나뉘었다(승인 시안). 크레용은 질감에 있다.
+    await press('브러시 분류 질감');
     assert.equal(labelled('브러시 크레용').length, 1, '꺼짐: 고급 브러시도 잠겨 있다');
     await press('브러시 닫기');
 
@@ -157,6 +159,7 @@ async function openPainter() {
     await press('움직임 처음으로');
     await press('그리기');
     await press('브러시 전체');
+    await press('브러시 분류 질감');
     assert.equal(labelled('브러시 크레용').length, 1, '켜짐: 고급 브러시 줄은 그대로 있다');
     assert.ok(labelled('브러시 크레용').length >= 1, '켜짐: 고급 브러시를 실제로 고를 수 있다');
     await press('브러시 닫기');

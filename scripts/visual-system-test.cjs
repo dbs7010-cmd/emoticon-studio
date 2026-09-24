@@ -204,12 +204,15 @@ async function ready() {
   assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.accentSoft, '고른 도구만 옅은 노랑 표면');
   assert.equal(flat(labelled('지우개')[0].props.style).backgroundColor, 'transparent', '고르지 않은 도구는 투명');
   // 노랑은 '지금 그리는 도구' 하나만 쓴다. 색은 도구가 아니라 패널 입구라 테두리로 말한다.
+  // 45.35 승인 시안: 색은 도구 줄 오른쪽 끝의 동그라미 하나다. 상태는 그 고리가 말한다.
   const colorBtn = () => flat(labelled('색')[0].props.style);
+  const colorRing = () => flat(byTestID('지금 색 고리')[0].props.style);
   assert.notEqual(colorBtn().backgroundColor, T.accentSoft, '색은 도구가 아니라 패널 입구 — 노랑을 쓰지 않는다');
-  const colorRest = seen(colorBtn());
+  assert.notEqual(colorRing().backgroundColor, T.accentSoft, '색 고리에도 노랑을 쓰지 않는다');
+  const colorRest = seen(colorRing());
   await press('색');
-  assert.notEqual(colorBtn().backgroundColor, T.accentSoft, '색 패널을 열어도 노랑이 되지 않는다');
-  assert.ok(seen(colorBtn()) > colorRest, '열린 패널은 더 굵은 테두리로 말한다');
+  assert.notEqual(colorRing().backgroundColor, T.accentSoft, '색 패널을 열어도 노랑이 되지 않는다');
+  assert.ok(seen(colorRing()) > colorRest, '열린 패널은 더 굵은 고리로 말한다');
   assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.accentSoft, '색을 열어도 활성 도구(펜)는 그대로 노랑');
   const yellowTools = TOOLS.filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accentSoft);
   assert.deepEqual(yellowTools, [TOOLS[0]], '도구 줄의 노랑은 한 곳뿐: ' + JSON.stringify(yellowTools));
@@ -225,15 +228,31 @@ async function ready() {
   assert.ok(quick.every(n => { const h = flat(n.props.style).minHeight ?? 0; return h >= 56 && h <= 72; }), '획 견본이 보일 만큼 높다(56~72dp)');
   assert.ok(quick.every(n => n.findAll(x => x.type === 'Image').length === 1), '카드마다 그 브러시의 실제 획 견본');
   assert.equal(quick.filter(n => flat(n.props.style).backgroundColor === T.accentSoft).length, 1, '빠른 줄의 노랑도 한 장뿐');
-  // 전체 목록: 무료 4 + PRO 8 을 한 판에. 쓸 수 있는 것은 흐리게 죽이지 않는다.
+  // 45.35 승인 시안: 브러시 창은 선·채색·질감·효과 갈래의 세로 목록이다. 줄마다 카드를 두르지 않고
+  // 얇은 구분선으로만 가르며, 이름 칸과 넓은 실제 획 견본이 따로 선다. 쓸 수 있는 것은 흐리게 죽이지 않는다.
   await press('브러시 전체');
-  const listCards = byTestID('브러시 목록')[0].findAll(n => n.type === 'Pressable' && /^브러시 /.test(n.props.accessibilityLabel ?? ''));
-  assert.equal(listCards.length, 30, '전체 목록은 무료 10 + PRO 20 = 30장: ' + listCards.length);
-  for (const t of ['기본 펜', '자연 잉크', '연필', '마커'])
-    assert.equal(flat(labelled('브러시 ' + t)[0].props.style).opacity ?? 1, 1, '쓸 수 있는 브러시 ' + t + ' 카드를 흐리게 하지 않는다');
-  assert.equal(labelled('선 보정').length, 0, '진하기·보정은 세부 설정 안');
+  const listRows = [];
+  for (const g of ['선', '채색', '질감', '효과']) {
+    await press('브러시 분류 ' + g);
+    // 화면이 다시 그려지면 예전 마디는 읽을 수 없다. 그 자리에서 필요한 값만 떠 둔다.
+    for (const n of byTestID('브러시 목록')[0].findAll(x => x.type === 'Pressable' && /^브러시 /.test(x.props.accessibilityLabel ?? '')))
+      listRows.push({ label: n.props.accessibilityLabel, st: flat(n.props.style), images: n.findAll(x => x.type === 'Image').length });
+    for (const t of ['기본 펜', '자연 잉크', '연필', '마커']) for (const node of labelled('브러시 ' + t))
+      assert.equal(flat(node.props.style).opacity ?? 1, 1, '쓸 수 있는 브러시 ' + t + ' 줄을 흐리게 하지 않는다');
+  }
+  assert.equal(listRows.length, 30, '네 갈래를 합치면 무료 10 + PRO 20 = 30줄: ' + listRows.length);
+  for (const { label, st, images } of listRows) {
+    assert.equal(seen({ borderWidth: st.borderWidth, borderColor: st.borderColor }), 0, '줄마다 카드 외곽선을 두르지 않는다: ' + label);
+    assert.equal(st.borderBottomWidth, 1, '얇은 구분선 하나로 가른다: ' + label);
+    assert.ok((st.minHeight ?? 0) >= 64 && (st.minHeight ?? 0) <= 76, '줄 높이 64~76dp: ' + st.minHeight);
+    assert.equal(images, 1, '줄마다 그 브러시의 실제 획 견본: ' + label);
+  }
+  // 고른 줄만 옅은 노랑이고, 노랑인 줄은 많아야 하나다.
+  const litRows = listRows.filter(r => r.st.backgroundColor === T.accentSoft);
+  assert.ok(litRows.length <= 1, '목록의 노랑은 고른 줄 하나뿐: ' + litRows.length);
+  assert.equal(labelled('선 보정').length, 0, '진하기·보정은 세부 설정 화면 안');
   await press('세부 설정');
-  assert.equal(labelled('선 보정').length, 1, '세부 설정을 펼치면 선 보정이 나온다');
+  assert.equal(labelled('선 보정').length, 1, '세부 설정으로 들어가면 선 보정이 나온다');
   await press('브러시 닫기');
 
   // ── 6. 문구: 키보드가 올라오면 입력 한 줄(머리·지우기·큰 적용 버튼 접힘) ──────────────────────

@@ -105,12 +105,24 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   await press('편의 세트');
   await act(async () => byTestID('slot-1')[0].props.onPress());
   await ready();
-  const area = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
+  const area = tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
   await act(async () => area.props.onLayout({ nativeEvent: { layout: { width: 360, height: 620 } } }));
 
   // ── 1. 패널을 연 채 캔버스를 누르면: 패널만 닫힌다. 그 손가락은 그림에 닿지 않는다 ──────────────
   const veil = () => byTestID('패널 닫기 막');
-  const openers = [['브러시 전체', '브러시 닫기'], ['색', '팔레트 닫기'], ['문구', '문구 닫기'], ['레이어', null]];
+  // 45.35: 브러시는 화면을 덮는 독립 창이라 제 바깥막을 갖는다. 나머지 판은 캔버스 위의 닫기 막 그대로다.
+  const outside = () => byTestID('브러시 창 배경')[0].findAll(n => n.type === 'Pressable')[0];
+  await press('브러시 전체');
+  assert.equal(byTestID('브러시 창 배경').length, 1, '브러시 전체: 창 뒤가 가볍게 어두워진다');
+  assert.equal(veil().length, 0, '브러시 전체: 캔버스의 닫기 막까지 겹쳐 두지 않는다');
+  {
+    const before = sent().length;
+    await act(async () => outside().props.onPress());
+    assert.equal(sent().length, before, '브러시 전체: 닫는 손가락은 캔버스에 아무 명령도 보내지 않는다');
+    assert.equal(byTestID('브러시 창 배경').length, 0, '브러시 전체: 바깥을 누르면 창이 닫힌다');
+    assert.equal(labelled('브러시 닫기').length, 0, '브러시 전체: 창이 닫혔다');
+  }
+  const openers = [['색', '팔레트 닫기'], ['문구', '문구 닫기'], ['레이어', null]];
   for (const [open, close] of openers) {
     await press(open);
     assert.equal(veil().length, 1, open + ': 캔버스에 닫기 막이 생긴다');
@@ -196,8 +208,9 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   const quick = () => byTestID('빠른 브러시')[0];
   assert.equal(labelled('문구').length, 1, '문구 입구는 하나');
   assert.equal(top().findAll(n => n.props.accessibilityLabel === '문구').length, 0, '문구는 아래 도구 줄에 없다');
+  // 45.35 승인 시안: 도구 네 칸 + 오른쪽 끝의 지금 색 동그라미가 한 줄이다.
   assert.deepEqual(top().findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel).map(n => n.props.accessibilityLabel),
-    ['그리기 도구 펜', '지우개', '채우기', '선택'], '아래 줄: 네 칸 균등');
+    ['그리기 도구 펜', '지우개', '채우기', '선택', '색'], '아래 줄: 도구 네 칸 + 지금 색');
   assert.deepEqual(quick().findAll(n => n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['기본 펜', '연필', '마커', '브러시 전체'], '빠른 브러시 셋 + 전체');
   const cell = label => top().findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === label)[0];
   assert.equal(styleOf(cell('그리기 도구 펜')).flex, styleOf(cell('지우개')).flex, '네 칸이 같은 폭으로 선다');
@@ -205,7 +218,7 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
 
   // ── 9. 도구를 열고 닫아도 캔버스는 제자리 ───────────────────────────────────────────────────
   const canvasBox = () => {
-    const areaNode = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
+    const areaNode = tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
     const square = areaNode.findAll(n => n.type === 'View' && !Array.isArray(n.props.style) && n.props.style?.overflow === 'hidden' && typeof n.props.style?.width === 'number')[0];
     return { align: areaNode.props.style.justifyContent, w: square?.props.style.width, h: square?.props.style.height };
   };

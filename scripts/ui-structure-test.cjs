@@ -159,7 +159,12 @@ const homeSections = () => {
   assert.equal(labelled('캐릭터 기준 보기').length + labelled('이 칸을 캐릭터 기준으로').length, 0, '참고 줄은 볼 그림만 다룬다');
   await press('참고');
   await press('선택');
-  assert.equal(anyLabel('브러시 굵기').length + anyLabel('지우개 굵기').length, 0, '선택 도구에는 굵기가 없다 — 지금 쓰는 것만 보인다');
+  // 45.35: 왼쪽 조절대는 늘 같은 자리를 지킨다 — 도구를 바꿀 때마다 기둥이 사라지면 화면이 흔들린다.
+  // 대신 뜻이 없는 도구(선택·채우기)에서는 비활성이 되고 값 말풍선도 내려간다.
+  const sizeRails = [...anyLabel('브러시 굵기'), ...anyLabel('지우개 굵기')];
+  assert.equal(sizeRails.length, 1, '조절대 자리는 그대로다');
+  assert.equal(sizeRails[0].props.accessibilityState.disabled, true, '선택 도구에서는 굵기 조절이 비활성이다');
+  assert.equal(tree.root.findAll(n => typeof n.type === 'string' && n.props.testID === '굵기 말풍선').length, 0, '비활성인 동안에는 값 말풍선이 없다');
   await press('브러시 전체');
   await message({ type: 'zoom', zoom: 2 });
   assert.equal(labelled('원래 크기로 보기').length, 1, '확대 중에만 배율 표시');

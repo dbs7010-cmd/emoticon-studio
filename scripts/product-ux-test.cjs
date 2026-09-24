@@ -70,20 +70,23 @@ const openSet = async name => { if (setButtons(name).length === 0 && setButtons(
 const message = async m => { await act(async () => tree.root.findByType('WebView').props.onMessage({ nativeEvent: { data: JSON.stringify(m) } })); };
 const ranges = label => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === label);
 const nudge = async (label, action, times) => { for (let i = 0; i < times; i++) await act(async () => ranges(label)[0].props.onAccessibilityAction({ nativeEvent: { actionName: action } })); };
-// 45.28: 굵기는 색과 같은 줄의 가로 막대다. 손가락처럼 끈다(locationX). 끄는 동안의 미리보기 텍스트를 돌려준다.
-// 막대 폭 240dp 를 알려 준 뒤, 원하는 굵기가 나오는 자리를 눌러 끈다(1~48 을 폭에 고르게 편다).
-const SIZE_BAR = 240;
-const atWidth = n => Math.round((n - 1) / 47 * SIZE_BAR);
+// 45.35 승인 시안: 굵기는 캔버스 **왼쪽 밖** 세로 조절대다. 위로 갈수록 굵다(locationY).
+// 끄는 동안의 값은 손잡이 옆 말풍선에만 적히고, 캔버스에는 아무것도 뜨지 않는다.
+// 조절대 높이 200dp 를 알려 준 뒤, 원하는 굵기가 나오는 자리를 눌러 끈다.
+const SIZE_RAIL = 200, RAIL_HANDLE = 34;
+const atWidth = n => Math.round(RAIL_HANDLE / 2 + (1 - (n - 1) / 47) * (SIZE_RAIL - RAIL_HANDLE));
+const bubbleText = id => tree.root.findAll(n => n.type === 'View' && n.props.testID === id)
+  .map(n => n.findAll(x => x.type === 'Text').map(x => String(x.children?.join(''))).join(''));
 const dragSize = async (label, want) => {
   const node = () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === label)[0];
   assert.ok(node(), 'size control ' + label);
   drags++;
-  const x = atWidth(want);
-  await act(async () => node().props.onLayout({ nativeEvent: { layout: { width: SIZE_BAR, height: 44 } } }));
-  await act(async () => node().props.onResponderGrant({ nativeEvent: { locationX: 0 } }));
-  await act(async () => node().props.onResponderMove({ nativeEvent: { locationX: x } }));
-  const during = tree.root.findAll(n => n.props.testID === '굵기 미리보기').map(n => n.findAll(x2 => x2.type === 'Text').map(x2 => String(x2.children?.join(''))).join(''));
-  await act(async () => node().props.onResponderRelease({ nativeEvent: { locationX: x } }));
+  const y = atWidth(want);
+  await act(async () => node().props.onLayout({ nativeEvent: { layout: { width: 60, height: SIZE_RAIL } } }));
+  await act(async () => node().props.onResponderGrant({ nativeEvent: { locationY: SIZE_RAIL } }));
+  await act(async () => node().props.onResponderMove({ nativeEvent: { locationY: y } }));
+  const during = bubbleText('굵기 말풍선');
+  await act(async () => node().props.onResponderRelease({ nativeEvent: { locationY: y } }));
   return during;
 };
 const texts = () => tree.root.findAll(n => n.type === 'Text').map(n => [n.props.children].flat(9).filter(x => typeof x === 'string' || typeof x === 'number').join(''));
@@ -128,16 +131,31 @@ const saved = async (dirty = true) => {
   assert.equal(labelled('그리기 도구 펜').length, 1, '도구 줄의 펜은 따로 읽힌다');
   assert.equal(labelled('펜 굵기').length + labelled('펜 설정 닫기').length, 0, '정체불명 설정 칩·펜 설정 시트가 없다');
   await press('브러시 전체');
-  assert.equal(labelled('브러시 닫기').length, 1, "'전체'를 누르면 브러시 목록이 열린다");
-  const variants = tree.root.findAll(n => n.props.testID === '브러시 목록')[0].findAll(n => n.type === 'Pressable' && /^브러시 /.test(n.props.accessibilityLabel ?? '')).map(n => n.props.accessibilityLabel);
+  assert.equal(labelled('브러시 닫기').length, 1, "'전체'를 누르면 브러시 창이 열린다");
+  // 45.35: 목록은 선·채색·질감·효과 네 갈래다. 한 갈래 안에서는 마지막 줄까지 한 번의 스크롤로 닿고,
+  // 네 갈래를 합치면 서른 종이 모두 있다. 갈래를 넘겨 가며 센다.
+  const GROUP_TABS = ['선', '채색', '질감', '효과'];
+  const variants = [];
+  let listLocks = 0, listPro = 0;
+  for (const g of GROUP_TABS) {
+    await press('브러시 분류 ' + g);
+    const list = tree.root.findAll(n => n.props.testID === '브러시 목록')[0];
+    variants.push(...list.findAll(n => n.type === 'Pressable' && /^브러시 /.test(n.props.accessibilityLabel ?? '')).map(n => n.props.accessibilityLabel));
+    assert.ok(list.findAll(n => n.type === 'Pressable').length >= 4, g + ' 갈래에도 줄이 여럿 있다 — 한 줄짜리 목록 자리는 없다');
+    listLocks += locks(); listPro += proMarks();
+  }
   assert.equal(variants.length, 30, '전체 목록은 무료 10 + PRO 20 = 30종: ' + variants.length);
+  assert.equal(new Set(variants).size, 30, '같은 브러시가 두 갈래에 겹쳐 있지 않다');
   assert.ok(variants.every(v => /^브러시 /.test(v)), '목록의 이름은 도구 줄과 섞이지 않게 모두 \'브러시 …\' 다: ' + JSON.stringify(variants));
 
   // ── 2. 잠금 밀도: 브러시 설정 ─────────────────────────────────────────────────────────────
-  assert.equal(locks(), 0, '브러시 설정: 자물쇠 0');
-  // 45.31: 분류 목록에서는 카드마다 무료/PRO 를 적는다. 자물쇠는 여전히 0 이고, 잠긴 것도 견본이 보인다.
-  assert.equal(proMarks(), 20, '브러시 목록: PRO 표시는 PRO 브러시 수와 같다, got ' + proMarks());
+  assert.equal(listLocks, 0, '브러시 창: 자물쇠 0');
+  // 45.31: 분류 목록에서는 줄마다 무료/PRO 를 적는다. 자물쇠는 여전히 0 이고, 잠긴 것도 견본이 보인다.
+  assert.equal(listPro, 20, '브러시 목록: PRO 표시는 PRO 브러시 수와 같다, got ' + listPro);
+  const showBrush = async name => { for (const g of GROUP_TABS) { if (labelled('브러시 ' + name).length) return; await press('브러시 분류 ' + g); } };
+  await showBrush('마커');
   assert.equal(labelled('브러시 마커').length, 1, '마커는 무료 10종이라 목록에 그대로 있다');
+  await showBrush('연필');
   await press('브러시 연필');   // 무료 사용자라 무료 브러시로 고른다
   // 45.25: 고르면 선택판이 닫힌다. 세부 설정을 보려면 다시 연다 — 그것이 '고르기'와 '맞추기'를 가르는 자리다.
   assert.equal(labelled('세부 설정').length, 0, '브러시를 고르면 선택판이 닫힌다');
@@ -150,21 +168,26 @@ const saved = async (dirty = true) => {
   await press('보정 강');
   noPaywall('브러시 설정(진하기·보정)');
   collect();
-  // 목록이 열려 있는 동안에는 아래 즐겨찾기 줄과 '전체'가 접힌다(45.34 §6) — 같은 말을 두 번 하지 않는다.
-  assert.equal(labelled('브러시 전체').length, 0, '목록이 열려 있으면 아래 전체 버튼은 접힌다');
-  assert.equal(tree.root.findAll(n => n.props.testID === '빠른 브러시').length, 0, '목록이 열려 있으면 아래 즐겨찾기 줄도 접힌다');
+  // 45.35 §4: 도구 창을 열고 닫아도 **캔버스와 아래 줄의 높이는 그대로다**. 브러시 창은 화면 전체를
+  // 덮는 독립 창이라 아래 줄을 접을 이유가 없어졌다(45.34 는 접느라 여닫을 때 캔버스가 커졌다 작아졌다 했다).
+  assert.equal(tree.root.findAll(n => n.props.testID === '빠른 브러시').length, 1, '창이 열려도 아래 줄의 자리는 그대로다');
+  assert.equal(tree.root.findAll(n => n.props.testID === '브러시 창 배경').length, 1, '창 뒤는 가볍게 어두워진다');
+  assert.equal(tree.root.findAll(n => n.type === 'View' && !Array.isArray(n.props.style) && n.props.style?.height === BASE_H).length, 1, '창이 열려도 아래 줄 높이가 바뀌지 않는다');
+  // 세부 설정은 같은 창의 다른 화면이다. 뒤로 가면 보던 갈래로 돌아온다.
+  assert.equal(labelled('브러시 목록으로').length, 1, '세부 설정에는 목록으로 돌아가는 길이 있다');
+  await press('브러시 목록으로');
+  assert.equal(ranges('진하기').length, 0, '목록으로 돌아오면 설정 막대는 접힌다');
   await press('브러시 닫기');
   assert.equal(labelled('브러시 닫기').length, 0, '닫기를 누르면 닫힌다');
-  assert.equal(labelled('브러시 전체').length, 1, '닫으면 아래 줄이 돌아온다');
-  assert.equal(tree.root.findAll(n => n.props.testID === '빠른 브러시').length, 1, '즐겨찾기 줄도 돌아온다');
+  assert.equal(tree.root.findAll(n => n.props.testID === '브러시 창 배경').length, 0, '창이 사라지면 어둡던 것도 걷힌다');
+  assert.equal(labelled('브러시 전체').length, 1, '아래 줄의 전체 입구는 그대로다');
 
-  // ── 굵기(45.28차: 승인 보드대로 색과 같은 줄에서 가로로 끈다. 숫자는 줄 끝에 늘 보이고, 끄는 동안에는 캔버스에 크기 원) ──
-  assert.equal(tree.root.findAll(n => n.props.testID === '굵기 미리보기').length, 0, '평소에는 큰 크기 원이 떠 있지 않다');
-  assert.equal(tree.root.findAll(n => n.props.testID === '굵기 수치').length, 1, '굵기 숫자는 줄 끝에 하나');
-  assert.equal(ranges('브러시 굵기')[0].props.style.flex, 1, '조절대는 줄의 남는 폭을 다 쓴다');
+  // ── 굵기(45.35 승인 시안: 캔버스 왼쪽 세로 조절대. 값은 손잡이 옆 말풍선에만 적힌다) ──
+  assert.equal(tree.root.findAll(n => n.props.testID === '굵기 미리보기').length, 0, '캔버스 한가운데 검은 미리보기 상자는 없다');
+  assert.equal(tree.root.findAll(n => n.type === 'View' && n.props.testID === '굵기 말풍선').length, 1, '굵기 값은 손잡이 옆 한 곳에만 적힌다');
+  assert.equal(ranges('브러시 굵기')[0].props.style.flex, 1, '조절대는 기둥의 남는 높이를 다 쓴다');
   let during = await dragSize('브러시 굵기', 24);
-  assert.deepEqual(during, ['24px'], '끄는 동안에만 크기 원과 px 이 보인다');
-  assert.equal(tree.root.findAll(n => n.props.testID === '굵기 미리보기').length, 0, '손을 떼면 사라진다');
+  assert.deepEqual(during, ['24'], '끄는 동안 말풍선이 지금 값을 말한다');
   assert.equal(lastCommand('width').width, 24, '브러시 굵기가 캔버스로 간다');
   assert.equal(loadStore().store.projects[0].brush.width, 24, '손을 떼면 굵기가 세트에 남는다');
   await press('지우개');
@@ -173,7 +196,7 @@ const saved = async (dirty = true) => {
   assert.equal(tree.root.findAll(n => n.type === 'Pressable' && / 닫기$/.test(n.props.accessibilityLabel ?? '') && n.props.accessibilityLabel !== '그리기 닫기').length, 0, '지우개는 따로 여는 설정 시트가 없다');
   assert.equal(ranges('브러시 굵기').length, 0, '지우개일 때는 같은 자리가 지우개 굵기');
   during = await dragSize('지우개 굵기', 40);
-  assert.deepEqual([during[0], lastCommand('width')], ['40px', { type: 'width', tool: 'eraser', width: 40 }], '지우개 굵기도 같은 조작');
+  assert.deepEqual([during[0], lastCommand('width')], ['40', { type: 'width', tool: 'eraser', width: 40 }], '지우개 굵기도 같은 조작');
   assert.equal(loadStore().store.projects[0].brush.eraserWidth, 40, '지우개 굵기도 세트에 남는다');
   await press('그리기 도구 펜');   // 그리기로 돌아온다
   assert.equal(ranges('브러시 굵기')[0].props.accessibilityValue.now, 24, '브러시 → 지우개 → 브러시: 브러시 굵기 그대로');
@@ -183,7 +206,7 @@ const saved = async (dirty = true) => {
   await press('지우개');
 
   // ── 43.1차: 이미 있는 두 손가락 확대를 알 수 있게 — 확대한 동안에만 작은 배율 표시, 누르면 100% ──────────────
-  const canvasAreaNode = () => tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
+  const canvasAreaNode = () => tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
   assert.equal(labelled('원래 크기로 보기').length, 0, '100% 에서는 배율 표시가 없다');
   await message({ type: 'zoom', zoom: 1.5 });
   assert.equal(labelled('원래 크기로 보기').length, 1, '확대하면 작은 배율 표시가 뜬다');
@@ -247,7 +270,12 @@ const saved = async (dirty = true) => {
   const placed = { ...lastCommand('caption').caption, dx: 40, dy: -60, scale: 1.4 };
   scene = { ...scene, caption: placed, captionPicked: true, dirty: true, undo: true }; await message(scene);
   assert.equal(count(['문구 내용 고치기', '문구 선택 끝']), 2, '글씨를 고른 동안에는 내용 고치기·끝만');
-  assert.equal(ranges('브러시 굵기').length + ranges('지우개 굵기').length, 0, '글씨를 고른 동안에는 굵기 조절이 비켜난다');
+  // 45.35: 조절대는 늘 같은 자리를 지킨다(사라지면 화면이 흔들린다). 대신 뜻이 없는 동안에는
+  // 비활성이 되고 값 말풍선도 내려간다 — 지금 바꿀 수 있는 것처럼 보이지 않는다.
+  const sizeRail = [...ranges('브러시 굵기'), ...ranges('지우개 굵기')];
+  assert.equal(sizeRail.length, 1, '굵기 조절대는 그 자리에 그대로 있다');
+  assert.equal(sizeRail[0].props.accessibilityState.disabled, true, '글씨를 고른 동안 굵기 조절은 비활성이다');
+  assert.equal(tree.root.findAll(n => n.type === 'View' && n.props.testID === '굵기 말풍선').length, 0, '비활성인 동안에는 값 말풍선을 띄우지 않는다');
   await message({ type: 'captionEdit' });
   assert.equal(tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용').length, 1, '고른 글씨를 한 번 더 누르면 내용 고치기가 열린다');
   await press('문구 닫기');
@@ -392,7 +420,7 @@ const saved = async (dirty = true) => {
   assert.ok(afterInit().some(m => m.type === 'brushSettings' && m.preset === 'pencil2'), '재시작 뒤에도 선 종류 유지');
   assert.equal(lastCommand('brushSettings').stabilizer, 'strong', '재시작 뒤에도 선 보정 유지');
   // 짧은 화면(캔버스 영역 360×353): 굵기 조절은 캔버스 안에 들어가고, 움직이기 패널이 캔버스를 절반 넘게 덮지 않는다.
-  const area = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
+  const area = tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
   await act(async () => area.props.onLayout({ nativeEvent: { layout: { width: 360, height: 353 } } }));
   assert.equal(ranges('브러시 굵기').length, 1, '짧은 화면에서도 굵기 조절이 있다');
   // 45.28: 굵기 조절대는 캔버스 영역 **밖**, 색과 같은 줄에 가로로 선다. 그림 위에 겹치지 않는다.
