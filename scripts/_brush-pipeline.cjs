@@ -9,7 +9,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { loader } = require('./load-ts.cjs');
 
-const OUT = 'verification/round45_26';
+const OUT = process.argv[3] || 'verification/round45_26';
 const PORT = Number(process.argv[2] || 4671);
 const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
 
@@ -19,7 +19,12 @@ const HOST = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>
 <body><div id="log">엔진을 띄우는 중…</div><iframe id="engine" src="engine.html"></iframe>
 <script>
 const log = document.getElementById('log'), engine = document.getElementById('engine');
-const kinds = ['pen', 'brush', 'pencil'];
+// 승인 구성 12종(45.29). base = 엔진 기본 브러시, preset = 엔진 PRESETS key.
+const kinds = [
+  ['pen', { base: 'pen' }], ['soft', { preset: 'soft' }], ['pencil', { base: 'pencil' }], ['marker', { preset: 'marker' }],
+  ['ink', { preset: 'ink' }], ['brushpen', { preset: 'brushpen' }], ['crayon', { preset: 'crayon' }], ['chalk', { preset: 'chalk' }],
+  ['rough', { preset: 'rough' }], ['airbrush', { preset: 'airbrush' }], ['dotted', { preset: 'dotted' }], ['outline', { preset: 'outline' }],
+];
 let token = 0, waiting = null;
 const post = m => engine.contentWindow.command(m);      // 약속을 돌려준다 — 반드시 await
 const wait = type => new Promise(r => { waiting = { type, r }; });
@@ -41,19 +46,19 @@ for (let i = 0; i <= 40; i++) { const t = i / 40; curve.push([0.08 + 0.84 * t, 0
 const onScreen = () => dom().getElementById('drawing').toDataURL('image/png');
 
 async function saveNow() { await post({ type: 'save', token: ++token }); const m = await wait('save'); await post({ type: 'saved', token: m.token }); return m; }
-async function fresh(kind, data) {
+async function fresh(kind, how, data) {
   await post({ type: 'init', id: 'p-' + kind, color: '#17191D', penWidth: 14,
-    brush: { preset: null, opacity: 1, stabilizer: 'light', smoothing: true },
+    brush: { preset: how.preset ?? null, opacity: 1, stabilizer: 'light', smoothing: true },
     layers: [{ id: 'draw-1', name: '그림 1', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0, data: data || undefined }] });
   await wait('initialized');
-  await post({ type: 'brush', brush: kind });
+  await post({ type: 'brush', brush: how.base ?? 'pen' });
   await post({ type: 'tool', tool: 'pen' });
   await rest();
 }
 async function run() {
   const out = {};
-  for (const kind of kinds) {
-    await fresh(kind, null);
+  for (const [kind, how] of kinds) {
+    await fresh(kind, how, null);
     // ① 입력 중: 손을 떼기 전에 화면을 읽는다.
     ev('pointerdown', curve[0]);
     for (const p of curve.slice(1)) ev('pointermove', p);
@@ -64,7 +69,7 @@ async function run() {
     await rest(150);
     const committed = await saveNow();
     // ③ 저장했다 다시 열고 그대로 다시 저장한다(그림에 손대지 않는다).
-    await fresh(kind, committed.data);
+    await fresh(kind, how, committed.data);
     const reopened = await saveNow();
     out[kind] = { during, committed: committed.data, reopened: reopened.data };
     log.textContent += '\\n' + kind + ' — 입력 중 · 확정 · 재열기 세 장 받음';

@@ -101,8 +101,13 @@ function render(node, flat) {
     ? ` data-press="1"${slop ? ` data-slop="${slop.top},${slop.right},${slop.bottom},${slop.left}"` : ''}` : '';
 
   if (type === 'Text') {
+    // numberOfLines 는 RN 에서 줄 수를 자르고 말줄임한다. 옮기지 않으면 좁은 화면에서 글자가 여러 줄로
+    // 쌓여 **기기에서는 나지 않는 줄바꿈**이 그림에만 생긴다(45.29차에 실제로 그랬다).
+    const lines = p.numberOfLines;
+    const clamp = lines === 1 ? 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+      : lines > 1 ? `display:-webkit-box;-webkit-line-clamp:${lines};-webkit-box-orient:vertical;overflow:hidden;` : '';
     const s = css({ fontFamily: null, ...style });
-    return `<span class="t" style="${s}">${kids()}</span>`;
+    return `<span class="t" style="${s}${clamp}">${kids()}</span>`;
   }
   if (type === 'Icon') {
     const size = p.size ?? 20;

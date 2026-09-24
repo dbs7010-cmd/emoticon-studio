@@ -17,11 +17,12 @@ const HOST = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>
 <script>
 const log = document.getElementById('log'), engine = document.getElementById('engine');
 // 12종. base = 엔진 기본 브러시, preset = 엔진 PRESETS key. 같은 곡선·같은 굵기로 긋는다.
+// 승인 구성 12종(45.29차) + 목록에서 내렸지만 엔진에 남아 있는 셋. 같은 곡선·같은 굵기로 긋는다.
 const kinds = [
-  ['pen', { base: 'pen' }], ['pencil', { base: 'pencil' }], ['brush', { base: 'brush' }],
-  ['marker', { preset: 'marker' }], ['ink', { preset: 'ink' }], ['soft', { preset: 'soft' }], ['grain', { preset: 'grain' }],
-  ['calligraphy', { preset: 'calligraphy' }], ['crayon', { preset: 'crayon' }], ['airbrush', { preset: 'airbrush' }],
-  ['chisel', { preset: 'chisel' }], ['rough', { preset: 'rough' }],
+  ['pen', { base: 'pen' }], ['soft', { preset: 'soft' }], ['pencil', { base: 'pencil' }], ['marker', { preset: 'marker' }],
+  ['ink', { preset: 'ink' }], ['brushpen', { preset: 'brushpen' }], ['crayon', { preset: 'crayon' }], ['chalk', { preset: 'chalk' }],
+  ['rough', { preset: 'rough' }], ['airbrush', { preset: 'airbrush' }], ['dotted', { preset: 'dotted' }], ['outline', { preset: 'outline' }],
+  ['brush', { base: 'brush' }], ['grain', { preset: 'grain' }], ['calligraphy', { preset: 'calligraphy' }], ['chisel', { preset: 'chisel' }],
 ];
 let at = 0, waiting = null;
 const post = m => engine.contentWindow.command(m);   // 약속을 돌려준다 — 반드시 await 한다

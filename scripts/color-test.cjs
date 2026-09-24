@@ -163,12 +163,13 @@ async function openPainter() {
   const brushCmd = () => lastCommand('brushSettings');
   await press('브러시 전체');
   // 45.28: 무료 4종과 PRO 8종이 전체 목록 한 판에 함께 선다(PRO 묶음은 따로 표시).
-  for (const t of ['펜', '연필', '붓', '마커']) assert.equal(labelled('브러시 ' + t).length, 1, '무료 브러시 ' + t);
-  for (const t of ['매끈한 잉크', '부드러운 펜', '결 연필', '캘리그래피', '크레용', '에어브러시', '납작펜', '거친 선']) assert.equal(labelled('브러시 ' + t).length, 1, 'PRO 브러시 ' + t);
+  // 45.29: 승인 구성 그대로. 무료 4 + PRO 8.
+  for (const t of ['기본 펜', '부드러운 펜', '연필', '마커']) assert.equal(labelled('브러시 ' + t).length, 1, '무료 브러시 ' + t);
+  for (const t of ['테이퍼 잉크', '붓펜', '크레용', '분필', '드라이 잉크', '에어브러시', '점선 펜', '테두리 펜']) assert.equal(labelled('브러시 ' + t).length, 1, 'PRO 브러시 ' + t);
   assert.equal(icons(tree.root, 'lock-outline'), 0, 'PRO 사용자에게 자물쇠가 없다');
-  await press('브러시 매끈한 잉크');
+  await press('브러시 테이퍼 잉크');
   assert.equal(brushCmd().preset, 'ink', '프리셋이 캔버스로 간다');
-  assert.ok(labelled('펜').every(n => !n.props.accessibilityState.selected), '기본 펜 카드는 선택에서 내려온다');
+  assert.ok(labelled('기본 펜').every(n => !n.props.accessibilityState.selected), '기본 펜 카드는 선택에서 내려온다');
   // 45.25: 브러시를 고르면 그 도구가 켜지고 선택판은 닫힌다 — 고른 뒤에 할 일은 그리는 것이다.
   assert.equal(labelled('브러시 닫기').length, 0, '프리셋을 고르면 선택판이 닫힌다');
   await press('브러시 전체');
@@ -187,7 +188,7 @@ async function openPainter() {
   {
     const quick = tree.root.findAll(n => n.props.testID === '빠른 브러시')[0].findAll(n => n.type === 'Pressable');
     const on = quick.filter(n => n.props.accessibilityState?.selected).map(n => n.props.accessibilityLabel);
-    assert.deepEqual(on, ['매끈한 잉크'], '고른 고급 브러시가 빠른 줄에서 골라진 채로 보인다: ' + JSON.stringify(on));
+    assert.deepEqual(on, ['테이퍼 잉크'], '고른 고급 브러시가 빠른 줄에서 골라진 채로 보인다: ' + JSON.stringify(on));
   }
   await act(async () => tree.unmount());
   commands.length = 0;
@@ -196,7 +197,7 @@ async function openPainter() {
   await press('브러시 전체'); await press('브러시 연필');   // 전체 목록에서 고르면 목록이 닫힌다
   assert.equal(brushCmd().preset, null, '기본 연필을 고르면 프리셋에서 내려온다');
   assert.equal(lastCommand('brush').brush, 'pencil');
-  await press('브러시 전체'); await press('브러시 매끈한 잉크');   // 고르면 판이 닫히므로 따로 닫지 않는다
+  await press('브러시 전체'); await press('브러시 테이퍼 잉크');   // 고르면 판이 닫히므로 따로 닫지 않는다
   assert.equal(loadStore().store.projects[0].brush.preset, 'ink');
   await act(async () => tree.unmount());
 
@@ -211,11 +212,11 @@ async function openPainter() {
   await press('브러시 전체');
   assert.equal(icons(tree.root, 'lock-outline'), 0, '무료: 브러시 시트에 자물쇠가 하나도 없다');
   assert.equal(labelled('브러시 마커').length, 1, '무료: 마커는 무료 4종에 들어 있다');
-  assert.equal(labelled('브러시 매끈한 잉크').length, 1, '무료에게도 PRO 브러시가 목록에 보인다(고를 때 안내로 간다)');
+  assert.equal(labelled('브러시 테이퍼 잉크').length, 1, '무료에게도 PRO 브러시가 목록에 보인다(고를 때 안내로 간다)');
   // PRO 표시는 묶음 머리 한 곳에만 둔다 — 카드마다 붙여 잠금을 늘어놓지 않는다.
   assert.ok(tree.root.findAll(n => n.type === 'Text' && String(n.children?.join('')) === 'PRO').length <= 2, '무료: PRO 표시는 묶음 머리에만 모여 있다');
   const before = sent().filter(m => m.type === 'brushSettings').length;
-  await press('브러시 매끈한 잉크');   // 전체 목록에서 잠긴 것을 고르면
+  await press('브러시 테이퍼 잉크');   // 전체 목록에서 잠긴 것을 고르면
   assert.equal(labelled('PRO 닫기').length, 1, '무료: 고급 브러시는 PRO 안내로 간다');
   assert.equal(sent().filter(m => m.type === 'brushSettings').length, before, '무료: 안내를 여는 것만으로 캔버스가 바뀌지 않는다');
   await press('PRO 닫기');

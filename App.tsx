@@ -17,7 +17,7 @@ import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, saveSt
 import { exportSet, decodeDataUrl, type HandoffFrames } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinals, inspectImage } from './src/services/qa';
-import { PLANS, PRICES_ARE_PROPOSED, PRICE_IS_CANDIDATE_NOTE, REVIEW_BUILD_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, purchase, purchaseHistoryUrl, refreshEntitlement, restore, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
+import { PLANS, REVIEW_BUILD_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, purchase, purchaseHistoryUrl, refreshEntitlement, restore, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
 import { PRESETS } from './src/painter/motion-panel';
 import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, PainterWork } from './src/types';
 
@@ -1361,14 +1361,15 @@ function Studio() {
           </View>
           {entitlementLabel(entitlement) !== '무료' && <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>}
           {expiredButRemembered(entitlement) && <Text style={{ fontSize: 12, color: C.ink }}>기간이 끝나도 이미 만든 움직임은 계속 재생되고 내보낼 수 있어요.</Text>}
-          {/* 파는 것은 하나다: 한 번 구매하면 계속 쓰는 PRO. 고르는 줄이 아니라 값을 적는 칸이다.
-              스토어 가격이 오면 그것을 적고, 없으면 후보 가격임을 분명히 적는다(하드코딩한 판매가가 아니다). */}
-          <View accessibilityRole="summary" accessibilityLabel={'PRO 가격 ' + (prices?.lifetime || PLANS[0].proposedPrice)}
-            style={{ borderWidth: 1, borderColor: C.accentBorder, borderRadius: 16, padding: 14, gap: 2, backgroundColor: C.accentSoft }}>
+          {/* 파는 것은 하나다: 한 번 구매하면 계속 쓰는 PRO. 값은 **스토어가 말해 주는 것만** 적는다.
+              불러오지 못하면 값을 지어내지 않고, 지금 살 수 없다는 것과 다음에 할 일을 적는다. */}
+          <View accessibilityRole="summary" accessibilityLabel={prices?.lifetime ? 'PRO 가격 ' + prices.lifetime : 'PRO 가격을 불러오지 못했어요'}
+            style={{ borderWidth: 1, borderColor: prices?.lifetime ? C.accentBorder : C.line, borderRadius: 16, padding: 14, gap: 2, backgroundColor: prices?.lifetime ? C.accentSoft : C.surface2 }}>
             <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{PLANS[0].label}</Text>
-            <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink }}>{prices?.lifetime || PLANS[0].proposedPrice}</Text>
-            <Text style={{ fontSize: 10, color: C.muted }}>{prices?.lifetime ? '스토어 가격' : (PRICES_ARE_PROPOSED ? '후보 가격 · 미확정' : '출시 가격')}</Text>
-            {!prices?.lifetime && <Text style={{ fontSize: 10, color: C.muted, lineHeight: 15 }}>{PRICE_IS_CANDIDATE_NOTE}</Text>}
+            {prices?.lifetime
+              ? <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink }}>{prices.lifetime}</Text>
+              : <Text style={{ fontSize: 15, fontWeight: '700', color: C.muted }}>{payment.phase === 'loading' ? '가격을 불러오는 중…' : '가격을 불러오지 못했어요'}</Text>}
+            {!prices?.lifetime && payment.phase !== 'loading' && <Text style={{ fontSize: 11, color: C.muted, lineHeight: 16 }}>지금은 구매할 수 없어요. 잠시 뒤 다시 시도해 주세요. 무료 기능은 그대로 쓸 수 있어요.</Text>}
             <Text style={{ fontSize: 11, color: C.muted }}>구독이 아니라 한 번만 결제해요. 정기 결제나 해지가 없어요.</Text>
           </View>
           <PaymentStatus payment={payment} onRestore={() => void restorePro()} onRetry={() => void loadPrices()} />

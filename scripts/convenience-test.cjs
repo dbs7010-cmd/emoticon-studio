@@ -198,7 +198,7 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.equal(top().findAll(n => n.props.accessibilityLabel === '문구').length, 0, '문구는 아래 도구 줄에 없다');
   assert.deepEqual(top().findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel).map(n => n.props.accessibilityLabel),
     ['그리기 도구 펜', '지우개', '채우기', '선택'], '아래 줄: 네 칸 균등');
-  assert.deepEqual(quick().findAll(n => n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['펜', '연필', '마커', '브러시 전체'], '빠른 브러시 셋 + 전체');
+  assert.deepEqual(quick().findAll(n => n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['기본 펜', '연필', '마커', '브러시 전체'], '빠른 브러시 셋 + 전체');
   const cell = label => top().findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === label)[0];
   assert.equal(styleOf(cell('그리기 도구 펜')).flex, styleOf(cell('지우개')).flex, '네 칸이 같은 폭으로 선다');
   for (const name of ['그리기 도구 펜', '지우개', '채우기', '선택']) assert.ok((styleOf(cell(name)).minHeight ?? 0) >= 44, name + ': 손가락 자리는 그대로');

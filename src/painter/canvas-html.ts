@@ -114,10 +114,12 @@ function render(t){ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l)
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
-function style(g){g.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';g.globalAlpha=tool==='eraser'?1:(brush==='pencil'&&wet)?1:brush==='brush'?0.85:brush==='pencil'?0.55:1;g.lineWidth=tool==='eraser'?eraserWidth:(brush==='brush'?penWidth*1.4:penWidth);g.strokeStyle=solid(color);g.fillStyle=solid(color);g.lineCap='round';g.lineJoin='round';const P=activePreset();if(P){g.globalAlpha=1;g.lineWidth=computeBrushWidth(penWidth*P.width,lastPressure,P)*(P.taper?Math.min(1,.3+.7*strokeLen/P.taper):1);g.lineCap=P.cap||'round';}}
+function style(g){g.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';g.globalAlpha=tool==='eraser'?1:(brush==='pencil'&&wet)?1:brush==='brush'?0.85:brush==='pencil'?0.55:1;g.lineWidth=tool==='eraser'?eraserWidth:(brush==='brush'?penWidth*1.4:penWidth);g.strokeStyle=solid(color);g.fillStyle=solid(color);g.lineCap='round';g.lineJoin='round';const P=activePreset();if(P){g.globalAlpha=1;g.lineWidth=computeBrushWidth(penWidth*P.width,lastPressure,P)*(P.taper?Math.min(1,.3+.7*strokeLen/P.taper):1);g.lineCap=P.cap||'round';
+  // 점선 펜만 점 간격을 건다. 프리셋이 없는 기본 펜·붓·연필은 이 줄을 지나지 않는다 — 예전 획이 한 픽셀도 바뀌지 않게.
+  if(P.dash){g.setLineDash([Math.max(.6,g.lineWidth*.22),Math.max(1,g.lineWidth*P.dash)]);g.lineDashOffset=-strokeLen;}else g.setLineDash([]);}}
 // 색 투명도. 획은 **불투명하게 따로 그린 뒤(wet) 손을 뗄 때 한 번에 투명도를 걸어 얹는다.** 짧은 선분마다
 // 투명도를 걸면 겹치는 이음매마다 진해져 구슬 꿴 줄처럼 보인다. 불투명한 색은 이 길을 타지 않는다.
-let wet=null,wetLayer=null,wetAlpha=1,picking=false;
+let wet=null,wetLayer=null,wetAlpha=1,picking=false,strokePath=[];
 // PRO 브러시. 무료 펜/붓/연필(brush)은 손대지 않고, preset 이 있을 때만 이 표를 쓴다. PRO 획은 전부 wet 버퍼에
 // 불투명하게 그린 뒤 손을 뗄 때 (색 투명도 × 브러시 진하기 × 프리셋 기본 진하기)를 한 번에 얹는다 — 한 획 안의 겹침은 진해지지 않는다.
 const PRESETS={
@@ -130,7 +132,12 @@ const PRESETS={
  crayon:{alpha:.8,width:1.6,cap:'round',texture:true},
  airbrush:{alpha:.45,width:2.4,soft:true},
  chisel:{alpha:1,width:1.9,cap:'butt'},
- rough:{alpha:.9,width:1.1,cap:'round',texture:true,taper:10}
+ rough:{alpha:.9,width:1.1,cap:'round',texture:true,taper:10},
+ // 45.29차: 승인 구성의 남은 네 종. 위 값은 그대로 둔다 — 저장된 작품이 쓰던 결과가 바뀌면 안 된다.
+ brushpen:{alpha:.85,width:1.4,cap:'round'},
+ chalk:{alpha:.7,width:2.3,cap:'round',texture:true,coarse:true},
+ dotted:{alpha:1,width:1.1,cap:'round',dash:2.4},
+ outline:{alpha:1,width:2.8,cap:'round',outline:.9}
 };
 // 선 보정 강도. light 는 예전 값 그대로다(무료 '선 보정' 켜짐과 같다).
 const STAB={light:.55,medium:.3,strong:.16};
@@ -150,8 +157,13 @@ function inkAlpha(){return rgba(color)[3]/255;}
 function dry(){if(!wet)return;const l=layers.find(x=>x.id===wetLayer);if(l){const g=l.bitmap.getContext('2d');g.save();g.globalAlpha=wetAlpha;g.drawImage(wetView(),0,0);g.restore();}wet=null;wetLayer=null;render();}
 // 결 연필: 그은 선에 고정된 알갱이 무늬를 파낸다. 획마다 파내면 다음 선분의 둥근 끝이 다시 덮으므로, 보여 줄 때와 얹을 때 한 번에 건다 —
 // 그리는 동안 보이는 결과 저장되는 결이 같다.
-let grainMask=null,wetShown=null;
-function wetView(){const P=activePreset();if(!wet||!P||!P.texture)return wet;if(!grainMask){grainMask=bitmap();const m=grainMask.getContext('2d');m.fillStyle='#000';for(let i=0;i<W*H*.02;i++){m.globalAlpha=.45+Math.random()*.4;m.beginPath();m.arc(Math.random()*W,Math.random()*H,.6+Math.random()*.9,0,Math.PI*2);m.fill();}}if(!wetShown)wetShown=bitmap();const t=wetShown.getContext('2d');t.globalCompositeOperation='source-over';t.clearRect(0,0,W,H);t.drawImage(wet,0,0);t.globalCompositeOperation='destination-out';t.drawImage(grainMask,0,0);t.globalCompositeOperation='source-over';return wetShown;}
+let grainMask=null,coarseMask=null,wetShown=null;
+function makeMask(density,minR,spread){const c=bitmap(),m=c.getContext('2d');m.fillStyle='#000';for(let i=0;i<W*H*density;i++){m.globalAlpha=.45+Math.random()*.4;m.beginPath();m.arc(Math.random()*W,Math.random()*H,minR+Math.random()*spread,0,Math.PI*2);m.fill();}return c;}
+function wetView(){const P=activePreset();if(!wet||!P||!P.texture)return wet;
+ let mask;
+ if(P.coarse){if(!coarseMask)coarseMask=makeMask(.008,1.4,2.2);mask=coarseMask;}
+ else{if(!grainMask)grainMask=makeMask(.02,.6,.9);mask=grainMask;}
+ if(!wetShown)wetShown=bitmap();const t=wetShown.getContext('2d');t.globalCompositeOperation='source-over';t.clearRect(0,0,W,H);t.drawImage(wet,0,0);t.globalCompositeOperation='destination-out';t.drawImage(mask,0,0);t.globalCompositeOperation='source-over';return wetShown;}
 // 연필 입자. 그은 선 둘레에 작은 점을 뿌려 종이에 걸리는 느낌을 낸다. 굵기는 건드리지 않는다 —
 // 필압을 흉내 내면 지원하지 않는 기능을 있는 척하게 된다.
 function grain(g,a,b){
@@ -709,10 +721,14 @@ canvas.addEventListener('pointerdown',e=>{
    applySelection(false,'pointerdown-outside');}
   marquee={x0:p0.x,y0:p0.y,x1:p0.x,y1:p0.y};render();return;}
  checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;
- const P0=activePreset();lastPressure=penPressure(e);strokeLen=0;lastRaw=last;
+ const P0=activePreset();lastPressure=penPressure(e);strokeLen=0;lastRaw=last;strokePath=[];
  const soft=(tool!=='eraser'&&!P0&&brush==='pencil')?PENCIL_ALPHA:1;
  wetAlpha=tool==='eraser'?1:computeBrushAlpha(inkAlpha()*brushOpacity*(P0?P0.alpha:1)*soft,lastPressure,P0);wet=(P0||wetAlpha<1)?bitmap():null;wetLayer=wet?l.id:null;
- const p=local(last,l),g=(wet||l.bitmap).getContext('2d');style(g);if(P0&&P0.soft)softStamp(g,p.x,p.y,g.lineWidth);else{g.beginPath();g.arc(p.x,p.y,g.lineWidth/2,0,Math.PI*2);g.fill();}render();state();
+ const p=local(last,l),g=(wet||l.bitmap).getContext('2d');style(g);
+ if(P0&&P0.outline){strokePath=[p];drawOutline(g);}
+ else if(P0&&P0.soft)softStamp(g,p.x,p.y,g.lineWidth);
+ else{g.beginPath();g.arc(p.x,p.y,g.lineWidth/2,0,Math.PI*2);g.fill();}
+ render();state();
 });
 canvas.addEventListener('pointermove',e=>{
  if(e.pointerType==='touch'&&touches.has(e.pointerId)){const old=touches.get(e.pointerId);touches.set(e.pointerId,{...old,x:e.clientX,y:e.clientY});}
@@ -751,6 +767,7 @@ canvas.addEventListener('pointermove',e=>{
 // 한 구간을 그린다. 무료 펜/붓/연필은 예전 그대로(3px 간격 선분 + 연필 입자), PRO 프리셋만 분기를 탄다.
 function inkSegment(l,fromP,toP){
  const a=local(fromP,l),b=local(toP,l),g=(wet||l.bitmap).getContext('2d');style(g);const P=activePreset();
+ if(P&&P.outline){strokePath.push(b);strokeLen+=Math.hypot(b.x-a.x,b.y-a.y);drawOutline(g);return;}
  // Pointer events can arrive several pixels apart on Android. Fill the gap with
  // short connected segments so brush and pencil strokes never render as dots.
  const distance=Math.hypot(b.x-a.x,b.y-a.y),spacing=P&&P.soft?Math.max(.8,g.lineWidth*.18):3,steps=Math.max(1,Math.ceil(distance/spacing));
@@ -763,6 +780,22 @@ function inkSegment(l,fromP,toP){
    if(!P)grain(g,from,to);
    from=to;
  }
+}
+// 테두리 펜: 지금까지의 획을 통째로 다시 긋고 가운데를 파낸다 — 속이 빈 선이 남는다.
+// 구간마다 덧칠하면 앞 구간에 뚫어 둔 속을 다음 구간의 바깥선이 메우므로, 매번 처음부터 다시 그린다.
+function drawOutline(g){
+ const P=activePreset();if(!P||!strokePath.length)return;
+ g.save();g.globalCompositeOperation='source-over';g.clearRect(0,0,W,H);
+ const path=()=>{g.beginPath();g.moveTo(strokePath[0].x,strokePath[0].y);for(let i=1;i<strokePath.length;i++)g.lineTo(strokePath[i].x,strokePath[i].y);};
+ g.lineCap='round';g.lineJoin='round';g.strokeStyle=solid(color);
+ const outer=g.lineWidth;
+ if(strokePath.length===1){g.beginPath();g.arc(strokePath[0].x,strokePath[0].y,outer/2,0,Math.PI*2);g.fill();}
+ else{path();g.stroke();}
+ const inner=Math.max(.5,outer-2*Math.max(.6,outer*P.outline*.34));
+ g.globalCompositeOperation='destination-out';g.lineWidth=inner;
+ if(strokePath.length===1){g.beginPath();g.arc(strokePath[0].x,strokePath[0].y,inner/2,0,Math.PI*2);g.fill();}
+ else{path();g.stroke();}
+ g.restore();
 }
 // 부드러운 펜: 가장자리로 갈수록 옅어지는 둥근 도장을 촘촘히 찍는다. 가운데는 겹쳐 차오르고 가장자리만 부드럽다.
 function softStamp(g,x,y,w){const r=Math.max(1,w/2),c=rgba(color),s='rgba('+c[0]+','+c[1]+','+c[2]+',';const grad=g.createRadialGradient(x,y,0,x,y,r);grad.addColorStop(0,s+'0.5)');grad.addColorStop(.55,s+'0.32)');grad.addColorStop(1,s+'0)');g.save();g.globalAlpha=1;g.fillStyle=grad;g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill();g.restore();}

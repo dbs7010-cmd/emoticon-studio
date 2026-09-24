@@ -228,7 +228,7 @@ function fakeServer(reply = body => body.productId === 'pro_lifetime'
   assert.equal(ent(), undefined, '처음엔 무료');
   await press('PRO 보기');
   assert.ok(shows('₩14,900'), '구매 가능: 스토어 가격이 보인다');
-  assert.ok(shows('스토어 가격') && !shows('후보 가격 · 미확정'), '후보 가격 표시가 스토어 가격으로 바뀐다');
+  assert.ok(!shows('후보 가격') && !shows('미확정') && !shows('제안가'), '제품 화면에 내부 기획 문구가 없다');
   assert.ok(shows('구독이 아니라 한 번만 결제해요'), '구독이 아니라는 것을 화면이 말한다');
   assert.equal(labelled('PRO 한 번 구매하기')[0].props.disabled, false, '가격을 불러오면 살 수 있다');
 
@@ -284,8 +284,9 @@ function fakeServer(reply = body => body.productId === 'pro_lifetime'
   await restart();
   await press('PRO 보기');
   assert.ok(shows('이 기기에서는 결제를 열 수 없어요') && shows('무료 기능은 그대로'), '모듈 없음 안내');
-  assert.ok(shows('14,900원') && shows('후보 가격 · 미확정'), '가격을 모르면 후보 가격임을 밝힌다');
-  assert.ok(shows('아직 확정된 판매가가 아니에요'), '후보 가격이라는 말을 한 번 더 분명히 한다');
+  assert.ok(shows('가격을 불러오지 못했어요'), '값을 지어내지 않고 못 불러왔다고 말한다');
+  assert.ok(shows('지금은 구매할 수 없어요') && shows('다시 시도해 주세요'), '살 수 없는 상태와 다음에 할 일을 적는다');
+  assert.ok(!shows('14,900'), '조회 실패에도 후보 가격을 대신 적지 않는다');
   assert.equal(labelled('PRO 한 번 구매하기')[0].props.disabled, true, '결제할 수 없으면 구매 버튼이 꺼진다');
   assert.equal(labelled('무료로 계속하기')[0].props.disabled, false, '무료로 계속하기는 그대로');
   await press('무료로 계속하기');
@@ -296,5 +297,5 @@ function fakeServer(reply = body => body.productId === 'pro_lifetime'
   const leaks = seen.filter(t => /user-cancelled|network-error|already-owned|billing-unavailable|expo-iap|Expo Go|purchaseToken/.test(t));
   assert.deepEqual(leaks, [], '오류 코드 노출 없음');
   await act(async () => tree.unmount());
-  console.log('PASS: iap — 비소모성 일회성 PRO: 상품 조회(in-app·가격·네트워크 실패·상품 없음·모듈 없음), 구매 성공 시 서버 확인 뒤에만 이용권·확정, Android purchaseToken 만 전송(주문 번호·원본 JSON 미사용)·token 없음/pending 은 확인 보류, 취소·네트워크·이미 보유·요청 거절·알 수 없음·상품 없음, 서버 없음·연결 실패·거절 시 이용권 없음·미확정, 복원(일회성 우선·예전 구독도 인정·없음·결제 보류 제외·연결 실패), 앱 시작 재확인(오프라인·서버 실패 유지, 구독 없음·거절 시 종료하되 기록 보존, 재설치 자동 복원), 화면 상태(불러오기·구매 가능·성공·구매 내역·취소·실패+다시 시도·구매 없음·확인 실패·복원 성공·결제 불가 시 후보 가격·버튼 꺼짐), 오류 코드 노출 없음, 출시 구성 검수 스위치 없음. 실제 Play 결제·서버 배포는 미검증.');
+  console.log('PASS: iap — 비소모성 일회성 PRO: 상품 조회(in-app·가격·네트워크 실패·상품 없음·모듈 없음), 구매 성공 시 서버 확인 뒤에만 이용권·확정, Android purchaseToken 만 전송(주문 번호·원본 JSON 미사용)·token 없음/pending 은 확인 보류, 취소·네트워크·이미 보유·요청 거절·알 수 없음·상품 없음, 서버 없음·연결 실패·거절 시 이용권 없음·미확정, 복원(일회성 우선·예전 구독도 인정·없음·결제 보류 제외·연결 실패), 앱 시작 재확인(오프라인·서버 실패 유지, 구독 없음·거절 시 종료하되 기록 보존, 재설치 자동 복원), 화면 상태(불러오기·구매 가능·성공·구매 내역·취소·실패+다시 시도·구매 없음·확인 실패·복원 성공·조회 실패 시 값 없음·재시도 안내·버튼 꺼짐), 오류 코드 노출 없음, 출시 구성 검수 스위치 없음. 실제 Play 결제·서버 배포는 미검증.');
 })().catch(e => { console.error(e); process.exit(1); });

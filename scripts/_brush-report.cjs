@@ -19,36 +19,46 @@ function measure(file) {
   for (const f of [.3, .5, .7]) { const x = Math.round(w * f); let n = 0; for (let y = 0; y < h; y++) if (d[(y * w + x) * 4 + 3] > 20) n++; widths.push(n); }
   return { widths, maxA, ink };
 }
-const DIR = 'verification/round45_26';
+const DIR = process.argv[2] || 'verification/round45_26';
+// 승인 구성 12종. 이름은 사람이 읽는 이름으로 적는다 — key 만으로는 어느 브러시인지 알기 어렵다.
+const KINDS = [
+  ['pen', '기본 펜', false], ['soft', '부드러운 펜', false], ['pencil', '연필', false], ['marker', '마커', false],
+  ['ink', '테이퍼 잉크', true], ['brushpen', '붓펜', true], ['crayon', '크레용', true], ['chalk', '분필', true],
+  ['rough', '드라이 잉크', true], ['airbrush', '에어브러시', true], ['dotted', '점선 펜', true], ['outline', '테두리 펜', true],
+];
 const rows = [];
-console.log('  브러시  단계      굵기(3곳)      최대 알파  잉크 픽셀');
-for (const kind of ['pen', 'brush', 'pencil']) {
+const pad = (t, n) => { let w = 0; for (const ch of String(t)) w += ch.charCodeAt(0) > 0x2000 ? 2 : 1; return String(t) + ' '.repeat(Math.max(1, n - w)); };
+console.log('  브러시        단계        굵기(3곳)        최대 알파  잉크 픽셀');
+for (const [kind, title, pro] of KINDS) {
   const stages = {};
   for (const [stage, label] of [['during', '입력 중'], ['committed', '확정 후'], ['reopened', '재열기 후']]) {
     const f = path.join(DIR, 'stroke-' + kind + '-' + stage + '.png');
     if (!fs.existsSync(f)) { console.log('  없음: ' + f); continue; }
     const m = measure(f); stages[stage] = m;
-    console.log('  ' + kind.padEnd(7) + label.padEnd(10) + m.widths.join(' / ').padEnd(15) + String(m.maxA).padEnd(10) + m.ink);
+    console.log('  ' + pad(title, 14) + pad(label, 12) + pad(m.widths.join(' / '), 17) + pad(m.maxA, 11) + m.ink);
   }
-  rows.push({ kind, stages });
+  rows.push({ kind, title, pro, stages });
 }
 console.log('');
-// 단계 사이가 같은지: 확정 후와 재열기 후는 같아야 한다(저장이 외형을 바꾸면 안 된다).
 let bad = 0;
+// ① 저장·재열기가 외형을 바꾸지 않는다.
 for (const r of rows) {
   const c = r.stages.committed, o = r.stages.reopened;
-  if (!c || !o) continue;
-  const same = JSON.stringify(c.widths) === JSON.stringify(o.widths) && Math.abs(c.maxA - o.maxA) <= 2 && Math.abs(c.ink - o.ink) / c.ink < .02;
+  if (!c || !o) { bad++; console.log('  ' + pad(r.title, 14) + '⚠ 단계가 모자라다'); continue; }
+  const same = JSON.stringify(c.widths) === JSON.stringify(o.widths) && Math.abs(c.maxA - o.maxA) <= 2 && Math.abs(c.ink - o.ink) / Math.max(1, c.ink) < .02;
   if (!same) bad++;
-  console.log('  ' + r.kind.padEnd(7) + (same ? '확정 후 == 재열기 후 (저장이 외형을 바꾸지 않는다)' : '⚠ 확정 후와 재열기 후가 다르다'));
+  console.log('  ' + pad(r.title, 14) + (same ? '확정 후 == 재열기 후 (저장·재열기가 외형을 바꾸지 않는다)' : '⚠ 확정 후와 재열기 후가 다르다: ' + JSON.stringify([c.widths, o.widths, c.maxA, o.maxA, c.ink, o.ink])));
 }
-// 세 브러시가 서로 다른지.
-const [pen, brush, pencil] = rows.map(r => r.stages.committed);
+// ② 열두 가지가 서로 다르다 — 굵기·알파·잉크를 묶은 지문이 겹치면 이름만 다른 것이다.
 console.log('');
-console.log('  펜 대비 붓  — 굵기 ' + (brush.widths[0] / pen.widths[0]).toFixed(2) + '배 · 잉크 ' + (brush.ink / pen.ink).toFixed(2) + '배');
-console.log('  펜 대비 연필 — 굵기 ' + (pencil.widths[0] / pen.widths[0]).toFixed(2) + '배 · 최대 알파 ' + pencil.maxA + ' (펜 ' + pen.maxA + ')');
-if (brush.widths[0] === pen.widths[0] && brush.ink === pen.ink) { console.log('  ⚠ 붓이 펜과 같다'); bad++; }
-if (pencil.maxA >= pen.maxA) { console.log('  ⚠ 연필이 펜보다 옅지 않다'); bad++; }
+const seen = new Map();
+for (const r of rows) {
+  const c = r.stages.committed; if (!c) continue;
+  const key = c.widths.join(',') + '|' + c.maxA + '|' + Math.round(c.ink / 50);
+  if (seen.has(key)) { bad++; console.log('  ⚠ ' + r.title + ' 가 ' + seen.get(key) + ' 와 같은 결과를 낸다'); }
+  seen.set(key, r.title);
+}
+console.log('  서로 다른 결과 ' + seen.size + ' / ' + rows.length);
 fs.writeFileSync(path.join(DIR, 'brush-pipeline.json'), JSON.stringify(rows, null, 2));
-console.log(bad ? '\n  손봐야 할 것 ' + bad + '개' : '\n  세 브러시가 서로 다르고, 저장·재열기가 외형을 바꾸지 않는다');
+console.log(bad ? '\n  손봐야 할 것 ' + bad + '개' : '\n  열두 가지가 서로 다르고, 저장·재열기가 외형을 바꾸지 않는다');
 process.exit(bad ? 2 : 0);

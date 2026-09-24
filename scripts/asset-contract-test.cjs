@@ -213,6 +213,32 @@ async function walk(App, { sourcesOn }) {
     // 연필은 굵기가 같고 옅기만 하다 — 테두리 크기는 펜과 같아야 한다.
     assert.deepEqual([pencil.w, pencil.h], [pen.w, pen.h], '연필 견본은 펜과 같은 굵기다(옅기만 다르다)');
   }
+  // 승인된 브러시 열두 가지(45.29). 이름·무료/PRO·엔진 효과가 한 벌로 묶여 있어야 한다 —
+  // 개수만 12개인 것으로 완료가 되지 않게, 이름과 실제 엔진 효과를 함께 못 박는다.
+  {
+    const src = fs.readFileSync('src/painter/painter.tsx', 'utf8');
+    const block = src.slice(src.indexOf('const CATALOG:'), src.indexOf('export const FREE_BRUSHES'));
+    const rows = [...block.matchAll(/\{ key: '([^']+)', title: '([^']+)', pro: (true|false), (?:base: '([^']+)'|preset: '([^']+)')/g)]
+      .map(m => ({ key: m[1], title: m[2], pro: m[3] === 'true', base: m[4], preset: m[5] }));
+    assert.equal(rows.length, 12, '브러시는 열두 가지다: ' + rows.length);
+    const free = rows.filter(r => !r.pro).map(r => r.title), paid = rows.filter(r => r.pro).map(r => r.title);
+    assert.deepEqual(free, ['기본 펜', '부드러운 펜', '연필', '마커'], '무료 넷: ' + JSON.stringify(free));
+    assert.deepEqual(paid, ['테이퍼 잉크', '붓펜', '크레용', '분필', '드라이 잉크', '에어브러시', '점선 펜', '테두리 펜'], 'PRO 여덟: ' + JSON.stringify(paid));
+    // 이름마다 실제로 다른 엔진 효과가 붙어 있다(같은 효과를 두 이름으로 늘어놓지 않는다).
+    const effects = rows.map(r => r.preset ?? ('base:' + r.base));
+    assert.equal(new Set(effects).size, 12, '열두 이름이 저마다 다른 엔진 효과를 쓴다: ' + JSON.stringify(effects));
+    // 프리셋 이름은 엔진 PRESETS 에 실제로 있다 — 없으면 이름만 있고 효과가 없는 브러시가 된다.
+    const engine = fs.readFileSync('src/painter/canvas-html.ts', 'utf8');
+    const table = engine.slice(engine.indexOf('const PRESETS={'), engine.indexOf('const STAB='));
+    for (const r of rows) if (r.preset) assert.ok(new RegExp('\\b' + r.preset + ':\\{').test(table), r.title + '(' + r.preset + ') 의 효과가 엔진에 있다');
+    // 열두 가지 모두 제 획 견본을 갖고, 어느 둘도 같은 파일이 아니다.
+    const files = rows.map(r => 'assets/art/stroke-' + r.key + '.png');
+    for (const f of files) assert.ok(fs.existsSync(f), f + ' 획 견본이 있다');
+    const seen = new Map();
+    for (const f of files) { const h = require('node:crypto').createHash('sha256').update(fs.readFileSync(f)).digest('hex'); assert.ok(!seen.has(h), f + ' 가 ' + seen.get(h) + ' 와 같은 그림이다'); seen.set(h, f); }
+    // 목록에서 내린 예전 브러시는 엔진에 그대로 남아 있어야 한다 — 저장된 작품이 쓰던 값이다.
+    for (const old of ['grain', 'calligraphy', 'chisel']) assert.ok(new RegExp('\\b' + old + ':\\{').test(table), '예전 브러시 ' + old + ' 는 엔진에 남는다(저장본 호환)');
+  }
   const slotsSrc = fs.readFileSync('src/design/asset-slots.ts', 'utf8');
   assert.ok(/mascot-paper\.png/.test(slotsSrc), '지금 쓰는 자리표시 그림은 asset-slots 한 곳에만 있다');
   const motionSrc = fs.readFileSync('src/painter/motion-panel.tsx', 'utf8');
@@ -223,6 +249,6 @@ async function walk(App, { sourcesOn }) {
   assert.ok(/ASSET_SLOTS\.proFeatureArtwork\.source/.test(appSrc) && /ASSET_SLOTS\.proFeatureArtwork\.sourceAfter/.test(appSrc), 'PRO 비교는 자리에서 받는다');
 
   await act(async () => tree.unmount());
-  console.log('PASS: asset contract — 자리 8개 규격, 표현 가이드 20개 안정 ID·기존 순서/문구, 카드별 서로 다른 이미지와 이미지 없는 카드의 준비 중 자리표시, 나머지 자리의 source/placeholder 연결을 확인했다. 화면 파일의 mascot 직접 참조 0. Native/WebView mocked.');
+  console.log('PASS: asset contract — 승인 브러시 12종(이름·무료/PRO·엔진 효과·견본), 자리 8개 규격, 표현 가이드 20개 안정 ID·기존 순서/문구, 카드별 서로 다른 이미지와 이미지 없는 카드의 준비 중 자리표시, 나머지 자리의 source/placeholder 연결을 확인했다. 화면 파일의 mascot 직접 참조 0. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

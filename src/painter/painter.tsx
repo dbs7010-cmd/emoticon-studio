@@ -117,34 +117,34 @@ const BRUSHES = [
   { key: 'brush' as const, title: '붓', art: require('../../assets/art/tool-brush.png'), stroke: require('../../assets/art/stroke-brush.png') },
   { key: 'pencil' as const, title: '연필', art: require('../../assets/art/tool-pencil.png'), stroke: require('../../assets/art/stroke-pencil.png') },
 ];
-// PRO 브러시 프리셋. 엔진(canvas-html PRESETS)과 같은 key 를 쓴다. sample 은 카드 안의 짧은 견본 모양이다.
-const PRO_BRUSHES = [
-  { key: 'ink' as const, title: '매끈한 잉크', sample: { height: 4, borderRadius: 2, opacity: 1 } },
-  { key: 'soft' as const, title: '부드러운 펜', sample: { height: 8, borderRadius: 4, opacity: .55 } },
-  { key: 'grain' as const, title: '결 연필', sample: { height: 5, borderRadius: 1, opacity: .75 } },
-  { key: 'marker' as const, title: '마커', sample: { height: 11, borderRadius: 1, opacity: .5 } },
-];
 // 브러시 한 벌(45.28차). 무료 4종 + PRO 8종 = 12종. key 는 저장되는 값이라 바꾸지 않는다.
 // base = 엔진의 기본 브러시, preset = 엔진 PRESETS 의 key. 둘 중 하나만 갖는다.
 export type BrushKey = string;
-const CATALOG: { key: BrushKey; title: string; pro: boolean; base?: Brush; preset?: NonNullable<BrushSettings['preset']>; stroke: ImageSourcePropType }[] = [
-  { key: 'pen', title: '펜', pro: false, base: 'pen', stroke: require('../../assets/art/stroke-pen.png') },
-  { key: 'pencil', title: '연필', pro: false, base: 'pencil', stroke: require('../../assets/art/stroke-pencil.png') },
-  { key: 'brush', title: '붓', pro: false, base: 'brush', stroke: require('../../assets/art/stroke-brush.png') },
-  { key: 'marker', title: '마커', pro: false, preset: 'marker', stroke: require('../../assets/art/stroke-marker.png') },
-  { key: 'ink', title: '매끈한 잉크', pro: true, preset: 'ink', stroke: require('../../assets/art/stroke-ink.png') },
-  { key: 'soft', title: '부드러운 펜', pro: true, preset: 'soft', stroke: require('../../assets/art/stroke-soft.png') },
-  { key: 'grain', title: '결 연필', pro: true, preset: 'grain', stroke: require('../../assets/art/stroke-grain.png') },
-  { key: 'calligraphy', title: '캘리그래피', pro: true, preset: 'calligraphy', stroke: require('../../assets/art/stroke-calligraphy.png') },
-  { key: 'crayon', title: '크레용', pro: true, preset: 'crayon', stroke: require('../../assets/art/stroke-crayon.png') },
-  { key: 'airbrush', title: '에어브러시', pro: true, preset: 'airbrush', stroke: require('../../assets/art/stroke-airbrush.png') },
-  { key: 'chisel', title: '납작펜', pro: true, preset: 'chisel', stroke: require('../../assets/art/stroke-chisel.png') },
-  { key: 'rough', title: '거친 선', pro: true, preset: 'rough', stroke: require('../../assets/art/stroke-rough.png') },
+// 이름은 승인 구성 그대로다. key·preset 은 **저장되는 값이라** 효과가 같으면 예전 것을 그대로 쓴다
+// (rough = 드라이 잉크, ink = 테이퍼 잉크). 효과가 없던 넷만 엔진에 새로 만들었다.
+const CATALOG: { key: BrushKey; title: string; pro: boolean; base?: Brush; preset?: NonNullable<BrushSettings['preset']>; use: string; stroke: ImageSourcePropType }[] = [
+  { key: 'pen', title: '기본 펜', pro: false, base: 'pen', use: '또렷한 선 · 밑그림과 마무리', stroke: require('../../assets/art/stroke-pen.png') },
+  { key: 'soft', title: '부드러운 펜', pro: false, preset: 'soft', use: '가장자리가 번지는 선 · 볼터치와 그림자', stroke: require('../../assets/art/stroke-soft.png') },
+  { key: 'pencil', title: '연필', pro: false, base: 'pencil', use: '종이에 걸리는 옅은 선 · 밑그림', stroke: require('../../assets/art/stroke-pencil.png') },
+  { key: 'marker', title: '마커', pro: false, preset: 'marker', use: '평평하고 넓은 선 · 색 채우기', stroke: require('../../assets/art/stroke-marker.png') },
+  { key: 'ink', title: '테이퍼 잉크', pro: true, preset: 'ink', use: '시작이 가늘고 끝이 굵어지는 선 · 펜선 정리', stroke: require('../../assets/art/stroke-ink.png') },
+  { key: 'brushpen', title: '붓펜', pro: true, preset: 'brushpen', use: '굵고 부드러운 붓 선 · 굵은 윤곽', stroke: require('../../assets/art/stroke-brushpen.png') },
+  { key: 'crayon', title: '크레용', pro: true, preset: 'crayon', use: '알갱이가 도드라지는 선 · 손그림 질감', stroke: require('../../assets/art/stroke-crayon.png') },
+  { key: 'chalk', title: '분필', pro: true, preset: 'chalk', use: '굵고 성글게 갈리는 선 · 거친 칠', stroke: require('../../assets/art/stroke-chalk.png') },
+  { key: 'rough', title: '드라이 잉크', pro: true, preset: 'rough', use: '끊기는 마른 붓 선 · 낡은 느낌', stroke: require('../../assets/art/stroke-rough.png') },
+  { key: 'airbrush', title: '에어브러시', pro: true, preset: 'airbrush', use: '옅게 뿌리는 선 · 그러데이션', stroke: require('../../assets/art/stroke-airbrush.png') },
+  { key: 'dotted', title: '점선 펜', pro: true, preset: 'dotted', use: '점이 이어지는 선 · 재봉선과 안내선', stroke: require('../../assets/art/stroke-dotted.png') },
+  { key: 'outline', title: '테두리 펜', pro: true, preset: 'outline', use: '속이 빈 두 겹 선 · 굵은 강조', stroke: require('../../assets/art/stroke-outline.png') },
 ];
+// 무료로 쓰는 프리셋. PRO 가 끝나도 이 둘은 효력이 남는다(승인 구성에서 무료다).
+const FREE_PRESETS = new Set(CATALOG.filter(b => !b.pro && b.preset).map(b => b.preset as string));
+// 목록에서 내린 예전 브러시. 엔진에는 그대로 있어 저장된 작품이 쓰던 값이 살아 있다 —
+// 지우지 않고, 고른 상태로 열면 그 이름을 읽어 준다.
+const RETIRED: Record<string, string> = { grain: '결 연필', calligraphy: '캘리그래피', chisel: '납작펜' };
 export const FREE_BRUSHES = CATALOG.filter(b => !b.pro).map(b => b.key);
 export const PRO_BRUSH_KEYS = CATALOG.filter(b => b.pro).map(b => b.key);
 // 빠른 선택 줄의 첫 모습. 승인 보드처럼 세 칸이고, 전체 목록에서 고르면 그 자리가 바뀐다.
-const QUICK_DEFAULT: BrushKey[] = ['pen', 'pencil', 'marker'];
+const QUICK_DEFAULT: BrushKey[] = ['pen', 'pencil', 'marker'];   // 승인 구성의 무료 셋
 // 승인 보드는 아래 도구 줄에 '펜'을 쓴다. 위 카드에도 '펜'이 있어 글자만으로는 둘이 같아 보인다 —
 // 보이는 글자는 보드대로 두고, 읽어 주는 이름만 '그리기 도구 펜'으로 갈라 둘을 구분한다.
 const ALL_TOOLS: [Tool, string, IconName, string][] = [['pen', '펜', 'fountain-pen-tip', '그리기 도구 펜'], ['eraser', '지우개', 'eraser', '지우개'], ['fill', '채우기', 'format-color-fill', '채우기'], ['select', '선택', 'select-drag', '선택']];
@@ -153,7 +153,7 @@ const STAB_LEVELS = [['light', '약'], ['medium', '중'], ['strong', '강']] as 
 function cleanBrush(b?: BrushSettings): BrushSettings {
   const size = (n: unknown) => typeof n === 'number' && Number.isFinite(n) ? Math.max(1, Math.min(48, Math.round(n))) : undefined;
   return {
-    preset: b?.preset && CATALOG.some(p => p.preset === b.preset) ? b.preset : undefined,
+    preset: b?.preset && (CATALOG.some(p => p.preset === b.preset) || b.preset in RETIRED) ? b.preset : undefined,
     opacity: typeof b?.opacity === 'number' && Number.isFinite(b.opacity) ? Math.max(.05, Math.min(1, b.opacity)) : undefined,
     stabilizer: b?.stabilizer && ['off', 'light', 'medium', 'strong'].includes(b.stabilizer) ? b.stabilizer : undefined,
     base: b?.base && BRUSHES.some(x => x.key === b.base) ? b.base : undefined,
@@ -381,7 +381,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   useEffect(() => () => { if (brushSave.current) clearTimeout(brushSave.current); }, []);
   // 진하기와 선 보정은 무료다(드로잉 앱의 기본 조절). 고급 브러시 네 가지만 PRO 이고, PRO 가 끝나면 효력만 기본 선으로 돌린다.
   const effectiveBrush = {
-    preset: pro ? brushPrefs.preset : undefined,
+    preset: pro ? brushPrefs.preset : (brushPrefs.preset && FREE_PRESETS.has(brushPrefs.preset) ? brushPrefs.preset : undefined),
     opacity: brushPrefs.opacity ?? 1,
     stabilizer: brushPrefs.stabilizer ?? 'light',
   };
@@ -714,6 +714,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const brushSheet = <View style={{ flexShrink: 1, minHeight: 0, paddingHorizontal: 12, paddingBottom: 6, gap: 6 }}>
     <ScrollView testID="브러시 목록" style={{ flexShrink: 1, minHeight: 0 }} showsVerticalScrollIndicator
       contentContainerStyle={{ gap: 10, paddingTop: 2, paddingBottom: 12 }}>
+      {!!effectiveBrush.preset && effectiveBrush.preset in RETIRED &&
+        <Text style={{ fontSize: 11, color: C.muted }}>지금은 예전 브러시 ‘{RETIRED[effectiveBrush.preset]}’ 로 그리고 있어요. 그대로 쓸 수 있어요.</Text>}
       {([[false, '기본'], [true, 'PRO']] as const).map(([isPro, groupName]) => {
         const group = CATALOG.filter(b => b.pro === isPro);
         return <View key={groupName} style={{ gap: 6 }}>
@@ -848,17 +850,19 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     </Pressable>
   </View>;
   // 머리줄이 넘치면 명령 묶음을 둘째 줄로 내린다. 세트 이름이 설 자리(96dp)를 남긴다.
-  const cmdStacked = topW > 0 && cmdW > 0 && cmdW + 44 + 28 + 44 + 96 > topW;
-  const brushTitle = effectiveBrush.preset ? (PRO_BRUSHES.find(p => p.key === effectiveBrush.preset)?.title ?? '브러시') : (BRUSHES.find(b => b.key === brush)?.title ?? '브러시');
+  // 320dp 급에서는 재 보기 전에도 분명히 모자라므로 바로 내린다 — 이름을 글자 단위로 쌓거나
+  // 손가락 자리를 줄이는 대신 줄을 하나 더 쓴다(45.29차).
+  const cmdStacked = narrow || (topW > 0 && cmdW > 0 && cmdW + 44 + 28 + 44 + 96 > topW);
   return <Modal onRequestClose={() => { if (Keyboard.isVisible()) { Keyboard.dismiss(); return; } if (panel) { ease(); setPanel(null); return; } if (drawRail || refRail) { ease(); setDrawRail(false); setRefRail(false); return; } if (showCanon) { setShowCanon(false); return; } save('close'); }} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       {/* 머리: 닫기 · 세트 이름과 칸 번호 · 되돌리기 · 다시 · 더보기. 저장 버튼은 없다 — 작업은 자동저장된다. */}
       <View onLayout={e => { const w = Math.round(e.nativeEvent.layout.width); if (w !== topW) setTopW(w); }}
         style={{ minHeight: 52, paddingHorizontal: 2, flexDirection: 'row', alignItems: 'center', backgroundColor: C.paper }}>
         <Bar label="그리기 닫기" icon="chevron-left" strong disabled={busy} onPress={() => save('close')} />
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: C.tap }}>
-          <Text numberOfLines={1} style={{ fontSize: 15, lineHeight: 20, color: C.ink, fontWeight: '700' }}>{setName}</Text>
-          <Text accessibilityLabel="현재 칸" style={{ fontSize: 11, lineHeight: 14, fontWeight: '600', color: C.faint, letterSpacing: .4 }}>{String(slot.number).padStart(2, '0') + ' / ' + slotCount}</Text>
+        {/* 이름은 한 줄로 줄이고 넘치면 말줄임한다. 칸 번호도 한 줄이다 — 글자 단위로 여러 줄에 쌓지 않는다. */}
+        <View style={{ flex: 1, flexShrink: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', minHeight: C.tap }}>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={{ maxWidth: '100%', fontSize: 15, lineHeight: 20, color: C.ink, fontWeight: '700' }}>{setName}</Text>
+          <Text numberOfLines={1} accessibilityLabel="현재 칸" style={{ maxWidth: '100%', fontSize: 11, lineHeight: 14, fontWeight: '600', color: C.faint, letterSpacing: .4 }}>{String(slot.number).padStart(2, '0') + ' / ' + slotCount}</Text>
         </View>
         <View testID="저장 표시" accessibilityLabel={saveMark === 'saving' ? '저장 중' : saveMark === 'done' ? '저장됨' : undefined} style={{ width: 28, height: C.tap, alignItems: 'center', justifyContent: 'center' }}>
           {saveMark === 'saving' && <MaterialCommunityIcons name="cloud-upload-outline" size={16} color={C.faint} />}

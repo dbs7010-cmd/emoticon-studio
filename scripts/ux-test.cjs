@@ -507,9 +507,9 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  const kav = () => tree.root.findAll(n=>n.type==='KeyboardAvoidingView').filter(n=>n.findAll(c=>c.type==='Pressable'&&c.props.accessibilityLabel==='문구 적용').length===1).at(-1);
  const keyboardTo = async height => { await act(async () => { for (const fn of keyboardListeners[height > 0 ? 'keyboardDidShow' : 'keyboardDidHide'] || []) fn({ endCoordinates: { height } }); }); };
  // 45.28: 아래 도구 줄은 네 칸 균등(펜·지우개·채우기·선택)이다.
- const toolRow = () => ['펜','지우개','채우기','선택'].filter(name => labelled(name).length > 0);
+ const toolRow = () => ['그리기 도구 펜','지우개','채우기','선택'].filter(name => labelled(name).length > 0);
  await press('문구');
- assert.deepEqual(toolRow(),['펜','지우개','채우기','선택'],'키보드 전에는 하단 도구바가 그대로 있다');
+ assert.deepEqual(toolRow(),['그리기 도구 펜','지우개','채우기','선택'],'키보드 전에는 하단 도구바가 그대로 있다');
  assert.equal(kav().props.behavior,'height','Android absolute dock는 높이 조정으로 키보드를 피한다');
  await keyboardTo(320);
  assert.equal(labelled('키보드 닫기').length,1,'패널 취소와 별도의 키보드 닫기');
@@ -518,7 +518,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.deepEqual(toolRow(),[],'대신 하단 도구바는 글자를 치는 동안 비켜준다');
  await keyboardTo(0);
  assert.equal(kav().props.behavior,'height','키보드 복원은 동일한 높이 조정 호스트에서 처리한다');
- assert.deepEqual(toolRow(),['펜','지우개','채우기','선택'],'그리고 하단 도구바가 제자리로 돌아온다');
+ assert.deepEqual(toolRow(),['그리기 도구 펜','지우개','채우기','선택'],'그리고 하단 도구바가 제자리로 돌아온다');
  assert.equal(labelled('문구 적용').length,1,'문구 패널은 그대로 열려 있다 — 키보드를 닫은 것이 취소는 아니다');
  await press('문구 닫기');
 
@@ -1067,14 +1067,14 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   // 빠른 선택 줄: 카드 셋 + 전체 입구.
   const quick=tree.root.findAll(n=>n.props.testID==='빠른 브러시')[0];
   assert.ok(quick,'빠른 브러시 줄이 있다 at '+width+'dp');
-  assert.deepEqual(quick.findAll(n=>n.type==='Pressable').map(n=>n.props.accessibilityLabel),['펜','연필','마커','브러시 전체'],'처음에는 펜·연필·마커 at '+width+'dp');
+  assert.deepEqual(quick.findAll(n=>n.type==='Pressable').map(n=>n.props.accessibilityLabel),['기본 펜','연필','마커','브러시 전체'],'처음에는 기본 펜·연필·마커 at '+width+'dp');
   // 전체 목록에서 고르면 빠른 줄의 한 자리가 바뀌고 목록은 닫힌다.
   await press('브러시 전체');
   assert.ok(tree.root.findAll(n=>n.props.testID==='브러시 목록').length===1,'전체 목록이 열린다');
-  assert.equal(labelled('브러시 붓').length,1,'무료 4종이 목록에 있다');
-  await press('브러시 붓');
+  assert.equal(labelled('브러시 부드러운 펜').length,1,'무료 4종이 목록에 있다');
+  await press('브러시 부드러운 펜');
   assert.equal(tree.root.findAll(n=>n.props.testID==='브러시 목록').length,0,'고르면 목록이 닫힌다 at '+width+'dp');
-  assert.ok(tree.root.findAll(n=>n.props.testID==='빠른 브러시')[0].findAll(n=>n.type==='Pressable').map(n=>n.props.accessibilityLabel).includes('붓'),'고른 브러시가 빠른 줄에 들어온다');
+  assert.ok(tree.root.findAll(n=>n.props.testID==='빠른 브러시')[0].findAll(n=>n.type==='Pressable').map(n=>n.props.accessibilityLabel).includes('부드러운 펜'),'고른 브러시가 빠른 줄에 들어온다');
   await press('연필');
   assert.equal(lastCommand('brush').brush,'pencil');
   assert.ok(labelled('그리기 도구 펜')[0].props.accessibilityState.selected,'그리기 도구(펜)가 그대로 골라져 있다');

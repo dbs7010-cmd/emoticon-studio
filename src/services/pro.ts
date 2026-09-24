@@ -12,14 +12,11 @@ export { storeModuleAvailable, PRODUCT_IDS };
 //   2. Losing PRO never takes work away. Effects already saved keep playing and keep exporting;
 //      only making new PRO effects needs a live entitlement.
 // 45.28: 파는 것은 하나다 — **한 번 사면 끝나는 비소모성 일회성 PRO**. 구독은 팔지 않는다.
+// 45.29: 값은 **스토어가 말해 주는 것만** 화면에 적는다. 내부 기획의 후보 가격은 코드에 두지 않는다
+// (문서 docs/IAP_AUDIT.md 에만 남긴다) — 제품 화면에 '미확정' 같은 내부 상태가 나가지 않게.
 export const PLANS = [
-  { id: 'lifetime' as const, label: '한 번 구매 · 계속 이용', proposedPrice: '14,900원' },
+  { id: 'lifetime' as const, label: '한 번 구매 · 계속 이용' },
 ];
-// 위 가격은 **후보 가격**이다. 스토어에 등록된 값도, 확정된 판매가도 아니다. 스토어가 상품을
-// 목록에 올려 주는 순간 화면은 스토어가 주는 현지 가격을 대신 보여 준다. 이 상수를 거짓으로
-// 바꾸기 전에는 어떤 화면도 이 숫자를 '판매가'라고 적지 않는다.
-export const PRICES_ARE_PROPOSED = true;
-export const PRICE_IS_CANDIDATE_NOTE = '아직 확정된 판매가가 아니에요. 스토어에 등록되면 그곳의 가격으로 보여요.';
 
 export const FREE_ENTITLEMENT: Entitlement = { plan: 'free', source: 'none' };
 

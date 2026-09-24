@@ -85,7 +85,7 @@ export type Project = {
 // base·width·eraserWidth: 세트에서 마지막으로 쓴 선 종류와 굵기. 다음 칸과 재시작에서도 이어진다(없으면 펜 6 · 지우개 24).
 // preset: 엔진 PRESETS 의 key. 45.28차에 PRO 네 종을 더했다. 옛 저장본에는 앞의 넷만 들어 있고,
 // 낯선 값은 painter 의 cleanBrush 가 없는 것으로 읽는다.
-export type BrushSettings = { preset?: 'ink' | 'soft' | 'grain' | 'marker' | 'calligraphy' | 'crayon' | 'airbrush' | 'chisel' | 'rough'; opacity?: number; stabilizer?: 'off' | 'light' | 'medium' | 'strong'; base?: 'pen' | 'brush' | 'pencil'; width?: number; eraserWidth?: number };
+export type BrushSettings = { preset?: 'ink' | 'soft' | 'grain' | 'marker' | 'calligraphy' | 'crayon' | 'airbrush' | 'chisel' | 'rough' | 'brushpen' | 'chalk' | 'dotted' | 'outline'; opacity?: number; stabilizer?: 'off' | 'light' | 'medium' | 'strong'; base?: 'pen' | 'brush' | 'pencil'; width?: number; eraserWidth?: number };
 // Only a store receipt may set this. `source` exists so a hand written file cannot claim PRO.
 export type Entitlement = {
   // 라이선스 테스터·내부 테스트 구매로 열린 이용권. 화면이 그렇게 말하기 위한 표시다.

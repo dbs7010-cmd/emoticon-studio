@@ -28,10 +28,10 @@ const ADB = process.env.ADB || path.join(process.env.ANDROID_HOME || 'C:\\Androi
 const L = {
   newSet: '새 이모티콘 만들기',fromImage: '내 그림으로 시작', settings: '설정', proEntry: 'PRO 보기',
   toolPen: '그리기 도구 펜', toolEraser: '지우개', toolFill: '채우기', toolSelect: '선택', color: '색',
-  brushAll: '브러시 전체', quickPen: '펜',
+  brushAll: '브러시 전체', quickPen: '기본 펜',
   tabDraw: '그리기', tabMotion: '움직이기', reference: '참고', layers: '레이어', caption: '문구',
   complete: '완성 후 다음', close: '그리기 닫기', more: '더보기', undo: '되돌리기', redo: '다시 실행',
-  brushClose: '브러시 닫기', pencil: '연필', brushVariant: '브러시 붓', proBrush: '브러시 매끈한 잉크', brushDetail: '세부 설정',
+  brushClose: '브러시 닫기', pencil: '연필', brushVariant: '브러시 부드러운 펜', proBrush: '브러시 테이퍼 잉크', brushDetail: '세부 설정',
   brushSize: '브러시 굵기', eraserSize: '지우개 굵기',
   swatch: '색 #54A9E8', recentPrefix: '최근 색 ', paletteClose: '팔레트 닫기',
   previousStart: '이전 칸 그림으로 시작', previousSkip: '이전 칸 그림 안 쓰기',
