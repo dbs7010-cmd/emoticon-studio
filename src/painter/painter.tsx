@@ -785,13 +785,15 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                   style={({ pressed }) => ({ minHeight: 64, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: C.radius.button,
                     borderWidth: 1, borderColor: on ? C.accentBorder : C.line, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.paper })}>
                   {/* 잠긴 것도 실제 획 견본과 이름이 그대로 읽힌다. 흐리게 지우지 않는다. */}
-                  <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '78%', height: 16, tintColor: color }} resizeMode="contain" />
-                  <Text numberOfLines={1} style={{ fontSize: 10, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
-                  {b.pro && <Text style={{ fontSize: 8, fontWeight: '800', color: C.faint, letterSpacing: .3 }}>PRO</Text>}
+                  <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '74%', height: 16, tintColor: color }} resizeMode="contain" />
+                  <Text numberOfLines={1} style={{ maxWidth: '92%', fontSize: 10, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
                 </Pressable>
+                {b.pro && <Text pointerEvents="none" style={{ position: 'absolute', left: 5, top: 4, fontSize: 8, fontWeight: '800', color: C.faint, letterSpacing: .3 }}>PRO</Text>}
+                {/* 압정은 카드 오른쪽 위 48×48 자리를 쓴다. hitSlop 으로 넓히면 안드로이드가 카드 밖을 잘라
+                    실제 손가락 자리가 줄어든다 — 그래서 자리 자체를 48 로 잡고 그림만 모서리에 둔다. */}
                 <Pressable accessibilityRole="button" accessibilityLabel={(fav >= 0 ? '즐겨찾기에 있음 ' : '즐겨찾기에 고정 ') + b.title}
-                  onPress={() => setPinning(b.key)} hitSlop={6}
-                  style={{ position: 'absolute', right: 0, top: 0, width: 26, height: 26, alignItems: 'center', justifyContent: 'center' }}>
+                  onPress={() => setPinning(b.key)}
+                  style={{ position: 'absolute', right: 0, top: 0, width: 48, height: 48, alignItems: 'flex-end', paddingTop: 4, paddingRight: 5 }}>
                   <MaterialCommunityIcons name={fav >= 0 ? 'pin' : 'pin-outline'} size={13} color={fav >= 0 ? C.ink : C.faint} />
                 </Pressable>
               </View>; })}
