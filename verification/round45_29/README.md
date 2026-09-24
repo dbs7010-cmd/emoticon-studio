@@ -164,3 +164,65 @@
 | `device-qa --dry` | 바뀐 라벨이 소스에 실제로 있다 |
 
 **자동 검사 PASS 는 사용자 경험 승인이 아니다. 이번에도 기기에서 보지 않았다 — DEVICE-UX UNVERIFIED.**
+
+---
+
+## 7. 검수 APK (잔여 수정·검증을 마친 뒤 한 번)
+
+| | |
+|---|---|
+| 파일 | `dist/emoticon-studio-1.0.0-vc1-internal-review-01f04af-arm64.apk` |
+| 크기 | 40,409,026 바이트 |
+| SHA-256 | `016d96ad5ca64e83474c8373cb083ffe2b12a7e954b12c0a755ac362e0aea9df` |
+| 소스 커밋 | `01f04af` (앱 소스는 `214d1e1` 과 동일 — 이후 두 커밋은 문서·검사·검증 자료만 건드렸다) |
+| SOURCE_ID | `399acbcfb5bae2eb3c04bbdd2fe74c1cfccfdf874c6145cc5b56b02995d2f603` |
+| 구성 | 내부 검수(`EMOTICON_INTERNAL_REVIEW=1`) · arm64-v8a · 디버그 서명 |
+| 빌드 | `gradlew.bat :app:assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a` · BUILD SUCCESSFUL in 3m 55s |
+
+APK 를 뜯어 확인했다(설치한 것이 아니다 — `apk-strings.txt`):
+
+- `assets/app.config`: `internalReview: true` · `receiptEndpoint` 없음 · 1.0.0 / versionCode 1
+- 병합 매니페스트에 `com.android.vending.BILLING`
+- 번들(Hermes)에 **승인 12종 이름이 모두 있다**: 기본 펜 · 부드러운 펜 · 연필 · 마커 · 테이퍼 잉크 ·
+  붓펜 · 크레용 · 분필 · 드라이 잉크 · 에어브러시 · 점선 펜 · 테두리 펜
+- 일회성 상품 `pro_lifetime`, 새 구매 화면 문구(`가격을 불러오지 못했어요` · `지금은 구매할 수 없어요`),
+  내린 브러시 안내(`예전 브러시`) 모두 있다
+- **내부 기획 문구는 없다**: `후보 가격` · `미확정` · `제안가` 셋 다 번들에 없다
+
+**서명이 `CN=Android Debug` 라 스토어에 올릴 수 없다. 내부 검수용이고 공개 배포·외부 공유는 하지 않는다.**
+**기존 APK 는 그대로 두었다.** 사용자 데이터·저장 schema·권한은 건드리지 않았다.
+
+### APK 소스와 현재 HEAD 의 차이
+
+직전 APK 소스 `ad37df1` → 이번 APK 소스. 앱 코드는 다섯 파일, 획 견본은 열 장이 바뀌었다.
+
+```
+App.tsx                         17 +/-   구매 화면에서 내부 기획 문구 제거
+src/painter/canvas-html.ts      47 +/-   프리셋 4종 추가 · 점선 · 테두리 · 성긴 결 마스크
+src/painter/painter.tsx         60 +/-   승인 12종 카탈로그 · 무료 프리셋 게이트 · 머리줄 한 줄 규칙
+src/services/pro.ts              9 +/-   후보 가격 상수 삭제
+src/types.ts                     2 +/-   프리셋 이름 4개 추가
+assets/art/stroke-*.png         +4장(브러시펜·분필·점선·테두리) / 6장 재생성
+```
+
+이번 APK 이후 HEAD 까지의 차이는 **없다**(문서·검사·검증 자료만 커밋했다).
+
+---
+
+## 8. 남은 출시 차단 항목 · 담당 · 필요 행동
+
+| 막힌 것 | 담당 | 필요한 행동 |
+|---|---|---|
+| Play Console 계정·앱 등록 | 사용자 | 개발자 계정 등록, 앱 생성, 패키지 `com.emoticonstudio.app` 연결 |
+| `pro_lifetime` 상품 등록 | 사용자 | **앱 내 상품(비소모성)** 으로 등록하고 판매가 확정, 라이선스 테스터 등록 |
+| 영수증 확인 서버 배포 | 사용자 | HTTPS 호스팅 + `GOOGLE_SERVICE_ACCOUNT_JSON` · `ANDROID_PACKAGE_NAME` 설정, 빌드 시 `EMOTICON_RECEIPT_ENDPOINT` 주입 |
+| 실제 구매·복원 실기기 확인 | 사용자 | 위 셋이 끝난 뒤 내부 테스트 트랙 설치본에서 결제 흐름 1회 |
+| 업로드 키 서명 | 사용자 | `EMOTICON_UPLOAD_STORE_FILE`·`_STORE_PASSWORD`·`_KEY_ALIAS`·`_KEY_PASSWORD` (값은 저장소에 두지 않는다) |
+| 브랜드 에셋 | 사용자 | 아이콘·적응형·스플래시·피처 그래픽·스크린샷 (`npm run assets:check` 가 목록을 준다) |
+| iOS | 사용자 | `ios/` 프로젝트와 App Store Server API 판정 — 지금은 없다 |
+| 실기기 사용성(DEVICE-UX) | 사용자 | 기기에서 직접 보기. 자동 검사로는 대신할 수 없다 |
+| 표시용 미생성 18장 · 가장자리 미충전 | AI(다음 회차) | 선이 끊긴 원본이라 자동 채움이 샌다 — 원본 보정이 먼저다 |
+| X02 저장/파일 열기 · P01 약관 URL · T01 도움말 | AI(다음 회차) | 이번 지시 밖으로 계속 남는다 |
+
+**막히지 않은 것**: 저장과 내보내기는 무료이고 스토어 계정과 무관하다. PRO 없이도, 결제 모듈 없이도
+한 세트를 끝까지 그려 워터마크 없이 내보낼 수 있다.
