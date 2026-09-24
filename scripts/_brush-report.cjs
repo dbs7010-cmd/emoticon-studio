@@ -20,12 +20,8 @@ function measure(file) {
   return { widths, maxA, ink };
 }
 const DIR = process.argv[2] || 'verification/round45_26';
-// 승인 구성 12종. 이름은 사람이 읽는 이름으로 적는다 — key 만으로는 어느 브러시인지 알기 어렵다.
-const KINDS = [
-  ['pen', '기본 펜', false], ['soft', '부드러운 펜', false], ['pencil', '연필', false], ['marker', '마커', false],
-  ['ink', '테이퍼 잉크', true], ['brushpen', '붓펜', true], ['crayon', '크레용', true], ['chalk', '분필', true],
-  ['rough', '드라이 잉크', true], ['airbrush', '에어브러시', true], ['dotted', '점선 펜', true], ['outline', '테두리 펜', true],
-];
+// v2 구성 30종 + 호환 5종(45.31). 사람이 읽는 이름으로 적는다.
+const KINDS = [["F01","기본 펜",false],["F02","자연 잉크",false],["F03","테이퍼 펜",false],["F04","붓펜",false],["F05","연필",false],["F06","색연필",false],["F07","불투명 채색붓",false],["F08","마커",false],["F09","에어브러시",false],["F10","납작 펜",false],["P01","거친 잉크",true],["P02","드라이 잉크",true],["P03","붓결 잉크",true],["P04","볼펜",true],["P05","크레용",true],["P06","분필",true],["P07","소프트 파스텔",true],["P08","목탄",true],["P09","연필 옆면",true],["P10","입자 음영",true],["P11","점묘",true],["P12","스프레이",true],["P13","드라이 평붓",true],["P14","워시",true],["P15","가장자리 수채",true],["P16","오일 파스텔",true],["P17","테두리 펜",true],["P18","점선 펜",true],["P19","평행선 펜",true],["P20","발광 펜",true],["L01","예전 마커",false],["L02","예전 붓펜",false],["L03","부드러운 펜",false],["L04","예전 붓",false],["L05","예전 연필",false]];
 const rows = [];
 const pad = (t, n) => { let w = 0; for (const ch of String(t)) w += ch.charCodeAt(0) > 0x2000 ? 2 : 1; return String(t) + ' '.repeat(Math.max(1, n - w)); };
 console.log('  브러시        단계        굵기(3곳)        최대 알파  잉크 픽셀');
@@ -58,7 +54,7 @@ for (const r of rows) {
   if (seen.has(key)) { bad++; console.log('  ⚠ ' + r.title + ' 가 ' + seen.get(key) + ' 와 같은 결과를 낸다'); }
   seen.set(key, r.title);
 }
-console.log('  서로 다른 결과 ' + seen.size + ' / ' + rows.length);
+console.log('  서로 다른 결과 ' + seen.size + ' / ' + rows.length + '  (지문이 다르다는 것일 뿐, 품질 판정이 아니다)');
 fs.writeFileSync(path.join(DIR, 'brush-pipeline.json'), JSON.stringify(rows, null, 2));
-console.log(bad ? '\n  손봐야 할 것 ' + bad + '개' : '\n  열두 가지가 서로 다르고, 저장·재열기가 외형을 바꾸지 않는다');
+console.log(bad ? '\n  손봐야 할 것 ' + bad + '개' : '\n  서른다섯 가지가 서로 다르고, 저장·재열기가 외형을 바꾸지 않는다');
 process.exit(bad ? 2 : 0);

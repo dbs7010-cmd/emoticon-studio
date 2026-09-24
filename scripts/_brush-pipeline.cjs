@@ -19,12 +19,8 @@ const HOST = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>
 <body><div id="log">엔진을 띄우는 중…</div><iframe id="engine" src="engine.html"></iframe>
 <script>
 const log = document.getElementById('log'), engine = document.getElementById('engine');
-// 승인 구성 12종(45.29). base = 엔진 기본 브러시, preset = 엔진 PRESETS key.
-const kinds = [
-  ['pen', { base: 'pen' }], ['soft', { preset: 'soft' }], ['pencil', { base: 'pencil' }], ['marker', { preset: 'marker' }],
-  ['ink', { preset: 'ink' }], ['brushpen', { preset: 'brushpen' }], ['crayon', { preset: 'crayon' }], ['chalk', { preset: 'chalk' }],
-  ['rough', { preset: 'rough' }], ['airbrush', { preset: 'airbrush' }], ['dotted', { preset: 'dotted' }], ['outline', { preset: 'outline' }],
-];
+// v2 구성 30종 + 호환 5종(45.31). base = 엔진 기본 브러시, preset = 엔진 PRESETS key.
+const kinds = [["F01",{"base":"pen"}],["F02",{"preset":"inknatural"}],["F03",{"preset":"ink"}],["F04",{"preset":"brushpen2"}],["F05",{"preset":"pencil2"}],["F06",{"preset":"colorpencil"}],["F07",{"preset":"opaque"}],["F08",{"preset":"marker2"}],["F09",{"preset":"airbrush"}],["F10",{"preset":"flat"}],["P01",{"preset":"inkrough"}],["P02",{"preset":"rough"}],["P03",{"preset":"bristle"}],["P04",{"preset":"ballpen"}],["P05",{"preset":"crayon"}],["P06",{"preset":"chalk"}],["P07",{"preset":"pastel"}],["P08",{"preset":"charcoal"}],["P09",{"preset":"pencilside"}],["P10",{"preset":"grainshade"}],["P11",{"preset":"pointil"}],["P12",{"preset":"spray"}],["P13",{"preset":"dryflat"}],["P14",{"preset":"wash"}],["P15",{"preset":"wateredge"}],["P16",{"preset":"oilpastel"}],["P17",{"preset":"outline"}],["P18",{"preset":"dotted"}],["P19",{"preset":"parallelpen"}],["P20",{"preset":"glowpen"}],["L01",{"preset":"marker"}],["L02",{"preset":"brushpen"}],["L03",{"preset":"soft"}],["L04",{"base":"brush"}],["L05",{"base":"pencil"}]];
 let token = 0, waiting = null;
 const post = m => engine.contentWindow.command(m);      // 약속을 돌려준다 — 반드시 await
 const wait = type => new Promise(r => { waiting = { type, r }; });
