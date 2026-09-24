@@ -50,6 +50,9 @@ type Props = {
   onSaveUserColor: (color: string) => void;
   onRemoveUserColor: (color: string) => void;
   brushSettings?: BrushSettings;
+  // 즐겨찾기 세 칸. 사용자가 고정하고, 앱이 저장한다 — 다른 브러시를 썼다고 바뀌지 않는다.
+  favoriteBrushes?: string[];
+  onFavoriteBrushes?: (keys: string[]) => void;
   onBrushSettings: (settings: BrushSettings) => void;
   paperTexture: boolean;
   completeTitle: string;
@@ -120,31 +123,55 @@ const BRUSHES = [
 // 브러시 한 벌(45.28차). 무료 4종 + PRO 8종 = 12종. key 는 저장되는 값이라 바꾸지 않는다.
 // base = 엔진의 기본 브러시, preset = 엔진 PRESETS 의 key. 둘 중 하나만 갖는다.
 export type BrushKey = string;
-// 이름은 승인 구성 그대로다. key·preset 은 **저장되는 값이라** 효과가 같으면 예전 것을 그대로 쓴다
-// (rough = 드라이 잉크, ink = 테이퍼 잉크). 효과가 없던 넷만 엔진에 새로 만들었다.
-const CATALOG: { key: BrushKey; title: string; pro: boolean; base?: Brush; preset?: NonNullable<BrushSettings['preset']>; use: string; stroke: ImageSourcePropType }[] = [
-  { key: 'pen', title: '기본 펜', pro: false, base: 'pen', use: '또렷한 선 · 밑그림과 마무리', stroke: require('../../assets/art/stroke-pen.png') },
-  { key: 'soft', title: '부드러운 펜', pro: false, preset: 'soft', use: '가장자리가 번지는 선 · 볼터치와 그림자', stroke: require('../../assets/art/stroke-soft.png') },
-  { key: 'pencil', title: '연필', pro: false, base: 'pencil', use: '종이에 걸리는 옅은 선 · 밑그림', stroke: require('../../assets/art/stroke-pencil.png') },
-  { key: 'marker', title: '마커', pro: false, preset: 'marker', use: '평평하고 넓은 선 · 색 채우기', stroke: require('../../assets/art/stroke-marker.png') },
-  { key: 'ink', title: '테이퍼 잉크', pro: true, preset: 'ink', use: '시작이 가늘고 끝이 굵어지는 선 · 펜선 정리', stroke: require('../../assets/art/stroke-ink.png') },
-  { key: 'brushpen', title: '붓펜', pro: true, preset: 'brushpen', use: '굵고 부드러운 붓 선 · 굵은 윤곽', stroke: require('../../assets/art/stroke-brushpen.png') },
-  { key: 'crayon', title: '크레용', pro: true, preset: 'crayon', use: '알갱이가 도드라지는 선 · 손그림 질감', stroke: require('../../assets/art/stroke-crayon.png') },
-  { key: 'chalk', title: '분필', pro: true, preset: 'chalk', use: '굵고 성글게 갈리는 선 · 거친 칠', stroke: require('../../assets/art/stroke-chalk.png') },
-  { key: 'rough', title: '드라이 잉크', pro: true, preset: 'rough', use: '끊기는 마른 붓 선 · 낡은 느낌', stroke: require('../../assets/art/stroke-rough.png') },
-  { key: 'airbrush', title: '에어브러시', pro: true, preset: 'airbrush', use: '옅게 뿌리는 선 · 그러데이션', stroke: require('../../assets/art/stroke-airbrush.png') },
-  { key: 'dotted', title: '점선 펜', pro: true, preset: 'dotted', use: '점이 이어지는 선 · 재봉선과 안내선', stroke: require('../../assets/art/stroke-dotted.png') },
-  { key: 'outline', title: '테두리 펜', pro: true, preset: 'outline', use: '속이 빈 두 겹 선 · 굵은 강조', stroke: require('../../assets/art/stroke-outline.png') },
+// 브러시 30종(45.31 · v2 구성표). 무료 10 + PRO 20. **문서 ID(F01·P01…)는 앱 ID 가 아니다** —
+// key 와 preset 은 저장되는 값이고, 효과가 같으면 예전 이름을 그대로 쓴다.
+// group 은 목록 분류(선·채색·질감·효과)다. use 는 고른 뒤 한 줄로 보여 주는 설명이다.
+type Group = '선' | '채색' | '질감' | '효과';
+const CATALOG: { key: BrushKey; title: string; pro: boolean; group: Group; base?: Brush; preset?: NonNullable<BrushSettings['preset']>; use: string; stroke: ImageSourcePropType }[] = [
+  // ── 무료 10 ──
+  { key: 'pen', title: '기본 펜', pro: false, group: '선', base: 'pen', use: '고른 굵기의 또렷한 선 · 외곽선', stroke: require('../../assets/art/stroke-pen.png') },
+  { key: 'inknatural', title: '자연 잉크', pro: false, group: '선', preset: 'inknatural', use: '가장자리가 살아 있는 손맛 선', stroke: require('../../assets/art/stroke-inknatural.png') },
+  { key: 'ink', title: '테이퍼 펜', pro: false, group: '선', preset: 'ink', use: '시작이 가늘어지는 선 · 펜선 정리', stroke: require('../../assets/art/stroke-ink.png') },
+  { key: 'brushpen2', title: '붓펜', pro: false, group: '선', preset: 'brushpen2', use: '천천히 그으면 굵어지는 붓 선 · 손글씨', stroke: require('../../assets/art/stroke-brushpen2.png') },
+  { key: 'flat', title: '납작 펜', pro: false, group: '선', preset: 'flat', use: '팁 각도에 따라 굵기가 달라지는 선', stroke: require('../../assets/art/stroke-flat.png') },
+  { key: 'pencil2', title: '연필', pro: false, group: '질감', preset: 'pencil2', use: '마른 입자의 옅은 선 · 밑그림과 해칭', stroke: require('../../assets/art/stroke-pencil2.png') },
+  { key: 'colorpencil', title: '색연필', pro: false, group: '질감', preset: 'colorpencil', use: '종이결에 색이 쌓이는 선 · 덧칠', stroke: require('../../assets/art/stroke-colorpencil.png') },
+  { key: 'opaque', title: '불투명 채색붓', pro: false, group: '채색', preset: 'opaque', use: '겹쳐도 얼룩 없는 고른 면 · 평면 채색', stroke: require('../../assets/art/stroke-opaque.png') },
+  { key: 'marker2', title: '마커', pro: false, group: '채색', preset: 'marker2', use: '납작하고 넓은 선 · 빠른 색 채우기', stroke: require('../../assets/art/stroke-marker2.png') },
+  { key: 'airbrush', title: '에어브러시', pro: false, group: '채색', preset: 'airbrush', use: '옅게 번지는 색 · 볼터치와 그림자', stroke: require('../../assets/art/stroke-airbrush.png') },
+  // ── PRO 20 ──
+  { key: 'inkrough', title: '거친 잉크', pro: true, group: '선', preset: 'inkrough', use: '속은 꽉 차고 가장자리가 거친 굵은 선', stroke: require('../../assets/art/stroke-inkrough.png') },
+  { key: 'rough', title: '드라이 잉크', pro: true, group: '선', preset: 'rough', use: '안쪽이 끊기는 마른 잉크 선', stroke: require('../../assets/art/stroke-rough.png') },
+  { key: 'bristle', title: '붓결 잉크', pro: true, group: '선', preset: 'bristle', use: '획 방향으로 이어지는 붓털 결', stroke: require('../../assets/art/stroke-bristle.png') },
+  { key: 'ballpen', title: '볼펜', pro: true, group: '선', preset: 'ballpen', use: '가늘고 옅은 선 · 겹쳐 쌓는 해칭', stroke: require('../../assets/art/stroke-ballpen.png') },
+  { key: 'crayon', title: '크레용', pro: true, group: '질감', preset: 'crayon', use: '왁스가 뭉치고 종이가 비치는 선', stroke: require('../../assets/art/stroke-crayon.png') },
+  { key: 'chalk', title: '분필', pro: true, group: '질감', preset: 'chalk', use: '가루가 성글게 앉는 굵은 선', stroke: require('../../assets/art/stroke-chalk.png') },
+  { key: 'pastel', title: '소프트 파스텔', pro: true, group: '질감', preset: 'pastel', use: '고운 가루가 넓게 앉는 채색', stroke: require('../../assets/art/stroke-pastel.png') },
+  { key: 'charcoal', title: '목탄', pro: true, group: '질감', preset: 'charcoal', use: '큰 결이 불규칙하게 번지는 선·면', stroke: require('../../assets/art/stroke-charcoal.png') },
+  { key: 'pencilside', title: '연필 옆면', pro: true, group: '질감', preset: 'pencilside', use: '넓은 접촉면의 결 있는 음영', stroke: require('../../assets/art/stroke-pencilside.png') },
+  { key: 'grainshade', title: '입자 음영', pro: true, group: '질감', preset: 'grainshade', use: '미세한 입자가 쌓이는 음영', stroke: require('../../assets/art/stroke-grainshade.png') },
+  { key: 'oilpastel', title: '오일 파스텔', pro: true, group: '채색', preset: 'oilpastel', use: '두껍게 눌리는 왁스 채색', stroke: require('../../assets/art/stroke-oilpastel.png') },
+  { key: 'wash', title: '워시', pro: true, group: '채색', preset: 'wash', use: '얇은 색을 겹쳐 쌓는 넓은 칠', stroke: require('../../assets/art/stroke-wash.png') },
+  { key: 'wateredge', title: '가장자리 수채', pro: true, group: '채색', preset: 'wateredge', use: '가장자리에 색이 고이는 수채 면', stroke: require('../../assets/art/stroke-wateredge.png') },
+  { key: 'dryflat', title: '드라이 평붓', pro: true, group: '효과', preset: 'dryflat', use: '넓은 붓결과 끊어진 색면', stroke: require('../../assets/art/stroke-dryflat.png') },
+  { key: 'pointil', title: '점묘', pro: true, group: '효과', preset: 'pointil', use: '경로 둘레에 흩어지는 점', stroke: require('../../assets/art/stroke-pointil.png') },
+  { key: 'spray', title: '스프레이', pro: true, group: '효과', preset: 'spray', use: '넓게 퍼지는 분사 입자', stroke: require('../../assets/art/stroke-spray.png') },
+  { key: 'outline', title: '테두리 펜', pro: true, group: '효과', preset: 'outline', use: '속이 빈 두 겹 선 · 굵은 강조', stroke: require('../../assets/art/stroke-outline.png') },
+  { key: 'dotted', title: '점선 펜', pro: true, group: '효과', preset: 'dotted', use: '점이 이어지는 선 · 재봉선과 안내선', stroke: require('../../assets/art/stroke-dotted.png') },
+  { key: 'parallelpen', title: '평행선 펜', pro: true, group: '효과', preset: 'parallelpen', use: '나란한 세 줄 · 속도선과 무늬', stroke: require('../../assets/art/stroke-parallelpen.png') },
+  { key: 'glowpen', title: '발광 펜', pro: true, group: '효과', preset: 'glowpen', use: '또렷한 중심과 흐린 번짐 · 반짝임', stroke: require('../../assets/art/stroke-glowpen.png') },
 ];
-// 무료로 쓰는 프리셋. PRO 가 끝나도 이 둘은 효력이 남는다(승인 구성에서 무료다).
+const GROUPS: Group[] = ['선', '채색', '질감', '효과'];
+// 무료로 쓰는 프리셋. PRO 가 끝나도 이 값들은 효력이 남는다.
 const FREE_PRESETS = new Set(CATALOG.filter(b => !b.pro && b.preset).map(b => b.preset as string));
-// 목록에서 내린 예전 브러시. 엔진에는 그대로 있어 저장된 작품이 쓰던 값이 살아 있다 —
-// 지우지 않고, 고른 상태로 열면 그 이름을 읽어 준다.
-const RETIRED: Record<string, string> = { grain: '결 연필', calligraphy: '캘리그래피', chisel: '납작펜' };
+// 목록에서 내린 예전 브러시. 엔진에는 그대로 있어 저장된 작품이 쓰던 값이 살아 있다.
+// 45.31 에서 마커·붓펜·연필이 새 것으로 갈렸고, 예전 것은 여기에 남아 계속 해석된다.
+const RETIRED: Record<string, string> = { grain: '결 연필', calligraphy: '캘리그래피', chisel: '납작펜(구형)', soft: '부드러운 펜', marker: '마커(구형)', brushpen: '붓펜(구형)' };
 export const FREE_BRUSHES = CATALOG.filter(b => !b.pro).map(b => b.key);
 export const PRO_BRUSH_KEYS = CATALOG.filter(b => b.pro).map(b => b.key);
 // 빠른 선택 줄의 첫 모습. 승인 보드처럼 세 칸이고, 전체 목록에서 고르면 그 자리가 바뀐다.
-const QUICK_DEFAULT: BrushKey[] = ['pen', 'pencil', 'marker'];   // 승인 구성의 무료 셋
+// 즐겨찾기 세 칸의 처음 값. 사용자가 바꾸기 전까지 이것으로 연다.
+const QUICK_DEFAULT: BrushKey[] = ['pen', 'pencil2', 'marker2'];
 // 승인 보드는 아래 도구 줄에 '펜'을 쓴다. 위 카드에도 '펜'이 있어 글자만으로는 둘이 같아 보인다 —
 // 보이는 글자는 보드대로 두고, 읽어 주는 이름만 '그리기 도구 펜'으로 갈라 둘을 구분한다.
 const ALL_TOOLS: [Tool, string, IconName, string][] = [['pen', '펜', 'fountain-pen-tip', '그리기 도구 펜'], ['eraser', '지우개', 'eraser', '지우개'], ['fill', '채우기', 'format-color-fill', '채우기'], ['select', '선택', 'select-drag', '선택']];
@@ -172,7 +199,7 @@ const swatches = [
 // 기본 레퍼런스 32칸은 아직 칸별 자료도 고르는 동작도 없다(자리표시뿐).
 // 명세 E05: 미완성 격자를 사용자 화면에 보이지 않는다. 자료는 그대로 두고 화면에서만 감춘다.
 const BUILTIN_READY: boolean = BUILTIN_REFERENCES.enabled && BUILTIN_REFERENCES.ready;
-export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, onSetReference, onCopyPrevious, onColorUsed, onClose, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
+export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, onSetReference, onCopyPrevious, onColorUsed, onClose, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<SaveAction>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
@@ -224,7 +251,20 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 표현 예시 참고 창(45.17차). 캔버스 위에 떠 있는 안내일 뿐이라 그림·썸네일·출력 어디에도 들어가지 않는다.
   const [refWindow, setRefWindow] = useState<'open' | 'collapsed' | 'closed'>('closed');
   // 빠른 선택 세 자리. 전체 목록에서 고르면 눌러 둔 자리가 그 브러시로 바뀐다(자리는 늘 셋).
-  const [quickBrushes, setQuickBrushes] = useState<BrushKey[]>(QUICK_DEFAULT);
+  // 저장된 즐겨찾기를 그대로 연다. 모르는 이름은 버리고 세 칸을 기본값으로 채운다.
+  const [quickBrushes, setQuickBrushes] = useState<BrushKey[]>(() => {
+    const kept = (favoriteBrushes ?? []).filter(k => CATALOG.some(b => b.key === k));
+    const out = [...new Set(kept)].slice(0, 3);
+    for (const d of QUICK_DEFAULT) if (out.length < 3 && !out.includes(d)) out.push(d);
+    return out;
+  });
+  // 즐겨찾기를 바꾸는 유일한 길. 사용자가 누른 것만 여기로 온다.
+  function pinBrush(slot: number, key: BrushKey) {
+    const next = quickBrushes.map((k, i) => i === slot ? key : k);
+    setQuickBrushes(next); onFavoriteBrushes?.(next); setPinning(null);
+  }
+  // 어느 칸에 넣을지 고르는 중인 브러시. null 이면 평소 상태다.
+  const [pinning, setPinning] = useState<BrushKey | null>(null);
   const guideUsed = useRef(false);
   // 이 칸에 깔아 둔 밑그림의 참고 id. 같은 예시를 또 눌러도 그림이 두 장 쌓이지 않게 한다.
   const guideLaid = useRef<string | null>(null);
@@ -407,15 +447,11 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     else { changeBrush({ preset: undefined, base: b.base }); setBrush(b.base!); send({ type: 'brush', brush: b.base! }); }
     if (tool !== 'pen') { setTool('pen'); send({ type: 'tool', tool: 'pen' }); onToolChange?.('pen'); }
   }
-  // 전체 목록에서 고르면: 그 브러시로 그리고, 빠른 줄의 한 자리를 내주고, 목록은 닫는다.
+  // 전체 목록에서 고르면: 그 브러시로 그리고 목록을 닫는다.
+  // **즐겨찾기는 건드리지 않는다**(45.31) — 한 번 썼다고 고정해 둔 칸이 밀려나면 안 된다.
   function pickFromAll(key: BrushKey) {
     const b = brushInfo(key);
     if (b.pro && !pro) { onRequestPro(); return; }
-    if (!quickBrushes.includes(key)) {
-      // 지금 쓰던 자리를 내준다. 쓰던 것이 빠른 줄에 없으면 마지막 자리를 쓴다.
-      const at = Math.max(0, quickBrushes.findIndex(k => isBrushOn(k)));
-      setQuickBrushes(quickBrushes.map((k, i) => i === at ? key : k));
-    }
     if (b.preset) { changeBrush({ preset: b.preset }); }
     else { changeBrush({ preset: undefined, base: b.base }); setBrush(b.base!); send({ type: 'brush', brush: b.base! }); }
     if (tool !== 'pen') { setTool('pen'); send({ type: 'tool', tool: 'pen' }); onToolChange?.('pen'); }
@@ -709,33 +745,60 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const stabName = effectiveBrush.stabilizer === 'off' ? '끔' : STAB_LEVELS.find(([level]) => level === effectiveBrush.stabilizer)?.[1] ?? '약';
   // 선 종류는 하나의 낮고 넓은 세그먼트다. 독립 카드 세 장으로 두지 않는다(40차). 고급 브러시는 네 번째 칸이 아니라 아래 조용한 한 줄.
   const stab = effectiveBrush.stabilizer;
-  // 전체 브러시 목록(45.28차). 무료 4 + PRO 8 을 한 판에 늘어놓는다.
-  // 고르면 빠른 선택 줄의 한 자리를 차지하고 목록은 닫힌다. 세부 설정은 이 판 안에서 펼친다.
+  // 전체 브러시 목록(45.31차). 30종을 선·채색·질감·효과로 나눠 놓는다 — 평면 목록 서른 줄이 아니다.
+  // 고르는 것과 즐겨찾기에 고정하는 것은 **다른 행동**이다: 카드를 누르면 고르고, 압정을 누르면 칸을 고른다.
+  // 잠긴 브러시도 이름과 실제 획 견본이 그대로 읽힌다.
   const brushSheet = <View style={{ flexShrink: 1, minHeight: 0, paddingHorizontal: 12, paddingBottom: 6, gap: 6 }}>
+    {!!pinning && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}>
+      <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, fontWeight: '700', color: C.ink }}>‘{brushInfo(pinning).title}’ 를 어느 칸에?</Text>
+      {quickBrushes.map((k, i) => <Pressable key={i} accessibilityRole="button" accessibilityLabel={'즐겨찾기 ' + (i + 1) + '번 칸에 넣기'}
+        onPress={() => pinBrush(i, pinning)}
+        style={({ pressed }) => ({ minHeight: C.tap, paddingHorizontal: 10, borderRadius: C.radius.button, alignItems: 'center', justifyContent: 'center',
+          borderWidth: 1, borderColor: C.lineStrong, backgroundColor: pressed ? C.fill : C.paper })}>
+        <Text style={{ fontSize: 11, fontWeight: '700', color: C.ink }}>{i + 1}</Text>
+        <Text numberOfLines={1} style={{ fontSize: 9, color: C.faint }}>{brushInfo(k).title}</Text>
+      </Pressable>)}
+      <Pressable accessibilityRole="button" accessibilityLabel="즐겨찾기 고정 취소" onPress={() => setPinning(null)}
+        style={{ minHeight: C.tap, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>취소</Text>
+      </Pressable>
+    </View>}
     <ScrollView testID="브러시 목록" style={{ flexShrink: 1, minHeight: 0 }} showsVerticalScrollIndicator
       contentContainerStyle={{ gap: 10, paddingTop: 2, paddingBottom: 12 }}>
       {!!effectiveBrush.preset && effectiveBrush.preset in RETIRED &&
         <Text style={{ fontSize: 11, color: C.muted }}>지금은 예전 브러시 ‘{RETIRED[effectiveBrush.preset]}’ 로 그리고 있어요. 그대로 쓸 수 있어요.</Text>}
-      {([[false, '기본'], [true, 'PRO']] as const).map(([isPro, groupName]) => {
-        const group = CATALOG.filter(b => b.pro === isPro);
+      {GROUPS.map(groupName => {
+        const group = CATALOG.filter(b => b.group === groupName);
+        if (!group.length) return null;
+        const paid = group.filter(b => b.pro).length;
         return <View key={groupName} style={{ gap: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: C.muted }}>{groupName}</Text>
-            {/* 묶음 이름이 이미 'PRO' 다 — 같은 글자를 배지로 한 번 더 붙이지 않고, 잠긴 이유만 말한다. */}
-            {isPro && !pro && <Text style={{ fontSize: 11, color: C.faint }}>이용권이 있으면 열려요</Text>}
-            <Text style={{ flex: 1, fontSize: 11, color: C.faint, textAlign: 'right' }}>{group.length}종</Text>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{groupName}</Text>
+            <Text style={{ flex: 1, fontSize: 11, color: C.faint }}>무료 {group.length - paid} · PRO {paid}</Text>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            {group.map(b => { const on = isBrushOn(b.key), locked = b.pro && !pro;
-              return <Pressable key={b.key} accessibilityRole="button" accessibilityLabel={'브러시 ' + b.title} accessibilityState={{ selected: on }}
-                onPress={() => pickFromAll(b.key)}
-                style={({ pressed }) => ({ width: '31.5%', minHeight: 62, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: C.radius.button,
-                  borderWidth: 1, borderColor: on ? C.accentBorder : C.line, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.paper, opacity: locked ? .6 : 1 })}>
-                <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '78%', height: 16, tintColor: color }} resizeMode="contain" />
-                <Text numberOfLines={1} style={{ fontSize: 10, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
-              </Pressable>; })}
+            {group.map(b => { const on = isBrushOn(b.key), locked = b.pro && !pro, fav = quickBrushes.indexOf(b.key);
+              return <View key={b.key} style={{ width: '31.5%' }}>
+                <Pressable accessibilityRole="button" accessibilityLabel={'브러시 ' + b.title}
+                  accessibilityHint={locked ? 'PRO 브러시예요' : b.use} accessibilityState={{ selected: on }}
+                  onPress={() => pickFromAll(b.key)}
+                  style={({ pressed }) => ({ minHeight: 64, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: C.radius.button,
+                    borderWidth: 1, borderColor: on ? C.accentBorder : C.line, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.paper })}>
+                  {/* 잠긴 것도 실제 획 견본과 이름이 그대로 읽힌다. 흐리게 지우지 않는다. */}
+                  <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '78%', height: 16, tintColor: color }} resizeMode="contain" />
+                  <Text numberOfLines={1} style={{ fontSize: 10, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
+                  {b.pro && <Text style={{ fontSize: 8, fontWeight: '800', color: C.faint, letterSpacing: .3 }}>PRO</Text>}
+                </Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={(fav >= 0 ? '즐겨찾기에 있음 ' : '즐겨찾기에 고정 ') + b.title}
+                  onPress={() => setPinning(b.key)} hitSlop={6}
+                  style={{ position: 'absolute', right: 0, top: 0, width: 26, height: 26, alignItems: 'center', justifyContent: 'center' }}>
+                  <MaterialCommunityIcons name={fav >= 0 ? 'pin' : 'pin-outline'} size={13} color={fav >= 0 ? C.ink : C.faint} />
+                </Pressable>
+              </View>; })}
           </View>
         </View>; })}
+      {/* 고른 브러시가 무엇에 쓰는 것인지 한 줄로. 카드마다 설명을 붙이면 목록이 읽히지 않는다. */}
+      <Text testID="브러시 쓰임" style={{ fontSize: 11, color: C.muted }}>{(CATALOG.find(b => isBrushOn(b.key)) ?? CATALOG[0]).use}</Text>
     </ScrollView>
     <Pressable accessibilityRole="button" accessibilityLabel="세부 설정" accessibilityState={{ expanded: brushDetail }} onPress={() => { ease(); setBrushDetail(!brushDetail); }}
       hitSlop={{ top: 2, bottom: 2 }}

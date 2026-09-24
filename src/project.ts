@@ -169,6 +169,10 @@ export function parseStore(raw: string): Store {
       if (typeof cutout.id !== 'string' || typeof cutout.name !== 'string' || !cutout.image || typeof cutout.image.path !== 'string') throw new Error('보관한 그림이 손상되었습니다.');
     }
   }
+  if (value.favoriteBrushes !== undefined) {
+    if (!Array.isArray(value.favoriteBrushes) || value.favoriteBrushes.length > 3 || value.favoriteBrushes.some((k: unknown) => typeof k !== 'string'))
+      throw new Error('즐겨찾기 브러시 목록이 손상되었습니다.');
+  }
   const ent = value.entitlement;
   if (ent !== undefined) {
     // 'lifetime' 이 지금 파는 일회성 PRO 다. 'monthly'·'yearly' 는 팔지 않지만 예전 저장본을 그대로 읽는다.

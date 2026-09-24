@@ -1110,12 +1110,12 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   // 전체 목록에서 고르면 빠른 줄의 한 자리가 바뀌고 목록은 닫힌다.
   await press('브러시 전체');
   assert.ok(tree.root.findAll(n=>n.props.testID==='브러시 목록').length===1,'전체 목록이 열린다');
-  assert.equal(labelled('브러시 부드러운 펜').length,1,'무료 4종이 목록에 있다');
-  await press('브러시 부드러운 펜');
+  assert.equal(labelled('브러시 자연 잉크').length,1,'무료 10종이 목록에 있다');
+  await press('브러시 자연 잉크');
   assert.equal(tree.root.findAll(n=>n.props.testID==='브러시 목록').length,0,'고르면 목록이 닫힌다 at '+width+'dp');
-  assert.ok(tree.root.findAll(n=>n.props.testID==='빠른 브러시')[0].findAll(n=>n.type==='Pressable').map(n=>n.props.accessibilityLabel).includes('부드러운 펜'),'고른 브러시가 빠른 줄에 들어온다');
-  await press('연필');
-  assert.equal(lastCommand('brush').brush,'pencil');
+  assert.deepEqual(tree.root.findAll(n=>n.props.testID==='빠른 브러시')[0].findAll(n=>n.type==='Pressable'&&n.props.testID).map(n=>n.props.accessibilityLabel),['기본 펜','연필','마커'],'즐겨찾기는 고정이다 — 다른 브러시를 골라도 바뀌지 않는다');
+  await press('연필');   // 45.31: 연필은 이제 제 프리셋(pencil2)이다 — 기본 브러시 셋이 아니다
+  assert.equal(lastCommand('brushSettings').preset,'pencil2');
   assert.ok(labelled('그리기 도구 펜')[0].props.accessibilityState.selected,'그리기 도구(펜)가 그대로 골라져 있다');
   const targets=tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel&&!n.props.disabled);
   assert.ok(targets.length>10,'there is something to audit at '+width+'dp');

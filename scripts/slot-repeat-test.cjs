@@ -116,8 +116,8 @@ const writeCaption = async text => {
     await press('이전 칸 그림으로 시작'); await act(async () => {});
     scene = { ...scene, dirty: true, undo: true }; await message(scene);
     // 도구·선 종류·굵기·색이 그대로 — 다시 고르지 않는다.
-    const brushNow = sent().filter(m => m.type === 'brush' || m.type === 'tool').at(-1) || init;
-    assert.ok(JSON.stringify(init).includes('pencil') || JSON.stringify(brushNow).includes('pencil'), n + '칸: 연필 유지');
+    const brushNow = sent().filter(m => m.type === 'brush' || m.type === 'tool' || m.type === 'brushSettings').at(-1) || init;
+    assert.ok(JSON.stringify(init).includes('pencil2') || JSON.stringify(brushNow).includes('pencil2'), n + '칸: 연필 유지');
     if (width1 != null) assert.ok(JSON.stringify(init).includes('"width":' + width1) || JSON.stringify(brushNow).includes('"width":' + width1), n + '칸: 굵기 유지 ' + width1);
     assert.equal(labelled('브러시 전체').length, 1, n + '칸: 브러시 도구');
     await writeCaption('칸 ' + n);
@@ -148,7 +148,7 @@ const writeCaption = async text => {
     assert.ok([...files.values()].some(v => typeof v === 'string' && v.includes('"text":"칸 ' + n + '"')), n + '칸 문구 저장');
     assert.ok(slot.motion, n + '칸 움직임 저장');
   }
-  assert.equal(stored.brush?.base, 'pencil', '세트에 선 종류 기억');
+  assert.equal(stored.brush?.preset, 'pencil2', '세트에 선 종류 기억');
 
   // 앞 칸(3칸) 다시 열기: 문구·움직임 그대로, 이어받기 제안은 뜨지 않는다(빈 칸이 아님).
   if (hasWebView()) { await ready(); await press('그리기 닫기'); await saved(false); }

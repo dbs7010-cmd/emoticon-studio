@@ -212,9 +212,9 @@ async function ready() {
   assert.equal(quick.filter(n => flat(n.props.style).backgroundColor === T.accentSoft).length, 1, '빠른 줄의 노랑도 한 장뿐');
   // 전체 목록: 무료 4 + PRO 8 을 한 판에. 쓸 수 있는 것은 흐리게 죽이지 않는다.
   await press('브러시 전체');
-  const listCards = byTestID('브러시 목록')[0].findAll(n => n.type === 'Pressable');
-  assert.equal(listCards.length, 12, '전체 목록은 무료 4 + PRO 8 = 12장: ' + listCards.length);
-  for (const t of ['기본 펜', '부드러운 펜', '연필', '마커'])
+  const listCards = byTestID('브러시 목록')[0].findAll(n => n.type === 'Pressable' && /^브러시 /.test(n.props.accessibilityLabel ?? ''));
+  assert.equal(listCards.length, 30, '전체 목록은 무료 10 + PRO 20 = 30장: ' + listCards.length);
+  for (const t of ['기본 펜', '자연 잉크', '연필', '마커'])
     assert.equal(flat(labelled('브러시 ' + t)[0].props.style).opacity ?? 1, 1, '쓸 수 있는 브러시 ' + t + ' 카드를 흐리게 하지 않는다');
   assert.equal(labelled('선 보정').length, 0, '진하기·보정은 세부 설정 안');
   await press('세부 설정');

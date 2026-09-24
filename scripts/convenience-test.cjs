@@ -230,8 +230,8 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
     const quickRow = byTestID('빠른 브러시')[0].findAll(n => n.type === 'Pressable').slice(0, 3);
     for (const k of quickRow) assert.equal(k.findAll(n => n.type === 'Image').length, 1, k.props.accessibilityLabel + ': 실제 엔진 획 견본이 보인다');
     assert.ok(quickRow.every(n => (styleOf(n).minHeight ?? 0) >= 44), '누르는 자리는 44dp 이상');
-    await press('연필');
-    assert.equal(lastCommand('brush').brush, 'pencil', '카드를 누르면 그 브러시로 바뀐다');
+    await press('연필');   // 45.31: 연필은 제 프리셋(pencil2)이다
+    assert.equal(lastCommand('brushSettings').preset, 'pencil2', '카드를 누르면 그 브러시로 바뀐다');
     assert.equal(byTestID('브러시 목록').length, 0, '카드를 눌러도 판이 열리지 않는다');
     // 이미 고른 카드를 다시 누르면 세부 설정이 열린다.
     await press('연필');

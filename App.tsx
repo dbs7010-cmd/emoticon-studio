@@ -1411,6 +1411,8 @@ function Studio() {
     </Dialog>}
     {painting && project && slot && <Painter key={project.id + '/' + slot.number} slot={slot} slotCount={project.slots.length} setName={project.projectName} canon={project.canon.image} canonName={project.characterName} canonLocked={project.canon.locked} palette={store?.palette ?? []} onColorUsed={rememberColor} userPalette={store?.userPalette ?? []} onSaveUserColor={saveUserColor} onRemoveUserColor={removeUserColor}
       brushSettings={project.brush}
+      favoriteBrushes={store?.favoriteBrushes}
+      onFavoriteBrushes={keys => { try { commit(st => ({ ...st, favoriteBrushes: keys })); } catch (e) { setNotice('즐겨찾기를 저장하지 못했어요. ' + userMessage(e)); } }}
       onBrushSettings={brush => { try { changeProject(project.id, p => ({ ...p, brush })); } catch (e) { setNotice('브러시 설정을 저장하지 못했어요. ' + userMessage(e)); } }}
       completeTitle={nextUnfinished(project, slot.number) === null ? '완성 · 전체 보기' : '완성 · 다음'}
       hasPrevious={!!previousDrawn(project, slot.number)}

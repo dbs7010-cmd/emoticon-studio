@@ -164,12 +164,16 @@ async function openPainter() {
   await press('브러시 전체');
   // 45.28: 무료 4종과 PRO 8종이 전체 목록 한 판에 함께 선다(PRO 묶음은 따로 표시).
   // 45.29: 승인 구성 그대로. 무료 4 + PRO 8.
-  for (const t of ['기본 펜', '부드러운 펜', '연필', '마커']) assert.equal(labelled('브러시 ' + t).length, 1, '무료 브러시 ' + t);
-  for (const t of ['테이퍼 잉크', '붓펜', '크레용', '분필', '드라이 잉크', '에어브러시', '점선 펜', '테두리 펜']) assert.equal(labelled('브러시 ' + t).length, 1, 'PRO 브러시 ' + t);
+  // 45.31: 무료 10 + PRO 20.
+  for (const t of ['기본 펜', '자연 잉크', '테이퍼 펜', '붓펜', '납작 펜', '연필', '색연필', '불투명 채색붓', '마커', '에어브러시'])
+    assert.equal(labelled('브러시 ' + t).length, 1, '무료 브러시 ' + t);
+  for (const t of ['거친 잉크', '드라이 잉크', '붓결 잉크', '볼펜', '크레용', '분필', '소프트 파스텔', '목탄', '연필 옆면', '입자 음영',
+                   '오일 파스텔', '워시', '가장자리 수채', '드라이 평붓', '점묘', '스프레이', '테두리 펜', '점선 펜', '평행선 펜', '발광 펜'])
+    assert.equal(labelled('브러시 ' + t).length, 1, 'PRO 브러시 ' + t);
   assert.equal(icons(tree.root, 'lock-outline'), 0, 'PRO 사용자에게 자물쇠가 없다');
-  await press('브러시 테이퍼 잉크');
-  assert.equal(brushCmd().preset, 'ink', '프리셋이 캔버스로 간다');
-  assert.ok(labelled('기본 펜').every(n => !n.props.accessibilityState.selected), '기본 펜 카드는 선택에서 내려온다');
+  await press('브러시 크레용');
+  assert.equal(brushCmd().preset, 'crayon', '프리셋이 캔버스로 간다');
+  assert.ok(labelled('브러시 기본 펜').every(n => !n.props.accessibilityState.selected), '기본 펜 카드는 선택에서 내려온다');
   // 45.25: 브러시를 고르면 그 도구가 켜지고 선택판은 닫힌다 — 고른 뒤에 할 일은 그리는 것이다.
   assert.equal(labelled('브러시 닫기').length, 0, '프리셋을 고르면 선택판이 닫힌다');
   await press('브러시 전체');
@@ -182,23 +186,24 @@ async function openPainter() {
   await press('보정 강');
   assert.deepEqual([brushCmd().stabilizer, brushCmd().smoothing], ['strong', true], '선 보정 강');
   await sleep(800);
-  assert.deepEqual(loadStore().store.projects[0].brush, { preset: 'ink', opacity: .5, stabilizer: 'strong' }, '브러시 설정이 프로젝트에 저장된다');
+  assert.deepEqual(loadStore().store.projects[0].brush, { preset: 'crayon', opacity: .5, stabilizer: 'strong' }, '브러시 설정이 프로젝트에 저장된다');
   await press('브러시 닫기');
   // 45.28: 지금 쓰는 브러시는 빠른 선택 줄에서 노랑으로 읽힌다 — 도구 줄 아이콘이 대신 말하지 않는다.
   {
     const quick = tree.root.findAll(n => n.props.testID === '빠른 브러시')[0].findAll(n => n.type === 'Pressable');
     const on = quick.filter(n => n.props.accessibilityState?.selected).map(n => n.props.accessibilityLabel);
-    assert.deepEqual(on, ['테이퍼 잉크'], '고른 고급 브러시가 빠른 줄에서 골라진 채로 보인다: ' + JSON.stringify(on));
+    // 45.31: 즐겨찾기는 고정이다. 고급 브러시를 골라도 빠른 줄은 그대로고, 어느 칸도 '골라짐'으로 켜지지 않는다.
+    assert.deepEqual(on, [], '즐겨찾기는 고른 브러시를 따라가지 않는다: ' + JSON.stringify(on));
   }
   await act(async () => tree.unmount());
   commands.length = 0;
   await openPainter();
-  assert.deepEqual([brushCmd().preset, brushCmd().opacity, brushCmd().stabilizer, brushCmd().smoothing], ['ink', .5, 'strong', true], '다시 열면 브러시 설정이 복원된다');
-  await press('브러시 전체'); await press('브러시 연필');   // 전체 목록에서 고르면 목록이 닫힌다
-  assert.equal(brushCmd().preset, null, '기본 연필을 고르면 프리셋에서 내려온다');
-  assert.equal(lastCommand('brush').brush, 'pencil');
-  await press('브러시 전체'); await press('브러시 테이퍼 잉크');   // 고르면 판이 닫히므로 따로 닫지 않는다
-  assert.equal(loadStore().store.projects[0].brush.preset, 'ink');
+  assert.deepEqual([brushCmd().preset, brushCmd().opacity, brushCmd().stabilizer, brushCmd().smoothing], ['crayon', .5, 'strong', true], '다시 열면 브러시 설정이 복원된다');
+  await press('브러시 전체'); await press('브러시 기본 펜');   // 전체 목록에서 고르면 목록이 닫힌다
+  assert.equal(brushCmd().preset, null, '기본 펜을 고르면 프리셋에서 내려온다');
+  assert.equal(lastCommand('brush').brush, 'pen');
+  await press('브러시 전체'); await press('브러시 크레용');   // 고르면 판이 닫히므로 따로 닫지 않는다
+  assert.equal(loadStore().store.projects[0].brush.preset, 'crayon');
   await act(async () => tree.unmount());
 
   // ── 무료 ────────────────────────────────────────────────────────────────────────────────────
@@ -208,25 +213,26 @@ async function openPainter() {
   await openPainter();
   // 무료: 고급 브러시 효력만 멈춘다. 진하기·선 보정은 무료라 저장된 값 그대로다.
   assert.deepEqual([brushCmd().preset, brushCmd().opacity, brushCmd().stabilizer], [null, .5, 'strong'], '무료: 고급 브러시만 효력이 멈추고 진하기·보정은 유지된다');
-  assert.equal(loadStore().store.projects[0].brush.preset, 'ink', '무료: 저장된 고급 브러시 설정은 지우지 않는다');
-  // 45.29: 승인 구성에서 '부드러운 펜'과 '마커'는 무료다. PRO 가 끝나도 이 둘은 효력이 남아야 한다 —
-  // 무료 브러시를 PRO 잠금에 딸려 보내지 않는다.
-  await press('브러시 전체'); await press('브러시 부드러운 펜');
-  assert.equal(brushCmd().preset, 'soft', '무료: 무료 프리셋은 PRO 없이도 캔버스로 간다');
-  assert.equal(loadStore().store.projects[0].brush.preset, 'soft', '무료: 무료 프리셋이 세트에 저장된다');
+  assert.equal(loadStore().store.projects[0].brush.preset, 'crayon', '무료: 저장된 고급 브러시 설정은 지우지 않는다');
+  // 45.31: 무료 10종에는 프리셋으로 도는 것이 여럿이다(자연 잉크·연필·색연필·마커…).
+  // PRO 가 끝나도 이 값들은 효력이 남아야 한다 — 무료 브러시를 PRO 잠금에 딸려 보내지 않는다.
+  await press('브러시 전체'); await press('브러시 색연필');
+  assert.equal(brushCmd().preset, 'colorpencil', '무료: 무료 프리셋은 PRO 없이도 캔버스로 간다');
+  assert.equal(loadStore().store.projects[0].brush.preset, 'colorpencil', '무료: 무료 프리셋이 세트에 저장된다');
   await act(async () => tree.unmount());
   await openPainter();
-  assert.equal(brushCmd().preset, 'soft', '무료: 다시 열어도 무료 프리셋은 그대로 살아 있다');
+  assert.equal(brushCmd().preset, 'colorpencil', '무료: 다시 열어도 무료 프리셋은 그대로 살아 있다');
   await press('브러시 전체'); await press('브러시 마커');
-  assert.equal(brushCmd().preset, 'marker', '무료: 마커도 PRO 없이 쓴다');
+  assert.equal(brushCmd().preset, 'marker2', '무료: 마커도 PRO 없이 쓴다');
   await press('브러시 전체');
   assert.equal(icons(tree.root, 'lock-outline'), 0, '무료: 브러시 시트에 자물쇠가 하나도 없다');
   assert.equal(labelled('브러시 마커').length, 1, '무료: 마커는 무료 4종에 들어 있다');
-  assert.equal(labelled('브러시 테이퍼 잉크').length, 1, '무료에게도 PRO 브러시가 목록에 보인다(고를 때 안내로 간다)');
-  // PRO 표시는 묶음 머리 한 곳에만 둔다 — 카드마다 붙여 잠금을 늘어놓지 않는다.
-  assert.ok(tree.root.findAll(n => n.type === 'Text' && String(n.children?.join('')) === 'PRO').length <= 2, '무료: PRO 표시는 묶음 머리에만 모여 있다');
+  assert.equal(labelled('브러시 크레용').length, 1, '무료에게도 PRO 브러시가 목록에 보인다(고를 때 안내로 간다)');
+  // 45.31: 목록이 분류로 갈리면서 무료/PRO 는 **카드마다** 작은 글자로 적는다(v2 지시).
+  // 자물쇠로 막아 놓는 것과는 다르다 — 잠긴 것도 이름과 실제 획 견본이 그대로 읽힌다.
+  assert.equal(tree.root.findAll(n => n.type === 'Text' && String(n.children?.join('')) === 'PRO').length, 20, '무료: PRO 표시는 PRO 브러시 수와 같다');
   const before = sent().filter(m => m.type === 'brushSettings').length;
-  await press('브러시 테이퍼 잉크');   // 전체 목록에서 잠긴 것을 고르면
+  await press('브러시 크레용');   // 전체 목록에서 잠긴 것을 고르면
   assert.equal(labelled('PRO 닫기').length, 1, '무료: 고급 브러시는 PRO 안내로 간다');
   assert.equal(sent().filter(m => m.type === 'brushSettings').length, before, '무료: 안내를 여는 것만으로 캔버스가 바뀌지 않는다');
   await press('PRO 닫기');

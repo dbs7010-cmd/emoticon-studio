@@ -147,7 +147,7 @@ const rows = [];
     const below = Math.max(0, (area.height - side) / 2);
     const covered = h => +(Math.max(0, h - below) / side).toFixed(2);
     await press('브러시 전체'); row.brush = covered(dockHeight().height);
-    assert.equal(byTestID('브러시 목록')[0].findAll(n => n.type === 'Pressable').length, 12, tag + ': 전체 목록 무료 4 + PRO 8');
+    assert.equal(byTestID('브러시 목록')[0].findAll(n => n.type === 'Pressable' && /^브러시 /.test(n.props.accessibilityLabel ?? '')).length, 30, tag + ': 전체 목록 무료 10 + PRO 20');
     await press('세부 설정'); row.brushDetail = covered(dockHeight().height);
     await press('브러시 닫기');
     await press('색'); row.color = covered(dockHeight().height);

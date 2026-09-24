@@ -120,6 +120,13 @@ function style(g){g.globalCompositeOperation=tool==='eraser'?'destination-out':'
 // 색 투명도. 획은 **불투명하게 따로 그린 뒤(wet) 손을 뗄 때 한 번에 투명도를 걸어 얹는다.** 짧은 선분마다
 // 투명도를 걸면 겹치는 이음매마다 진해져 구슬 꿴 줄처럼 보인다. 불투명한 색은 이 길을 타지 않는다.
 let wet=null,wetLayer=null,wetAlpha=1,picking=false,strokePath=[];
+// 45.31 재료층. 새 프리셋(dab 이 있는 것)만 이 값을 쓴다.
+// 씨앗은 획마다 정해지고, 획을 통째로 다시 그릴 때 처음부터 같은 순서로 흘러 결과가 흔들리지 않는다.
+let strokeSeed=1,rand=()=>.5,strokeSpeed=0,lastMoveAt=0;
+function seeded(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function resetRand(){rand=seeded(strokeSeed);}
+// 종이결. 화면 자리에 붙은 값이라 같은 자리를 다시 칠하면 같은 결이 나온다 — 획을 다시 그려도 입자가 움직이지 않는다.
+function paperAt(x,y,scale){const s=Math.max(1,scale||3);let h=(Math.floor(x/s)*73856093)^(Math.floor(y/s)*19349663)^0x5bf03635;h=Math.imul(h^(h>>>13),0xC2B2AE35);return((h^(h>>>16))>>>0)/4294967296;}
 // PRO 브러시. 무료 펜/붓/연필(brush)은 손대지 않고, preset 이 있을 때만 이 표를 쓴다. PRO 획은 전부 wet 버퍼에
 // 불투명하게 그린 뒤 손을 뗄 때 (색 투명도 × 브러시 진하기 × 프리셋 기본 진하기)를 한 번에 얹는다 — 한 획 안의 겹침은 진해지지 않는다.
 const PRESETS={
@@ -133,6 +140,62 @@ const PRESETS={
  airbrush:{alpha:.45,width:2.4,soft:true},
  chisel:{alpha:1,width:1.9,cap:'butt'},
  rough:{alpha:.9,width:1.1,cap:'round',texture:true,taper:10},
+ // ── 45.31: 무료 10 + PRO 20 구성(v2 구성표). 위의 값은 한 글자도 바꾸지 않는다 —
+ // 저장된 작품이 쓰던 프리셋이 그대로 살아 있어야 한다. 새 이름은 전부 아래에만 있다.
+ // dab 값의 출발점은 원본 .myb 의 radius/hardness/opaque/dabs_per_radius/offset_by_random/elliptical 이고,
+ // 손가락 입력(압력 없음)에 맞게 다시 정했다. 원본 그대로가 아니다.
+ //
+ // ── 무료 10 ──
+ // F02 자연 잉크 — irregular_ink(elliptical 1.66 · angle[stroke]). 중심선은 손을 그대로 따르고
+ //     dab 의 기울기만 획을 따라 돌아 가장자리에만 미세한 변화가 생긴다. 중심을 흔들지 않는다.
+ inknatural:{alpha:1,width:1,dab:{r:1.1,hard:.97,op:1,per:4,ratio:1.15,angle:'along',jitter:.06,opRand:.06}},
+ // F04 붓펜 — PenBrush(radius[pressure]). 압력이 없으므로 속도로 굵기를 바꾼다: 천천히 그으면 굵고 빠르면 가늘다.
+ brushpen2:{alpha:.92,width:1.7,dab:{r:1.15,hard:.92,op:1,per:3,speed:.45}},
+ // F06 색연필 — 종이결에 색이 쌓인다. 결은 화면 자리에 붙어 있어 덧칠할수록 같은 골에 색이 얹힌다.
+ // F05 연필 — 2B_pencil(hardness .2 · opaque .15 · offset .5). 고운 마른 입자. 해칭을 겹쳐도 형태가 뭉개지지 않게
+ // 한 dab 은 옅고 촘촘하다. 예전 기본 연필(base pencil)은 호환용으로 그대로 남는다.
+ pencil2:{alpha:.62,width:1,dab:{r:1,hard:.45,op:.3,per:4,grain:.55,grainScale:1,jitter:.22}},
+ // F06 색연필 — 결이 굵은 종이에 색이 쌓인다. 연필보다 결이 크고 진하며, 덧칠할수록 같은 골에 색이 얹힌다.
+ colorpencil:{alpha:.9,width:1.15,dab:{r:1.15,hard:.6,op:.5,per:4,grain:.85,grainScale:3,jitter:.12}},
+ // F07 불투명 채색붓 — 100%_Opaque(hardness .95). 한 획 안에서 아무리 겹쳐도 면이 고르게 찬다.
+ opaque:{alpha:1,width:1.6,dab:{r:1,hard:.95,op:1,per:2.2}},
+ // F08 마커 — Marker(elliptical 5.46 · angle[direction] · hardness .5). 진행 방향에 직각인 납작 dab 이라
+ //     이어붙임 자국이 없다. 예전 marker 는 아래 호환용으로 남는다.
+ marker2:{alpha:.6,width:2,dab:{r:1,hard:.72,op:1,per:4,ratio:2.6,angle:'dir'}},
+ // F10 납작 펜 — calligraphy(elliptical 5.46 · angle 45.9 고정). 팁 각도가 고정이라 가로·세로 획의 굵기가 다르다.
+ flat:{alpha:1,width:1.5,dab:{r:1,hard:.97,op:1,per:9,nib:46,nibRatio:3.5}},
+ //
+ // ── PRO 20 ──
+ // P01 거친 잉크 — textured_ink(hardness 1 · dabs 6). 속은 꽉 차고 가장자리만 거칠다.
+ inkrough:{alpha:1,width:1.1,dab:{r:1,hard:1,op:1,per:5,jitter:.22,opRand:.15}},
+ // P03 붓결 잉크 — rigger(angle 178 ≈ 진행 방향 · hardness 1). 털 여러 가닥이 획 방향으로 이어진다.
+ bristle:{alpha:.95,width:1.6,dab:{r:1,hard:.9,op:.85,per:3.2,bristles:9,hair:.2,spread:.9,angle:'along',ratio:2}},
+ // P04 볼펜 — ballpen(opaque .2 · hardness .2). 가늘고 옅어 해칭을 겹쳐 쌓는다.
+ ballpen:{alpha:.7,width:.6,dab:{r:1,hard:.6,op:.5,per:3,opRand:.25}},
+ // P07 소프트 파스텔 — Pastel_1 을 크레용과 갈라 쓴다: 덩어리 대신 고운 가루가 넓게 앉는다.
+ pastel:{alpha:.8,width:1.9,dab:{r:1,hard:.35,op:.3,per:3.6,grain:.6,grainScale:3,jitter:.3}},
+ // P08 목탄 — charcoal(hardness .2 · offset 1.6 · dabs 5). 큰 결이 불규칙하게 번진다. 색은 고른 색 그대로.
+ charcoal:{alpha:.8,width:1.7,dab:{r:.85,hard:.25,op:.35,per:4,jitter:1.1,grain:.5,grainScale:5,opRand:.3}},
+ // P09 연필 옆면 — 8B_Pencil(tilt 의존). 손가락에는 기울기가 없으므로 넓은 접촉면을 고정 프로필로 둔다.
+ pencilside:{alpha:.8,width:2.4,dab:{r:1.6,hard:.5,op:.2,per:8,ratio:2.6,angle:'dir',grain:.65,grainScale:2}},
+ // P10 입자 음영 — Grain(hardness .1 · elliptical 10[random]). 원본의 색 끌림(smudge)은 넣지 않았다.
+ grainshade:{alpha:.85,width:2,dab:{r:.9,hard:.3,op:.14,per:8,ratio:1.8,angle:'rnd',jitter:.7,grain:.5,grainScale:2}},
+ // P11 점묘 — puantilism(dabs 6 · offset 2). 경로 주변에 떨어진 점을 뿌린다. 점선처럼 일정 간격이 아니다.
+ pointil:{alpha:1,width:1,dab:{r:.5,hard:.9,op:.95,per:.8,scatter:3,sizeRand:.45}},
+ // P12 스프레이 — spray(offset 2 · dabs_per_basic 3.9). 더 넓게, 더 촘촘히, 크기가 제각각.
+ spray:{alpha:.85,width:1.6,dab:{r:.3,hard:.7,op:.75,per:.35,scatter:4.5,sizeRand:.7}},
+ // P13 드라이 평붓 — 넓은 납작 붓이 마르며 끊긴다. P02(가는 마른 잉크)의 확대판이 아니라 폭·털수·끊김이 다르다.
+ dryflat:{alpha:.85,width:2.6,dab:{r:1,hard:.8,op:.7,per:2.6,bristles:13,hair:.16,spread:1,angle:'along',ratio:1.6,drop:.35}},
+ // P14 워시 — watercolor_glazing(elliptical 10 · hardness .41 · 얇게 여러 번). 겹칠수록 조금씩 짙어진다.
+ wash:{alpha:.45,width:3,dab:{r:1,hard:.45,op:.1,per:3,ratio:1.3}},
+ // P15 가장자리 수채 — 가운데는 옅고 가장자리에 색이 고인다. 이름만으로 되는 효과가 아니라 테두리를 따로 얹는다.
+ wateredge:{alpha:.6,width:3,rim:1.4,dab:{r:1,hard:.5,op:.16,per:4,ratio:1.2}},
+ // P16 오일 파스텔 — oil paint 원본은 오일 파스텔이 아니다. 두껍고 눌린 왁스가 되도록 따로 잡았다.
+ oilpastel:{alpha:.95,width:2.2,dab:{r:1,hard:.85,op:.75,per:2.4,ratio:2.2,angle:'along',jitter:.22,grain:.35,grainScale:4}},
+ // P19 평행선 펜 — 곡선 법선 방향으로 일정 간격의 여러 줄. 획 전체를 다시 그어 급회전에서도 이음매가 없다.
+ parallelpen:{alpha:1,width:.5,repath:true,parallel:3,gap:1.8},
+ // P20 발광 펜 — Glow_Airbrush(hardness .14). 또렷한 중심선 + 흐린 번짐. 배경을 밝게 만들지는 않는다.
+ glowpen:{alpha:.9,width:1,glow:3.2,dab:{r:1,hard:.95,op:1,per:3}},
  // 45.29차: 승인 구성의 남은 네 종. 위 값은 그대로 둔다 — 저장된 작품이 쓰던 결과가 바뀌면 안 된다.
  brushpen:{alpha:.85,width:1.4,cap:'round'},
  chalk:{alpha:.7,width:2.3,cap:'round',texture:true,coarse:true},
@@ -154,7 +217,20 @@ function activePreset(){return tool!=='eraser'&&preset?PRESETS[preset]:null;}
 function solid(hex){const p=rgba(hex);return '#'+[p[0],p[1],p[2]].map(n=>n.toString(16).padStart(2,'0')).join('');}
 function css(hex){const p=rgba(hex);return p[3]>=255?solid(hex):'rgba('+p[0]+','+p[1]+','+p[2]+','+(p[3]/255).toFixed(3)+')';}
 function inkAlpha(){return rgba(color)[3]/255;}
-function dry(){if(!wet)return;const l=layers.find(x=>x.id===wetLayer);if(l){const g=l.bitmap.getContext('2d');g.save();g.globalAlpha=wetAlpha;g.drawImage(wetView(),0,0);g.restore();}wet=null;wetLayer=null;render();}
+// 젖은 획의 가장자리에만 색을 더 앉힌다(수채가 마르며 테두리에 고이는 모양).
+function poolEdge(c,amount){
+ const g=c.getContext('2d',{willReadFrequently:true}),img=g.getImageData(0,0,W,H),d=img.data,out=new Uint8ClampedArray(d);
+ const A=(x,y)=>(x<0||y<0||x>=W||y>=H)?0:d[(y*W+x)*4+3];
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+  const i=(y*W+x)*4,a=d[i+3];if(a<8)continue;
+  // 두 칸 안에 빈 곳이 있으면 가장자리다.
+  let near=0;
+  for(let k=1;k<=2&&!near;k++)if(A(x-k,y)<8||A(x+k,y)<8||A(x,y-k)<8||A(x,y+k)<8)near=1;
+  if(near)out[i+3]=Math.min(255,Math.round(a*(1+amount)+18));
+ }
+ img.data.set(out);g.putImageData(img,0,0);
+}
+function dry(){if(!wet)return;{const P=activePreset();if(P&&P.rim)poolEdge(wet,P.rim);}const l=layers.find(x=>x.id===wetLayer);if(l){const g=l.bitmap.getContext('2d');g.save();g.globalAlpha=wetAlpha;g.drawImage(wetView(),0,0);g.restore();}wet=null;wetLayer=null;render();}
 // 결 연필: 그은 선에 고정된 알갱이 무늬를 파낸다. 획마다 파내면 다음 선분의 둥근 끝이 다시 덮으므로, 보여 줄 때와 얹을 때 한 번에 건다 —
 // 그리는 동안 보이는 결과 저장되는 결이 같다.
 let grainMask=null,coarseMask=null,wetShown=null;
@@ -722,10 +798,13 @@ canvas.addEventListener('pointerdown',e=>{
   marquee={x0:p0.x,y0:p0.y,x1:p0.x,y1:p0.y};render();return;}
  checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;
  const P0=activePreset();lastPressure=penPressure(e);strokeLen=0;lastRaw=last;strokePath=[];
+ strokeSeed=(Date.now()^Math.round(last.x*7919)^Math.round(last.y*104729))>>>0;resetRand();strokeSpeed=0;lastMoveAt=Date.now();
  const soft=(tool!=='eraser'&&!P0&&brush==='pencil')?PENCIL_ALPHA:1;
  wetAlpha=tool==='eraser'?1:computeBrushAlpha(inkAlpha()*brushOpacity*(P0?P0.alpha:1)*soft,lastPressure,P0);wet=(P0||wetAlpha<1)?bitmap():null;wetLayer=wet?l.id:null;
  const p=local(last,l),g=(wet||l.bitmap).getContext('2d');style(g);
  if(P0&&P0.outline){strokePath=[p];drawOutline(g);}
+ else if(P0&&P0.repath){strokePath=[p];redrawStroke(g,P0);}
+ else if(P0&&P0.dab){if(P0.glow)stampSegment(g,p,{x:p.x+.01,y:p.y},P0,{r:P0.glow,hard:.08,op:.1,per:2.4});stampSegment(g,p,{x:p.x+.01,y:p.y},P0,P0.dab);}
  else if(P0&&P0.soft)softStamp(g,p.x,p.y,g.lineWidth);
  else{g.beginPath();g.arc(p.x,p.y,g.lineWidth/2,0,Math.PI*2);g.fill();}
  render();state();
@@ -761,6 +840,9 @@ canvas.addEventListener('pointermove',e=>{
  if(!active||e.pointerId!==pointer)return;e.preventDefault();const l=activeDraw(),raw=point(e);if(!l)return;
  lastPressure=penPressure(e);lastRaw=raw;
  if(smoothing){const k=STAB[stabilizer]||.55;steady={x:steady.x+(raw.x-steady.x)*k,y:steady.y+(raw.y-steady.y)*k};}else{steady=raw;}const p=steady;
+ // 손가락에는 압력이 없다. 대신 속도를 재서 굵기 반응에 쓴다(급격히 튀지 않게 이어 붙인다).
+ {const now=Date.now(),dt=Math.max(8,now-lastMoveAt),v=Math.hypot(p.x-last.x,p.y-last.y)/dt*16;
+  strokeSpeed=strokeSpeed*.7+v*.3;lastMoveAt=now;}
  inkSegment(l,last,p);
  dirty=true;last=p;render();
 });
@@ -768,6 +850,11 @@ canvas.addEventListener('pointermove',e=>{
 function inkSegment(l,fromP,toP){
  const a=local(fromP,l),b=local(toP,l),g=(wet||l.bitmap).getContext('2d');style(g);const P=activePreset();
  if(P&&P.outline){strokePath.push(b);strokeLen+=Math.hypot(b.x-a.x,b.y-a.y);drawOutline(g);return;}
+ // 45.31 재료층. repath 는 획 전체를 매번 다시 긋는다(마커 빗살·평행선). dab 은 경로 위에 찍는다.
+ if(P&&P.repath){strokePath.push(b);strokeLen+=Math.hypot(b.x-a.x,b.y-a.y);redrawStroke(g,P);return;}
+ if(P&&P.dab){
+  if(P.glow)stampSegment(g,a,b,P,{r:P.glow,hard:.08,op:.1,per:2.4});
+  strokeLen+=stampSegment(g,a,b,P,P.dab);return;}
  // Pointer events can arrive several pixels apart on Android. Fill the gap with
  // short connected segments so brush and pencil strokes never render as dots.
  const distance=Math.hypot(b.x-a.x,b.y-a.y),spacing=P&&P.soft?Math.max(.8,g.lineWidth*.18):3,steps=Math.max(1,Math.ceil(distance/spacing));
@@ -780,6 +867,30 @@ function inkSegment(l,fromP,toP){
    if(!P)grain(g,from,to);
    from=to;
  }
+}
+// 획 전체를 한 path 로 다시 긋는다. 구간마다 따로 stroke 하면 굽은 자리에서 토막이 벌어져 톱니가 남는다
+// (45.30 에서 잰 값: 거칠기 1.78 → 1.10). 입자가 없는 브러시만 이 길을 탄다 — 다시 그려도 결과가 같다.
+function redrawStroke(g,P){
+ if(!strokePath.length)return;
+ resetRand();
+ g.save();g.globalCompositeOperation='source-over';g.clearRect(0,0,W,H);
+ g.lineJoin='round';g.strokeStyle=solid(color);g.fillStyle=solid(color);
+ const lines=P.parallel?P.parallel:1,gap=(P.gap??.9)*g.lineWidth;
+ for(let k=0;k<lines;k++){
+  const off=lines===1?0:(k/(lines-1)-.5)*2*gap*(lines-1)/2;
+  g.beginPath();
+  if(strokePath.length===1){g.arc(strokePath[0].x,strokePath[0].y,g.lineWidth/2,0,Math.PI*2);g.fill();}
+  else for(let i=0;i<strokePath.length;i++){
+   const p=strokePath[i];
+   // 곡선 법선 방향으로 밀어 평행선을 만든다. 끝점은 이웃 점으로 방향을 잡는다.
+   const q=strokePath[Math.min(strokePath.length-1,i+1)],o=strokePath[Math.max(0,i-1)];
+   const dx=q.x-o.x,dy=q.y-o.y,len=Math.hypot(dx,dy)||1;
+   const x=p.x+(-dy/len)*off,y=p.y+(dx/len)*off;
+   if(i===0)g.moveTo(x,y);else g.lineTo(x,y);
+  }
+  if(strokePath.length>1)g.stroke();
+ }
+ g.restore();
 }
 // 테두리 펜: 지금까지의 획을 통째로 다시 긋고 가운데를 파낸다 — 속이 빈 선이 남는다.
 // 구간마다 덧칠하면 앞 구간에 뚫어 둔 속을 다음 구간의 바깥선이 메우므로, 매번 처음부터 다시 그린다.
@@ -798,6 +909,74 @@ function drawOutline(g){
  g.restore();
 }
 // 부드러운 펜: 가장자리로 갈수록 옅어지는 둥근 도장을 촘촘히 찍는다. 가운데는 겹쳐 차오르고 가장자리만 부드럽다.
+// ── 재료층(45.31) ─────────────────────────────────────────────────────────────────────────────
+// 원본 MyPaint 브러시(.myb)는 이 엔진에 그대로 들어가지 않는다. 그래서 **국소 알고리즘만** 옮겼다:
+// 경로 위에 타원 dab 을 촘촘히 찍고, dab 마다 반지름·단단함·진하기·기울기·흔들림을 준다.
+// 원본에서 읽은 값(radius·hardness·opaque·dabs_per_radius·offset_by_random·elliptical ratio/angle)을
+// 출발점으로 삼되 손가락 입력에 맞게 다시 정했다. libmypaint: ISC(licenses/ 참조).
+//
+// dab 한 개. hard 가 1 이면 또렷한 원, 낮을수록 가장자리가 부드럽다. ratio 는 납작한 정도, ang 은 기울기(라디안).
+function dabAt(g,x,y,r,hard,op,ratio,ang){
+ if(!(r>.2)||!(op>0))return;
+ const c=rgba(color),s='rgba('+c[0]+','+c[1]+','+c[2]+',';
+ g.save();g.globalAlpha=Math.max(0,Math.min(1,op));
+ g.translate(x,y);if(ang)g.rotate(ang);if(ratio&&ratio!==1)g.scale(1,1/ratio);
+ if(hard>=.995){g.fillStyle=solid(color);}
+ else{const grad=g.createRadialGradient(0,0,0,0,0,r);grad.addColorStop(0,s+'1)');grad.addColorStop(Math.max(0,Math.min(.97,hard)),s+'1)');grad.addColorStop(1,s+'0)');g.fillStyle=grad;}
+ g.beginPath();g.arc(0,0,r,0,Math.PI*2);g.fill();g.restore();
+}
+// 한 구간에 dab 을 줄지어 찍는다. 굵기는 style() 이 정한 lineWidth 의 절반을 기준 반지름으로 쓴다.
+function stampSegment(g,a,b,P,D){
+ const base=g.lineWidth/2*(D.r??1);
+ const dist=Math.hypot(b.x-a.x,b.y-a.y);
+ const per=D.per??2.2;                                   // dabs_per_actual_radius
+ const step=Math.max(.3,base/Math.max(.5,per));
+ const n=Math.max(1,Math.ceil(dist/step));
+ const ux=dist?(b.x-a.x)/dist:1,uy=dist?(b.y-a.y)/dist:0; // 진행 방향
+ const nx=-uy,ny=ux;                                      // 법선
+ const dirAng=Math.atan2(uy,ux);
+ const bristles=Math.max(1,D.bristles??1);
+ for(let i=1;i<=n;i++){
+  const t=i/n,px=a.x+(b.x-a.x)*t,py=a.y+(b.y-a.y)*t;
+  // 속도에 따른 굵기(손가락에는 압력이 없다). fast 가 1 에 가까울수록 빠르다.
+  const fast=Math.max(0,Math.min(1,strokeSpeed/26));
+  let r=base;
+  if(D.speed)r*=1-D.speed*fast;
+  if(P.taper)r*=Math.min(1,.3+.7*strokeLen/P.taper);
+  let op=D.op??1,hard=D.hard??.9;
+  if(D.grain){const v=paperAt(px,py,D.grainScale??3);op*=(1-D.grain)+D.grain*v;}
+  if(D.opRand)op*=1-D.opRand*rand();
+  let ang=0,ratio=D.ratio??1;
+  if(D.angle==='dir')ang=dirAng+Math.PI/2;
+  else if(D.angle==='along')ang=dirAng;
+  else if(D.angle==='rnd')ang=rand()*Math.PI*2;
+  else if(typeof D.angle==='number')ang=D.angle*Math.PI/180;
+  if(D.nib===undefined)for(let bIdx=0;bIdx<bristles;bIdx++){
+   let ox=0,oy=0,br=r,bop=op;
+   if(bristles>1){
+    // 붓털: 법선 방향으로 고르게 벌려 놓고 털마다 굵기·진하기를 조금씩 다르게 한다(획 내내 같은 털).
+    const u=bristles===1?0:(bIdx/(bristles-1)-.5)*2;
+    ox=nx*u*base*(D.spread??.85);oy=ny*u*base*(D.spread??.85);
+    br=base*(D.hair??.22)*(.6+bristleR[bIdx%bristleR.length]*.8);
+    bop=op*(.45+bristleA[bIdx%bristleA.length]*.55);
+   }
+   if(D.jitter){const j=D.jitter*base;ox+=(rand()-.5)*2*j;oy+=(rand()-.5)*2*j;}
+   if(D.scatter){const ang2=rand()*Math.PI*2,rad=Math.sqrt(rand())*D.scatter*base;ox+=Math.cos(ang2)*rad;oy+=Math.sin(ang2)*rad;
+    if(D.sizeRand)br=br*(1-D.sizeRand+D.sizeRand*2*rand());}
+   if(D.drop&&rand()<D.drop)continue;             // 마른 붓: 군데군데 닿지 않는다
+   dabAt(g,px+ox,py+oy,br,hard,bop,ratio,ang);
+  }
+  // 납작 팁: 진행 방향과 팁 각도가 이루는 각으로 굵기가 달라진다(가로획은 굵고 세로획은 가늘게).
+  if(D.nib!==undefined){
+   const nib=D.nib*Math.PI/180,w=Math.abs(Math.sin(dirAng-nib));
+   dabAt(g,px,py,base*(.4+.6*w),.97,op,D.nibRatio??6,nib+Math.PI/2);
+  }
+ }
+ return dist;
+}
+// 붓털마다 고정된 굵기·진하기. 획이 다시 그려져도 같은 털이 같은 자리에 난다.
+const bristleR=[.42,.91,.23,.77,.58,.12,.95,.35,.68,.05,.82,.49];
+const bristleA=[.71,.24,.88,.45,.13,.97,.36,.62,.08,.79,.52,.31];
 function softStamp(g,x,y,w){const r=Math.max(1,w/2),c=rgba(color),s='rgba('+c[0]+','+c[1]+','+c[2]+',';const grad=g.createRadialGradient(x,y,0,x,y,r);grad.addColorStop(0,s+'0.5)');grad.addColorStop(.55,s+'0.32)');grad.addColorStop(1,s+'0)');g.save();g.globalAlpha=1;g.fillStyle=grad;g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill();g.restore();}
 function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel':'pointerup',{id:e.pointerId,matched:e.pointerId===pointer});
  if(e.pointerType==='touch'&&touches.has(e.pointerId))touches.delete(e.pointerId);

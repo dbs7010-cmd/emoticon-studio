@@ -85,7 +85,11 @@ export type Project = {
 // base·width·eraserWidth: 세트에서 마지막으로 쓴 선 종류와 굵기. 다음 칸과 재시작에서도 이어진다(없으면 펜 6 · 지우개 24).
 // preset: 엔진 PRESETS 의 key. 45.28차에 PRO 네 종을 더했다. 옛 저장본에는 앞의 넷만 들어 있고,
 // 낯선 값은 painter 의 cleanBrush 가 없는 것으로 읽는다.
-export type BrushSettings = { preset?: 'ink' | 'soft' | 'grain' | 'marker' | 'calligraphy' | 'crayon' | 'airbrush' | 'chisel' | 'rough' | 'brushpen' | 'chalk' | 'dotted' | 'outline'; opacity?: number; stabilizer?: 'off' | 'light' | 'medium' | 'strong'; base?: 'pen' | 'brush' | 'pencil'; width?: number; eraserWidth?: number };
+export type BrushSettings = { preset?: 'ink' | 'soft' | 'grain' | 'marker' | 'calligraphy' | 'crayon' | 'airbrush' | 'chisel' | 'rough' | 'brushpen' | 'chalk' | 'dotted' | 'outline'
+  // 45.31(무료 10 + PRO 20). 위 이름은 하나도 지우지 않는다 — 저장된 작품이 그대로 그려져야 한다.
+  | 'inknatural' | 'brushpen2' | 'pencil2' | 'colorpencil' | 'opaque' | 'marker2' | 'flat'
+  | 'inkrough' | 'bristle' | 'ballpen' | 'pastel' | 'charcoal' | 'pencilside' | 'grainshade'
+  | 'pointil' | 'spray' | 'dryflat' | 'wash' | 'wateredge' | 'oilpastel' | 'parallelpen' | 'glowpen'; opacity?: number; stabilizer?: 'off' | 'light' | 'medium' | 'strong'; base?: 'pen' | 'brush' | 'pencil'; width?: number; eraserWidth?: number };
 // Only a store receipt may set this. `source` exists so a hand written file cannot claim PRO.
 export type Entitlement = {
   // 라이선스 테스터·내부 테스트 구매로 열린 이용권. 화면이 그렇게 말하기 위한 표시다.
@@ -98,4 +102,7 @@ export type Cutout = { id: string; name: string; image: LocalImage };
 // reviewUnlock: 내부 검수 빌드에서만 효력이 있는 임시 해제. 이용권(entitlement)과 따로 둔다 —
 // 같은 자리에 두면 출시 앱에서 구매한 이용권으로 읽힐 길이 생긴다.
 // userPalette: 사용자가 이름 붙여 모아 둔 색(PRO로 저장). 최근 색(palette)과 달리 자동으로 밀려나지 않는다.
-export type Store = { version: 1; revision: number; projects: Project[]; palette?: string[]; userPalette?: string[]; entitlement?: Entitlement; reviewUnlock?: boolean; paperTexture?: boolean; savedMotions?: SavedMotion[]; cutouts?: Cutout[] };
+export type Store = { version: 1; revision: number; projects: Project[]; palette?: string[]; userPalette?: string[]; entitlement?: Entitlement; reviewUnlock?: boolean; paperTexture?: boolean; savedMotions?: SavedMotion[]; cutouts?: Cutout[];
+  // 즐겨찾기 세 칸. **사용자가 직접 고정한다** — 다른 브러시를 썼다고 저절로 바뀌지 않는다(45.31).
+  // 없으면 기본값(기본 펜·연필·마커)으로 연다. 예전 저장본에는 이 칸이 없고, 그대로 읽힌다.
+  favoriteBrushes?: string[] };

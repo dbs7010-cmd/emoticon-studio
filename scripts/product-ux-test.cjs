@@ -128,14 +128,15 @@ const saved = async (dirty = true) => {
   assert.equal(labelled('펜 굵기').length + labelled('펜 설정 닫기').length, 0, '정체불명 설정 칩·펜 설정 시트가 없다');
   await press('브러시 전체');
   assert.equal(labelled('브러시 닫기').length, 1, "'전체'를 누르면 브러시 목록이 열린다");
-  const variants = tree.root.findAll(n => n.props.testID === '브러시 목록')[0].findAll(n => n.type === 'Pressable').map(n => n.props.accessibilityLabel);
-  assert.equal(variants.length, 12, '전체 목록은 무료 4 + PRO 8 = 12종: ' + variants.length);
+  const variants = tree.root.findAll(n => n.props.testID === '브러시 목록')[0].findAll(n => n.type === 'Pressable' && /^브러시 /.test(n.props.accessibilityLabel ?? '')).map(n => n.props.accessibilityLabel);
+  assert.equal(variants.length, 30, '전체 목록은 무료 10 + PRO 20 = 30종: ' + variants.length);
   assert.ok(variants.every(v => /^브러시 /.test(v)), '목록의 이름은 도구 줄과 섞이지 않게 모두 \'브러시 …\' 다: ' + JSON.stringify(variants));
 
   // ── 2. 잠금 밀도: 브러시 설정 ─────────────────────────────────────────────────────────────
   assert.equal(locks(), 0, '브러시 설정: 자물쇠 0');
-  assert.ok(proMarks() <= 1, '브러시 설정: PRO 표시는 한 줄 이하, got ' + proMarks());
-  assert.equal(labelled('브러시 마커').length, 1, '마커는 무료 4종이라 목록에 그대로 있다');
+  // 45.31: 분류 목록에서는 카드마다 무료/PRO 를 적는다. 자물쇠는 여전히 0 이고, 잠긴 것도 견본이 보인다.
+  assert.equal(proMarks(), 20, '브러시 목록: PRO 표시는 PRO 브러시 수와 같다, got ' + proMarks());
+  assert.equal(labelled('브러시 마커').length, 1, '마커는 무료 10종이라 목록에 그대로 있다');
   await press('브러시 연필');   // 무료 사용자라 무료 브러시로 고른다
   // 45.25: 고르면 선택판이 닫힌다. 세부 설정을 보려면 다시 연다 — 그것이 '고르기'와 '맞추기'를 가르는 자리다.
   assert.equal(labelled('세부 설정').length, 0, '브러시를 고르면 선택판이 닫힌다');
@@ -170,7 +171,7 @@ const saved = async (dirty = true) => {
   assert.equal(loadStore().store.projects[0].brush.eraserWidth, 40, '지우개 굵기도 세트에 남는다');
   await press('그리기 도구 펜');   // 그리기로 돌아온다
   assert.equal(ranges('브러시 굵기')[0].props.accessibilityValue.now, 24, '브러시 → 지우개 → 브러시: 브러시 굵기 그대로');
-  assert.equal(lastCommand('brush').brush, 'pencil', '고른 연필도 그대로');
+  assert.equal(lastCommand('brushSettings').preset, 'pencil2', '고른 연필도 그대로');
   await press('채우기'); await press('채우기');
   assert.equal(tree.root.findAll(n => n.type === 'Pressable' && / 닫기$/.test(n.props.accessibilityLabel ?? '') && n.props.accessibilityLabel !== '그리기 닫기').length, 0, '설정이 없는 도구는 다시 눌러도 시트를 열지 않는다');
   await press('지우개');
@@ -283,12 +284,12 @@ const saved = async (dirty = true) => {
   let init = await ready();
   assert.equal(init.penWidth, 24, '새 칸: 브러시 굵기 유지');
   assert.equal(init.eraserWidth, 40, '새 칸: 지우개 크기 유지');
-  assert.ok(afterInit().some(m => m.type === 'brush' && m.brush === 'pencil'), '새 칸: 선 종류(연필) 유지');
+  assert.ok(afterInit().some(m => m.type === 'brushSettings' && m.preset === 'pencil2'), '새 칸: 선 종류(연필) 유지');
   assert.ok(afterInit().some(m => m.type === 'tool' && m.tool === 'eraser'), '새 칸: 고른 도구(지우개) 유지');
   assert.ok(labelled('지우개')[0].props.accessibilityState.selected, '새 칸: 도구 줄도 지우개');
   assert.equal(lastCommand('brushSettings').stabilizer, 'strong', '새 칸: 선 보정 유지');
   const onDisk = loadStore().store.projects[0].brush;
-  assert.deepEqual([onDisk.base, onDisk.width, onDisk.eraserWidth, onDisk.stabilizer], ['pencil', 24, 40, 'strong'], '설정은 세트에 저장된다');
+  assert.deepEqual([onDisk.preset, onDisk.width, onDisk.eraserWidth, onDisk.stabilizer], ['pencil2', 24, 40, 'strong'], '설정은 세트에 저장된다');
 
   // 빈 칸에서 이전 그림으로 시작: 한 번 누르면 된다(비어 있는 칸이라 확인창 없음).
   assert.equal(labelled('이전 칸 그림으로 시작').length, 1, '빈 다음 칸이 이전 칸 그림으로 시작을 제안한다');
@@ -371,7 +372,7 @@ const saved = async (dirty = true) => {
   await act(async () => tiles().find(t => t.props.testID === 'slot-3').props.onPress());
   init = await ready();
   assert.equal(init.penWidth, 24, '재시작 뒤에도 굵기 유지');
-  assert.ok(afterInit().some(m => m.type === 'brush' && m.brush === 'pencil'), '재시작 뒤에도 선 종류 유지');
+  assert.ok(afterInit().some(m => m.type === 'brushSettings' && m.preset === 'pencil2'), '재시작 뒤에도 선 종류 유지');
   assert.equal(lastCommand('brushSettings').stabilizer, 'strong', '재시작 뒤에도 선 보정 유지');
   // 짧은 화면(캔버스 영역 360×353): 굵기 조절은 캔버스 안에 들어가고, 움직이기 패널이 캔버스를 절반 넘게 덮지 않는다.
   const area = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
