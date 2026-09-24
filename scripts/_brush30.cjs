@@ -63,7 +63,10 @@ const shape=${JSON.stringify(SHAPE)};
 let token=0,waiting=null;
 const post=m=>engine.contentWindow.command(m);       // 약속을 돌려준다 — 반드시 await
 const wait=t=>new Promise(r=>{waiting={type:t,r};});
-const rest=(ms=60)=>new Promise(r=>setTimeout(r,ms));
+// 숨은 탭에서 setTimeout 은 1초로 늦춰진다(획마다 1초 = 한 종에 80초). 메시지 한 바퀴는 늦춰지지 않으므로
+// 그걸로 시간을 센다. 하는 일은 같다 — 그 시간만큼 기다렸다가 다음 획으로 간다.
+const tick=()=>new Promise(r=>{const c=new MessageChannel();c.port1.onmessage=()=>r();c.port2.postMessage(0);});
+const rest=async(ms=60)=>{const t0=performance.now();while(performance.now()-t0<ms)await tick();};
 window.addEventListener('message',e=>{let m;try{m=JSON.parse(e.data);}catch{return;}
  if(waiting&&m.type===waiting.type){const r=waiting.r;waiting=null;r(m);}
  if(m.type==='ready')start();});

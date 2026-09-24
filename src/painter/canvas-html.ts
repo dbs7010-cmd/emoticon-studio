@@ -126,15 +126,37 @@ let strokeSeed=1,rand=()=>.5,strokeSpeed=0,lastMoveAt=0;
 // 45.32 미감 수정. dab 의 기울기를 이어 주고(급회전에서 톱니 방지), 손을 대자마자 찍던 첫 자국을 없앴다.
 let dabAng=null,tapDot=null,ribbonLen=0;
 // 부드러운 잡음. 자리(획을 따라 잰 길이)만으로 정해져 다시 그려도 같은 결과가 나온다.
-function wave(s,seed){const a=seed*.017;return (Math.sin(s*.21+a)*.5+Math.sin(s*.53+a*2.3)*.32+Math.sin(s*1.07+a*4.1)*.18)/1;}
+// 획 길이를 따라 굵기가 천천히 오르내린다. 마디가 짧으면 획이 애벌레처럼 울퉁불퉁해지므로
+// 가장 짧은 마디도 15px 쯤으로 둔다 — 손글씨 한 획 안에서 한두 번만 출렁인다.
+function wave(s,seed){const a=seed*.017;return Math.sin(s*.085+a)*.55+Math.sin(s*.19+a*2.3)*.30+Math.sin(s*.41+a*4.1)*.15;}
 function seeded(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
 function resetRand(){rand=seeded(strokeSeed);}
 // 종이결. 화면 자리에 붙은 값이라 같은 자리를 다시 칠하면 같은 결이 나온다 — 획을 다시 그려도 입자가 움직이지 않는다.
+// 종이결. 예전에는 dab 마다 이 값을 알파에 곱했는데, 그러면 한 dab 이 통째로 옅어져
+// 굵은 획이 **동그란 도장이 꿰인 줄**로 보였다(45.32 결함). 이제 결은 획을 다 그은 뒤
+// 픽셀 단위로 판다 — dab 은 고르게 찍히고 결만 남는다.
+function paperNoise(x,y,s){
+ const h=(a,b)=>{let n=(a*73856093)^(b*19349663)^0x5bf03635;n=Math.imul(n^(n>>>13),0xC2B2AE35);return((n^(n>>>16))>>>0)/4294967296;};
+ const one=(sc)=>{const gx=x/sc,gy=y/sc,x0=Math.floor(gx),y0=Math.floor(gy),fx=gx-x0,fy=gy-y0;
+  const ex=fx*fx*(3-2*fx),ey=fy*fy*(3-2*fy);
+  return (h(x0,y0)*(1-ex)+h(x0+1,y0)*ex)*(1-ey)+(h(x0,y0+1)*(1-ex)+h(x0+1,y0+1)*ex)*ey;};
+ return one(Math.max(1.2,s))*.6+one(Math.max(2.4,s*2.4))*.4;
+}
+// 결이 파이는 정도. 종이는 **솟은 결이 색을 다 받고 골만 비는** 것이라, 절반을 깎는 무늬를 쓰면
+// 획이 지지직거리는 잡티가 된다. 골(THR 아래)만 파고 나머지는 그대로 둔다.
+const GRAIN_THR=.42;
+// 굵기 s 마다 한 장씩 만들어 둔다(캔버스 크기는 바뀌지 않는다). 알파 = 1 - 결 이라
+// destination-out 으로 얹으면 남은 알파 = 원래 알파 × ((1-결세기) + 결세기 × 결).
+const paperMasks={};
+function paperMask(scale){const key=String(scale);if(paperMasks[key])return paperMasks[key];
+ const c=bitmap(),g=c.getContext('2d'),im=g.createImageData(W,H),d=im.data;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=(y*W+x)*4;d[i]=d[i+1]=d[i+2]=0;const v=paperNoise(x,y,scale),t=Math.max(0,Math.min(1,(GRAIN_THR-v)/GRAIN_THR));d[i+3]=Math.round(255*t*t*(3-2*t));}
+ g.putImageData(im,0,0);paperMasks[key]=c;return c;}
 function paperAt(x,y,scale){const s=Math.max(1,scale||3);let h=(Math.floor(x/s)*73856093)^(Math.floor(y/s)*19349663)^0x5bf03635;h=Math.imul(h^(h>>>13),0xC2B2AE35);return((h^(h>>>16))>>>0)/4294967296;}
 // PRO 브러시. 무료 펜/붓/연필(brush)은 손대지 않고, preset 이 있을 때만 이 표를 쓴다. PRO 획은 전부 wet 버퍼에
 // 불투명하게 그린 뒤 손을 뗄 때 (색 투명도 × 브러시 진하기 × 프리셋 기본 진하기)를 한 번에 얹는다 — 한 획 안의 겹침은 진해지지 않는다.
 const PRESETS={
- ink:{alpha:1,width:1.05,ribbon:{taper:26,floor:.22}},
+ ink:{alpha:1,width:1.05,ribbon:{taper:18,floor:.38}},
  soft:{alpha:1,width:1.35,soft:true},
  grain:{alpha:.85,width:.75,cap:'round',texture:true},
  marker:{alpha:.55,width:2,cap:'butt'},
@@ -239,7 +261,17 @@ function dry(){if(!wet)return;{const P=activePreset();if(P&&P.rim)poolEdge(wet,P
 // 그리는 동안 보이는 결과 저장되는 결이 같다.
 let grainMask=null,coarseMask=null,wetShown=null;
 function makeMask(density,minR,spread){const c=bitmap(),m=c.getContext('2d');m.fillStyle='#000';for(let i=0;i<W*H*density;i++){m.globalAlpha=.45+Math.random()*.4;m.beginPath();m.arc(Math.random()*W,Math.random()*H,minR+Math.random()*spread,0,Math.PI*2);m.fill();}return c;}
-function wetView(){const P=activePreset();if(!wet||!P||!P.texture)return wet;
+function wetView(){const P=activePreset();
+ if(!wet||!P)return wet;
+ const D=P.dab;
+ if(!P.texture&&!(D&&D.grain))return wet;
+ if(D&&D.grain&&!P.texture){
+  if(!wetShown)wetShown=bitmap();const t=wetShown.getContext('2d');
+  t.globalCompositeOperation='source-over';t.clearRect(0,0,W,H);t.drawImage(wet,0,0);
+  t.globalCompositeOperation='destination-out';t.globalAlpha=Math.max(0,Math.min(1,D.grain));
+  t.drawImage(paperMask(D.grainScale??3),0,0);
+  t.globalAlpha=1;t.globalCompositeOperation='source-over';return wetShown;
+ }
  let mask;
  if(P.coarse){if(!coarseMask)coarseMask=makeMask(.008,1.4,2.2);mask=coarseMask;}
  else{if(!grainMask)grainMask=makeMask(.02,.6,.9);mask=grainMask;}
@@ -901,8 +933,16 @@ function ribbon(g,pts){
 function redrawRibbon(g,P){
  const B=P.ribbon;if(!strokePath.length)return;
  g.save();g.globalCompositeOperation='source-over';g.clearRect(0,0,W,H);g.fillStyle=solid(color);
- const W0=g.lineWidth,taper=Math.max(1,(B.taper??12)),floor=B.floor??.2;
+ const W0=g.lineWidth;
  const total=strokePath[strokePath.length-1].s||0;
+ // 테이퍼 길이가 고정이면 짧은 획은 **전부가 테이퍼**가 되어 나뭇잎·바늘 모양이 된다(45.32 결함).
+ // 양 끝 테이퍼를 획 길이의 30% 로 묶는다 — 아무리 짧아도 가운데 40% 는 제 굵기를 낸다.
+ const taper=Math.max(1,Math.min(B.taper??12,total*.3));
+ // 게다가 끝 굵기의 바닥값도 획 길이를 따른다. 긴 획은 제 특징대로 뾰족하게 빠지고,
+ // 손글씨처럼 짧은 획은 끝이 뭉툭하다 — 모든 짧은 획을 일률로 뾰족하게 만들지 않는다.
+ const nominal=Math.max(1,B.taper??12);
+ const short=1-Math.max(0,Math.min(1,total/(nominal*3)));
+ const floor=(B.floor??.2)+(1-(B.floor??.2))*short;
  const pts=strokePath.map(p=>{
   // 양 끝에서 가늘어진다. 뿌리(sqrt)를 써서 갑자기 굵어지지 않는다.
   const near=Math.min(p.s,total-p.s);
@@ -997,7 +1037,6 @@ function stampSegment(g,a,b,P,D){
   // 작은 굵기에서는 옅고 무른 dab 이 서로 닿지 않아 선이 끊겨 보인다. 반지름이 4px 아래로 내려갈수록
   // 단단하고 진하게 보정한다 — 큰 굵기의 결은 그대로 두고 작은 글씨만 또렷해진다.
   if(base<4){const k=Math.max(0,Math.min(1,(4-base)/3));hard=hard+(1-hard)*k*.8;op=Math.min(1,op*(1+k*1.1));}
-  if(D.grain){const v=paperAt(px,py,D.grainScale??3);op*=(1-D.grain)+D.grain*v;}
   if(D.opRand)op*=1-D.opRand*rand();
   let ang=0,ratio=D.ratio??1;
   if(ratio>1&&turn>0.02&&dist>0.01){

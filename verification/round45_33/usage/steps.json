@@ -1,0 +1,142 @@
+{
+  "illust": [
+    {
+      "name": "크레용",
+      "engine": "crayon",
+      "use": "목도리 — 왁스가 눌린 색면(머리 뒤에 먼저)",
+      "color": "#D9655A",
+      "width": 17,
+      "strokes": 3
+    },
+    {
+      "name": "불투명 채색붓",
+      "engine": "opaque",
+      "use": "몸을 채운다 — 외곽선 안쪽까지만",
+      "color": "#F7DDA0",
+      "width": 30,
+      "strokes": 3
+    },
+    {
+      "name": "불투명 채색붓",
+      "engine": "opaque",
+      "use": "귀",
+      "color": "#F7DDA0",
+      "width": 20,
+      "strokes": 2
+    },
+    {
+      "name": "색연필",
+      "engine": "colorpencil",
+      "use": "귀 안쪽 — 결이 보이는 색",
+      "color": "#D99A74",
+      "width": 12,
+      "strokes": 2
+    },
+    {
+      "name": "에어브러시",
+      "engine": "airbrush",
+      "use": "볼터치",
+      "color": "#F2A08E",
+      "width": 20,
+      "strokes": 2
+    },
+    {
+      "name": "연필",
+      "engine": "pencil2",
+      "use": "턱 밑 음영 — 결이 곱다",
+      "color": "#B08A55",
+      "width": 14,
+      "strokes": 1
+    },
+    {
+      "name": "기본 펜",
+      "engine": "pen",
+      "use": "외곽선",
+      "color": "#2B2A28",
+      "width": 6,
+      "strokes": 3
+    },
+    {
+      "name": "자연 잉크",
+      "engine": "inknatural",
+      "use": "눈",
+      "color": "#2B2A28",
+      "width": 8,
+      "strokes": 2
+    },
+    {
+      "name": "자연 잉크",
+      "engine": "inknatural",
+      "use": "입",
+      "color": "#2B2A28",
+      "width": 6,
+      "strokes": 1
+    },
+    {
+      "name": "테이퍼 펜",
+      "engine": "ink",
+      "use": "수염 — 끝이 가늘어져야 한다",
+      "color": "#2B2A28",
+      "width": 5,
+      "strokes": 4
+    },
+    {
+      "name": "평행선 펜",
+      "engine": "parallelpen",
+      "use": "효과선",
+      "color": "#C9A659",
+      "width": 5,
+      "strokes": 2
+    },
+    {
+      "name": "발광 펜",
+      "engine": "glowpen",
+      "use": "반짝임",
+      "color": "#F2C24B",
+      "width": 7,
+      "strokes": 2
+    },
+    {
+      "name": "붓펜",
+      "engine": "brushpen2",
+      "use": "손글씨 — 획 중간 굵기가 변한다",
+      "color": "#2B2A28",
+      "width": 8,
+      "strokes": 13
+    }
+  ],
+  "writing": [
+    {
+      "name": "붓펜",
+      "engine": "brushpen2",
+      "use": "굵기 변화가 가장 크다 — 제목·인사말",
+      "color": "#17191D",
+      "width": 7,
+      "strokes": 13
+    },
+    {
+      "name": "테이퍼 펜",
+      "engine": "ink",
+      "use": "끝이 가늘어지되 손글씨에서 뾰족하지 않다",
+      "color": "#17191D",
+      "width": 11,
+      "strokes": 13
+    },
+    {
+      "name": "자연 잉크",
+      "engine": "inknatural",
+      "use": "굵기가 천천히 오르내린다 — 손그림 느낌",
+      "color": "#17191D",
+      "width": 11,
+      "strokes": 13
+    },
+    {
+      "name": "기본 펜",
+      "engine": "pen",
+      "use": "굵기가 고르다 — 기준",
+      "color": "#17191D",
+      "width": 10,
+      "strokes": 13
+    }
+  ]
+}
