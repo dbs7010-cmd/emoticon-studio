@@ -950,7 +950,46 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   assert.equal(JSON.stringify(loadStore().store),proBefore,'미리 만들어 본 뒤에도 저장된 작품은 그대로다');
   assert.equal(named('적용 전 미리보기').length,1,'만들어진 움직임이 화면에 보인다');
   assert.ok(shown().some(t=>t.includes('적용 전')),'아직 적용 전이라고 말한다');
-  await press('뒤로');
+  // ── 여기부터 45.29: **실제로 적용**까지 간다. 지금까지는 미리보기에서 멈춰 있었다. ─────────
+  // 그림이 없는 칸을 일부러 섞는다 — 되는 칸만 되고, 안 되는 칸은 이유를 말해야 한다.
+  {
+   const before=loadStore().store, set=before.projects.find(p=>p.id===live.id);
+   const empty=set.slots.find(x=>!x.work);
+   assert.ok(empty,'그림이 없는 칸도 있다');
+   await press('전체 선택');
+   const bakedBefore=bakes.length;
+   const applyRow=tree.root.findAll(n=>n.type==='Pressable'&&/^\d+칸에 적용$/.test(n.props.accessibilityLabel??''))[0];
+   assert.ok(applyRow,'적용 버튼이 있다');
+   await act(async()=>applyRow.props.onPress());
+   await act(async()=>{});
+   await act(async()=>{});
+   const after=loadStore().store.projects.find(p=>p.id===live.id);
+   // 화면이 '적용됨'이라고 적은 칸은 실제로 움직임과 파일을 갖는다.
+   const applied=shown().filter(t=>/^\d+ · 적용됨$/.test(t)).map(t=>Number(t.split(' ')[0]));
+   assert.ok(applied.length>=2,'여러 칸에 적용됐다: '+JSON.stringify(applied));
+   assert.equal(bakes.length-bakedBefore,applied.length,'적용한 칸마다 한 번씩 실제로 만들었다');
+   for(const n of applied){
+    const slot=after.slots.find(x=>x.number===n);
+    assert.deepEqual(slot.motion,preset,n+'번: 같은 움직임이 들어갔다');
+    assert.ok(slot.motionImage&&slot.motionImage.path,n+'번: 움직이는 그림 파일이 생겼다');
+   }
+   const stillEmpty=after.slots.find(x=>x.number===empty.number);
+   assert.equal(stillEmpty.motion,undefined,'그림이 없는 칸은 건드리지 않는다');
+   assert.equal(stillEmpty.motionImage,undefined,'그림이 없는 칸에는 파일도 만들지 않는다');
+   assert.ok(shown().some(t=>/칸에 같은 움직임을 적용했어요|칸에 적용했고/.test(t)),'몇 칸이 됐는지 말한다');
+   // ── 앱을 완전히 끄고 다시 켠다. 적용한 결과가 그대로 살아 있어야 한다(자동저장이 아니라 **종료 후**다).
+   await act(async()=>tree.unmount());
+   await act(async()=>{tree=create(React.createElement(App));});
+   await act(async()=>{});
+   const restarted=loadStore().store.projects.find(p=>p.id===live.id);
+   for(const n of applied){
+    const slot=restarted.slots.find(x=>x.number===n);
+    assert.deepEqual(slot.motion,preset,n+'번: 앱을 껐다 켜도 움직임이 그대로다');
+    assert.ok(slot.motionImage&&slot.motionImage.path,n+'번: 앱을 껐다 켜도 파일이 그대로다');
+   }
+   assert.equal(labelled('새 이모티콘 만들기').length,1,'껐다 켜면 홈으로 돌아온다');
+   await openSet(live.projectName);
+  }
   await press('뒤로');
   const off=loadStore().store;
   saveStore({...off,revision:off.revision+1,entitlement:undefined});
@@ -1226,5 +1265,5 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   console.log('  노랑 글자 0곳 · 노랑 위 글자 #17191D 고정 · PRO 역할 분리');
 }
 
- console.log('PASS: one-tap start into an empty canvas, two tabs over one drawing, free effects that reach the canvas, PRO parts announced before use (free users go to PRO first, never blocked at save), a movement kept on a shelf and taken back down without touching the cut, a piece kept as its own picture and brought back, movement order changed by dragging, a batch preview that builds one cut for real without writing anything, empty canvas never counts as finished, 완성 declaration separate from autosave, autosave on backgrounding, one save per double tap, copy-previous as an independent document, captions saved with the drawing, temporary and adopted set references, re-edit returns a cut to 작업 중, board states, the last open cut returning to the board, export flow that only claims what it measured, share retry, legacy stores preserved and readable, guarded set deletion, save failure that never claims a completion, an unreadable store that names the cause and writes nothing. Native modules/WebView mocked; drawing and file delivery still require a device.');
+ console.log('PASS: one-tap start into an empty canvas, two tabs over one drawing, free effects that reach the canvas, PRO parts announced before use (free users go to PRO first, never blocked at save), a movement kept on a shelf and taken back down without touching the cut, a piece kept as its own picture and brought back, movement order changed by dragging, a batch preview that builds one cut for real without writing anything, a batch apply that reaches every drawn cut and names the reason for the ones it skips, and survives a cold restart, empty canvas never counts as finished, 완성 declaration separate from autosave, autosave on backgrounding, one save per double tap, copy-previous as an independent document, captions saved with the drawing, temporary and adopted set references, re-edit returns a cut to 작업 중, board states, the last open cut returning to the board, export flow that only claims what it measured, share retry, legacy stores preserved and readable, guarded set deletion, save failure that never claims a completion, an unreadable store that names the cause and writes nothing. Native modules/WebView mocked; drawing and file delivery still require a device.');
 })().then(()=>process.exit(0)).catch(e=>{console.error(e);process.exit(1);});
