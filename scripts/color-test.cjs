@@ -209,6 +209,16 @@ async function openPainter() {
   // 무료: 고급 브러시 효력만 멈춘다. 진하기·선 보정은 무료라 저장된 값 그대로다.
   assert.deepEqual([brushCmd().preset, brushCmd().opacity, brushCmd().stabilizer], [null, .5, 'strong'], '무료: 고급 브러시만 효력이 멈추고 진하기·보정은 유지된다');
   assert.equal(loadStore().store.projects[0].brush.preset, 'ink', '무료: 저장된 고급 브러시 설정은 지우지 않는다');
+  // 45.29: 승인 구성에서 '부드러운 펜'과 '마커'는 무료다. PRO 가 끝나도 이 둘은 효력이 남아야 한다 —
+  // 무료 브러시를 PRO 잠금에 딸려 보내지 않는다.
+  await press('브러시 전체'); await press('브러시 부드러운 펜');
+  assert.equal(brushCmd().preset, 'soft', '무료: 무료 프리셋은 PRO 없이도 캔버스로 간다');
+  assert.equal(loadStore().store.projects[0].brush.preset, 'soft', '무료: 무료 프리셋이 세트에 저장된다');
+  await act(async () => tree.unmount());
+  await openPainter();
+  assert.equal(brushCmd().preset, 'soft', '무료: 다시 열어도 무료 프리셋은 그대로 살아 있다');
+  await press('브러시 전체'); await press('브러시 마커');
+  assert.equal(brushCmd().preset, 'marker', '무료: 마커도 PRO 없이 쓴다');
   await press('브러시 전체');
   assert.equal(icons(tree.root, 'lock-outline'), 0, '무료: 브러시 시트에 자물쇠가 하나도 없다');
   assert.equal(labelled('브러시 마커').length, 1, '무료: 마커는 무료 4종에 들어 있다');
@@ -299,5 +309,5 @@ async function openPainter() {
   assert.equal(lastCommand('color').color, '#11223380', '무료: HEX 투명도도 받는다');
   assert.equal(labelled('PRO 닫기').length, 0, '무료: 색과 브러시 조절 어디에서도 결제 화면이 열리지 않았다');
   await act(async () => tree.unmount());
-  console.log('PASS: color — SV 사각·색상 막대·투명도가 캔버스 색을 바꾸고 최근 색은 멈춘 뒤 한 번만 기록, 스포이드 켜기·취소·읽은 색 반영·빈 곳 안내·누른 채 끌어 집기(끄는 동안 미리보기, 떼면 확정), 내 팔레트 저장·재사용·정리, HEX 투명도, 브러시 도구 다시 누르기로 설정, 고급 브러시 저장·복원, 색 패널은 SV 사각으로 열리고 팔레트 견본은 갈래 안. 무료: 색·진하기·선 보정 전부 사용, 자물쇠 0, PRO 표시는 고급 브러시 한 줄, 누르면 안내로 가고 캔버스는 그대로. Native/WebView mocked.');
+  console.log('PASS: color — SV 사각·색상 막대·투명도가 캔버스 색을 바꾸고 최근 색은 멈춘 뒤 한 번만 기록, 스포이드 켜기·취소·읽은 색 반영·빈 곳 안내·누른 채 끌어 집기(끄는 동안 미리보기, 떼면 확정), 내 팔레트 저장·재사용·정리, HEX 투명도, 브러시 도구 다시 누르기로 설정, 고급 브러시 저장·복원, 색 패널은 SV 사각으로 열리고 팔레트 견본은 갈래 안. 무료: 무료 프리셋(부드러운 펜·마커)은 PRO 없이도 살아 있고, 색·진하기·선 보정 전부 사용, 자물쇠 0, PRO 표시는 고급 브러시 한 줄, 누르면 안내로 가고 캔버스는 그대로. Native/WebView mocked.');
 })().catch(e => { console.error(e); process.exit(1); });
