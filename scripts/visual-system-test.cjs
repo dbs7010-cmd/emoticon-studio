@@ -63,11 +63,26 @@ async function ready() {
 
 (async () => {
   // ── 1. 토큰: 명세 값 · 한 벌 ─────────────────────────────────────────────────────────────
-  // 명세 §2 색상표. 값이 되돌아가지 않게 못 박는다.
-  assert.equal(T.bg, '#FFFFFF'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.surface2, '#F5F6F8');
-  assert.equal(T.ink, '#17191D'); assert.equal(T.muted, '#555D69'); assert.equal(T.line, '#E3E6EC');
-  assert.equal(T.accent, '#FFD52A'); assert.equal(T.accentSoft, '#FFF3B0'); assert.equal(T.danger, '#B42318');
-  assert.equal(T.accentInk, '#17191D', '노랑 위 글자는 짙은 색이다(흰 글씨 금지)');
+  // 45.34 공통 색 기준. 값이 되돌아가지 않게 못 박는다.
+  // 앱 바탕(bg)은 흰색에서 옅은 회색으로 내렸다 — 예전에는 bg 와 paper 가 둘 다 흰색이라
+  // 앱 바탕과 패널이 구분되지 않았다. 패널은 그대로 흰색이고, 그 위에 떠 보인다.
+  assert.equal(T.bg, '#F6F7F8'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.surface2, '#ECEEF2');
+  assert.notEqual(T.bg, T.paper, '앱 바탕과 패널은 서로 달라야 층이 읽힌다');
+  assert.notEqual(T.bg, T.surface2, '눌린 면은 앱 바탕과도 달라야 한다');
+  assert.equal(T.ink, '#202329'); assert.equal(T.muted, '#626872'); assert.equal(T.line, '#E5E7EB');
+  assert.equal(T.accent, '#FFDA32'); assert.equal(T.accentSoft, '#FFF5C2'); assert.equal(T.danger, '#B42318');
+  assert.equal(T.accentInk, T.ink, '노랑 위 글자는 짙은 색이다(흰 글씨 금지)');
+  // 글자 색은 실제 대비로 확인한다. 토큰을 바꿀 때 눈으로만 고르면 보조 글자가 조용히 옅어진다.
+  {
+    const lum = h => { const v = [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16) / 255)
+      .map(c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+      return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+    const ratio = (x, y) => { const a = lum(x), b = lum(y); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); };
+    assert.ok(ratio(T.ink, T.paper) >= 7, '본문은 패널 위에서 7:1 이상');
+    assert.ok(ratio(T.muted, T.paper) >= 4.5, '보조 글자도 패널 위에서 4.5:1 이상');
+    assert.ok(ratio(T.muted, T.bg) >= 4.5, '보조 글자는 앱 바탕 위에서도 4.5:1 이상');
+    assert.ok(ratio(T.accentInk, T.accent) >= 4.5, '노랑 위 글자도 4.5:1 이상');
+  }
   assert.deepEqual([T.radius.xs, T.radius.sm, T.radius.md, T.radius.lg, T.radius.xl], [8, 12, 16, 20, 24], '모서리는 8·12·16·20·24 한 벌');
   // 명세 §2 는 쓰임새로 부른다: 카드16 · 버튼12 · 칩10.
   assert.deepEqual([T.radius.card, T.radius.button, T.radius.chip], [16, 12, 10], '카드16·버튼12·칩10');

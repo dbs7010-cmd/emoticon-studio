@@ -1255,9 +1255,12 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   assert.deepEqual(bad, [], '노랑이 글자·아이콘 색으로 쓰인 자리가 없다:\n' + bad.join('\n'));
 
   // 노랑 위 글자는 한 가지 차콜로 고정한다. 자리마다 다른 갈색을 쓰면 역할이 흐려진다.
-  const ui = require('fs').readFileSync('src/components/ui.tsx', 'utf8');
-  assert.ok(ui.includes("accentInk: '#17191D'"), '노랑 위 글자색이 짙은 ink 하나로 고정돼 있다(명세 §2)');
-  assert.ok(ui.includes("accent: '#FFD52A'"), '강조는 명세 §2 의 primary 노랑 하나다');
+  // 45.34: 값이 #17191D → #202329, 노랑이 #FFD52A → #FFDA32 로 바뀌었다. 값을 글자로 박아 두면
+  // 공통 기준을 손볼 때마다 여기가 막는다 — 지켜야 할 것은 '하나로 고정돼 있다'이지 특정 16진수가 아니다.
+  const { T } = load('src/components/ui.tsx');
+  assert.equal(T.accentInk, T.ink, '노랑 위 글자색이 짙은 ink 하나로 고정돼 있다');
+  assert.equal(T.accent, T.yellow, '강조 노랑은 한 값이다');
+  assert.notEqual(T.accent, T.accentSoft, '행동 노랑과 선택 배경은 다른 값이다');
 
   // PRO 는 행동 노랑과 다른 자리에 있어야 한다 — 누르는 곳처럼 보이면 안 된다.
   const app = require('fs').readFileSync('App.tsx', 'utf8');

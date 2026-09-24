@@ -51,9 +51,13 @@ function labelsMissingFromSource() {
     if (key === 'recentPrefix') return !source.includes("'최근 색 ' + c");
     if (key === 'saveMark') return !source.includes("'저장됨'");
     // 브러시 이름은 목록에서 '브러시 ' + 이름으로 조립된다. 접두사와 그 이름이 소스에 있으면 된다.
-    if (key === 'favPin') return !source.includes("'즐겨찾기에 고정 '");
-    if (key === 'brushVariant' || key === 'proBrush') return !(source.includes("'브러시 ' + b.title") && source.includes("'" + label.replace('브러시 ', '') + "'"));
-    if (key === 'brushClose') return !(source.includes("title + ' 닫기'") && source.includes('title="브러시"'));
+    // 45.34: 압정을 견본마다 겹쳐 두지 않고 '즐겨찾기 편집' 모드로 옮겼다(§6). 고정하는 자리는
+    // 줄을 누른 뒤 뜨는 '1·2·3번 칸' 이므로, 확인할 것은 그 편집 길이 소스에 있는가다.
+    if (key === 'favPin') return !(source.includes("'즐겨찾기 편집'") && source.includes("'즐겨찾기에 넣기 '"));
+    if (key === 'brushVariant' || key === 'proBrush')
+      return !(source.includes("+ b.title") && source.includes("'브러시 '") && source.includes("'" + label.replace('브러시 ', '') + "'"));
+    // 시트 제목이 모드에 따라 바뀌므로(브러시 / 즐겨찾기 편집) 닫기 이름을 따로 넘긴다.
+    if (key === 'brushClose') return !source.includes('closeLabel="브러시 닫기"');
     return !(source.includes(`"${label}"`) || source.includes(`'${label}'`) || source.includes(`>${label}<`) || source.includes(`\`${label}\``) || new RegExp(`[\\['"]${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]`).test(source));
   }).map(([key, label]) => `${key}=${label}`);
 }

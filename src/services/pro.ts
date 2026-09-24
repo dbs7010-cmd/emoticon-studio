@@ -30,14 +30,25 @@ export const devBuild = () => typeof __DEV__ !== 'undefined' && __DEV__ === true
 export const internalReviewBuild = (): boolean =>
   (Constants.expoConfig?.extra as { internalReview?: boolean } | undefined)?.internalReview === true;
 
+// 검수용 PRO 를 **볼 수 있고 켤 수 있는** 환경인가. 두 가지다:
+//   ① 내부 검수 APK (EMOTICON_INTERNAL_REVIEW=1 로 빌드)
+//   ② 개발 실행 (Expo Go / 개발 클라이언트 — __DEV__ 가 참)
+// 출시 구성은 둘 다 거짓이므로 스위치가 그려지지도, 저장된 값이 권한으로 인정되지도 않는다.
+export const reviewCapable = (): boolean => internalReviewBuild() || devBuild();
+
 // 검수용 임시 해제. **구매가 아니고 영수증도 아니다.** 그래서 Entitlement 안에 넣지 않고 따로 둔다 —
 // 넣는 순간 언젠가 '이용권'으로 읽히고, 출시 앱으로 옮겨 갈 길이 생긴다. 저장소에 남더라도 출시
 // 구성에서는 internalReviewBuild() 가 거짓이라 아무 효력이 없다. 작품은 그대로 남는다.
 export const reviewUnlocked = (store: { reviewUnlock?: boolean } | undefined): boolean =>
-  internalReviewBuild() && store?.reviewUnlock === true;
+  reviewCapable() && store?.reviewUnlock === true;
 
 // 화면이 이 빌드가 무엇인지 스스로 말하게 한다. 검수용임을 숨기면 검수 결과를 출시 상태로 착각한다.
 export const REVIEW_BUILD_NOTE = '내부 검수용 빌드예요. PRO 기능을 결제 없이 켜서 확인할 수 있고, 이 권한은 구매가 아니며 출시 앱으로 넘어가지 않아요.';
+// 개발 실행에서 켰을 때의 안내. 검수 APK 와 구분해 적는다 — 어느 쪽에서 본 결과인지 헷갈리면 안 된다.
+export const REVIEW_DEV_NOTE = '개발 실행이라 PRO 기능을 결제 없이 켜서 확인할 수 있어요. 구매가 아니고, 출시 앱에서는 이 스위치가 없어요.';
+// 지금 환경의 이름. 화면이 스스로 무엇인지 말하게 한다.
+export const reviewEnvLabel = (): string =>
+  internalReviewBuild() ? '내부 검수용 빌드' : devBuild() ? '개발 실행' : '';
 
 // An entitlement is live when a receipt says so and the term has not run out.
 // "verified" is set only by a server that checked the receipt with Google/Apple. The store file is

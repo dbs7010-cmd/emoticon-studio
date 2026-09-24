@@ -114,12 +114,16 @@ function render(t){ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l)
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
-function style(g){g.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';g.globalAlpha=tool==='eraser'?1:(brush==='pencil'&&wet)?1:brush==='brush'?0.85:brush==='pencil'?0.55:1;g.lineWidth=tool==='eraser'?eraserWidth:(brush==='brush'?penWidth*1.4:penWidth);g.strokeStyle=solid(color);g.fillStyle=solid(color);g.lineCap='round';g.lineJoin='round';const P=activePreset();if(P){g.globalAlpha=1;g.lineWidth=computeBrushWidth(penWidth*P.width,lastPressure,P)*(P.taper?Math.min(1,.3+.7*strokeLen/P.taper):1);g.lineCap=P.cap||'round';
+function style(g){const T=liveTool();g.globalCompositeOperation=T==='eraser'?'destination-out':'source-over';g.globalAlpha=T==='eraser'?1:(brush==='pencil'&&wet)?1:brush==='brush'?0.85:brush==='pencil'?0.55:1;g.lineWidth=T==='eraser'?eraserWidth:(brush==='brush'?penWidth*1.4:penWidth);g.strokeStyle=solid(color);g.fillStyle=solid(color);g.lineCap='round';g.lineJoin='round';const P=activePreset();if(P){g.globalAlpha=1;g.lineWidth=computeBrushWidth(penWidth*P.width,lastPressure,P)*(P.taper?Math.min(1,.3+.7*strokeLen/P.taper):1);g.lineCap=P.cap||'round';
   // 점선 펜만 점 간격을 건다. 프리셋이 없는 기본 펜·붓·연필은 이 줄을 지나지 않는다 — 예전 획이 한 픽셀도 바뀌지 않게.
   if(P.dash){g.setLineDash([Math.max(.6,g.lineWidth*.22),Math.max(1,g.lineWidth*P.dash)]);g.lineDashOffset=-strokeLen;}else g.setLineDash([]);}}
 // 색 투명도. 획은 **불투명하게 따로 그린 뒤(wet) 손을 뗄 때 한 번에 투명도를 걸어 얹는다.** 짧은 선분마다
 // 투명도를 걸면 겹치는 이음매마다 진해져 구슬 꿴 줄처럼 보인다. 불투명한 색은 이 길을 타지 않는다.
 let wet=null,wetLayer=null,wetAlpha=1,picking=false,strokePath=[];
+// 그리는 중인 획이 시작할 때 쥐고 있던 도구. 획 도중에 도구가 바뀌어도 이 획은 이것으로 끝낸다 —
+// 반은 그려지고 반은 지워지는 획이 나오면 안 된다. 획이 없을 때는 null 이고 현재 도구를 쓴다.
+let strokeTool=null;
+function liveTool(){return strokeTool||tool;}
 // 45.31 재료층. 새 프리셋(dab 이 있는 것)만 이 값을 쓴다.
 // 씨앗은 획마다 정해지고, 획을 통째로 다시 그릴 때 처음부터 같은 순서로 흘러 결과가 흔들리지 않는다.
 let strokeSeed=1,rand=()=>.5,strokeSpeed=0,lastMoveAt=0;
@@ -239,7 +243,7 @@ function validPressure(p){return Number.isFinite(p)&&p>0&&p<=1?p:null;}
 function penPressure(e){return e&&e.pointerType==='pen'?validPressure(e.pressure):null;}
 function computeBrushWidth(base,pressure,settings){const p=validPressure(pressure);if(p===null||!settings||!settings.pressure)return base;return base*Math.max(.25,Math.min(1.5,.5+p));}
 function computeBrushAlpha(base,pressure,settings){const p=validPressure(pressure);if(p===null||!settings||!settings.pressure)return base;return base*Math.max(.1,Math.min(1,p*1.25));}
-function activePreset(){return tool!=='eraser'&&preset?PRESETS[preset]:null;}
+function activePreset(){return liveTool()!=='eraser'&&preset?PRESETS[preset]:null;}
 function solid(hex){const p=rgba(hex);return '#'+[p[0],p[1],p[2]].map(n=>n.toString(16).padStart(2,'0')).join('');}
 function css(hex){const p=rgba(hex);return p[3]>=255?solid(hex):'rgba('+p[0]+','+p[1]+','+p[2]+','+(p[3]/255).toFixed(3)+')';}
 function inkAlpha(){return rgba(color)[3]/255;}
@@ -297,7 +301,7 @@ function firstTwo(){return points().slice(0,2);}
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function middle(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
 function canvasUnits(px){const r=canvas.getBoundingClientRect();return px*W/Math.max(1,r.width);}
-function cancelStrokeForGesture(){captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
+function cancelStrokeForGesture(){captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;strokeTool=null;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
 function beginMulti(){
  const ps=firstTwo();if(ps.length<2)return;const [a,b]=ps,mid=middle(a,b),ref=activeReference();
  if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,ids:[a.id,b.id],distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,didCheckpoint:false,capScale:caption?.scale||1,capRot:caption?.rot||0,angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};}
@@ -364,9 +368,25 @@ function wholeDelta(t){
  if(!motion||!motion.preset)return d;
  const a=Math.max(0,Math.min(1,motion.strength==null?.5:motion.strength));
  const phase=t/loopSeconds()*Math.PI*2;
- if(motion.preset==='bounce'){d.dy=-Math.abs(Math.sin(phase))*(H*.055)*a;d.sy=1+Math.sin(phase*2)*.03*a;}
- if(motion.preset==='shake'){d.dx=Math.sin(phase)*(W*.04)*a;d.rot=Math.sin(phase)*4*a;}
+ // 여섯 가지가 **서로 다른 것을 한다**. 이름만 다르고 같은 움직임을 새 종류로 세지 않는다.
+ //   둥실 = 위아래 이동만 · 통통 = 뛰고 착지에서 눌림 · 두근 = 크기만
+ //   까딱 = 회전만    · 도리도리(흔들기) = 좌우 이동만 · 부르르 = 작고 빠른 떨림
+ if(motion.preset==='float'){d.dy=Math.sin(phase)*(H*.035)*a;}
+ if(motion.preset==='bounce'){
+  // 뛰어오른 높이. 땅에 닿는 순간(올라간 높이가 0 일 때) 세로로 눌리고 가로로 퍼진다.
+  const up=Math.abs(Math.sin(phase));
+  d.dy=-up*(H*.07)*a;
+  const squash=(1-up)*(1-up)*.12*a;          // 공중에서는 0, 착지에서 가장 크다
+  d.sy=1-squash;d.sx=1+squash*.8;
+ }
  if(motion.preset==='pulse'){const s=1+Math.sin(phase)*.07*a;d.sx=s;d.sy=s;}
+ // 까딱 — 작은 좌우 회전. 제자리에서 고개만 기울인다(이동 없음).
+ if(motion.preset==='tilt'){d.rot=Math.sin(phase)*7*a;}
+ // 도리도리 — 짧고 빠른 좌우 이동. 45.34 에서 회전을 뺐다: 회전은 '까딱'의 몫이고,
+ // 둘 다 돌면 두 효과가 구별되지 않는다. 대신 한 바퀴에 두 번 왕복해 '짧고 빠르게' 만든다.
+ if(motion.preset==='shake'){d.dx=Math.sin(phase*2)*(W*.035)*a;}
+ // 부르르 — 아주 작은 범위에서 빠르게 떤다. 가로·세로가 서로 다른 박자로 흔들려 방향이 읽히지 않는다.
+ if(motion.preset==='jitter'){d.dx=Math.sin(phase*7)*(W*.012)*a;d.dy=Math.cos(phase*9)*(H*.010)*a;d.rot=Math.sin(phase*8)*1.5*a;}
  return d;
 }
 // One part moving on its own, combined with whatever the whole picture is doing.
@@ -833,11 +853,12 @@ canvas.addEventListener('pointerdown',e=>{
    applySelection(false,'pointerdown-outside');}
   marquee={x0:p0.x,y0:p0.y,x1:p0.x,y1:p0.y};render();return;}
  checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;
+ strokeTool=tool;                      // 이 획은 끝까지 이 도구로 그린다
  const P0=activePreset();lastPressure=penPressure(e);strokeLen=0;lastRaw=last;strokePath=[];
  strokeSeed=(Date.now()^Math.round(last.x*7919)^Math.round(last.y*104729))>>>0;resetRand();strokeSpeed=0;lastMoveAt=Date.now();
  dabAng=null;tapDot=null;ribbonLen=0;
- const soft=(tool!=='eraser'&&!P0&&brush==='pencil')?PENCIL_ALPHA:1;
- wetAlpha=tool==='eraser'?1:computeBrushAlpha(inkAlpha()*brushOpacity*(P0?P0.alpha:1)*soft,lastPressure,P0);wet=(P0||wetAlpha<1)?bitmap():null;wetLayer=wet?l.id:null;
+ const soft=(strokeTool!=='eraser'&&!P0&&brush==='pencil')?PENCIL_ALPHA:1;
+ wetAlpha=strokeTool==='eraser'?1:computeBrushAlpha(inkAlpha()*brushOpacity*(P0?P0.alpha:1)*soft,lastPressure,P0);wet=(P0||wetAlpha<1)?bitmap():null;wetLayer=wet?l.id:null;
  const p=local(last,l),g=(wet||l.bitmap).getContext('2d');style(g);
  if(P0&&P0.outline){strokePath=[p];drawOutline(g);}
  else if(P0&&P0.repath){strokePath=[p];redrawStroke(g,P0);}
@@ -1099,14 +1120,19 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
    tapDot=null;}
   dry();
  }
- if(strokePending){future=[];strokePending=false;}active=false;pointer=null;steady=null;state();
+ if(strokePending){future=[];strokePending=false;}active=false;pointer=null;steady=null;strokeTool=null;state();
 }
 canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('이미지를 열 수 없습니다.'));i.src=src;});}
 async function loadLayer(l){const b=bitmap();if(l.data){const i=await image(l.data),scale=Math.min(W/i.width,H/i.height),w=i.width*scale,h=i.height*scale;b.getContext('2d').drawImage(i,(W-w)/2,(H-h)/2,w,h);}return {...defaults(l.id,l.name),...l,bitmap:b,data:undefined};}
 function metrics(c){const g=c.getContext('2d',{willReadFrequently:true}),w=c.width,h=c.height,d=g.getImageData(0,0,w,h).data;let n=0,xs=0,ys=0,minX=w,minY=h,maxX=0,maxY=0,r=0,green=0,b=0,transparent=false;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=(y*w+x)*4;if(d[k+3]<255)transparent=true;if(d[k+3]>16){n++;xs+=x;ys+=y;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);r+=d[k];green+=d[k+1];b+=d[k+2];}}return {coverage:n/(w*h),centerX:n?xs/n/w:.5,centerY:n?ys/n/h:.5,width:n?(maxX-minX+1)/w:0,height:n?(maxY-minY+1)/h:0,color:n?[r/n/255,green/n/255,b/n/255]:[0,0,0],transparent};}
 async function command(m){try{
- if(saving&&!['saved','saveFailed','analyze','save'].includes(m.type))return;
+ // 조용한 자동저장이 도는 동안에도 **다음 획의 준비**는 받아야 한다. 아래 명령은 그림(레이어 비트맵)을
+ // 건드리지 않고 '다음에 무엇으로 그릴지'만 정하므로 저장 결과를 흐트러뜨리지 않는다.
+ // 이걸 버리면 지우개 → 펜 전환이 조용히 사라져 다음 획이 지워진다(45.34에서 픽셀로 재현).
+ // 저장은 시작할 때 선택을 이미 확정하므로(applySelection) 저장 중 'tool' 이 그림을 바꿀 일은 없다.
+ const SAFE_WHILE_SAVING=['saved','saveFailed','analyze','save','tool','brush','brushSettings','color','width'];
+ if(saving&&!SAFE_WHILE_SAVING.includes(m.type))return;
  if(m.type==='init'){
    loading=true;const input=m.layers||[{...defaults('draw-1','그림 1'),data:m.drawing}];
    if(m.color)color=m.color;if(m.brush)applyBrush(m.brush);if(Number.isFinite(m.penWidth))penWidth=m.penWidth;if(Number.isFinite(m.eraserWidth))eraserWidth=m.eraserWidth;

@@ -55,6 +55,7 @@ const load = loader({ ...mocks, './src/services/images': images, '../services/im
 const { loadStore, saveStore } = load('src/services/storage.ts');
 const App = load('App.tsx').default;
 const { BASE_H } = load('src/painter/painter.tsx');
+const { T } = load('src/components/ui.tsx');
 
 const metrics = { coverage: .2, centerX: .5, centerY: .5, width: .5, height: .5, color: [.2, .2, .2], transparent: true };
 let tree, scene;
@@ -149,8 +150,13 @@ const saved = async (dirty = true) => {
   await press('보정 강');
   noPaywall('브러시 설정(진하기·보정)');
   collect();
-  await press('브러시 전체');
-  assert.equal(labelled('브러시 닫기').length, 0, '다시 누르면 닫힌다');
+  // 목록이 열려 있는 동안에는 아래 즐겨찾기 줄과 '전체'가 접힌다(45.34 §6) — 같은 말을 두 번 하지 않는다.
+  assert.equal(labelled('브러시 전체').length, 0, '목록이 열려 있으면 아래 전체 버튼은 접힌다');
+  assert.equal(tree.root.findAll(n => n.props.testID === '빠른 브러시').length, 0, '목록이 열려 있으면 아래 즐겨찾기 줄도 접힌다');
+  await press('브러시 닫기');
+  assert.equal(labelled('브러시 닫기').length, 0, '닫기를 누르면 닫힌다');
+  assert.equal(labelled('브러시 전체').length, 1, '닫으면 아래 줄이 돌아온다');
+  assert.equal(tree.root.findAll(n => n.props.testID === '빠른 브러시').length, 1, '즐겨찾기 줄도 돌아온다');
 
   // ── 굵기(45.28차: 승인 보드대로 색과 같은 줄에서 가로로 끈다. 숫자는 줄 끝에 늘 보이고, 끄는 동안에는 캔버스에 크기 원) ──
   assert.equal(tree.root.findAll(n => n.props.testID === '굵기 미리보기').length, 0, '평소에는 큰 크기 원이 떠 있지 않다');
@@ -255,10 +261,17 @@ const saved = async (dirty = true) => {
   assert.equal(fakeBars.length, 0, '0%/100% 로만 바뀌는 가짜 재생 막대가 없다');
   assert.ok(!texts().some(t => t.includes('초 반복')), '반복 길이 줄이 없다');
   const sampleStyles = () => tree.root.findAll(n => n.type === 'Image' && Array.isArray(n.props.style) && n.props.style.some(s => s && s.transform)).map(n => JSON.stringify(n.props.style[1]));
-  assert.equal(sampleStyles().length, 3, '효과 카드 세 장이 모두 움직이는 견본을 가진다');
+  // 45.34: 전체 움직임이 셋에서 여섯으로 늘었다(둥실·통통·두근거리기·까딱·흔들기·부르르).
+  // 개수를 글자로 박지 않고 화면이 내놓는 효과 수와 견준다 — 수를 늘릴 때마다 여기가 막히면 안 된다.
+  const { PRESETS: MOTION_PRESETS } = load('src/painter/motion-panel.tsx');
+  assert.ok(MOTION_PRESETS.length >= 6, '전체 움직임은 최소 여섯 가지: ' + MOTION_PRESETS.length);
+  assert.equal(new Set(MOTION_PRESETS.map(e => e.id)).size, MOTION_PRESETS.length, '효과 id 가 겹치지 않는다');
+  assert.equal(sampleStyles().length, MOTION_PRESETS.length, '효과 카드가 모두 움직이는 견본을 가진다');
   const first = JSON.stringify(sampleStyles());
   await act(async () => { await new Promise(r => setTimeout(r, 250)); });
   assert.notEqual(JSON.stringify(sampleStyles()), first, '견본이 실제로 움직인다');
+  // 견본이 서로 달라야 이름만 다른 효과가 아니다.
+  assert.equal(new Set(sampleStyles()).size > 1, true, '효과마다 견본이 다르게 움직인다');
   assert.equal(ranges('속도').length, 0, '효과를 고르기 전에는 설정표가 먼저 나오지 않는다');
   assert.equal(locks(), 0, '움직이기: 자물쇠 0');
   assert.equal(proMarks(), 1, '움직이기 기본 화면: PRO 표시는 부분 움직임 한 줄');
@@ -320,11 +333,15 @@ const saved = async (dirty = true) => {
   assert.equal(saves(), savesAt + 1, '앱을 내리면 자동저장');
   assert.equal(mark(), '저장 중', '저장 중에는 작은 표시');
   assert.equal(toolbar().props.pointerEvents, 'auto', '자동저장이 도구 줄을 잠그지 않는다');
+  // 45.34 에서 뒤집힌 규칙. 예전에는 저장이 끝날 때까지 도구 명령을 모아 뒀는데, 그 사이에 그은 획이
+  // **이전 도구로** 그려졌다 — 지우개 → 펜 전환이 사라져 새 획이 지워지는 증상을 픽셀로 재현했다
+  // (verification/round45_34/eraser-before). 도구·브러시·색·굵기는 그림을 건드리지 않고
+  // '다음에 무엇으로 그릴지'만 정하므로 저장 중에도 **바로** 보낸다.
   const toolsBefore = sent().filter(m => m.type === 'tool').length;
   await press('채우기');
-  assert.equal(sent().filter(m => m.type === 'tool').length, toolsBefore, '저장 중에 누른 도구는 캔버스가 받을 수 있을 때까지 모아 둔다');
+  assert.equal(sent().filter(m => m.type === 'tool').length, toolsBefore + 1, '저장 중에 누른 도구도 바로 간다 — 미뤘다가 보내면 그 사이 획이 이전 도구로 그려진다');
+  assert.deepEqual(sent().filter(m => m.type === 'tool').at(-1), { type: 'tool', tool: 'fill' }, '보낸 것이 방금 고른 도구다');
   await saved(true);
-  assert.deepEqual(sent().filter(m => m.type === 'tool').at(-1), { type: 'tool', tool: 'fill' }, '저장이 끝나면 모아 둔 도구가 간다');
   assert.equal(mark(), '저장됨', '끝나면 짧은 체크');
   await act(async () => { await new Promise(r => setTimeout(r, 1300)); });
   assert.equal(mark(), undefined, '체크는 스스로 사라진다');
@@ -426,7 +443,8 @@ const saved = async (dirty = true) => {
   const flowA = await bench(async () => {
     await press('이전 칸 그림으로 시작'); await act(async () => {});
     scene = { ...scene, dirty: true, undo: true }; await message(scene);
-    await press('브러시 전체'); await press('연필');   // 고르면 선택판이 스스로 닫힌다(45.25)
+    // 목록이 열리면 아래 즐겨찾기 줄이 접히므로(45.34 §6) 목록 쪽 이름으로 고른다.
+    await press('브러시 전체'); await press('브러시 연필');   // 고르면 선택판이 스스로 닫힌다(45.25)
     await dragSize('브러시 굵기', 400, 390);
     await press('색'); await press('최근 색 #54A9E8');
     await press('문구');
@@ -465,7 +483,10 @@ const saved = async (dirty = true) => {
   if (fs.existsSync('android/app/src/main/res/values/styles.xml')) assert.ok(!/Theme\.App\.SplashScreen[\s\S]*?splashscreen_logo[\s\S]*?<\/style>/.test(fs.readFileSync('android/app/src/main/res/values/styles.xml', 'utf8')), '생성된 android/ 에도 반영');
   assert.ok(/body\{margin:0;background:#F4F4F5/.test(fs.readFileSync('src/painter/canvas-html.ts', 'utf8')), '캔버스 WebView 바탕도 밝다');
   const root = tree.root.findAll(n => n.type === 'SafeAreaView')[0];
-  assert.equal(root.props.style.backgroundColor, '#FFFFFF', '앱 뿌리 화면 바탕은 명세 §2 surface(흰 바탕)');
+  // 45.34: 앱 바탕을 흰색에서 옅은 회색으로 내렸다 — 흰 패널이 그 위에 떠 보이게 하기 위해서다.
+  // 값을 글자로 박지 않고 토큰과 견준다. 지켜야 할 것은 '뿌리 바탕은 토큰의 앱 바탕'이다.
+  assert.equal(root.props.style.backgroundColor, T.bg, '앱 뿌리 화면 바탕은 공통 토큰의 앱 바탕이다');
+  assert.notEqual(T.bg, T.paper, '앱 바탕과 패널이 같으면 층이 읽히지 않는다');
 
   // ── 홈 위계(40차): 브랜드 머리 → 창작 표면(새 이모티콘 만들기) → 최근 작업 ─────────────────────────
   await press('뒤로');

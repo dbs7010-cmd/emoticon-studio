@@ -17,7 +17,7 @@ import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, saveSt
 import { exportSet, decodeDataUrl, type HandoffFrames } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinals, inspectImage } from './src/services/qa';
-import { PLANS, REVIEW_BUILD_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, purchase, purchaseHistoryUrl, refreshEntitlement, restore, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
+import { PLANS, REVIEW_BUILD_NOTE, REVIEW_DEV_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, purchase, purchaseHistoryUrl, refreshEntitlement, restore, reviewCapable, reviewEnvLabel, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
 import { PRESETS } from './src/painter/motion-panel';
 import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, PainterWork } from './src/types';
 
@@ -72,7 +72,7 @@ function Studio() {
   const [specOpen, setSpecOpen] = useState(false);
   // 홈 공지는 asset-slots 의 HOME_NOTICE 하나로 켜고 끈다. 검수용 빌드에서만 설정에서 켠 상태를 미리 볼 수 있다(저장하지 않는다).
   const [noticePreview, setNoticePreview] = useState(false);
-  const noticeOn = HOME_NOTICE.enabled || (internalReviewBuild() && noticePreview);
+  const noticeOn = HOME_NOTICE.enabled || (reviewCapable() && noticePreview);
   const [prepOpen, setPrepOpen] = useState(false); // 제출 준비는 묶음을 만든 뒤 보는 일이라 접어 둔다(45.2차).
   // 부가 이미지 만들기. 고른 컷을 프레임 안에서 옮기고 키우기만 한다 — 원본 컷은 건드리지 않는다.
   const [extraKind, setExtraKind] = useState<'icon' | 'share' | 'cover'>('icon');
@@ -1272,9 +1272,9 @@ function Studio() {
     {settings && <Dialog title="설정" onClose={() => setSettings(false)}>
       <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>
       {/* 검수용 빌드는 스스로 그렇다고 말한다. 출시 구성에서는 아예 그려지지 않는다(internalReviewBuild() 가 거짓). */}
-      {internalReviewBuild() && <View style={{ gap: 8, padding: 12, borderRadius: T.radius.md, backgroundColor: C.accentSoft }}>
-        <Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>내부 검수용 빌드</Text>
-        <Text style={{ fontSize: 11, color: C.accentInk, lineHeight: 16 }}>{REVIEW_BUILD_NOTE}</Text>
+      {reviewCapable() && <View style={{ gap: 8, padding: 12, borderRadius: T.radius.md, backgroundColor: C.accentSoft }}>
+        <Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>{reviewEnvLabel()}</Text>
+        <Text style={{ fontSize: 11, color: C.accentInk, lineHeight: 16 }}>{internalReviewBuild() ? REVIEW_BUILD_NOTE : REVIEW_DEV_NOTE}</Text>
         <Pressable accessibilityRole="switch" accessibilityLabel="검수용 PRO 켜기" accessibilityState={{ checked: !!store?.reviewUnlock }}
           onPress={() => { try { commit(st => ({ ...st, reviewUnlock: !st.reviewUnlock })); } catch { /* 저장 실패는 위 배너가 말한다 */ } }}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
@@ -1379,8 +1379,8 @@ function Studio() {
           {/* 내부 검수 빌드에서는 이 기기에서 결제를 열 수 없는 일이 흔하다. 잠금에 부딪힌 검수자가
               설정 깊은 곳의 토글을 찾아 헤매지 않도록, 막힌 바로 그 자리에서 켤 수 있게 한다.
               출시 구성에서는 internalReviewBuild() 가 거짓이라 이 줄이 아예 그려지지 않는다. 구매가 아니다. */}
-          {internalReviewBuild() && !pro && <Action icon="key-variant" title="결제 없이 검수용 PRO 켜기"
-            onPress={() => { try { commit(st => ({ ...st, reviewUnlock: true })); setProSheet(false); resetPayment(); setNotice(REVIEW_BUILD_NOTE); } catch (e) { setNotice('검수용 PRO 를 켜지 못했어요. ' + userMessage(e)); } }} />}
+          {reviewCapable() && !pro && <Action icon="key-variant" title="결제 없이 검수용 PRO 켜기"
+            onPress={() => { try { commit(st => ({ ...st, reviewUnlock: true })); setProSheet(false); resetPayment(); setNotice(internalReviewBuild() ? REVIEW_BUILD_NOTE : REVIEW_DEV_NOTE); } catch (e) { setNotice('검수용 PRO 를 켜지 못했어요. ' + userMessage(e)); } }} />}
           <Action title="무료로 계속하기" onPress={() => { setProSheet(false); resetPayment(); }} />
           <Pressable accessibilityRole="button" accessibilityLabel="구매 복원" disabled={payment.phase === 'buying' || payment.phase === 'restoring'} onPress={() => void restorePro()} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{payment.phase === 'restoring' ? '구매 내역을 확인하는 중…' : '구매 복원'}</Text></Pressable>
           {/* 일회성 구매에는 해지가 없다. 영수증·환불은 스토어의 구매 내역에서 본다.

@@ -13,25 +13,25 @@ import type { LocalImage } from '../types';
 // 노랑 위 글자는 반드시 accentInk(짙은 색) — 흰 글자는 대비가 2:1 아래라 읽히지 않는다. 노랑을 글자색으로 쓰지 않는다.
 // 이 앱은 카카오 이모티콘 제출을 돕지만 카카오가 만든 앱이 아니다. 카카오의 노랑·로고·캐릭터·화면 구성을 따라 하지 않는다.
 export const T = {
-  bg: '#FFFFFF',            // surface — 앱 기본 바탕(명세 §2)
+  bg: '#F6F7F8',            // 앱 기본 바탕 — 흰 패널이 그 위에 떠 보이도록 한 단계 내렸다(45.34)
   paper: '#FFFFFF',         // surfacePrimary
-  surface2: '#F5F6F8',      // workspace — 캔버스 바깥·세그먼트 바탕·빈 칸(명세 §2)
+  surface2: '#ECEEF2',      // workspace — 캔버스 바깥·세그먼트 바탕·빈 칸. 앱 바탕보다 한 단계 눌린 면(45.34)
   warm: '#FFF9E8',          // surfaceWarm — 창작 표면·제안
-  ink: '#17191D',           // ink — 본문·아이콘(명세 §2)
-  muted: '#555D69',         // secondary — 보조 설명(명세 §2)
+  ink: '#202329',           // 본문·아이콘 (45.34 공통 기준)
+  muted: '#626872',         // 보조 설명 (45.34 공통 기준 · 흰 패널에서 5.6:1)
   faint: '#8B93A0',         // 아주 작은 보조 글자와 비활성 아이콘(secondary 에서 한 단계 옅게)
-  line: '#E3E6EC',          // border — 구분선(명세 §2)
+  line: '#E5E7EB',          // 구분선 (45.34 공통 기준)
   lineStrong: '#CBD0DA',
-  accent: '#FFD52A',        // primary — 주요 CTA·도구 선택(명세 §2)
+  accent: '#FFDA32',        // 브랜드 노랑 — 완성과 현재 선택에만 쓴다(45.34)
   accentLine: '#F0C61E',    // primaryPressed
-  accentSoft: '#FFF3B0',    // selected — 선택 배경 보조(명세 §2)
-  accentInk: '#17191D',     // 노랑 위 글자는 언제나 짙은 색(흰 글씨 금지)
+  accentSoft: '#FFF5C2',    // 선택 배경 — 넓은 노란 면 대신 이 옅은 배경 + 얇은 강조선을 쓴다(45.34)
+  accentInk: '#202329',     // 노랑 위 글자는 언제나 짙은 색(흰 글씨 금지)
   accentBorder: '#EFD25E', // 고른 표면(옅은 노랑)의 1px 가장자리
   warmLine: '#F4E6B8',      // 따뜻한 표면의 가장자리
   warmInk: '#8A6A00',       // 따뜻한 표면 위의 작은 머리글(노랑 계열 글자가 아닌 짙은 황갈색)
   floating: '#FFFFFFF7',    // 캔버스 위에 뜨는 흰 표면
-  yellow: '#FFD52A',
-  fill: '#EFF1F5', fillPressed: '#E3E6EC',
+  yellow: '#FFDA32',
+  fill: '#E9ECF1', fillPressed: '#DDE1E8',
   success: '#2F8A57', successSoft: '#E4F3EA',
   warning: '#A86400', warningSoft: '#FDF0D6',
   danger: '#B42318', dangerSoft: '#FBE4E1',   // danger(명세 §2)

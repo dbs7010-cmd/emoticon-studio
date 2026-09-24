@@ -23,7 +23,9 @@ export type MotionLoop = { count: number; fps: number; loop: number; delayMs: nu
 export type PainterExport = { data: string; metrics: Metrics; layers: (LayerTransform & { data: string })[]; references: (LayerTransform & { path: string })[]; activeLayerId: string; caption?: Caption; motion?: Motion | null; gif?: MotionLoop };
 // Motion is stored beside the drawing, never baked into it: editing a cut keeps its movement,
 // and a cut with no motion is exactly the still cut it always was.
-export type MotionPreset = 'bounce' | 'shake' | 'pulse';
+// 45.34: 셋에서 여섯으로. 기존 셋의 id 는 그대로 둔다 — 저장된 칸이 읽히지 않으면 안 된다.
+// 새로 더한 셋은 float(둥실) · tilt(까딱) · jitter(부르르) 다.
+export type MotionPreset = 'bounce' | 'shake' | 'pulse' | 'float' | 'tilt' | 'jitter';
 export type PartEffect = 'rotate' | 'move' | 'scale';
 // One drawing layer moving on its own. `amount` is degrees for rotate, a fraction of the canvas
 // for move, and a scale delta for scale; `angle` is the direction a move travels in.

@@ -4,14 +4,19 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ProTag, Range, T } from '../components/ui';
 import { ASSET_SLOTS } from '../design/asset-slots';
 import { usesPro } from '../project';
-import type { LayerTransform, Motion, PartMotion, SavedMotion } from '../types';
+import type { LayerTransform, Motion, PartMotion, SavedMotion, MotionPreset } from '../types';
 
 const C = T;
 // Everyday words for what the movement does. The effect ids stay in English in the data.
+// 45.34: 셋 → 여섯. 전체 움직임은 전부 무료다(잠그지 않는다).
+// id 는 저장에 남는 값이라 기존 셋을 그대로 두고 새 셋만 더했다.
 export const PRESETS = [
-  { id: 'bounce' as const, label: '통통', hint: '위아래로 통통 튀어요', icon: 'arrow-up-down' as const },
-  { id: 'shake' as const, label: '흔들기', hint: '좌우로 흔들려요', icon: 'arrow-left-right' as const },
+  { id: 'float' as const, label: '둥실', hint: '부드럽게 위아래로 떠요', icon: 'weather-windy' as const },
+  { id: 'bounce' as const, label: '통통', hint: '뛰었다가 착지할 때 눌려요', icon: 'arrow-up-down' as const },
   { id: 'pulse' as const, label: '두근거리기', hint: '커졌다 작아져요', icon: 'heart-pulse' as const },
+  { id: 'tilt' as const, label: '까딱', hint: '고개를 좌우로 까딱여요', icon: 'format-text-rotation-angle-up' as const },
+  { id: 'shake' as const, label: '흔들기', hint: '좌우로 빠르게 흔들려요', icon: 'arrow-left-right' as const },
+  { id: 'jitter' as const, label: '부르르', hint: '제자리에서 작게 떨려요', icon: 'vibrate' as const },
 ];
 export const PART_EFFECTS = [
   { id: 'rotate' as const, label: '회전', unit: '°', min: 5, max: 60, step: 5, amount: 20 },
@@ -39,16 +44,25 @@ export const layerLabel = (name: string) => name.replace(/^그림 (\d+)$/, '레�
 
 // 효과 견본. 이 칸의 그림이 그 효과대로 실제로 움직인다 — 이름만 보고 결과를 짐작하게 하지 않는다.
 // Animated 대신 작은 타이머로 한 컴포넌트만 다시 그린다(패널 전체를 매 프레임 그리지 않는다).
-export function MotionSample({ preset, uri, fallback, size = 44, active }: { preset: 'bounce' | 'shake' | 'pulse'; uri?: string; fallback: ImageSourcePropType | null; size?: number; active: boolean }) {
+export function MotionSample({ preset, uri, fallback, size = 44, active }: { preset: MotionPreset; uri?: string; fallback: ImageSourcePropType | null; size?: number; active: boolean }) {
   const [t, setT] = React.useState(0);
   React.useEffect(() => {
+    // 카드는 **고르기 전에도** 움직인다 — 이름만 보고 결과를 짐작하게 하지 않는 것이 이 견본의 목적이다.
+    // 화면 밖(패널이 닫힘)에서는 카드 자체가 사라지므로 타이머도 함께 걷힌다.
     const started = Date.now();
     const timer = setInterval(() => setT((Date.now() - started) / 1000), 60);
     return () => clearInterval(timer);
   }, []);
-  const phase = Math.sin(t * Math.PI * 2 / .8);
-  const move = preset === 'bounce' ? { transform: [{ translateY: -Math.abs(phase) * size * .16 }] }
-    : preset === 'shake' ? { transform: [{ rotate: `${phase * 9}deg` }] }
+  // 견본은 **엔진이 하는 것과 같은 일**을 작게 흉내 낸다. 이름만 보고 결과를 짐작하게 하지 않는다.
+  const turn = t * Math.PI * 2 / .8;
+  const phase = Math.sin(turn);
+  const up = Math.abs(phase);
+  const squash = (1 - up) * (1 - up) * .12;
+  const move = preset === 'float' ? { transform: [{ translateY: phase * size * .09 }] }
+    : preset === 'bounce' ? { transform: [{ translateY: -up * size * .18 }, { scaleY: 1 - squash }, { scaleX: 1 + squash * .8 }] }
+    : preset === 'tilt' ? { transform: [{ rotate: `${phase * 9}deg` }] }
+    : preset === 'shake' ? { transform: [{ translateX: Math.sin(turn * 2) * size * .10 }] }
+    : preset === 'jitter' ? { transform: [{ translateX: Math.sin(turn * 7) * size * .035 }, { translateY: Math.cos(turn * 9) * size * .03 }, { rotate: `${Math.sin(turn * 8) * 2}deg` }] }
     : { transform: [{ scale: 1 + Math.max(0, phase) * .14 }] };
   return <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
     <Image accessibilityIgnoresInvertColors source={uri ? { uri } : fallback ?? undefined} style={[{ width: size * .86, height: size * .86, opacity: active ? 1 : .85 }, move]} resizeMode="contain" />
