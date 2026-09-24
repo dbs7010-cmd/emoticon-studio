@@ -1,0 +1,1192 @@
+[
+  {
+    "kind": "F01",
+    "title": "기본 펜",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6877
+      },
+      "committed": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6877
+      },
+      "reopened": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6877
+      }
+    }
+  },
+  {
+    "kind": "F02",
+    "title": "자연 잉크",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          24,
+          20,
+          32
+        ],
+        "maxA": 255,
+        "ink": 7591
+      },
+      "committed": {
+        "widths": [
+          24,
+          20,
+          32
+        ],
+        "maxA": 255,
+        "ink": 7591
+      },
+      "reopened": {
+        "widths": [
+          24,
+          20,
+          32
+        ],
+        "maxA": 255,
+        "ink": 7591
+      }
+    }
+  },
+  {
+    "kind": "F03",
+    "title": "테이퍼 펜",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          23,
+          19,
+          28
+        ],
+        "maxA": 255,
+        "ink": 6788
+      },
+      "committed": {
+        "widths": [
+          23,
+          19,
+          28
+        ],
+        "maxA": 255,
+        "ink": 6788
+      },
+      "reopened": {
+        "widths": [
+          23,
+          19,
+          28
+        ],
+        "maxA": 255,
+        "ink": 6788
+      }
+    }
+  },
+  {
+    "kind": "F04",
+    "title": "붓펜",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          24,
+          25,
+          29
+        ],
+        "maxA": 242,
+        "ink": 7857
+      },
+      "committed": {
+        "widths": [
+          24,
+          25,
+          29
+        ],
+        "maxA": 242,
+        "ink": 7857
+      },
+      "reopened": {
+        "widths": [
+          24,
+          25,
+          29
+        ],
+        "maxA": 242,
+        "ink": 7857
+      }
+    }
+  },
+  {
+    "kind": "F05",
+    "title": "연필",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          18,
+          17,
+          22
+        ],
+        "maxA": 137,
+        "ink": 6323
+      },
+      "committed": {
+        "widths": [
+          18,
+          17,
+          22
+        ],
+        "maxA": 137,
+        "ink": 6337
+      },
+      "reopened": {
+        "widths": [
+          18,
+          17,
+          22
+        ],
+        "maxA": 137,
+        "ink": 6337
+      }
+    }
+  },
+  {
+    "kind": "F06",
+    "title": "색연필",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          25,
+          22,
+          33
+        ],
+        "maxA": 234,
+        "ink": 8161
+      },
+      "committed": {
+        "widths": [
+          25,
+          22,
+          33
+        ],
+        "maxA": 235,
+        "ink": 8198
+      },
+      "reopened": {
+        "widths": [
+          25,
+          22,
+          33
+        ],
+        "maxA": 235,
+        "ink": 8198
+      }
+    }
+  },
+  {
+    "kind": "F07",
+    "title": "불투명 채색붓",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          32,
+          26,
+          40
+        ],
+        "maxA": 255,
+        "ink": 10220
+      },
+      "committed": {
+        "widths": [
+          32,
+          26,
+          40
+        ],
+        "maxA": 255,
+        "ink": 10298
+      },
+      "reopened": {
+        "widths": [
+          32,
+          26,
+          40
+        ],
+        "maxA": 255,
+        "ink": 10298
+      }
+    }
+  },
+  {
+    "kind": "F08",
+    "title": "마커",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          38,
+          32,
+          48
+        ],
+        "maxA": 153,
+        "ink": 12191
+      },
+      "committed": {
+        "widths": [
+          38,
+          32,
+          48
+        ],
+        "maxA": 153,
+        "ink": 12441
+      },
+      "reopened": {
+        "widths": [
+          38,
+          32,
+          48
+        ],
+        "maxA": 153,
+        "ink": 12441
+      }
+    }
+  },
+  {
+    "kind": "F09",
+    "title": "에어브러시",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          43,
+          36,
+          54
+        ],
+        "maxA": 111,
+        "ink": 14808
+      },
+      "committed": {
+        "widths": [
+          43,
+          36,
+          54
+        ],
+        "maxA": 111,
+        "ink": 14808
+      },
+      "reopened": {
+        "widths": [
+          43,
+          36,
+          54
+        ],
+        "maxA": 111,
+        "ink": 14808
+      }
+    }
+  },
+  {
+    "kind": "F10",
+    "title": "납작 펜",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          12,
+          8,
+          14
+        ],
+        "maxA": 255,
+        "ink": 3808
+      },
+      "committed": {
+        "widths": [
+          12,
+          8,
+          14
+        ],
+        "maxA": 255,
+        "ink": 4054
+      },
+      "reopened": {
+        "widths": [
+          12,
+          8,
+          14
+        ],
+        "maxA": 255,
+        "ink": 4054
+      }
+    }
+  },
+  {
+    "kind": "P01",
+    "title": "거친 잉크",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          26,
+          22,
+          34
+        ],
+        "maxA": 255,
+        "ink": 8316
+      },
+      "committed": {
+        "widths": [
+          26,
+          22,
+          34
+        ],
+        "maxA": 255,
+        "ink": 8342
+      },
+      "reopened": {
+        "widths": [
+          26,
+          22,
+          34
+        ],
+        "maxA": 255,
+        "ink": 8342
+      }
+    }
+  },
+  {
+    "kind": "P02",
+    "title": "드라이 잉크",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          23,
+          20,
+          30
+        ],
+        "maxA": 230,
+        "ink": 7444
+      },
+      "committed": {
+        "widths": [
+          23,
+          20,
+          30
+        ],
+        "maxA": 230,
+        "ink": 7444
+      },
+      "reopened": {
+        "widths": [
+          23,
+          20,
+          30
+        ],
+        "maxA": 230,
+        "ink": 7444
+      }
+    }
+  },
+  {
+    "kind": "P03",
+    "title": "붓결 잉크",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          27,
+          23,
+          34
+        ],
+        "maxA": 242,
+        "ink": 8576
+      },
+      "committed": {
+        "widths": [
+          27,
+          23,
+          34
+        ],
+        "maxA": 242,
+        "ink": 8717
+      },
+      "reopened": {
+        "widths": [
+          27,
+          23,
+          34
+        ],
+        "maxA": 242,
+        "ink": 8717
+      }
+    }
+  },
+  {
+    "kind": "P04",
+    "title": "볼펜",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          11,
+          10,
+          14
+        ],
+        "maxA": 173,
+        "ink": 3600
+      },
+      "committed": {
+        "widths": [
+          11,
+          10,
+          14
+        ],
+        "maxA": 173,
+        "ink": 3612
+      },
+      "reopened": {
+        "widths": [
+          11,
+          10,
+          14
+        ],
+        "maxA": 173,
+        "ink": 3612
+      }
+    }
+  },
+  {
+    "kind": "P05",
+    "title": "크레용",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          25,
+          23,
+          35
+        ],
+        "maxA": 224,
+        "ink": 9009
+      },
+      "committed": {
+        "widths": [
+          25,
+          23,
+          35
+        ],
+        "maxA": 224,
+        "ink": 9095
+      },
+      "reopened": {
+        "widths": [
+          25,
+          23,
+          35
+        ],
+        "maxA": 224,
+        "ink": 9095
+      }
+    }
+  },
+  {
+    "kind": "P06",
+    "title": "분필",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          47,
+          40,
+          58
+        ],
+        "maxA": 179,
+        "ink": 15645
+      },
+      "committed": {
+        "widths": [
+          47,
+          40,
+          58
+        ],
+        "maxA": 179,
+        "ink": 15645
+      },
+      "reopened": {
+        "widths": [
+          47,
+          40,
+          58
+        ],
+        "maxA": 179,
+        "ink": 15645
+      }
+    }
+  },
+  {
+    "kind": "P07",
+    "title": "소프트 파스텔",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          38,
+          31,
+          46
+        ],
+        "maxA": 212,
+        "ink": 11909
+      },
+      "committed": {
+        "widths": [
+          38,
+          31,
+          46
+        ],
+        "maxA": 212,
+        "ink": 11984
+      },
+      "reopened": {
+        "widths": [
+          38,
+          31,
+          46
+        ],
+        "maxA": 212,
+        "ink": 11984
+      }
+    }
+  },
+  {
+    "kind": "P08",
+    "title": "목탄",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          31,
+          32,
+          45
+        ],
+        "maxA": 198,
+        "ink": 11656
+      },
+      "committed": {
+        "widths": [
+          31,
+          32,
+          45
+        ],
+        "maxA": 200,
+        "ink": 11662
+      },
+      "reopened": {
+        "widths": [
+          31,
+          32,
+          45
+        ],
+        "maxA": 200,
+        "ink": 11662
+      }
+    }
+  },
+  {
+    "kind": "P09",
+    "title": "연필 옆면",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          53,
+          45,
+          67
+        ],
+        "maxA": 167,
+        "ink": 17818
+      },
+      "committed": {
+        "widths": [
+          53,
+          45,
+          67
+        ],
+        "maxA": 167,
+        "ink": 18350
+      },
+      "reopened": {
+        "widths": [
+          53,
+          45,
+          67
+        ],
+        "maxA": 167,
+        "ink": 18350
+      }
+    }
+  },
+  {
+    "kind": "P10",
+    "title": "입자 음영",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          33,
+          30,
+          41
+        ],
+        "maxA": 142,
+        "ink": 13164
+      },
+      "committed": {
+        "widths": [
+          33,
+          30,
+          41
+        ],
+        "maxA": 142,
+        "ink": 13203
+      },
+      "reopened": {
+        "widths": [
+          33,
+          30,
+          41
+        ],
+        "maxA": 142,
+        "ink": 13203
+      }
+    }
+  },
+  {
+    "kind": "P11",
+    "title": "점묘",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          8,
+          8,
+          9
+        ],
+        "maxA": 255,
+        "ink": 3772
+      },
+      "committed": {
+        "widths": [
+          8,
+          8,
+          9
+        ],
+        "maxA": 255,
+        "ink": 3804
+      },
+      "reopened": {
+        "widths": [
+          8,
+          8,
+          9
+        ],
+        "maxA": 255,
+        "ink": 3804
+      }
+    }
+  },
+  {
+    "kind": "P12",
+    "title": "스프레이",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          10,
+          3,
+          5
+        ],
+        "maxA": 217,
+        "ink": 3392
+      },
+      "committed": {
+        "widths": [
+          10,
+          3,
+          5
+        ],
+        "maxA": 217,
+        "ink": 3424
+      },
+      "reopened": {
+        "widths": [
+          10,
+          3,
+          5
+        ],
+        "maxA": 217,
+        "ink": 3424
+      }
+    }
+  },
+  {
+    "kind": "P13",
+    "title": "드라이 평붓",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          46,
+          38,
+          57
+        ],
+        "maxA": 222,
+        "ink": 14577
+      },
+      "committed": {
+        "widths": [
+          46,
+          38,
+          57
+        ],
+        "maxA": 222,
+        "ink": 14951
+      },
+      "reopened": {
+        "widths": [
+          46,
+          38,
+          57
+        ],
+        "maxA": 222,
+        "ink": 14951
+      }
+    }
+  },
+  {
+    "kind": "P14",
+    "title": "워시",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          37,
+          31,
+          43
+        ],
+        "maxA": 66,
+        "ink": 14505
+      },
+      "committed": {
+        "widths": [
+          37,
+          31,
+          43
+        ],
+        "maxA": 66,
+        "ink": 14678
+      },
+      "reopened": {
+        "widths": [
+          37,
+          31,
+          43
+        ],
+        "maxA": 66,
+        "ink": 14678
+      }
+    }
+  },
+  {
+    "kind": "P15",
+    "title": "가장자리 수채",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          48,
+          40,
+          62
+        ],
+        "maxA": 118,
+        "ink": 16788
+      },
+      "committed": {
+        "widths": [
+          53,
+          44,
+          68
+        ],
+        "maxA": 118,
+        "ink": 17632
+      },
+      "reopened": {
+        "widths": [
+          53,
+          44,
+          68
+        ],
+        "maxA": 118,
+        "ink": 17632
+      }
+    }
+  },
+  {
+    "kind": "P16",
+    "title": "오일 파스텔",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          28,
+          25,
+          29
+        ],
+        "maxA": 242,
+        "ink": 8048
+      },
+      "committed": {
+        "widths": [
+          28,
+          25,
+          29
+        ],
+        "maxA": 242,
+        "ink": 8403
+      },
+      "reopened": {
+        "widths": [
+          28,
+          25,
+          29
+        ],
+        "maxA": 242,
+        "ink": 8403
+      }
+    }
+  },
+  {
+    "kind": "P17",
+    "title": "테두리 펜",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          37,
+          31,
+          46
+        ],
+        "maxA": 255,
+        "ink": 12697
+      },
+      "committed": {
+        "widths": [
+          37,
+          31,
+          46
+        ],
+        "maxA": 255,
+        "ink": 12697
+      },
+      "reopened": {
+        "widths": [
+          37,
+          31,
+          46
+        ],
+        "maxA": 255,
+        "ink": 12697
+      }
+    }
+  },
+  {
+    "kind": "P18",
+    "title": "점선 펜",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          0,
+          0,
+          10
+        ],
+        "maxA": 255,
+        "ink": 3520
+      },
+      "committed": {
+        "widths": [
+          0,
+          0,
+          10
+        ],
+        "maxA": 255,
+        "ink": 3520
+      },
+      "reopened": {
+        "widths": [
+          0,
+          0,
+          10
+        ],
+        "maxA": 255,
+        "ink": 3520
+      }
+    }
+  },
+  {
+    "kind": "P19",
+    "title": "평행선 펜",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          34,
+          29,
+          42
+        ],
+        "maxA": 255,
+        "ink": 10863
+      },
+      "committed": {
+        "widths": [
+          34,
+          29,
+          42
+        ],
+        "maxA": 255,
+        "ink": 10863
+      },
+      "reopened": {
+        "widths": [
+          34,
+          29,
+          42
+        ],
+        "maxA": 255,
+        "ink": 10863
+      }
+    }
+  },
+  {
+    "kind": "P20",
+    "title": "발광 펜",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          48,
+          39,
+          60
+        ],
+        "maxA": 230,
+        "ink": 17625
+      },
+      "committed": {
+        "widths": [
+          48,
+          39,
+          60
+        ],
+        "maxA": 230,
+        "ink": 17625
+      },
+      "reopened": {
+        "widths": [
+          48,
+          39,
+          60
+        ],
+        "maxA": 230,
+        "ink": 17625
+      }
+    }
+  },
+  {
+    "kind": "L01",
+    "title": "예전 마커",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          42,
+          34,
+          52
+        ],
+        "maxA": 140,
+        "ink": 13175
+      },
+      "committed": {
+        "widths": [
+          42,
+          34,
+          52
+        ],
+        "maxA": 140,
+        "ink": 13175
+      },
+      "reopened": {
+        "widths": [
+          42,
+          34,
+          52
+        ],
+        "maxA": 140,
+        "ink": 13175
+      }
+    }
+  },
+  {
+    "kind": "L02",
+    "title": "예전 붓펜",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 217,
+        "ink": 9539
+      },
+      "committed": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 217,
+        "ink": 9539
+      },
+      "reopened": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 217,
+        "ink": 9539
+      }
+    }
+  },
+  {
+    "kind": "L03",
+    "title": "부드러운 펜",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          25,
+          21,
+          32
+        ],
+        "maxA": 240,
+        "ink": 8306
+      },
+      "committed": {
+        "widths": [
+          25,
+          21,
+          32
+        ],
+        "maxA": 240,
+        "ink": 8306
+      },
+      "reopened": {
+        "widths": [
+          25,
+          21,
+          32
+        ],
+        "maxA": 240,
+        "ink": 8306
+      }
+    }
+  },
+  {
+    "kind": "L04",
+    "title": "예전 붓",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 255,
+        "ink": 9538
+      },
+      "committed": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 255,
+        "ink": 9538
+      },
+      "reopened": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 255,
+        "ink": 9538
+      }
+    }
+  },
+  {
+    "kind": "L05",
+    "title": "예전 연필",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 140,
+        "ink": 6861
+      },
+      "committed": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 140,
+        "ink": 6861
+      },
+      "reopened": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 140,
+        "ink": 6861
+      }
+    }
+  }
+]
