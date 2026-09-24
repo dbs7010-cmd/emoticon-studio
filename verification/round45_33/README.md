@@ -224,3 +224,34 @@
 * 연필 옆면은 잉크량이 +25% 로 다른 브러시(+1~12%)보다 많이 올랐다. 음영 도구로는 알맞지만
   예전보다 진해진 것은 사실이다.
 * 손글씨 예시의 글자 모양은 획 경로를 손으로 놓은 것이라 글씨체로서 곱지 않다. 브러시 비교 목적에는 맞다.
+
+---
+
+## 7. 검수 APK
+
+제품 코드가 바뀌었으므로 **한 번만** 빌드했다. 이전 APK 다섯 개는 `dist/` 에 그대로 보존했다.
+
+| 항목 | 값 |
+|---|---|
+| 파일 | `dist/emoticon-studio-1.0.0-vc1-internal-review-3313158-arm64.apk` |
+| 크기 | 40,921,875 bytes |
+| SHA-256 | `4f6cca6c0efbb5b1bba6c51a53db35adea7a842153616af67088a68026e76fa8` |
+| 커밋 | `3313158` — Round45.33 |
+| ABI | arm64-v8a 단독 |
+| 서명 | 내부 검수 서명(EMOTICON_INTERNAL_REVIEW=1) — 배포용 아님 |
+| 빌드 | BUILD SUCCESSFUL 3m 50s |
+
+### 번들에 실제로 들어갔는지
+
+Hermes 바이트코드이고 엔진 HTML 은 한글이 섞여 UTF-16 으로 들어간다. 그 인코딩으로 찾아 대조했다.
+
+| 확인 | 결과 |
+|---|---|
+| 새 결 코드 | `paperNoise` · `paperMask` · `GRAIN_THR` **있음** |
+| 새 테이퍼 규칙 | `const short=1-Math.max` **있음** |
+| 테이퍼 펜 값 | `ink:{alpha:1,width:1.05,ribbon:{taper:18,floor:.38}}` — 글자 그대로 |
+| 없어야 하는 옛 코드 | dab 알파에 결 곱하기 `op*=(1-D.grain)+D.grain*v` **없음** · 짧은 마디 물결 `sin(s*1.07…)` **없음** |
+| 구형 프리셋 | `marker` `brushpen` `soft` `grain` `calligraphy` `chisel` **6/6** |
+| 후보 가격 | `14,900` **없음** — 문서에만 |
+
+**설치·실행 검증은 없다.** 사용자가 직접 설치해 확인해야 하고, 그전까지 DEVICE-UX UNVERIFIED 다.
