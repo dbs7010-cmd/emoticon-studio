@@ -199,19 +199,40 @@ async function walk(App, { sourcesOn }) {
     assert.ok(!/mascot-(paper|ink)\.png/.test(src), file + ': mascot 그림을 직접 참조하지 않는다(자리에서 받는다)');
     assert.ok(!/\bMASCOT\b/.test(src), file + ': MASCOT 직접 참조가 없다');
   }
-  // 브러시 획 견본 셋은 **엔진이 그은 것**이고 서로 달라야 한다(45.26).
-  // 45.25 에는 셋 중 둘이 같아 보였는데, 원인은 엔진이 아니라 견본을 만들던 쪽이 명령 줄서기를
+  // 브러시 획 견본은 **엔진이 그은 것**이고 서로 달라야 한다(45.26).
+  // 45.25 에는 견본 둘이 같아 보였는데, 원인은 엔진이 아니라 견본을 만들던 쪽이 명령 줄서기를
   // 기다리지 않아 앞 브러시로 그은 것이었다. 여기서 '서로 다름'을 못 박아 같은 실수를 다시 못 하게 한다.
+  //
+  // 45.35: 견본을 **넓은 띠**로 다시 만들었다(scripts/make-brush-samples.cjs). 예전 견본은 거의 정사각이라
+  // 줄 안에서 높이에 맞춰 줄이면 작은 도장이 됐다 — 시안이 말하는 '넓은 실제 획 견본'이 아니었다.
+  // 그래서 검사도 '잘라낸 테두리 크기'가 아니라 **띠 안의 실제 잉크**를 잰다.
   {
-    const png = f => { const b = fs.readFileSync(f); return { w: b.readUInt32BE(16), h: b.readUInt32BE(20), bytes: b.length, raw: b }; };
-    const pen = png('assets/art/stroke-pen.png'), brush = png('assets/art/stroke-brush.png'), pencil = png('assets/art/stroke-pencil.png');
-    assert.ok(!pen.raw.equals(brush.raw), '펜과 붓의 획 견본이 같은 파일이 아니다');
-    assert.ok(!pen.raw.equals(pencil.raw), '펜과 연필의 획 견본이 같은 파일이 아니다');
-    // 붓은 더 굵게 긋는다(엔진: penWidth × 1.4). 잘라낸 테두리는 획 반지름만큼만 커지므로 '더 크다'만 본다.
-    // 실제 굵기·알파 수치는 scripts/_brush-pipeline.cjs 가 재어 verification/round45_26 에 남긴다.
-    assert.ok(brush.h > pen.h && brush.w > pen.w, '붓 견본이 펜보다 굵다: ' + pen.w + '×' + pen.h + ' → ' + brush.w + '×' + brush.h);
-    // 연필은 굵기가 같고 옅기만 하다 — 테두리 크기는 펜과 같아야 한다.
-    assert.deepEqual([pencil.w, pencil.h], [pen.w, pen.h], '연필 견본은 펜과 같은 굵기다(옅기만 다르다)');
+    const { read } = require('./_png.cjs');
+    const src = fs.readFileSync('src/painter/painter.tsx', 'utf8');
+    const block = src.slice(src.indexOf('const CATALOG:'), src.indexOf('const GROUPS:'));
+    const files = [...block.matchAll(/title: '([^']+)'[^\n]*stroke: require\('[^']*\/([^'\/]+\.png)'\)/g)].map(m => ({ title: m[1], file: m[2] }));
+    assert.equal(files.length, 30, '서른 종 모두 견본 파일을 갖는다: ' + files.length);
+    const seenBytes = new Map(), ink = new Map();
+    for (const { title, file } of files) {
+      const path = 'assets/art/' + file;
+      const raw = fs.readFileSync(path), img = read(path);
+      // 줄은 가로로 넓다. 견본도 넓어야 높이에 맞춰 줄였을 때 획으로 보인다(도장이 아니라).
+      assert.ok(img.w / img.h >= 3, title + ' 견본이 넓은 띠다(가로/세로 ≥ 3): ' + img.w + '×' + img.h);
+      let touched = 0, solid = 0;
+      for (let i = 0; i < img.w * img.h; i++) { const a = img.d[i * 4 + 3]; if (a > 8) touched++; if (a > 120) solid++; }
+      const n = img.w * img.h, cover = touched / n, dense = solid / n;
+      // 비어 있지도, 띠를 통째로 **짙게** 덮지도 않는다 — 둘 다 '획'으로 읽히지 않는다.
+      // 옅게 번지는 브러시(에어브러시·워시)는 넓게 닿는 것이 그 성질이라 '닿음'이 아니라 '짙음'으로 잰다.
+      assert.ok(cover > .03, title + ' 견본에 획이 있다(닿은 넓이 ' + (cover * 100).toFixed(1) + '%)');
+      assert.ok(dense < .70, title + ' 견본이 띠를 통째로 덮지 않는다(짙은 넓이 ' + (dense * 100).toFixed(1) + '%)');
+      ink.set(title, dense);
+      const key = raw.toString('base64');
+      assert.ok(!seenBytes.has(key), title + ' 견본이 ' + seenBytes.get(key) + ' 와 같은 파일이다');
+      seenBytes.set(key, title);
+    }
+    // 굵게 긋는 브러시는 실제로 잉크를 더 덮는다 — 이름만 다른 견본이 아니다.
+    assert.ok(ink.get('붓펜') > ink.get('기본 펜'), '붓펜 견본이 기본 펜보다 굵다: ' + ink.get('기본 펜').toFixed(3) + ' → ' + ink.get('붓펜').toFixed(3));
+    assert.ok(ink.get('불투명 채색붓') > ink.get('기본 펜'), '채색 붓 견본이 선 브러시보다 넓게 덮는다');
   }
   // 브러시 서른 가지(45.31 · v2 구성표). 이름·무료/PRO·분류·엔진 효과·견본이 한 벌로 묶여 있어야 한다 —
   // 이름만 서른 개인 상태로는 통과하지 않는다.

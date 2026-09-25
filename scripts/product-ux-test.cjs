@@ -185,7 +185,7 @@ const saved = async (dirty = true) => {
   // ── 굵기(45.35 승인 시안: 캔버스 왼쪽 세로 조절대. 값은 손잡이 옆 말풍선에만 적힌다) ──
   assert.equal(tree.root.findAll(n => n.props.testID === '굵기 미리보기').length, 0, '캔버스 한가운데 검은 미리보기 상자는 없다');
   assert.equal(tree.root.findAll(n => n.type === 'View' && n.props.testID === '굵기 말풍선').length, 1, '굵기 값은 손잡이 옆 한 곳에만 적힌다');
-  assert.equal(ranges('브러시 굵기')[0].props.style.flex, 1, '조절대는 기둥의 남는 높이를 다 쓴다');
+  assert.ok(ranges('브러시 굵기')[0].props.style.height >= 108, '조절대 홈은 끌 만큼 길다: ' + ranges('브러시 굵기')[0].props.style.height);
   let during = await dragSize('브러시 굵기', 24);
   assert.deepEqual(during, ['24'], '끄는 동안 말풍선이 지금 값을 말한다');
   assert.equal(lastCommand('width').width, 24, '브러시 굵기가 캔버스로 간다');
@@ -423,11 +423,12 @@ const saved = async (dirty = true) => {
   const area = tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
   await act(async () => area.props.onLayout({ nativeEvent: { layout: { width: 360, height: 353 } } }));
   assert.equal(ranges('브러시 굵기').length, 1, '짧은 화면에서도 굵기 조절이 있다');
-  // 45.28: 굵기 조절대는 캔버스 영역 **밖**, 색과 같은 줄에 가로로 선다. 그림 위에 겹치지 않는다.
+  // 45.35: 굵기 조절대는 캔버스 영역 **밖**, 왼쪽 기둥에 세로로 선다. 그림 위에 겹치지 않는다.
   assert.equal(area.findAll(n => n.props.accessibilityLabel === '브러시 굵기' || n.props.accessibilityLabel === '지우개 굵기').length, 0, '조절대는 캔버스 영역 안에 없다');
   const band = tree.root.findAll(n => n.props.accessibilityLabel === '브러시 굵기' || n.props.accessibilityLabel === '지우개 굵기');
   assert.equal(band.length, 1, '조절대는 화면에 하나');
-  assert.equal(band[0].props.style.flex, 1, '줄의 남는 폭을 다 쓴다');
+  // 짧은 화면에서도 끌 만큼은 길다(하한 108dp). 캔버스가 길다고 끝없이 늘어나지도 않는다.
+  assert.ok(band[0].props.style.height >= 108 && band[0].props.style.height <= 208, '짧은 화면의 홈 길이: ' + band[0].props.style.height);
   assert.notEqual(band[0].props.style.position, 'absolute', '캔버스 위에 겹치지 않는다');
   await press('움직이기');
   const motionBox = tree.root.findAll(n => n.type === 'View' && Array.isArray(n.props.style) && n.props.style.some(s => s && typeof s.height === 'number' && s.flexShrink === 0))[0];

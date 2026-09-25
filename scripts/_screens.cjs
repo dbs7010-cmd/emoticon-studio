@@ -107,7 +107,9 @@ function render(node, flat) {
     const clamp = lines === 1 ? 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
       : lines > 1 ? `display:-webkit-box;-webkit-line-clamp:${lines};-webkit-box-orient:vertical;overflow:hidden;` : '';
     const s = css({ fontFamily: null, ...style });
-    return `<span class="t" style="${s}${clamp}">${kids()}</span>`;
+    // css() 는 마지막 속성 뒤에 세미콜론을 붙이지 않는다. 그대로 이으면 앞 속성과 붙어 **둘 다 깨진다** —
+    // 45.35 검토 렌더에서 '불투명도' 라벨의 color 와 말줄임이 통째로 죽어, 라벨이 기둥 밖으로 흘러 나갔다.
+    return `<span class="t" style="${s}${s && clamp ? ';' : ''}${clamp}">${kids()}</span>`;
   }
   if (type === 'Icon') {
     const size = p.size ?? 20;

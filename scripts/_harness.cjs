@@ -91,8 +91,11 @@ async function ready(extra = {}) {
   };
   await message(scene); await message({ type: 'initialized' });
   // 기기가 주는 캔버스 영역 크기. 없으면 캔버스가 0 으로 그려진다.
-  const area = { width: viewport.width, height: viewport.height - 24 - 52 - 48 - 104 };
-  const box = tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && !Array.isArray(n.props.style) && n.props.style?.flex === 1)[0];
+  // 45.35: 가로에서 **왼쪽 조절대 기둥을 뺀다**. 빼지 않으면 캔버스가 제 자리보다 넓게 그려져
+  // 기둥 위로 넘쳐 나오고, 검토 그림만 기기와 다르게 보인다(실제로 그렇게 보였다).
+  const { RAIL_W, BASE_H } = load('src/painter/painter.tsx');
+  const area = { width: viewport.width - RAIL_W, height: viewport.height - 24 - 52 - 48 - BASE_H };
+  const box = tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
   if (box) await act(async () => box.props.onLayout({ nativeEvent: { layout: area } }));
 }
 // 비동기 작업(굽기·묶기·공유)이 끝날 때까지 몇 번 더 돌려 준다.
@@ -109,6 +112,14 @@ const unmount = async () => { if (tree) await act(async () => tree.unmount()); t
 
 // 명세가 이름 붙인 화면들. 각 항목은 [id, 사람이 읽는 이름, 여는 법].
 // 여는 법은 홈에서 다시 시작(fresh)하거나 앞 화면에서 이어 간다.
+// 왼쪽 조절대를 잡고 끄는 중으로 만든다(45.35). 값 말풍선과 눌린 손잡이가 보이는 상태다.
+async function holdRail(label, ratio) {
+  const node = () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === label)[0];
+  const H = 240, HANDLE = 34;
+  await act(async () => node().props.onLayout({ nativeEvent: { layout: { width: 60, height: H } } }));
+  await act(async () => node().props.onResponderGrant({ nativeEvent: { locationY: H } }));
+  await act(async () => node().props.onResponderMove({ nativeEvent: { locationY: HANDLE / 2 + (1 - ratio) * (H - HANDLE) } }));
+}
 const SCREENS = [
   ['home-empty', '홈 · 작업 없음', async () => { seed(0); await fresh(); }],
   ['home-work', '홈 · 작업 있음', async () => { seed(2); await fresh(); }],
@@ -117,8 +128,18 @@ const SCREENS = [
   ['guide-examples', '표현 가이드 · 표현 고르기', async () => { await press('고마워 · 두 손 모아 꾸벅'); await press('정중하게 고르기'); }],
   ['set-detail', '세트 상세(보드)', async () => { await press('표현 가이드로'); await press('홈으로'); await press('검토 세트 이어서 만들기'); await ready(); await closePainter(); }],
   ['draw-base', '그리기 · 기본', async () => { await tap('slot-1'); await ready(); }],
-  ['draw-brush', '그리기 · 브러시 전체 목록', async () => { await press('브러시 전체'); }],
-  ['draw-color', '그리기 · 색', async () => { await press('색'); }],
+  ['draw-size', '그리기 · 굵기 조절 중', async () => { await holdRail('브러시 굵기', .62); }],
+  ['draw-ink', '그리기 · 불투명도 조절 중', async () => {
+    await act(async () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '브러시 굵기')[0].props.onResponderRelease());
+    await holdRail('브러시 불투명도', .55);
+  }],
+  ['draw-brush', '그리기 · 브러시 전체 목록', async () => {
+    await act(async () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '브러시 불투명도')[0].props.onResponderRelease());
+    await press('브러시 전체');
+  }],
+  ['draw-fav-edit', '그리기 · 즐겨찾기 편집', async () => { await press('즐겨찾기 편집'); }],
+  ['draw-fav-slot', '그리기 · 즐겨찾기 넣을 칸 고르기', async () => { await press('즐겨찾기에 넣기 붓펜'); }],
+  ['draw-color', '그리기 · 색', async () => { await press('즐겨찾기 고정 취소'); await press('즐겨찾기 편집 끝내기'); await press('브러시 닫기'); await press('색'); }],
   ['draw-reference', '그리기 · 참고', async () => { await press('팔레트 닫기'); await press('참고'); }],
   ['draw-layers', '그리기 · 레이어', async () => { await press('참고 닫기'); await press('레이어'); }],
   ['draw-caption', '그리기 · 문구 + 키보드', async () => {
@@ -146,8 +167,8 @@ const SCREENS = [
   }],
   ['draw-brush-detail', '그리기 · 브러시 세부 설정', async () => { await press('세부 설정'); }],
   ['draw-ref-and-brush', '그리기 · 참고와 브러시 함께', async () => {
-    // 세부 설정이 열린 채로 두면 판이 길어진다 — 기본 선택판만 연 모습으로 견준다.
-    await press('세부 설정'); await press('브러시 닫기'); await press('브러시 전체');
+    // 45.35: 세부 설정은 접히는 줄이 아니라 같은 창의 다른 화면이다. 목록으로 돌아와서 견준다.
+    await press('브러시 목록으로');
   }],
 ];
 

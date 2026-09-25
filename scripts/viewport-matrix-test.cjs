@@ -136,7 +136,7 @@ const rows = [];
     const sizer = tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '브러시 굵기')[0];
     assert.ok(sizer, tag + ': 굵기 조절대');
     const bandStyle = flat(sizer.props.style);
-    assert.equal(bandStyle.flex, 1, tag + ': 조절대는 기둥의 남는 높이를 다 쓴다');
+    assert.ok(bandStyle.height >= 108 && bandStyle.height <= 208, tag + ': 조절대 홈 길이 108~208dp: ' + bandStyle.height);
     assert.notEqual(bandStyle.position, 'absolute', tag + ': 캔버스 위에 겹치지 않는다');
     const rail = byTestID('조절대')[0];
     assert.ok(rail, tag + ': 왼쪽 기둥');

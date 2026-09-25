@@ -187,18 +187,25 @@ const QUICK_DEFAULT: BrushKey[] = ['pen', 'pencil2', 'marker2'];
 // WebView 에 중간값 메시지가 쌓이지도 않는다. 최종값은 손을 떼는 그 순간 반드시 올라간다.
 // 지연 보간·debounce·setTimeout 은 쓰지 않는다 — 늦게 반영하는 것이 아니라 아예 보내지 않는다.
 // 굵기는 어차피 **다음 첫 획**부터 쓰이므로, 끄는 도중의 값을 엔진이 알 이유가 없다.
-export const RAIL_W = 64;
+// 기둥 폭 72dp: 손가락 자리(48dp)를 넉넉히 넘고, **라벨과 값 말풍선이 기둥 안에 온전히 들어간다**.
+// 64dp 였을 때 '불투명도' 라벨과 '100%' 말풍선이 기둥 밖으로 삐져나가 캔버스에 가렸다(검토 렌더에서 확인).
+// 말풍선을 캔버스 위로 띄우는 길도 있지만, 그러면 고치는 중인 그림의 가장자리를 가린다.
+export const RAIL_W = 72;
 // 손잡이는 흰 세로 캡슐(시안). 홈 가운데에 얹히고, 가운데에 잉크색 표시가 하나 있다.
 const RAIL_HANDLE_H = 34, RAIL_HANDLE_W = 20, RAIL_GROOVE_X = 7, RAIL_GROOVE_W = 6;
+// 홈의 길이. 아래위로 하나씩 서므로 캔버스 높이의 절반을 나눠 갖되, 시안의 비율을 넘지 않는다 —
+// 캔버스가 길다고 노란 기둥 둘이 화면을 지배하면 안 된다. 짧은 화면에서는 120dp 까지 줄어든다.
+const RAIL_TRACK_MAX = 208, RAIL_TRACK_MIN = 108, RAIL_LABEL_H = 19;
+const railTrackOf = (area: number) => Math.max(RAIL_TRACK_MIN, Math.min(RAIL_TRACK_MAX, Math.floor((area - 24 - 20 - RAIL_LABEL_H * 2) / 2)));
 // 말풍선은 손잡이 오른쪽에 붙어 함께 오르내린다. 손잡이 자리에 매여 있으므로 조절이 끝나면
 // 남아 떠도는 표시가 없다.
-const RAIL_BUBBLE_X = RAIL_HANDLE_W, RAIL_BUBBLE_H = 22;
+const RAIL_BUBBLE_X = RAIL_HANDLE_W, RAIL_BUBBLE_H = 22, RAIL_BUBBLE_W = 44;
 // 0~1 을 퍼센트 글자로. 자리를 비율로 잡아야 첫 그림부터 맞고, 레이아웃을 재기 전에도 비어 보이지 않는다.
 const pct = (r: number) => (Math.max(0, Math.min(1, r)) * 100).toFixed(2) + '%' as `${number}%`;
-function VSlider({ label, value, min, max, step = 1, onCommit, bubble, disabled, testID, a11yLabel }: {
+function VSlider({ label, value, min, max, step = 1, onCommit, bubble, disabled, testID, a11yLabel, height: track }: {
   label: string; value: number; min: number; max: number; step?: number;
   onCommit: (n: number) => void; bubble: (n: number) => React.ReactNode;
-  disabled?: boolean; testID?: string; a11yLabel?: string;
+  disabled?: boolean; testID?: string; a11yLabel?: string; height: number;
 }) {
   // 끄는 동안의 값. null 이면 위에서 내려온 값을 그대로 보여 준다.
   const [live, setLive] = useState<number | null>(null);
@@ -212,8 +219,8 @@ function VSlider({ label, value, min, max, step = 1, onCommit, bubble, disabled,
   const at = (y: number) => { if (h <= 0) return; setLive(quantize(min + (1 - Math.max(0, Math.min(1, (y - RAIL_HANDLE_H / 2) / travel))) * span)); };
   const settle = () => { if (live !== null) onCommit(live); setLive(null); };
   const nudge = (by: number) => onCommit(quantize(value + by * step));
-  return <View style={{ flex: 1 }}>
-    <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '700', color: disabled ? T.faint : T.muted, paddingBottom: 4 }}>{label}</Text>
+  return <View style={{ height: track + RAIL_LABEL_H }}>
+    <Text numberOfLines={1} style={{ height: RAIL_LABEL_H, fontSize: 10, lineHeight: 14, fontWeight: '700', letterSpacing: -.2, color: disabled ? T.faint : T.muted }}>{label}</Text>
     <View testID={testID} accessibilityRole="adjustable" accessibilityLabel={a11yLabel ?? label}
       accessibilityState={{ disabled }} accessibilityValue={{ min, max, now: Math.round(shown) }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
@@ -224,9 +231,9 @@ function VSlider({ label, value, min, max, step = 1, onCommit, bubble, disabled,
       onResponderGrant={e => at(e.nativeEvent.locationY)}
       onResponderMove={e => at(e.nativeEvent.locationY)}
       onResponderRelease={settle} onResponderTerminate={settle}
-      style={{ flex: 1 }}>
+      style={{ height: track }}>
       {/* 손잡이가 오르내리는 자리. 위아래로 손잡이 절반만큼 들여 두면 손잡이가 끝에서 잘리지 않는다. */}
-      <View pointerEvents="none" style={{ flex: 1, marginVertical: RAIL_HANDLE_H / 2 }}>
+      <View pointerEvents="none" style={{ height: track - RAIL_HANDLE_H, marginVertical: RAIL_HANDLE_H / 2 }}>
         {/* 홈: 얇고 부드러운 회색. 들여 둔 만큼 도로 늘려 기둥 전체를 지난다. */}
         <View style={{ position: 'absolute', left: RAIL_GROOVE_X, top: -RAIL_HANDLE_H / 2, bottom: -RAIL_HANDLE_H / 2, width: RAIL_GROOVE_W, borderRadius: RAIL_GROOVE_W / 2, backgroundColor: T.surface2 }} />
         {/* 아래에서 지금 값까지만 노랑이 찬다. */}
@@ -245,8 +252,8 @@ function VSlider({ label, value, min, max, step = 1, onCommit, bubble, disabled,
 }
 // 말풍선 껍데기. 모서리·테두리·글자를 다른 도구와 같은 언어로 쓴다.
 function RailBubble({ children, testID }: { children: React.ReactNode; testID?: string }) {
-  return <View testID={testID} style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height: RAIL_BUBBLE_H, paddingHorizontal: 5,
-    borderRadius: 10, backgroundColor: T.paper, borderWidth: 1, borderColor: T.line, ...Elev[1] }}>{children}</View>;
+  return <View testID={testID} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3,
+    width: RAIL_BUBBLE_W, height: RAIL_BUBBLE_H, borderRadius: 10, backgroundColor: T.paper, borderWidth: 1, borderColor: T.line, ...Elev[1] }}>{children}</View>;
 }
 const ALL_TOOLS: [Tool, string, IconName, string][] = [['pen', '펜', 'fountain-pen-tip', '그리기 도구 펜'], ['eraser', '지우개', 'eraser', '지우개'], ['fill', '채우기', 'format-color-fill', '채우기'], ['select', '선택', 'select-drag', '선택']];
 const STAB_LEVELS = [['light', '약'], ['medium', '중'], ['strong', '강']] as const;
@@ -396,6 +403,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const inkable = tool === 'pen' && editing;
   // 말풍선 안의 원. 굵기를 눈으로 가늠하게 하되 말풍선 크기는 바뀌지 않도록 4~12 안에 둔다.
   const dotFor = (n: number) => Math.max(4, Math.min(12, Math.round(3 + n * 9 / 48)));
+  // 기둥 홈의 길이. 아직 한 번도 재지 않았을 때(첫 그림)는 화면 높이로 어림한다 — 재고 나면 그 값을 쓴다.
+  const railTrack = railTrackOf(canvasArea || Math.max(200, windowHeight - insets.top - insets.bottom - 52 - 48 - BASE_H));
   const tap = (name: string) => { if (PROBE) console.log('SELPROBE ' + JSON.stringify({ type: 'ui', what: name, t: Date.now() })); };
   // 조용한 자동저장이 도는 동안 캔버스는 다른 명령을 받지 않는다. 그 사이 누른 도구·색·굵기는 버리지 않고 모았다가
   // 저장이 끝나면 보낸다. 자동저장 중에 누른 완성·닫기도 잃지 않고 저장이 끝난 뒤 이어서 한다.
@@ -848,7 +857,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 크기도 배율도 그대로다. 창 높이는 미리 정해 두어, 목록과 세부 설정을 오가도 창이 커졌다
   // 작아졌다 하지 않는다. 보통 세로 화면에서 네 줄이 통째로 보이는 높이를 아래에서 보장한다.
   const brushRoom = Math.max(160, windowHeight - insets.top - insets.bottom - 16);
-  const BRUSH_ROW_H = 70;
+  const BRUSH_ROW_H = 72;
   const brushWindowH = Math.min(brushRoom, Math.max(Math.round(brushRoom * .62), 48 + 48 + BRUSH_ROW_H * 4 + 12));
   const closeBrush = () => { ease(); setPanel(null); setFavEdit(false); setPinning(null); setBrushDetail(false); };
   closeBrushRef.current = closeBrush;
@@ -922,7 +931,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               </View>
               {/* 견본 칸 — 남은 가로폭을 전부 쓴다. 실제 브러시 엔진이 낸 획이다. */}
               <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
-                <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '100%', height: 34, tintColor: color }} resizeMode="contain" />
+                <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '100%', height: 40, tintColor: color }} resizeMode="contain" />
               </View>
               {b.pro && <ProTag />}
               {/* 표시 자리는 고르든 말든 같은 너비다 — 고를 때 줄 안이 밀리지 않는다. */}
@@ -1115,17 +1124,17 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       {/* 왼쪽 조절대 + 캔버스. 조절대는 **늘 같은 자리를 차지한다** — 움직이기 탭에서 내용만 비우고
           자리는 남겨, 탭을 오가도 정사각 캔버스의 크기가 달라지지 않는다. */}
       <View style={{ flex: 1, flexDirection: 'row', backgroundColor: C.bg }}>
-      <View testID="조절대" style={{ width: RAIL_W, paddingLeft: 4, paddingTop: 10, paddingBottom: 14 }}>
+      <View testID="조절대" style={{ width: RAIL_W, paddingLeft: 4, paddingTop: 10, paddingBottom: 14, justifyContent: 'space-between' }}>
         {tab === 'draw' && !typing && <>
-          <VSlider testID="굵기 조절대" label="굵기" a11yLabel={tool === 'eraser' ? '지우개 굵기' : '브러시 굵기'}
+          <VSlider testID="굵기 조절대" label="굵기" height={railTrack} a11yLabel={tool === 'eraser' ? '지우개 굵기' : '브러시 굵기'}
             value={width} min={1} max={48} step={1} disabled={!sizable}
             onCommit={n => setWidth(n, true)}
             bubble={n => <RailBubble testID="굵기 말풍선">
               <View style={{ width: dotFor(n), height: dotFor(n), borderRadius: dotFor(n) / 2, backgroundColor: tool === 'eraser' ? C.paper : color, borderWidth: 1, borderColor: C.lineStrong }} />
               <Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>{Math.round(n)}</Text>
             </RailBubble>} />
-          <View style={{ height: 14 }} />
-          <VSlider testID="불투명도 조절대" label="불투명도" a11yLabel="브러시 불투명도"
+          <View style={{ height: 20 }} />
+          <VSlider testID="불투명도 조절대" label="불투명도" height={railTrack} a11yLabel="브러시 불투명도"
             value={Math.round((effectiveBrush.opacity ?? 1) * 100)} min={10} max={100} step={5} disabled={!inkable}
             onCommit={n => changeBrush({ opacity: Math.max(.1, Math.min(1, n / 100)) }, true)}
             bubble={n => <RailBubble testID="불투명도 말풍선">
@@ -1133,7 +1142,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             </RailBubble>} />
         </>}
       </View>
-      <View testID="캔버스 영역" style={{ flex: 1, alignItems: 'center', justifyContent: tab === 'motion' ? 'flex-start' : 'center', backgroundColor: C.bg }}
+      <View testID="캔버스 영역" style={{ flex: 1, alignItems: 'center', justifyContent: tab === 'motion' ? 'flex-start' : 'center', backgroundColor: C.surface2 }}
         onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; const side = Math.floor(Math.min(w, h)); if (side > 0 && side !== canvasSide) setCanvasSide(side); if (h > 0 && Math.round(h) !== canvasArea) setCanvasArea(Math.round(h)); if (w > 0 && Math.round(w) !== canvasWide) setCanvasWide(Math.round(w)); }}>
         {/* 캔버스 틀: 네이티브 WebView 는 크기 지정을 무시하고 영역 전체를 채워, 캔버스가 위에 붙고 아래에 빈 띠가 남았다(40차 실기기 bounds 0,381–1080,1882).
             정사각 틀로 감싸 잘라 두면 WebView 가 틀만큼만 차지하고, 그리기 탭에서는 영역 가운데·움직이기 탭에서는 위에 선다. */}
@@ -1511,7 +1520,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             onPress={() => { ease(); setPanel('brush'); setBrushDetail(false); setBrushGroup(brushInfo(currentBrushKey).group); setDrawRail(false); setRefRail(false); setCaptionOpen(false); }}
             style={({ pressed }) => ({ width: 56, minHeight: 62, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: C.radius.button,
               backgroundColor: pressed ? C.fill : 'transparent' })}>
-            <MaterialCommunityIcons name="dots-grid" size={20} color={C.muted} />
+            <MaterialCommunityIcons name="view-grid-outline" size={20} color={C.muted} />
             <Text style={{ fontSize: 11, fontWeight: '600', color: C.muted }}>전체</Text>
           </Pressable>
         </View>
@@ -1710,11 +1719,12 @@ function GuideStrip({ title, hint, artwork, collapsed, onCollapse, onClose, onUn
   </View>;
 }
 // Hand-drawn eye: filled pupil when shown, struck through when hidden.
+// 45.35: 손으로 그린 눈 대신 다른 아이콘과 같은 집합(MaterialCommunityIcons)에서 가져온다 —
+// 한 줄 안에서 연필·눈·점 셋의 선 굵기와 크기가 어긋나 보이던 자리다.
 function EyeToggle({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
-  const tint = on ? T.ink : T.faint;
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ checked: on }} onPress={onPress} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}>
-    <View style={{ width: 22, height: 15, borderRadius: 8, borderWidth: 1.6, borderColor: tint, alignItems: 'center', justifyContent: 'center' }}>{on && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: tint }} />}</View>
-    {!on && <View style={{ position: 'absolute', width: 26, height: 1.6, borderRadius: 1, backgroundColor: tint, transform: [{ rotate: '-24deg' }] }} />}
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ checked: on }} onPress={onPress}
+    style={({ pressed }) => ({ width: T.tap, height: T.tap, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : 'transparent' })}>
+    <MaterialCommunityIcons name={on ? 'eye-outline' : 'eye-off-outline'} size={20} color={on ? T.ink : T.faint} />
   </Pressable>;
 }
 // 하단에서 올라오는 설정 패널의 공통 껍데기.
@@ -1858,7 +1868,7 @@ function Swatch({ color, selected, onPress, size = 34, label, round }: { color: 
 // 덮는다. 늘릴 때 기기가 픽셀 사이를 메우므로 단이 생기지 않는다. 두 장은 색과 무관해서
 // 어떤 색상에서도 같은 판이 나온다 — 색을 바꿀 때마다 그림을 다시 만들지 않는다.
 // (그라디언트 라이브러리를 새로 넣지 않는다: 네이티브 구성이 달라진다.)
-const FIELD_H = 150, HUE_W = 44, HUE_BAR_W = 22, KNOB = 24;
+const FIELD_H = 132, HUE_W = 44, HUE_BAR_W = 22, KNOB = 24;
 const SAT_MASK = require('../../assets/art/field-sat.png');
 const VAL_MASK = require('../../assets/art/field-val.png');
 const HUE_MASK = require('../../assets/art/hue-bar-v.png');
