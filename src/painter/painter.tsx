@@ -195,7 +195,11 @@ export const RAIL_W = 72;
 const RAIL_HANDLE_H = 34, RAIL_HANDLE_W = 20, RAIL_GROOVE_X = 7, RAIL_GROOVE_W = 6;
 // 홈의 길이. 아래위로 하나씩 서므로 캔버스 높이의 절반을 나눠 갖되, 시안의 비율을 넘지 않는다 —
 // 캔버스가 길다고 노란 기둥 둘이 화면을 지배하면 안 된다. 짧은 화면에서는 120dp 까지 줄어든다.
-const RAIL_TRACK_MAX = 208, RAIL_TRACK_MIN = 108, RAIL_LABEL_H = 19;
+// 기둥의 위아래 여백(24) + 두 홈 사이(20) + 라벨 둘을 빼고 남는 높이를 둘로 나눈다.
+// 짧은 화면(320×568)에서는 하한 56dp 까지 줄어든다 — 108dp 를 고집했더니 기둥이 캔버스 영역 밖으로
+// 밀려나 불투명도 홈이 아래 줄에 잘렸다. 잘려서 못 쓰는 것보다 짧아도 쓰는 편이 낫다.
+// 접근성 한 걸음(increment/decrement)은 홈 길이와 무관하게 늘 정확히 한 칸씩 움직인다.
+const RAIL_TRACK_MAX = 208, RAIL_TRACK_MIN = 56, RAIL_LABEL_H = 19;
 const railTrackOf = (area: number) => Math.max(RAIL_TRACK_MIN, Math.min(RAIL_TRACK_MAX, Math.floor((area - 24 - 20 - RAIL_LABEL_H * 2) / 2)));
 // 말풍선은 손잡이 오른쪽에 붙어 함께 오르내린다. 손잡이 자리에 매여 있으므로 조절이 끝나면
 // 남아 떠도는 표시가 없다.

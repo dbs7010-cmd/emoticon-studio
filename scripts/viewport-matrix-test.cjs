@@ -136,7 +136,10 @@ const rows = [];
     const sizer = tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '브러시 굵기')[0];
     assert.ok(sizer, tag + ': 굵기 조절대');
     const bandStyle = flat(sizer.props.style);
-    assert.ok(bandStyle.height >= 108 && bandStyle.height <= 208, tag + ': 조절대 홈 길이 108~208dp: ' + bandStyle.height);
+    assert.ok(bandStyle.height >= 56 && bandStyle.height <= 208, tag + ': 조절대 홈 길이 56~208dp: ' + bandStyle.height);
+    // 기둥 전체가 캔버스 영역 높이 안에 든다 — 잘려 나가면 아래쪽 조절을 아예 쓸 수 없다.
+    const railNeeds = 24 + 20 + (19 + bandStyle.height) * 2;
+    assert.ok(railNeeds <= area.height, tag + ': 기둥이 캔버스 영역 안에 든다 ' + railNeeds + ' ≤ ' + area.height);
     assert.notEqual(bandStyle.position, 'absolute', tag + ': 캔버스 위에 겹치지 않는다');
     const rail = byTestID('조절대')[0];
     assert.ok(rail, tag + ': 왼쪽 기둥');

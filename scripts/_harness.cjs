@@ -94,7 +94,10 @@ async function ready(extra = {}) {
   // 45.35: 가로에서 **왼쪽 조절대 기둥을 뺀다**. 빼지 않으면 캔버스가 제 자리보다 넓게 그려져
   // 기둥 위로 넘쳐 나오고, 검토 그림만 기기와 다르게 보인다(실제로 그렇게 보였다).
   const { RAIL_W, BASE_H } = load('src/painter/painter.tsx');
-  const area = { width: viewport.width - RAIL_W, height: viewport.height - 24 - 52 - 48 - BASE_H };
+  // 좁은 화면(360dp 미만)에서는 머리줄의 명령 묶음이 둘째 줄로 내려간다(painter 의 cmdStacked 규칙).
+  // 그만큼 캔버스 영역이 낮아진다 — 빼지 않으면 검토 그림에서만 왼쪽 기둥이 아래 줄에 잘린다.
+  const stacked = viewport.width < 360 ? 44 : 0;
+  const area = { width: viewport.width - RAIL_W, height: viewport.height - 24 - 52 - stacked - 48 - BASE_H };
   const box = tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
   if (box) await act(async () => box.props.onLayout({ nativeEvent: { layout: area } }));
 }
@@ -190,8 +193,11 @@ function seed(count) {
 }
 
 // 화면을 차례로 열고, 열릴 때마다 cb(id, title, tree, flat) 를 부른다.
-async function walk(width, cb) {
+// 45.35: 높이도 받는다. 예전에는 폭만 바꿔서, 320×568 로 찍어도 화면은 **844 높이로 배치된 뒤**
+// 568 에서 잘렸다 — 짧은 화면의 문제를 보는 것이 아니라 없는 문제를 만들어 보고 있었다.
+async function walk(width, cb, height) {
   viewport.width = width;
+  if (height) viewport.height = height;
   for (const [id, title, open] of SCREENS) {
     await open();
     await cb(id, title, tree, flat);

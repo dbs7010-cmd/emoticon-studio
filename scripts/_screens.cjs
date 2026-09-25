@@ -198,7 +198,7 @@ const PAGE = (id, title, body) => `<!doctype html>
     fs.writeFileSync(file, PAGE(id, title, body));
     made.push({ id, title, file: id + '.html', bytes: fs.statSync(file).size, realImages: assets.ok, missingImages: assets.missing.slice() });
     console.log('  ' + id.padEnd(16) + ('실제 그림 ' + assets.ok + '장').padEnd(14) + (assets.missing.length ? '· 이 렌더에 없는 그림 ' + assets.missing.length + '장' : '') + '  ' + title);
-  });
+  }, HEIGHT);
   // 비교용 목록: 한 줄에 하나씩, 열어 볼 링크와 함께.
   const index = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>임티제작소 화면 목록 · 390dp</title>
 <style>body{margin:0;padding:28px;background:#14161A;color:#E7E9EE;font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif}
