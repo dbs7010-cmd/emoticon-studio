@@ -42,4 +42,14 @@
 
 ## 4. 검수 APK
 
-(빌드 후 기록)
+| 항목 | 값 |
+|---|---|
+| 파일 | `dist/emoticon-studio-1.0.0-vc1-internal-review-714c934-arm64.apk` |
+| 크기 | 41,000,776 bytes |
+| SHA-256 | `8cb8b2dc1f4b4779e7f495ae070e13bb9addbf391b723cb1cb59e2ffcf505c17` |
+| 소스 커밋 | `714c934` |
+| 구성 | 내부 검수(`internalReview: true` 번들 확인) · arm64-v8a · 디버그 서명 · **스토어 출시본 아님** |
+| 빌드 | `:app:assembleRelease` · BUILD SUCCESSFUL in 8m 12s · ASCII 빌드 환경(`GRADLE_USER_HOME=C:\gradle-home`, `TEMP=C:\build-temp`) |
+
+번들 확인: '저장하고 다음 칸' · '이 칸에서 이 참고를 없앱니다' · 레이어 끌기 안내 **있음**, 옛 '이 세트의 모든 칸에서…' · 옛 회색 바둑판 CSS **없음**.
+설치·실행은 확인하지 않았다 — 실기기 미검증.
