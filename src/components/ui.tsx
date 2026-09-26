@@ -11,8 +11,9 @@ import type { LocalImage } from '../types';
 // · 바탕은 따뜻한 크림(차가운 회색을 걷었다). 흰 표면이 그 위에 스티커처럼 붙는다.
 // · 노랑(#FFCC2E)은 지금 할 일(저장·새로 만들기)과 고른 것에만 넓게 쓴다. 넓은 노란 면은 화면에 하나.
 // · 대비색: 보라(PRO) · 초록(저장됨·완성) · 파스텔(감정 카드). 경고색은 정말 경고일 때만.
-// · 스티커 문법: 누르는 주요 표면과 고른 것은 2px 짙은 테두리 + 딱 떨어지는 그림자(Pop). 목록 줄은 얇은 선 그대로 —
-//   모든 것에 테두리를 두르면 눈이 피로하다.
+// · 테두리 절충안(45.39 사용자 확정 — 검정이 모든 카드를 두르니 '뜬금없고 통일성이 약하다'):
+//   검정 2px(+ 딱 떨어지는 그림자 Pop)는 **누를 노란 버튼**과 **고른 것**에만 쓴다. 그래서 검정이 '누를 것·지금 고른 것'을 뜻한다.
+//   카드·캔버스·안내·목록 상자는 따뜻한 갈색 선 + 부드러운 그림자(Card · Paper). 목록 줄은 얇은 선 그대로.
 // · 노랑 위 글자는 언제나 짙은 색(흰 글씨 금지). 노랑을 글자색으로 쓰지 않는다.
 // 이 앱은 카카오 이모티콘 제출을 돕지만 카카오가 만든 앱이 아니다. 카카오의 노랑(#FEE500)·로고·캐릭터·화면 구성을 따라 하지 않는다.
 export const T = {
@@ -42,7 +43,8 @@ export const T = {
   pro: '#5B47E0', proSoft: '#ECE8FF',            // PRO 대비색(노랑의 반대편 보라)
   mint: '#D5F2E3', blue: '#E3F1FF', lavender: '#ECE8FF',
   lilac: '#DCD3FF', sky: '#CDEBFF', coral: '#FFD9CC',   // 감정 카드 파스텔
-  edge: '#2A2320', stroke: 2,                            // 스티커 테두리
+  edge: '#2A2320', stroke: 2,                            // 검정 테두리 — 노란 버튼·고른 것에만
+  cardLine: '#E0CFAF', paperLine: '#D6C3A0',             // 카드·캔버스의 따뜻한 갈색 선
   radius: { xs: 8, sm: 12, md: 16, lg: 20, xl: 24, chip: 10, button: 14, card: 20 },
   gap: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
   tap: 48, // 편한 손가락 자리
@@ -72,6 +74,16 @@ export const Elev = {
   0: {},
   1: { shadowColor: '#5A4020', shadowOpacity: 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   2: { shadowColor: '#5A4020', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: -3 }, elevation: 8 },
+} as const;
+// 카드(홈 세트·가이드·목록 상자·대화 상자·안내)와 캔버스 종이. 검정 없이 따뜻한 선과 부드러운 그림자로 층을 가른다.
+export const Card = {
+  border: { borderWidth: 1.5, borderColor: T.cardLine },
+  shadow: { boxShadow: '0px 3px 0px #EBDDC2' },
+  float: { boxShadow: '0px 8px 24px rgba(90, 64, 32, 0.16)' },
+} as const;
+export const Paper = {
+  border: { borderWidth: 1.5, borderColor: T.paperLine },
+  shadow: { boxShadow: '0px 6px 18px rgba(90, 64, 32, 0.14)' },
 } as const;
 export const Pop = {
   border: { borderWidth: T.stroke, borderColor: T.edge },
@@ -134,10 +146,10 @@ export function Action({ title, onPress, disabled = false, primary = false, busy
           : kind === 'danger' ? T.dangerSoft
           : kind === 'ghost' ? (pressed ? T.fill : 'transparent')
           : (pressed ? T.fill : T.paper),
-        // 스티커 문법(45.39): 주요·보조 버튼은 2px 짙은 테두리 + 딱 떨어지는 그림자. 눌리면 그림자를 거두고 내려앉는다.
-        borderWidth: kind === 'primary' || kind === 'secondary' ? T.stroke : 0, borderColor: off ? T.lineStrong : T.edge,
-        ...(sticker && !pressed ? (kind === 'primary' ? Pop.shadow : Pop.small) : {}),
-        ...(sticker && pressed ? Pop.pressed : {}),
+        // 절충안(45.39): 노란 주요 버튼만 검정 테두리 + 딱 떨어지는 그림자(눌리면 내려앉는다). 보조 버튼은 카드와 같은 갈색 선.
+        borderWidth: kind === 'primary' ? T.stroke : kind === 'secondary' ? 1.5 : 0,
+        borderColor: kind === 'primary' ? (off ? T.lineStrong : T.edge) : T.cardLine,
+        ...(sticker && kind === 'primary' ? (pressed ? Pop.pressed : Pop.shadow) : {}),
         opacity: off && kind !== 'primary' ? .5 : kind === 'danger' && pressed ? .8 : 1,
       };
     }}>
@@ -165,7 +177,7 @@ export function Segmented<K extends string>({ items, value, onChange, testID, de
       return <Pressable key={item.key} accessibilityRole="button" accessibilityLabel={item.a11y ?? item.label} accessibilityState={{ selected: on }} onPress={() => onChange(item.key)}
         hitSlop={{ top: dense ? 4 : 2, bottom: dense ? 4 : 2 }}
         style={{ flex: 1, minHeight: dense ? 40 : 44, borderRadius: 11, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6,
-          backgroundColor: on ? T.paper : 'transparent', borderWidth: on ? T.stroke : 0, borderColor: on ? T.edge : 'transparent', ...(on ? Pop.small : {}) }}>
+          backgroundColor: on ? T.paper : 'transparent', borderWidth: on ? T.stroke : 0, borderColor: on ? T.edge : 'transparent' }}>
         {!!item.image && <Image source={item.image} style={{ width: 13, height: 18, opacity: on ? 1 : .7 }} resizeMode="contain" />}
         {!!item.icon && <MaterialCommunityIcons name={item.icon} size={16} color={on ? T.ink : T.muted} />}
         <Text numberOfLines={1} style={{ fontSize: dense ? 13 : 14, fontWeight: on ? '800' : '600', color: on ? T.ink : T.muted }}>{item.label}</Text>
@@ -296,7 +308,7 @@ export function ProTag() {
 }
 export function Dialog({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return <Modal transparent animationType="fade" onRequestClose={onClose}><View style={{ flex: 1, backgroundColor: '#1716144D', justifyContent: 'center', padding: 20 }}>
-    <View accessibilityViewIsModal style={{ maxHeight: '82%', backgroundColor: C.paper, borderRadius: T.radius.xl, paddingHorizontal: T.gap.xl, paddingTop: T.gap.md, paddingBottom: T.gap.xl, gap: T.gap.sm, ...Pop.border, ...Pop.shadow }}>
+    <View accessibilityViewIsModal style={{ maxHeight: '82%', backgroundColor: C.paper, borderRadius: T.radius.xl, paddingHorizontal: T.gap.xl, paddingTop: T.gap.md, paddingBottom: T.gap.xl, gap: T.gap.sm, ...Card.border, ...Card.float }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={styles.subtitle}>{title}</Text><Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={{ width: T.tap, height: T.tap, marginRight: -12, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="close" size={20} color={T.muted} /></Pressable></View>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 12 }}><View style={{ gap: 12 }}>{children}</View></ScrollView>
     </View>
@@ -310,7 +322,7 @@ export function Preview({ image, label, size = 140 }: { image?: LocalImage; labe
 }
 export const styles = StyleSheet.create({
   page: { padding: T.gap.lg, gap: T.gap.md, paddingBottom: 28, backgroundColor: C.bg },
-  card: { padding: T.gap.lg, gap: T.gap.sm, backgroundColor: C.paper, borderRadius: T.radius.lg, borderWidth: T.stroke, borderColor: C.edge, boxShadow: `3px 3px 0px ${T.edge}` },
+  card: { padding: T.gap.lg, gap: T.gap.sm, backgroundColor: C.paper, borderRadius: T.radius.lg, borderWidth: 1.5, borderColor: C.cardLine, boxShadow: '0px 3px 0px #EBDDC2' },
   title: { fontSize: 26, fontFamily: Font.display, fontWeight: '400', color: C.ink },
   subtitle: { fontSize: 20, fontFamily: Font.display, fontWeight: '400', color: C.ink },
   label: { fontSize: 13, fontWeight: '700', color: C.muted },

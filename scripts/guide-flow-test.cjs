@@ -287,7 +287,7 @@ async function echoReferences(scene) {
     await act(async () => area().props.onLayout({ nativeEvent: { layout: { width: 390, height: 300 } } }));
     const withRef = { ...square().props.style };
     assert.equal(withRef.width, withRef.height, '줄어든 자리에서도 캔버스는 정사각이다');
-    assert.equal(withRef.width, 300 - 20, '남은 높이에 맞춰진다(min(폭, 높이) − 둘레 여백 10×2, 45.37)');
+    assert.equal(withRef.width, 300 - 16, '남은 높이에 맞춰진다(min(폭, 높이) − 둘레 여백 8×2, 45.39)');
     await press('표현 예시 닫기');
     await act(async () => area().props.onLayout({ nativeEvent: { layout: { width: 390, height: 420 } } }));
     const without = { ...square().props.style };

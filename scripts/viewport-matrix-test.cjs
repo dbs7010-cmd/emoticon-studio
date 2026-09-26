@@ -43,7 +43,7 @@ const load = loader({ ...mocks, './src/services/images': images, '../services/im
 const { createProject } = load('src/project.ts');
 const { saveStore } = load('src/services/storage.ts');
 const App = load('App.tsx').default;
-const { BASE_H, RAIL_W, CANVAS_GAP } = load('src/painter/painter.tsx');
+const { BASE_H, BAR_H, RAIL_W, CANVAS_GAP } = load('src/painter/painter.tsx');
 
 let tree;
 const labelled = label => tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === label);
@@ -68,9 +68,13 @@ async function openPainter() {
   const init = sent().filter(m => m.type === 'init').at(-1);
   await message({ type: 'state', undo: true, redo: false, dirty: false, activeLayerId: 'draw-1', activeReferenceId: null, caption: { text: '고마워요', place: 'bottom', color: '#242424' }, layers: init.layers.map(l => ({ id: l.id, name: l.name, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 })), references: [] });
   await message({ type: 'initialized' });
-  // 기기가 주는 캔버스 영역 크기: 화면 - 상태바 - 머리 - 탭 - 기본 도구 줄, 그리고 가로에서는
-  // 왼쪽 세로 조절대의 기둥(45.35 승인 시안)을 뺀다.
-  const area = { width: viewport.width - RAIL_W, height: viewport.height - STATUS - NAV - HEADER - TABS - BASE_H };
+  // 기기가 주는 작업면 크기: 화면 - 상태바 - 머리 - 탭 - 기본 도구 줄. 앱은 이것으로 캔버스가 더 커지는 배치를 고른다(45.39):
+  // 위 조절 줄이면 캔버스 영역 = 폭 × (높이 - 조절 줄), 옆 조절대면 (폭 - 기둥) × 높이.
+  const stage = { width: viewport.width, height: viewport.height - STATUS - NAV - HEADER - TABS - BASE_H };
+  await act(async () => tree.root.findAll(n => n.type === 'View' && n.props.testID === '작업면')[0].props.onLayout({ nativeEvent: { layout: stage } }));
+  const sideBar = Math.floor(Math.min(stage.width, stage.height - BAR_H) - CANVAS_GAP * 2), sideRail = Math.floor(Math.min(stage.width - RAIL_W, stage.height) - CANVAS_GAP * 2);
+  const rail = sideRail > sideBar;
+  const area = rail ? { width: stage.width - RAIL_W, height: stage.height, rail, sideBar, sideRail } : { width: stage.width, height: stage.height - BAR_H, rail, sideBar, sideRail };
   const container = tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
   await act(async () => container.props.onLayout({ nativeEvent: { layout: area } }));
   return area;
@@ -122,6 +126,7 @@ const rows = [];
   p.slots = p.slots.map((s, i) => i < 3 ? { ...s, finalImage: { path: 'image-a.png', width: 360, height: 360 }, done: true } : s);
   // 568 은 지시서의 가장 작은 화면(320×568)이다. 45.36 까지 이 높이가 빠져 있어, 그 화면의 브러시 창 줄 수를 아무도 재지 않았다.
 const heights = [568, 640, 720, 800, 900, 1000];
+  const rows45 = [];
   const widths = [320, 360, 390, 412];
   for (const height of heights) for (const width of widths) {
     viewport.width = width; viewport.height = height;
@@ -132,44 +137,58 @@ const heights = [568, 640, 720, 800, 900, 1000];
     const screen = height - STATUS - NAV;
     const row = { viewport: `${width}×${height}`, canvas: side, canvasShare: +(side * side / (width * screen)).toFixed(2) };
     const tag = `${width}×${height}`;
-    // 기본 Painter: 캔버스 한 변은 280dp 이상, 다만 **가로가 그것을 허락할 때**다.
-    // 45.35 승인 시안이 캔버스 왼쪽에 조절대 기둥을 세웠으므로, 정사각 캔버스의 한 변은
-    // 아무리 커도 (화면 폭 - 기둥) 을 넘을 수 없다. 320dp 화면에서는 그 값이 256dp 다 —
-    // 기하학적 상한이지 결함이 아니다. 손가락 자리(기둥 48dp·도구 48dp)는 어디서도 줄이지 않았다.
-    const floor = Math.min(280, viewport.width - RAIL_W - CANVAS_GAP * 2);
-    assert.ok(side >= floor, tag + ': 캔버스 한 변 ' + floor + 'dp 이상, got ' + side);
-    // 45.35 승인 시안: 굵기와 불투명도는 캔버스 **왼쪽 밖** 기둥에서 세로로 끈다.
-    // 캔버스 위에 겹치지 않고, 손가락이 닿는 폭을 갖고, 화면에 하나뿐이다.
+    // 45.39: 캔버스는 기기가 허락하는 만큼 **최대로** 선다 — 폭과 (영역 높이) 중 작은 쪽에서 둘레 여백만 뺀다.
+    // 그리고 45.38(왼쪽 세로 조절대 72dp + 여백 10) 보다 **작아지는 화면은 하나도 없다**.
+    const oldSide = Math.floor(Math.min(width - 72, height - STATUS - NAV - HEADER - TABS - BASE_H) - 20);
+    assert.equal(side, Math.min(area.width, area.height) - CANVAS_GAP * 2, tag + ': 캔버스는 남는 자리를 꽉 채운다');
+    assert.ok(side >= oldSide, tag + ': 45.38 보다 작아지지 않는다 ' + oldSide + ' → ' + side);
+    row.before = oldSide;
+    // 굵기·불투명도: 캔버스 **위** 조절 줄(대부분의 화면) 또는 세로가 아주 짧은 화면에서만 **옆** 조절대. 둘 중 하나만, 캔버스에 겹치지 않는다.
+    row.layout = area.rail ? 'rail' : 'bar';
+    assert.equal(side, Math.max(area.sideBar, area.sideRail), tag + ': 더 큰 캔버스를 주는 배치를 골랐다');
     const sizer = tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '브러시 굵기')[0];
-    assert.ok(sizer, tag + ': 굵기 조절대');
-    const bandStyle = flat(sizer.props.style);
-    assert.ok(bandStyle.height >= 56 && bandStyle.height <= 208, tag + ': 조절대 홈 길이 56~208dp: ' + bandStyle.height);
-    // 조절대는 **종이 옆**에 붙는다(45.36-R1 G1): 조절대 묶음은 캔버스 한 변과 같은 높이로, 캔버스와 같은 세로 가운데에 선다.
-    // 그래서 굵기 라벨 위 끝은 캔버스 위 끝 아래, 불투명도 홈 아래 끝은 캔버스 아래 끝 위에 있다.
-    const railBody = byTestID('조절대 내용')[0];
-    assert.ok(railBody, tag + ': 조절대 묶음');
-    const bodyStyle = flat(railBody.props.style);
-    assert.equal(bodyStyle.height, side, tag + ': 조절대 묶음 높이 = 캔버스 한 변');
-    const railNeeds = (bodyStyle.paddingVertical ?? 0) * 2 + 20 + (19 + bandStyle.height) * 2;
-    assert.ok(railNeeds <= side, tag + ': 라벨·홈 둘이 캔버스 한 변 안에 든다 ' + railNeeds + ' ≤ ' + side);
-    // 그리기 탭: 캔버스와 조절대 묶음이 둘 다 영역의 **세로 가운데**에 선다(45.37) — 조절대의 위아래 끝이 종이의 위아래 끝과 맞는다.
-    assert.equal(flat(byTestID('조절대')[0].props.style).justifyContent, 'center', tag + ': 조절대 묶음은 세로 가운데');
-    assert.equal(flat(byTestID('캔버스 영역')[0].props.style).justifyContent, 'center', tag + ': 캔버스도 세로 가운데');
-    row.railSpan = railNeeds;
-    assert.notEqual(bandStyle.position, 'absolute', tag + ': 캔버스 위에 겹치지 않는다');
-    const rail = byTestID('조절대')[0];
-    assert.ok(rail, tag + ': 왼쪽 기둥');
-    const railStyle = flat(rail.props.style);
-    // 기둥 폭에서 안쪽 여백을 뺀 것이 실제로 손가락이 닿는 폭이다.
-    assert.ok(railStyle.width - (railStyle.paddingLeft ?? 0) >= 48, tag + ': 조절대는 손가락이 닿는 폭이다: ' + (railStyle.width - (railStyle.paddingLeft ?? 0)));
-    assert.equal(rail.findAll(n => n.props.accessibilityRole === 'adjustable').length, 2, tag + ': 기둥에는 굵기와 불투명도 둘뿐이다');
+    assert.ok(sizer, tag + ': 굵기 조절');
+    const holder = byTestID(area.rail ? '조절대' : '조절 줄')[0];
+    assert.ok(holder, tag + ': ' + (area.rail ? '옆 조절대' : '조절 줄'));
+    assert.equal(byTestID(area.rail ? '조절 줄' : '조절대').length, 0, tag + ': 다른 배치는 그리지 않는다');
+    assert.equal(holder.findAll(n => n.props.accessibilityRole === 'adjustable').length, 2, tag + ': 굵기와 불투명도 둘뿐이다');
+    if (!area.rail) {
+      assert.equal(flat(holder.props.style).height, BAR_H, tag + ': 조절 줄 높이는 두 탭 모두 같다');
+      assert.ok(BAR_H >= 44, tag + ': 조절 줄은 손가락이 닿는 높이다');
+      assert.equal(flat(sizer.props.style).height, BAR_H, tag + ': 굵기 막대는 줄 높이 전체가 누르는 자리다');
+    } else {
+      assert.ok(flat(holder.props.style).width - (flat(holder.props.style).paddingLeft ?? 0) >= 48, tag + ': 옆 조절대는 손가락이 닿는 폭이다');
+    }
     const canvasFrame = tree.root.findAll(n => n.type === 'View' && n.props.collapsable === false)[0];
-    assert.equal(canvasFrame.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 0, tag + ': 캔버스 틀 안에 조절대가 없다');
-    assert.equal(byTestID('굵기 말풍선').length, 1, tag + ': 굵기는 손잡이 옆에서 숫자로도 말한다');
-    assert.equal(byTestID('굵기 미리보기').length, 0, tag + ': 캔버스 한가운데 검은 상자는 없다');
+    assert.equal(canvasFrame.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 0, tag + ': 캔버스 틀 안에 조절이 없다');
     const canvasArea = byTestID('캔버스 영역')[0];
-    assert.equal(canvasArea.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 0, tag + ': 굵기 조절대는 캔버스 영역 밖에 있다');
-    assert.equal(tree.root.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 1, tag + ': 조절대는 화면에 하나');
+    assert.equal(canvasArea.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 0, tag + ': 굵기 조절은 캔버스 영역 밖에 있다');
+    assert.equal(flat(canvasArea.props.style).justifyContent, 'center', tag + ': 그리기 탭 캔버스는 세로 가운데');
+    rows45.push(tag + ' ' + row.layout + ' ' + oldSide + '→' + side);
+    assert.equal(tree.root.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 1, tag + ': 굵기 조절은 화면에 하나');
+    assert.equal(byTestID('굵기 미리보기').length, 0, tag + ': 캔버스 한가운데 검은 상자는 없다');
+    // 캔버스 바깥 여백의 두 손가락 톡 = 되돌리기, 세 손가락 톡 = 다시 실행. 끌면 톡이 아니다.
+    {
+      const margin = () => byTestID('캔버스 여백')[0];
+      assert.ok(margin(), tag + ': 캔버스 여백이 손가락을 받는다');
+      const t = (n, x = 10) => ({ nativeEvent: { touches: Array.from({ length: n }, () => ({ pageX: x, pageY: 10 })), pageX: x, pageY: 10 } });
+      const tap = async n => {
+        await act(async () => margin().props.onTouchStart(t(1)));
+        for (let k = 2; k <= n; k++) await act(async () => margin().props.onTouchStart(t(k)));
+        await act(async () => margin().props.onTouchEnd(t(0)));
+      };
+      const undos = () => sent().filter(m => m.type === 'undo').length;
+      const before = undos();
+      await tap(2);
+      assert.equal(undos(), before + 1, tag + ': 여백에서 두 손가락 톡 → 되돌리기');
+      await act(async () => margin().props.onTouchStart(t(1)));
+      await act(async () => margin().props.onTouchStart(t(2)));
+      await act(async () => margin().props.onTouchMove(t(2, 60)));
+      await act(async () => margin().props.onTouchEnd(t(0)));
+      assert.equal(undos(), before + 1, tag + ': 두 손가락으로 끌면 되돌리지 않는다');
+      await tap(1);
+      assert.equal(undos(), before + 1, tag + ': 한 손가락 톡은 아무 일도 하지 않는다');
+    }
     // 기본 도구 줄 두 줄(즐겨찾기 62 + 도구 52)과 줄 사이 여백이 BASE_H 안에 들어간다 — 아래가 잘리지 않는다.
     assert.ok(6 + 62 + 6 + 52 <= BASE_H, tag + ': 기본 도구 줄 두 줄이 잘리지 않는다');
     for (const l of ['그리기 도구 펜', '지우개', '채우기', '선택', '색', '브러시 전체', '되돌리기', '다시 실행', '저장']) assert.equal(labelled(l).length, 1, tag + ': ' + l);
@@ -204,7 +223,8 @@ const heights = [568, 640, 720, 800, 900, 1000];
     const colorDock = dockHeight();
     row.color = covered(Math.max(0, colorDock.height + colorDock.bottom - BASE_H));
     assert.equal(colorDock.bottom, 0, tag + ': 색 패널은 도구 줄 자리까지 쓴다');
-    assert.ok(colorDock.height >= 260, tag + ': 색 선택과 스크롤에 필요한 높이');
+    // 45.39: 캔버스가 커진 가장 작은 화면(320×568)에서 259dp — 색판 88 + 견본 줄 + 머리가 드는 256 을 하한으로 둔다.
+    assert.ok(colorDock.height >= 256, tag + ': 색 선택과 스크롤에 필요한 높이: ' + colorDock.height);
     const colorScroll = byTestID('색 견본 스크롤')[0];
     assert.ok(colorScroll.findAll(n => n.props.accessibilityLabel === 'HEX 색 값').length, tag + ': 키보드 위에서도 색 값에 스크롤로 닿는다');
     assert.ok(tree.root.findAll(n => n.props.testID === '최근 색').length === 1, tag + ': 최근 색이 색 패널 맨 위');
@@ -349,6 +369,7 @@ const heights = [568, 640, 720, 800, 900, 1000];
   fs.writeFileSync(outDir + '/viewport-matrix.json', JSON.stringify(rows, null, 2));
   console.log('  viewport  canvas share brush detail color ref layers motion kbRoom boardTile exportCell');
   for (const r of rows) console.log('  ' + [r.viewport.padEnd(9), String(r.canvas).padStart(6), String(r.canvasShare).padStart(5), r.brush, r.brushDetail, r.color, r.reference, r.layers, r.motion, r.captionKeyboardRoom, r.boardTile, r.exportCell].join('  '));
-  console.log('PASS: viewport matrix — 568/640/720/800/900/1000 × 320/360/390/412: 캔버스는 (화면 폭 − 왼쪽 조절대) 까지 정사각으로 꽉 차고, 굵기·불투명도는 캔버스 밖 왼쪽 기둥에 세로로 하나씩, 도구 줄 두 줄 안 잘림, 브러시 창은 줄 넷이 보이는 독립 창, 색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침·설정 목록만 줄고 완성 줄은 스크롤 밖, 보드 세 칸·아래 줄, 내보내기 결과 격자 한 줄 다섯 칸 이상, 글자 배율 1.0/1.3/1.5 에서 높이 고정 상자 잘림 0곳. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).');
+  console.log(rows45.join(' · '));
+  console.log('PASS: viewport matrix — 568/640/720/800/900/1000 × 320/360/390/412: 캔버스는 기기가 허락하는 만큼 정사각으로 꽉 차고(45.38 보다 작아지는 화면 0), 굵기·불투명도는 캔버스 위 조절 줄(세로가 아주 짧은 화면만 옆 조절대)에 하나씩, 여백 두 손가락 톡 되돌리기, 도구 줄 두 줄 안 잘림, 브러시 창은 줄 넷이 보이는 독립 창, 색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침·설정 목록만 줄고 완성 줄은 스크롤 밖, 보드 세 칸·아래 줄, 내보내기 결과 격자 한 줄 다섯 칸 이상, 글자 배율 1.0/1.3/1.5 에서 높이 고정 상자 잘림 0곳. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -178,7 +178,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   // 그래서 같은 규칙: 테두리 없음, 고른 칸만 옅은 노랑 면 + 짧은 노란 밑줄, 누르는 동안 회색.
   // 한 줄에 일곱을 욱여넣던 것을 네 칸 격자로 바꿨다 — 320dp 에서 흔들기·부르르가 화면 밖에 있어 고를 수 없었고,
   // 기기에서는 칸이 36dp 로 줄어 손가락 자리(48dp)도 글자도 모자랐다.
-  const card = (on: boolean) => ({ pressed }: { pressed: boolean }) => ({ flex: 1, minHeight: 84, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: C.radius.md, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.bg, borderWidth: C.stroke, borderColor: on ? C.edge : 'transparent', ...(on ? Pop.small : {}) } as const);
+  const card = (on: boolean) => ({ pressed }: { pressed: boolean }) => ({ flex: 1, minHeight: 84, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: C.radius.md, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.bg, borderWidth: C.stroke, borderColor: on ? C.edge : 'transparent' } as const);
   const mark = (on: boolean) => <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 4, height: 3, borderRadius: 2, backgroundColor: on ? C.accent : 'transparent' }} />;
   // 다른 화면으로 가는 줄은 **목록 줄** 역할이다 — 브러시·레이어 목록처럼 카드 없이 얇은 구분선으로 가른다.
   const row = { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 4, borderBottomWidth: 1, borderColor: C.line } as const;
@@ -297,10 +297,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     </Pressable>
     </View>
 
-    {moving && <>
-      <Row label="속도" value={base.speed} min={0} max={1} onActive={setHolding} onChange={speed => set({ speed: Math.round(speed * 20) / 20 })} />
-      <Row label="세기" value={base.strength} min={0} max={1} onActive={setHolding} onChange={strength => set({ strength: Math.round(strength * 20) / 20 })} />
-    </>}
+    {/* 세기·속도는 45.39 부터 캔버스 바로 위 조절 줄에 있다(그리기의 굵기·불투명도와 같은 자리). */}
     {moving && hasCaption && <Pressable accessibilityRole="switch" accessibilityLabel="글씨도 같이 움직이기" accessibilityState={{ checked: !!base.captionMoves }}
       onPress={() => set({ captionMoves: !base.captionMoves })} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, gap: 10 }}>
       <Text style={{ flex: 1, fontSize: 13, color: C.ink }}>글씨도 같이 움직이기</Text>

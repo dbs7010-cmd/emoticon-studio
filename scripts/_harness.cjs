@@ -91,15 +91,19 @@ async function ready(extra = {}) {
   };
   await message(scene); await message({ type: 'initialized' });
   // 기기가 주는 캔버스 영역 크기. 없으면 캔버스가 0 으로 그려진다.
-  // 45.35: 가로에서 **왼쪽 조절대 기둥을 뺀다**. 빼지 않으면 캔버스가 제 자리보다 넓게 그려져
-  // 기둥 위로 넘쳐 나오고, 검토 그림만 기기와 다르게 보인다(실제로 그렇게 보였다).
-  const { RAIL_W, BASE_H } = load('src/painter/painter.tsx');
+  // 45.39: 작업면 크기를 먼저 알려 앱이 배치(위 조절 줄 · 옆 조절대)를 고르게 하고, 고른 배치대로 캔버스 영역을 준다.
+  const { RAIL_W, BAR_H, CANVAS_GAP, BASE_H } = load('src/painter/painter.tsx');
   // 머리줄은 기본 글자 크기면 320dp 에서도 한 줄이다(45.36-R1 G3). 둘째 줄은 잰 폭이 넘칠 때만 생기고,
   // 이 렌더는 글자 배율 1.0 이라 생기지 않는다. 45.36 은 한 줄로 바꾸고도 여기서 44dp 를 계속 빼,
   // 320 렌더의 캔버스 영역만 기기보다 낮게 그려졌다.
   // 45.37: 모드 줄은 어느 폭에서도 한 줄이다(좁은 화면은 되돌리기가 윗줄로 간다).
   const stacked = 0;
-  const area = { width: viewport.width - RAIL_W, height: viewport.height - 24 - 52 - stacked - 48 - BASE_H };
+  const stage = { width: viewport.width, height: viewport.height - 24 - 52 - stacked - 48 - BASE_H };
+  const stageBox = tree.root.findAll(n => n.type === 'View' && n.props.testID === '작업면')[0];
+  if (stageBox) await act(async () => stageBox.props.onLayout({ nativeEvent: { layout: stage } }));
+  const rail = Math.min(stage.width - RAIL_W, stage.height) > Math.min(stage.width, stage.height - BAR_H);
+  const area = rail ? { width: stage.width - RAIL_W, height: stage.height } : { width: stage.width, height: stage.height - BAR_H };
+  void CANVAS_GAP;
   const box = tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
   if (box) await act(async () => box.props.onLayout({ nativeEvent: { layout: area } }));
 }
@@ -117,13 +121,13 @@ const unmount = async () => { if (tree) await act(async () => tree.unmount()); t
 
 // 명세가 이름 붙인 화면들. 각 항목은 [id, 사람이 읽는 이름, 여는 법].
 // 여는 법은 홈에서 다시 시작(fresh)하거나 앞 화면에서 이어 간다.
-// 왼쪽 조절대를 잡고 끄는 중으로 만든다(45.35). 값 말풍선과 눌린 손잡이가 보이는 상태다.
+// 조절 막대를 잡고 끄는 중으로 만든다(45.39: 위 조절 줄의 가로 막대). 값 글자와 눌린 손잡이가 보이는 상태다.
 async function holdRail(label, ratio) {
   const node = () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === label)[0];
-  const H = 240, HANDLE = 34;
-  await act(async () => node().props.onLayout({ nativeEvent: { layout: { width: 60, height: H } } }));
-  await act(async () => node().props.onResponderGrant({ nativeEvent: { locationY: H, pageY: H } }));
-  await act(async () => node().props.onResponderMove({ nativeEvent: { locationY: HANDLE / 2 + (1 - ratio) * (H - HANDLE), pageY: HANDLE / 2 + (1 - ratio) * (H - HANDLE) } }));
+  const W = 120, KNOB = 24;
+  await act(async () => node().props.onLayout({ nativeEvent: { layout: { width: W, height: 44 } } }));
+  await act(async () => node().props.onResponderGrant({ nativeEvent: { locationX: 0, pageX: 0 } }));
+  await act(async () => node().props.onResponderMove({ nativeEvent: { locationX: 3, pageX: KNOB / 2 + ratio * (W - KNOB) } }));
 }
 const SCREENS = [
   ['home-empty', '홈 · 작업 없음', async () => { seed(0); await fresh(); }],

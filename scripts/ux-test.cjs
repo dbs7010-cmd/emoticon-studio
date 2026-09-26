@@ -178,7 +178,8 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
    await act(async () => speedBar().props.onResponderGrant({ nativeEvent: { pageX: 40 + x, locationX: x } }));
    await act(async () => speedBar().props.onResponderRelease({ nativeEvent: { pageX: 40 + x, locationX: x } }));
   };
-  for (const [x, expected] of [[0, 0], [50, .25], [100, .5], [200, 1]]) {
+  // 45.39 조절 줄: 손잡이(24dp)가 끝에서 잘리지 않게 홈 양 끝을 12dp 들였다 — 0 은 x=12, 1 은 x=188(폭 200).
+  for (const [x, expected] of [[0, 0], [56, .25], [100, .5], [200, 1]]) {
    await tapAt(x);
    const got = lastCommand('motion').motion.speed;
    assert.equal(got, expected, `${x}px 에서 ${expected} 이 되어야 한다, got ${got}`);
@@ -213,17 +214,10 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   // 세로 스크롤과의 다툼: 슬라이더는 자기 위에서 시작한 손가락만 잡는다.
   assert.equal(speed.props.onStartShouldSetResponder(), true, '자기 위에서 시작한 손가락은 잡는다');
   assert.equal(typeof speed.props.onMoveShouldSetResponder, 'function', '끌기도 받는다');
-  const panel=()=>tree.root.findAll(n=>n.type==='ScrollView'&&n.props.scrollEnabled!==undefined)[0];
-  assert.ok(panel(),'스크롤 여부를 제어하는 패널이 있다');
-  assert.equal(panel().props.scrollEnabled,true,'평소에는 패널이 스크롤된다');
-  await act(async()=>speed.props.onResponderGrant({nativeEvent:{locationX:100}}));
-  assert.equal(panel().props.scrollEnabled,false,'슬라이더를 잡고 있는 동안에는 스크롤이 꺼진다');
-  await act(async()=>speed.props.onResponderRelease({nativeEvent:{}}));
-  assert.equal(panel().props.scrollEnabled,true,'놓으면 다시 스크롤된다');
-  // 손가락이 중간에 취소돼도(전화가 오거나 제스처를 빼앗겨도) 잠긴 채로 남지 않는다.
-  await act(async()=>speed.props.onResponderGrant({nativeEvent:{locationX:100}}));
-  await act(async()=>speed.props.onResponderTerminate({nativeEvent:{}}));
-  assert.equal(panel().props.scrollEnabled,true,'제스처를 빼앗겨도 스크롤이 도로 켜진다');
+  // 45.39: 세기·속도는 스크롤되는 움직임 판이 아니라 캔버스 위 조절 줄에 있다 — 스크롤과 다툴 자리가 없다.
+  const bar = tree.root.findAll(n => n.props.testID === '조절 줄')[0];
+  assert.ok(bar && bar.findAll(n => n.props.accessibilityLabel === '속도' && n.props.accessibilityRole === 'adjustable').length === 1, '속도 조절은 캔버스 위 조절 줄에 있다');
+  assert.equal(tree.root.findAll(n => n.type === 'ScrollView' && n.props.keyboardShouldPersistTaps === 'handled')[0].findAll(n => n.props.accessibilityLabel === '속도').length, 0, '움직임 판 안에는 속도 조절이 없다');
   const scroller = tree.root.findAll(n => n.type === 'ScrollView' && n.props.keyboardShouldPersistTaps === 'handled')[0];
   assert.ok(scroller, '패널은 세로로 스크롤되는 자리 안에 있다');
  }
@@ -1256,18 +1250,19 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   assert.equal(labelled('선 보정').length,0,'기본 화면에는 독립 선 보정 줄이 없다');
   assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='선 종류').length,0,'선 종류 카드는 기본 화면에서 접혀 있다 at '+width+'dp');
   assert.ok(!shown().some(t=>t==='PRO'),'작업 화면 기본 상태에 PRO 표시가 없다 at '+width+'dp');
-  // 45.35 승인 시안: 굵기와 불투명도는 캔버스 **왼쪽 밖**의 세로 조절대다. 아래 가로 두 줄은 없앴다.
-  //   조절대는 하나뿐이고(둘이면 어느 쪽이 지금 값인지 알 수 없다), 값은 손잡이 옆 말풍선에만 적힌다.
+  // 45.39: 굵기와 불투명도는 캔버스 **위** 조절 줄 하나에 가로로 선다(왼쪽 세로 기둥은 캔버스를 작게 만들어 걷었다).
+  //   조절하는 자리는 하나뿐이고, 지금 값은 이름 아래 한 곳에 적힌다.
   const sizer=()=>tree.root.findAll(n=>n.props.accessibilityRole==='adjustable'&&/굵기$/.test(n.props.accessibilityLabel??''))[0];
   assert.ok(sizer(),'굵기 조절대가 있다 at '+width+'dp');
-  assert.equal(tree.root.findAll(n=>n.props.testID==='조절대').length,1,'왼쪽 조절대는 한 기둥이다 at '+width+'dp');
+  assert.equal(tree.root.findAll(n=>n.props.testID==='조절 줄').length,1,'조절 줄은 하나다 at '+width+'dp');
+  assert.equal(tree.root.findAll(n=>n.props.testID==='조절대').length,0,'왼쪽 세로 기둥은 없다 at '+width+'dp');
   assert.equal(tree.root.findAll(n=>n.props.accessibilityRole==='adjustable'&&/굵기$/.test(n.props.accessibilityLabel??'')).length,1,'굵기를 바꾸는 자리는 하나뿐이다 at '+width+'dp');
-  assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='굵기 말풍선').length,1,'굵기 값이 손잡이 옆 한 곳에 보인다 at '+width+'dp');
-  assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='불투명도 말풍선').length,1,'불투명도 값도 손잡이 옆 한 곳에 보인다 at '+width+'dp');
+  assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='굵기 점').length,1,'굵기 값 옆에 지금 굵기 점이 하나 at '+width+'dp');
+  assert.ok(shown().includes('100%'),'불투명도 값이 조절 줄에 보인다 at '+width+'dp');
   assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 미리보기').length,0,'캔버스 한가운데 검은 미리보기 상자는 없다 at '+width+'dp');
   assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 띠').length,0,'캔버스 가장자리 굵기 띠도 없다 at '+width+'dp');
-  // 손잡이와 말풍선은 레이아웃을 재기 전에도 제자리에 있다(비율 자리) — 처음 한 번 비어 보이지 않는다.
-  assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 조절대 손잡이').length,1,'굵기 손잡이가 처음부터 보인다 at '+width+'dp');
+  // 손잡이는 레이아웃을 재기 전에도 비율 자리에 있다 — 처음 한 번 비어 보이지 않는다.
+  assert.ok(styleOf(sizer().findAll(n=>n.type==='View'&&styleOf(n).borderRadius===12)[0]).left.endsWith('%'),'굵기 손잡이가 처음부터 비율 자리에 있다 at '+width+'dp');
   // 빠른 선택 줄: 카드 셋 + 전체 입구.
   const quick=tree.root.findAll(n=>n.props.testID==='빠른 브러시')[0];
   assert.ok(quick,'빠른 브러시 줄이 있다 at '+width+'dp');

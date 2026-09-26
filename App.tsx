@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import Constants from 'expo-constants';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
-import { Action, AssetSlot, Dialog, Elev, Field, IconButton, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font } from './src/components/ui';
+import { Action, AssetSlot, Dialog, Elev, Field, IconButton, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font, Card } from './src/components/ui';
 import { ASSET_SLOTS, EXPRESSION_GUIDE, HOME_NOTICE, type ExpressionExample, type ExpressionGuideCard } from './src/design/asset-slots';
 import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
 import { MotionBaker, type Baker } from './src/components/motion-baker';
@@ -32,8 +32,11 @@ const appVersion = Constants.expoConfig?.version ?? '—';
 const shownArt = (x?: { artwork?: ImageSourcePropType; display?: ImageSourcePropType } | null) => x?.display ?? x?.artwork ?? null;
 const coverOf = (card: ExpressionGuideCard) => card.artwork ?? shownArt(card.examples?.find(x => x.id === card.cover)) ?? null;
 // 홈에 올리는 표현 가이드 미리보기 셋: 서로 다른 감정·자세를 고른다(명세 §5 — 기존 예시 최대 3개).
-const HOME_GUIDE_PREVIEW = ['greeting-hello', 'greeting-excited', 'daily-good-night'] as const;
-const PREVIEW_TINT = [T.lilac, T.sky, T.coral] as const;
+// 45.39: 홈이 허전하다는 지적 — 가이드 미리보기를 셋에서 여섯(두 줄)으로. 기쁨·미안·놀람·일상을 섞어 '무엇이든 그릴 거리'가 보이게 한다.
+const HOME_GUIDE_PREVIEW = ['greeting-hello', 'greeting-excited', 'greeting-thanks', 'sad-sorry', 'surprise-gasp', 'daily-good-night'] as const;
+const PREVIEW_TINT = [T.lilac, T.sky, T.coral, T.mint, T.accentSoft, T.blue] as const;
+// 홈에서 큰 카드 아래 작은 줄로 더 보여 주는 세트 수(45.39). 세트가 여럿이어도 홈에 하나만 보여 빈 자리가 컸다.
+const HOME_MORE = 2;
 // 표현 선택의 '참고 vs 밑그림' 안내는 앱을 켠 뒤 처음 한 번만 보여 준다. 저장 파일에는 남기지 않는다.
 let guideTipShown = false;
 // A rough, hand-drawn mark: friendly, and never better drawn than the user's own work.
@@ -697,7 +700,7 @@ function Studio() {
           <Segmented dense testID="세트 분류" value={projectFilter} onChange={setProjectFilter} items={[{ key: 'all', label: '전체' }, { key: 'working', label: '작업 중' }, { key: 'done', label: '완성' }]} />
           <Segmented dense testID="세트 정렬" value={projectOrder} onChange={setProjectOrder} items={[{ key: 'recent', label: '최근 수정순' }, { key: 'name', label: '이름순' }]} />
           {!visibleProjects.length && <Text style={{ fontSize: 13, color: C.muted }}>조건에 맞는 세트가 없어요. 찾는 말이나 분류를 바꿔 보세요.</Text>}
-          <View testID="전체 작업 목록" style={{ borderRadius: T.radius.card, backgroundColor: C.paper, borderWidth: C.stroke, borderColor: C.edge, ...Pop.small, overflow: 'hidden' }}>
+          <View testID="전체 작업 목록" style={{ borderRadius: T.radius.card, backgroundColor: C.paper, ...Card.border, ...Card.shadow, overflow: 'hidden' }}>
             {visibleProjects.map((p, i) => {
               const m = setMeta(p), cover = p.slots.find(s => s.finalImage);
               return <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 12, paddingRight: 2, borderTopWidth: i ? 1 : 0, borderColor: C.line }}>
@@ -803,7 +806,7 @@ function Studio() {
                     // 대표 그림은 이 감정의 예시 중 cover 가 가리키는 것을 그대로 쓴다(카드 전용 그림이 오면 artwork 가 먼저다).
                     const cover = c.artwork ?? shownArt(c.examples?.find(x => x.id === c.cover)) ?? null;
                     return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => { c.examples?.length ? setGuideCard(c) : startFromGuide(c); }}
-                    style={({ pressed }) => ({ width: cardWidth, padding: 10, gap: 8, borderRadius: T.radius.card, backgroundColor: pressed ? C.fill : C.paper, borderWidth: C.stroke, borderColor: C.edge, ...Pop.small })}>
+                    style={({ pressed }) => ({ width: cardWidth, padding: 10, gap: 8, borderRadius: T.radius.card, backgroundColor: pressed ? C.fill : C.paper, ...Card.border })}>
                     <View style={{ width: frame, height: frame, borderRadius: 14, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       <AssetSlot name="expressionGuideArtwork" size={Math.round(frame * .8)} sourceOverride={cover} />
                     </View>
@@ -825,7 +828,7 @@ function Studio() {
               <Text numberOfLines={1} style={{ fontSize: screenWidth < 360 ? 23 : 26, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>임티제작소</Text>
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel="PRO 보기" onPress={() => setProSheet(true)} style={{ minHeight: 48, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' }}>
-              <View style={{ height: 30, paddingHorizontal: 11, borderRadius: 15, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: pro ? C.pro : C.proSoft, borderWidth: C.stroke, borderColor: pro ? C.pro : C.edge }}>
+              <View style={{ height: 30, paddingHorizontal: 11, borderRadius: 15, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: pro ? C.pro : C.proSoft }}>
                 <MaterialCommunityIcons name="star-four-points" size={12} color={pro ? C.paper : C.pro} />
                 <Text style={{ fontSize: 12, fontWeight: '800', color: pro ? C.paper : C.pro }}>{pro ? 'PRO' : 'PRO 보기'}</Text>
               </View>
@@ -845,7 +848,7 @@ function Studio() {
               const when = new Date(p.updatedAt);
               const stamp = Number.isFinite(when.getTime()) ? `${when.getMonth() + 1}월 ${when.getDate()}일` : '';
               return <Pressable accessibilityRole="button" accessibilityLabel={p.projectName} key={p.id} onPress={() => { setProjectId(p.id); setScreen('board'); }}
-                style={({ pressed }) => ({ backgroundColor: C.paper, borderRadius: T.radius.card, padding: 12, gap: 12, borderWidth: C.stroke, borderColor: C.edge, ...(pressed ? Pop.pressed : Pop.shadow) })}>
+                style={({ pressed }) => ({ backgroundColor: C.paper, borderRadius: T.radius.card, padding: 12, gap: 12, ...Card.border, ...(pressed ? {} : Card.shadow) })}>
                 {/* 세트의 실제 칸 네 개가 주인공. 더 있으면 마지막 칸에 남은 수를 얹는다. 빈 세트는 첫 칸 자리에 연필 표시. */}
                 <View testID="홈 작품 미리보기" style={{ flexDirection: 'row', gap: 6 }}>
                   {[0, 1, 2, 3].map(i => {
@@ -865,7 +868,7 @@ function Studio() {
                   <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={6} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="dots-horizontal" size={22} color={C.faint} /></Pressable>
                 </View>
                 <View style={{ gap: 8, paddingHorizontal: 4 }}>
-                  <View style={{ height: 10, borderRadius: 5, backgroundColor: C.surface2, borderWidth: 1.5, borderColor: C.edge, overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / p.slots.length * 100)}%`, height: '100%', backgroundColor: C.accent }} /></View>
+                  <View style={{ height: 10, borderRadius: 5, backgroundColor: C.surface2, borderWidth: 1.5, borderColor: C.paperLine, overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / p.slots.length * 100)}%`, height: '100%', backgroundColor: C.accent }} /></View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2 }}>
                     <Text style={{ flex: 1, fontSize: 12, color: C.muted, fontWeight: '600' }}><Text style={{ color: C.ink, fontWeight: '700' }}>{done}개 완성</Text>{working ? ` · ${working}개 작업 중` : ''}</Text>
                     <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 이어서 만들기`} onPress={() => { setProjectId(p.id); setScreen('board'); setSlotNumber(nextUnfinished(p, p.lastSlot ?? 0) ?? p.lastSlot ?? 1); setPainting(true); }}
@@ -878,6 +881,22 @@ function Studio() {
                     </Pressable>
                   </View>
                 </View>
+              </Pressable>;
+            })}
+            {/* 그다음 세트들은 작은 줄로(45.39). 누르면 그 세트 보드가 열린다. */}
+            {sortedProjects.slice(HOME_RECENT, HOME_RECENT + HOME_MORE).map(p => {
+              const cover = p.slots.find(s => s.finalImage);
+              const done = doneCount(p);
+              return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={p.projectName + ' 세트 열기'} onPress={() => { setProjectId(p.id); setScreen('board'); }}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 10, borderRadius: 16, backgroundColor: pressed ? C.fill : C.paper, ...Card.border })}>
+                <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: C.surface2, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                  {cover ? <Image source={{ uri: imageUri((cover.motionImage ?? cover.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <MaterialCommunityIcons name="draw" size={18} color={C.lineStrong} />}
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>{p.projectName}</Text>
+                  <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{done} / {p.slots.length} 완성</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
               </Pressable>;
             })}
             </View>}
@@ -922,7 +941,7 @@ function Studio() {
           })()}
           {/* 주요 기능 진입: 표현 가이드 한 줄. 노랑을 쓰지 않는 조용한 줄 — 홈의 노랑 버튼은 '새 이모티콘 만들기' 하나. */}
           <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드" onPress={() => setHomeView('guide')}
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 14, borderRadius: T.radius.card, backgroundColor: pressed ? C.fill : C.paper, borderWidth: C.stroke, borderColor: C.edge, ...(pressed ? Pop.pressed : Pop.small) })}>
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 14, borderRadius: T.radius.card, backgroundColor: pressed ? C.fill : C.paper, ...Card.border, ...(pressed ? {} : Card.shadow) })}>
             <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
               <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color={C.ink} />
             </View>
@@ -932,13 +951,13 @@ function Studio() {
             </View>
             <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
           </Pressable>
-          {/* 가이드가 무엇을 주는지 그림으로 한 번에 보인다. 기존 예시 셋을 서로 다른 보조색 위에 올린다. */}
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: -4 }}>
+          {/* 가이드가 무엇을 주는지 그림으로 한 번에 보인다. 예시 여섯을 서로 다른 보조색 위에, 세 칸씩 두 줄로 올린다(45.39). */}
+          <View testID="홈 가이드 미리보기" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: -4 }}>
             {HOME_GUIDE_PREVIEW.map((id, i) => {
               const card = EXPRESSION_GUIDE.cards.find(c => c.id === id);
               return <Pressable key={id} accessibilityRole="button" accessibilityLabel={(card?.name ?? '') + ' 표현 보기'}
                 onPress={() => { if (card?.examples?.length) { setHomeView('guide'); setGuideCategory(card.category); setGuideCard(card); } else setHomeView('guide'); }}
-                style={({ pressed }) => ({ flex: 1, aspectRatio: 1, borderRadius: 18, backgroundColor: PREVIEW_TINT[i], alignItems: 'center', justifyContent: 'center', gap: 2, borderWidth: C.stroke, borderColor: C.edge, ...(pressed ? Pop.pressed : Pop.small) })}>
+                style={({ pressed }) => ({ flexBasis: '30%', flexGrow: 1, aspectRatio: 1, borderRadius: 18, backgroundColor: PREVIEW_TINT[i], alignItems: 'center', justifyContent: 'center', gap: 2, borderWidth: 1.5, borderColor: C.cardLine, opacity: pressed ? .85 : 1 })}>
                 <AssetSlot name="expressionGuideArtwork" size={56} sourceOverride={card ? coverOf(card) : null} />
                 <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{card?.name ?? ''}</Text>
               </Pressable>;
@@ -1168,7 +1187,7 @@ function Studio() {
             return <>
               {/* 1. 내가 만든 결과가 먼저다. 손볼 칸은 테두리로 드러나고, 누르면 그 칸이 열린다. */}
               {/* 요약 표면: 완성 상태가 먼저. 모두 채우면 따뜻한 표면과 완성 그림 자리(exportSuccessArtwork). */}
-              <View testID="내보내기 요약" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 18, borderRadius: T.radius.card, backgroundColor: finished >= profile.count ? C.accent : C.paper, borderWidth: C.stroke, borderColor: C.edge, ...Pop.shadow }}>
+              <View testID="내보내기 요약" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 18, borderRadius: T.radius.card, backgroundColor: finished >= profile.count ? C.accent : C.paper, ...Card.border, ...Card.shadow }}>
                 <View style={{ flex: 1, gap: 8 }}>
                   <Text style={{ fontSize: 12, fontWeight: '700', color: finished >= profile.count ? C.warmInk : C.muted }}>{finished >= profile.count ? `세트를 모두 완성했어요 · ${profile.profileLabel}` : profile.profileLabel}</Text>
                   <Text style={{ fontSize: 24, lineHeight: 30, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{finished} / {profile.count} 완성</Text>
@@ -1192,7 +1211,7 @@ function Studio() {
               {/* 손볼 곳: 한 표면 안의 목록. 상태는 옅은 호박/빨강 동그라미 하나로 — 강한 경고 상자를 쌓지 않는다. */}
               {!!problems.length && <View style={{ gap: 8 }}>
                 <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink, marginTop: 4 }}>손볼 곳 {problems.length}개</Text>
-                <View style={{ borderRadius: T.radius.card, backgroundColor: C.paper, borderWidth: C.stroke, borderColor: C.edge, ...Pop.small, overflow: 'hidden' }}>
+                <View style={{ borderRadius: T.radius.card, backgroundColor: C.paper, ...Card.border, ...Card.shadow, overflow: 'hidden' }}>
                   {problems.map((c, i) => <Pressable key={c.label + i} accessibilityRole="button" accessibilityLabel={`${c.label} 고치기`} disabled={!c.slot} onPress={() => c.slot && fixSlot(c.slot)}
                     style={({ pressed }) => ({ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderColor: C.line, backgroundColor: pressed && c.slot ? C.fill : 'transparent' })}>
                     <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.status === 'FAIL' ? T.dangerSoft : T.warningSoft, alignItems: 'center', justifyContent: 'center' }}>
