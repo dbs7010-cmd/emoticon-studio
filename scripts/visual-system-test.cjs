@@ -151,7 +151,11 @@ async function ready() {
   assert.ok(texts().includes('이어서 만들기'), '맨 위 제목은 이어서 만들기');
   assert.equal(byTestID('홈 알림').length, 0, '알림 꺼짐 → 자리 없음');
   const primaryYellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
-  assert.deepEqual(primaryYellow, ['새 이모티콘 만들기'], '홈의 노랑 버튼은 하나: ' + JSON.stringify(primaryYellow));
+  // 45.39 홈(시안 H4, 사용자 확정): 노랑은 카드 안 '이어 그리기' 하나. 새로 만들기는 카드와 같은 흰 칸이다.
+  assert.deepEqual(primaryYellow, ['시각 세트 이어서 만들기'], '홈의 노랑 버튼은 하나: ' + JSON.stringify(primaryYellow));
+  assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 남은 일 카드가 있다');
+  assert.ok(texts().includes('이모티콘 31칸 더 그리기'), '남은 칸을 제안 기준(멈춘 32칸)으로 센다');
+  assert.ok(texts().includes('대표 아이콘'), '대표 아이콘 줄');
 
   // ── 44차: 세트가 늘어도 홈은 최근 넷 + 전체 보기. 여러 세트는 전체 작업, 세트 안 칸은 보드. 표현 가이드는 홈의 조용한 한 줄 ─────
   assert.equal(labelled('표현 가이드').length, 1, '홈에 표현 가이드 입구 한 줄');

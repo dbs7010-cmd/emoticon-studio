@@ -113,12 +113,10 @@ const homeSections = () => {
         assert.ok(flat(notice.props.style).paddingVertical <= 12, '공지는 낮은 한 줄 배너');
       }
       const yellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
-      assert.deepEqual(yellow, ['새 이모티콘 만들기'], '홈의 노랑 버튼은 하나(' + where + ')');
-      if (count) {
-        const shortcut = tree.root.findAll(n => n.type === 'Pressable' && /^세트 \d+ 이어서 만들기$/.test(n.props.accessibilityLabel ?? ''))[0];
-        const pill = shortcut.findAll(n => n.type === 'View')[0];
-        assert.ok(!flat(pill.props.style).backgroundColor, '카드 안 지름길은 표면을 갖지 않는다 — 카드 자체보다 약하게(' + where + ')');
-      }
+      // 45.39 홈(시안 H4): 노랑은 하나 — 세트가 있으면 카드 안 '이어 그리기', 없으면 창작 표면의 '새 이모티콘 만들기'.
+      assert.equal(yellow.length, 1, '홈의 노랑 버튼은 하나(' + where + '): ' + JSON.stringify(yellow));
+      assert.ok(count ? /^세트 [0-9]+ 이어서 만들기$/.test(yellow[0]) : yellow[0] === '새 이모티콘 만들기', '노랑은 지금 할 일(' + where + '): ' + yellow[0]);
+      if (count) assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 남은 일 카드(' + where + ')');
     }
   }
 
@@ -254,6 +252,6 @@ const homeSections = () => {
   assert.equal(labelled('제안 기준으로 보기').length, 0, '다 채워도 제출 준비는 접혀 있다');
 
   await act(async () => tree.unmount());
-  console.log('PASS: ui structure — 홈(세트 0·1·4·10 × 공지 꺼짐/켜짐) 순서 고정·공지 꺼지면 자리 0·최근 하나+전체 보기·지름길 약하게, 그리기 캔버스 알림 한 번에 하나·패널 한 번에 하나·굵기는 행동 줄·선택 도구엔 없음·배율은 따로, 움직이기 효과→재사용→PRO 한 줄, 보드 범례는 두 상태일 때만, 내보내기 요약→격자→손볼 곳→만들기→제출 준비(접힘)→부가 이미지→자세히. Native/WebView mocked.');
+  console.log('PASS: ui structure — 홈(세트 0·1·4·10 × 공지 꺼짐/켜짐) 순서 고정·공지 꺼지면 자리 0·최근 하나+전체 보기·노랑은 지금 할 일 하나·제안까지 남은 일, 그리기 캔버스 알림 한 번에 하나·패널 한 번에 하나·굵기는 행동 줄·선택 도구엔 없음·배율은 따로, 움직이기 효과→재사용→PRO 한 줄, 보드 범례는 두 상태일 때만, 내보내기 요약→격자→손볼 곳→만들기→제출 준비(접힘)→부가 이미지→자세히. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });
