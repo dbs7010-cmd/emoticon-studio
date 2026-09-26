@@ -560,6 +560,26 @@ async function echoReferences(scene) {
   }
   console.log('  릴리스 조건: 리소스 이름을 파일로 오해하지 않고 내려받아 쓴다 · 실패 시 단계만 한글로 알린다');
 
+  // ── 45.38 넣을 곳: 표현을 어느 세트의 몇 번 칸에 넣는지 행동 위에서 말하고, 바꿀 수 있다 ─────────────
+  {
+    const older = { ...createProject('예전 세트', '콩이'), updatedAt: '2026-01-01T00:00:00.000Z' };
+    const newer = { ...createProject('최근 세트', '콩이'), updatedAt: '2026-09-01T00:00:00.000Z' };
+    saveStore({ version: 1, revision: 9000, projects: [older, newer], palette: [] });   // 앞 단계 저장본보다 새 번호
+    await render(withArt(true));
+    await press('표현 가이드');
+    await press('고마워 · 두 손 모아 꾸벅');
+    await press('정중하게 고르기');
+    const dest = () => texts(byTestID('표현 넣을 곳')[0]).join('');
+    assert.ok(dest().includes('최근 세트 · 01번 칸'), '기본은 가장 최근 세트의 다음 빈 칸이고, 그렇게 적혀 있다: ' + dest());
+    await press('넣을 곳 바꾸기');
+    await press('넣을 곳 예전 세트');
+    assert.ok(dest().includes('예전 세트 · 01번 칸'), '고른 세트로 바뀐다: ' + dest());
+    await press('밑그림 넣기');
+    await ready();
+    assert.ok(tree.root.findAll(n => n.type === 'Text').some(n => [n.props.children].flat(9).join('') === '예전 세트'), '고른 세트의 칸이 열린다');
+  }
+  console.log('  넣을 곳 — 기본은 가장 최근 세트, 다른 세트로 바꾸면 그 세트의 다음 빈 칸이 열린다');
+
   await act(async () => tree.unmount());
   console.log('PASS: guide flow — 고마워 다섯 표현의 ID·이름·힌트, 그림 없는 표현의 준비 중과 잠긴 버튼, 고른 표현의 그림·힌트 전달, 참고 창 옮기기(화면 밖 이탈 없음)·접기·다시 열기·닫기와 캔버스 입력 분리, 밑그림의 기존 참고 레이어 재사용(30%·중앙·별도 그림 레이어·조절·삭제), 저장 그림·움직임·썸네일 제외를 확인했다. Native/WebView mocked.');
   process.exit(0);

@@ -64,6 +64,8 @@ function Studio() {
   const [trashOpen, setTrashOpen] = useState(false), [confirmPurgeId, setConfirmPurgeId] = useState<string | null>(null);
   // 세트 관리의 이름 칸, 전체 작업의 검색·분류·정렬(45.38).
   const [managedName, setManagedName] = useState('');
+  // 표현 가이드의 목적지(45.38): null = 가장 최근 세트(예전과 같다), 'new' = 새 세트, 그 밖에는 고른 세트 id.
+  const [guideTargetId, setGuideTargetId] = useState<string | null>(null), [guideTargetPick, setGuideTargetPick] = useState(false);
   const [projectQuery, setProjectQuery] = useState('');
   const [projectFilter, setProjectFilter] = useState<'all' | 'working' | 'done'>('all');
   const [projectOrder, setProjectOrder] = useState<'recent' | 'name'>('recent');
@@ -326,7 +328,9 @@ function Studio() {
     setGuideExampleMode(example && artwork ? mode ?? 'watch' : null);
     setGuideCard(null);
     setHomeView('home');
-    const target = sortedProjects[0];
+    // 목적지: 사용자가 고른 세트, 없으면 가장 최근 세트. '새 세트'를 골랐으면 새로 만든다.
+    const target = guideTargetId === 'new' ? undefined : sortedProjects.find(p => p.id === guideTargetId) ?? sortedProjects[0];
+    setGuideTargetId(null);
     if (!target) { createProjectNow(defaultSetName()); return; }
     const open = nextUnfinished(target, target.lastSlot ?? 0);
     setProjectId(target.id); setScreen('board');
@@ -759,6 +763,20 @@ function Studio() {
                   {picked ? picked.hint : '표현을 골라 주세요'}
                 </Text>
                 {guideTip && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>참고는 옆에 두고 보고, 밑그림은 캔버스에 겹쳐 놓고 그려요</Text>}
+                {/* 어느 세트의 몇 번 칸에 넣는지 행동 바로 위에서 말한다(45.38). 예전에는 가장 최근 세트의 다음 빈 칸이 말없이 열렸다. */}
+                {(() => {
+                  const dest = guideTargetId === 'new' ? null : sortedProjects.find(p => p.id === guideTargetId) ?? sortedProjects[0] ?? null;
+                  const open = dest ? nextUnfinished(dest, dest.lastSlot ?? 0) : null;
+                  const text = !dest ? '새 이모티콘 세트의 01번 칸' : open === null ? `${dest.projectName} · 빈 칸 없음(보드에서 골라요)` : `${dest.projectName} · ${pad(open)}번 칸`;
+                  return <View testID="표현 넣을 곳" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, borderRadius: 12, backgroundColor: C.surface2 }}>
+                    <MaterialCommunityIcons name="arrow-down-bold-box-outline" size={18} color={C.muted} />
+                    <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: C.ink }}><Text style={{ color: C.muted }}>넣을 곳 </Text><Text style={{ fontWeight: '800' }}>{text}</Text></Text>
+                    {!!sortedProjects.length && <Pressable accessibilityRole="button" accessibilityLabel="넣을 곳 바꾸기" onPress={() => setGuideTargetPick(true)}
+                      style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 12, backgroundColor: pressed ? C.fill : 'transparent' })}>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>바꾸기</Text>
+                    </Pressable>}
+                  </View>;
+                })()}
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable accessibilityRole="button" accessibilityLabel="참고 보기" accessibilityState={{ disabled: !ready }} disabled={!ready}
                     onPress={() => { guideTipShown = true; startFromGuide(guideCard!, picked!, 'watch'); }}
@@ -1374,6 +1392,23 @@ function Studio() {
       <Text style={styles.muted}>휴지통으로 옮겨요. {TRASH_DAYS}일 안에는 설정 › 휴지통에서 그림까지 그대로 되살릴 수 있고, 그 뒤에는 영구 삭제돼요.</Text>
       <Action danger title="휴지통으로 옮기기" onPress={() => deleteProject(pendingDelete.id)} />
       <Action title="취소" onPress={() => setConfirmDeleteId(null)} />
+    </Dialog>}
+    {guideTargetPick && <Dialog title="넣을 곳 고르기" onClose={() => setGuideTargetPick(false)}>
+      {sortedProjects.map(p => { const open = nextUnfinished(p, p.lastSlot ?? 0);
+        const on = (guideTargetId ?? sortedProjects[0]?.id) === p.id;
+        return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={'넣을 곳 ' + p.projectName} accessibilityState={{ selected: on }}
+          onPress={() => { setGuideTargetId(p.id); setGuideTargetPick(false); }}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 12, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 15, fontWeight: on ? '800' : '700', color: C.ink }}>{p.projectName}</Text>
+          <Text style={{ fontSize: 12, color: C.muted }}>{open === null ? '빈 칸 없음' : pad(open) + '번 칸'}</Text>
+          {on && <MaterialCommunityIcons name="check" size={18} color={C.ink} />}
+        </Pressable>; })}
+      <Pressable accessibilityRole="button" accessibilityLabel="넣을 곳 새 세트" accessibilityState={{ selected: guideTargetId === 'new' }}
+        onPress={() => { setGuideTargetId('new'); setGuideTargetPick(false); }}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 12, borderRadius: 12, backgroundColor: guideTargetId === 'new' ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
+        <MaterialCommunityIcons name="plus" size={18} color={C.ink} />
+        <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: C.ink }}>새 이모티콘 세트</Text>
+      </Pressable>
     </Dialog>}
     {trashOpen && !pendingPurge && <Dialog title="휴지통" onClose={() => setTrashOpen(false)}>
       <Text style={styles.muted}>지운 세트는 {TRASH_DAYS}일 동안 여기 남아요. 되살리면 그림·움직임·참고가 그대로 돌아와요.</Text>
