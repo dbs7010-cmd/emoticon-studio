@@ -67,6 +67,26 @@ export const Elev = {
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
+// 같은 화면 안의 보기 전환은 모두 같은 문법을 쓴다: 배경 없이 굵은 글자와 노란 밑줄.
+export function TabBar<K extends string>({ items, value, onChange, testID }: { items: readonly { key: K; label: string; a11y?: string }[]; value: K; onChange: (key: K) => void; testID?: string }) {
+  return <View testID={testID} style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: T.line }}>
+    {items.map(item => { const selected = item.key === value; return <Pressable key={item.key} accessibilityRole="tab" accessibilityLabel={item.a11y ?? item.label}
+      accessibilityState={{ selected }} onPress={() => onChange(item.key)}
+      style={({ pressed }) => ({ flex: 1, minHeight: T.tap, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : 'transparent' })}>
+      <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: selected ? '800' : '600', color: selected ? T.ink : T.muted }}>{item.label}</Text>
+      <View pointerEvents="none" style={{ position: 'absolute', left: 12, right: 12, bottom: 0, height: 3, borderRadius: 2, backgroundColor: selected ? T.accent : 'transparent' }} />
+    </Pressable>; })}
+  </View>;
+}
+
+export function EmptyState({ icon, message, action }: { icon: IconName; message: string; action: React.ReactNode }) {
+  return <View style={{ minHeight: 132, alignItems: 'center', justifyContent: 'center', gap: T.gap.sm, padding: T.gap.lg }}>
+    <MaterialCommunityIcons name={icon} size={30} color={T.faint} />
+    <Text style={{ ...Type.bodySecondary, textAlign: 'center' }}>{message}</Text>
+    {action}
+  </View>;
+}
+
 // 사용자에게 보여 줄 오류 문장. 우리가 쓴 한국어 문장은 그대로, 기술 오류(영문·코드·경로)는 일반 문장으로 바꾼다.
 // 원문은 개발 로그로만 남긴다 — 화면에는 "Error:"·파일 경로·JSON 같은 말이 나오지 않는다.
 export function userMessage(error: unknown, fallback = '잠시 후 다시 시도해 주세요.'): string {
@@ -143,7 +163,7 @@ export function Chip({ label, on, onPress, icon, wide, a11y }: { label: string; 
 }
 
 // 시트·패널 머리: 제목 하나 + 선택 보조 동작 + 닫기. 모든 패널이 같은 머리를 쓴다.
-export function SheetHeader({ title, onClose, closeLabel, closeIcon = 'close', right, left, grab = true }: { title: string; onClose: () => void; closeLabel?: string; closeIcon?: IconName; right?: React.ReactNode; left?: React.ReactNode; grab?: boolean }) {
+export function SheetHeader({ title, onClose, closeLabel, closeIcon = 'close', right, left, grab = false }: { title: string; onClose: () => void; closeLabel?: string; closeIcon?: IconName; right?: React.ReactNode; left?: React.ReactNode; grab?: boolean }) {
   return <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingLeft: left ? 2 : T.gap.lg, paddingRight: 4 }}>
     {grab && <View style={{ position: 'absolute', top: 6, left: 0, right: 0, alignItems: 'center' }} pointerEvents="none"><View style={{ width: 32, height: 4, borderRadius: 2, backgroundColor: T.line }} /></View>}
     {left}

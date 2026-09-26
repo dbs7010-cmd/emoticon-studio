@@ -69,22 +69,36 @@ const dom=()=>engine.contentDocument;
 function ev(type,p){const c=dom().getElementById('drawing'),r=c.getBoundingClientRect();
  c.dispatchEvent(new (dom().defaultView.PointerEvent)(type,{pointerId:1,pointerType:'pen',isPrimary:true,bubbles:true,cancelable:true,pressure:.5,
   clientX:r.left+p[0]*r.width,clientY:r.top+p[1]*r.height}));}
-function draw(pts){ev('pointerdown',pts[0]);for(const p of pts.slice(1))ev('pointermove',p);ev('pointerup',pts.at(-1));}
+// 앱은 압력 입력을 지원하지 않는다. 모든 견본도 실제 앱과 같은 고정 pressure=.5만 보내며,
+// 차이는 사용자가 실제로 만들 수 있는 경로·굵기·속도(이벤트 간격)로만 만든다.
+async function draw(pts,delay){ev('pointerdown',pts[0]);for(const p of pts.slice(1)){ev('pointermove',p);if(delay)await rest(delay);}ev('pointerup',pts.at(-1));}
 // 띠 안을 지나는 완만한 물결 하나. 가로를 넓게 쓰되 세로로는 띠를 벗어나지 않는다.
-function wave(amp,from,to){const a=[];for(let i=0;i<=56;i++){const t=i/56;a.push([from+(to-from)*t,.5+amp*Math.sin(t*Math.PI*1.7-.35)]);}return a;}
+function wave(amp,from,to,turns=1.7,count=56,base=.5){const a=[];for(let i=0;i<=count;i++){const t=i/count;a.push([from+(to-from)*t,base+amp*Math.sin(t*Math.PI*turns-.35)]);}return a;}
 // 분류마다 보여 줄 것이 다르다(45.35 §6): 선은 선의 성격, 채색은 넓은 획과 겹침,
 // 질감은 재료감, 효과는 그 효과의 실제 특징.
-function planFor(group){
+function planFor(b){
+ const named={
+  pen:{width:12,amp:.045,turns:1.7,count:64,delay:1}, inknatural:{width:15,amp:.075,turns:2.2,count:78,delay:2},
+  ink:{width:18,amp:.05,turns:1.35,count:24,delay:0}, brushpen2:{width:26,amp:.08,turns:1.8,count:34,delay:2},
+  flat:{width:30,amp:.025,turns:1.15,count:28,delay:1}, pencil2:{width:18,amp:.065,turns:2.5,count:88,delay:2},
+  marker2:{width:32,amp:.02,turns:1.0,count:36,delay:0}, dryflat:{width:28,amp:.07,turns:2.0,count:42,delay:1},
+  pointil:{width:24,amp:.09,turns:2.8,count:30,delay:2}, spray:{width:30,amp:.055,turns:1.5,count:70,delay:1},
+  dotted:{width:18,amp:.035,turns:1.2,count:38,delay:2}, parallelpen:{width:24,amp:.06,turns:1.9,count:56,delay:1},
+  glowpen:{width:22,amp:.035,turns:1.4,count:72,delay:1}, outline:{width:28,amp:.045,turns:1.7,count:52,delay:1}
+ };
+ const n=named[b.key]; if(n)return {...n,paths:[wave(n.amp,.05,.95,n.turns,n.count)]};
+ // 불투명 붓도 실제 겹침을 보이되, 두 획이 띠 대부분을 칠해 버리지 않게 두 번째 획은 짧게 둔다.
+ if(b.key==='opaque')return {width:22,delay:1,paths:[wave(.035,.05,.95,1.5,48,.47),wave(-.025,.42,.78,1.1,24,.55)]};
  // 채색은 넓은 획과 **겹침**을 보여 준다. 다만 띠를 통째로 덮으면 획이 아니라 색 덩어리로 보인다 —
  // 두 번째 획을 짧고 살짝 어긋나게 겹쳐 경계가 읽히게 한다.
- if(group==='채색')return {width:26,paths:[wave(.035,.05,.95),wave(-.025,.34,.98)]};
- if(group==='질감')return {width:26,paths:[wave(.04,.05,.95)]};
- if(group==='효과')return {width:20,paths:[wave(.045,.05,.95)]};
- return {width:14,paths:[wave(.05,.05,.95)]};
+ if(b.group==='채색')return {width:28,delay:1,paths:[wave(.035,.05,.95,1.5,48,.46),wave(-.025,.34,.98,1.2,34,.56)]};
+ if(b.group==='질감')return {width:25,delay:2,paths:[wave(.07,.05,.95,2.4,72)]};
+ if(b.group==='효과')return {width:20,delay:1,paths:[wave(.045,.05,.95,1.7,52)]};
+ return {width:14,delay:1,paths:[wave(.05,.05,.95,1.7,56)]};
 }
 async function start(){
  for(const b of list){
-  const plan=planFor(b.group);
+  const plan=planFor(b);
   await post({type:'init',id:'s-'+b.key,color:'#17191D',penWidth:plan.width,
    brush:{preset:b.preset,opacity:1,stabilizer:'light',smoothing:true},
    layers:[{id:'draw-1',name:'그림 1',visible:true,opacity:1,x:0,y:0,scale:1,rotation:0}]});
@@ -93,7 +107,7 @@ async function start(){
   await post({type:'tool',tool:'pen'});
   await post({type:'width',tool:'pen',width:plan.width});
   await rest(50);
-  for(const pts of plan.paths){draw(pts);await rest(90);}
+  for(const pts of plan.paths){await draw(pts,plan.delay);await rest(90);}
   await rest(160);
   await post({type:'save',token:++token});
   const saved=await wait('save');

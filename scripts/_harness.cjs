@@ -120,8 +120,8 @@ async function holdRail(label, ratio) {
   const node = () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === label)[0];
   const H = 240, HANDLE = 34;
   await act(async () => node().props.onLayout({ nativeEvent: { layout: { width: 60, height: H } } }));
-  await act(async () => node().props.onResponderGrant({ nativeEvent: { locationY: H } }));
-  await act(async () => node().props.onResponderMove({ nativeEvent: { locationY: HANDLE / 2 + (1 - ratio) * (H - HANDLE) } }));
+  await act(async () => node().props.onResponderGrant({ nativeEvent: { locationY: H, pageY: H } }));
+  await act(async () => node().props.onResponderMove({ nativeEvent: { locationY: HANDLE / 2 + (1 - ratio) * (H - HANDLE), pageY: HANDLE / 2 + (1 - ratio) * (H - HANDLE) } }));
 }
 const SCREENS = [
   ['home-empty', '홈 · 작업 없음', async () => { seed(0); await fresh(); }],
@@ -152,6 +152,7 @@ const SCREENS = [
   ['draw-selection', '그리기 · 선택과 변형', async () => {
     await act(async () => (keyboardListeners.keyboardDidHide || []).forEach(fn => fn({})));
     await press('문구 닫기');
+    await press('선택');
     await message({ ...scene, selection: { x: 40, y: 40, w: 180, h: 180 } });
   }],
   ['motion-base', '움직이기', async () => { await message({ ...scene, selection: null }); await press('움직이기'); }],

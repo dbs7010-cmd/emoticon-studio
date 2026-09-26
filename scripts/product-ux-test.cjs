@@ -70,7 +70,8 @@ const openSet = async name => { if (setButtons(name).length === 0 && setButtons(
 const message = async m => { await act(async () => tree.root.findByType('WebView').props.onMessage({ nativeEvent: { data: JSON.stringify(m) } })); };
 const ranges = label => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === label);
 const nudge = async (label, action, times) => { for (let i = 0; i < times; i++) await act(async () => ranges(label)[0].props.onAccessibilityAction({ nativeEvent: { actionName: action } })); };
-// 45.35 승인 시안: 굵기는 캔버스 **왼쪽 밖** 세로 조절대다. 위로 갈수록 굵다(locationY).
+// 굵기는 캔버스 **왼쪽 밖** 세로 조절대다. 실제 네이티브 이벤트처럼 pageY 를 주고,
+// 조절대가 측정한 화면 좌표를 뺀 절대 좌표 계약을 검증한다.
 // 끄는 동안의 값은 손잡이 옆 말풍선에만 적히고, 캔버스에는 아무것도 뜨지 않는다.
 // 조절대 높이 200dp 를 알려 준 뒤, 원하는 굵기가 나오는 자리를 눌러 끈다.
 const SIZE_RAIL = 200, RAIL_HANDLE = 34;
@@ -83,10 +84,10 @@ const dragSize = async (label, want) => {
   drags++;
   const y = atWidth(want);
   await act(async () => node().props.onLayout({ nativeEvent: { layout: { width: 60, height: SIZE_RAIL } } }));
-  await act(async () => node().props.onResponderGrant({ nativeEvent: { locationY: SIZE_RAIL } }));
-  await act(async () => node().props.onResponderMove({ nativeEvent: { locationY: y } }));
+  await act(async () => node().props.onResponderGrant({ nativeEvent: { pageY: SIZE_RAIL } }));
+  await act(async () => node().props.onResponderMove({ nativeEvent: { pageY: y } }));
   const during = bubbleText('굵기 말풍선');
-  await act(async () => node().props.onResponderRelease({ nativeEvent: { locationY: y } }));
+  await act(async () => node().props.onResponderRelease({ nativeEvent: { pageY: y } }));
   return during;
 };
 const texts = () => tree.root.findAll(n => n.type === 'Text').map(n => [n.props.children].flat(9).filter(x => typeof x === 'string' || typeof x === 'number').join(''));

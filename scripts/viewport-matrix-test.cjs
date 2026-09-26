@@ -51,7 +51,13 @@ const labelled = label => tree.root.findAll(n => n.type === 'Pressable' && n.pro
 const byTestID = id => tree.root.findAll(n => typeof n.type === 'string' && n.props.testID === id);
 const press = async label => { const m = labelled(label); assert.equal(m.length, 1, 'button ' + label + ' (' + m.length + ') at ' + JSON.stringify(viewport)); await act(async () => m[0].props.onPress()); };
 const message = async m => { await act(async () => tree.root.findByType('WebView').props.onMessage({ nativeEvent: { data: JSON.stringify(m) } })); };
-const flat = style => Object.assign({}, ...[style].flat(9).filter(Boolean));
+const flat = style => Object.assign(
+  {},
+  ...[style]
+    .flat(9)
+    .filter(Boolean)
+    .map(value => typeof value === 'function' ? value({ pressed: false }) : value),
+);
 const sent = () => commands.map(s => JSON.parse(s.slice(s.indexOf('(') + 1, s.lastIndexOf(');true;'))));
 const HEADER = 52, TABS = 48, STATUS = 24, NAV = 0; // 안드로이드 제스처 내비·상태바(인셋은 SafeArea 가 뺀다고 보고 보수적으로 상태바만 뺀다)
 
@@ -242,7 +248,7 @@ const rows = [];
     assert.ok(row.color <= colorCap, tag + ': 색 패널은 캔버스를 ' + Math.round(colorCap * 100) + '% 넘게 가리지 않는다: ' + row.color);
     rows.push(row);
   }
-  // ── 머리줄: 넘치면 두 줄로 갈린다(글자나 손가락 자리를 줄이지 않는다) ─────────────────────────
+  // ── 머리줄: 승인 시안처럼 네 크기 모두 한 줄, 보조 도구는 48dp 아이콘+작은 글자 ─────────────
   viewport.width = 320; viewport.height = 800;
   files.clear();
   saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8'] });
@@ -267,15 +273,15 @@ const rows = [];
   await measure(320, 120, 150);
   assert.equal(rowsIn(headOf()), 1, '들어가면 한 줄을 지킨다');
   assert.deepEqual(aidNames(), [1, 1, 1], '한 줄에서도 보조 셋이 그대로');
-  // 넘치면 두 줄. 글자 크기나 손가락 자리는 그대로여야 한다.
+  // 측정값이 크게 들어와도 승인 시안의 한 줄 구조를 지킨다. 보조 도구는 고정 48dp라 320에도 들어간다.
   const tapBefore = ['참고', '레이어', '문구'].map(l => flat(labelled(l)[0].props.style).minHeight);
   await measure(320, 200, 180);
-  assert.equal(rowsIn(headOf()), 2, '넘치면 두 줄로 갈린다');
-  assert.deepEqual(aidNames(), [1, 1, 1], '두 줄이 되어도 보조 셋은 그대로 하나씩');
-  assert.deepEqual(['참고', '레이어', '문구'].map(l => flat(labelled(l)[0].props.style).minHeight), tapBefore, '두 줄로 가도 손가락 자리를 줄이지 않는다');
+  assert.equal(rowsIn(headOf()), 1, '320에서도 머리줄은 한 줄');
+  assert.deepEqual(aidNames(), [1, 1, 1], '한 줄에 보조 셋이 그대로 하나씩');
+  assert.deepEqual(['참고', '레이어', '문구'].map(l => flat(labelled(l)[0].props.style).minHeight), tapBefore, '한 줄에서도 손가락 자리를 줄이지 않는다');
   assert.deepEqual(tapBefore, [48, 48, 48], '보조 도구 손가락 자리 48dp');
   await act(async () => tree.unmount());
-  console.log('  머리줄 — 들어가면 한 줄 · 넘치면 두 줄 · 손가락 자리 48dp 불변');
+  console.log('  머리줄 — 320~412dp 모두 한 줄 · 보조 도구 손가락 자리 48dp 불변');
 
   // ── 글자 배율 1.0 / 1.3 / 1.5 ────────────────────────────────────────────────────────────
   const scaleRows = [];
