@@ -246,6 +246,11 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
     await press('연필');   // 45.31: 연필은 제 프리셋(pencil2)이다
     assert.equal(lastCommand('brushSettings').preset, 'pencil2', '카드를 누르면 그 브러시로 바뀐다');
     assert.equal(byTestID('브러시 목록').length, 0, '카드를 눌러도 판이 열리지 않는다');
+    await press('지우개');
+    assert.equal(quick().findAll(n => n.type === 'Pressable' && n.props.accessibilityState?.selected).length, 0, '지우개에서는 브러시를 선택 상태로 표시하지 않는다');
+    await press('연필');
+    assert.equal(lastCommand('tool').tool, 'pen', '현재 브러시를 누르면 지우개에서 펜으로 돌아온다');
+    assert.equal(byTestID('브러시 목록').length, 0, '펜으로 돌아올 때 설정창이 열리지 않는다');
     // 이미 고른 카드를 다시 누르면 세부 설정이 열린다.
     await press('연필');
     assert.equal(byTestID('브러시 목록').length, 1, '고른 카드를 다시 누르면 설정이 열린다');

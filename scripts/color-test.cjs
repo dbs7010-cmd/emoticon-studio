@@ -290,8 +290,9 @@ async function openPainter() {
     assert.ok((pad.paddingBottom ?? 0) >= 12, '마지막 줄 아래에 여유가 있다: ' + pad.paddingBottom);
     const inScroll = label => scroll[0].findAll(n => n.props.accessibilityLabel === label || n.props.testID === label).length;
     // 머리줄과 탭은 스크롤 밖에 있어 어디까지 내려가도 제자리다.
-    for (const fixed of ['스포이드', '내 팔레트에 저장', '팔레트 닫기', '팔레트', '직접 선택'])
+    for (const fixed of ['팔레트 닫기', '팔레트', '직접 선택'])
       assert.equal(inScroll(fixed), 0, fixed + ': 머리줄·탭은 스크롤 밖');
+    for (const moving of ['스포이드', '내 팔레트에 저장']) assert.ok(inScroll(moving) > 0, moving + ': 짧은 화면에서도 스크롤로 접근한다');
     // 마지막 견본은 스크롤 안이라 끝까지 내려가면 온전히 보인다.
     const swatchNames = scroll[0].findAll(n => n.type === 'Pressable' && /^색 #/.test(n.props.accessibilityLabel ?? '')).map(n => n.props.accessibilityLabel);
     assert.ok(swatchNames.length >= 20, '기본 색 견본이 스크롤 안에 모두 있다: ' + swatchNames.length);
