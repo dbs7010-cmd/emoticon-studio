@@ -94,9 +94,10 @@ async function ready(extra = {}) {
   // 45.35: 가로에서 **왼쪽 조절대 기둥을 뺀다**. 빼지 않으면 캔버스가 제 자리보다 넓게 그려져
   // 기둥 위로 넘쳐 나오고, 검토 그림만 기기와 다르게 보인다(실제로 그렇게 보였다).
   const { RAIL_W, BASE_H } = load('src/painter/painter.tsx');
-  // 좁은 화면(360dp 미만)에서는 머리줄의 명령 묶음이 둘째 줄로 내려간다(painter 의 cmdStacked 규칙).
-  // 그만큼 캔버스 영역이 낮아진다 — 빼지 않으면 검토 그림에서만 왼쪽 기둥이 아래 줄에 잘린다.
-  const stacked = viewport.width < 360 ? 44 : 0;
+  // 머리줄은 기본 글자 크기면 320dp 에서도 한 줄이다(45.36-R1 G3). 둘째 줄은 잰 폭이 넘칠 때만 생기고,
+  // 이 렌더는 글자 배율 1.0 이라 생기지 않는다. 45.36 은 한 줄로 바꾸고도 여기서 44dp 를 계속 빼,
+  // 320 렌더의 캔버스 영역만 기기보다 낮게 그려졌다.
+  const stacked = 0;
   const area = { width: viewport.width - RAIL_W, height: viewport.height - 24 - 52 - stacked - 48 - BASE_H };
   const box = tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
   if (box) await act(async () => box.props.onLayout({ nativeEvent: { layout: area } }));

@@ -163,16 +163,19 @@ export function Chip({ label, on, onPress, icon, wide, a11y }: { label: string; 
 }
 
 // 시트·패널 머리: 제목 하나 + 선택 보조 동작 + 닫기. 모든 패널이 같은 머리를 쓴다.
-export function SheetHeader({ title, onClose, closeLabel, closeIcon = 'close', right, left, grab = false }: { title: string; onClose: () => void; closeLabel?: string; closeIcon?: IconName; right?: React.ReactNode; left?: React.ReactNode; grab?: boolean }) {
-  return <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingLeft: left ? 2 : T.gap.lg, paddingRight: 4 }}>
+// 닫기는 언제나 × 하나다(승인 시안) — 판마다 ∨ 와 × 가 섞이지 않게 아이콘을 고를 수 없게 했다(45.36-R1 G7).
+// onClose 가 없으면 닫기를 그리지 않는다: 나가는 길이 따로 정해진 판(선택 변형의 취소·적용, 명세 E08)이 같은 머리를 쓰되
+// 세 번째 출구를 만들지 않기 위해서다.
+export function SheetHeader({ title, onClose, closeLabel, right, left, grab = false }: { title: string; onClose?: () => void; closeLabel?: string; right?: React.ReactNode; left?: React.ReactNode; grab?: boolean }) {
+  return <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingLeft: left ? 2 : T.gap.lg, paddingRight: onClose ? 4 : T.gap.lg }}>
     {grab && <View style={{ position: 'absolute', top: 6, left: 0, right: 0, alignItems: 'center' }} pointerEvents="none"><View style={{ width: 32, height: 4, borderRadius: 2, backgroundColor: T.line }} /></View>}
     {left}
     <Text numberOfLines={1} style={{ flex: 1, fontSize: 17, fontWeight: '800', color: T.ink }}>{title}</Text>
     {right}
-    <Pressable accessibilityRole="button" accessibilityLabel={closeLabel ?? title + ' 닫기'} onPress={onClose} hitSlop={2}
+    {onClose && <Pressable accessibilityRole="button" accessibilityLabel={closeLabel ?? title + ' 닫기'} onPress={onClose} hitSlop={2}
       style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : 'transparent' })}>
-      <MaterialCommunityIcons name={closeIcon} size={20} color={T.muted} />
-    </Pressable>
+      <MaterialCommunityIcons name="close" size={20} color={T.muted} />
+    </Pressable>}
   </View>;
 }
 

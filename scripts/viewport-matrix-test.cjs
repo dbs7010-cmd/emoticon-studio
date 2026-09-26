@@ -31,7 +31,7 @@ const png = Buffer.alloc(33); Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).cop
 const pngData = 'data:image/png;base64,' + png.toString('base64');
 const mocks = {
   'react-native': rn, '@expo/ui': { Host: 'Host', Button: 'Button', Slider: 'Slider' }, '@expo/vector-icons': { MaterialCommunityIcons: 'Icon' },
-  'react-native-safe-area-context': { SafeAreaProvider: 'SafeAreaProvider', SafeAreaView: 'SafeAreaView', useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) },
+  'react-native-safe-area-context': { SafeAreaProvider: 'SafeAreaProvider', SafeAreaView: 'SafeAreaView', useSafeAreaInsets: () => ({ top: 24, bottom: 0, left: 0, right: 0 }) },
   'expo-image-picker': {}, 'expo-image-manipulator': {}, 'expo-asset': { Asset: { fromModule: () => ({ downloadAsync: async () => ({ localUri: 'bundled://art', uri: 'bundled://art' }) }) } }, 'expo-status-bar': { StatusBar: 'StatusBar' }, 'expo-constants': { default: { expoConfig: { extra: {} } } }, 'react-native-webview': { WebView },
   'expo-sharing': { isAvailableAsync: async () => true, shareAsync: async () => {} }, 'expo-file-system': { Directory, File, Paths: { document: 'document' } },
   './src/components/image-analyzer': { ImageAnalyzer: () => null },
@@ -120,7 +120,8 @@ const rows = [];
 (async () => {
   const p = createProject('매트릭스 세트', '콩이');
   p.slots = p.slots.map((s, i) => i < 3 ? { ...s, finalImage: { path: 'image-a.png', width: 360, height: 360 }, done: true } : s);
-  const heights = [640, 720, 800, 900, 1000];
+  // 568 은 지시서의 가장 작은 화면(320×568)이다. 45.36 까지 이 높이가 빠져 있어, 그 화면의 브러시 창 줄 수를 아무도 재지 않았다.
+const heights = [568, 640, 720, 800, 900, 1000];
   const widths = [320, 360, 390, 412];
   for (const height of heights) for (const width of widths) {
     viewport.width = width; viewport.height = height;
@@ -143,9 +144,18 @@ const rows = [];
     assert.ok(sizer, tag + ': 굵기 조절대');
     const bandStyle = flat(sizer.props.style);
     assert.ok(bandStyle.height >= 56 && bandStyle.height <= 208, tag + ': 조절대 홈 길이 56~208dp: ' + bandStyle.height);
-    // 기둥 전체가 캔버스 영역 높이 안에 든다 — 잘려 나가면 아래쪽 조절을 아예 쓸 수 없다.
-    const railNeeds = 24 + 20 + (19 + bandStyle.height) * 2;
-    assert.ok(railNeeds <= area.height, tag + ': 기둥이 캔버스 영역 안에 든다 ' + railNeeds + ' ≤ ' + area.height);
+    // 조절대는 **종이 옆**에 붙는다(45.36-R1 G1): 조절대 묶음은 캔버스 한 변과 같은 높이로, 캔버스와 같은 세로 가운데에 선다.
+    // 그래서 굵기 라벨 위 끝은 캔버스 위 끝 아래, 불투명도 홈 아래 끝은 캔버스 아래 끝 위에 있다.
+    const railBody = byTestID('조절대 내용')[0];
+    assert.ok(railBody, tag + ': 조절대 묶음');
+    const bodyStyle = flat(railBody.props.style);
+    assert.equal(bodyStyle.height, side, tag + ': 조절대 묶음 높이 = 캔버스 한 변');
+    const railNeeds = (bodyStyle.paddingVertical ?? 0) * 2 + 20 + (19 + bandStyle.height) * 2;
+    assert.ok(railNeeds <= side, tag + ': 라벨·홈 둘이 캔버스 한 변 안에 든다 ' + railNeeds + ' ≤ ' + side);
+    // 캔버스와 조절대 묶음은 둘 다 영역 **맨 위**에서 시작한다 — 그래서 조절대의 위아래 끝이 종이의 위아래 끝과 맞는다.
+    assert.equal(flat(byTestID('조절대')[0].props.style).justifyContent, 'flex-start', tag + ': 조절대 묶음은 맨 위에서 시작');
+    assert.equal(flat(byTestID('캔버스 영역')[0].props.style).justifyContent, 'flex-start', tag + ': 캔버스도 맨 위에서 시작(두 탭 같은 자리)');
+    row.railSpan = railNeeds;
     assert.notEqual(bandStyle.position, 'absolute', tag + ': 캔버스 위에 겹치지 않는다');
     const rail = byTestID('조절대')[0];
     assert.ok(rail, tag + ': 왼쪽 기둥');
@@ -165,7 +175,7 @@ const rows = [];
     for (const l of ['그리기 도구 펜', '지우개', '채우기', '선택', '색', '브러시 전체', '되돌리기', '다시 실행', '완성 후 다음']) assert.equal(labelled(l).length, 1, tag + ': ' + l);
     assert.equal(byTestID('빠른 브러시')[0].findAll(n => n.type === 'Pressable' && n.props.testID).length, 3, tag + ': 빠른 브러시 카드 셋');
     // 각 패널이 가리는 캔버스 비율(패널 높이 - 캔버스 아래 남는 자리) / 캔버스 높이.
-    const below = Math.max(0, (area.height - side) / 2);
+    const below = Math.max(0, area.height - side);   // 캔버스가 위에 붙어 남는 자리는 전부 아래다(45.36-R1)
     const covered = h => +(Math.max(0, h - below) / side).toFixed(2);
     // 브러시 창은 아래에서 올라오는 판이 아니라 화면을 덮는 독립 창이다(45.35). 창 높이로 잰다.
     await press('브러시 전체');
@@ -173,8 +183,12 @@ const rows = [];
     assert.ok(brushWindow, tag + ': 브러시 창');
     const winH = flat(brushWindow.props.style).height;
     row.brush = covered(winH);
-    // 보통 세로 화면에서 줄 넷이 통째로 보인다: 머리(48) + 분류(48) + 줄 70×4 + 세부 설정 줄(48).
-    assert.ok(winH >= 48 + 48 + 70 * 4, tag + ': 브러시 창에 네 줄이 들어간다: ' + winH);
+    // 줄 넷이 통째로 보인다: 창 높이에서 머리(48)·분류(48)·세부 설정 입구(48)·편집 안내(24)·여백(8)을 빼고도
+    // 브러시 줄 네 개가 남아야 한다. 45.36 까지는 세부 설정 입구를 빼지 않고 셌다(G9).
+    const rowH = flat(brushWindow.findAll(n => n.type === 'Pressable' && /^브러시 줄 /.test(n.props.testID ?? ''))[0].props.style).minHeight;
+    const listRoom = winH - 48 - 48 - 48 - 24 - 8;
+    row.brushRows = +(listRoom / rowH).toFixed(1);
+    assert.ok(listRoom >= rowH * 4, tag + ': 브러시 줄 넷이 통째로 보인다: ' + listRoom + ' ≥ ' + rowH * 4);
     assert.ok(winH <= screen - 16, tag + ': 브러시 창이 화면을 넘지 않는다: ' + winH);
     let listed = 0;
     for (const g of ['선', '채색', '질감', '효과']) {
@@ -273,15 +287,16 @@ const rows = [];
   await measure(320, 120, 150);
   assert.equal(rowsIn(headOf()), 1, '들어가면 한 줄을 지킨다');
   assert.deepEqual(aidNames(), [1, 1, 1], '한 줄에서도 보조 셋이 그대로');
-  // 측정값이 크게 들어와도 승인 시안의 한 줄 구조를 지킨다. 보조 도구는 고정 48dp라 320에도 들어간다.
+  // 글자 배율을 키워 정말 넘칠 때(예: 모드 탭 200 + 보조 180 > 320)만 두 줄로 갈린다. 글자나 손가락 자리는 그대로다.
+  // 45.36 은 이 경우에도 한 줄을 기대하도록 바꿔, 큰 글자에서 넘치는 자리를 검사가 덮었다(45.36-R1 G3에서 되돌림).
   const tapBefore = ['참고', '레이어', '문구'].map(l => flat(labelled(l)[0].props.style).minHeight);
   await measure(320, 200, 180);
-  assert.equal(rowsIn(headOf()), 1, '320에서도 머리줄은 한 줄');
-  assert.deepEqual(aidNames(), [1, 1, 1], '한 줄에 보조 셋이 그대로 하나씩');
-  assert.deepEqual(['참고', '레이어', '문구'].map(l => flat(labelled(l)[0].props.style).minHeight), tapBefore, '한 줄에서도 손가락 자리를 줄이지 않는다');
+  assert.equal(rowsIn(headOf()), 2, '넘치면 두 줄로 갈린다');
+  assert.deepEqual(aidNames(), [1, 1, 1], '두 줄이 되어도 보조 셋은 그대로 하나씩');
+  assert.deepEqual(['참고', '레이어', '문구'].map(l => flat(labelled(l)[0].props.style).minHeight), tapBefore, '두 줄로 가도 손가락 자리를 줄이지 않는다');
   assert.deepEqual(tapBefore, [48, 48, 48], '보조 도구 손가락 자리 48dp');
   await act(async () => tree.unmount());
-  console.log('  머리줄 — 320~412dp 모두 한 줄 · 보조 도구 손가락 자리 48dp 불변');
+  console.log('  머리줄 — 기본 글자면 320dp 에서도 한 줄 · 넘칠 때만 두 줄 · 손가락 자리 48dp 불변');
 
   // ── 글자 배율 1.0 / 1.3 / 1.5 ────────────────────────────────────────────────────────────
   const scaleRows = [];
@@ -320,6 +335,6 @@ const rows = [];
   fs.writeFileSync(outDir + '/viewport-matrix.json', JSON.stringify(rows, null, 2));
   console.log('  viewport  canvas share brush detail color ref layers motion kbRoom boardTile exportCell');
   for (const r of rows) console.log('  ' + [r.viewport.padEnd(9), String(r.canvas).padStart(6), String(r.canvasShare).padStart(5), r.brush, r.brushDetail, r.color, r.reference, r.layers, r.motion, r.captionKeyboardRoom, r.boardTile, r.exportCell].join('  '));
-  console.log('PASS: viewport matrix — 640/720/800/900/1000 × 320/360/390/412: 캔버스는 (화면 폭 − 왼쪽 조절대) 까지 정사각으로 꽉 차고, 굵기·불투명도는 캔버스 밖 왼쪽 기둥에 세로로 하나씩, 도구 줄 두 줄 안 잘림, 브러시 창은 줄 넷이 보이는 독립 창, 색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침·설정 목록만 줄고 완성 줄은 스크롤 밖, 보드 세 칸·아래 줄, 내보내기 결과 격자 한 줄 다섯 칸 이상, 글자 배율 1.0/1.3/1.5 에서 높이 고정 상자 잘림 0곳. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).');
+  console.log('PASS: viewport matrix — 568/640/720/800/900/1000 × 320/360/390/412: 캔버스는 (화면 폭 − 왼쪽 조절대) 까지 정사각으로 꽉 차고, 굵기·불투명도는 캔버스 밖 왼쪽 기둥에 세로로 하나씩, 도구 줄 두 줄 안 잘림, 브러시 창은 줄 넷이 보이는 독립 창, 색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침·설정 목록만 줄고 완성 줄은 스크롤 밖, 보드 세 칸·아래 줄, 내보내기 결과 격자 한 줄 다섯 칸 이상, 글자 배율 1.0/1.3/1.5 에서 높이 고정 상자 잘림 0곳. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

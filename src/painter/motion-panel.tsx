@@ -132,10 +132,16 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   const enterPro = () => { if (pro) setView('parts'); else onRequestPro(); };
   // '없음'은 전체 움직임만 뺀다. 부분 움직임이 있으면 그것은 남긴다.
   const clearPreset = () => { if (hasPro) set({ preset: undefined }); else onChange(null); };
-  // 효과 카드: 고른 것만 옅은 노랑 표면. 테두리는 1px 하나. '없음'은 좁고 조용하게 — 효과와 같은 무게로 서지 않는다.
-  const card = (on: boolean) => ({ flex: 1, minHeight: 84, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: C.radius.md, borderWidth: 1, borderColor: on ? C.accentBorder : C.line, backgroundColor: on ? C.accentSoft : C.paper } as const);
-  const quiet = (on: boolean) => ({ width: 56, minHeight: 84, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: C.radius.md, borderWidth: 1, borderColor: on ? C.accentBorder : 'transparent', backgroundColor: on ? C.accentSoft : C.surface2 } as const);
-  const row = { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 12, borderRadius: 14, backgroundColor: C.surface2 } as const;
+  // 효과 카드는 그리기 탭의 **즐겨찾기 칸과 같은 역할**이다 — 그림 견본 + 이름 중 하나를 고른다(45.36-R1 G6·G18).
+  // 그래서 같은 규칙: 테두리 없음, 고른 칸만 옅은 노랑 면 + 짧은 노란 밑줄, 누르는 동안 회색.
+  // 한 줄에 일곱을 욱여넣던 것을 네 칸 격자로 바꿨다 — 320dp 에서 흔들기·부르르가 화면 밖에 있어 고를 수 없었고,
+  // 기기에서는 칸이 36dp 로 줄어 손가락 자리(48dp)도 글자도 모자랐다.
+  const card = (on: boolean) => ({ pressed }: { pressed: boolean }) => ({ flex: 1, minHeight: 84, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: C.radius.md, backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' } as const);
+  const mark = (on: boolean) => <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 4, height: 3, borderRadius: 2, backgroundColor: on ? C.accent : 'transparent' }} />;
+  // 다른 화면으로 가는 줄은 **목록 줄** 역할이다 — 브러시·레이어 목록처럼 카드 없이 얇은 구분선으로 가른다.
+  const row = { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 4, borderBottomWidth: 1, borderColor: C.line } as const;
+  const choices: ({ id: MotionPreset; label: string } | null)[] = [null, ...PRESETS];
+  const grid: typeof choices[] = []; for (let i = 0; i < choices.length; i += 4) grid.push(choices.slice(i, i + 4));
   const back = view === 'pose' ? { label: '부분 움직임으로 돌아가기', to: 'parts' as const, title: '두 모습 번갈아' }
     : { label: '움직임 처음으로', to: 'basic' as const, title: view === 'parts' ? '부분만 움직이기' : '보관한 움직임' };
 
@@ -150,18 +156,24 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         그래야 아래 완성 줄이 밖으로 밀려나지 않고, 목록 끝까지 스크롤로 닿을 수 있다. */}
     <ScrollView style={{ flex: 1, minHeight: 0 }} keyboardShouldPersistTaps="handled" scrollEnabled={!holding && dragFrom === null} contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 20, gap: 10 }}>
     {view === 'basic' ? <>
-    <View style={{ flexDirection: 'row', gap: 8 }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="움직임 없음" accessibilityState={{ selected: !base.preset }} onPress={clearPreset} style={quiet(!base.preset)}>
-        <MaterialCommunityIcons name="motion-pause-outline" size={20} color={!base.preset ? C.ink : C.faint} />
-        <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: !base.preset ? '700' : '600', color: !base.preset ? C.ink : C.muted }}>없음</Text>
-      </Pressable>
-      {PRESETS.map(p => {
-        const on = base.preset === p.id;
-        return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={p.label} accessibilityState={{ selected: on }} onPress={() => set({ preset: p.id })} style={card(on)}>
-          <MotionSample preset={p.id} uri={sample} fallback={ASSET_SLOTS.motionExampleArtwork.source} active={on} size={48} />
-          <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{p.label}</Text>
-        </Pressable>;
-      })}
+    <View testID="움직임 격자" style={{ gap: 4 }}>
+      {grid.map((line, r) => <View key={r} style={{ flexDirection: 'row', gap: 6 }}>
+        {line.map(p => {
+          if (!p) return <Pressable key="none" accessibilityRole="button" accessibilityLabel="움직임 없음" accessibilityState={{ selected: !base.preset }} onPress={clearPreset} style={card(!base.preset)}>
+            <View style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="motion-pause-outline" size={22} color={!base.preset ? C.ink : C.faint} /></View>
+            <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: !base.preset ? '800' : '600', color: !base.preset ? C.ink : C.muted }}>없음</Text>
+            {mark(!base.preset)}
+          </Pressable>;
+          const on = base.preset === p.id;
+          return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={p.label} accessibilityState={{ selected: on }} onPress={() => set({ preset: p.id })} style={card(on)}>
+            <MotionSample preset={p.id} uri={sample} fallback={ASSET_SLOTS.motionExampleArtwork.source} active={on} size={48} />
+            <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{p.label}</Text>
+            {mark(on)}
+          </Pressable>;
+        })}
+        {/* 마지막 줄이 모자라면 빈 칸으로 채워 칸 폭을 윗줄과 맞춘다. */}
+        {Array.from({ length: 4 - line.length }, (_, i) => <View key={'pad' + i} style={{ flex: 1 }} />)}
+      </View>)}
     </View>
     {/* 다시 쓰는 것끼리 한 묶음(45.2차): 직전 칸의 움직임과 보관해 둔 움직임. 새로 고르기 바로 다음 자리. */}
     <View style={{ gap: 6 }}>
@@ -169,7 +181,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       const locked = usesPro(previousMotion) && !pro;
       const name = [PRESETS.find(p => p.id === previousMotion.preset)?.label, previousMotion.parts?.length ? `부분 ${previousMotion.parts.length}` : null].filter(Boolean).join(' · ');
       // 따뜻한 제안 한 줄: 24칸을 만드는 동안 가장 자주 누르는 행동.
-      return <Pressable accessibilityRole="button" accessibilityLabel="직전 칸 움직임 다시 쓰기" onPress={() => locked ? onRequestPro() : onChange(previousMotion)} style={{ ...row, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
+      return <Pressable accessibilityRole="button" accessibilityLabel="직전 칸 움직임 다시 쓰기" onPress={() => locked ? onRequestPro() : onChange(previousMotion)} style={{ ...row, paddingHorizontal: 12, borderRadius: 14, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
         <MaterialCommunityIcons name="history" size={20} color={C.ink} />
         <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>직전 칸 움직임 다시 쓰기{name ? ' · ' + name : ''}</Text>
         {locked ? <ProTag /> : <MaterialCommunityIcons name="plus" size={18} color={C.muted} />}

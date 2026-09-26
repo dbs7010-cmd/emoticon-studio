@@ -94,12 +94,16 @@ async function openPainter() {
   assert.ok(hueBar(), '색상 막대로 계열을 고른다');
   // 45.35 승인 시안: 색상 막대는 사각판 오른쪽에 **세로로** 선다. 위쪽 끝(0°) = 빨강.
   await act(async () => hueBar().props.onLayout({ nativeEvent: { layout: { width: 44, height: 150 } } }));
-  await act(async () => hueBar().props.onResponderGrant({ nativeEvent: { locationY: 0 } }));
-  await act(async () => hueBar().props.onResponderRelease({ nativeEvent: { locationY: 0 } }));
-  // 그 다음 사각: 오른쪽 위 = 가장 선명하고 가장 밝게.
+  // 실제 이벤트처럼 화면 좌표(page)와 판 안 좌표(location)를 함께 준다. 막대는 화면 y 480, 사각판은 (40, 500)에 있다.
+  // 누른 뒤에는 **엉뚱한 location** 을 준다 — 제품이 끄는 동안 location 을 쓰면 여기서 틀린다(45.36-R1 G19 와 같은 방식).
+  await act(async () => hueBar().props.onResponderGrant({ nativeEvent: { pageY: 480 + 60, locationY: 60 } }));
+  await act(async () => hueBar().props.onResponderMove({ nativeEvent: { pageY: 480 - 300, locationY: 5 } }));
+  await act(async () => hueBar().props.onResponderRelease({ nativeEvent: { pageY: 480 - 300, locationY: 5 } }));
+  // 그 다음 사각: 오른쪽 위 = 가장 선명하고 가장 밝게. 손가락이 판 오른쪽·위로 한참 나가도 가장자리 값에서 멈춘다.
   await act(async () => field().props.onLayout({ nativeEvent: { layout: { width: 240, height: 132 } } }));
-  await act(async () => field().props.onResponderGrant({ nativeEvent: { locationX: 239, locationY: 0 } }));
-  await act(async () => field().props.onResponderRelease({ nativeEvent: { locationX: 239, locationY: 0 } }));
+  await act(async () => field().props.onResponderGrant({ nativeEvent: { pageX: 40 + 100, pageY: 500 + 60, locationX: 100, locationY: 60 } }));
+  await act(async () => field().props.onResponderMove({ nativeEvent: { pageX: 40 + 900, pageY: 500 - 400, locationX: 3, locationY: 3 } }));
+  await act(async () => field().props.onResponderRelease({ nativeEvent: { pageX: 40 + 900, pageY: 500 - 400, locationX: 3, locationY: 3 } }));
   const wheelColor = lastCommand('color').color;
   assert.ok(wheelColor, 'SV 사각에서 고른 색이 캔버스로 간다');
   assert.ok(Math.abs(color.hsvOf(wheelColor).h) <= 8 || Math.abs(color.hsvOf(wheelColor).h - 360) <= 8, '막대 위쪽 끝은 빨강 계열: ' + wheelColor);
@@ -327,8 +331,8 @@ async function openPainter() {
   assert.equal(range('투명도').length, 1, '무료: 투명도 막대');
   const freeHue = () => tree.root.findAll(n => n.props && n.props.accessibilityLabel === '색 계열 막대')[0];
   await act(async () => freeHue().props.onLayout({ nativeEvent: { layout: { width: 44, height: 150 } } }));
-  await act(async () => freeHue().props.onResponderGrant({ nativeEvent: { locationY: 75 } }));
-  await act(async () => freeHue().props.onResponderRelease({ nativeEvent: { locationY: 75 } }));
+  await act(async () => freeHue().props.onResponderGrant({ nativeEvent: { pageY: 480 + 75, locationY: 75 } }));
+  await act(async () => freeHue().props.onResponderRelease({ nativeEvent: { pageY: 480 + 75, locationY: 75 } }));
   const midBar = lastCommand('color').color;
   assert.ok(Math.abs(color.hsvOf(midBar).h - 180) <= 8, '무료: 세로 색상 막대 가운데는 하늘 계열: ' + midBar);
   await act(async () => hexInput()[0].props.onChangeText('#11223380'));

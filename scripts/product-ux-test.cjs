@@ -70,11 +70,12 @@ const openSet = async name => { if (setButtons(name).length === 0 && setButtons(
 const message = async m => { await act(async () => tree.root.findByType('WebView').props.onMessage({ nativeEvent: { data: JSON.stringify(m) } })); };
 const ranges = label => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === label);
 const nudge = async (label, action, times) => { for (let i = 0; i < times; i++) await act(async () => ranges(label)[0].props.onAccessibilityAction({ nativeEvent: { actionName: action } })); };
-// 굵기는 캔버스 **왼쪽 밖** 세로 조절대다. 실제 네이티브 이벤트처럼 pageY 를 주고,
-// 조절대가 측정한 화면 좌표를 뺀 절대 좌표 계약을 검증한다.
+// 굵기는 캔버스 **왼쪽 밖** 세로 조절대다. 실제 네이티브 이벤트처럼 pageY(화면 좌표)와 locationY(홈 안 좌표)를 함께 준다.
+// 홈은 화면 위에서 RAIL_TOP 만큼 내려와 있다 — 0 에 두면 '화면 좌표 − 홈 위치' 계산을 전혀 시험하지 못한다(45.36 의 검사가 그랬다).
+// 누른 뒤의 move 에는 **엉뚱한 locationY** 를 준다: 제품이 끄는 동안 locationY 를 쓰면 값이 틀려 여기서 잡힌다(45.36-R1 G19).
 // 끄는 동안의 값은 손잡이 옆 말풍선에만 적히고, 캔버스에는 아무것도 뜨지 않는다.
 // 조절대 높이 200dp 를 알려 준 뒤, 원하는 굵기가 나오는 자리를 눌러 끈다.
-const SIZE_RAIL = 200, RAIL_HANDLE = 34;
+const SIZE_RAIL = 200, RAIL_HANDLE = 34, RAIL_TOP = 300;
 const atWidth = n => Math.round(RAIL_HANDLE / 2 + (1 - (n - 1) / 47) * (SIZE_RAIL - RAIL_HANDLE));
 const bubbleText = id => tree.root.findAll(n => n.type === 'View' && n.props.testID === id)
   .map(n => n.findAll(x => x.type === 'Text').map(x => String(x.children?.join(''))).join(''));
@@ -84,10 +85,10 @@ const dragSize = async (label, want) => {
   drags++;
   const y = atWidth(want);
   await act(async () => node().props.onLayout({ nativeEvent: { layout: { width: 60, height: SIZE_RAIL } } }));
-  await act(async () => node().props.onResponderGrant({ nativeEvent: { pageY: SIZE_RAIL } }));
-  await act(async () => node().props.onResponderMove({ nativeEvent: { pageY: y } }));
+  await act(async () => node().props.onResponderGrant({ nativeEvent: { pageY: RAIL_TOP + SIZE_RAIL, locationY: SIZE_RAIL } }));
+  await act(async () => node().props.onResponderMove({ nativeEvent: { pageY: RAIL_TOP + y, locationY: 7 } }));
   const during = bubbleText('굵기 말풍선');
-  await act(async () => node().props.onResponderRelease({ nativeEvent: { pageY: y } }));
+  await act(async () => node().props.onResponderRelease({ nativeEvent: { pageY: RAIL_TOP + y, locationY: 7 } }));
   return during;
 };
 const texts = () => tree.root.findAll(n => n.type === 'Text').map(n => [n.props.children].flat(9).filter(x => typeof x === 'string' || typeof x === 'number').join(''));
@@ -191,6 +192,21 @@ const saved = async (dirty = true) => {
   assert.deepEqual(during, ['24'], '끄는 동안 말풍선이 지금 값을 말한다');
   assert.equal(lastCommand('width').width, 24, '브러시 굵기가 캔버스로 간다');
   assert.equal(loadStore().store.projects[0].brush.width, 24, '손을 떼면 굵기가 세트에 남는다');
+  // 손가락이 홈 밖으로 한참 나가도 값은 끝에서 멈춘다 — 튀거나 거꾸로 가지 않는다(45.36-R1 G19).
+  {
+    const rail = () => ranges('브러시 굵기')[0];
+    await act(async () => rail().props.onLayout({ nativeEvent: { layout: { width: 60, height: SIZE_RAIL } } }));
+    await act(async () => rail().props.onResponderGrant({ nativeEvent: { pageY: RAIL_TOP + 100, locationY: 100 } }));
+    await act(async () => rail().props.onResponderMove({ nativeEvent: { pageY: RAIL_TOP - 400, locationY: 3 } }));
+    assert.deepEqual(bubbleText('굵기 말풍선'), ['48'], '홈 위로 한참 나가면 최댓값에서 멈춘다');
+    await act(async () => rail().props.onResponderMove({ nativeEvent: { pageY: RAIL_TOP + SIZE_RAIL + 600, locationY: 3 } }));
+    assert.deepEqual(bubbleText('굵기 말풍선'), ['1'], '홈 아래로 한참 나가면 최솟값에서 멈춘다');
+    const widthsBefore = commands.filter(c => c.includes('"width"')).length;
+    await act(async () => rail().props.onResponderRelease({ nativeEvent: { pageY: RAIL_TOP + SIZE_RAIL + 600, locationY: 3 } }));
+    assert.equal(lastCommand('width').width, 1, '손을 떼면 마지막 값(1)이 캔버스로 간다');
+    assert.equal(commands.filter(c => c.includes('"width"')).length, widthsBefore + 1, '끄는 동안이 아니라 손을 뗄 때 한 번만 보낸다');
+    await dragSize('브러시 굵기', 24);
+  }
   await press('지우개');
   assert.equal(lastCommand('tool').tool, 'eraser', '다른 도구는 처음 누르면 고르기만 한다');
   await press('지우개');
@@ -227,8 +243,8 @@ const saved = async (dirty = true) => {
 
   // ── 2. 잠금 밀도: 색 ─────────────────────────────────────────────────────────────────────
   await press('색');
-  // 45.5: 도구를 연다고 그림이 움직이지 않는다 — 색 패널을 열어도 캔버스는 같은 자리(가운데)에 그대로 선다.
-  assert.equal(canvasAreaNode().props.style.justifyContent, 'center', '색 패널을 열어도 캔버스는 제자리다(45.5차)');
+  // 45.5: 도구를 연다고 그림이 움직이지 않는다 — 색 패널을 열어도 캔버스는 같은 자리(45.36-R1 부터 영역 맨 위)에 그대로 선다.
+  assert.equal(canvasAreaNode().props.style.justifyContent, 'flex-start', '색 패널을 열어도 캔버스는 제자리다(45.5차)');
   assert.equal(locks() + proMarks(), 0, '색(팔레트): 자물쇠·PRO 표시 0');
   // 45.4: 스포이드는 누르기도 되고 누른 채 캔버스로 끌 수도 있는 손잡이다.
   const dropper = () => tree.root.findAll(n => n.props && n.props.accessibilityLabel === '스포이드')[0];

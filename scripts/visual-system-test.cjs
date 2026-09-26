@@ -269,10 +269,18 @@ async function ready() {
   await act(async () => { for (const fn of keyboardListeners.keyboardDidHide || []) fn({}); });
   await press('문구 닫기');
 
-  // ── 7. 움직이기: '없음'은 좁고 조용하다 ──────────────────────────────────────────────────────
+  // ── 7. 움직이기: 네 칸 격자, 모든 효과에 손이 닿고, '없음'은 조용하다 ─────────────────────────
+  // 45.2 의 '없음은 좁게'는 한 줄에 일곱을 세우던 때의 규칙이다. 그 줄은 320dp 에서 흔들기·부르르를 화면 밖으로 밀었고
+  // 기기에서는 칸을 36dp 로 줄였다(45.36-R1 G18). 이제 칸 크기는 같고, '없음'은 움직이는 견본 없이 옅은 아이콘만 둔다.
   await press('움직이기');
-  const none = flat(labelled('움직임 없음')[0].props.style), bounce = flat(labelled('통통')[0].props.style);
-  assert.ok(typeof none.width === 'number' && none.width <= 64 && bounce.flex === 1, "'없음'은 효과 카드보다 좁다");
+  const gridRows = tree.root.findAll(n => n.props.testID === '움직임 격자')[0].children.filter(c => c.type === 'View');
+  assert.deepEqual(gridRows.map(r => r.children.length), [4, 4], '네 칸씩 두 줄(마지막 줄은 빈 칸으로 폭을 맞춘다)');
+  for (const label of ['움직임 없음', '둥실', '통통', '두근거리기', '까딱', '흔들기', '부르르']) {
+    const cell = labelled(label);
+    assert.equal(cell.length, 1, label + ' 칸이 격자에 있다');
+    assert.equal(flat(cell[0].props.style).flex, 1, label + ' 칸은 줄을 넷으로 나눈 폭(320dp 에서도 48dp 이상)');
+  }
+  assert.equal(labelled('움직임 없음')[0].findAll(n => n.type === 'Image').length, 0, "'없음'에는 움직이는 견본이 없다 — 효과와 같은 무게로 서지 않는다");
   assert.equal(labelled('통통')[0].findAll(n => n.type === 'Image').length, 1, '효과 카드에 실제로 움직이는 견본');
   // 45.2: 다시 쓰는 것(보관한 움직임)은 효과 바로 다음, PRO 한 줄은 맨 아래. 한 줄짜리 섹션 제목은 없다.
   assert.ok(!texts().includes('더 세밀하게 움직이기'), '한 줄뿐인 목록에 섹션 제목을 붙이지 않는다');
@@ -293,6 +301,6 @@ async function ready() {
   assert.deepEqual(yellowOnExport, ['파일 묶음 만들기'], '내보내기의 노랑 버튼은 하나');
   await act(async () => tree.unmount());
 
-  console.log('PASS: visual system — 토큰(색·모서리 8/12/16/20/24·간격 4 기반·옅은 그림자·글자 위계 8단), 2px 노랑 선택 박스·900 굵기 남발 없음, 화면 하드코딩 색 ' + hex + '곳(39차 56, 견본·토큰 정의 제외), 에셋 자리 8개 규격(44차 표현 가이드 카드 포함)·캔버스 가이드 힌트 없음·알림 꺼짐·레퍼런스 V1 분류 넷, 홈 브랜드→창작 표면→최근 작업·노랑 버튼 1, 세트 12개여도 홈은 가장 최근 하나+전체 보기·전체 작업→보드→뒤로 전체 작업·표현 가이드 분류/카드, 보드 글자 배지 없음·떠 있는 아래 줄, 도구 네 칸 테두리 없음·고른 도구만 노랑 표면·되돌리기 조용, 빠른 브러시 카드 셋(획 견본·노랑 하나)·전체 목록 무료4+PRO8, 문구 키보드 한 줄, 움직임 없음 좁게, 내보내기 요약→격자·제출 준비·노랑 1. Native/WebView mocked.');
+  console.log('PASS: visual system — 토큰(색·모서리 8/12/16/20/24·간격 4 기반·옅은 그림자·글자 위계 8단), 2px 노랑 선택 박스·900 굵기 남발 없음, 화면 하드코딩 색 ' + hex + '곳(39차 56, 견본·토큰 정의 제외), 에셋 자리 8개 규격(44차 표현 가이드 카드 포함)·캔버스 가이드 힌트 없음·알림 꺼짐·레퍼런스 V1 분류 넷, 홈 브랜드→창작 표면→최근 작업·노랑 버튼 1, 세트 12개여도 홈은 가장 최근 하나+전체 보기·전체 작업→보드→뒤로 전체 작업·표현 가이드 분류/카드, 보드 글자 배지 없음·떠 있는 아래 줄, 도구 네 칸 테두리 없음·고른 도구만 노랑 표면·되돌리기 조용, 빠른 브러시 카드 셋(획 견본·노랑 하나)·전체 목록 무료4+PRO8, 문구 키보드 한 줄, 움직임 네 칸 격자(전 효과 닿음·없음은 견본 없이 조용), 내보내기 요약→격자·제출 준비·노랑 1. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

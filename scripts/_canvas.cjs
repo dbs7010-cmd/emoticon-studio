@@ -6,8 +6,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { loader } = require('./load-ts.cjs');
 
-const OUT = 'verification/round45_23/screens/assets';
+// node scripts/_canvas.cjs [포트] [폴더]. 폴더를 주지 않으면 회차와 무관한 한 곳에 둔다 —
+// _screens.cjs 가 거기서 가져간다. 회차 폴더마다 따로 돌리는 것을 잊어 빈 캔버스로 찍던 일(45.36)을 막는다.
 const PORT = Number(process.argv[2] || 4641);
+const OUT = process.argv[3] || 'verification/engine-sample';
 const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
 
 // 시험 그림: 이미 저장소에 있는 표현 가이드 그림을 레이어로 넣는다(새로 그리지 않는다).

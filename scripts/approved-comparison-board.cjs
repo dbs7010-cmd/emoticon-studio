@@ -3,8 +3,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'verification', 'round45_36', 'comparisons');
-const SCREEN = path.join(ROOT, 'verification', 'round45_36', 'screens');
+// node scripts/approved-comparison-board.cjs [렌더 폴더] [출력 폴더]
+const SCREEN = path.resolve(ROOT, process.argv[2] || 'verification/round45_36/screens');
+const OUT = path.resolve(ROOT, process.argv[3] || 'verification/round45_36/comparisons');
 const APPROVED = path.join(ROOT, 'docs', 'design', 'approved-tool-design-board.webp');
 const items = [
   ['workspace', '작업 화면', 'draw-base.png'],
@@ -12,6 +13,7 @@ const items = [
   ['color', '색상 판', 'draw-color.png'],
   ['layers', '레이어 판', 'draw-layers.png'],
   ['selection', '선택 상태', 'draw-selection.png'],
+  ['motion', '움직이기', 'motion-base.png'],
 ];
 
 fs.mkdirSync(path.join(OUT, 'img'), { recursive: true });

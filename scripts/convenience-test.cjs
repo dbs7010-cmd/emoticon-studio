@@ -157,8 +157,8 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   await press('색');   // 45.28: 패널은 SV 사각 + 색상 막대로 열린다
   const field = () => anyLabel('색 사각판')[0];
   await act(async () => field().props.onLayout({ nativeEvent: { layout: { width: 240, height: 132 } } }));
-  await act(async () => field().props.onResponderGrant({ nativeEvent: { locationX: 200, locationY: 30 } }));
-  await act(async () => field().props.onResponderRelease({ nativeEvent: { locationX: 200, locationY: 30 } }));
+  await act(async () => field().props.onResponderGrant({ nativeEvent: { pageX: 40 + 200, pageY: 500 + 30, locationX: 200, locationY: 30 } }));
+  await act(async () => field().props.onResponderRelease({ nativeEvent: { pageX: 40 + 200, pageY: 500 + 30, locationX: 200, locationY: 30 } }));
   const picked = lastCommand('color').color;
   assert.ok(picked, 'SV 사각에서 고른 색이 캔버스로 간다');
   await new Promise(r => setTimeout(r, 900));
@@ -323,6 +323,29 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   await press('레이어 1 관리');
   assert.equal(labelled('뒤로 보내기').length, 1, '맨 앞으로 간 장은 이제 뒤로만 갈 수 있다');
   assert.equal(labelled('앞으로 보내기').length, 0, '맨 앞에서는 더 앞으로 가지 않는다');
+  await press('레이어 1 관리');
+  // 45.36-R1 G14: 줄 끝 손잡이(≡)를 **손가락으로 끌어서** 차례를 바꾼다. 45.36 에는 접근성 동작만 있어 끌어도 아무 일이 없었다.
+  // 지금 차례는 [그림 2, 그림 1] — 그림 1 은 아래 줄이다. 한 줄 높이(57)만큼 위로 끌면 뒤로 한 칸(by −1).
+  const grip = () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityLabel === '레이어 1 순서 바꾸기')[0];
+  assert.ok(grip() && typeof grip().props.onResponderMove === 'function', '손잡이는 끌 수 있다(응답 함수가 붙어 있다)');
+  const drag = async dy => {
+    await act(async () => { grip().props.onStartShouldSetResponder(); grip().props.onResponderGrant({ nativeEvent: { pageY: 500 } }); });
+    await act(async () => grip().props.onResponderMove({ nativeEvent: { pageY: 500 + dy } }));
+    await act(async () => grip().props.onResponderRelease({ nativeEvent: { pageY: 500 + dy } }));
+  };
+  const moves = () => sent().filter(m => m.type === 'moveLayer').length;
+  let movedBefore = moves();
+  await drag(-12);
+  assert.equal(moves(), movedBefore, '반 줄도 안 되게 끌면 차례를 바꾸지 않는다');
+  await drag(-57);
+  assert.equal(moves(), movedBefore + 1, '한 줄 끌면 한 번 옮긴다');
+  assert.deepEqual(lastCommand('moveLayer'), { type: 'moveLayer', id: 'draw-1', by: -1 }, '위로 끌면 뒤로 한 칸');
+  movedBefore = moves();
+  await drag(-600);
+  assert.equal(moves(), movedBefore + 1, '목록 끝을 넘어 끌어도 갈 수 있는 칸(1)만큼만 옮긴다');
+  movedBefore = moves();
+  await drag(300);
+  assert.equal(moves(), movedBefore, '맨 아래 줄은 더 아래로 끌리지 않는다');
   await press('레이어');
   // ── 15. 45.10 기존 저장본 보존: 장이 여럿인 옛 칸은 그대로 열리고, 부분 움직임이 가리키는 장도 그대로 ──
   await press('그리기 닫기');
@@ -442,6 +465,6 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.equal(labelled('문구 적용').length, 0, '취소하면 문구 편집이 닫힌다');
 
   await act(async () => tree.unmount());
-  console.log('PASS: convenience — 새 칸 한 장·옛 다중 장 저장본과 부분 움직임 참조 보존, 레이어 차례 앞으로/뒤로(양 끝 멈춤), 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 브러시 카드의 실제 획 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, SV 사각 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
+  console.log('PASS: convenience — 새 칸 한 장·옛 다중 장 저장본과 부분 움직임 참조 보존, 레이어 차례 앞으로/뒤로·손잡이 끌기(양 끝 멈춤), 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 브러시 카드의 실제 획 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, SV 사각 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

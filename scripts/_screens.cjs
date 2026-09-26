@@ -189,6 +189,12 @@ const PAGE = (id, title, body) => `<!doctype html>
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
+  // 캔버스 자리의 엔진 그림을 먼저 확보한다. 없으면 **찍지 않고 실패한다** —
+  // 45.36 에서 빈 캔버스(오류 문구)가 찍힌 104장을 증거로 제출한 일을 다시 만들지 않는다.
+  const sample = path.join(OUT, 'assets', 'canvas-sample.png');
+  const shared = path.join('verification', 'engine-sample', 'canvas-sample.png');
+  if (!fs.existsSync(sample) && fs.existsSync(shared)) { fs.mkdirSync(path.dirname(sample), { recursive: true }); fs.copyFileSync(shared, sample); }
+  if (!fs.existsSync(sample)) throw new Error('엔진 시험 그림이 없다: ' + shared + ' — node scripts/_canvas.cjs 를 띄우고 브라우저로 열어 먼저 만든다');
   const made = [];
   await walk(WIDTH, async (id, title, tree, flat) => {
     modals = []; assets.ok = 0; assets.missing = [];
