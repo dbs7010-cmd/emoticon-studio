@@ -42,7 +42,7 @@ const images = { dataUrl: async () => pngData, pickImages: async () => [], saveP
 const load = loader({ ...mocks, './src/services/images': images, '../services/images': images });
 const { loadStore, saveStore } = load('src/services/storage.ts');
 const { createProject } = load('src/project.ts');
-const { T, Type, Elev } = load('src/components/ui.tsx');
+const { T, Type, Elev, Pop, Font } = load('src/components/ui.tsx');
 const slots = load('src/design/asset-slots.ts');
 const App = load('App.tsx').default;
 
@@ -63,14 +63,25 @@ async function ready() {
 
 (async () => {
   // ── 1. 토큰: 명세 값 · 한 벌 ─────────────────────────────────────────────────────────────
-  // 45.34 공통 색 기준. 값이 되돌아가지 않게 못 박는다.
-  // 앱 바탕(bg)은 흰색에서 옅은 회색으로 내렸다 — 예전에는 bg 와 paper 가 둘 다 흰색이라
-  // 앱 바탕과 패널이 구분되지 않았다. 패널은 그대로 흰색이고, 그 위에 떠 보인다.
-  assert.equal(T.bg, '#F6F7F8'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.surface2, '#ECEEF2');
+  // 45.39 확정 디자인 D '노랑 스티커'(사용자 확정 2026-09-27). 값이 되돌아가지 않게 못 박는다.
+  // 앱 바탕은 따뜻한 크림, 패널은 흰색 — 둘이 달라야 층이 읽힌다(45.34 원칙 유지).
+  assert.equal(T.bg, '#FFF9EC'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.surface2, '#F6EBD3');
   assert.notEqual(T.bg, T.paper, '앱 바탕과 패널은 서로 달라야 층이 읽힌다');
   assert.notEqual(T.bg, T.surface2, '눌린 면은 앱 바탕과도 달라야 한다');
-  assert.equal(T.ink, '#202329'); assert.equal(T.muted, '#626872'); assert.equal(T.line, '#E5E7EB');
-  assert.equal(T.accent, '#FFDA32'); assert.equal(T.accentSoft, '#FFF5C2'); assert.equal(T.danger, '#B42318');
+  assert.equal(T.ink, '#2A2320'); assert.equal(T.muted, '#6F6258'); assert.equal(T.line, '#EADFCB');
+  assert.equal(T.accent, '#FFCC2E'); assert.equal(T.accentSoft, '#FFF0B8'); assert.equal(T.danger, '#B42318');
+  assert.notEqual(T.accent.toUpperCase(), '#FEE500', '카카오 노랑을 쓰지 않는다');
+  // 스티커 문법: 2px 짙은 테두리 + 딱 떨어지는 그림자. PRO 는 노랑의 반대편 보라.
+  assert.equal(T.stroke, 2); assert.equal(T.edge, T.ink, '스티커 테두리는 본문 색');
+  assert.equal(Pop.border.borderWidth, 2); assert.ok(/^3px 3px 0px /.test(Pop.shadow.boxShadow), '주요 표면 그림자는 흐림 없이 3px');
+  assert.equal(T.pro, '#5B47E0');
+  // 제목 글꼴 Jua: 빌드 설정에 들어 있고, 파일과 OFL 사용권 문서가 함께 있다.
+  assert.equal(Font.display, 'Jua'); assert.equal(Type.screenTitle.fontFamily, 'Jua'); assert.equal(Type.screenTitle.fontWeight, '400', '한 굵기 글꼴에 가짜 굵기를 걸지 않는다');
+  {
+    const plugin = require('../app.config.js')().plugins.find(x => Array.isArray(x) && x[0] === 'expo-font');
+    assert.ok(plugin && plugin[1].android.fonts[0].fontFamily === 'Jua', 'expo-font 설정 플러그인이 Jua 를 넣는다');
+    assert.ok(fs.existsSync('assets/fonts/Jua-Regular.ttf') && fs.readFileSync('assets/fonts/Jua-OFL.txt', 'utf8').includes('SIL Open Font License'), '글꼴 파일과 사용권');
+  }
   assert.equal(T.accentInk, T.ink, '노랑 위 글자는 짙은 색이다(흰 글씨 금지)');
   // 글자 색은 실제 대비로 확인한다. 토큰을 바꿀 때 눈으로만 고르면 보조 글자가 조용히 옅어진다.
   {
@@ -85,10 +96,11 @@ async function ready() {
   }
   assert.deepEqual([T.radius.xs, T.radius.sm, T.radius.md, T.radius.lg, T.radius.xl], [8, 12, 16, 20, 24], '모서리는 8·12·16·20·24 한 벌');
   // 명세 §2 는 쓰임새로 부른다: 카드16 · 버튼12 · 칩10.
-  assert.deepEqual([T.radius.card, T.radius.button, T.radius.chip], [16, 12, 10], '카드16·버튼12·칩10');
-  // 명세 §2 글자 위계. 제목24 · 화면명20 · 섹션18 · 본문16 · 버튼15 · 보조13 · 도구12.
+  // 45.39: 스티커 표면은 조금 더 둥글다 — 카드20 · 버튼14 · 칩10.
+  assert.deepEqual([T.radius.card, T.radius.button, T.radius.chip], [20, 14, 10], '카드20·버튼14·칩10');
+  // 45.39 글자 위계. 제목26 · 화면명22 · 섹션19(Jua) · 본문16 · 버튼15 · 보조13 · 도구12.
   assert.deepEqual([Type.screenTitle.fontSize, Type.screenName.fontSize, Type.sectionTitle.fontSize, Type.body.fontSize, Type.button.fontSize, Type.bodySecondary.fontSize, Type.caption.fontSize],
-    [24, 20, 18, 16, 15, 13, 12], '글자 크기 한 벌');
+    [26, 22, 19, 16, 15, 13, 12], '글자 크기 한 벌');
   assert.deepEqual(Object.values(T.gap), [4, 8, 12, 16, 20, 24, 32], '간격은 4 기반 한 벌');
   for (const key of ['screenTitle', 'sectionTitle', 'cardTitle', 'body', 'bodySecondary', 'button', 'caption', 'micro']) assert.ok(Type[key]?.fontSize, 'Type.' + key);
   assert.ok(Elev[1].shadowOpacity <= .08 && Elev[2].shadowOpacity <= .12, '그림자는 옅다(짙은 drop shadow 금지)');
@@ -200,24 +212,26 @@ async function ready() {
   // 쉬고 있는 도구에는 보이는 테두리가 없다(테두리 1px 은 자리만 잡아 두고 색이 투명이라 보이지 않는다).
   const seen = st => (st.borderWidth ?? 0) === 0 || st.borderColor === 'transparent' ? 0 : st.borderWidth;
   const TOOLS = ['그리기 도구 펜', '지우개', '채우기', '선택'];
-  for (const label of TOOLS) assert.equal(seen(flat(labelled(label)[0].props.style)), 0, label + ' 도구에 카드 테두리가 없다');
-  assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.accentSoft, '고른 도구만 옅은 노랑 표면');
+  // 45.39 디자인 D: 고른 도구는 노랑 채움 + 2px 짙은 테두리(스티커). 쉬는 도구는 테두리도 바탕도 없다.
+  for (const label of TOOLS.slice(1)) assert.equal(seen(flat(labelled(label)[0].props.style)), 0, label + ' 쉬는 도구에 카드 테두리가 없다');
+  assert.equal(seen(flat(labelled(TOOLS[0])[0].props.style)), 2, '고른 도구는 2px 테두리');
+  assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.accent, '고른 도구만 노랑 표면');
   assert.equal(flat(labelled('지우개')[0].props.style).backgroundColor, 'transparent', '고르지 않은 도구는 투명');
   // 노랑은 '지금 그리는 도구' 하나만 쓴다. 색은 도구가 아니라 패널 입구라 테두리로 말한다.
   // 45.35 승인 시안: 색은 도구 줄 오른쪽 끝의 동그라미 하나다. 상태는 그 고리가 말한다.
   const colorBtn = () => flat(labelled('색')[0].props.style);
   const colorRing = () => flat(byTestID('지금 색 고리')[0].props.style);
-  assert.notEqual(colorBtn().backgroundColor, T.accentSoft, '색은 도구가 아니라 패널 입구 — 노랑을 쓰지 않는다');
-  assert.notEqual(colorRing().backgroundColor, T.accentSoft, '색 고리에도 노랑을 쓰지 않는다');
+  assert.notEqual(colorBtn().backgroundColor, T.accent, '색은 도구가 아니라 패널 입구 — 노랑을 쓰지 않는다');
+  assert.notEqual(colorRing().backgroundColor, T.accent, '색 고리에도 노랑을 쓰지 않는다');
   const colorRest = seen(colorRing());
   await press('색');
-  assert.notEqual(colorRing().backgroundColor, T.accentSoft, '색 패널을 열어도 노랑이 되지 않는다');
+  assert.notEqual(colorRing().backgroundColor, T.accent, '색 패널을 열어도 노랑이 되지 않는다');
   assert.ok(seen(colorRing()) > colorRest, '열린 패널은 더 굵은 고리로 말한다');
-  assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.accentSoft, '색을 열어도 활성 도구(펜)는 그대로 노랑');
-  const yellowTools = TOOLS.filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accentSoft);
+  assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.accent, '색을 열어도 활성 도구(펜)는 그대로 노랑');
+  const yellowTools = TOOLS.filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accent);
   assert.deepEqual(yellowTools, [TOOLS[0]], '도구 줄의 노랑은 한 곳뿐: ' + JSON.stringify(yellowTools));
   await press('지우개');
-  assert.deepEqual(TOOLS.filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accentSoft), ['지우개'], '지우개로 바꾸면 노랑도 하나만 따라 옮긴다');
+  assert.deepEqual(TOOLS.filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accent), ['지우개'], '지우개로 바꾸면 노랑도 하나만 따라 옮긴다');
   await press(TOOLS[0]);
   const undoBg = flat(labelled('되돌리기')[0].props.style).backgroundColor;
   assert.ok(!undoBg || undoBg === 'transparent', '되돌리기는 도구처럼 보이지 않는 조용한 아이콘(바탕이 없다): ' + undoBg);
@@ -227,7 +241,9 @@ async function ready() {
   assert.ok(quick.every(n => flat(n.props.style).flex === 1), '세 장이 한 줄을 나눠 쓴다');
   assert.ok(quick.every(n => { const h = flat(n.props.style).minHeight ?? 0; return h >= 56 && h <= 72; }), '획 견본이 보일 만큼 높다(56~72dp)');
   assert.ok(quick.every(n => n.findAll(x => x.type === 'Image').length === 1), '카드마다 그 브러시의 실제 획 견본');
-  assert.equal(quick.filter(n => flat(n.props.style).backgroundColor === T.accentSoft).length, 1, '빠른 줄의 노랑도 한 장뿐');
+  // 45.39: 고른 브러시는 흰 스티커 카드(2px 테두리 + 그림자). 도구의 노랑과 역할이 다르다. 스티커 카드는 한 장뿐.
+  assert.equal(quick.filter(n => seen(flat(n.props.style)) === 2).length, 1, '빠른 줄의 고른 카드는 한 장뿐');
+  assert.ok(quick.every(n => flat(n.props.style).backgroundColor !== T.accent), '브러시 카드는 도구처럼 노랑으로 칠하지 않는다');
   // 45.35 승인 시안: 브러시 창은 선·채색·질감·효과 갈래의 세로 목록이다. 줄마다 카드를 두르지 않고
   // 얇은 구분선으로만 가르며, 이름 칸과 넓은 실제 획 견본이 따로 선다. 쓸 수 있는 것은 흐리게 죽이지 않는다.
   await press('브러시 전체');

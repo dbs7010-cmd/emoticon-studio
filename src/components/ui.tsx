@@ -5,50 +5,58 @@ import { imageUri } from '../services/storage';
 import { ASSET_SLOTS, type AssetSlotName } from '../design/asset-slots';
 import type { LocalImage } from '../types';
 
-// ── 임티제작소 디자인 토큰(40차) ──────────────────────────────────────────────────────────────
-// 한 벌의 색·글자·간격·모서리·그림자로 홈·보드·그리기·내보내기가 한 앱으로 읽히게 한다.
+// ── 임티제작소 디자인 토큰 · 45.39 확정 방향 D '노랑 스티커' ─────────────────────────────────────
+// 사용자 확정(2026-09-27): B 의 굵은 테두리 + A 의 따뜻한 색감, 노랑이 기본색, 대비색으로 눈이 피로하지 않게 뚜렷하게.
 //
-// 색은 명세 §2 표를 따른다: 흰 바탕 · 차가운 회색 계열 보조 · 노랑 하나로 강조(CTA · 고른 것 · 진행).
-// 창작 표면처럼 따뜻한 면은 강조 면으로만 남긴다. 색만으로 상태를 구분하지 않는다(테두리·체크·밑줄을 함께 쓴다).
-// 노랑 위 글자는 반드시 accentInk(짙은 색) — 흰 글자는 대비가 2:1 아래라 읽히지 않는다. 노랑을 글자색으로 쓰지 않는다.
-// 이 앱은 카카오 이모티콘 제출을 돕지만 카카오가 만든 앱이 아니다. 카카오의 노랑·로고·캐릭터·화면 구성을 따라 하지 않는다.
+// · 바탕은 따뜻한 크림(차가운 회색을 걷었다). 흰 표면이 그 위에 스티커처럼 붙는다.
+// · 노랑(#FFCC2E)은 지금 할 일(저장·새로 만들기)과 고른 것에만 넓게 쓴다. 넓은 노란 면은 화면에 하나.
+// · 대비색: 보라(PRO) · 초록(저장됨·완성) · 파스텔(감정 카드). 경고색은 정말 경고일 때만.
+// · 스티커 문법: 누르는 주요 표면과 고른 것은 2px 짙은 테두리 + 딱 떨어지는 그림자(Pop). 목록 줄은 얇은 선 그대로 —
+//   모든 것에 테두리를 두르면 눈이 피로하다.
+// · 노랑 위 글자는 언제나 짙은 색(흰 글씨 금지). 노랑을 글자색으로 쓰지 않는다.
+// 이 앱은 카카오 이모티콘 제출을 돕지만 카카오가 만든 앱이 아니다. 카카오의 노랑(#FEE500)·로고·캐릭터·화면 구성을 따라 하지 않는다.
 export const T = {
-  bg: '#F6F7F8',            // 앱 기본 바탕 — 흰 패널이 그 위에 떠 보이도록 한 단계 내렸다(45.34)
-  paper: '#FFFFFF',         // surfacePrimary
-  surface2: '#ECEEF2',      // workspace — 캔버스 바깥·세그먼트 바탕·빈 칸. 앱 바탕보다 한 단계 눌린 면(45.34)
-  warm: '#FFF9E8',          // surfaceWarm — 창작 표면·제안
-  ink: '#202329',           // 본문·아이콘 (45.34 공통 기준)
-  muted: '#626872',         // 보조 설명 (45.34 공통 기준 · 흰 패널에서 5.6:1)
-  faint: '#8B93A0',         // 아주 작은 보조 글자와 비활성 아이콘(secondary 에서 한 단계 옅게)
-  line: '#E5E7EB',          // 구분선 (45.34 공통 기준)
-  lineStrong: '#CBD0DA',
-  accent: '#FFDA32',        // 브랜드 노랑 — 완성과 현재 선택에만 쓴다(45.34)
-  accentLine: '#F0C61E',    // primaryPressed
-  accentSoft: '#FFF5C2',    // 선택 배경 — 넓은 노란 면 대신 이 옅은 배경 + 얇은 강조선을 쓴다(45.34)
-  accentInk: '#202329',     // 노랑 위 글자는 언제나 짙은 색(흰 글씨 금지)
-  accentBorder: '#EFD25E', // 고른 표면(옅은 노랑)의 1px 가장자리
-  warmLine: '#F4E6B8',      // 따뜻한 표면의 가장자리
-  warmInk: '#8A6A00',       // 따뜻한 표면 위의 작은 머리글(노랑 계열 글자가 아닌 짙은 황갈색)
-  floating: '#FFFFFFF7',    // 캔버스 위에 뜨는 흰 표면
-  yellow: '#FFDA32',
-  fill: '#E9ECF1', fillPressed: '#DDE1E8',
-  success: '#2F8A57', successSoft: '#E4F3EA',
-  warning: '#A86400', warningSoft: '#FDF0D6',
-  danger: '#B42318', dangerSoft: '#FBE4E1',   // danger(명세 §2)
-  info: '#2C5F9E', infoSoft: '#EAF1FB',
-  mint: '#E4F3EA', blue: '#EAF1FB', lavender: '#EFE8FB',
-  lilac: '#D9CFFF', sky: '#C9EBFF', coral: '#FFD5CF',   // 감정 그림 배경(명세 §2)
-  radius: { xs: 8, sm: 12, md: 16, lg: 20, xl: 24, chip: 10, button: 12, card: 16 },
+  bg: '#FFF9EC',            // 앱 바탕 — 따뜻한 크림
+  paper: '#FFFFFF',         // 스티커 표면
+  surface2: '#F6EBD3',      // 작업대 — 캔버스 바깥·세그먼트 바탕·빈 칸
+  warm: '#FFF3D6',          // 따뜻한 제안 면
+  ink: '#2A2320',           // 본문·아이콘·스티커 테두리
+  muted: '#6F6258',         // 보조 설명(흰 표면에서 6:1)
+  faint: '#9A8C7F',         // 아주 작은 보조 글자와 비활성 아이콘
+  line: '#EADFCB',          // 구분선
+  lineStrong: '#D3C4AA',
+  accent: '#FFCC2E',        // 기본색 노랑 — 지금 할 일과 고른 것
+  accentLine: '#F0B800',    // 노랑 눌림
+  accentSoft: '#FFF0B8',    // 고른 면
+  accentInk: '#2A2320',     // 노랑 위 글자
+  accentBorder: '#2A2320',  // 고른 면의 가장자리 — 스티커 테두리와 같은 짙은 색
+  warmLine: '#EFDDB0',
+  warmInk: '#7A5A00',
+  floating: '#FFFFFFF7',
+  yellow: '#FFCC2E',
+  fill: '#F3EADA', fillPressed: '#EADFCB',
+  success: '#1E7F55', successSoft: '#D5F2E3',
+  warning: '#9A5B00', warningSoft: '#FFEACC',
+  danger: '#B42318', dangerSoft: '#FCE3DF',
+  info: '#3D4FC4', infoSoft: '#E9E5FF',
+  pro: '#5B47E0', proSoft: '#ECE8FF',            // PRO 대비색(노랑의 반대편 보라)
+  mint: '#D5F2E3', blue: '#E3F1FF', lavender: '#ECE8FF',
+  lilac: '#DCD3FF', sky: '#CDEBFF', coral: '#FFD9CC',   // 감정 카드 파스텔
+  edge: '#2A2320', stroke: 2,                            // 스티커 테두리
+  radius: { xs: 8, sm: 12, md: 16, lg: 20, xl: 24, chip: 10, button: 14, card: 20 },
   gap: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
   tap: 48, // 편한 손가락 자리
 };
 const C = T;
+// 제목 글꼴: Jua(빌드 때 APK 에 들어간다, app.config.js). 한 굵기뿐이라 굵기는 400 으로 둔다 — 굵게를 걸면 가짜 굵기가 된다.
+export const Font = { display: 'Jua' } as const;
+const display = { fontFamily: Font.display, fontWeight: '400' as const };
 
-// 글자 위계. 굵기 하나로 위계를 만들지 않는다 — 크기·굵기·색·줄 간격을 함께 쓴다. 설명문은 굵게 쓰지 않는다.
+// 글자 위계. 화면·섹션 제목은 Jua, 본문은 기기 기본 한글 글꼴. 설명문은 굵게 쓰지 않는다.
 export const Type = {
-  screenTitle: { fontSize: 24, lineHeight: 32, fontWeight: '800', color: T.ink, letterSpacing: -0.4 },
-  screenName: { fontSize: 20, lineHeight: 27, fontWeight: '800', color: T.ink, letterSpacing: -0.4 },
-  sectionTitle: { fontSize: 18, lineHeight: 25, fontWeight: '800', color: T.ink, letterSpacing: -0.2 },
+  screenTitle: { fontSize: 26, lineHeight: 34, ...display, color: T.ink },
+  screenName: { fontSize: 22, lineHeight: 29, ...display, color: T.ink },
+  sectionTitle: { fontSize: 19, lineHeight: 26, ...display, color: T.ink },
   cardTitle: { fontSize: 16, lineHeight: 22, fontWeight: '700', color: T.ink },
   body: { fontSize: 16, lineHeight: 24, fontWeight: '400', color: T.ink },
   bodySecondary: { fontSize: 13, lineHeight: 19, fontWeight: '400', color: T.muted },
@@ -57,12 +65,19 @@ export const Type = {
   micro: { fontSize: 11, lineHeight: 14, fontWeight: '600', color: T.faint },
 } as const;
 
-// 그림자는 예뻐 보이려고가 아니라 표면의 층을 가르려고 쓴다. 짙은 그림자는 쓰지 않는다.
-//   0: 평평한 바탕 · 1: 카드·누르는 표면 · 2: 떠 있는 dock·시트
+// 그림자. 층을 가르는 부드러운 그림자(Elev)와, 스티커처럼 붙은 주요 표면의 딱 떨어지는 그림자(Pop) 두 가지.
+//   Elev 0: 평평한 바탕 · 1: 카드·누르는 표면 · 2: 떠 있는 dock·시트
+//   Pop: 2px 테두리와 함께 쓴다(주요 버튼·카드·캔버스·고른 것). 눌리면 그림자를 거두고 그만큼 내려앉는다.
 export const Elev = {
   0: {},
-  1: { shadowColor: '#3B3420', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  2: { shadowColor: '#3B3420', shadowOpacity: 0.1, shadowRadius: 18, shadowOffset: { width: 0, height: -3 }, elevation: 8 },
+  1: { shadowColor: '#5A4020', shadowOpacity: 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  2: { shadowColor: '#5A4020', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: -3 }, elevation: 8 },
+} as const;
+export const Pop = {
+  border: { borderWidth: T.stroke, borderColor: T.edge },
+  shadow: { boxShadow: `3px 3px 0px ${T.edge}` },
+  small: { boxShadow: `2px 2px 0px ${T.edge}` },
+  pressed: { transform: [{ translateX: 2 }, { translateY: 2 }] },
 } as const;
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -110,16 +125,22 @@ export function Action({ title, onPress, disabled = false, primary = false, busy
   const off = disabled || busy;
   const tint = kind === 'primary' ? T.accentInk : kind === 'danger' ? T.danger : T.ink;
   return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ disabled: off, busy }} disabled={off} onPress={onPress}
-    style={({ pressed }) => ({
-      minHeight: kind === 'primary' && !compact ? 52 : T.tap, borderRadius: T.radius.button,
-      flexDirection: 'row', gap: T.gap.sm, alignItems: 'center', justifyContent: 'center', paddingHorizontal: kind === 'ghost' ? T.gap.sm : T.gap.lg,
-      backgroundColor: kind === 'primary' ? (off ? '#F4ECCB' : pressed ? T.accentLine : T.accent)
-        : kind === 'danger' ? T.dangerSoft
-        : kind === 'ghost' ? (pressed ? T.fill : 'transparent')
-        : (pressed ? T.fill : T.paper),
-      borderWidth: kind === 'secondary' ? 1 : 0, borderColor: T.line,
-      opacity: off && kind !== 'primary' ? .5 : kind === 'danger' && pressed ? .8 : 1,
-    })}>
+    style={({ pressed }) => {
+      const sticker = (kind === 'primary' || kind === 'secondary') && !off;
+      return {
+        minHeight: kind === 'primary' && !compact ? 52 : T.tap, borderRadius: T.radius.button,
+        flexDirection: 'row', gap: T.gap.sm, alignItems: 'center', justifyContent: 'center', paddingHorizontal: kind === 'ghost' ? T.gap.sm : T.gap.lg,
+        backgroundColor: kind === 'primary' ? (off ? '#F4E9C8' : pressed ? T.accentLine : T.accent)
+          : kind === 'danger' ? T.dangerSoft
+          : kind === 'ghost' ? (pressed ? T.fill : 'transparent')
+          : (pressed ? T.fill : T.paper),
+        // 스티커 문법(45.39): 주요·보조 버튼은 2px 짙은 테두리 + 딱 떨어지는 그림자. 눌리면 그림자를 거두고 내려앉는다.
+        borderWidth: kind === 'primary' || kind === 'secondary' ? T.stroke : 0, borderColor: off ? T.lineStrong : T.edge,
+        ...(sticker && !pressed ? (kind === 'primary' ? Pop.shadow : Pop.small) : {}),
+        ...(sticker && pressed ? Pop.pressed : {}),
+        opacity: off && kind !== 'primary' ? .5 : kind === 'danger' && pressed ? .8 : 1,
+      };
+    }}>
     {busy && <ActivityIndicator size="small" color={kind === 'primary' ? T.accentInk : T.muted} />}
     {!busy && !!icon && <MaterialCommunityIcons name={icon} size={18} color={off && kind === 'primary' ? T.faint : tint} />}
     <Text numberOfLines={1} style={{ ...Type.button, fontSize: kind === 'primary' && !compact ? 16 : 14, fontWeight: kind === 'primary' ? '800' : '700', color: off && kind === 'primary' ? T.faint : tint }}>{title}</Text>
@@ -144,7 +165,7 @@ export function Segmented<K extends string>({ items, value, onChange, testID, de
       return <Pressable key={item.key} accessibilityRole="button" accessibilityLabel={item.a11y ?? item.label} accessibilityState={{ selected: on }} onPress={() => onChange(item.key)}
         hitSlop={{ top: dense ? 4 : 2, bottom: dense ? 4 : 2 }}
         style={{ flex: 1, minHeight: dense ? 40 : 44, borderRadius: 11, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6,
-          backgroundColor: on ? T.accentSoft : 'transparent', borderWidth: on ? 1 : 0, borderColor: on ? T.accentBorder : 'transparent' }}>
+          backgroundColor: on ? T.paper : 'transparent', borderWidth: on ? T.stroke : 0, borderColor: on ? T.edge : 'transparent', ...(on ? Pop.small : {}) }}>
         {!!item.image && <Image source={item.image} style={{ width: 13, height: 18, opacity: on ? 1 : .7 }} resizeMode="contain" />}
         {!!item.icon && <MaterialCommunityIcons name={item.icon} size={16} color={on ? T.ink : T.muted} />}
         <Text numberOfLines={1} style={{ fontSize: dense ? 13 : 14, fontWeight: on ? '800' : '600', color: on ? T.ink : T.muted }}>{item.label}</Text>
@@ -156,7 +177,7 @@ export function Segmented<K extends string>({ items, value, onChange, testID, de
 export function Chip({ label, on, onPress, icon, wide, a11y }: { label: string; on: boolean; onPress: () => void; icon?: IconName; wide?: boolean; a11y?: string }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={a11y ?? label} accessibilityState={{ selected: on }} onPress={onPress}
     style={({ pressed }) => ({ flex: wide ? 1 : undefined, minHeight: 44, paddingHorizontal: 14, borderRadius: 22, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center',
-      borderWidth: 1, borderColor: on ? T.accentBorder : T.line, backgroundColor: on ? T.accentSoft : pressed ? T.fill : T.paper })}>
+      borderWidth: on ? T.stroke : 1, borderColor: on ? T.edge : T.line, backgroundColor: on ? T.accentSoft : pressed ? T.fill : T.paper })}>
     {!!icon && <MaterialCommunityIcons name={icon} size={16} color={on ? T.ink : T.muted} />}
     <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? T.ink : T.muted }}>{label}</Text>
   </Pressable>;
@@ -170,7 +191,7 @@ export function SheetHeader({ title, onClose, closeLabel, right, left, grab = fa
   return <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingLeft: left ? 2 : T.gap.lg, paddingRight: onClose ? 4 : T.gap.lg }}>
     {grab && <View style={{ position: 'absolute', top: 6, left: 0, right: 0, alignItems: 'center' }} pointerEvents="none"><View style={{ width: 32, height: 4, borderRadius: 2, backgroundColor: T.line }} /></View>}
     {left}
-    <Text numberOfLines={1} style={{ flex: 1, fontSize: 17, fontWeight: '800', color: T.ink }}>{title}</Text>
+    <Text numberOfLines={1} style={{ flex: 1, fontSize: 19, ...display, color: T.ink }}>{title}</Text>
     {right}
     {onClose && <Pressable accessibilityRole="button" accessibilityLabel={closeLabel ?? title + ' 닫기'} onPress={onClose} hitSlop={2}
       style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : 'transparent' })}>
@@ -262,20 +283,20 @@ export function Range({ label, hideLabel, value, min, max, step, onChange, displ
       <View pointerEvents="none" style={{ height: 4, borderRadius: 2, backgroundColor: T.line, overflow: 'hidden' }}>
         <View style={{ width: `${ratio * 100}%`, height: '100%', backgroundColor: T.accent }} />
       </View>
-      <View pointerEvents="none" style={{ position: 'absolute', left: `${ratio * 100}%`, width: 20, height: 20, marginLeft: -10, borderRadius: 10, backgroundColor: '#FFF', borderWidth: 1, borderColor: live !== null ? T.ink : T.lineStrong, ...Elev[1] }} />
+      <View pointerEvents="none" style={{ position: 'absolute', left: `${ratio * 100}%`, width: 20, height: 20, marginLeft: -10, borderRadius: 10, backgroundColor: live !== null ? T.accent : '#FFF', borderWidth: T.stroke, borderColor: T.edge }} />
     </View>
     {!!shownText && <Text accessibilityLabel={label ? label + ' 값' : undefined} style={{ minWidth: 42, fontSize: 12, color: T.muted, textAlign: 'right' }}>{shownText}</Text>}
   </View>;
 }
 // PRO 표시는 한 가지 모양뿐이다: 옅은 바탕의 작은 글자. 누르는 버튼(노랑)처럼 보이지 않게, 경고처럼 튀지 않게.
 export function ProTag() {
-  return <View style={{ paddingHorizontal: 6, height: 18, borderRadius: 6, backgroundColor: T.surface2, borderWidth: 1, borderColor: T.line, justifyContent: 'center' }}>
-    <Text style={{ fontSize: 10, fontWeight: '800', color: T.muted, letterSpacing: .4 }}>PRO</Text>
+  return <View style={{ paddingHorizontal: 6, height: 18, borderRadius: 6, backgroundColor: T.proSoft, justifyContent: 'center' }}>
+    <Text style={{ fontSize: 10, fontWeight: '800', color: T.pro, letterSpacing: .4 }}>PRO</Text>
   </View>;
 }
 export function Dialog({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return <Modal transparent animationType="fade" onRequestClose={onClose}><View style={{ flex: 1, backgroundColor: '#1716144D', justifyContent: 'center', padding: 20 }}>
-    <View accessibilityViewIsModal style={{ maxHeight: '82%', backgroundColor: C.paper, borderRadius: T.radius.xl, paddingHorizontal: T.gap.xl, paddingTop: T.gap.md, paddingBottom: T.gap.xl, gap: T.gap.sm, ...Elev[2] }}>
+    <View accessibilityViewIsModal style={{ maxHeight: '82%', backgroundColor: C.paper, borderRadius: T.radius.xl, paddingHorizontal: T.gap.xl, paddingTop: T.gap.md, paddingBottom: T.gap.xl, gap: T.gap.sm, ...Pop.border, ...Pop.shadow }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={styles.subtitle}>{title}</Text><Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={{ width: T.tap, height: T.tap, marginRight: -12, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="close" size={20} color={T.muted} /></Pressable></View>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 12 }}><View style={{ gap: 12 }}>{children}</View></ScrollView>
     </View>
@@ -289,11 +310,11 @@ export function Preview({ image, label, size = 140 }: { image?: LocalImage; labe
 }
 export const styles = StyleSheet.create({
   page: { padding: T.gap.lg, gap: T.gap.md, paddingBottom: 28, backgroundColor: C.bg },
-  card: { padding: T.gap.lg, gap: T.gap.sm, backgroundColor: C.paper, borderRadius: T.radius.lg, borderWidth: 1, borderColor: C.line },
-  title: { fontSize: 24, fontWeight: '800', color: C.ink, letterSpacing: -0.4 },
-  subtitle: { fontSize: 18, fontWeight: '800', color: C.ink },
+  card: { padding: T.gap.lg, gap: T.gap.sm, backgroundColor: C.paper, borderRadius: T.radius.lg, borderWidth: T.stroke, borderColor: C.edge, boxShadow: `3px 3px 0px ${T.edge}` },
+  title: { fontSize: 26, fontFamily: Font.display, fontWeight: '400', color: C.ink },
+  subtitle: { fontSize: 20, fontFamily: Font.display, fontWeight: '400', color: C.ink },
   label: { fontSize: 13, fontWeight: '700', color: C.muted },
-  input: { fontSize: 16, minHeight: T.tap, borderWidth: 1, borderColor: C.line, borderRadius: T.radius.sm, padding: T.gap.md, backgroundColor: '#FFFFFF', color: C.ink },
+  input: { fontSize: 16, minHeight: T.tap, borderWidth: 1.5, borderColor: C.lineStrong, borderRadius: T.radius.sm, padding: T.gap.md, backgroundColor: '#FFFFFF', color: C.ink },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   muted: { color: C.muted, fontSize: 16, lineHeight: 24 },
 });

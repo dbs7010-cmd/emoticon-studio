@@ -7,7 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { canvasHtml } from './canvas-html';
 import { alphaOf, hsv, hsvOf, light, parseHex, toHex, typedHex, withAlpha } from './color';
-import { Action, Dialog, Elev, EmptyState, IconButton, ProTag, Range, Segmented, SheetHeader, T, TabBar, userMessage } from '../components/ui';
+import { Action, Dialog, Elev, EmptyState, IconButton, ProTag, Range, Segmented, SheetHeader, T, TabBar, userMessage, Pop, Font } from '../components/ui';
 import { ASSET_SLOTS, BUILTIN_REFERENCES } from '../design/asset-slots';
 import { MotionPanel, layerLabel } from './motion-panel';
 import { KAKAO_STATIC_SPEC } from '../constants/kakao-spec';
@@ -1175,13 +1175,15 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 윗줄의 주 동작 하나: 저장. 누르면 **이 칸에 머문다**(45.38). 45.37 까지는 이름만 '저장'이고 실제로는 다음 칸으로 넘어가,
   // 단순히 저장하려던 사람이 작업 자리를 잃었다. 이제 저장한 뒤 캔버스 위 안내에서 '다음 칸'을 고를 수 있다.
   // 내보내기 검수에서 고치러 들어온 칸이면 저장 뒤 그 검수 화면으로 돌아간다.
-  // 모양은 승인 시안대로 노란 채움 + 글자만.
+  // 모양: 노란 채움 + 짙은 테두리 + 딱 떨어지는 그림자(45.39 확정 디자인 D). 눌리면 내려앉는다.
   const saveButton = <Pressable accessibilityRole="button" accessibilityLabel="저장" accessibilityHint={returnToReview ? '저장한 뒤 내보내기 검수로 돌아가요' : '이 칸을 저장하고 완성으로 표시해요. 이 칸에 그대로 있어요'}
       disabled={busy || !initialized} onPress={() => save('manual')}
       hitSlop={{ top: 4, bottom: 4 }}
-      style={({ pressed }) => ({ minHeight: 40, minWidth: 56, paddingHorizontal: 14, marginHorizontal: 2, borderRadius: C.radius.button,
-        alignItems: 'center', justifyContent: 'center', backgroundColor: busy || !initialized ? C.fill : pressed ? C.accentLine : C.accent })}>
-      <Text numberOfLines={1} style={{ color: busy || !initialized ? C.faint : C.accentInk, fontWeight: '800', fontSize: 14 }}>저장</Text>
+      style={({ pressed }) => ({ minHeight: 40, minWidth: 60, paddingHorizontal: 16, marginHorizontal: 4, borderRadius: 20,
+        alignItems: 'center', justifyContent: 'center', backgroundColor: busy || !initialized ? C.fill : pressed ? C.accentLine : C.accent,
+        borderWidth: C.stroke, borderColor: busy || !initialized ? C.lineStrong : C.edge,
+        ...(busy || !initialized ? {} : pressed ? Pop.pressed : Pop.small) })}>
+      <Text numberOfLines={1} style={{ color: busy || !initialized ? C.faint : C.accentInk, fontWeight: '800', fontSize: 15 }}>저장</Text>
     </Pressable>;
   return <Modal onRequestClose={() => { if (Keyboard.isVisible()) { Keyboard.dismiss(); return; } if (panel === 'brush' && brushDetail) { ease(); setBrushDetail(false); return; } if (panel === 'brush') { closeBrush(); return; } if (panel) { ease(); setPanel(null); return; } if (drawRail || refRail) { ease(); setDrawRail(false); setRefRail(false); return; } if (showCanon) { setShowCanon(false); return; } save('close'); }} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -1216,7 +1218,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: tab === key }}
               onPress={() => switchTab(key)}
               style={{ minHeight: 48, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 15, fontWeight: tab === key ? '800' : '600', color: tab === key ? C.ink : C.faint }}>{title}</Text>
+              <Text style={{ fontSize: 18, fontFamily: Font.display, fontWeight: '400', color: tab === key ? C.ink : C.faint }}>{title}</Text>
               <View pointerEvents="none" style={{ position: 'absolute', left: 8, right: 8, bottom: 0, height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: tab === key ? C.accent : 'transparent' }} />
             </Pressable>)}
           </View>
@@ -1269,7 +1271,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {/* 캔버스 틀: 네이티브 WebView 는 크기 지정을 무시하고 영역 전체를 채워, 캔버스가 위에 붙고 아래에 빈 띠가 남았다(40차 실기기 bounds 0,381–1080,1882).
             정사각 틀로 감싸 잘라 두면 WebView 가 틀만큼만 차지하고, 그리기 탭에서는 영역 가운데·움직이기 탭에서는 위에 선다. */}
         {/* 종이 경계: 얇은 선 + 옅은 그림자. 흰 종이와 작업면이 비슷한 밝기라 경계가 없으면 캔버스가 떠 보였다(45.37 실기기). */}
-        <View ref={canvasRef} collapsable={false} style={canvasSide ? { width: canvasSide, height: canvasSide, overflow: 'hidden', backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, ...Elev[1] } : { width: '100%', aspectRatio: 1, maxHeight: '100%', overflow: 'hidden' }}>
+        <View ref={canvasRef} collapsable={false} style={canvasSide ? { width: canvasSide, height: canvasSide, overflow: 'hidden', backgroundColor: C.paper, borderRadius: 6, borderWidth: C.stroke, borderColor: C.edge, ...Pop.shadow } : { width: '100%', aspectRatio: 1, maxHeight: '100%', overflow: 'hidden' }}>
         <WebView ref={web} source={source} originWhitelist={['about:*']} javaScriptEnabled scrollEnabled={false} onShouldStartLoadWithRequest={r => r.url === 'about:blank'} onError={e => { unlock(); setInitialized(false); Alert.alert('그리기 화면을 열지 못했어요', userMessage(e.nativeEvent.description, '닫았다가 다시 열어 주세요.')); }} onMessage={event => {
           try {
             const m = JSON.parse(event.nativeEvent.data);
@@ -1361,14 +1363,17 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <MaterialCommunityIcons name="cloud-upload-outline" size={14} color={C.muted} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}>저장 중이에요 · 잠시만요</Text>
         </View>}
-        {canvasMessage === 'saved' && <View testID="저장 안내" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line, ...Elev[1] }}>
-          <MaterialCommunityIcons name={savedNote === 'done' ? 'check-circle' : 'content-save-outline'} size={16} color={savedNote === 'done' ? C.success : C.muted} />
-          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}>{savedNote === 'done' ? '저장했어요 · 완성으로 표시했어요' : '저장했어요 · 빈 칸은 완성으로 치지 않아요'}</Text>
+        {/* 45.39: 저장 안내는 경고처럼 보이면 안 된다(사용자 지적). 흰 스티커 + 초록 체크 + 짙은 '다음 칸' 버튼. */}
+        {canvasMessage === 'saved' && <View testID="저장 안내" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, paddingLeft: 8, paddingRight: 4, borderRadius: 24, backgroundColor: C.paper, borderWidth: C.stroke, borderColor: C.edge, ...Pop.small }}>
+          <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: savedNote === 'done' ? C.successSoft : C.fill }}>
+            <MaterialCommunityIcons name={savedNote === 'done' ? 'check-bold' : 'content-save-outline'} size={16} color={savedNote === 'done' ? C.success : C.muted} />
+          </View>
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>{savedNote === 'done' ? String(slot.number).padStart(2, '0') + '번 칸 저장했어요' : '저장했어요 · 빈 칸은 완성으로 치지 않아요'}</Text>
           {savedNote === 'done' && <Pressable accessibilityRole="button" accessibilityLabel={completeTitle.includes('전체') ? '전체 보기로 가기' : '다음 칸으로 가기'}
             onPress={() => { setSavedNote(null); onComplete(); }}
-            style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, borderRadius: C.radius.button, flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: pressed ? C.fill : 'transparent' })}>
-            <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{completeTitle.includes('전체') ? '전체 보기' : '다음 칸'}</Text>
-            <MaterialCommunityIcons name="chevron-right" size={16} color={C.ink} />
+            style={({ pressed }) => ({ minHeight: 40, paddingLeft: 14, paddingRight: 8, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: C.ink, opacity: pressed ? .85 : 1 })}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: C.paper }}>{completeTitle.includes('전체') ? '전체 보기' : '다음 칸'}</Text>
+            <MaterialCommunityIcons name="chevron-right" size={18} color={C.paper} />
           </Pressable>}
         </View>}
         {canvasMessage === 'hidden' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.accentSoft, borderWidth: 1, borderColor: C.accentBorder }}>
@@ -1672,7 +1677,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               accessibilityState={{ selected: on }} accessibilityHint={on ? '다시 누르면 세부 설정이 열려요' : undefined}
               onPress={() => pickBrush(key)}
               style={({ pressed }) => ({ flex: 1, minHeight: 62, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: C.radius.button,
-                backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
+                // 역할별 선택(45.36): 브러시 = 흰 스티커 카드(테두리 + 그림자). 도구 = 노랑 채움. 보조 = 옅은 노랑.
+                backgroundColor: on ? C.paper : pressed ? C.fill : 'transparent', borderWidth: C.stroke, borderColor: on ? C.edge : 'transparent', ...(on ? Pop.small : {}) })}>
               <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '76%', height: 20, tintColor: color }} resizeMode="contain" />
               <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
             </Pressable>; })}
@@ -1690,7 +1696,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             return <Pressable key={key} testID={'도구 ' + title} accessibilityRole="button" accessibilityLabel={a11y} accessibilityState={{ selected: on }}
               onPress={() => selectTool(key)}
               style={({ pressed }) => ({ flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: C.radius.button,
-                backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
+                backgroundColor: on ? C.accent : pressed ? C.fill : 'transparent', borderWidth: C.stroke, borderColor: on ? C.edge : 'transparent' })}>
               <MaterialCommunityIcons name={icon} size={20} color={on ? C.ink : C.muted} />
               <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{title}</Text>
             </Pressable>; })}

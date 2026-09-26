@@ -33,7 +33,7 @@ const load = src => new Promise(r => { f.onload = () => setTimeout(r, 450); f.sr
 })().catch(e => { log.textContent += '\\n실패: ' + e.message; });
 </script></body></html>`;
 
-const TYPES = { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.png': 'image/png' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.ttf': 'font/ttf' };
 let saved = 0;
 const server = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url.startsWith('/save/')) {

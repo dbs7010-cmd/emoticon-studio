@@ -18,8 +18,8 @@ const PX = new Set(['width', 'height', 'minWidth', 'minHeight', 'maxWidth', 'max
   'padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'paddingHorizontal', 'paddingVertical',
   'borderWidth', 'borderTopWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderRightWidth', 'borderRadius', 'fontSize', 'lineHeight', 'letterSpacing']);
 const PAIRS = { marginHorizontal: ['margin-left', 'margin-right'], marginVertical: ['margin-top', 'margin-bottom'], paddingHorizontal: ['padding-left', 'padding-right'], paddingVertical: ['padding-top', 'padding-bottom'] };
-const RENAME = { backgroundColor: 'background-color', borderColor: 'border-color', borderRadius: 'border-radius', borderWidth: 'border-width', borderTopWidth: 'border-top-width', borderBottomWidth: 'border-bottom-width', borderLeftWidth: 'border-left-width', borderRightWidth: 'border-right-width', flexDirection: 'flex-direction', justifyContent: 'justify-content', alignItems: 'align-items', alignSelf: 'align-self', flexWrap: 'flex-wrap', flexGrow: 'flex-grow', flexShrink: 'flex-shrink', flexBasis: 'flex-basis', fontSize: 'font-size', fontWeight: 'font-weight', lineHeight: 'line-height', letterSpacing: 'letter-spacing', textAlign: 'text-align', zIndex: 'z-index', aspectRatio: 'aspect-ratio', minWidth: 'min-width', minHeight: 'min-height', maxWidth: 'max-width', maxHeight: 'max-height', marginTop: 'margin-top', marginBottom: 'margin-bottom', marginLeft: 'margin-left', marginRight: 'margin-right', paddingTop: 'padding-top', paddingBottom: 'padding-bottom', paddingLeft: 'padding-left', paddingRight: 'padding-right', textDecorationLine: 'text-decoration-line', textTransform: 'text-transform' };
-const SKIP = new Set(['resizeMode', 'shadowColor', 'shadowOffset', 'shadowOpacity', 'shadowRadius', 'elevation', 'textAlignVertical', 'includeFontPadding', 'fontFamily', 'transform', 'borderCurve', 'objectFit']);
+const RENAME = { backgroundColor: 'background-color', borderColor: 'border-color', borderRadius: 'border-radius', borderWidth: 'border-width', borderTopWidth: 'border-top-width', borderBottomWidth: 'border-bottom-width', borderLeftWidth: 'border-left-width', borderRightWidth: 'border-right-width', flexDirection: 'flex-direction', justifyContent: 'justify-content', alignItems: 'align-items', alignSelf: 'align-self', flexWrap: 'flex-wrap', flexGrow: 'flex-grow', flexShrink: 'flex-shrink', flexBasis: 'flex-basis', fontSize: 'font-size', fontWeight: 'font-weight', lineHeight: 'line-height', letterSpacing: 'letter-spacing', textAlign: 'text-align', zIndex: 'z-index', aspectRatio: 'aspect-ratio', minWidth: 'min-width', minHeight: 'min-height', maxWidth: 'max-width', maxHeight: 'max-height', marginTop: 'margin-top', marginBottom: 'margin-bottom', marginLeft: 'margin-left', marginRight: 'margin-right', paddingTop: 'padding-top', paddingBottom: 'padding-bottom', paddingLeft: 'padding-left', paddingRight: 'padding-right', textDecorationLine: 'text-decoration-line', textTransform: 'text-transform', boxShadow: 'box-shadow', fontFamily: 'font-family' };
+const SKIP = new Set(['resizeMode', 'shadowColor', 'shadowOffset', 'shadowOpacity', 'shadowRadius', 'elevation', 'textAlignVertical', 'includeFontPadding', 'transform', 'borderCurve', 'objectFit']);
 
 function css(style) {
   const out = [];
@@ -158,6 +158,8 @@ const PAGE = (id, title, body) => `<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 <style>
+  /* 45.39: 제목 글꼴 Jua(앱에 들어가는 같은 파일). 없으면 기본 글꼴로 그린다. */
+  @font-face { font-family: 'Jua'; src: url('Jua-Regular.ttf'); }
   :root { color-scheme: light; }
   body { margin:0; padding:24px; background:#2A2D33; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif; display:flex; flex-direction:column; align-items:center; gap:12px; }
   h1 { color:#E7E9EE; font-size:15px; font-weight:700; margin:0; }
@@ -189,6 +191,7 @@ const PAGE = (id, title, body) => `<!doctype html>
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
+  if (fs.existsSync('assets/fonts/Jua-Regular.ttf')) fs.copyFileSync('assets/fonts/Jua-Regular.ttf', path.join(OUT, 'Jua-Regular.ttf'));
   // 캔버스 자리의 엔진 그림을 먼저 확보한다. 없으면 **찍지 않고 실패한다** —
   // 45.36 에서 빈 캔버스(오류 문구)가 찍힌 104장을 증거로 제출한 일을 다시 만들지 않는다.
   const sample = path.join(OUT, 'assets', 'canvas-sample.png');
