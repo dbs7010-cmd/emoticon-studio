@@ -32,7 +32,7 @@ let taps = 0, drags = 0;
 const realSetInterval = global.setInterval;
 global.setInterval = (fn, ms) => ms === 40000 ? { unref() {} } : realSetInterval(fn, ms);
 const WebView = React.forwardRef((props, ref) => { React.useImperativeHandle(ref, () => ({ injectJavaScript: s => commands.push(s) })); return React.createElement('WebView', props); });
-const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n]));
+const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n])); rn.Animated = require('./_rn-animated-mock.cjs');
 Object.assign(rn, { Keyboard: { addListener: () => ({ remove() {} }), dismiss() {}, isVisible: () => false }, StyleSheet: { create: x => x }, Platform: { OS: 'android' }, useWindowDimensions: () => ({ width: 390, height: 844 }), BackHandler: { addEventListener: () => ({ remove() {} }) }, AppState: { addEventListener: (_type, fn) => { appStates.push(fn); return { remove() {} }; } }, Alert: { alert(title, message, buttons) { alerts.push({ title, message, buttons }); } }, Linking: { openURL: async () => {} } });
 const mocks = {
   'react-native': rn, '@expo/ui': { Host: 'Host', Button: 'Button', Slider: 'Slider' }, '@expo/vector-icons': { MaterialCommunityIcons: 'Icon' },
@@ -243,8 +243,8 @@ const saved = async (dirty = true) => {
 
   // ── 2. 잠금 밀도: 색 ─────────────────────────────────────────────────────────────────────
   await press('색');
-  // 45.5: 도구를 연다고 그림이 움직이지 않는다 — 색 패널을 열어도 캔버스는 같은 자리(45.36-R1 부터 영역 맨 위)에 그대로 선다.
-  assert.equal(canvasAreaNode().props.style.justifyContent, 'flex-start', '색 패널을 열어도 캔버스는 제자리다(45.5차)');
+  // 45.5: 도구를 연다고 그림이 움직이지 않는다 — 색 패널을 열어도 캔버스는 같은 자리(그리기 탭은 영역 가운데, 45.37)에 그대로 선다.
+  assert.equal(canvasAreaNode().props.style.justifyContent, 'center', '색 패널을 열어도 캔버스는 제자리다(45.5차)');
   assert.equal(locks() + proMarks(), 0, '색(팔레트): 자물쇠·PRO 표시 0');
   // 45.4: 스포이드는 누르기도 되고 누른 채 캔버스로 끌 수도 있는 손잡이다.
   const dropper = () => tree.root.findAll(n => n.props && n.props.accessibilityLabel === '스포이드')[0];
@@ -333,7 +333,7 @@ const saved = async (dirty = true) => {
   await press('PRO 닫기');
   noPaywall('움직이기(무료 효과)');
   collect();
-  await press('완성 후 다음');
+  await press('저장하고 다음 칸');
   await saved(true);
   assert.ok(!alerts.some(a => /PRO/.test(a.title ?? '')), '저장할 때 PRO 알림이 끼어들지 않았다');
   assert.equal(loadStore().store.projects[0].slots[0].done, true, '움직이기 탭에서도 완성할 수 있다');
@@ -395,7 +395,7 @@ const saved = async (dirty = true) => {
   scene = { ...scene, dirty: true }; await message(scene);
   savesAt = saves();
   await act(async () => appStates.at(-1)('background'));
-  await press('완성 후 다음');
+  await press('저장하고 다음 칸');
   assert.equal(saves(), savesAt + 1, '자동저장 중 완성은 겹쳐 저장하지 않는다');
   await saved(true);
   await act(async () => { await new Promise(r => setTimeout(r, 30)); });
@@ -498,7 +498,7 @@ const saved = async (dirty = true) => {
     await act(async () => tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용')[0].props.onChangeText('좋아'));
     taps++; await act(async () => tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용')[0].props.onSubmitEditing());
     drags++; scene = { ...scene, caption: { ...lastCommand('caption').caption, dx: 20 }, captionPicked: true }; await message(scene); // 캔버스에서 글씨 끌기(엔진 검사는 gesture-test)
-    await press('완성 후 다음'); await saved(true);
+    await press('저장하고 다음 칸'); await saved(true);
   });
   await ready();
   const flowB = await bench(async () => {
@@ -510,7 +510,7 @@ const saved = async (dirty = true) => {
     scene = { ...scene, caption: lastCommand('caption').caption, captionPicked: true }; await message(scene);
     await press('움직이기'); await press('직전 칸 움직임 다시 쓰기');
     scene = { ...scene, motion: lastCommand('motion').motion }; await message(scene);
-    await press('완성 후 다음'); await saved(true);
+    await press('저장하고 다음 칸'); await saved(true);
   });
   console.log('  FLOW A(다음 칸·붓·굵기·최근 색·문구 배치): 누르기 ' + flowA.taps + ' · 끌기 ' + flowA.drags + ' · 확인창 ' + flowA.modals);
   console.log('  FLOW B(다음 칸·문구 고치기·직전 움직임): 누르기 ' + flowB.taps + ' · 끌기 ' + flowB.drags + ' · 확인창 ' + flowB.modals);
@@ -562,7 +562,7 @@ const saved = async (dirty = true) => {
   assert.equal(guideLine().length, 0, '같은 말을 캔버스 위에 또 띄우지 않는다');
   await press('문구');
   await act(async () => tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용')[0].props.onChangeText('안 눌렀어'));
-  await press('완성 후 다음');
+  await press('저장하고 다음 칸');
   assert.equal(lastCommand('caption').caption.text, '안 눌렀어', '적용을 누르지 않아도 저장 전에 문구가 캔버스로 확정된다');
   await saved(true);
   assert.equal(refSpotOf().length, 0, '다음 칸으로 넘어가면 참고 자리가 따라오지 않는다');

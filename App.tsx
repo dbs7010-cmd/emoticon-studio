@@ -1292,15 +1292,15 @@ function Studio() {
           <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>홈 공지 미리 보기 {noticePreview ? '켜짐' : '꺼짐'}</Text>
         </Pressable>
       </View>}
-      <Pressable accessibilityRole="switch" accessibilityLabel="캔버스 종이 질감" accessibilityState={{ checked: store?.paperTexture !== false }}
-        onPress={() => { try { commit(st => ({ ...st, paperTexture: st.paperTexture === false })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
+      <Pressable accessibilityRole="switch" accessibilityLabel="캔버스 종이 질감" accessibilityState={{ checked: store?.paperTexture === true }}
+        onPress={() => { try { commit(st => ({ ...st, paperTexture: st.paperTexture !== true })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>캔버스 종이 질감</Text>
           <Text style={{ fontSize: 11, color: C.muted }}>파일에는 들어가지 않아요</Text>
         </View>
-        <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: store?.paperTexture !== false ? C.accent : C.lineStrong }}>
-          <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.paperTexture !== false ? 18 : 0 }} />
+        <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: store?.paperTexture === true ? C.accent : C.lineStrong }}>
+          <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.paperTexture === true ? 18 : 0 }} />
         </View>
       </Pressable>
       {/* 앱 정보: 실제 설정에 적힌 버전만 보여 준다. 없는 도움말·백업 버튼은 만들지 않는다(명세 T01). */}
@@ -1424,15 +1424,16 @@ function Studio() {
       onGuideHintDone={() => setGuideHint(null)}
       guideExample={guideExample}
       guideExampleMode={guideExampleMode}
-      // 번들 그림을 세트의 참고 사진과 같은 자리에 들여놓는다. 저장·복원·삭제는 기존 참고 정책이 그대로 맡는다.
+      // 번들 그림을 **이 칸의** 참고 사진과 같은 자리에 들여놓는다. 저장·복원·삭제는 기존 참고 정책이 그대로 맡는다.
+      // 45.37: 예전에는 세트의 모든 칸에 넣어, 한 칸에서 고른 밑그림이 다른 칸에도 깔렸다(새 칸은 첫 참고를 켜서 연다).
       onImportGuideExample={async artwork => {
         const image = await importBundledImage(artwork);
-        changeProject(project.id, q => ({ ...q, slots: q.slots.map(t => ({ ...t, referenceImages: mergeImages(t.referenceImages, [image]) })) }));
+        changeProject(project.id, q => ({ ...q, slots: q.slots.map(t => t.number !== slot.number ? t : { ...t, referenceImages: mergeImages(t.referenceImages, [image]) }) }));
         return image;
       }}
       initialTool={lastTool}
       onToolChange={setLastTool}
-      paperTexture={store?.paperTexture !== false}
+      paperTexture={store?.paperTexture === true}
       savedMotions={store?.savedMotions ?? []}
       onSaveMotion={saveMotion}
       onForgetMotion={forgetMotion}
@@ -1449,8 +1450,10 @@ function Studio() {
       onForgetCutout={forgetCutout}
       initialImport={pendingImport}
       onInitialImportUsed={() => setPendingImport(null)}
-      onAddReferences={async () => { const added = await pickImages(true); if (added.length) changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => ({ ...s, referenceImages: mergeImages(s.referenceImages, added) })) })); return added; }}
-      onRemoveReference={path => { changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => ({ ...s, referenceImages: s.referenceImages.filter(image => image.path !== path), work: s.work ? { ...s.work, references: s.work.references.filter(reference => reference.image?.path !== path), activeLayerId: s.work.activeLayerId.startsWith('ref-') && s.work.references.some(reference => reference.id === s.work!.activeLayerId && reference.image?.path === path) ? 'draw-1' : s.work.activeLayerId } : undefined })) })); }}
+      // 참고 사진은 **지금 칸에만** 들어간다(45.37 사용자 신고: 한 칸에서 가져온 참고가 세트의 모든 칸에 깔렸다).
+      // 이미 다른 칸에 들어가 있던 참고는 사용자 데이터라 지우지 않는다 — 그 칸에서 따로 지울 수 있다.
+      onAddReferences={async () => { const added = await pickImages(true); if (added.length) changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => s.number !== slot.number ? s : { ...s, referenceImages: mergeImages(s.referenceImages, added) }) })); return added; }}
+      onRemoveReference={path => { changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => s.number !== slot.number ? s : ({ ...s, referenceImages: s.referenceImages.filter(image => image.path !== path), work: s.work ? { ...s.work, references: s.work.references.filter(reference => reference.image?.path !== path), activeLayerId: s.work.activeLayerId.startsWith('ref-') && s.work.references.some(reference => reference.id === s.work!.activeLayerId && reference.image?.path === path) ? 'draw-1' : s.work.activeLayerId } : undefined })) })); }}
       onSave={(payload, dialogue, complete) => {
         const latest = current.current!.projects.find(p => p.id === project.id)!.slots.find(s => s.number === slot.number)!;
         const { finalImage, work } = savePainterWork(payload, latest.referenceImages);

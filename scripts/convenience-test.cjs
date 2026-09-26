@@ -23,7 +23,7 @@ const commands = [];
 const realSetInterval = global.setInterval;
 global.setInterval = (fn, ms) => ms === 40000 ? { unref() {} } : realSetInterval(fn, ms);
 const WebView = React.forwardRef((props, ref) => { React.useImperativeHandle(ref, () => ({ injectJavaScript: s => commands.push(s) })); return React.createElement('WebView', props); });
-const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n]));
+const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n])); rn.Animated = require('./_rn-animated-mock.cjs');
 const backHandlers = [];
 Object.assign(rn, { Keyboard: { addListener: (name, fn) => { (keyboardListeners[name] = keyboardListeners[name] || []).push(fn); return { remove() {} }; }, dismiss() {}, isVisible: () => false }, StyleSheet: { create: x => x }, Platform: { OS: 'android' }, useWindowDimensions: () => ({ width: 390, height: 844 }), BackHandler: { addEventListener: (_n, fn) => { backHandlers.push(fn); return { remove() { const i = backHandlers.indexOf(fn); if (i >= 0) backHandlers.splice(i, 1); } }; } }, AppState: { addEventListener: () => ({ remove() {} }) }, Alert: { alert() {} }, Linking: { openURL: async () => {} } });
 const png = Buffer.alloc(33); Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(png); png.writeUInt32BE(360, 16); png.writeUInt32BE(360, 20);
@@ -334,15 +334,28 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
     await act(async () => grip().props.onResponderRelease({ nativeEvent: { pageY: 500 + dy } }));
   };
   const moves = () => sent().filter(m => m.type === 'moveLayer').length;
+  // 줄 차례를 화면에서 읽는다(접근성 이름 '… 선택' 의 차례).
+  const rowOrder = () => tree.root.findAll(n => n.type === 'Pressable' && / 선택$/.test(n.props.accessibilityLabel ?? '') && /^레이어 \d/.test(n.props.accessibilityLabel)).map(n => n.props.accessibilityLabel.replace(' 선택', ''));
+  assert.deepEqual(rowOrder(), ['레이어 2', '레이어 1'], '지금 차례: 그림 2 가 위, 그림 1 이 아래');
   let movedBefore = moves();
   await drag(-12);
   assert.equal(moves(), movedBefore, '반 줄도 안 되게 끌면 차례를 바꾸지 않는다');
   await drag(-57);
   assert.equal(moves(), movedBefore + 1, '한 줄 끌면 한 번 옮긴다');
   assert.deepEqual(lastCommand('moveLayer'), { type: 'moveLayer', id: 'draw-1', by: -1 }, '위로 끌면 뒤로 한 칸');
+  // 45.37: 엔진이 새 차례를 돌려주기 전에도 화면은 이미 새 차례다 — 옛 자리로 튀었다 돌아오는 깜빡임이 없다.
+  assert.deepEqual(rowOrder(), ['레이어 1', '레이어 2'], '놓자마자 화면 차례가 바뀐다(엔진 응답 전)');
+  scene = { ...scene, layers: [scene.layers[1], scene.layers[0]] };
+  await message(scene);
+  assert.deepEqual(rowOrder(), ['레이어 1', '레이어 2'], '엔진이 돌려준 차례와 같다');
   movedBefore = moves();
   await drag(-600);
+  assert.equal(moves(), movedBefore, '맨 위 줄은 더 위로 끌리지 않는다');
+  await drag(600);
   assert.equal(moves(), movedBefore + 1, '목록 끝을 넘어 끌어도 갈 수 있는 칸(1)만큼만 옮긴다');
+  assert.deepEqual(lastCommand('moveLayer'), { type: 'moveLayer', id: 'draw-1', by: 1 }, '아래로 끌면 앞으로 한 칸');
+  scene = { ...scene, layers: [scene.layers[1], scene.layers[0]] };
+  await message(scene);
   movedBefore = moves();
   await drag(300);
   assert.equal(moves(), movedBefore, '맨 아래 줄은 더 아래로 끌리지 않는다');

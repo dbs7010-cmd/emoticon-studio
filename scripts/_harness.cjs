@@ -28,7 +28,7 @@ const realSetInterval = global.setInterval;
 global.setInterval = (fn, ms) => ms === 40000 ? { unref() {} } : realSetInterval(fn, ms);
 const WebView = React.forwardRef((props, ref) => { React.useImperativeHandle(ref, () => ({ injectJavaScript: s => commands.push(s) })); return React.createElement('WebView', props); });
 const viewport = { width: 390, height: 844 };
-const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n]));
+const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n])); rn.Animated = require('./_rn-animated-mock.cjs');
 Object.assign(rn, {
   Keyboard: { addListener: (name, fn) => { (keyboardListeners[name] = keyboardListeners[name] || []).push(fn); return { remove() { keyboardListeners[name] = keyboardListeners[name].filter(f => f !== fn); } }; }, dismiss() {}, isVisible: () => false },
   StyleSheet: { create: x => x }, Platform: { OS: 'android' }, useWindowDimensions: () => ({ ...viewport }),
@@ -97,6 +97,7 @@ async function ready(extra = {}) {
   // 머리줄은 기본 글자 크기면 320dp 에서도 한 줄이다(45.36-R1 G3). 둘째 줄은 잰 폭이 넘칠 때만 생기고,
   // 이 렌더는 글자 배율 1.0 이라 생기지 않는다. 45.36 은 한 줄로 바꾸고도 여기서 44dp 를 계속 빼,
   // 320 렌더의 캔버스 영역만 기기보다 낮게 그려졌다.
+  // 45.37: 모드 줄은 어느 폭에서도 한 줄이다(좁은 화면은 되돌리기가 윗줄로 간다).
   const stacked = 0;
   const area = { width: viewport.width - RAIL_W, height: viewport.height - 24 - 52 - stacked - 48 - BASE_H };
   const box = tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];

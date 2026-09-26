@@ -24,7 +24,7 @@ const commands = [];
 const realSetInterval = global.setInterval;
 global.setInterval = (fn, ms) => ms === 40000 ? { unref() {} } : realSetInterval(fn, ms);
 const WebView = React.forwardRef((props, ref) => { React.useImperativeHandle(ref, () => ({ injectJavaScript: s => commands.push(s) })); return React.createElement('WebView', props); });
-const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n]));
+const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n])); rn.Animated = require('./_rn-animated-mock.cjs');
 const alerts = [];
 let failImport = false;   // 넣기가 실패했을 때 부분 성공이 남지 않는지 보려고 켠다
 Object.assign(rn, {
@@ -287,7 +287,7 @@ async function echoReferences(scene) {
     await act(async () => area().props.onLayout({ nativeEvent: { layout: { width: 390, height: 300 } } }));
     const withRef = { ...square().props.style };
     assert.equal(withRef.width, withRef.height, '줄어든 자리에서도 캔버스는 정사각이다');
-    assert.equal(withRef.width, 300, '남은 높이에 맞춰진다(min(폭, 높이))');
+    assert.equal(withRef.width, 300 - 20, '남은 높이에 맞춰진다(min(폭, 높이) − 둘레 여백 10×2, 45.37)');
     await press('표현 예시 닫기');
     await act(async () => area().props.onLayout({ nativeEvent: { layout: { width: 390, height: 420 } } }));
     const without = { ...square().props.style };

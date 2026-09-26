@@ -2,7 +2,7 @@ import { KAKAO_STATIC_SPEC as SPEC } from '../constants/kakao-spec';
 
 // Local-only Painter engine. Reference images are preview layers and never enter final export.
 export const canvasHtml = `<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>
-*{box-sizing:border-box}body{margin:0;background:#F4F4F5;font-family:system-ui;overflow:hidden}#viewport{height:100vh;overflow:auto;touch-action:none;overscroll-behavior:none}#surface{position:relative;background-color:white;background-image:conic-gradient(#F1F1F3 25%,transparent 0 50%,#F1F1F3 0 75%,transparent 0);background-size:28px 28px;margin:auto}#surface.paper{background-color:#FBFAF7;background-image:radial-gradient(#00000009 1px,transparent 1px),radial-gradient(#00000007 1px,transparent 1px);background-size:7px 7px,11px 11px;background-position:0 0,4px 5px}canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+*{box-sizing:border-box}body{margin:0;background:#F4F4F5;font-family:system-ui;overflow:hidden}#viewport{height:100vh;overflow:auto;touch-action:none;overscroll-behavior:none}#surface{position:relative;background-color:#FFFFFF;margin:auto}#surface.paper{background-color:#FFFFFF;background-image:radial-gradient(#00000006 1px,transparent 1px);background-size:9px 9px}canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 </style></head><body><div id="viewport"><div id="surface"><canvas id="drawing" width="${SPEC.width}" height="${SPEC.height}"></canvas></div></div><script>
 (function(){
 const canvas=document.getElementById('drawing'),surface=document.getElementById('surface'),viewport=document.getElementById('viewport'),ctx=canvas.getContext('2d',{willReadFrequently:true});

@@ -25,7 +25,7 @@ const alerts = [];
 const WebView = React.forwardRef((props, ref) => { React.useImperativeHandle(ref, () => ({ injectJavaScript: s => commands.push(s) })); return React.createElement('WebView', props); });
 let gifCount = 0;
 const images = { dataUrl: async () => 'data:image/png;base64,test', pickImages: async () => [], savePainterWork: (...a) => real.savePainterWork(...a), saveCutout: () => ({}), saveMotionLoop: () => ({ path: 'moving-' + (++gifCount) + '.gif', width: 360, height: 360 }), saveSubmitLoop: () => undefined };
-const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n]));
+const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n])); rn.Animated = require('./_rn-animated-mock.cjs');
 Object.assign(rn, { Keyboard: { addListener: () => ({ remove() {} }), dismiss() {}, isVisible: () => false }, StyleSheet: { create: x => x }, Platform: { OS: 'android' }, useWindowDimensions: () => ({ width: 390, height: 844 }), BackHandler: { addEventListener: () => ({ remove() {} }) }, AppState: { addEventListener: () => ({ remove() {} }) }, Alert: { alert(title, message, buttons) { alerts.push({ title, message, buttons }); } }, Linking: { openURL: async () => {} } });
 const mocks = {
   'react-native': rn, '@expo/ui': { Host: 'Host', Button: 'Button', Slider: 'Slider' }, '@expo/vector-icons': { MaterialCommunityIcons: 'Icon' },
@@ -278,7 +278,7 @@ const closePainter = async () => { await press('그리기 닫기'); await answer
   await restart();
   await openSlot(1);
   await press('움직이기');
-  const complete = labelled('완성 후 다음')[0];
+  const complete = labelled('저장하고 다음 칸')[0];
   assert.ok(complete, '움직이기 화면에도 완료 줄이 있다');
   const scrolls = tree.root.findAllByType('ScrollView');
   assert.ok(scrolls.length >= 1, '설정부는 스크롤된다');

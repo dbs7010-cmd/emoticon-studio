@@ -29,8 +29,12 @@ const words = (value: number, min: number, max: number) => {
   const at = (value - min) / (max - min || 1);
   return at < .2 ? '아주 약하게' : at < .4 ? '약하게' : at < .6 ? '보통' : at < .8 ? '세게' : '아주 세게';
 };
-const Row = ({ label, value, onChange, min, max, display, onActive }: { label: string; value: number; onChange: (n: number) => void; min: number; max: number; display?: string; onActive?: (active: boolean) => void }) =>
-  <Range label={label} value={value} min={min} max={max} onChange={onChange} display={display ?? words(value, min, max)} onActive={onActive} />;
+// 움직임 조절 줄. step 은 값이 실제로 바뀌는 칸이다 — 막대는 이 칸이 바뀔 때만 움직임을 다시 적용한다(45.37: 끄는 내내
+// 미리보기가 처음부터 다시 돌아 '뚝뚝' 끊겼다). fmt 가 있으면 끄는 동안의 값도 같은 글자로 보여 준다.
+const Row = ({ label, value, onChange, min, max, step, fmt, onActive }: { label: string; value: number; onChange: (n: number) => void; min: number; max: number; step?: number; fmt?: (n: number) => string; onActive?: (active: boolean) => void }) => {
+  const text = fmt ?? ((n: number) => words(n, min, max));
+  return <Range label={label} value={value} min={min} max={max} step={step ?? (max - min) / 20} onChange={onChange} display={text(value)} format={text} onActive={onActive} />;
+};
 
 const Chip = ({ label, on, onPress, wide }: { label: string; on: boolean; onPress: () => void; wide?: boolean }) =>
   <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }} onPress={onPress}
@@ -260,7 +264,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
             <View style={{ flexDirection: 'row', gap: 6 }}>
               {PART_EFFECTS.map(e => <Chip key={e.id} wide label={e.label} on={part.effect === e.id} onPress={() => editPart(part.id, { effect: e.id, amount: e.amount })} />)}
             </View>
-            <Row label={effect.label} value={part.amount} min={effect.min} max={effect.max} display={effect.id === 'rotate' ? Math.round(part.amount) + '°' : undefined} onActive={setHolding} onChange={amount => editPart(part.id, { amount: Number(amount.toFixed(3)) })} />
+            <Row label={effect.label} value={part.amount} min={effect.min} max={effect.max} fmt={effect.id === 'rotate' ? n => Math.round(n) + '°' : undefined} onActive={setHolding} onChange={amount => editPart(part.id, { amount: Number(amount.toFixed(3)) })} />
             <Row label="속도" value={part.speed} min={0} max={1} onActive={setHolding} onChange={speed => editPart(part.id, { speed: Math.round(speed * 20) / 20 })} />
             <Pressable accessibilityRole="button" accessibilityLabel={`${name} 세부 조절`} accessibilityState={{ expanded: detail }} onPress={() => setDetailPart(detail ? null : part.id)}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 }}>
@@ -278,7 +282,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
                   <Chip wide label={pivotPick === part.id && pivotRole === 'to' ? '캔버스를 누르세요' : '끝 위치'} on={pivotPick === part.id && pivotRole === 'to'} onPress={() => onPickPivot(pivotPick === part.id && pivotRole === 'to' ? null : part.id, 'to')} />
                 </View>
                 {part.fromX === undefined || part.toX === undefined
-                  ? <Row label="방향" value={part.angle} min={0} max={350} display={Math.round(part.angle) + '°'} onActive={setHolding} onChange={angle => editPart(part.id, { angle: Math.round(angle / 10) * 10 })} />
+                  ? <Row label="방향" value={part.angle} min={0} max={350} step={10} fmt={n => Math.round(n) + '°'} onActive={setHolding} onChange={angle => editPart(part.id, { angle: Math.round(angle / 10) * 10 })} />
                   : <Chip wide label="위치 지우기" on={false} onPress={() => editPart(part.id, { fromX: undefined, fromY: undefined, toX: undefined, toY: undefined })} />}
               </>}
               <Chip wide label={pivotPick === part.id && pivotRole === 'pivot' ? '캔버스를 누르세요' : '중심점 옮기기'} on={pivotPick === part.id && pivotRole === 'pivot'} onPress={() => onPickPivot(pivotPick === part.id ? null : part.id)} />
@@ -301,7 +305,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
           <Chip wide label="차례로" on={base.play === 'sequence'} onPress={() => set({ play: 'sequence', parts: parts.map((p, i) => ({ ...p, delay: Number((i * (base.stagger ?? .15)).toFixed(2)) })) })} />
         </View>
         {base.play === 'sequence' && <Row label="시작 간격" value={base.stagger ?? .15} min={0} max={.6}
-          display={(base.stagger ?? .15).toFixed(2) + '초'} onActive={setHolding}
+          step={.05} fmt={n => n.toFixed(2) + '초'} onActive={setHolding}
           onChange={stagger => { const step = Number(stagger.toFixed(2)); set({ stagger: step, parts: parts.map((p, i) => ({ ...p, delay: Number((i * step).toFixed(2)) })) }); }} />}
       </>}
 
@@ -345,7 +349,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
           <MaterialCommunityIcons name="content-copy" size={16} color={C.ink} />
           <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>모습 1 복사해서 모습 2 만들기</Text>
         </Pressable>
-        <Row label="간격" value={base.alternate.interval} min={.2} max={1.2} display={base.alternate.interval.toFixed(1) + '초'} onActive={setHolding} onChange={interval => set({ alternate: { ...base.alternate!, interval: Number(interval.toFixed(2)) } })} />
+        <Row label="간격" value={base.alternate.interval} min={.2} max={1.2} step={.1} fmt={n => n.toFixed(1) + '초'} onActive={setHolding} onChange={interval => set({ alternate: { ...base.alternate!, interval: Number(interval.toFixed(2)) } })} />
       </>}
     </> : <View style={{ gap: 8 }}>
       {!!motion && <Pressable accessibilityRole="button" accessibilityLabel="이 움직임 보관하기" onPress={onSaveMotion}

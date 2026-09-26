@@ -25,7 +25,7 @@ const commands = [];
 const realSetInterval = global.setInterval;
 global.setInterval = (fn, ms) => ms === 40000 ? { unref() {} } : realSetInterval(fn, ms);
 const WebView = React.forwardRef((props, ref) => { React.useImperativeHandle(ref, () => ({ injectJavaScript: s => commands.push(s) })); return React.createElement('WebView', props); });
-const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n]));
+const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n])); rn.Animated = require('./_rn-animated-mock.cjs');
 Object.assign(rn, { Keyboard: { addListener: (name, fn) => { (keyboardListeners[name] = keyboardListeners[name] || []).push(fn); return { remove() { keyboardListeners[name] = keyboardListeners[name].filter(f => f !== fn); } }; }, dismiss() {}, isVisible: () => false }, StyleSheet: { create: x => x }, Platform: { OS: 'android' }, useWindowDimensions: () => ({ ...viewport }), BackHandler: { addEventListener: () => ({ remove() {} }) }, AppState: { addEventListener: () => ({ remove() {} }) }, Alert: { alert() {} }, Linking: { openURL: async () => {} } });
 const png = Buffer.alloc(33); Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(png); png.writeUInt32BE(360, 16); png.writeUInt32BE(360, 20);
 const pngData = 'data:image/png;base64,' + png.toString('base64');
@@ -43,7 +43,7 @@ const load = loader({ ...mocks, './src/services/images': images, '../services/im
 const { createProject } = load('src/project.ts');
 const { saveStore } = load('src/services/storage.ts');
 const App = load('App.tsx').default;
-const { BASE_H, RAIL_W } = load('src/painter/painter.tsx');
+const { BASE_H, RAIL_W, CANVAS_GAP } = load('src/painter/painter.tsx');
 
 let tree;
 const labelled = label => tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === label);
@@ -128,7 +128,7 @@ const heights = [568, 640, 720, 800, 900, 1000];
     files.clear();
     saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
     const area = await openPainter();
-    const side = Math.min(area.width, area.height);
+    const side = Math.min(area.width, area.height) - CANVAS_GAP * 2;   // 캔버스 둘레 여백(45.37)
     const screen = height - STATUS - NAV;
     const row = { viewport: `${width}×${height}`, canvas: side, canvasShare: +(side * side / (width * screen)).toFixed(2) };
     const tag = `${width}×${height}`;
@@ -136,7 +136,7 @@ const heights = [568, 640, 720, 800, 900, 1000];
     // 45.35 승인 시안이 캔버스 왼쪽에 조절대 기둥을 세웠으므로, 정사각 캔버스의 한 변은
     // 아무리 커도 (화면 폭 - 기둥) 을 넘을 수 없다. 320dp 화면에서는 그 값이 256dp 다 —
     // 기하학적 상한이지 결함이 아니다. 손가락 자리(기둥 48dp·도구 48dp)는 어디서도 줄이지 않았다.
-    const floor = Math.min(280, viewport.width - RAIL_W);
+    const floor = Math.min(280, viewport.width - RAIL_W - CANVAS_GAP * 2);
     assert.ok(side >= floor, tag + ': 캔버스 한 변 ' + floor + 'dp 이상, got ' + side);
     // 45.35 승인 시안: 굵기와 불투명도는 캔버스 **왼쪽 밖** 기둥에서 세로로 끈다.
     // 캔버스 위에 겹치지 않고, 손가락이 닿는 폭을 갖고, 화면에 하나뿐이다.
@@ -152,9 +152,9 @@ const heights = [568, 640, 720, 800, 900, 1000];
     assert.equal(bodyStyle.height, side, tag + ': 조절대 묶음 높이 = 캔버스 한 변');
     const railNeeds = (bodyStyle.paddingVertical ?? 0) * 2 + 20 + (19 + bandStyle.height) * 2;
     assert.ok(railNeeds <= side, tag + ': 라벨·홈 둘이 캔버스 한 변 안에 든다 ' + railNeeds + ' ≤ ' + side);
-    // 캔버스와 조절대 묶음은 둘 다 영역 **맨 위**에서 시작한다 — 그래서 조절대의 위아래 끝이 종이의 위아래 끝과 맞는다.
-    assert.equal(flat(byTestID('조절대')[0].props.style).justifyContent, 'flex-start', tag + ': 조절대 묶음은 맨 위에서 시작');
-    assert.equal(flat(byTestID('캔버스 영역')[0].props.style).justifyContent, 'flex-start', tag + ': 캔버스도 맨 위에서 시작(두 탭 같은 자리)');
+    // 그리기 탭: 캔버스와 조절대 묶음이 둘 다 영역의 **세로 가운데**에 선다(45.37) — 조절대의 위아래 끝이 종이의 위아래 끝과 맞는다.
+    assert.equal(flat(byTestID('조절대')[0].props.style).justifyContent, 'center', tag + ': 조절대 묶음은 세로 가운데');
+    assert.equal(flat(byTestID('캔버스 영역')[0].props.style).justifyContent, 'center', tag + ': 캔버스도 세로 가운데');
     row.railSpan = railNeeds;
     assert.notEqual(bandStyle.position, 'absolute', tag + ': 캔버스 위에 겹치지 않는다');
     const rail = byTestID('조절대')[0];
@@ -172,10 +172,10 @@ const heights = [568, 640, 720, 800, 900, 1000];
     assert.equal(tree.root.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 1, tag + ': 조절대는 화면에 하나');
     // 기본 도구 줄 두 줄(즐겨찾기 62 + 도구 52)과 줄 사이 여백이 BASE_H 안에 들어간다 — 아래가 잘리지 않는다.
     assert.ok(6 + 62 + 6 + 52 <= BASE_H, tag + ': 기본 도구 줄 두 줄이 잘리지 않는다');
-    for (const l of ['그리기 도구 펜', '지우개', '채우기', '선택', '색', '브러시 전체', '되돌리기', '다시 실행', '완성 후 다음']) assert.equal(labelled(l).length, 1, tag + ': ' + l);
+    for (const l of ['그리기 도구 펜', '지우개', '채우기', '선택', '색', '브러시 전체', '되돌리기', '다시 실행', '저장하고 다음 칸']) assert.equal(labelled(l).length, 1, tag + ': ' + l);
     assert.equal(byTestID('빠른 브러시')[0].findAll(n => n.type === 'Pressable' && n.props.testID).length, 3, tag + ': 빠른 브러시 카드 셋');
     // 각 패널이 가리는 캔버스 비율(패널 높이 - 캔버스 아래 남는 자리) / 캔버스 높이.
-    const below = Math.max(0, area.height - side);   // 캔버스가 위에 붙어 남는 자리는 전부 아래다(45.36-R1)
+    const below = Math.max(0, (area.height - side) / 2);   // 그리기 탭은 캔버스가 가운데라 남는 자리의 절반이 아래다(45.37)
     const covered = h => +(Math.max(0, h - below) / side).toFixed(2);
     // 브러시 창은 아래에서 올라오는 판이 아니라 화면을 덮는 독립 창이다(45.35). 창 높이로 잰다.
     await press('브러시 전체');
@@ -222,14 +222,14 @@ const heights = [568, 640, 720, 800, 900, 1000];
     row.motion = +(Math.max(0, motion - BASE_H - (area.height - side)) / side).toFixed(2);
     assert.ok(row.motion < .45, tag + ': 움직이기 패널이 캔버스를 45% 넘게 덮지 않는다: ' + row.motion);
     // 45.28: 완성은 머리줄 하나뿐이다 — 움직이기 탭의 큰 완성 줄은 없앴다(두 개가 아니다).
-    assert.equal(labelled('완성 후 다음').length, 1, tag + ': 움직이기에서도 완성 버튼은 머리줄에 하나');
+    assert.equal(labelled('저장하고 다음 칸').length, 1, tag + ': 움직이기에서도 완성 버튼은 머리줄에 하나');
     // 겹침이 아니라 경계로 본다: 설정 목록은 줄어드는 스크롤이고(flex:1·minHeight:0),
     // 완성은 스크롤 밖 머리줄에 있다. 그래서 목록이 길어져도 완성을 밀어내지 못하고, 끝까지 스크롤로 닿는다.
     const motionScroll = tree.root.findAll(n => n.type === 'ScrollView' && flat(n.props.style).flex === 1);
     assert.equal(motionScroll.length, 1, tag + ': 움직이기 설정 목록은 줄어드는 스크롤 하나');
     assert.equal(flat(motionScroll[0].props.style).minHeight, 0, tag + ': 목록이 내용 높이로 버티지 않는다');
     assert.ok((flat(motionScroll[0].props.contentContainerStyle).paddingBottom ?? 0) >= 12, tag + ': 목록 끝에 여유가 있다');
-    const finishRow = tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === '완성 후 다음')[0];
+    const finishRow = tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === '저장하고 다음 칸')[0];
     for (let p = finishRow.parent; p; p = p.parent) assert.notEqual(p.type, 'ScrollView', tag + ': 완성은 스크롤 안에 있으면 안 된다');
     await press('그리기');
     // 보드·내보내기: 격자 세 칸이 폭 안, 내보내기 결과 격자 칸 크기.
@@ -262,17 +262,11 @@ const heights = [568, 640, 720, 800, 900, 1000];
     assert.ok(row.color <= colorCap, tag + ': 색 패널은 캔버스를 ' + Math.round(colorCap * 100) + '% 넘게 가리지 않는다: ' + row.color);
     rows.push(row);
   }
-  // ── 머리줄: 승인 시안처럼 네 크기 모두 한 줄, 보조 도구는 48dp 아이콘+작은 글자 ─────────────
-  viewport.width = 320; viewport.height = 800;
-  files.clear();
-  saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8'] });
-  await openPainter();
+  // ── 머리줄(45.37): 윗줄 = 닫기 · 이름 · 저장 · 더보기. 모드 줄 = 그리기·움직이기 … 되돌리기·다시 실행 | 참고·레이어·문구 ─────
+  // 380dp 이상은 한 줄, 넘칠 때(큰 글자)만 두 줄. 380dp 미만은 재기 전부터 두 줄 — '문구'가 화면 밖으로 밀린 채 보이지 않게.
   const headOf = () => tree.root.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && flat(n.props.style).borderBottomWidth === 1)[0];
-  const aidNames = () => ['참고', '레이어', '문구'].map(l => labelled(l).length);
-  assert.deepEqual(aidNames(), [1, 1, 1], '보조 셋이 모두 있다');
+  const aidNames = () => ['참고', '레이어', '문구', '되돌리기', '다시 실행'].map(l => labelled(l).length);
   const rowsIn = head => head.findAll(n => n.type === 'View' && flat(n.props.style).flexDirection === 'row' && n.parent === head).length;
-  // 아직 아무것도 재지 않았으면 예전처럼 한 줄이다.
-  assert.equal(rowsIn(headOf()), 1, '재기 전에는 한 줄');
   // 한 번 그릴 때마다 노드가 새로 생기므로 그때그때 다시 찾아 보낸다.
   const measure = async (headWidth, tabsWidth, aidsWidth) => {
     for (const [pick, width] of [[h => h, headWidth], [h => h.findAll(n => n.type === 'View' && typeof n.props.onLayout === 'function' && n !== h)[0], tabsWidth],
@@ -283,20 +277,34 @@ const heights = [568, 640, 720, 800, 900, 1000];
       await act(async () => { fn({ nativeEvent: { layout: { width, height: 48 } } }); });
     }
   };
-  // 넉넉하면 한 줄 그대로.
-  await measure(320, 120, 150);
-  assert.equal(rowsIn(headOf()), 1, '들어가면 한 줄을 지킨다');
-  assert.deepEqual(aidNames(), [1, 1, 1], '한 줄에서도 보조 셋이 그대로');
-  // 글자 배율을 키워 정말 넘칠 때(예: 모드 탭 200 + 보조 180 > 320)만 두 줄로 갈린다. 글자나 손가락 자리는 그대로다.
-  // 45.36 은 이 경우에도 한 줄을 기대하도록 바꿔, 큰 글자에서 넘치는 자리를 검사가 덮었다(45.36-R1 G3에서 되돌림).
+  // 넓은 화면(412): 재기 전에도, 들어가면 한 줄. 넘치면 두 줄. 글자와 손가락 자리는 그대로.
+  viewport.width = 412; viewport.height = 900;
+  files.clear();
+  saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8'] });
+  await openPainter();
+  assert.deepEqual(aidNames(), [1, 1, 1, 1, 1], '보조 셋과 되돌리기·다시 실행이 모두 있다');
+  assert.equal(labelled('저장하고 다음 칸').length, 1, '윗줄에는 저장 하나');
+  assert.equal(rowsIn(headOf()), 1, '412: 재기 전에는 한 줄');
+  assert.equal(headOf().findAll(n => n.props.accessibilityLabel === '되돌리기').length, 1, '412: 되돌리기는 모드 줄(참고 왼쪽)');
+  await measure(400, 140, 230);
+  assert.equal(rowsIn(headOf()), 1, '412: 들어가면 한 줄을 지킨다');
   const tapBefore = ['참고', '레이어', '문구'].map(l => flat(labelled(l)[0].props.style).minHeight);
-  await measure(320, 200, 180);
-  assert.equal(rowsIn(headOf()), 2, '넘치면 두 줄로 갈린다');
-  assert.deepEqual(aidNames(), [1, 1, 1], '두 줄이 되어도 보조 셋은 그대로 하나씩');
+  await measure(400, 200, 230);
+  assert.equal(rowsIn(headOf()), 2, '412: 넘치면(큰 글자) 두 줄로 갈린다');
+  assert.deepEqual(aidNames(), [1, 1, 1, 1, 1], '두 줄이 되어도 하나씩');
   assert.deepEqual(['참고', '레이어', '문구'].map(l => flat(labelled(l)[0].props.style).minHeight), tapBefore, '두 줄로 가도 손가락 자리를 줄이지 않는다');
-  assert.deepEqual(tapBefore, [48, 48, 48], '보조 도구 손가락 자리 48dp');
+  assert.deepEqual(tapBefore, [48, 48, 48], '보조 도구 손가락 높이 48dp');
   await act(async () => tree.unmount());
-  console.log('  머리줄 — 기본 글자면 320dp 에서도 한 줄 · 넘칠 때만 두 줄 · 손가락 자리 48dp 불변');
+  // 좁은 화면(320): 모드 줄은 한 줄 그대로, 되돌리기·다시 실행은 윗줄(이름 옆)로 간다 — 줄을 하나 더 쓰지 않는다.
+  viewport.width = 320; viewport.height = 800;
+  files.clear();
+  saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8'] });
+  await openPainter();
+  assert.equal(rowsIn(headOf()), 1, '320: 모드 줄은 한 줄');
+  assert.deepEqual(aidNames(), [1, 1, 1, 1, 1], '320: 모두 하나씩');
+  assert.equal(headOf().findAll(n => n.props.accessibilityLabel === '되돌리기').length, 0, '320: 되돌리기는 모드 줄이 아니라 윗줄에');
+  await act(async () => tree.unmount());
+  console.log('  머리줄 — 모드 줄은 한 줄(큰 글자로 넘칠 때만 두 줄) · 되돌리기는 380dp 이상 참고 왼쪽, 미만은 윗줄 · 손가락 높이 48dp');
 
   // ── 글자 배율 1.0 / 1.3 / 1.5 ────────────────────────────────────────────────────────────
   const scaleRows = [];

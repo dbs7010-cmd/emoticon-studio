@@ -212,31 +212,59 @@ export function AssetSlot({ name, size, style, sourceOverride }: { name: AssetSl
 
 // 앱 색의 슬라이더. 트랙 · 채워진 부분 · 손잡이. 줄 어디를 끌어도 움직인다.
 // hideLabel: 이름을 옆 글자로 또 적지 않고 접근성 이름으로만 남긴다(굵기 줄처럼 이미 옆에 이름이 있는 자리).
-export function Range({ label, hideLabel, value, min, max, step, onChange, display, testID, onActive }: { label?: string; hideLabel?: boolean; value: number; min: number; max: number; step?: number; onChange: (n: number) => void; display?: string; testID?: string; onActive?: (active: boolean) => void }) {
+// 가로 조절 막대. 끊기지 않는 비결은 왼쪽 세로 조절대와 같다(45.37):
+// ① 손잡이는 이 부품 안의 값(live)으로 **즉시** 따라온다 — 부모가 다시 그려지기를 기다리지 않는다.
+// ② 부모에게는 값이 **실제로 바뀌었을 때만**(step 으로 반올림한 값 기준), **화면 한 프레임에 한 번**만 알린다.
+//    예전에는 손가락 이벤트마다(초당 100번 넘게, 반올림 전 값이라 매번 '바뀜') 올려서, 편집 화면 전체가 다시 그려지고
+//    움직임 미리보기가 매번 처음부터 다시 돌았다 — 사용자가 본 '뚝뚝 끊김'이다.
+// ③ 손을 떼는 순간 마지막 값을 반드시 한 번 올린 뒤 onActive(false) 를 부른다. 늦게 반영하는 타이머는 없다.
+// ④ 좌표는 누를 때 막대의 화면 위치를 잡고(pageX − locationX) 그다음부터 화면 좌표만 쓴다 — 손가락이 막대 밖으로 나가도 튀지 않는다.
+const nextFrame: (f: () => void) => unknown = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : f => setTimeout(f, 16);
+export function Range({ label, hideLabel, value, min, max, step, onChange, display, format, testID, onActive }: { label?: string; hideLabel?: boolean; value: number; min: number; max: number; step?: number; onChange: (n: number) => void; display?: string; format?: (n: number) => string; testID?: string; onActive?: (active: boolean) => void }) {
   const [width, setWidth] = React.useState(0);
-  const ratio = Math.max(0, Math.min(1, (value - min) / (max - min || 1)));
-  const from = (x: number) => { if (width > 0) onChange(min + Math.max(0, Math.min(1, x / width)) * (max - min)); };
+  const [live, setLive] = React.useState<number | null>(null);
+  const origin = React.useRef(0), sent = React.useRef<number | null>(null), pending = React.useRef(false), latest = React.useRef<number | null>(null);
+  const shown = live ?? value;
+  const ratio = Math.max(0, Math.min(1, (shown - min) / (max - min || 1)));
+  // 한 칸: 정해 두지 않으면 범위의 1/100. 부모에게는 이 칸이 바뀔 때만 알린다.
+  const unit = step ?? (max - min) / 100;
+  const snap = (n: number) => Math.max(min, Math.min(max, Math.round((n - min) / unit) * unit + min));
+  const flush = () => { pending.current = false; const n = latest.current; if (n !== null && n !== sent.current) { sent.current = n; onChange(n); } };
+  const at = (pageX: number) => {
+    if (width <= 0) return;
+    const n = snap(min + Math.max(0, Math.min(1, (pageX - origin.current) / width)) * (max - min));
+    latest.current = n; setLive(n);
+    if (!pending.current) { pending.current = true; nextFrame(flush); }
+  };
+  const settle = () => { flush(); latest.current = null; setLive(null); onActive?.(false); };
   // 스크린 리더는 자리를 누르지 않고 한 걸음을 요청한다. 한 걸음은 따로 정하지 않으면 범위의 1/20.
   const nudge = (by: number) => {
     const jump = step ?? (max - min) / 20;
     onChange(Math.max(min, Math.min(max, value + by * jump)));
   };
+  const shownText = live !== null && format ? format(live) : display;
   return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
     {!!label && !hideLabel && <Text style={{ width: 40, fontSize: 12, fontWeight: '600', color: T.muted }}>{label}</Text>}
-    <View testID={testID} accessibilityRole="adjustable" accessibilityLabel={label} accessibilityValue={{ min, max, now: value }}
+    <View testID={testID} accessibilityRole="adjustable" accessibilityLabel={label} accessibilityValue={{ min, max, now: shown }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={e => { if (e.nativeEvent.actionName === 'increment') nudge(1); if (e.nativeEvent.actionName === 'decrement') nudge(-1); }}
       onLayout={e => setWidth(e.nativeEvent.layout.width)}
-      onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true}
-      onResponderGrant={e => { onActive?.(true); from(e.nativeEvent.locationX); }} onResponderMove={e => from(e.nativeEvent.locationX)}
-      onResponderRelease={() => onActive?.(false)} onResponderTerminate={() => onActive?.(false)}
+      onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderTerminationRequest={() => false}
+      onResponderGrant={e => {
+        // pageX 가 없는 이벤트(일부 모의 환경)에서는 기준점을 0 으로 두어 locationX 를 그대로 쓴다.
+        const px = e.nativeEvent.pageX ?? e.nativeEvent.locationX;
+        // 중복 거르기는 한 번의 조작 안에서만 한다. 부모 값은 엔진이 되돌려줄 때까지 늦을 수 있어 기준으로 쓰지 않는다.
+        origin.current = px - e.nativeEvent.locationX; sent.current = null; onActive?.(true); at(px); flush();
+      }}
+      onResponderMove={e => at(e.nativeEvent.pageX ?? e.nativeEvent.locationX)}
+      onResponderRelease={e => { if (e?.nativeEvent) at(e.nativeEvent.pageX ?? e.nativeEvent.locationX); settle(); }} onResponderTerminate={settle}
       style={{ flex: 1, height: 44, justifyContent: 'center' }}>
-      <View style={{ height: 4, borderRadius: 2, backgroundColor: T.line, overflow: 'hidden' }}>
+      <View pointerEvents="none" style={{ height: 4, borderRadius: 2, backgroundColor: T.line, overflow: 'hidden' }}>
         <View style={{ width: `${ratio * 100}%`, height: '100%', backgroundColor: T.accent }} />
       </View>
-      <View pointerEvents="none" style={{ position: 'absolute', left: `${ratio * 100}%`, width: 20, height: 20, marginLeft: -10, borderRadius: 10, backgroundColor: '#FFF', borderWidth: 1, borderColor: T.lineStrong, ...Elev[1] }} />
+      <View pointerEvents="none" style={{ position: 'absolute', left: `${ratio * 100}%`, width: 20, height: 20, marginLeft: -10, borderRadius: 10, backgroundColor: '#FFF', borderWidth: 1, borderColor: live !== null ? T.ink : T.lineStrong, ...Elev[1] }} />
     </View>
-    {!!display && <Text accessibilityLabel={label ? label + ' 값' : undefined} style={{ minWidth: 42, fontSize: 12, color: T.muted, textAlign: 'right' }}>{display}</Text>}
+    {!!shownText && <Text accessibilityLabel={label ? label + ' 값' : undefined} style={{ minWidth: 42, fontSize: 12, color: T.muted, textAlign: 'right' }}>{shownText}</Text>}
   </View>;
 }
 // PRO 표시는 한 가지 모양뿐이다: 옅은 바탕의 작은 글자. 누르는 버튼(노랑)처럼 보이지 않게, 경고처럼 튀지 않게.

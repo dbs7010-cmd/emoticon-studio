@@ -37,7 +37,7 @@ let pendingPicks = [];
 const images = { dataUrl: async () => 'data:image/png;base64,test', pickImages: async () => pendingPicks, savePainterWork: (...args) => persistPainter(...args), saveCutout: (...args) => persistCutout(...args), saveMotionLoop: () => ({ path: 'moving.gif', width: 360, height: 360 }) };
 const bakes=[];
 const composed=[];
-const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n]));
+const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'ScrollView', 'KeyboardAvoidingView', 'Image', 'Modal'].map(n => [n, n])); rn.Animated = require('./_rn-animated-mock.cjs');
 Object.assign(rn, { Keyboard: { addListener: (name, fn) => { (keyboardListeners[name] = keyboardListeners[name] || []).push(fn); return { remove() { keyboardListeners[name] = keyboardListeners[name].filter(f => f !== fn); } }; }, dismiss() {} }, StyleSheet: { create: x => x }, Platform: { OS: 'android' }, useWindowDimensions: () => ({ width: viewport.width, height: viewport.height }), BackHandler: { addEventListener: () => ({ remove() {} }) }, AppState: { addEventListener: (_t, fn) => { appState.push(fn); return { remove() {} }; } }, Alert: { alert(title, message, buttons) { alerts.push({ title, message, buttons }); } }, Linking: { openURL: async () => {} } });
 const load = loader({
   'react-native': rn, '@expo/ui': { Host: 'Host', Button: 'Button', Slider: 'Slider' }, '@expo/vector-icons': { MaterialCommunityIcons: 'Icon' },
@@ -140,7 +140,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  await press('움직이기');
  {
   const basic=tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel&&!n.props.disabled).map(n=>n.props.accessibilityLabel);
-  for(const must of ['움직임 없음','통통','흔들기','두근거리기','부분만 움직이기','보관한 움직임','완성 후 다음'])
+  for(const must of ['움직임 없음','통통','흔들기','두근거리기','부분만 움직이기','보관한 움직임','저장하고 다음 칸'])
    assert.ok(basic.includes(must),'기본 화면에 있어야 한다: '+must);
   for(const gone of ['움직임 취소','움직임 적용','미리보기 재생','미리보기 크게','이 움직임 보관하기','레이어 1 부분 움직임 추가'])
    assert.ok(!basic.includes(gone),'기본 화면에 없다: '+gone);
@@ -168,19 +168,33 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   assert.deepEqual(speed.props.accessibilityValue, { min: 0, max: 1, now: .5 }, '읽어 주는 값이 지금 값과 같다');
   await act(async () => speed.props.onLayout({ nativeEvent: { layout: { width: 200 } } }));
   // 왼쪽 끝, 4분의 1, 가운데, 오른쪽 끝: 닿은 자리가 값이 된다.
+  // 누르고 떼는 실제 순서로 짚는다. 막대는 매번 새로 찾는다 — 값이 바뀌면 다시 그려지기 때문이다.
+  // 막대는 화면 x=40 에 있다(pageX = 40 + locationX).
+  const speedBar = () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '속도')[0];
+  const tapAt = async x => {
+   await act(async () => speedBar().props.onResponderGrant({ nativeEvent: { pageX: 40 + x, locationX: x } }));
+   await act(async () => speedBar().props.onResponderRelease({ nativeEvent: { pageX: 40 + x, locationX: x } }));
+  };
   for (const [x, expected] of [[0, 0], [50, .25], [100, .5], [200, 1]]) {
-   await act(async () => speed.props.onResponderGrant({ nativeEvent: { locationX: x } }));
+   await tapAt(x);
    const got = lastCommand('motion').motion.speed;
    assert.equal(got, expected, `${x}px 에서 ${expected} 이 되어야 한다, got ${got}`);
   }
-  // 폭 밖으로 끌어도 범위를 넘지 않는다.
-  await act(async () => speed.props.onResponderMove({ nativeEvent: { locationX: 900 } }));
+  // 폭 밖으로 끌어도 범위를 넘지 않는다. 끄는 동안 locationX 가 엉뚱해도(손가락이 막대 밖) 화면 좌표로 잰다.
+  // 끄는 동안 같은 값(최대)을 여러 번 보내지 않는다 — 매 이벤트마다 보내 미리보기가 처음부터 다시 돌던 것이 45.37 의 '끊김'이다.
+  await act(async () => speedBar().props.onResponderGrant({ nativeEvent: { pageX: 40 + 100, locationX: 100 } }));
+  const beforeDrag = sent().filter(m => m.type === 'motion').length;
+  for (const px of [300, 600, 900]) await act(async () => speedBar().props.onResponderMove({ nativeEvent: { pageX: 40 + px, locationX: 3 } }));
+  await act(async () => speedBar().props.onResponderRelease({ nativeEvent: { pageX: 40 + 900, locationX: 3 } }));
   assert.equal(lastCommand('motion').motion.speed, 1, '오른쪽으로 더 끌어도 최대에서 멈춘다');
-  await act(async () => speed.props.onResponderMove({ nativeEvent: { locationX: -40 } }));
+  assert.ok(sent().filter(m => m.type === 'motion').length - beforeDrag <= 1, '끄는 동안 같은 최대값을 여러 번 보내지 않는다');
+  await act(async () => speedBar().props.onResponderGrant({ nativeEvent: { pageX: 40 + 100, locationX: 100 } }));
+  await act(async () => speedBar().props.onResponderMove({ nativeEvent: { pageX: 40 - 40, locationX: 3 } }));
+  await act(async () => speedBar().props.onResponderRelease({ nativeEvent: { pageX: 40 - 40, locationX: 3 } }));
   assert.equal(lastCommand('motion').motion.speed, 0, '왼쪽도 마찬가지다');
-  await act(async () => speed.props.onResponderRelease({ nativeEvent: {} }));
   // 화면 읽기 프로그램은 자리를 짚지 않고 한 칸씩 올리고 내린다. 그 요청이 실제로 값을 바꿔야 한다.
-  await act(async () => speed.props.onResponderGrant({ nativeEvent: { locationX: 100 } }));
+  await act(async () => speedBar().props.onResponderGrant({ nativeEvent: { pageX: 140, locationX: 100 } }));
+  await act(async () => speedBar().props.onResponderRelease({ nativeEvent: { pageX: 140, locationX: 100 } }));
   assert.equal(lastCommand('motion').motion.speed, .5, '가운데에서 시작한다');
   assert.deepEqual(speed.props.accessibilityActions, [{ name: 'increment' }, { name: 'decrement' }], '올리기와 내리기를 내놓는다');
   await act(async () => speed.props.onAccessibilityAction({ nativeEvent: { actionName: 'increment' } }));
@@ -240,7 +254,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  // 선택 자체는 무료여야 한다. 그리고 선택 중에는 아래에 같은 버튼 줄이 두 번 보이면 안 된다.
  scene={...scene,selection:{box:{x:10,y:10,w:60,h:60},dx:0,dy:0,scale:1,rot:0,flip:1}};await message(scene);
  // 45.28 정정: 완성은 머리줄로 올라갔다(승인 보드 01). 선택 판의 취소·적용과 자리가 갈려 겹치지 않는다.
- assert.equal(labelled('완성 후 다음').length,1,'완성은 머리줄에 하나만 있다');
+ assert.equal(labelled('저장하고 다음 칸').length,1,'완성은 머리줄에 하나만 있다');
  assert.equal(labelled('선택 취소').length,1,'선택 판은 제 취소를 가진다');
  assert.equal(labelled('선택 적용').length,1,'선택 판은 제 적용을 가진다');
  for(const tool of ['작게','크게','왼쪽 회전','오른쪽 회전','좌우 반전'])assert.equal(labelled(tool).length,1,'선택 변형 버튼: '+tool);
@@ -252,7 +266,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  assert.equal(labelled('PRO 알아보기').length,0,'무료 선택 변형은 PRO를 묻지 않는다');
  assert.equal(sent().filter(m=>m.type==='save').length,beforeSelect,'그리고 저장을 부르지도 않는다');
  scene={...scene,selection:null};await message(scene);
- assert.equal(labelled('완성 후 다음').length,1,'선택이 끝나면 완성 버튼이 돌아온다');
+ assert.equal(labelled('저장하고 다음 칸').length,1,'선택이 끝나면 완성 버튼이 돌아온다');
 
  // ── 고른 부분을 그림으로 보관 ─────────────────────────────────────────────────────────────
  // 시안 A3의 '내 그림으로 보관'. 떠내는 것이지 잘라내는 것이 아니므로 그림도, 저장된 작품도
@@ -429,7 +443,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.equal(labelled('색 #54A9E8').length,0,'닫으면 다시 간결한 줄로 돌아온다');
 
  // ── An empty canvas is never a finished cut ────────────────────────────────────────────────
- await press('완성 후 다음');
+ await press('저장하고 다음 칸');
  await saved(true,blank);
  assert.equal(fresh().slots.filter(s=>s.done).length,0,'declaring an empty canvas finished does not count it');
  assert.ok(alerts.at(-1).title.includes('빈 칸'),'and it says why');
@@ -438,7 +452,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
 
  // ── Drawing, declaring it done, and landing on the next unfinished cut ──────────────────────
  scene.dirty=true;await message(scene);
- await press('완성 후 다음');
+ await press('저장하고 다음 칸');
  await saved();
  assert.equal(fresh().slots[0].done,true,'a drawn cut can be declared finished');
  assert.equal(fresh().slots[0].qa.status,'PASS','and it is checked against the file that was just written');
@@ -581,7 +595,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.ok(shown().some(t=>t==='0개 완성 · 2개 작업 중'),'the board counts declarations and work in progress, not saves');
  await act(async()=>tile(1).props.onPress());await init();
  scene.dirty=true;await message(scene);
- await press('완성 후 다음');await saved();await init();
+ await press('저장하고 다음 칸');await saved();await init();
  assert.equal(tile(1).props.accessibilityLabel,'슬롯 1 완성');
  assert.ok(shown().some(t=>t.startsWith('1개 완성')),'and the count follows: '+shown().filter(t=>t.includes('개 완성')).join(' | '));
  await press('그리기 닫기');await saved(false);
@@ -705,7 +719,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await openSet('새 이모티콘 세트');
  await act(async()=>tiles().find(t=>t.props.testID==='slot-9').props.onPress());await init();
  scene.dirty=true;await message(scene);
- await press('완성 후 다음');await saved();
+ await press('저장하고 다음 칸');await saved();
  assert.equal(tree.root.findAllByType('WebView').length,0,'finishing the last open cut closes the painter');
  assert.equal(tiles().length,32,'and lands on the board, where the whole set is visible at once');
  assert.ok(shown().some(t=>t==='32개 완성'),'with every cut counted and none left in progress');
@@ -841,9 +855,18 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.equal(labelled('참고 삭제').length,0,'destructive actions stay tucked away');
  await press('참고 관리');
  await press('참고 삭제');
- assert.ok(alerts.at(-1).message.includes('모든 칸'),'removing a reference says it affects the whole set');
+ // 45.37: 참고는 칸마다 따로다. 지우면 **이 칸에서만** 없어지고 다른 칸의 참고는 그대로다(한 칸의 참고가 세트 전체에 깔리던 사용자 신고).
+ assert.ok(alerts.at(-1).message.includes('이 칸'),'removing a reference says it affects this cut only');
+ const holdersBefore=loadStore().store.projects.find(x=>x.id===p.id).slots.filter(s=>s.referenceImages.some(i=>i.path===image.path)).length;
  await answer('삭제');
- assert.ok(loadStore().store.projects.find(x=>x.id===p.id).slots.every(s=>!s.referenceImages.some(i=>i.path===image.path)),'and it leaves every cut');
+ const holdersAfter=loadStore().store.projects.find(x=>x.id===p.id).slots.filter(s=>s.referenceImages.some(i=>i.path===image.path)).length;
+ assert.equal(holdersAfter,holdersBefore-1,'it leaves only this cut — the other cuts keep their own reference');
+ // 새로 가져온 참고 사진도 이 칸 하나에만 들어간다.
+ pendingPicks=[{path:'image-cut-only.png',width:360,height:360}];
+ if(!labelled('참고 사진 추가').length)await press('참고');
+ await act(async()=>labelled('참고 사진 추가')[0].props.onPress());await act(async()=>{});
+ assert.equal(loadStore().store.projects.find(x=>x.id===p.id).slots.filter(s=>s.referenceImages.some(i=>i.path==='image-cut-only.png')).length,1,'a newly added reference lands in this cut only, not the whole set');
+ pendingPicks=[];
  assert.equal(labelled('기획 보기').length,0,'the legacy planning card is no longer a separate entry on the canvas (its data is kept, see above)');
  await press('그리기 닫기');await saved(false);
 
@@ -890,7 +913,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await act(async()=>tiles()[4].props.onPress());await init();
  scene.dirty=true;await message(scene);
  failWrite=true;
- await press('완성 후 다음');
+ await press('저장하고 다음 칸');
  await saved();
  failWrite=false;
  assert.equal(tree.root.findAllByType('WebView').length,1,'a failed save never moves to the next cut');
@@ -1089,7 +1112,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  };
  const smallest=node=>{const a=hitArea(node);return Math.min(a.height,a.width);};
  // The controls the canon calls 주요: reached constantly, so 48dp is the floor, not a target.
- const primary=['브러시','채우기','지우개','색','그리기','움직이기','내보내기','이어서 그리기','첫 칸 그리기','완성 후 다음','그리기 닫기','뒤로','더보기','참고','레이어','문구'];
+ const primary=['브러시','채우기','지우개','색','그리기','움직이기','내보내기','이어서 그리기','첫 칸 그리기','저장하고 다음 칸','그리기 닫기','뒤로','더보기','참고','레이어','문구'];
  const small=[];
  for(const width of [320,360,390,412]){
   viewport.width=width;
