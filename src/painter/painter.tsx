@@ -1160,21 +1160,29 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 줄을 하나 더 쓰는 대신(작은 화면에서 캔버스·판 자리가 모자라진다) 윗줄 이름 옆에 선다. 윗줄은 저장 하나라 자리가 남는다.
   const undoInModeRow = windowWidth >= 380;
   // 캔버스 여백의 여러 손가락 톡. 움직임이 12dp 를 넘거나 350ms 를 넘으면 톡이 아니다(끌기·길게 누르기).
-  const marginGesture = useRef<{ t: number; x: number; y: number; most: number; moved: boolean } | null>(null);
-  function marginTouch(kind: 'start' | 'move' | 'end' | 'cancel', ev?: { touches?: ArrayLike<{ pageX: number; pageY: number }>; pageX?: number; pageY?: number }) {
+  // 45.39 실기기: 처음 만든 것은 두 번째 손가락의 위치를 **첫 손가락의 시작점**과 비교해, 두 손가락이 떨어져 닿기만 해도 '끌었다'로
+  // 판정해 되돌리기가 한 번도 되지 않았다. 이제 손가락마다(identifier) 제 시작점과 비교한다. 톡의 시간 한도는 엔진과 비슷하게 500ms.
+  type TouchLike = { identifier?: number | string; pageX: number; pageY: number };
+  const marginGesture = useRef<{ t: number; starts: Map<string, { x: number; y: number }>; most: number; moved: boolean } | null>(null);
+  function marginTouch(kind: 'start' | 'move' | 'end' | 'cancel', ev?: { touches?: ArrayLike<TouchLike> }) {
     const touches = ev?.touches ? Array.from(ev.touches) : [];
-    const g = marginGesture.current;
+    const key = (t: TouchLike, i: number) => String(t.identifier ?? i);
     if (kind === 'cancel') { marginGesture.current = null; return; }
+    let g = marginGesture.current;
     if (kind === 'start') {
-      if (!g) marginGesture.current = { t: Date.now(), x: ev?.pageX ?? 0, y: ev?.pageY ?? 0, most: Math.max(1, touches.length), moved: false };
-      else g.most = Math.max(g.most, touches.length);
+      if (!g) g = marginGesture.current = { t: Date.now(), starts: new Map(), most: 0, moved: false };
+      touches.forEach((t, i) => { if (!g!.starts.has(key(t, i))) g!.starts.set(key(t, i), { x: t.pageX, y: t.pageY }); });
+      g.most = Math.max(g.most, touches.length);
       return;
     }
     if (!g) return;
-    if (kind === 'move') { if (Math.abs((ev?.pageX ?? g.x) - g.x) > 12 || Math.abs((ev?.pageY ?? g.y) - g.y) > 12) g.moved = true; return; }
+    if (kind === 'move') {
+      touches.forEach((t, i) => { const o = g!.starts.get(key(t, i)); if (o && (Math.abs(t.pageX - o.x) > 16 || Math.abs(t.pageY - o.y) > 16)) g!.moved = true; });
+      return;
+    }
     if (touches.length > 0) return;          // 아직 손가락이 남아 있다
     marginGesture.current = null;
-    if (g.moved || Date.now() - g.t > 350 || !initialized || busy) return;
+    if (g.moved || Date.now() - g.t > 500 || !initialized || busy) return;
     if (g.most === 2 && scene.undo) send({ type: 'undo' });
     if (g.most >= 3 && scene.redo) send({ type: 'redo' });
   }
@@ -1380,8 +1388,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {/* 캔버스 바깥 여백의 손가락(45.39): 두 손가락 톡 = 되돌리기, 세 손가락 톡 = 다시 실행. 캔버스 안(엔진)과 같은 약속이다 —
             작은 화면에서 종이 안에만 두 손가락을 올리기 불편하다는 신고. 캔버스 뒤에 깔려 있어 캔버스 위 손가락은 엔진이 받는다. */}
         <View testID="캔버스 여백" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-          onTouchStart={e => marginTouch('start', e.nativeEvent)} onTouchMove={e => marginTouch('move', e.nativeEvent)}
-          onTouchEnd={e => marginTouch('end', e.nativeEvent)} onTouchCancel={() => marginTouch('cancel')} />
+          onTouchStart={e => marginTouch('start', e.nativeEvent as never)} onTouchMove={e => marginTouch('move', e.nativeEvent as never)}
+          onTouchEnd={e => marginTouch('end', e.nativeEvent as never)} onTouchCancel={() => marginTouch('cancel')} />
         {/* 캔버스 틀: 네이티브 WebView 는 크기 지정을 무시하고 영역 전체를 채워, 캔버스가 위에 붙고 아래에 빈 띠가 남았다(40차 실기기 bounds 0,381–1080,1882).
             정사각 틀로 감싸 잘라 두면 WebView 가 틀만큼만 차지하고, 그리기 탭에서는 영역 가운데·움직이기 탭에서는 위에 선다. */}
         {/* 종이 경계: 얇은 선 + 옅은 그림자. 흰 종이와 작업면이 비슷한 밝기라 경계가 없으면 캔버스가 떠 보였다(45.37 실기기). */}

@@ -171,7 +171,8 @@ const heights = [568, 640, 720, 800, 900, 1000];
     {
       const margin = () => byTestID('캔버스 여백')[0];
       assert.ok(margin(), tag + ': 캔버스 여백이 손가락을 받는다');
-      const t = (n, x = 10) => ({ nativeEvent: { touches: Array.from({ length: n }, () => ({ pageX: x, pageY: 10 })), pageX: x, pageY: 10 } });
+      // 실제 두 손가락은 서로 떨어져 닿는다(45.39 실기기에서 되지 않던 까닭). 손가락마다 identifier 와 제자리가 다르다.
+      const t = (n, dx = 0) => ({ nativeEvent: { touches: Array.from({ length: n }, (_, i) => ({ identifier: i, pageX: 10 + i * 190 + dx, pageY: 10 + i * 40 })) } });
       const tap = async n => {
         await act(async () => margin().props.onTouchStart(t(1)));
         for (let k = 2; k <= n; k++) await act(async () => margin().props.onTouchStart(t(k)));
