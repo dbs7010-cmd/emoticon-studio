@@ -17,7 +17,7 @@ class File {
 const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } } });
 const { createProject } = load('src/project.ts');
 const { localFile } = load('src/services/storage.ts');
-const { buildZip, crc32, setEntries, exportSet, safeName } = load('src/services/export.ts');
+const { buildZip, crc32, setEntries, exportSet, safeName, exportFormatSummary } = load('src/services/export.ts');
 
 // CRC32 must agree with a known-good implementation, or every archiver will reject the bundle.
 for (const sample of ['', 'a', 'hello world', '이모티콘', 'x'.repeat(1000)]) {
@@ -100,6 +100,9 @@ for (const entry of archive) {
   assert.equal(Buffer.from(submitted.data.slice(8, 12)).toString('ascii'), 'WEBP', '그리고 WEBP 형식이다');
   const fallback = bundle.find(e => e.name === '04.gif');
   assert.equal(Buffer.from(fallback.data.slice(0, 6)).toString('ascii'), 'GIF89a', '04.gif 는 작업용 GIF 그대로다');
+  // 45.38: 화면의 '파일 형식' 안내는 ZIP 에 실제로 들어가는 파일과 같은 수를 말한다(예전 안내는 'WebP · 나머지 PNG').
+  assert.equal(exportFormatSummary(mixed), 'PNG 1개 · WebP 1개 · GIF 1개', '형식 안내가 묶음 내용과 같다: ' + exportFormatSummary(mixed));
+  assert.equal(exportFormatSummary(createProject('빈 세트', '콩이')), '아직 만든 파일이 없어요', '만든 파일이 없으면 그렇게 말한다');
 }
 
 // ── GIF 가 조용히 섞이지 않는다 ─────────────────────────────────────────────────────────────

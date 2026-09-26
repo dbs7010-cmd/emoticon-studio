@@ -1,6 +1,6 @@
 // 8~24칸 반복 제작 시뮬레이션(Round 39). 실제 App 을 띄워 한 세트를 칸마다 끝까지 만든다.
-//   칸 1: 연필 · 굵기 · 색 · 문구 · 통통 → 저장하고 다음 칸
-//   칸 2~N: 이전 칸 그림으로 시작 → 문구 새로 쓰기 → (짝수 칸) 직전 칸 움직임 다시 쓰기 → 저장하고 다음 칸
+//   칸 1: 연필 · 굵기 · 색 · 문구 · 통통 → 저장
+//   칸 2~N: 이전 칸 그림으로 시작 → 문구 새로 쓰기 → (짝수 칸) 직전 칸 움직임 다시 쓰기 → 저장
 // 확인: 선 종류·굵기·도구가 칸을 넘어도 유지, 최근 색 유지, 이전 그림 이어받기 매번 제안, 직전 움직임 행 매번 보임,
 //      칸마다 누르기 수가 늘어나지 않음(8칸째와 N칸째 동일), 확인창 0, 저장된 칸 수·문구·움직임, 앞 칸 다시 열면 그대로.
 const assert = require('node:assert/strict');
@@ -106,7 +106,7 @@ const writeCaption = async text => {
   await press('움직이기'); await press('통통');
   scene = { ...scene, motion: lastCommand('motion').motion }; await message(scene);
   await press('그리기');
-  await press('저장하고 다음 칸'); await saved(true);
+  await press('저장'); await saved(true); await press('다음 칸으로 가기');
 
   const perSlot = [];
   const SLOTS = 24;
@@ -132,7 +132,7 @@ const writeCaption = async text => {
     const recent = tree.root.findAll(n2 => n2.type === 'Pressable' && String(n2.props.accessibilityLabel || '').startsWith('최근 색 ')).map(n2 => n2.props.accessibilityLabel);
     assert.equal(recent[0], '최근 색 #E94F4F', n + '칸: 최근 색 맨 앞 유지 ' + recent.join(','));
     if (labelled('팔레트 닫기').length) await press('팔레트 닫기');
-    await press('저장하고 다음 칸'); await saved(true);
+    await press('저장'); await saved(true); await press('다음 칸으로 가기');
     perSlot.push({ n, taps: taps - t0, modals: alerts.length - a0 });
   }
   const at8 = perSlot.find(s => s.n === 8), last = perSlot.at(-1);

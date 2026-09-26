@@ -278,7 +278,7 @@ const closePainter = async () => { await press('그리기 닫기'); await answer
   await restart();
   await openSlot(1);
   await press('움직이기');
-  const complete = labelled('저장하고 다음 칸')[0];
+  const complete = labelled('저장')[0];
   assert.ok(complete, '움직이기 화면에도 완료 줄이 있다');
   const scrolls = tree.root.findAllByType('ScrollView');
   assert.ok(scrolls.length >= 1, '설정부는 스크롤된다');

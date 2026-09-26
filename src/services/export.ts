@@ -102,6 +102,14 @@ export function buildZip(entries: ExportEntry[]): Uint8Array {
 export const shipped = (slot: Project['slots'][number]) => slot.submitImage ?? slot.motionImage ?? slot.finalImage;
 export const shippedName = (slot: Project['slots'][number]) =>
   `${String(slot.number).padStart(2, '0')}.${slot.submitImage ? 'webp' : slot.motionImage ? 'gif' : 'png'}`;
+// 묶음에 실제로 들어갈 파일의 형식별 수. 화면의 '파일 형식' 안내가 ZIP 과 같은 규칙(shippedName)으로 센다(45.38).
+// 예전 안내는 'WebP · 나머지 PNG' 로 적었지만, WebP 가 없는 움직이는 칸은 GIF 로 들어갔다.
+export function exportFormatSummary(project: Project): string {
+  const counts: Record<'png' | 'webp' | 'gif', number> = { png: 0, webp: 0, gif: 0 };
+  for (const slot of shippedSlots(project)) counts[shippedName(slot).split('.').pop() as 'png' | 'webp' | 'gif']++;
+  const parts = (['png', 'webp', 'gif'] as const).filter(k => counts[k] > 0).map(k => ({ png: 'PNG', webp: 'WebP', gif: 'GIF' })[k] + ' ' + counts[k] + '개');
+  return parts.length ? parts.join(' · ') : '아직 만든 파일이 없어요';
+}
 export function brokenSlots(project: Project): number[] {
   return project.slots.filter(slot => shipped(slot) && !localFile(shipped(slot)!.path).exists).map(slot => slot.number);
 }

@@ -140,7 +140,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  await press('움직이기');
  {
   const basic=tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel&&!n.props.disabled).map(n=>n.props.accessibilityLabel);
-  for(const must of ['움직임 없음','통통','흔들기','두근거리기','부분만 움직이기','보관한 움직임','저장하고 다음 칸'])
+  for(const must of ['움직임 없음','통통','흔들기','두근거리기','부분만 움직이기','보관한 움직임','저장'])
    assert.ok(basic.includes(must),'기본 화면에 있어야 한다: '+must);
   for(const gone of ['움직임 취소','움직임 적용','미리보기 재생','미리보기 크게','이 움직임 보관하기','레이어 1 부분 움직임 추가'])
    assert.ok(!basic.includes(gone),'기본 화면에 없다: '+gone);
@@ -254,7 +254,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  // 선택 자체는 무료여야 한다. 그리고 선택 중에는 아래에 같은 버튼 줄이 두 번 보이면 안 된다.
  scene={...scene,selection:{box:{x:10,y:10,w:60,h:60},dx:0,dy:0,scale:1,rot:0,flip:1}};await message(scene);
  // 45.28 정정: 완성은 머리줄로 올라갔다(승인 보드 01). 선택 판의 취소·적용과 자리가 갈려 겹치지 않는다.
- assert.equal(labelled('저장하고 다음 칸').length,1,'완성은 머리줄에 하나만 있다');
+ assert.equal(labelled('저장').length,1,'완성은 머리줄에 하나만 있다');
  assert.equal(labelled('선택 취소').length,1,'선택 판은 제 취소를 가진다');
  assert.equal(labelled('선택 적용').length,1,'선택 판은 제 적용을 가진다');
  for(const tool of ['작게','크게','왼쪽 회전','오른쪽 회전','좌우 반전'])assert.equal(labelled(tool).length,1,'선택 변형 버튼: '+tool);
@@ -266,7 +266,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
  assert.equal(labelled('PRO 알아보기').length,0,'무료 선택 변형은 PRO를 묻지 않는다');
  assert.equal(sent().filter(m=>m.type==='save').length,beforeSelect,'그리고 저장을 부르지도 않는다');
  scene={...scene,selection:null};await message(scene);
- assert.equal(labelled('저장하고 다음 칸').length,1,'선택이 끝나면 완성 버튼이 돌아온다');
+ assert.equal(labelled('저장').length,1,'선택이 끝나면 완성 버튼이 돌아온다');
 
  // ── 고른 부분을 그림으로 보관 ─────────────────────────────────────────────────────────────
  // 시안 A3의 '내 그림으로 보관'. 떠내는 것이지 잘라내는 것이 아니므로 그림도, 저장된 작품도
@@ -443,18 +443,21 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.equal(labelled('색 #54A9E8').length,0,'닫으면 다시 간결한 줄로 돌아온다');
 
  // ── An empty canvas is never a finished cut ────────────────────────────────────────────────
- await press('저장하고 다음 칸');
+ // 45.38: 저장 버튼은 이 칸에 머문다. 빈 캔버스는 저장하되 완성으로 치지 않고, 캔버스 위 안내가 그 이유를 말한다.
+ await press('저장');
  await saved(true,blank);
  assert.equal(fresh().slots.filter(s=>s.done).length,0,'declaring an empty canvas finished does not count it');
- assert.ok(alerts.at(-1).title.includes('빈 칸'),'and it says why');
+ assert.ok(tree.root.findAll(n=>n.props.testID==='저장 안내').length===1&&shown().some(t=>t.includes('빈 칸은 완성으로 치지 않아요')),'and it says why');
  assert.ok(fresh().slots[0].finalImage,'while the work itself is still kept');
  assert.equal(tree.root.findAllByType('WebView').length,1,'and it stays on the same cut');
 
  // ── Drawing, declaring it done, and landing on the next unfinished cut ──────────────────────
  scene.dirty=true;await message(scene);
- await press('저장하고 다음 칸');
+ await press('저장');
  await saved();
  assert.equal(fresh().slots[0].done,true,'a drawn cut can be declared finished');
+ assert.equal(tree.root.findAllByType('WebView').length,1,'saving keeps the user on the same cut (45.38)');
+ await press('다음 칸으로 가기');
  assert.equal(fresh().slots[0].qa.status,'PASS','and it is checked against the file that was just written');
  assert.equal(fresh().lastSlot,1,'and the set remembers where the work was');
  const second=await init();
@@ -595,7 +598,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.ok(shown().some(t=>t==='0개 완성 · 2개 작업 중'),'the board counts declarations and work in progress, not saves');
  await act(async()=>tile(1).props.onPress());await init();
  scene.dirty=true;await message(scene);
- await press('저장하고 다음 칸');await saved();await init();
+ await press('저장');await saved();await init();
  assert.equal(tile(1).props.accessibilityLabel,'슬롯 1 완성');
  assert.ok(shown().some(t=>t.startsWith('1개 완성')),'and the count follows: '+shown().filter(t=>t.includes('개 완성')).join(' | '));
  await press('그리기 닫기');await saved(false);
@@ -702,7 +705,8 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   await saved(true, metrics, retryToken);
   assert.equal(sent().filter(m => m.type === 'saved').at(-1).token, retryToken, '다시 부른 저장은 정상으로 끝난다');
  }
- assert.equal(labelled('저장').length,0,'there is no save button to manage: work saves itself');
+ // 45.38: 저장 버튼은 하나(사용자 요청). 그래도 작업은 스스로 저장된다 — 저장 버튼은 '이 칸 완성' 선언이다.
+ assert.equal(labelled('저장').length,1,'one save button, and work still saves itself');
  const beforeDouble=sent().filter(m=>m.type==='save').length;
  const closeButton=labelled('그리기 닫기')[0];
  await act(async()=>{closeButton.props.onPress();closeButton.props.onPress();});
@@ -719,7 +723,9 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await openSet('새 이모티콘 세트');
  await act(async()=>tiles().find(t=>t.props.testID==='slot-9').props.onPress());await init();
  scene.dirty=true;await message(scene);
- await press('저장하고 다음 칸');await saved();
+ await press('저장');await saved();
+ assert.equal(tree.root.findAllByType('WebView').length,1,'saving the last open cut still stays on it');
+ await press('전체 보기로 가기');
  assert.equal(tree.root.findAllByType('WebView').length,0,'finishing the last open cut closes the painter');
  assert.equal(tiles().length,32,'and lands on the board, where the whole set is visible at once');
  assert.ok(shown().some(t=>t==='32개 완성'),'with every cut counted and none left in progress');
@@ -734,6 +740,18 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.ok(!shown().some(t=>t.includes('작업 파일')),'nor contradicts a promise with a working-file disclaimer');
  assert.ok(!shown().some(t=>/승인 확률|점수/.test(t)),'no approval odds anywhere');
  assert.ok(!shown().some(t=>t.includes('아직 완성되지 않았어요')),'a finished set reports no missing cuts');
+ // 45.38: 내보내기 결과에서 칸을 열어 고치고 저장하면, 다음 칸이 아니라 이 검수 화면으로 돌아온다.
+ // 한 칸을 미완성으로 되돌려 둔다 — 예전 코드는 미완성 칸이 남아 있으면 그 칸으로 넘어갔다.
+ {
+  const sid=fresh().id;
+  saveStore({...loadStore().store,revision:loadStore().store.revision+1,projects:loadStore().store.projects.map(x=>x.id===sid?{...x,slots:x.slots.map(s=>s.number===20?{...s,done:false}:s)}:x)});
+  await press('03번 칸 열기');await init();
+  scene.dirty=true;await message(scene);
+  assert.equal(labelled('저장')[0].props.accessibilityHint,'저장한 뒤 내보내기 검수로 돌아가요','the save button says where it will go');
+  await press('저장');await saved();
+  assert.equal(tree.root.findAllByType('WebView').length,0,'saving a cut opened from the review closes the painter');
+  assert.equal(tree.root.findAll(n=>n.props.testID==='결과 격자').length,1,'and returns to the review, not to the next unfinished cut');
+ }
  const named=label=>tree.root.findAll(n=>n.props.accessibilityLabel===label);
  assert.equal(labelled('자세히 보기').length,1,'규격과 직접 확인은 처음에 접혀 있다');
  assert.ok(!shown().some(t=>t.includes('공식 가이드 확인일')),'접힌 동안 원문이 화면을 채우지 않는다');
@@ -913,7 +931,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await act(async()=>tiles()[4].props.onPress());await init();
  scene.dirty=true;await message(scene);
  failWrite=true;
- await press('저장하고 다음 칸');
+ await press('저장');
  await saved();
  failWrite=false;
  assert.equal(tree.root.findAllByType('WebView').length,1,'a failed save never moves to the next cut');
@@ -1112,7 +1130,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  };
  const smallest=node=>{const a=hitArea(node);return Math.min(a.height,a.width);};
  // The controls the canon calls 주요: reached constantly, so 48dp is the floor, not a target.
- const primary=['브러시','채우기','지우개','색','그리기','움직이기','내보내기','이어서 그리기','첫 칸 그리기','저장하고 다음 칸','그리기 닫기','뒤로','더보기','참고','레이어','문구'];
+ const primary=['브러시','채우기','지우개','색','그리기','움직이기','내보내기','이어서 그리기','첫 칸 그리기','저장','그리기 닫기','뒤로','더보기','참고','레이어','문구'];
  const small=[];
  for(const width of [320,360,390,412]){
   viewport.width=width;

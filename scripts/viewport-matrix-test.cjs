@@ -172,7 +172,7 @@ const heights = [568, 640, 720, 800, 900, 1000];
     assert.equal(tree.root.findAll(n => n.props.accessibilityLabel === '브러시 굵기').length, 1, tag + ': 조절대는 화면에 하나');
     // 기본 도구 줄 두 줄(즐겨찾기 62 + 도구 52)과 줄 사이 여백이 BASE_H 안에 들어간다 — 아래가 잘리지 않는다.
     assert.ok(6 + 62 + 6 + 52 <= BASE_H, tag + ': 기본 도구 줄 두 줄이 잘리지 않는다');
-    for (const l of ['그리기 도구 펜', '지우개', '채우기', '선택', '색', '브러시 전체', '되돌리기', '다시 실행', '저장하고 다음 칸']) assert.equal(labelled(l).length, 1, tag + ': ' + l);
+    for (const l of ['그리기 도구 펜', '지우개', '채우기', '선택', '색', '브러시 전체', '되돌리기', '다시 실행', '저장']) assert.equal(labelled(l).length, 1, tag + ': ' + l);
     assert.equal(byTestID('빠른 브러시')[0].findAll(n => n.type === 'Pressable' && n.props.testID).length, 3, tag + ': 빠른 브러시 카드 셋');
     // 각 패널이 가리는 캔버스 비율(패널 높이 - 캔버스 아래 남는 자리) / 캔버스 높이.
     const below = Math.max(0, (area.height - side) / 2);   // 그리기 탭은 캔버스가 가운데라 남는 자리의 절반이 아래다(45.37)
@@ -228,14 +228,14 @@ const heights = [568, 640, 720, 800, 900, 1000];
     row.motion = +(Math.max(0, motion - BASE_H - (area.height - side)) / side).toFixed(2);
     assert.ok(row.motion < .45, tag + ': 움직이기 패널이 캔버스를 45% 넘게 덮지 않는다: ' + row.motion);
     // 45.28: 완성은 머리줄 하나뿐이다 — 움직이기 탭의 큰 완성 줄은 없앴다(두 개가 아니다).
-    assert.equal(labelled('저장하고 다음 칸').length, 1, tag + ': 움직이기에서도 완성 버튼은 머리줄에 하나');
+    assert.equal(labelled('저장').length, 1, tag + ': 움직이기에서도 완성 버튼은 머리줄에 하나');
     // 겹침이 아니라 경계로 본다: 설정 목록은 줄어드는 스크롤이고(flex:1·minHeight:0),
     // 완성은 스크롤 밖 머리줄에 있다. 그래서 목록이 길어져도 완성을 밀어내지 못하고, 끝까지 스크롤로 닿는다.
     const motionScroll = tree.root.findAll(n => n.type === 'ScrollView' && flat(n.props.style).flex === 1);
     assert.equal(motionScroll.length, 1, tag + ': 움직이기 설정 목록은 줄어드는 스크롤 하나');
     assert.equal(flat(motionScroll[0].props.style).minHeight, 0, tag + ': 목록이 내용 높이로 버티지 않는다');
     assert.ok((flat(motionScroll[0].props.contentContainerStyle).paddingBottom ?? 0) >= 12, tag + ': 목록 끝에 여유가 있다');
-    const finishRow = tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === '저장하고 다음 칸')[0];
+    const finishRow = tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === '저장')[0];
     for (let p = finishRow.parent; p; p = p.parent) assert.notEqual(p.type, 'ScrollView', tag + ': 완성은 스크롤 안에 있으면 안 된다');
     await press('그리기');
     // 보드·내보내기: 격자 세 칸이 폭 안, 내보내기 결과 격자 칸 크기.
@@ -289,7 +289,7 @@ const heights = [568, 640, 720, 800, 900, 1000];
   saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8'] });
   await openPainter();
   assert.deepEqual(aidNames(), [1, 1, 1, 1, 1], '보조 셋과 되돌리기·다시 실행이 모두 있다');
-  assert.equal(labelled('저장하고 다음 칸').length, 1, '윗줄에는 저장 하나');
+  assert.equal(labelled('저장').length, 1, '윗줄에는 저장 하나');
   assert.equal(rowsIn(headOf()), 1, '412: 재기 전에는 한 줄');
   assert.equal(headOf().findAll(n => n.props.accessibilityLabel === '되돌리기').length, 1, '412: 되돌리기는 모드 줄(참고 왼쪽)');
   await measure(400, 140, 230);

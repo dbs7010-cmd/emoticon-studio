@@ -266,7 +266,8 @@ const saved = async (dirty = true) => {
   assert.equal(count(['참고', '참고 열기', '기준 그림 보기', '직전 그림 보기', '기획 보기']), 1, '참고 입구는 하나');
   assert.equal(count(['움직이기', '움직이기로 넘어가기']), 1, '움직이기 입구는 하나');
   assert.equal(count(['문구', '문구 넣기', '문구 고치기', '문구 고르기']), 1, '문구 입구는 하나');
-  assert.equal(labelled('저장').length, 0, '저장 버튼으로 저장을 관리하게 하지 않는다');
+  // 45.38: 저장 버튼은 하나(사용자 요청). 이 칸을 완성으로 표시하고 머문다 — 작업 자체는 여전히 스스로 저장된다.
+  assert.equal(labelled('저장').length, 1, '저장 버튼은 머리줄에 하나');
   await press('더보기');
   assert.equal(count(['문구 넣기', '문구 고치기', '이 그림을 기준 그림으로', '기준 그림 보기']), 0, '더보기가 다른 입구를 되풀이하지 않는다');
   // 45.2: 캐릭터 기준은 세트 전체의 일이라 더보기 한 곳에만 있다(참고 줄에는 없다).
@@ -333,10 +334,11 @@ const saved = async (dirty = true) => {
   await press('PRO 닫기');
   noPaywall('움직이기(무료 효과)');
   collect();
-  await press('저장하고 다음 칸');
+  await press('저장');
   await saved(true);
   assert.ok(!alerts.some(a => /PRO/.test(a.title ?? '')), '저장할 때 PRO 알림이 끼어들지 않았다');
   assert.equal(loadStore().store.projects[0].slots[0].done, true, '움직이기 탭에서도 완성할 수 있다');
+  await press('다음 칸으로 가기');   // 45.38: 저장은 머물고, 다음 칸은 저장 안내에서 고른다(움직이기 탭에서도)
 
   // ── 4. 새 칸: 제작 설정이 이어진다 ──────────────────────────────────────────────────────────
   let init = await ready();
@@ -395,7 +397,7 @@ const saved = async (dirty = true) => {
   scene = { ...scene, dirty: true }; await message(scene);
   savesAt = saves();
   await act(async () => appStates.at(-1)('background'));
-  await press('저장하고 다음 칸');
+  await press('저장');
   assert.equal(saves(), savesAt + 1, '자동저장 중 완성은 겹쳐 저장하지 않는다');
   await saved(true);
   await act(async () => { await new Promise(r => setTimeout(r, 30)); });
@@ -498,7 +500,7 @@ const saved = async (dirty = true) => {
     await act(async () => tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용')[0].props.onChangeText('좋아'));
     taps++; await act(async () => tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용')[0].props.onSubmitEditing());
     drags++; scene = { ...scene, caption: { ...lastCommand('caption').caption, dx: 20 }, captionPicked: true }; await message(scene); // 캔버스에서 글씨 끌기(엔진 검사는 gesture-test)
-    await press('저장하고 다음 칸'); await saved(true);
+    await press('저장'); await saved(true); await press('다음 칸으로 가기');
   });
   await ready();
   const flowB = await bench(async () => {
@@ -510,7 +512,7 @@ const saved = async (dirty = true) => {
     scene = { ...scene, caption: lastCommand('caption').caption, captionPicked: true }; await message(scene);
     await press('움직이기'); await press('직전 칸 움직임 다시 쓰기');
     scene = { ...scene, motion: lastCommand('motion').motion }; await message(scene);
-    await press('저장하고 다음 칸'); await saved(true);
+    await press('저장'); await saved(true); await press('다음 칸으로 가기');
   });
   console.log('  FLOW A(다음 칸·붓·굵기·최근 색·문구 배치): 누르기 ' + flowA.taps + ' · 끌기 ' + flowA.drags + ' · 확인창 ' + flowA.modals);
   console.log('  FLOW B(다음 칸·문구 고치기·직전 움직임): 누르기 ' + flowB.taps + ' · 끌기 ' + flowB.drags + ' · 확인창 ' + flowB.modals);
@@ -562,9 +564,9 @@ const saved = async (dirty = true) => {
   assert.equal(guideLine().length, 0, '같은 말을 캔버스 위에 또 띄우지 않는다');
   await press('문구');
   await act(async () => tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용')[0].props.onChangeText('안 눌렀어'));
-  await press('저장하고 다음 칸');
+  await press('저장');
   assert.equal(lastCommand('caption').caption.text, '안 눌렀어', '적용을 누르지 않아도 저장 전에 문구가 캔버스로 확정된다');
-  await saved(true);
+  await saved(true); await press('다음 칸으로 가기');
   assert.equal(refSpotOf().length, 0, '다음 칸으로 넘어가면 참고 자리가 따라오지 않는다');
   // 다음 칸은 아직 캔버스가 준비되기 전이라 닫기는 저장 없이 바로 끝난다.
   await press('그리기 닫기');

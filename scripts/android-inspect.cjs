@@ -32,11 +32,11 @@ const API = process.env.BS_API_HOST || 'api-cloud.browserstack.com';
 const BUDGET_MS = Number(process.env.BUDGET_MS || 9 * 60 * 1000);
 
 // 화면 요소 이름. 코드에서 그대로 읽어 온 것이다(accessibilityLabel → content-desc).
-// 39차: 38.5차 UI 로 갱신. 저장 버튼은 없어졌고(자동 저장) '저장하고 다음 칸'이 칸을 끝낸다.
+// 39차: 38.5차 UI 로 갱신. 저장 버튼은 없어졌고(자동 저장) '저장'이 칸을 끝낸다.
 // 무선 ADB 로 연결한 실기기 검수는 scripts/device-qa.cjs 가 맡는다(라벨은 npm test 에서 소스와 대조).
 const L = {
   newSet: '새 세트',
-  save: '저장하고 다음 칸',
+  save: '저장',
   addLayer: '레이어 추가',
   toolSelect: '선택',
   toolPen: '브러시',

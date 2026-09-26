@@ -14,7 +14,7 @@ import { Painter, type CopiedWork, type Tool } from './src/painter/painter';
 import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC as SPEC, STAGES, WEBP_TOOL_RULE, WEBP_ANIMATOR_URL, REQUIRED_EXTRAS } from './src/constants/kakao-spec';
 import { captionText, createProject, doneCount, usesPro, droppedImagePaths, duplicateCaptions, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
 import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, saveStore, type StoreReport } from './src/services/storage';
-import { exportSet, decodeDataUrl, type HandoffFrames } from './src/services/export';
+import { exportSet, decodeDataUrl, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinals, inspectImage } from './src/services/qa';
 import { PLANS, REVIEW_BUILD_NOTE, REVIEW_DEV_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, purchase, purchaseHistoryUrl, refreshEntitlement, restore, reviewCapable, reviewEnvLabel, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
@@ -249,7 +249,14 @@ function Studio() {
   }
   // "완성 · 다음" lands on a cut that is still open, and hands over an empty canvas: copying the
   // last drawing is a separate, explicit action inside the painter.
+  // 내보내기 검수의 '손볼 곳'에서 들어온 칸은 저장하면 그 검수 화면으로 돌아간다(45.38).
+  // 예전에는 다음 미완성 칸이 남아 있으면 그 칸으로 넘어가, 검수 중이던 흐름을 잃었다.
+  function returnToReview() {
+    setPainting(false); setSlotNumber(null); setGuideHint(null); setGuideExample(null); setGuideExampleMode(null);
+    setScreen('export'); setReturnToExport(false);
+  }
   function completeAndNext() {
+    if (returnToExport) { returnToReview(); return; }
     const latest = current.current?.projects.find(p => p.id === projectId);
     if (!latest || slotNumber === null) return;
     const next = nextUnfinished(latest, slotNumber);
@@ -496,10 +503,12 @@ function Studio() {
   // 한 칸을 만들지 못해도 나머지는 그대로 내보내고, 만들지 못한 칸을 이름으로 알려 준다.
   async function bakeHandoff(target: Project): Promise<{ handoff: HandoffFrames[]; failed: number[] }> {
     const handoff: HandoffFrames[] = [], failed: number[] = [];
-    for (const slot of target.slots) {
-      if (!slot.work || !slot.motion || !isAnimated(slot)) continue;
+    // 칸마다 차례로 만든다. 진행 수를 그대로 보여 준다(45.38) — 예전에는 '만드는 중…' 한 줄뿐이라 멈춘 것처럼 보였다.
+    const targets = target.slots.filter(slot => slot.work && slot.motion && isAnimated(slot));
+    for (const [index, slot] of targets.entries()) {
+      setBusy(`움직이는 칸 프레임 만드는 중 · ${index + 1}/${targets.length}칸`);
       try {
-        const loop = await baker.current!.bake(slot.work, slot.motion, true);
+        const loop = await baker.current!.bake(slot.work!, slot.motion!, true);
         const frames = (loop.sheets ?? []).map(decodeDataUrl);
         if (frames.length) handoff.push({ number: slot.number, frames, delayMs: loop.delayMs });
         else failed.push(slot.number);
@@ -513,6 +522,7 @@ function Studio() {
     // 앱이 '제출 파일'을 만들어 준다고 말하지 않는다 — PRO 화면의 무료 약속과 같은 말을 쓴다.
     void task('파일 묶음 만드는 중…', async () => {
       const { handoff, failed } = await bakeHandoff(project);
+      setBusy('파일 묶음 정리하는 중…');
       const result = exportSet(project, handoff);
       setLastExport({ path: result.path, count: result.count });
       setHandoffCuts(handoff.map(cut => ({ number: cut.number, count: cut.frames.length, delayMs: cut.delayMs })));
@@ -1019,7 +1029,7 @@ function Studio() {
               ['완성한 칸', `${doneCount(project)} / ${profile.count}`],
               [`크기 ${SPEC.width}×${SPEC.height}`, `${sized.length} / ${drawn.length}`],
               ['투명 배경', measured.length === drawn.length ? `${clear.length} / ${drawn.length}` : `${clear.length} / ${measured.length}`],
-              ['파일 형식', moving ? `움직이는 ${movingCuts}칸 중 ${submitReady}칸 WebP · 나머지 PNG` : 'PNG'],
+              ['파일 형식', exportFormatSummary(project)],   // 45.38: ZIP 과 같은 규칙으로 센 실제 파일 수
               ['용량 상한', `${Math.round(profile.maxBytes / 1024)}KB`],
             ];
             const problems = setChecks.filter(c => c.status !== 'PASS');
@@ -1438,6 +1448,8 @@ function Studio() {
       onSaveMotion={saveMotion}
       onForgetMotion={forgetMotion}
       onComplete={completeAndNext}
+      returnToReview={returnToExport}
+      onReturnToReview={returnToReview}
       onSetReference={useAsReference}
       onCopyPrevious={copyPreviousWork}
       onClose={() => { setPainting(false); setSlotNumber(null); setGuideHint(null); setGuideExample(null); setGuideExampleMode(null); if (returnToExport) { setScreen('export'); setReturnToExport(false); } }}

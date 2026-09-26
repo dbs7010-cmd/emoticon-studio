@@ -163,9 +163,10 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     <View testID="움직임 격자" style={{ gap: 4 }}>
       {grid.map((line, r) => <View key={r} style={{ flexDirection: 'row', gap: 6 }}>
         {line.map(p => {
-          if (!p) return <Pressable key="none" accessibilityRole="button" accessibilityLabel="움직임 없음" accessibilityState={{ selected: !base.preset }} onPress={clearPreset} style={card(!base.preset)}>
+          if (!p) return <Pressable key="none" accessibilityRole="button" accessibilityLabel="움직임 없음" accessibilityHint={hasPro ? '전체 움직임만 빼요. 부분 움직임은 남아요' : undefined} accessibilityState={{ selected: !base.preset }} onPress={clearPreset} style={card(!base.preset)}>
             <View style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="motion-pause-outline" size={22} color={!base.preset ? C.ink : C.faint} /></View>
-            <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: !base.preset ? '800' : '600', color: !base.preset ? C.ink : C.muted }}>없음</Text>
+            {/* 부분 움직임·두 모습이 있으면 '없음'이 모두 끈 것처럼 읽힌다 — 그때는 범위를 이름에 드러낸다(45.38). */}
+            <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: !base.preset ? '800' : '600', color: !base.preset ? C.ink : C.muted }}>{hasPro ? '전체 없음' : '없음'}</Text>
             {mark(!base.preset)}
           </Pressable>;
           const on = base.preset === p.id;

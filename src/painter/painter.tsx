@@ -78,6 +78,9 @@ type Props = {
   onForgetMotion: (id: string) => void;
   onSave: (payload: PainterExport, dialogue: string, complete: boolean) => QA | undefined;
   onComplete: () => void;
+  // 내보내기 검수의 '손볼 곳'에서 들어온 칸이면 저장 뒤 그 검수 화면으로 돌아간다(45.38).
+  returnToReview?: boolean;
+  onReturnToReview?: () => void;
   onSetReference: () => void;
   onCopyPrevious: () => Promise<CopiedWork | null>;
   onColorUsed: (color: string) => void;
@@ -95,7 +98,8 @@ type Props = {
   onShare: () => Promise<void>;
 };
 
-type SaveAction = 'stay' | 'close' | 'share' | 'complete' | 'reference' | 'motion' | number;
+// 'manual': 저장 버튼(45.38). 이 칸을 저장하고 완성으로 표시하되 **이 칸에 머문다**. 다음 칸은 저장 뒤 안내에서 고른다.
+type SaveAction = 'stay' | 'manual' | 'close' | 'share' | 'complete' | 'reference' | 'motion' | number;
 export type Tool = 'pen' | 'fill' | 'eraser' | 'select';
 type Brush = 'pen' | 'brush' | 'pencil';
 type Panel = 'color' | 'width' | 'brush' | 'reference' | 'more' | 'caption' | null;
@@ -358,7 +362,7 @@ const swatches = [
 // 기본 레퍼런스 32칸은 아직 칸별 자료도 고르는 동작도 없다(자리표시뿐).
 // 명세 E05: 미완성 격자를 사용자 화면에 보이지 않는다. 자료는 그대로 두고 화면에서만 감춘다.
 const BUILTIN_READY: boolean = BUILTIN_REFERENCES.enabled && BUILTIN_REFERENCES.ready;
-export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, onSetReference, onCopyPrevious, onColorUsed, onClose, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
+export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, returnToReview, onReturnToReview, onSetReference, onCopyPrevious, onColorUsed, onClose, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<SaveAction>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
@@ -476,6 +480,15 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [layerDragging, setLayerDragging] = useState(false);
   const [cutoutPicker, setCutoutPicker] = useState(false);
   const [hiddenWarning, setHiddenWarning] = useState('');
+  // 저장 버튼 뒤의 짧은 안내(45.38). 'done' 이면 '다음 칸' 으로 이어 갈 수 있고, 'blank' 면 빈 칸은 완성이 아니라고 말한다.
+  // 4초 뒤 스스로 걷힌다 — 캔버스 위에는 한 번에 한 가지만 말한다(canvasMessage).
+  const [savedNote, setSavedNote] = useState<'done' | 'blank' | null>(null);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showSaved = (kind: 'done' | 'blank') => {
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    setSavedNote(kind); savedTimer.current = setTimeout(() => setSavedNote(null), 4000);
+  };
+  useEffect(() => () => { if (savedTimer.current) clearTimeout(savedTimer.current); }, []);
   const keeping = useRef<((data: string | null) => void) | null>(null);
   const selectedReference = scene.references.find(r => r.id === scene.activeReferenceId);
 
@@ -1115,8 +1128,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 참고 줄은 제외한다 — 참고는 캔버스 위에서 옮기고 키우는 중이라 손가락이 캔버스로 가야 한다.
   const panelCovering = tab === 'draw' && ((!!panel && panel !== 'more' && panel !== 'brush') || drawRail);
   // 캔버스 위에는 한 번에 한 가지만 말한다(45.2차). 위에서부터 급한 순서로 하나를 고른다.
-  const canvasMessage: 'saving' | 'hidden' | 'eyedrop' | 'previous' | 'guide' | 'zoomHint' | null =
-    tab !== 'draw' ? null
+  const canvasMessage: 'saving' | 'saved' | 'hidden' | 'eyedrop' | 'previous' | 'guide' | 'zoomHint' | null =
+    // 방금 누른 저장의 결과는 두 탭 모두에서 보인다 — 움직이기 탭에서 저장해도 '다음 칸'으로 이어 갈 수 있어야 한다.
+    savedNote && !slowSave ? 'saved'
+    : tab !== 'draw' ? null
     // 저장이 길어지는 동안에는 이것이 가장 급한 소식이다 — 지금 획이 캔버스에 닿지 않는 이유다.
     : slowSave ? 'saving'
     : hiddenWarning ? 'hidden'
@@ -1148,11 +1163,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 아래 줄은 '지금 그리는 손'이다: 브러시와 색이 주인공, 나머지 셋은 모드를 바꾸는 빠른 칸(45.5차).
   // 네 번째 값: 아이콘 옆에 이름을 남길지. 처음 보는 사람이 그림만으로 알 수 있는 것은 이름을 떼고, 애매한 것만 남긴다.
   const quickTools: [Tool, string, IconName, boolean][] = [['eraser', '지우개', 'eraser', true], ['fill', '채우기', 'format-color-fill', true], ['select', '선택', 'select-drag', true]];
-  // 윗줄의 주 동작 하나: 저장(45.37 — '완성'이라는 말이 헷갈린다는 사용자 요청으로 이름을 바꿨다).
-  // 하는 일은 그대로다: 이 칸을 완성으로 표시하고 저장한 뒤 다음 칸(또는 전체 보기)으로 간다. 작업 중 내용은 따로 자동저장된다.
-  // 모양은 승인 시안대로 노란 채움 + 글자만. 화면 읽기 이름은 보이는 글자를 포함해 무엇이 이어지는지까지 말한다.
-  const saveButton = <Pressable accessibilityRole="button" accessibilityLabel="저장하고 다음 칸" accessibilityHint={'이 칸을 완성으로 표시하고 저장한 뒤 ' + (completeTitle.includes('전체') ? '전체 보기로 가요' : '다음 칸으로 가요')}
-      disabled={busy || !initialized} onPress={() => save('complete')}
+  // 윗줄의 주 동작 하나: 저장. 누르면 **이 칸에 머문다**(45.38). 45.37 까지는 이름만 '저장'이고 실제로는 다음 칸으로 넘어가,
+  // 단순히 저장하려던 사람이 작업 자리를 잃었다. 이제 저장한 뒤 캔버스 위 안내에서 '다음 칸'을 고를 수 있다.
+  // 내보내기 검수에서 고치러 들어온 칸이면 저장 뒤 그 검수 화면으로 돌아간다.
+  // 모양은 승인 시안대로 노란 채움 + 글자만.
+  const saveButton = <Pressable accessibilityRole="button" accessibilityLabel="저장" accessibilityHint={returnToReview ? '저장한 뒤 내보내기 검수로 돌아가요' : '이 칸을 저장하고 완성으로 표시해요. 이 칸에 그대로 있어요'}
+      disabled={busy || !initialized} onPress={() => save('manual')}
       hitSlop={{ top: 4, bottom: 4 }}
       style={({ pressed }) => ({ minHeight: 40, minWidth: 56, paddingHorizontal: 14, marginHorizontal: 2, borderRadius: C.radius.button,
         alignItems: 'center', justifyContent: 'center', backgroundColor: busy || !initialized ? C.fill : pressed ? C.accentLine : C.accent })}>
@@ -1278,11 +1294,18 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                 // An empty canvas is not a finished cut. Keep the work, refuse the declaration only.
                 const blank = !(m.metrics?.coverage > 0);
                 if (action === 'complete' && blank) action = 'stay';
-                if (m.dirty !== false || action === 'stay' || action === 'share' || action === 'complete' || action === 'reference') {
-                  const result = onSave(m, slot.dialogue, action === 'complete'); setQA(result);
+                // 저장 버튼: 그림이 있으면 완성으로 표시하고, 빈 캔버스면 작업만 남긴다(빈 칸은 완성이 아니다).
+                const declare = action === 'complete' || (action === 'manual' && !blank);
+                if (m.dirty !== false || action === 'stay' || action === 'manual' || action === 'share' || action === 'complete' || action === 'reference') {
+                  const result = onSave(m, slot.dialogue, declare); setQA(result);
                 }
                 send({ type: 'saved', token: m.token }); unlock(); markSaved();
                 if (nextAction.current === 'complete' && blank) { Alert.alert('아직 빈 칸이에요', '선을 하나라도 그리면 완성할 수 있어요.'); return; }
+                if (action === 'manual') {
+                  if (returnToReview && !blank) { onReturnToReview?.(); return; }
+                  showSaved(blank ? 'blank' : 'done');
+                  return;
+                }
                 if (action === 'motion') switchTab('draw');
                 else if (action === 'close') onClose();
                 else if (action === 'complete') onComplete();
@@ -1328,6 +1351,16 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {canvasMessage === 'saving' && <View accessibilityLabel="저장 중이라 잠시 그릴 수 없어요" pointerEvents="none" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingHorizontal: 12, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
           <MaterialCommunityIcons name="cloud-upload-outline" size={14} color={C.muted} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}>저장 중이에요 · 잠시만요</Text>
+        </View>}
+        {canvasMessage === 'saved' && <View testID="저장 안내" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line, ...Elev[1] }}>
+          <MaterialCommunityIcons name={savedNote === 'done' ? 'check-circle' : 'content-save-outline'} size={16} color={savedNote === 'done' ? C.success : C.muted} />
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}>{savedNote === 'done' ? '저장했어요 · 완성으로 표시했어요' : '저장했어요 · 빈 칸은 완성으로 치지 않아요'}</Text>
+          {savedNote === 'done' && <Pressable accessibilityRole="button" accessibilityLabel={completeTitle.includes('전체') ? '전체 보기로 가기' : '다음 칸으로 가기'}
+            onPress={() => { setSavedNote(null); onComplete(); }}
+            style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, borderRadius: C.radius.button, flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: pressed ? C.fill : 'transparent' })}>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{completeTitle.includes('전체') ? '전체 보기' : '다음 칸'}</Text>
+            <MaterialCommunityIcons name="chevron-right" size={16} color={C.ink} />
+          </Pressable>}
         </View>}
         {canvasMessage === 'hidden' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.accentSoft, borderWidth: 1, borderColor: C.accentBorder }}>
           <MaterialCommunityIcons name="eye-off-outline" size={16} color={C.accentInk} />

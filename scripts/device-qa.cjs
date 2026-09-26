@@ -30,7 +30,7 @@ const L = {
   toolPen: '그리기 도구 펜', toolEraser: '지우개', toolFill: '채우기', toolSelect: '선택', color: '색',
   brushAll: '브러시 전체', quickPen: '기본 펜', favPin: '즐겨찾기에 고정 크레용',
   tabDraw: '그리기', tabMotion: '움직이기', reference: '참고', layers: '레이어', caption: '문구',
-  complete: '저장하고 다음 칸', close: '그리기 닫기', more: '더보기', undo: '되돌리기', redo: '다시 실행',
+  complete: '저장', close: '그리기 닫기', more: '더보기', undo: '되돌리기', redo: '다시 실행',
   brushClose: '브러시 닫기', pencil: '연필', brushVariant: '브러시 자연 잉크', proBrush: '브러시 크레용', brushDetail: '세부 설정',
   brushSize: '브러시 굵기', eraserSize: '지우개 굵기',
   swatch: '색 #54A9E8', recentPrefix: '최근 색 ', paletteClose: '팔레트 닫기',
