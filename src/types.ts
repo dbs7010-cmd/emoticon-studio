@@ -28,7 +28,9 @@ export type PainterExport = { data: string; metrics: Metrics; layers: (LayerTran
 // 저장 검증이 읽는 **유일한 목록**이다. 45.34 에서 종류를 셋에서 여섯으로 늘렸을 때
 // 이 자리가 아니라 project.ts 안에 글자로 박힌 옛 셋만 남아 있어서, 둥실·까딱·부르르를
 // 고르면 저장이 거부됐다 — "움직임 종류가 손상되었습니다". 늘릴 자리는 여기 하나뿐이어야 한다.
-export const MOTION_PRESETS = ['bounce', 'shake', 'pulse', 'float', 'tilt', 'jitter'] as const;
+// 45.39: 여섯에서 스물로(무료 6 · PRO 14, verification/round45_39/MOTION_TIERS.md). 앞의 여섯 id 는 그대로다.
+export const MOTION_PRESETS = ['bounce', 'shake', 'pulse', 'float', 'tilt', 'jitter',
+  'pop', 'slide', 'peek', 'drop', 'vanish', 'hop', 'nod', 'bow', 'dance', 'sway', 'spin', 'shiver', 'punch', 'stretch'] as const;
 export type MotionPreset = typeof MOTION_PRESETS[number];
 export type PartEffect = 'rotate' | 'move' | 'scale';
 // One drawing layer moving on its own. `amount` is degrees for rotate, a fraction of the canvas
@@ -44,7 +46,8 @@ export type PartMotion = {
 };
 export type Motion = {
   version: 1;
-  preset?: MotionPreset;            // the whole picture moving, free
+  preset?: MotionPreset;            // the whole picture moving (무료 6 · PRO 14 — motion-math.ts)
+  direction?: 'left' | 'right' | 'up' | 'down'; // 쓱(slide)이 들어오는 쪽. 없으면 왼쪽
   speed: number; strength: number;  // 0..1
   parts?: PartMotion[];                          // PRO: parts moving on their own
   play?: 'together' | 'sequence';

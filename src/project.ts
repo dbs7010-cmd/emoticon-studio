@@ -1,5 +1,6 @@
 import { KAKAO_STATIC_SPEC as SPEC } from './constants/kakao-spec';
 import { MOTION_PRESETS } from './types';
+import { isProPreset } from './motion-math';
 import type { LocalImage, Motion, Project, Slot, Store } from './types';
 
 export function createProject(projectName: string, characterName: string): Project {
@@ -69,8 +70,9 @@ export const isAnimated = (slot: Slot): boolean =>
 export const setIsAnimated = (project: Project): boolean => project.slots.some(isAnimated);
 // Which movements are PRO. Derived from the motion itself so a saved effect can always be
 // replayed and re-exported, whatever the subscription says today.
+// 45.39: PRO 효과(무료 6 밖의 전체 움직임)도 PRO 다. 이미 저장된 칸은 painter 의 proPart 비교로 다시 묻지 않는다.
 export const usesPro = (motion?: Motion): boolean =>
-  !!(motion && ((motion.parts?.length ?? 0) > 0 || motion.alternate));
+  !!(motion && ((motion.parts?.length ?? 0) > 0 || motion.alternate || isProPreset(motion.preset)));
 // Slot numbers are positions, so reordering moves the work and renumbers the places it sits in.
 // Everything a cut owns — drawing, layers, words, movement, the files behind them — travels with
 // it, because it all hangs off the cut itself and never off the number.
@@ -124,6 +126,7 @@ export function parseStore(raw: string): Store {
         // 종류 목록은 types.ts 한 곳에서 온다. 여기에 또 적으면 화면이 내놓는 것과 저장이 받는 것이
         // 갈라진다 — 45.34 에서 실제로 갈라져 늘린 세 가지가 저장되지 않았다(45.35 에서 고침).
         if (m.preset !== undefined && !(MOTION_PRESETS as readonly string[]).includes(m.preset)) throw new Error('움직임 종류가 손상되었습니다.');
+        if (m.direction !== undefined && !['left', 'right', 'up', 'down'].includes(m.direction)) throw new Error('움직임 방향이 손상되었습니다.');
         if (![m.speed, m.strength].every(n => Number.isFinite(n) && n >= 0 && n <= 1)) throw new Error('움직임 세기 데이터가 손상되었습니다.');
         if (m.play !== undefined && !['together', 'sequence'].includes(m.play)) throw new Error('움직임 재생 순서가 손상되었습니다.');
         if (m.captionMoves !== undefined && typeof m.captionMoves !== 'boolean') throw new Error('문구 움직임 데이터가 손상되었습니다.');

@@ -1,22 +1,46 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView, Image, type ImageSourcePropType } from 'react-native';
+import { View, Text, Pressable, ScrollView, Image, Animated, type ImageSourcePropType } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ProTag, Range, T } from '../components/ui';
 import { ASSET_SLOTS } from '../design/asset-slots';
 import { usesPro } from '../project';
+import { isProPreset, loopScale, presetDelta, type MotionDirection } from '../motion-math';
 import type { LayerTransform, Motion, PartMotion, SavedMotion, MotionPreset } from '../types';
 
 const C = T;
 // Everyday words for what the movement does. The effect ids stay in English in the data.
-// 45.34: 셋 → 여섯. 전체 움직임은 전부 무료다(잠그지 않는다).
-// id 는 저장에 남는 값이라 기존 셋을 그대로 두고 새 셋만 더했다.
-export const PRESETS = [
-  { id: 'float' as const, label: '둥실', hint: '부드럽게 위아래로 떠요', icon: 'weather-windy' as const },
-  { id: 'bounce' as const, label: '통통', hint: '뛰었다가 착지할 때 눌려요', icon: 'arrow-up-down' as const },
-  { id: 'pulse' as const, label: '두근거리기', hint: '커졌다 작아져요', icon: 'heart-pulse' as const },
-  { id: 'tilt' as const, label: '까딱', hint: '고개를 좌우로 까딱여요', icon: 'format-text-rotation-angle-up' as const },
-  { id: 'shake' as const, label: '흔들기', hint: '좌우로 빠르게 흔들려요', icon: 'arrow-left-right' as const },
-  { id: 'jitter' as const, label: '부르르', hint: '제자리에서 작게 떨려요', icon: 'vibrate' as const },
+// 45.39: 여섯 → 스물(무료 6 · PRO 14). 조사로 매긴 순위와 배정은 verification/round45_39/MOTION_TIERS.md.
+// 묶음(등장·동작·강조)으로 나눠 보여 준다. id 는 저장에 남는 값이라 앞의 여섯은 그대로다.
+export type MotionGroup = '등장' | '동작' | '강조';
+export const MOTION_GROUPS: { id: MotionGroup; hint: string }[] = [
+  { id: '등장', hint: '화면 밖에서 나타나요' },
+  { id: '동작', hint: '몸짓으로 말해요' },
+  { id: '강조', hint: '감정을 크게 보여요' },
+];
+export const PRESETS: { id: MotionPreset; label: string; hint: string; group: MotionGroup }[] = [
+  { id: 'pop', label: '뿅', hint: '작게 있다가 뿅 튀어나와요', group: '등장' },
+  { id: 'slide', label: '쓱', hint: '옆이나 위아래에서 쓱 들어와요', group: '등장' },
+  { id: 'peek', label: '빼꼼', hint: '아래에서 살짝 내밀었다 숨어요', group: '등장' },
+  { id: 'drop', label: '쿵', hint: '위에서 떨어져 착지해요', group: '등장' },
+  { id: 'vanish', label: '사라지기', hint: '있다가 쏙 사라져요', group: '등장' },
+  { id: 'bounce', label: '통통', hint: '뛰었다가 착지할 때 눌려요', group: '동작' },
+  { id: 'float', label: '둥실', hint: '부드럽게 위아래로 떠요', group: '동작' },
+  { id: 'tilt', label: '까딱', hint: '고개를 좌우로 까딱여요', group: '동작' },
+  { id: 'hop', label: '폴짝', hint: '움츠렸다 크게 뛰어요', group: '동작' },
+  { id: 'nod', label: '끄덕', hint: '두 번 끄덕여요', group: '동작' },
+  { id: 'bow', label: '꾸벅', hint: '꾸벅 숙였다 일어나요', group: '동작' },
+  { id: 'dance', label: '들썩', hint: '좌우로 들썩들썩 춤춰요', group: '동작' },
+  { id: 'sway', label: '살랑', hint: '발끝을 축으로 살랑 흔들려요', group: '동작' },
+  { id: 'spin', label: '빙글', hint: '한 바퀴 빙글 돌아요', group: '동작' },
+  { id: 'shake', label: '흔들기', hint: '좌우로 빠르게 흔들려요', group: '강조' },
+  { id: 'pulse', label: '두근거리기', hint: '커졌다 작아져요', group: '강조' },
+  { id: 'jitter', label: '부르르', hint: '제자리에서 작게 떨려요', group: '강조' },
+  { id: 'shiver', label: '덜덜', hint: '크게 덜덜 떨어요', group: '강조' },
+  { id: 'punch', label: '쾅', hint: '쾅 커졌다 돌아와요', group: '강조' },
+  { id: 'stretch', label: '쭈욱', hint: '말랑하게 늘었다 줄어요', group: '강조' },
+];
+export const DIRECTIONS: { id: MotionDirection; label: string }[] = [
+  { id: 'left', label: '왼쪽' }, { id: 'right', label: '오른쪽' }, { id: 'up', label: '위' }, { id: 'down', label: '아래' },
 ];
 export const PART_EFFECTS = [
   { id: 'rotate' as const, label: '회전', unit: '°', min: 5, max: 60, step: 5, amount: 20 },
@@ -47,29 +71,43 @@ const Chip = ({ label, on, onPress, wide }: { label: string; on: boolean; onPres
 export const layerLabel = (name: string) => name.replace(/^그림 (\d+)$/, '레이어 $1');
 
 // 효과 견본. 이 칸의 그림이 그 효과대로 실제로 움직인다 — 이름만 보고 결과를 짐작하게 하지 않는다.
-// Animated 대신 작은 타이머로 한 컴포넌트만 다시 그린다(패널 전체를 매 프레임 그리지 않는다).
-export function MotionSample({ preset, uri, fallback, size = 44, active }: { preset: MotionPreset; uri?: string; fallback: ImageSourcePropType | null; size?: number; active: boolean }) {
-  const [t, setT] = React.useState(0);
+// 45.39: 엔진과 **같은 식**(motion-math.ts)을 한 바퀴 24점으로 미리 계산해 네이티브 애니메이션으로 돌린다.
+// 스무 개가 한꺼번에 움직여도 JS 가 매 프레임 다시 그리지 않는다(예전 타이머 방식은 칸마다 60ms 마다 다시 그렸다).
+// 작은 견본에서는 작은 움직임이 보이지 않으므로 효과마다 정한 배율로 키운다 — 들어오는 효과는 배율 없이 그대로.
+const SAMPLE_BOOST: Partial<Record<MotionPreset, { t: number; r: number; s: number }>> = {
+  float: { t: 5, r: 1, s: 1 }, bounce: { t: 5, r: 1, s: 1 }, shake: { t: 5, r: 1, s: 1 }, jitter: { t: 5, r: 2.5, s: 1 }, tilt: { t: 1, r: 2.5, s: 1 }, pulse: { t: 1, r: 1, s: 4 },
+  nod: { t: 3, r: 1, s: 2 }, bow: { t: 2, r: 1, s: 1.5 }, dance: { t: 3, r: 1.5, s: 1 }, sway: { t: 1, r: 1.3, s: 1 }, shiver: { t: 2.5, r: 1.5, s: 1 },
+  hop: { t: 1.2, r: 1, s: 1.5 }, stretch: { t: 1, r: 1, s: 1.5 }, punch: { t: 1, r: 1, s: 1.2 },
+};
+const SAMPLE_POINTS = 24;
+export function sampleFrames(preset: MotionPreset, size: number, direction?: MotionDirection) {
+  const boost = SAMPLE_BOOST[preset] ?? { t: 1, r: 1, s: 1 };
+  let last = 0;
+  return Array.from({ length: SAMPLE_POINTS + 1 }, (_, i) => {
+    const d = presetDelta(preset, i / SAMPLE_POINTS, .5, direction, size, size);
+    // 회전은 이어지게 편다(360° 다음 0° 로 보간하면 거꾸로 한 바퀴 돈다).
+    let rot = d.rot * boost.r; while (rot - last > 180) rot -= 360; while (last - rot > 180) rot += 360; last = rot;
+    const sc = (v: number) => Math.max(.001, 1 + (v - 1) * boost.s);
+    return { px: d.px, py: d.py, dx: d.dx * boost.t, dy: d.dy * boost.t, sx: sc(d.sx), sy: sc(d.sy), rot };
+  });
+}
+export function MotionSample({ preset, uri, fallback, size = 44, active, direction }: { preset: MotionPreset; uri?: string; fallback: ImageSourcePropType | null; size?: number; active: boolean; direction?: MotionDirection }) {
+  const clock = React.useRef(new Animated.Value(0)).current;
+  const frames = React.useMemo(() => sampleFrames(preset, size, direction), [preset, size, direction]);
   React.useEffect(() => {
-    // 카드는 **고르기 전에도** 움직인다 — 이름만 보고 결과를 짐작하게 하지 않는 것이 이 견본의 목적이다.
-    // 화면 밖(패널이 닫힘)에서는 카드 자체가 사라지므로 타이머도 함께 걷힌다.
-    const started = Date.now();
-    const timer = setInterval(() => setT((Date.now() - started) / 1000), 60);
-    return () => clearInterval(timer);
-  }, []);
-  // 견본은 **엔진이 하는 것과 같은 일**을 작게 흉내 낸다. 이름만 보고 결과를 짐작하게 하지 않는다.
-  const turn = t * Math.PI * 2 / .8;
-  const phase = Math.sin(turn);
-  const up = Math.abs(phase);
-  const squash = (1 - up) * (1 - up) * .12;
-  const move = preset === 'float' ? { transform: [{ translateY: phase * size * .09 }] }
-    : preset === 'bounce' ? { transform: [{ translateY: -up * size * .18 }, { scaleY: 1 - squash }, { scaleX: 1 + squash * .8 }] }
-    : preset === 'tilt' ? { transform: [{ rotate: `${phase * 9}deg` }] }
-    : preset === 'shake' ? { transform: [{ translateX: Math.sin(turn * 2) * size * .10 }] }
-    : preset === 'jitter' ? { transform: [{ translateX: Math.sin(turn * 7) * size * .035 }, { translateY: Math.cos(turn * 9) * size * .03 }, { rotate: `${Math.sin(turn * 8) * 2}deg` }] }
-    : { transform: [{ scale: 1 + Math.max(0, phase) * .14 }] };
-  return <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-    <Image accessibilityIgnoresInvertColors source={uri ? { uri } : fallback ?? undefined} style={[{ width: size * .86, height: size * .86, opacity: active ? 1 : .85 }, move]} resizeMode="contain" />
+    // 카드는 **고르기 전에도** 움직인다. 화면 밖(패널이 닫힘)에서는 카드가 사라지며 함께 멈춘다.
+    clock.setValue(0);
+    const loop = Animated.loop(Animated.timing(clock, { toValue: 1, duration: Math.round(800 * loopScale(preset)), easing: (x: number) => x, useNativeDriver: true }));
+    loop.start();
+    return () => loop.stop();
+  }, [preset]);
+  const inputRange = frames.map((_, i) => i / SAMPLE_POINTS);
+  const at = (pick: (f: typeof frames[number]) => number) => clock.interpolate({ inputRange, outputRange: frames.map(pick) });
+  const origin = `${(frames[0].px / size) * 100}% ${(frames[0].py / size) * 100}%`;
+  return <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+    <Animated.Image accessibilityIgnoresInvertColors source={uri ? { uri } : fallback ?? undefined} resizeMode="contain"
+      style={{ width: size * .86, height: size * .86, opacity: active ? 1 : .85, transformOrigin: origin,
+        transform: [{ translateX: at(f => f.dx) }, { translateY: at(f => f.dy) }, { rotate: clock.interpolate({ inputRange, outputRange: frames.map(f => f.rot + 'deg') }) }, { scaleX: at(f => f.sx) }, { scaleY: at(f => f.sy) }] }} />
   </View>;
 }
 
@@ -144,8 +182,27 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   const mark = (on: boolean) => <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 4, height: 3, borderRadius: 2, backgroundColor: on ? C.accent : 'transparent' }} />;
   // 다른 화면으로 가는 줄은 **목록 줄** 역할이다 — 브러시·레이어 목록처럼 카드 없이 얇은 구분선으로 가른다.
   const row = { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 4, borderBottomWidth: 1, borderColor: C.line } as const;
-  const choices: ({ id: MotionPreset; label: string } | null)[] = [null, ...PRESETS];
-  const grid: typeof choices[] = []; for (let i = 0; i < choices.length; i += 4) grid.push(choices.slice(i, i + 4));
+  // 45.39: 묶음으로 나눈 격자. 묶음 칩으로 좁혀 볼 수 있다(전체가 기본).
+  const [group, setGroup] = React.useState<MotionGroup | 'all'>('all');
+  // PRO 효과 미리보기(무료 사용자). 누르면 **내 그림에 입혀 보여 주고** 그 자리에서 PRO 를 권한다.
+  // 저장은 하지 않는다 — 저장·닫기를 누르면 PRO 안내가 먼저 뜨고, '무료로 저장'은 미리보기 전 효과로 되돌린다.
+  const [trialFrom, setTrialFrom] = React.useState<{ preset?: MotionPreset; direction?: MotionDirection } | null>(null);
+  const trying = !pro && isProPreset(base.preset) && !!trialFrom;
+  const pick = (id: MotionPreset) => {
+    if (!pro && isProPreset(id)) {
+      if (!trialFrom) setTrialFrom({ preset: base.preset, direction: base.direction });
+      set({ preset: id });
+      return;
+    }
+    setTrialFrom(null);
+    set({ preset: id });
+  };
+  const endTrial = () => { const from = trialFrom; setTrialFrom(null); if (!from) return; if (!from.preset && !hasPro) onChange(null); else set({ preset: from.preset, direction: from.direction }); };
+  const sections = MOTION_GROUPS.filter(g => group === 'all' || g.id === group).map(g => {
+    const items = PRESETS.filter(p => p.group === g.id);
+    const rows: typeof items[] = []; for (let i = 0; i < items.length; i += 4) rows.push(items.slice(i, i + 4));
+    return { ...g, rows };
+  });
   const back = view === 'pose' ? { label: '부분 움직임으로 돌아가기', to: 'parts' as const, title: '두 모습 번갈아' }
     : { label: '움직임 처음으로', to: 'basic' as const, title: view === 'parts' ? '부분만 움직이기' : '보관한 움직임' };
 
@@ -160,26 +217,67 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         그래야 아래 완성 줄이 밖으로 밀려나지 않고, 목록 끝까지 스크롤로 닿을 수 있다. */}
     <ScrollView style={{ flex: 1, minHeight: 0 }} keyboardShouldPersistTaps="handled" scrollEnabled={!holding && dragFrom === null} contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 20, gap: 10 }}>
     {view === 'basic' ? <>
-    <View testID="움직임 격자" style={{ gap: 4 }}>
-      {grid.map((line, r) => <View key={r} style={{ flexDirection: 'row', gap: 6 }}>
-        {line.map(p => {
-          if (!p) return <Pressable key="none" accessibilityRole="button" accessibilityLabel="움직임 없음" accessibilityHint={hasPro ? '전체 움직임만 빼요. 부분 움직임은 남아요' : undefined} accessibilityState={{ selected: !base.preset }} onPress={clearPreset} style={card(!base.preset)}>
-            <View style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="motion-pause-outline" size={22} color={!base.preset ? C.ink : C.faint} /></View>
-            {/* 부분 움직임·두 모습이 있으면 '없음'이 모두 끈 것처럼 읽힌다 — 그때는 범위를 이름에 드러낸다(45.38). */}
-            <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: !base.preset ? '800' : '600', color: !base.preset ? C.ink : C.muted }}>{hasPro ? '전체 없음' : '없음'}</Text>
-            {mark(!base.preset)}
-          </Pressable>;
-          const on = base.preset === p.id;
-          return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={p.label} accessibilityState={{ selected: on }} onPress={() => set({ preset: p.id })} style={card(on)}>
-            <MotionSample preset={p.id} uri={sample} fallback={ASSET_SLOTS.motionExampleArtwork.source} active={on} size={48} />
-            <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{p.label}</Text>
-            {mark(on)}
-          </Pressable>;
-        })}
-        {/* 마지막 줄이 모자라면 빈 칸으로 채워 칸 폭을 윗줄과 맞춘다. */}
-        {Array.from({ length: 4 - line.length }, (_, i) => <View key={'pad' + i} style={{ flex: 1 }} />)}
+    {/* 없음 + 묶음 칩. '없음'은 전체 움직임만 뺀다(부분 움직임이 있으면 '전체 없음'). */}
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }}>
+      <Pressable accessibilityRole="button" accessibilityLabel="움직임 없음" accessibilityHint={hasPro ? '전체 움직임만 빼요. 부분 움직임은 남아요' : undefined} accessibilityState={{ selected: !base.preset }}
+        onPress={() => { setTrialFrom(null); clearPreset(); }}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1, borderColor: !base.preset ? C.accentBorder : C.line, backgroundColor: !base.preset ? C.accentSoft : pressed ? C.fill : C.paper })}>
+        <MaterialCommunityIcons name="motion-pause-outline" size={16} color={C.ink} />
+        <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: !base.preset ? '800' : '600', color: C.ink }}>{hasPro ? '전체 없음' : '없음'}</Text>
+      </Pressable>
+      <View style={{ width: 1, height: 22, backgroundColor: C.line }} />
+      {([['all', '전체'], ...MOTION_GROUPS.map(g => [g.id, g.id])] as [MotionGroup | 'all', string][]).map(([id, label]) => {
+        const on = group === id;
+        return <Pressable key={id} accessibilityRole="button" accessibilityLabel={'움직임 묶음 ' + label} accessibilityState={{ selected: on }} onPress={() => setGroup(id)}
+          style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 20, backgroundColor: on ? C.ink : pressed ? C.fill : 'transparent', borderWidth: on ? 0 : 1, borderColor: C.line })}>
+          <Text style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.paper : C.muted }}>{label}</Text>
+        </Pressable>;
+      })}
+    </ScrollView>
+    {trying && <View testID="PRO 미리보기 안내" style={{ gap: 8, padding: 12, borderRadius: C.radius.md, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <ProTag />
+        <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>{PRESETS.find(p => p.id === base.preset)?.label} — 내 그림으로 미리 보는 중이에요</Text>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="PRO로 이 효과 쓰기" onPress={onRequestPro}
+          style={({ pressed }) => ({ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: C.ink, opacity: pressed ? .85 : 1 })}>
+          <Text style={{ fontSize: 14, fontWeight: '800', color: C.paper }}>PRO로 쓰기</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="미리보기 끝내기" onPress={endTrial}
+          style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper })}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>원래대로</Text>
+        </Pressable>
+      </View>
+    </View>}
+    <View testID="움직임 격자" style={{ gap: 12 }}>
+      {sections.map(g => <View key={g.id} style={{ gap: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, paddingHorizontal: 2 }}>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{g.id}</Text>
+          <Text style={{ fontSize: 11, color: C.muted }}>{g.hint}</Text>
+        </View>
+        {g.rows.map((line, r) => <View key={r} style={{ flexDirection: 'row', gap: 6 }}>
+          {line.map(p => {
+            const on = base.preset === p.id, locked = !pro && isProPreset(p.id);
+            return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={p.label} accessibilityHint={locked ? 'PRO 효과예요. 누르면 내 그림으로 미리 볼 수 있어요' : p.hint} accessibilityState={{ selected: on }} onPress={() => pick(p.id)} style={card(on)}>
+              {locked && <View pointerEvents="none" style={{ position: 'absolute', top: 4, right: 4 }}><ProTag /></View>}
+              <MotionSample preset={p.id} uri={sample} fallback={ASSET_SLOTS.motionExampleArtwork.source} active={on} size={48} direction={p.id === 'slide' ? base.direction : undefined} />
+              <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{p.label}</Text>
+              {mark(on)}
+            </Pressable>;
+          })}
+          {/* 마지막 줄이 모자라면 빈 칸으로 채워 칸 폭을 윗줄과 맞춘다. */}
+          {Array.from({ length: 4 - line.length }, (_, i) => <View key={'pad' + i} style={{ flex: 1 }} />)}
+        </View>)}
       </View>)}
     </View>
+    {/* 쓱: 들어오는 쪽 */}
+    {base.preset === 'slide' && <View style={{ gap: 6 }}>
+      <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>들어오는 쪽</Text>
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        {DIRECTIONS.map(d => <Chip key={d.id} wide label={d.label} on={(base.direction ?? 'left') === d.id} onPress={() => set({ direction: d.id })} />)}
+      </View>
+    </View>}
     {/* 다시 쓰는 것끼리 한 묶음(45.2차): 직전 칸의 움직임과 보관해 둔 움직임. 새로 고르기 바로 다음 자리. */}
     <View style={{ gap: 6 }}>
     {!moving && !!previousMotion && (() => {

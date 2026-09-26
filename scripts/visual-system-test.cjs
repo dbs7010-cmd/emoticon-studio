@@ -273,9 +273,12 @@ async function ready() {
   // 45.2 의 '없음은 좁게'는 한 줄에 일곱을 세우던 때의 규칙이다. 그 줄은 320dp 에서 흔들기·부르르를 화면 밖으로 밀었고
   // 기기에서는 칸을 36dp 로 줄였다(45.36-R1 G18). 이제 칸 크기는 같고, '없음'은 움직이는 견본 없이 옅은 아이콘만 둔다.
   await press('움직이기');
-  const gridRows = tree.root.findAll(n => n.props.testID === '움직임 격자')[0].children.filter(c => c.type === 'View');
-  assert.deepEqual(gridRows.map(r => r.children.length), [4, 4], '네 칸씩 두 줄(마지막 줄은 빈 칸으로 폭을 맞춘다)');
-  for (const label of ['움직임 없음', '둥실', '통통', '두근거리기', '까딱', '흔들기', '부르르']) {
+  // 45.39: 스무 가지를 등장·동작·강조 세 묶음으로. 묶음마다 네 칸씩, 마지막 줄은 빈 칸으로 폭을 맞춘다. '없음'은 격자 위 칩 줄로 옮겼다.
+  const grid = tree.root.findAll(n => n.props.testID === '움직임 격자')[0];
+  const gridRows = grid.findAll(n => n.type === 'View' && flat(n.props.style).flexDirection === 'row' && flat(n.props.style).alignItems !== 'baseline');
+  assert.deepEqual(gridRows.map(r => r.children.length), [4, 4, 4, 4, 4, 4, 4], '묶음마다 네 칸씩(등장 2줄 · 동작 3줄 · 강조 2줄)');
+  assert.equal(labelled('움직임 없음').length, 1, "'없음'은 격자 위에 하나");
+  for (const label of ['뿅', '쓱', '빼꼼', '쿵', '사라지기', '둥실', '통통', '까딱', '폴짝', '끄덕', '꾸벅', '들썩', '살랑', '빙글', '두근거리기', '흔들기', '부르르', '덜덜', '쾅', '쭈욱']) {
     const cell = labelled(label);
     assert.equal(cell.length, 1, label + ' 칸이 격자에 있다');
     assert.equal(flat(cell[0].props.style).flex, 1, label + ' 칸은 줄을 넷으로 나눈 폭(320dp 에서도 48dp 이상)');

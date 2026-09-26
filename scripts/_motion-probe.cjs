@@ -13,8 +13,10 @@ const { decode, compose } = require('./_gif.cjs');
 const PORT = Number(process.argv[2] || 4920);
 const OUT = process.argv[3] || 'verification/round45_34/motion';
 const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
-const PRESETS = ['float', 'bounce', 'pulse', 'tilt', 'shake', 'jitter'];
-const NAME = { float: '둥실', bounce: '통통', pulse: '두근거리기', tilt: '까딱', shake: '흔들기', jitter: '부르르' };
+// 45.39: 스무 가지 전부(저장 목록을 그대로 읽는다).
+const { MOTION_PRESETS } = loader({})('src/types.ts');
+const PRESETS = [...MOTION_PRESETS];
+const NAME = { float: '둥실', bounce: '통통', pulse: '두근거리기', tilt: '까딱', shake: '흔들기', jitter: '부르르', pop: '뿅', slide: '쓱', peek: '빼꼼', drop: '쿵', vanish: '사라지기', hop: '폴짝', nod: '끄덕', bow: '꾸벅', dance: '들썩', sway: '살랑', spin: '빙글', shiver: '덜덜', punch: '쾅', stretch: '쭈욱' };
 
 const HOST = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>움직임 여섯</title>
 <style>html,body{margin:0;background:#14161A;color:#E7E9EE;font:13px/1.7 system-ui}

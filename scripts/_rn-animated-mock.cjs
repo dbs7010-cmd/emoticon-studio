@@ -5,12 +5,17 @@ class Value {
   setValue(v) { this._value = v; }
   stopAnimation(cb) { if (cb) cb(this._value); }
   __getValue() { return this._value; }
+  // 보간은 첫 값으로 둔다. 검사는 움직이는 중간 상태를 보지 않는다.
+  interpolate({ outputRange }) { return new Value(outputRange[0]); }
 }
 const run = (fn) => ({ start: cb => { fn(); if (cb) cb({ finished: true }); }, stop() {} });
 module.exports = {
   View: 'View',
+  Image: 'Image',
   Value,
   timing: (value, { toValue }) => run(() => value.setValue(toValue)),
   spring: (value, { toValue }) => run(() => value.setValue(toValue)),
   parallel: list => run(() => list.forEach(a => a.start())),
+  // 끝없이 도는 견본은 검사에서 돌리지 않는다.
+  loop: () => ({ start() {}, stop() {} }),
 };

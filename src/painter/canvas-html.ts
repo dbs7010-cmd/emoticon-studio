@@ -1,4 +1,5 @@
 import { KAKAO_STATIC_SPEC as SPEC } from '../constants/kakao-spec';
+import { MOTION_MATH_JS, LONG_MOTION_PRESETS, ENTRANCE_REST } from '../motion-math';
 
 // Local-only Painter engine. Reference images are preview layers and never enter final export.
 export const canvasHtml = `<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>
@@ -360,35 +361,20 @@ function fillAt(spot){
 function loopSeconds(){
  if(!motion)return 1;
  if(motion.alternate&&motion.alternate.interval>0)return Math.max(.2,motion.alternate.interval*2);
- return 1.2-Math.max(0,Math.min(1,motion.speed==null?.5:motion.speed))*.8;
+ const base=1.2-Math.max(0,Math.min(1,motion.speed==null?.5:motion.speed))*.8;
+ // 들어오고 머무는 효과(뿅·쓱·빼꼼 …)는 한 바퀴가 두 배다 — 짧으면 들어오자마자 다시 시작해 읽히지 않는다.
+ return motion.preset&&LONG_PRESETS.indexOf(motion.preset)>=0?base*2:base;
 }
+var LONG_PRESETS=${JSON.stringify(LONG_MOTION_PRESETS)},ENTRANCE_REST=${JSON.stringify(ENTRANCE_REST)};
 function cyclesFor(speed){return Math.max(1,Math.min(4,Math.round((speed==null?.5:speed)*3)+1));}
 function wholeDelta(t){
- const d={px:W/2,py:H/2,dx:0,dy:0,sx:1,sy:1,rot:0};
- if(!motion||!motion.preset)return d;
+ if(!motion||!motion.preset)return {px:W/2,py:H/2,dx:0,dy:0,sx:1,sy:1,rot:0};
  const a=Math.max(0,Math.min(1,motion.strength==null?.5:motion.strength));
- const phase=t/loopSeconds()*Math.PI*2;
- // 여섯 가지가 **서로 다른 것을 한다**. 이름만 다르고 같은 움직임을 새 종류로 세지 않는다.
- //   둥실 = 위아래 이동만 · 통통 = 뛰고 착지에서 눌림 · 두근 = 크기만
- //   까딱 = 회전만    · 도리도리(흔들기) = 좌우 이동만 · 부르르 = 작고 빠른 떨림
- if(motion.preset==='float'){d.dy=Math.sin(phase)*(H*.035)*a;}
- if(motion.preset==='bounce'){
-  // 뛰어오른 높이. 땅에 닿는 순간(올라간 높이가 0 일 때) 세로로 눌리고 가로로 퍼진다.
-  const up=Math.abs(Math.sin(phase));
-  d.dy=-up*(H*.07)*a;
-  const squash=(1-up)*(1-up)*.12*a;          // 공중에서는 0, 착지에서 가장 크다
-  d.sy=1-squash;d.sx=1+squash*.8;
- }
- if(motion.preset==='pulse'){const s=1+Math.sin(phase)*.07*a;d.sx=s;d.sy=s;}
- // 까딱 — 작은 좌우 회전. 제자리에서 고개만 기울인다(이동 없음).
- if(motion.preset==='tilt'){d.rot=Math.sin(phase)*7*a;}
- // 도리도리 — 짧고 빠른 좌우 이동. 45.34 에서 회전을 뺐다: 회전은 '까딱'의 몫이고,
- // 둘 다 돌면 두 효과가 구별되지 않는다. 대신 한 바퀴에 두 번 왕복해 '짧고 빠르게' 만든다.
- if(motion.preset==='shake'){d.dx=Math.sin(phase*2)*(W*.035)*a;}
- // 부르르 — 아주 작은 범위에서 빠르게 떤다. 가로·세로가 서로 다른 박자로 흔들려 방향이 읽히지 않는다.
- if(motion.preset==='jitter'){d.dx=Math.sin(phase*7)*(W*.012)*a;d.dy=Math.cos(phase*9)*(H*.010)*a;d.rot=Math.sin(phase*8)*1.5*a;}
- return d;
+ const L=loopSeconds(),u=((t/L)%1+1)%1;
+ // 스무 가지 식은 motion-math.ts 한 곳에 있다(효과 견본과 같은 식). 앞의 여섯은 45.38 과 같은 값을 낸다.
+ return presetDelta(motion.preset,u,a,motion.direction,W,H);
 }
+${MOTION_MATH_JS}
 // One part moving on its own, combined with whatever the whole picture is doing.
 function partDelta(part,t,base){
  const L=loopSeconds(),cycles=cyclesFor(part.speed);
@@ -425,11 +411,16 @@ function deltaFor(l,t){
 function motionClips(){
  if(!motion)return false;
  const L=loopSeconds(),steps=12;
+ // 밖에서 들어오는 효과는 들어오는 동안 밖에 있는 것이 정상이다. 들어온 뒤(머무는 동안)만 본다. 빼꼼은 늘 일부가 가려진다.
+ const rest=motion.preset&&Object.prototype.hasOwnProperty.call(ENTRANCE_REST,motion.preset)?ENTRANCE_REST[motion.preset]:0;
  for(const l of layers){
   if(!l.visible)continue;
   const box=inkBox(l.bitmap);
   if(!box)continue;
   for(let i=0;i<steps;i++){
+   const part=(motion.parts||[]).some(pp=>pp.layerId===l.id&&!pp.off);
+   if(rest===null&&!part)continue;
+   if(rest&&i/steps<rest&&!part)continue;
    const d=deltaFor(l,L*i/steps);
    if(!d||d.hidden)continue;
    const corners=[[box.minX,box.minY],[box.maxX,box.minY],[box.minX,box.maxY],[box.maxX,box.maxY]];

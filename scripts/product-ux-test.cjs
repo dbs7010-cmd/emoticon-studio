@@ -306,21 +306,23 @@ const saved = async (dirty = true) => {
   const fakeBars = tree.root.findAll(n => n.type === 'View' && !!n.props.style && !Array.isArray(n.props.style) && ['0%', '100%'].includes(n.props.style.width) && n.props.style.height === 6);
   assert.equal(fakeBars.length, 0, '0%/100% 로만 바뀌는 가짜 재생 막대가 없다');
   assert.ok(!texts().some(t => t.includes('초 반복')), '반복 길이 줄이 없다');
-  const sampleStyles = () => tree.root.findAll(n => n.type === 'Image' && Array.isArray(n.props.style) && n.props.style.some(s => s && s.transform)).map(n => JSON.stringify(n.props.style[1]));
+  // 45.39: 견본은 네이티브 애니메이션(Animated.Image)으로 돈다. 검사는 카드마다 견본이 붙었는지와, 견본이 도는 한 바퀴(sampleFrames)를 본다.
+  const sampleStyles = () => tree.root.findAll(n => n.type === 'Image' && n.props.style && !Array.isArray(n.props.style) && Array.isArray(n.props.style.transform));
   // 45.34: 전체 움직임이 셋에서 여섯으로 늘었다(둥실·통통·두근거리기·까딱·흔들기·부르르).
   // 개수를 글자로 박지 않고 화면이 내놓는 효과 수와 견준다 — 수를 늘릴 때마다 여기가 막히면 안 된다.
   const { PRESETS: MOTION_PRESETS } = load('src/painter/motion-panel.tsx');
   assert.ok(MOTION_PRESETS.length >= 6, '전체 움직임은 최소 여섯 가지: ' + MOTION_PRESETS.length);
   assert.equal(new Set(MOTION_PRESETS.map(e => e.id)).size, MOTION_PRESETS.length, '효과 id 가 겹치지 않는다');
   assert.equal(sampleStyles().length, MOTION_PRESETS.length, '효과 카드가 모두 움직이는 견본을 가진다');
-  const first = JSON.stringify(sampleStyles());
-  await act(async () => { await new Promise(r => setTimeout(r, 250)); });
-  assert.notEqual(JSON.stringify(sampleStyles()), first, '견본이 실제로 움직인다');
+  const { sampleFrames } = load('src/painter/motion-panel.tsx');
+  const loops = MOTION_PRESETS.map(p => sampleFrames(p.id, 48));
+  for (const [i, frames] of loops.entries()) assert.ok(new Set(frames.map(f => JSON.stringify(f))).size > 3, MOTION_PRESETS[i].label + ' 견본이 실제로 움직인다');
   // 견본이 서로 달라야 이름만 다른 효과가 아니다.
-  assert.equal(new Set(sampleStyles()).size > 1, true, '효과마다 견본이 다르게 움직인다');
+  assert.equal(new Set(loops.map(f => JSON.stringify(f))).size, MOTION_PRESETS.length, '효과마다 견본이 다르게 움직인다');
   assert.equal(ranges('속도').length, 0, '효과를 고르기 전에는 설정표가 먼저 나오지 않는다');
   assert.equal(locks(), 0, '움직이기: 자물쇠 0');
-  assert.equal(proMarks(), 1, '움직이기 기본 화면: PRO 표시는 부분 움직임 한 줄');
+  // 45.39: PRO 효과 열넷은 카드마다 작게 PRO 라고 보인다(누르면 내 그림으로 미리보기). 자물쇠는 없다.
+  assert.equal(proMarks(), 1 + 14, '움직이기 기본 화면: PRO 표시는 PRO 효과 열넷 + 부분 움직임 한 줄');
   await press('통통');
   scene = { ...scene, motion: lastCommand('motion').motion }; await message(scene);
   assert.equal(ranges('속도').length, 1, '고르면 속도가 나온다');

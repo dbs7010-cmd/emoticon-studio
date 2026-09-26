@@ -12,6 +12,7 @@ import { ASSET_SLOTS, BUILTIN_REFERENCES } from '../design/asset-slots';
 import { MotionPanel, layerLabel } from './motion-panel';
 import { KAKAO_STATIC_SPEC } from '../constants/kakao-spec';
 import { usesPro } from '../project';
+import { isProPreset } from '../motion-math';
 import { dataUrl } from '../services/images';
 import { imageUri } from '../services/storage';
 import { CAPTION_STYLES } from '../types';
@@ -771,10 +772,16 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // asks for a subscription, and it asks before saving rather than dropping anything quietly.
   // PRO 부분(부분 움직임·두 모습·재생 순서)만 비교한다. 무료 효과·속도를 바꿨다고 이미 저장된 PRO 움직임을 다시 묻지 않는다.
   // 무료 사용자는 PRO 입구에서 PRO 안내로 가므로 정상 흐름에서는 여기에 닿지 않는다 — PRO 가 끝난 사용자를 위한 안전장치다.
-  const proPart = (m?: Motion | null) => JSON.stringify(m ? { parts: m.parts ?? null, alternate: m.alternate ?? null, play: m.play ?? null, stagger: m.stagger ?? null } : null);
+  // 45.39: PRO 효과(무료 6 밖의 전체 움직임)도 PRO 부분이다. 이미 저장된 PRO 효과는 그대로면 다시 묻지 않는다.
+  const proPart = (m?: Motion | null) => JSON.stringify(m ? { parts: m.parts ?? null, alternate: m.alternate ?? null, play: m.play ?? null, stagger: m.stagger ?? null,
+    preset: isProPreset(m.preset) ? m.preset : null, direction: isProPreset(m.preset) && m.preset === 'slide' ? m.direction ?? 'left' : null } : null);
   const proIsNew = usesPro(scene.motion ?? undefined) && !pro && proPart(scene.motion) !== proPart(slot.motion);
   function saveWithoutPro() {
-    const free = scene.motion ? { ...scene.motion, parts: undefined, alternate: undefined, play: undefined } : null;
+    // PRO 효과를 미리 보던 중이면 그 전(저장돼 있던) 효과로 돌아간다. 이미 저장된 PRO 효과는 그대로 둔다.
+    const was = slot.motion;
+    const keepPreset = !isProPreset(scene.motion?.preset) || scene.motion?.preset === was?.preset;
+    const free = scene.motion ? { ...scene.motion, parts: undefined, alternate: undefined, play: undefined,
+      preset: keepPreset ? scene.motion.preset : was?.preset, direction: keepPreset ? scene.motion.direction : was?.direction } : null;
     setProSheet(false);
     send({ type: 'motion', motion: free && free.preset ? free : null });
     // The canvas has the free motion now; this save is the answer to the question just asked,
@@ -785,6 +792,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   function save(action: SaveAction = 'stay') {
     if (inFlight.current) { if (quiet.current && action !== 'stay') queued.current = action; return; }
     if (!initialized) { if (action === 'close') onClose(); return; }
+    // 자동저장은 PRO 미리보기 중에 창을 띄우지 않는다 — 조용히 건너뛰고, 사용자가 저장·닫기를 누를 때 묻는다.
+    if (proIsNew && !proHandled.current && action === 'stay') return;
     if (proIsNew && !proHandled.current) { pendingAction.current = action; setPanel(null); setDrawRail(false); setRefRail(false); setProSheet(true); return; }
     proHandled.current = false;
     // 입력칸에 확정하지 않은 문구가 남아 있으면 저장 직전에 그대로 넣는다 — '적용'을 누르지 않았다고 조용히 잃지 않는다(45.1차).
