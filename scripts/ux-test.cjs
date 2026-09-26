@@ -1002,6 +1002,46 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   saveStore({ ...loadStore().store, revision: loadStore().store.revision + 1, projects: loadStore().store.projects.filter(x => x.id !== copy.id) });
   await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); });
  }
+ // ── 45.38 세트 관리: 이름 바꾸기 · 복제, 전체 작업: 찾기 · 분류 · 정렬 ─────────────────────────────
+ {
+  const managers = name => tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === name + ' 관리');
+  const openAll = async () => { if (!labelled('세트 이름으로 찾기').length && labelled('전체 작업 보기').length) await press('전체 작업 보기'); };
+  await openAll();
+  await act(async () => managers('이전 프로젝트')[0].props.onPress());
+  const original = loadStore().store.projects.find(x => x.projectName === '이전 프로젝트');
+  // 복제: 새 id · '사본' 이름 · 그림은 함께 가리킨다(파일을 늘리지 않는다)
+  await press('세트 복제');
+  let st = loadStore().store;
+  const dup = st.projects.find(x => x.projectName === '이전 프로젝트 사본');
+  assert.ok(dup && dup.id !== original.id, 'duplicating makes a new set with its own id');
+  assert.deepEqual(dup.slots, original.slots, 'the copy has every cut, pointing at the same pictures');
+  // 이름 바꾸기: 사본의 이름을 바꾼다
+  await act(async () => { tree.unmount(); }); await act(async () => { tree = create(React.createElement(App)); });
+  await openAll();
+  await act(async () => managers('이전 프로젝트 사본')[0].props.onPress());
+  const nameField = () => tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '세트 이름')[0];
+  assert.equal(nameField().props.value, '이전 프로젝트 사본', 'the name field starts with the current name');
+  await act(async () => nameField().props.onChangeText('두 번째 세트'));
+  await press('이름 바꾸기');
+  assert.equal(loadStore().store.projects.find(x => x.id === dup.id).projectName, '두 번째 세트', 'renaming changes only the name');
+  // 찾기 · 분류 · 정렬
+  await openAll();
+  const listed = () => tree.root.findAll(n => n.props.testID === '전체 작업 목록')[0].findAll(n => n.type === 'Pressable' && / 관리$/.test(n.props.accessibilityLabel ?? '')).map(n => n.props.accessibilityLabel.replace(/ 관리$/, ''));
+  const search = () => tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '세트 이름으로 찾기')[0];
+  await act(async () => search().props.onChangeText('두 번째'));
+  assert.deepEqual(listed(), ['두 번째 세트'], 'search narrows the list by name');
+  await act(async () => search().props.onChangeText('없는 이름'));
+  assert.equal(listed().length, 0, 'no match shows an empty list');
+  assert.ok(shown().some(t => t.includes('조건에 맞는 세트가 없어요')), 'and says so');
+  await act(async () => search().props.onChangeText(''));
+  await press('이름순');
+  const byName = listed();
+  assert.deepEqual(byName, [...byName].sort((a, b) => a.localeCompare(b, 'ko')), 'name order sorts by name');
+  await press('최근 수정순');
+  // 뒤 검사에 영향이 없게 사본을 걷어 낸다
+  saveStore({ ...loadStore().store, revision: loadStore().store.revision + 1, projects: loadStore().store.projects.filter(x => x.id !== dup.id) });
+  await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); });
+ }
  // ── Save failure: nothing moves on, and nothing is lost ─────────────────────────────────────
  await openSet('이전 프로젝트');
  await act(async()=>tiles()[4].props.onPress());await init();

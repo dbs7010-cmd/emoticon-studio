@@ -62,6 +62,11 @@ function Studio() {
   const [newSetName, setNewSetName] = useState<string | null>(null);
   const [manageId, setManageId] = useState<string | null>(null), [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [trashOpen, setTrashOpen] = useState(false), [confirmPurgeId, setConfirmPurgeId] = useState<string | null>(null);
+  // 세트 관리의 이름 칸, 전체 작업의 검색·분류·정렬(45.38).
+  const [managedName, setManagedName] = useState('');
+  const [projectQuery, setProjectQuery] = useState('');
+  const [projectFilter, setProjectFilter] = useState<'all' | 'working' | 'done'>('all');
+  const [projectOrder, setProjectOrder] = useState<'recent' | 'name'>('recent');
   const [screen, setScreen] = useState<'board' | 'export' | 'batch' | 'extras'>('board');
   const [batchSource, setBatchSource] = useState<number | null>(null), [batchPicked, setBatchPicked] = useState<number[]>([]);
   const [batchSaved, setBatchSaved] = useState<string | null>(null), [batchReplace, setBatchReplace] = useState(true);
@@ -379,6 +384,26 @@ function Studio() {
       setNotice(`${restored.project.projectName} 세트를 되살렸어요(그림 ${restored.images}개)${restored.copy ? ' — 같은 세트가 있어 사본으로 넣었어요' : ''}.`);
     });
   }
+  // 세트 관리에 이름 바꾸기·복제를 모은다(45.38). 예전에는 이름을 바꾸려면 '캐릭터 기준 · 세트 이름'으로 따로 들어가야 했다.
+  function renameProject(id: string, name: string) {
+    const next = name.trim();
+    if (!next) return;
+    try { changeProject(id, p => ({ ...p, projectName: next })); } catch (e) { Alert.alert('이름을 바꾸지 못했어요', userMessage(e)); return; }
+    setManageId(null); setNotice(`세트 이름을 '${next}'(으)로 바꿨어요.`);
+  }
+  // 복제는 세트 정보만 새로 만든다. 그림 파일은 두 세트가 함께 가리킨다 — 편집은 늘 새 파일로 저장되고,
+  // 한쪽을 지워도 다른 쪽이 가리키는 파일은 정리되지 않으므로(droppedImagePaths) 안전하다.
+  function duplicateProject(id: string) {
+    const source = current.current?.projects.find(p => p.id === id);
+    if (!source) return;
+    const now = new Date().toISOString();
+    const taken = new Set((current.current?.projects ?? []).map(p => p.projectName));
+    let name = source.projectName + ' 사본';
+    for (let i = 2; taken.has(name); i++) name = `${source.projectName} 사본 ${i}`;
+    const copy: Project = { ...JSON.parse(JSON.stringify(source)), id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, projectName: name, createdAt: now, updatedAt: now, deletedAt: undefined };
+    try { commit(st => ({ ...st, projects: [...st.projects, copy] })); } catch (e) { Alert.alert('복제하지 못했어요', userMessage(e)); return; }
+    setManageId(null); setNotice(`'${name}' 세트를 만들었어요.`);
+  }
   function restoreProject(id: string) {
     const target = current.current?.projects.find(p => p.id === id);
     if (!target) return;
@@ -597,6 +622,14 @@ function Studio() {
   // 최근에 손댄 세트가 먼저. 홈은 앞의 넷만, 나머지는 '전체 작업'에서 찾는다 — 세트가 100개여도 홈 길이는 같다.
   // 휴지통의 세트는 홈·전체 작업·표현 가이드의 대상에서 모두 빠진다(45.38).
   const sortedProjects = store ? store.projects.filter(p => !inTrash(p)).sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? '')) : [];
+  const managedLive = store?.projects.find(p => p.id === manageId);
+  useEffect(() => { setManagedName(managedLive?.projectName ?? ''); }, [manageId]);
+  // 전체 작업 목록: 이름 검색 · 작업 중/완성 분류 · 최근 수정순/이름순.
+  const query = projectQuery.trim().toLocaleLowerCase();
+  const visibleProjects = sortedProjects
+    .filter(p => !query || p.projectName.toLocaleLowerCase().includes(query))
+    .filter(p => projectFilter === 'all' || (projectFilter === 'done' ? doneCount(p) === p.slots.length : doneCount(p) < p.slots.length));
+  if (projectOrder === 'name') visibleProjects.sort((a, b) => a.projectName.localeCompare(b.projectName, 'ko'));
   const trashed = store ? store.projects.filter(inTrash).sort((a, b) => (b.deletedAt ?? '').localeCompare(a.deletedAt ?? '')) : [];
   const pendingPurge = store?.projects.find(p => p.id === confirmPurgeId);
   // 홈은 프로젝트 관리 화면이 아니라 시작 화면이다(45.5차): 가장 최근 세트 하나만 두고, 나머지는 전체 작업에서 관리한다.
@@ -656,8 +689,12 @@ function Studio() {
             <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>전체 작업</Text>
             <Text style={{ fontSize: 12, color: C.faint }}>{sortedProjects.length}개 세트</Text>
           </View>
+          <Field label="세트 이름으로 찾기" value={projectQuery} onChangeText={setProjectQuery} multiline={false} />
+          <Segmented dense testID="세트 분류" value={projectFilter} onChange={setProjectFilter} items={[{ key: 'all', label: '전체' }, { key: 'working', label: '작업 중' }, { key: 'done', label: '완성' }]} />
+          <Segmented dense testID="세트 정렬" value={projectOrder} onChange={setProjectOrder} items={[{ key: 'recent', label: '최근 수정순' }, { key: 'name', label: '이름순' }]} />
+          {!visibleProjects.length && <Text style={{ fontSize: 13, color: C.muted }}>조건에 맞는 세트가 없어요. 찾는 말이나 분류를 바꿔 보세요.</Text>}
           <View testID="전체 작업 목록" style={{ borderRadius: T.radius.card, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
-            {sortedProjects.map((p, i) => {
+            {visibleProjects.map((p, i) => {
               const m = setMeta(p), cover = p.slots.find(s => s.finalImage);
               return <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 12, paddingRight: 2, borderTopWidth: i ? 1 : 0, borderColor: C.line }}>
                 <Pressable accessibilityRole="button" accessibilityLabel={p.projectName} onPress={() => { setProjectId(p.id); setScreen('board'); }}
@@ -1325,6 +1362,9 @@ function Studio() {
     {managed && !pendingDelete && <Dialog title="세트 관리" onClose={() => setManageId(null)}>
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{managed.projectName}</Text>
       <Text style={styles.muted}>{doneCount(managed)} / {managed.slots.length} 완성</Text>
+      <Field label="세트 이름" value={managedName} onChangeText={setManagedName} multiline={false} />
+      <Action primary title="이름 바꾸기" disabled={!managedName.trim() || managedName.trim() === managed.projectName} onPress={() => renameProject(managed.id, managedName)} />
+      <Action icon="content-copy" title="세트 복제" onPress={() => duplicateProject(managed.id)} />
       <Action icon="archive-arrow-down-outline" title="백업 파일 만들기" onPress={() => { const target = managed; setManageId(null); backupProject(target); }} />
       <Text style={{ fontSize: 12, color: C.muted, lineHeight: 17 }}>그림·레이어·문구·움직임·참고를 파일 하나로 보관해요. 앱을 지우거나 기기를 바꾸기 전에 만들어 두면 설정 › 백업에서 되살리기로 그대로 돌아와요.</Text>
       <Action danger icon="delete-outline" title="세트 삭제" onPress={() => setConfirmDeleteId(managed.id)} />
