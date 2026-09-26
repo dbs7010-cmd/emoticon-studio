@@ -13,7 +13,8 @@ import { ExtraComposer, placeInFrame, type Composer } from './src/components/ext
 import { Painter, type CopiedWork, type Tool } from './src/painter/painter';
 import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC as SPEC, STAGES, WEBP_TOOL_RULE, WEBP_ANIMATOR_URL, REQUIRED_EXTRAS } from './src/constants/kakao-spec';
 import { TRASH_DAYS, inTrash, trashExpired, captionText, createProject, doneCount, usesPro, droppedImagePaths, duplicateCaptions, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
-import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, saveStore, type StoreReport } from './src/services/storage';
+import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, readPickedFile, saveStore, type StoreReport } from './src/services/storage';
+import { restoreBackup, writeBackup } from './src/services/backup';
 import { exportSet, decodeDataUrl, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinals, inspectImage } from './src/services/qa';
@@ -354,6 +355,29 @@ function Studio() {
     if (id === projectId) { setProjectId(null); setSlotNumber(null); setCanonOpen(false); }
     setConfirmDeleteId(null); setManageId(null);
     setNotice(`${target.projectName} 세트를 휴지통으로 옮겼어요. ${TRASH_DAYS}일 안에 되살릴 수 있어요.`);
+  }
+  // 세트 백업(45.38): 세트 하나를 파일 하나로 만들어 공유 창으로 넘긴다. 앱을 지우거나 기기를 바꿔도 이 파일로 되살린다.
+  function backupProject(target: Project) {
+    void task('백업 파일 만드는 중…', async () => {
+      const made = writeBackup(target);
+      const lost = made.missing ? ` 그림 ${made.missing}개는 이 기기에 이미 없어 빼고 만들었어요.` : '';
+      if (!await Sharing.isAvailableAsync()) { setNotice(`백업 파일을 만들었어요(그림 ${made.images}개).${lost} 이 기기에서는 공유 창을 열 수 없어요.`); return; }
+      await Sharing.shareAsync(exportUri(made.path), { mimeType: 'application/zip', UTI: 'public.zip', dialogTitle: '백업 파일 보관' });
+      setNotice(`${target.projectName} 백업 파일을 만들었어요(그림 ${made.images}개).${lost} 공유 창에서 드라이브·메일 등 앱 밖에 보관해 주세요.`);
+    });
+  }
+  // 백업에서 되살리기: 파일을 고르면 먼저 전부 검사하고, 통과하면 새 세트로 들인다. 같은 세트가 있으면 덮어쓰지 않고 사본으로.
+  function restoreFromBackup() {
+    void task('백업 확인하는 중…', async () => {
+      // 문서 선택 모듈은 누를 때만 불러온다(네이티브 모듈 — 앱 시작과 검사 환경에 부담을 주지 않는다).
+      const picker = require('expo-document-picker') as typeof import('expo-document-picker');
+      const picked = await picker.getDocumentAsync({ type: ['application/zip', 'application/octet-stream', '*/*'], copyToCacheDirectory: true, multiple: false });
+      if (picked.canceled || !picked.assets?.length) return;
+      const restored = restoreBackup(readPickedFile(picked.assets[0].uri), current.current?.projects ?? []);
+      commit(s => ({ ...s, projects: [...s.projects, restored.project] }));
+      setSettings(false); setHomeView('all');
+      setNotice(`${restored.project.projectName} 세트를 되살렸어요(그림 ${restored.images}개)${restored.copy ? ' — 같은 세트가 있어 사본으로 넣었어요' : ''}.`);
+    });
   }
   function restoreProject(id: string) {
     const target = current.current?.projects.find(p => p.id === id);
@@ -1301,6 +1325,8 @@ function Studio() {
     {managed && !pendingDelete && <Dialog title="세트 관리" onClose={() => setManageId(null)}>
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{managed.projectName}</Text>
       <Text style={styles.muted}>{doneCount(managed)} / {managed.slots.length} 완성</Text>
+      <Action icon="archive-arrow-down-outline" title="백업 파일 만들기" onPress={() => { const target = managed; setManageId(null); backupProject(target); }} />
+      <Text style={{ fontSize: 12, color: C.muted, lineHeight: 17 }}>그림·레이어·문구·움직임·참고를 파일 하나로 보관해요. 앱을 지우거나 기기를 바꾸기 전에 만들어 두면 설정 › 백업에서 되살리기로 그대로 돌아와요.</Text>
       <Action danger icon="delete-outline" title="세트 삭제" onPress={() => setConfirmDeleteId(managed.id)} />
     </Dialog>}
     {pendingDelete && <Dialog title="세트 삭제" onClose={() => setConfirmDeleteId(null)}>
@@ -1352,6 +1378,12 @@ function Studio() {
           <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>홈 공지 미리 보기 {noticePreview ? '켜짐' : '꺼짐'}</Text>
         </Pressable>
       </View>}
+      <Pressable accessibilityRole="button" accessibilityLabel="백업에서 되살리기" onPress={restoreFromBackup}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+        <MaterialCommunityIcons name="archive-arrow-up-outline" size={20} color={C.muted} />
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>백업에서 되살리기</Text>
+        <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+      </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={'휴지통 ' + trashed.length + '개'} onPress={() => { setSettings(false); setTrashOpen(true); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
         <MaterialCommunityIcons name="delete-restore" size={20} color={C.muted} />

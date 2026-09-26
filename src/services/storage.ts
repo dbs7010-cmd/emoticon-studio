@@ -12,6 +12,8 @@ export function imageUri(path: string) { return localFile(path).uri; }
 // Export bundles live beside the images but are never image files, so cleanup never sees them.
 export function exportFile(name: string) { ensureRoot(); return localFile('set-' + name); }
 export function exportUri(name: string) { return localFile(name).uri; }
+// 사용자가 고른 파일(문서 선택 창이 앱 캐시로 복사한 것)을 읽는다. 앱 폴더 밖이라 localFile 의 이름 규칙을 쓰지 않는다.
+export function readPickedFile(uri: string): Uint8Array { return new File(uri).bytesSync(); }
 export function newImageFile() { ensureRoot(); return localFile(`image-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.png`); }
 // 움직이는 파일은 두 가지다: 작업용 GIF 와 카카오가 받는 WebP. 둘 다 같은 이름 규칙을 쓴다.
 export function newMotionFile(kind: 'gif' | 'webp' = 'gif') { ensureRoot(); return localFile(`image-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${kind}`); }

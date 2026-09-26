@@ -34,6 +34,7 @@ const alerts = [];
 let failWrite = false;
 const WebView = React.forwardRef((props, ref) => { React.useImperativeHandle(ref, () => ({ injectJavaScript: s => commands.push(s) })); return React.createElement('WebView', props); });
 let pendingPicks = [];
+let pickedDocument = null;
 const images = { dataUrl: async () => 'data:image/png;base64,test', pickImages: async () => pendingPicks, savePainterWork: (...args) => persistPainter(...args), saveCutout: (...args) => persistCutout(...args), saveMotionLoop: () => ({ path: 'moving.gif', width: 360, height: 360 }) };
 const bakes=[];
 const composed=[];
@@ -45,6 +46,8 @@ const load = loader({
   'expo-image-picker': {}, 'expo-image-manipulator': {}, 'expo-asset': { Asset: { fromModule: () => ({ downloadAsync: async () => ({ localUri: 'bundled://art', uri: 'bundled://art' }) }) } },
   'expo-status-bar': { StatusBar: 'StatusBar' }, 'expo-constants': { default: { expoConfig: { extra: {} } } }, 'react-native-webview': { WebView },
   'expo-sharing': { isAvailableAsync: async () => true, shareAsync: async (uri, options) => { shared.push({ uri, options }); } },
+  // 45.38 백업 되살리기: 문서 선택 창이 고른 파일(uri)을 돌려준다.
+  'expo-document-picker': { getDocumentAsync: async () => pickedDocument ? { canceled: false, assets: [{ uri: pickedDocument, name: 'backup.zip' }] } : { canceled: true, assets: null } },
   'expo-file-system': { Directory, File, Paths: { document: 'document' } },
   './src/services/images': images, '../services/images': images,
   './src/components/image-analyzer': { ImageAnalyzer: () => null },
@@ -968,6 +971,37 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  }
  assert.equal(labelled('다른 프로젝트').length,0,'a restart does not bring the deleted set back');
 
+ // ── 45.38 세트 백업 → 되살리기: 세트 관리에서 파일 하나로 만들고, 설정에서 그 파일로 되살린다 ─────────────
+ {
+  const managers = () => tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === '이전 프로젝트 관리');
+  if (!managers().length && labelled('전체 작업 보기').length) await press('전체 작업 보기');
+  await act(async () => managers()[0].props.onPress());
+  const sharedBefore = shared.length;
+  await press('백업 파일 만들기');
+  await act(async () => {});
+  assert.equal(shared.length, sharedBefore + 1, 'the backup file goes to the share sheet: ' + JSON.stringify(alerts.at(-1)));
+  const backupUri = shared.at(-1).uri;
+  assert.ok(/set-backup-.+\.zip$/.test(backupUri), 'a backup zip was written: ' + backupUri);
+  assert.ok(shown().some(t => t.includes('백업 파일을 만들었어요')), 'and the user is told how many pictures it holds');
+  const before = loadStore().store.projects.filter(x => !x.deletedAt).length;
+  const original = loadStore().store.projects.find(x => x.projectName === '이전 프로젝트');
+  pickedDocument = backupUri;
+  await press('설정');
+  await press('백업에서 되살리기');
+  await act(async () => {});
+  const after = loadStore().store.projects;
+  assert.equal(after.filter(x => !x.deletedAt).length, before + 1, 'restoring adds a set');
+  const copy = after.find(x => x.projectName === '이전 프로젝트 (복원)');
+  assert.ok(copy && copy.id !== original.id, 'the same set already exists, so it comes back as a copy with a new id');
+  const drawn = original.slots.filter(sl => sl.finalImage).length;
+  assert.equal(copy.slots.filter(sl => sl.finalImage).length, drawn, 'every drawn cut comes back');
+  for (const sl of copy.slots.filter(x => x.finalImage)) assert.ok(files.has(localFile(sl.finalImage.path).uri), 'restored pictures exist on disk: ' + sl.finalImage.path);
+  assert.deepEqual(loadStore().store.projects.find(x => x.id === original.id), original, 'the original set is untouched');
+  // 뒤 검사에 영향이 없게 되살린 사본을 걷어 낸다(그 그림은 다음 저장에서 정리된다).
+  pickedDocument = null;
+  saveStore({ ...loadStore().store, revision: loadStore().store.revision + 1, projects: loadStore().store.projects.filter(x => x.id !== copy.id) });
+  await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); });
+ }
  // ── Save failure: nothing moves on, and nothing is lost ─────────────────────────────────────
  await openSet('이전 프로젝트');
  await act(async()=>tiles()[4].props.onPress());await init();
