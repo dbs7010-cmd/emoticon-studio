@@ -12,7 +12,7 @@ import { MotionBaker, type Baker } from './src/components/motion-baker';
 import { ExtraComposer, placeInFrame, type Composer } from './src/components/extra-composer';
 import { Painter, type CopiedWork, type Tool } from './src/painter/painter';
 import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC as SPEC, STAGES, WEBP_TOOL_RULE, WEBP_ANIMATOR_URL, REQUIRED_EXTRAS } from './src/constants/kakao-spec';
-import { captionText, createProject, doneCount, usesPro, droppedImagePaths, duplicateCaptions, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
+import { TRASH_DAYS, inTrash, trashExpired, captionText, createProject, doneCount, usesPro, droppedImagePaths, duplicateCaptions, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
 import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, saveStore, type StoreReport } from './src/services/storage';
 import { exportSet, decodeDataUrl, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
@@ -60,6 +60,7 @@ function Studio() {
   // 명세 H03: 새 세트는 이름을 확인하고 만든다. 이 값이 있는 동안에도 저장소는 그대로다 — '만들기'를 눌러야 세트가 생긴다.
   const [newSetName, setNewSetName] = useState<string | null>(null);
   const [manageId, setManageId] = useState<string | null>(null), [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [trashOpen, setTrashOpen] = useState(false), [confirmPurgeId, setConfirmPurgeId] = useState<string | null>(null);
   const [screen, setScreen] = useState<'board' | 'export' | 'batch' | 'extras'>('board');
   const [batchSource, setBatchSource] = useState<number | null>(null), [batchPicked, setBatchPicked] = useState<number[]>([]);
   const [batchSaved, setBatchSaved] = useState<string | null>(null), [batchReplace, setBatchReplace] = useState(true);
@@ -178,6 +179,14 @@ function Studio() {
     try { saveStore(next); setSaveError(''); } catch (e) { setSaveError(String(e)); throw e; }
     deleteLocalImages(droppedImagePaths(previous, next));
   }
+  // 휴지통에서 TRASH_DAYS(30)일이 지난 세트는 앱이 저장소를 읽은 뒤 한 번 영구 삭제한다(45.38). 실패해도 다음 실행에 다시 한다.
+  const purgedOnce = useRef(false);
+  useEffect(() => {
+    if (!store || purgedOnce.current) return;
+    purgedOnce.current = true;
+    if (!store.projects.some(p => trashExpired(p))) return;
+    try { commit(st => ({ ...st, projects: st.projects.filter(p => !trashExpired(p)) })); } catch { /* 저장 실패는 배너가 말한다 */ }
+  }, [store]);
   function changeProject(id: string, transform: (p: Project) => Project) { commit(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...transform(p), updatedAt: new Date().toISOString() } : p) })); }
   function updateProject(transform: (p: Project) => Project) { if (projectId) { try { changeProject(projectId, transform); } catch { /* Keep unsaved state with persistent retry banner. */ } } }
   const project = store?.projects.find(p => p.id === projectId), slot = project?.slots.find(s => s.number === slotNumber);
@@ -335,14 +344,32 @@ function Studio() {
     const target = number ?? nextUnfinished(project, project.lastSlot ?? 0) ?? project.lastSlot ?? 1;
     setScreen('board'); setSlotNumber(target); setPainting(true);
   }
+  // 세트 삭제는 휴지통으로 옮기는 것이다(45.38). 예전에는 확인창 한 번 뒤 그림 파일까지 바로 지워져 되돌릴 수 없었다.
+  // 휴지통의 세트는 목록에서만 빠지고 그림 파일은 그대로 남는다(저장소가 아직 그 파일을 가리키므로 정리 대상이 아니다).
   function deleteProject(id: string) {
+    const target = current.current?.projects.find(p => p.id === id);
+    if (!target) return;
+    try { commit(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...p, deletedAt: new Date().toISOString() } : p) })); }
+    catch (e) { Alert.alert('휴지통으로 옮기지 못했어요', userMessage(e)); return; }
+    if (id === projectId) { setProjectId(null); setSlotNumber(null); setCanonOpen(false); }
+    setConfirmDeleteId(null); setManageId(null);
+    setNotice(`${target.projectName} 세트를 휴지통으로 옮겼어요. ${TRASH_DAYS}일 안에 되살릴 수 있어요.`);
+  }
+  function restoreProject(id: string) {
+    const target = current.current?.projects.find(p => p.id === id);
+    if (!target) return;
+    try { commit(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...p, deletedAt: undefined, updatedAt: new Date().toISOString() } : p) })); }
+    catch (e) { Alert.alert('되살리지 못했어요', userMessage(e)); return; }
+    setNotice(`${target.projectName} 세트를 되살렸어요.`);
+  }
+  // 영구 삭제: 저장소에서 빼면 다른 곳이 가리키지 않는 그림 파일은 commit 이 정리한다(droppedImagePaths).
+  function purgeProject(id: string) {
     const target = current.current?.projects.find(p => p.id === id);
     if (!target) return;
     try { commit(s => ({ ...s, projects: s.projects.filter(p => p.id !== id) })); }
     catch (e) { Alert.alert('삭제하지 못했어요', userMessage(e)); return; }
-    if (id === projectId) { setProjectId(null); setSlotNumber(null); setCanonOpen(false); }
-    setConfirmDeleteId(null); setManageId(null);
-    setNotice(`${target.projectName} 세트를 삭제했어요.`);
+    setConfirmPurgeId(null);
+    setNotice(`${target.projectName} 세트를 영구 삭제했어요.`);
   }
   // A movement someone liked is kept at the store level, so it can be opened again from any cut of
   // any set. The name is made from the settings themselves: nobody has to invent one mid-drawing.
@@ -544,7 +571,10 @@ function Studio() {
   const managed = store?.projects.find(p => p.id === manageId);
   const pendingDelete = store?.projects.find(p => p.id === confirmDeleteId);
   // 최근에 손댄 세트가 먼저. 홈은 앞의 넷만, 나머지는 '전체 작업'에서 찾는다 — 세트가 100개여도 홈 길이는 같다.
-  const sortedProjects = store ? [...store.projects].sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? '')) : [];
+  // 휴지통의 세트는 홈·전체 작업·표현 가이드의 대상에서 모두 빠진다(45.38).
+  const sortedProjects = store ? store.projects.filter(p => !inTrash(p)).sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? '')) : [];
+  const trashed = store ? store.projects.filter(inTrash).sort((a, b) => (b.deletedAt ?? '').localeCompare(a.deletedAt ?? '')) : [];
+  const pendingPurge = store?.projects.find(p => p.id === confirmPurgeId);
   // 홈은 프로젝트 관리 화면이 아니라 시작 화면이다(45.5차): 가장 최근 세트 하나만 두고, 나머지는 전체 작업에서 관리한다.
   const HOME_RECENT = 1;
   const setMeta = (p: Project) => { const when = new Date(p.updatedAt); return { moving: setIsAnimated(p), done: doneCount(p), working: p.slots.filter(isWorking).length, stamp: Number.isFinite(when.getTime()) ? `${when.getMonth() + 1}월 ${when.getDate()}일` : '' }; };
@@ -1275,9 +1305,29 @@ function Studio() {
     </Dialog>}
     {pendingDelete && <Dialog title="세트 삭제" onClose={() => setConfirmDeleteId(null)}>
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{pendingDelete.projectName}</Text>
-      <Text style={styles.muted}>이 세트의 그림과 참고 사진이 함께 지워지고, 되돌릴 수 없어요.</Text>
-      <Action danger title="이 세트 삭제" onPress={() => deleteProject(pendingDelete.id)} />
+      <Text style={styles.muted}>휴지통으로 옮겨요. {TRASH_DAYS}일 안에는 설정 › 휴지통에서 그림까지 그대로 되살릴 수 있고, 그 뒤에는 영구 삭제돼요.</Text>
+      <Action danger title="휴지통으로 옮기기" onPress={() => deleteProject(pendingDelete.id)} />
       <Action title="취소" onPress={() => setConfirmDeleteId(null)} />
+    </Dialog>}
+    {trashOpen && !pendingPurge && <Dialog title="휴지통" onClose={() => setTrashOpen(false)}>
+      <Text style={styles.muted}>지운 세트는 {TRASH_DAYS}일 동안 여기 남아요. 되살리면 그림·움직임·참고가 그대로 돌아와요.</Text>
+      {!trashed.length && <Text style={{ fontSize: 13, color: C.faint }}>휴지통이 비어 있어요.</Text>}
+      {trashed.map(p => {
+        const left = Math.max(0, TRASH_DAYS - Math.floor((Date.now() - Date.parse(p.deletedAt!)) / 86400000));
+        return <View key={p.id} testID={'휴지통 ' + p.projectName} style={{ gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderColor: C.line }}>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{p.projectName}</Text>
+          <Text style={{ fontSize: 12, color: C.muted }}>{doneCount(p)} / {p.slots.length} 완성 · {left}일 뒤 영구 삭제</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}><Action primary compact icon="restore" title="되살리기" onPress={() => restoreProject(p.id)} /></View>
+            <View style={{ flex: 1 }}><Action compact danger title="영구 삭제" onPress={() => setConfirmPurgeId(p.id)} /></View>
+          </View>
+        </View>; })}
+    </Dialog>}
+    {pendingPurge && <Dialog title="영구 삭제" onClose={() => setConfirmPurgeId(null)}>
+      <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{pendingPurge.projectName}</Text>
+      <Text style={styles.muted}>이 세트의 그림과 참고 사진이 함께 지워지고, 되돌릴 수 없어요.</Text>
+      <Action danger title="영구 삭제" onPress={() => purgeProject(pendingPurge.id)} />
+      <Action title="취소" onPress={() => setConfirmPurgeId(null)} />
     </Dialog>}
     {settings && <Dialog title="설정" onClose={() => setSettings(false)}>
       <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>
@@ -1302,6 +1352,13 @@ function Studio() {
           <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>홈 공지 미리 보기 {noticePreview ? '켜짐' : '꺼짐'}</Text>
         </Pressable>
       </View>}
+      <Pressable accessibilityRole="button" accessibilityLabel={'휴지통 ' + trashed.length + '개'} onPress={() => { setSettings(false); setTrashOpen(true); }}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+        <MaterialCommunityIcons name="delete-restore" size={20} color={C.muted} />
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>휴지통</Text>
+        <Text style={{ fontSize: 13, color: C.muted }}>{trashed.length ? trashed.length + '개' : '비어 있음'}</Text>
+        <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+      </Pressable>
       <Pressable accessibilityRole="switch" accessibilityLabel="캔버스 종이 질감" accessibilityState={{ checked: store?.paperTexture === true }}
         onPress={() => { try { commit(st => ({ ...st, paperTexture: st.paperTexture !== true })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>

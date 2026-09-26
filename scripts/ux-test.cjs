@@ -915,15 +915,57 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await press('다른 프로젝트 관리');
  await press('세트 삭제');
  assert.ok(loadStore().store.projects.some(x=>x.id===other.id),'choosing delete only opens the confirmation');
- assert.ok(shown().some(t=>t.includes('되돌릴 수 없')),'confirmation warns the delete is permanent');
- await press('이 세트 삭제');
- const left=loadStore().store;
- assert.ok(!left.projects.some(x=>x.id===other.id),'the deleted set is gone from storage');
+ // 45.38: 삭제는 휴지통으로 옮기는 것이다. 30일 안에는 그림까지 그대로 되살릴 수 있고, 영구 삭제는 휴지통에서 따로 한다.
+ assert.ok(shown().some(t=>t.includes('휴지통으로 옮겨요')),'confirmation says the set goes to the trash, not away for good');
+ await press('휴지통으로 옮기기');
+ let left=loadStore().store;
+ assert.ok(left.projects.find(x=>x.id===other.id)?.deletedAt,'the set is kept in storage, marked as in the trash');
  assert.deepEqual(left.projects.find(x=>x.id===p.id),survivor,'the surviving set keeps every slot and image');
- for(const path of otherPaths)assert.equal(files.has(localFile(path).uri),false,'deleted set leaves no orphan image: '+path);
+ for(const path of otherPaths)assert.equal(files.has(localFile(path).uri),true,'a set in the trash keeps its images: '+path);
+ await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
+ assert.equal(labelled('다른 프로젝트').length,0,'a restart does not bring the trashed set back into the lists');
+ // 되살리기
+ await press('설정');
+ await press('휴지통 1개');
+ assert.equal(tree.root.findAll(n=>n.props.testID==='휴지통 다른 프로젝트').length,1,'the trash lists the set');
+ await press('되살리기');
+ assert.equal(loadStore().store.projects.find(x=>x.id===other.id).deletedAt,undefined,'restoring clears the trash mark');
+ await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
+ if (buttons('다른 프로젝트 관리').length===0 && labelled('전체 작업 보기').length) await press('전체 작업 보기');
+ assert.equal(labelled('다른 프로젝트 관리').length,1,'a restored set is back in the list');
+ // 다시 휴지통 → 영구 삭제
+ await press('다른 프로젝트 관리');
+ await press('세트 삭제');
+ await press('휴지통으로 옮기기');
+ await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
+ await press('설정');
+ await press('휴지통 1개');
+ await press('영구 삭제');
+ assert.ok(shown().some(t=>t.includes('되돌릴 수 없')),'permanent delete warns it cannot be undone');
+ assert.ok(loadStore().store.projects.some(x=>x.id===other.id),'choosing permanent delete only opens the confirmation');
+ const purgeButtons=tree.root.findAll(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='영구 삭제');
+ await act(async()=>purgeButtons.at(-1).props.onPress());
+ left=loadStore().store;
+ assert.ok(!left.projects.some(x=>x.id===other.id),'the permanently deleted set is gone from storage');
+ assert.deepEqual(left.projects.find(x=>x.id===p.id),survivor,'the surviving set keeps every slot and image');
+ for(const path of otherPaths)assert.equal(files.has(localFile(path).uri),false,'permanent delete leaves no orphan image: '+path);
  assert.equal(files.has(localFile('image-old.png').uri),true,'another set keeps its images');
  for(const name of ['store-a.json','store-b.json'])assert.equal(files.has(localFile(name).uri),true,'store snapshots are never deleted: '+name);
  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
+ // 30일이 지난 휴지통 세트는 앱이 열릴 때 영구 삭제된다. 다른 세트와 같이 쓰는 그림 파일은 남는다.
+ {
+  const st=loadStore().store;const base=st.projects.find(x=>x.id===p.id);
+  const old={...base,id:'expired-set',projectName:'오래된 휴지통',deletedAt:new Date(Date.now()-31*86400000).toISOString()};
+  const fresh2={...base,id:'recent-trash',projectName:'최근 휴지통',deletedAt:new Date(Date.now()-2*86400000).toISOString()};
+  saveStore({...st,revision:st.revision+1,projects:[...st.projects,old,fresh2]});
+  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});await act(async()=>{});
+  const after=loadStore().store.projects;
+  assert.ok(!after.some(x=>x.id==='expired-set'),'a set 31 days in the trash is purged on launch');
+  assert.ok(after.some(x=>x.id==='recent-trash'),'a set 2 days in the trash stays restorable');
+  assert.deepEqual(after.find(x=>x.id===p.id),survivor,'purging never touches the live set that shares its images');
+  saveStore({...loadStore().store,revision:loadStore().store.revision+1,projects:loadStore().store.projects.filter(x=>x.id!=='recent-trash')});
+  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
+ }
  assert.equal(labelled('다른 프로젝트').length,0,'a restart does not bring the deleted set back');
 
  // ── Save failure: nothing moves on, and nothing is lost ─────────────────────────────────────

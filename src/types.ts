@@ -77,6 +77,8 @@ export type Slot = {
 };
 export type Project = {
   id: string; projectName: string; characterName: string; createdAt: string; updatedAt: string;
+  // 휴지통에 넣은 때(45.38). 있으면 목록에서 빠지고, 그림 파일은 그대로 남아 되살릴 수 있다. 30일이 지나면 영구 삭제된다.
+  deletedAt?: string;
   canon: { image?: LocalImage; personality: string; speech: string; locked: string; variable: string };
   slots: Slot[];
   lastSlot?: number; // where the user left off, so a restart lands back on the same칸

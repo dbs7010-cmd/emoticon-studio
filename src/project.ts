@@ -37,6 +37,14 @@ export function droppedImagePaths(before: Store, after: Store): string[] {
   const kept = storeImagePaths(after);
   return [...storeImagePaths(before)].filter(path => !kept.has(path));
 }
+// 휴지통(45.38): 넣은 뒤 이 기간이 지나면 앱이 열릴 때 영구 삭제한다. 그 전에는 그림 파일까지 그대로라 되살릴 수 있다.
+export const TRASH_DAYS = 30;
+export const inTrash = (project: Project): boolean => !!project.deletedAt;
+export function trashExpired(project: Project, now = Date.now()): boolean {
+  if (!project.deletedAt) return false;
+  const at = Date.parse(project.deletedAt);
+  return Number.isFinite(at) && now - at > TRASH_DAYS * 24 * 60 * 60 * 1000;
+}
 // A cut is finished only when the user says so. Older stores predate that declaration, so there
 // a saved drawing still counts as finished and nothing already completed is lost.
 export const isDone = (slot: Slot): boolean => slot.done ?? !!slot.finalImage;
@@ -96,6 +104,7 @@ export function parseStore(raw: string): Store {
   if (value.version !== 1 || !Number.isSafeInteger(value.revision) || !Array.isArray(value.projects)) throw new Error('지원하지 않거나 손상된 저장 파일입니다.');
   for (const p of value.projects) {
     if (!p.id || typeof p.projectName !== 'string' || !p.canon || !Array.isArray(p.slots) || p.slots.length !== SPEC.count) throw new Error('프로젝트 저장 데이터가 손상되었습니다.');
+    if (p.deletedAt !== undefined && typeof p.deletedAt !== 'string') throw new Error('프로젝트 저장 데이터가 손상되었습니다.');
     for (const s of [p.characterName, p.createdAt, p.updatedAt, p.canon.personality, p.canon.speech, p.canon.locked, p.canon.variable]) if (typeof s !== 'string') throw new Error('CANON 저장 데이터가 손상되었습니다.');
     const validateImage = (image: Project['canon']['image']) => {
       if (!image) return;

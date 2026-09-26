@@ -13,7 +13,7 @@ class File {
   delete() { if (!files.delete(this.uri)) throw new Error('missing ' + this.uri); }
 }
 const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } } });
-const { createProject, imagePaths, storeImagePaths, droppedImagePaths } = load('src/project.ts');
+const { createProject, imagePaths, storeImagePaths, droppedImagePaths, parseStore, trashExpired, TRASH_DAYS } = load('src/project.ts');
 const { deleteLocalImages, localFile } = load('src/services/storage.ts');
 
 const image = path => ({ path, width: 360, height: 360 });
@@ -65,4 +65,17 @@ assert.equal(result.removed, 1);
 // store-a, store-b, notes.txt and the traversal attempt are refused; a path that is simply gone is not a failure.
 assert.equal(result.skipped, 4, 'refused paths are reported rather than thrown');
 
+// 45.38 휴지통: 휴지통의 세트도 그림을 가리키므로 정리 대상이 아니다. 표시는 글자여야 하고, 30일이 지나야 만료다.
+{
+  const trash = { ...createProject('휴지통 세트', '콩이'), deletedAt: new Date().toISOString() };
+  trash.slots[0].finalImage = { path: 'image-trash.png', width: 360, height: 360 };
+  const st = { version: 1, revision: 1, projects: [trash] };
+  assert.ok(storeImagePaths(st).has('image-trash.png'), 'a set in the trash still owns its images — cleanup leaves them');
+  assert.equal(parseStore(JSON.stringify(st)).projects[0].deletedAt, trash.deletedAt, 'the trash mark survives a save round trip');
+  assert.throws(() => parseStore(JSON.stringify({ ...st, projects: [{ ...trash, deletedAt: 7 }] })), /손상/, 'a malformed trash mark is refused');
+  const now = Date.now();
+  assert.equal(trashExpired({ ...trash, deletedAt: new Date(now - (TRASH_DAYS - 1) * 86400000).toISOString() }, now), false, 'inside the window: not expired');
+  assert.equal(trashExpired({ ...trash, deletedAt: new Date(now - (TRASH_DAYS + 1) * 86400000).toISOString() }, now), true, 'past the window: expired');
+  assert.equal(trashExpired(createProject('산 세트', '콩이'), now), false, 'a live set never expires');
+}
 console.log('PASS: project image ownership, orphan set difference across projects, shared-path protection, deletion guard for store snapshots and foreign files. File system mocked.');
