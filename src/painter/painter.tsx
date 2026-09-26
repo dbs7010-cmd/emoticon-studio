@@ -1952,12 +1952,12 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
       <View {...eyedropHandlers} accessibilityRole="button" accessibilityLabel="스포이드" accessibilityHint="누른 채 그림 위로 끌면 그 자리 색을 집어요"
         style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', gap: 1 }}>
         <MaterialCommunityIcons name="eyedropper-variant" size={19} color={T.ink} />
-        <Text numberOfLines={1} style={{ fontSize: 9, fontWeight: '600', color: T.muted }}>색 추출</Text>
+        <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: T.muted }}>색 추출</Text>
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel={kept ? '내 팔레트에 있음' : '내 팔레트에 저장'} disabled={kept} onPress={() => onSave(color)}
         style={({ pressed }) => ({ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: 12, backgroundColor: pressed ? T.fill : 'transparent' })}>
         <MaterialCommunityIcons name={kept ? 'check' : 'palette-swatch-outline'} size={19} color={kept ? T.success : T.ink} />
-        <Text numberOfLines={1} style={{ fontSize: 9, fontWeight: '600', color: kept ? T.success : T.muted }}>{kept ? '저장됨' : '색 저장'}</Text>
+        <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: kept ? T.success : T.muted }}>{kept ? '저장됨' : '색 저장'}</Text>
       </Pressable>
     </View>
     {/* 제목과 탭만 고정한다. 색 값·추출·견본·투명도는 작은 화면과 키보드 위에서도 함께 스크롤된다. */}

@@ -1025,7 +1025,7 @@ function Studio() {
                       {picked && <View style={{ position: 'absolute', left: 4, top: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="check" size={14} color={C.accentInk} /></View>}
                       {!!result && <View style={{ position: 'absolute', right: 4, bottom: 4, width: 12, height: 12, borderRadius: 6, backgroundColor: result.ok ? colors.PASS : colors.FAIL, borderWidth: 1.5, borderColor: '#FFF' }} />}
                     </View>
-                    <Text numberOfLines={1} style={{ fontSize: 9, color: C.muted }}>{pad(s.number)}{isAnimated(s) ? ' · 움직임 있음' : ''}</Text>
+                    <Text numberOfLines={1} style={{ fontSize: 10, color: C.muted }}>{pad(s.number)}{isAnimated(s) ? ' · 움직임 있음' : ''}</Text>
                   </Pressable>;
                 })}
               </ScrollView>
