@@ -132,4 +132,30 @@
 
 ## 7. 검수 APK
 
-(빌드 후 기록)
+통합 수정과 가능한 검증을 마친 뒤 소스 커밋 `d51b155` 로 한 번 구웠다. 기존 APK 16개는 건드리지 않았다(`dist/` 에 17개).
+
+| 항목 | 값 |
+|---|---|
+| 파일 | `dist/emoticon-studio-1.0.0-vc1-internal-review-d51b155-arm64.apk` |
+| 크기 | 40,996,928 bytes |
+| SHA-256 | `e02979d45794fe78fcd3dd7528cb511a3c4ff432583ae31c9501105cfed94408` |
+| 소스 커밋 | `d51b155` |
+| ABI | arm64-v8a 단독(다른 ABI 0) |
+| 구성 | `EMOTICON_INTERNAL_REVIEW=1` — 번들 `app.config` 의 `internalReview: true` 확인 · 디버그 서명 · **스토어 출시본 아님** |
+| 빌드 | `gradlew.bat :app:assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a` · BUILD SUCCESSFUL in 8m 10s |
+| 빌드 환경 | `ANDROID_HOME=C:\Android\Sdk` `GRADLE_USER_HOME=C:\gradle-home` `TEMP=TMP=C:\build-temp` `EMOTICON_ALLOW_DEBUG_SIGNED_RELEASE=1` |
+
+첫 시도는 `GRADLE_USER_HOME`·`TEMP` 를 빼먹어 사용자 폴더의 한글 경로에서 prefab(CMake) 단계가 실패했다(4m 49s, APK 없음).
+`docs/PROJECT_STATE.md` 에 적힌 ASCII 경로 설정으로 다시 구워 성공했다.
+
+### 번들에 실제로 들어갔는지 (설치가 아니라 파일을 뜯어 확인)
+
+| 확인 | 결과 |
+|---|---|
+| 레이어 끌기 안내 '누른 채 위아래로 끌어서 차례를 바꿔요' | 있음 |
+| 선택 판 머리 '고른 부분' · 움직임 격자 · 색 판 '기본 색' | 있음 |
+| 움직임 저장 목록 `MOTION_PRESETS` · 지우개 수정 `SAFE_WHILE_SAVING` · '검수용 PRO' | 있음 |
+| 캔버스 가운데 검은 상자 '굵기 미리보기' | 없음 |
+| 견본 생성용 난수 고정 코드(앱에 들어가면 안 된다) | 없음 |
+
+**설치·실행은 확인하지 않았다 — 실기기 미검증.**
