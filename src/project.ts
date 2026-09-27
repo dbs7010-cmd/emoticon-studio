@@ -1,7 +1,22 @@
 import { KAKAO_STATIC_SPEC as SPEC } from './constants/kakao-spec';
 import { MOTION_PRESETS } from './types';
 import { isProPreset } from './motion-math';
-import type { LocalImage, Motion, Project, Slot, Store } from './types';
+import type { Check, LocalImage, Motion, Project, Slot, Store } from './types';
+
+// Home and export share these issues. Missing cuts belong to progress, not defects.
+export function setIssues(project: Project, identical: number[][] = []): Check[] {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return [
+    ...project.slots.filter(s => s.finalImage && (s.finalImage.width !== SPEC.width || s.finalImage.height !== SPEC.height))
+      .map(s => ({ label: `${pad(s.number)}번 크기`, status: 'FAIL' as const, detail: `${SPEC.width}×${SPEC.height}가 아니에요. 이 칸을 다시 저장하면 맞춰져요.`, slot: s.number })),
+    ...project.slots.filter(s => s.finalImage?.metrics && !s.finalImage.metrics.transparent)
+      .map(s => ({ label: `${pad(s.number)}번 배경`, status: 'FAIL' as const, detail: '배경이 투명하지 않아요.', slot: s.number })),
+    ...identical.map(group => ({ label: '같은 그림', status: 'WARNING' as const, detail: `${group.map(pad).join(', ')}번 파일이 완전히 같아요. 그대로 둘지 직접 판단해 주세요.`, slot: group[1] })),
+    ...duplicateCaptions(project.slots).map(group => ({ label: '겹친 문구', status: 'WARNING' as const, detail: `${group.map(pad).join(', ')}번 문구가 같아요.`, slot: group[1] })),
+    ...project.slots.filter(s => s.finalImage && s.qa?.status === 'FAIL')
+      .map(s => ({ label: `${pad(s.number)}번 검사`, status: 'FAIL' as const, detail: '자동 검사에서 문제가 나왔어요.', slot: s.number })),
+  ];
+}
 
 export function createProject(projectName: string, characterName: string): Project {
   const now = new Date().toISOString();

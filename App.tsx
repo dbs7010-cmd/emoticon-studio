@@ -14,12 +14,12 @@ import { ExtraComposer, placeInFrame, type Composer } from './src/components/ext
 import { Painter, CATALOG, type CopiedWork, type Tool } from './src/painter/painter';
 import { isProPreset } from './src/motion-math';
 import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC as SPEC, STAGES, WEBP_TOOL_RULE, WEBP_ANIMATOR_URL, REQUIRED_EXTRAS } from './src/constants/kakao-spec';
-import { TRASH_DAYS, inTrash, trashExpired, captionText, createProject, doneCount, usesPro, droppedImagePaths, duplicateCaptions, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
+import { TRASH_DAYS, inTrash, trashExpired, captionText, createProject, doneCount, usesPro, droppedImagePaths, setIssues, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
 import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, readPickedFile, saveStore, type StoreReport } from './src/services/storage';
 import { restoreBackup, writeBackup } from './src/services/backup';
 import { exportSet, decodeDataUrl, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
-import { identicalFinals, inspectImage } from './src/services/qa';
+import { identicalFinalsAsync, finalsKey, inspectImage } from './src/services/qa';
 import { PLANS, REVIEW_BUILD_NOTE, REVIEW_DEV_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, purchase, purchaseHistoryUrl, refreshEntitlement, restore, reviewCapable, reviewEnvLabel, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
 import { PRESETS } from './src/painter/motion-panel';
 import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, PainterWork } from './src/types';
@@ -66,6 +66,20 @@ function Studio() {
   // instead of guessed at, and so nothing has to be deleted to find out.
   const [report, setReport] = useState<StoreReport | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null), [slotNumber, setSlotNumber] = useState<number | null>(null), [canonOpen, setCanonOpen] = useState(false), [painting, setPainting] = useState(false);
+  const [checkedFinals, setCheckedFinals] = useState<Record<string, { key: string; groups: number[][]; error?: boolean }>>({});
+  useEffect(() => {
+    let cancelled = false;
+    for (const p of store?.projects ?? []) {
+      if (inTrash(p)) continue;
+      const key = finalsKey(p);
+      void identicalFinalsAsync(p).then(groups => {
+        if (!cancelled) setCheckedFinals(old => ({ ...old, [p.id]: { key, groups } }));
+      }).catch(() => {
+        if (!cancelled) setCheckedFinals(old => ({ ...old, [p.id]: { key, groups: [], error: true } }));
+      });
+    }
+    return () => { cancelled = true; };
+  }, [store, projectId]);
   const [busy, setBusy] = useState('');
   const [menu, setMenu] = useState(false);
   // 명세 H03: 새 세트는 이름을 확인하고 만든다. 이 값이 있는 동안에도 저장소는 그대로다 — '만들기'를 눌러야 세트가 생긴다.
@@ -506,19 +520,10 @@ function Studio() {
   // Deterministic set-level checks over the saved files themselves. Everything here works offline,
   // and nothing here is a judgement about the artwork: those belong to the person drawing it.
   const pad = (n: number) => String(n).padStart(2, '0');
-  const setChecks: Check[] = !project || screen !== 'export' ? [] : [
-    ...(() => {
-      const missing = project.slots.filter(s => !isDone(s)).length;
-      return missing ? [{ label: '남은 칸', status: (missing === SPEC.count ? 'FAIL' : 'WARNING') as Check['status'], detail: `${missing}칸이 아직 완성되지 않았어요.` }] : [];
-    })(),
-    ...project.slots.filter(s => s.finalImage && (s.finalImage.width !== SPEC.width || s.finalImage.height !== SPEC.height))
-      .map(s => ({ label: `${pad(s.number)}번 크기`, status: 'FAIL' as const, detail: `${SPEC.width}×${SPEC.height}가 아니에요. 이 칸을 다시 저장하면 맞춰져요.`, slot: s.number })),
-    ...project.slots.filter(s => s.finalImage && s.finalImage.metrics && !s.finalImage.metrics.transparent)
-      .map(s => ({ label: `${pad(s.number)}번 배경`, status: 'FAIL' as const, detail: '배경이 투명하지 않아요.', slot: s.number })),
-    ...identicalFinals(project).map(group => ({ label: '같은 그림', status: 'WARNING' as const, detail: `${group.map(pad).join(', ')}번 파일이 완전히 같아요. 그대로 둘지 직접 판단해 주세요.`, slot: group[1] })),
-    ...duplicateCaptions(project.slots).map(group => ({ label: '겹친 문구', status: 'WARNING' as const, detail: `${group.map(pad).join(', ')}번 문구가 같아요.`, slot: group[1] })),
-    ...project.slots.filter(s => s.finalImage && s.qa?.status === 'FAIL').map(s => ({ label: `${pad(s.number)}번 검사`, status: 'FAIL' as const, detail: '자동 검사에서 문제가 나왔어요.', slot: s.number })),
-  ];
+  const projectFinals = project ? checkedFinals[project.id] : undefined;
+  const issuesPending = !!project && projectFinals?.key !== finalsKey(project);
+  const setChecks: Check[] = !project ? [] : setIssues(project, issuesPending ? [] : projectFinals?.groups);
+  if (projectFinals?.error && !issuesPending) setChecks.push({ label: '그림 비교', status: 'WARNING', detail: '그림 파일을 비교하지 못했어요. 세트를 다시 열어 확인해 주세요.' });
   // A purchase only ever lands here, and only after the store and our receipt server both said yes.
   async function startPurchase() {
     if (purchasesClosed()) return;
@@ -865,21 +870,18 @@ function Studio() {
             const left = Math.max(0, need.emoticons - done);
             const movingNeed = moving && 'animatedMin' in need ? need.animatedMin : 0;
             const movingHave = p.slots.filter(sl => sl.submitImage).length;
-            // 홈에서 세는 손볼 곳은 가볍게 확인되는 것만(겹친 문구 · 크기 · 배경 · 자동 검사). 같은 그림 비교는 파일을 읽어야 해 내보내기 화면에서 센다.
-            const issues = [
-              ...duplicateCaptions(p.slots).map(() => '겹친 문구'),
-              ...drawn.filter(sl => sl.finalImage!.width !== SPEC.width || sl.finalImage!.height !== SPEC.height).map(() => '크기'),
-              ...drawn.filter(sl => sl.finalImage!.metrics && !sl.finalImage!.metrics.transparent).map(() => '배경'),
-              ...drawn.filter(sl => sl.qa?.status === 'FAIL').map(() => '자동 검사'),
-            ];
-            const issueText = [...new Set(issues)].map(k => `${k} ${issues.filter(x => x === k).length}곳`).join(' · ');
+            const checked = checkedFinals[p.id];
+            const pending = checked?.key !== finalsKey(p);
+            const issues = setIssues(p, pending ? [] : checked?.groups);
+            if (checked?.error && !pending) issues.push({ label: '그림 비교', status: 'WARNING', detail: '그림 파일을 비교하지 못했어요. 세트를 다시 열어 확인해 주세요.' });
+            const issueText = issues.map(c => c.label).join(' · ');
             const rows: { key: string; ok: boolean; warn?: boolean; title: string; detail: string; action?: string; run?: () => void }[] = [
               left ? { key: 'cuts', ok: false, title: `이모티콘 ${left}칸 더 그리기`, detail: `${need.emoticons}칸이 모두 있어야 제안할 수 있어요`, action: '다음 칸', run: () => openCut(next) }
                 : { key: 'cuts', ok: true, title: `이모티콘 ${need.emoticons}칸 모두 완성`, detail: '제안에 필요한 칸을 다 채웠어요' },
               ...(moving ? [movingHave >= movingNeed
                 ? { key: 'moving', ok: true, title: `움직이는 칸 ${movingNeed}개 이상`, detail: `지금 ${movingHave}개 · 제안에는 ${movingNeed}개면 충분해요` }
                 : { key: 'moving', ok: false, title: `움직이는 칸 ${movingNeed - movingHave}개 더`, detail: `제안에는 움직이는 칸이 ${movingNeed}개 필요해요 · 지금 ${movingHave}개` }] : []),
-              issues.length ? { key: 'issues', ok: false, warn: true, title: `손볼 곳 ${issues.length}개`, detail: issueText, action: '보기', run: () => { setProjectId(p.id); setScreen('export'); } }
+              pending ? { key: 'issues', ok: false, title: '손볼 곳 확인 중', detail: '그림 파일을 비교하고 있어요' } : issues.length ? { key: 'issues', ok: false, warn: true, title: `손볼 곳 ${issues.length}개`, detail: issueText, action: '보기', run: () => { setProjectId(p.id); setScreen('export'); } }
                 : { key: 'issues', ok: true, title: '손볼 곳 없음', detail: '문구·크기·배경 확인을 통과했어요' },
               p.extras?.icon ? { key: 'icon', ok: true, title: '대표 아이콘', detail: '만들어 두었어요' }
                 : { key: 'icon', ok: false, title: '대표 아이콘', detail: drawn.length ? '아직 없어요 · 그린 칸으로 바로 만들 수 있어요' : '그린 칸이 생기면 만들 수 있어요',
@@ -1249,7 +1251,9 @@ function Studio() {
 
               {/* 2·3. 손볼 곳과 고치는 길 */}
               {/* 손볼 곳: 한 표면 안의 목록. 상태는 옅은 호박/빨강 동그라미 하나로 — 강한 경고 상자를 쌓지 않는다. */}
-              {!!problems.length && <View style={{ gap: 8 }}>
+              {issuesPending && <Text>손볼 곳 확인 중</Text>}
+              {!issuesPending && !problems.length && <Text>손볼 곳 없음</Text>}
+              {!issuesPending && !!problems.length && <View style={{ gap: 8 }}>
                 <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink, marginTop: 4 }}>손볼 곳 {problems.length}개</Text>
                 <View style={{ borderRadius: T.radius.card, backgroundColor: C.paper, ...Card.border, ...Card.shadow, overflow: 'hidden' }}>
                   {problems.map((c, i) => <Pressable key={c.label + i} accessibilityRole="button" accessibilityLabel={`${c.label} 고치기`} disabled={!c.slot} onPress={() => c.slot && fixSlot(c.slot)}

@@ -3,6 +3,34 @@ import type { Check, LocalImage, Project, QA, Verdict } from '../types';
 import { crc32 } from './export';
 import { localFile } from './storage';
 
+// Saved image paths are immutable (storage.writeImage creates a new path). Keep only
+// small fingerprints, never image bytes. Failed reads are retryable on the next check.
+const finalHashes = new Map<string, Promise<string | null>>();
+export const finalsKey = (project: Project): string => JSON.stringify(project.slots.map(s => [s.number, s.finalImage?.path]));
+export async function identicalFinalsAsync(project: Project): Promise<number[][]> {
+  const groups = new Map<string, number[]>();
+  await Promise.all(project.slots.map(async slot => {
+    if (!slot.finalImage) return;
+    const path = slot.finalImage.path;
+    let hash = finalHashes.get(path);
+    if (!hash) {
+      hash = (async () => {
+        const file = localFile(path);
+        if (!file.exists) return null;
+        const bytes = await file.bytes();
+        return `${bytes.length}:${crc32(bytes)}`;
+      })();
+      finalHashes.set(path, hash);
+      if (finalHashes.size > 1024) finalHashes.delete(finalHashes.keys().next().value!);
+    }
+    let key: string | null;
+    try { key = await hash; } catch (error) { finalHashes.delete(path); throw error; }
+    if (key === null) { finalHashes.delete(path); return; }
+    groups.set(key, [...(groups.get(key) ?? []), slot.number]);
+  }));
+  return [...groups.values()].filter(g => g.length > 1).map(g => g.sort((a, b) => a - b)).sort((a, b) => a[0] - b[0]);
+}
+
 // Cuts whose exported files are byte-for-byte the same picture. Worth telling the user about;
 // never worth editing or deleting on their behalf.
 export function identicalFinals(project: Project): number[][] {
