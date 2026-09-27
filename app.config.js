@@ -18,6 +18,9 @@
 const base = require('./app.json');
 
 const internalReview = process.env.EMOTICON_INTERNAL_REVIEW === '1';
+const purchases = process.env.EMOTICON_PURCHASES;
+if (purchases !== undefined && purchases !== 'closed') throw new Error('EMOTICON_PURCHASES must be closed or unset');
+if (purchases === 'closed' && internalReview) throw new Error('Closed free tests cannot enable internalReview');
 // 영수증 확인 서버 주소(https 만). 비밀 키가 아니라 공개 주소다 — 키는 서버에만 둔다.
 // 비어 있으면 앱은 구매를 확인하지 못하고, 그 사실을 화면에 말한다(PRO 를 열지 않는다).
 const receiptEndpoint = /^https:\/\//.test(process.env.EMOTICON_RECEIPT_ENDPOINT || '') ? process.env.EMOTICON_RECEIPT_ENDPOINT : undefined;
@@ -79,6 +82,7 @@ module.exports = () => {
     ...(base.expo.extra ?? {}),
     // 이 값이 참인 빌드에서만 설정 화면에 검수용 스위치가 나타난다. 거짓이면 그 화면도, 그 길도 없다.
     internalReview,
+    purchases,
     receiptEndpoint,
   },
   };

@@ -3,6 +3,8 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { buy, finishPurchase, listProducts, ownedPurchase, storeModuleAvailable, PRODUCT_IDS, type ProductsResult, type StoreProblem, type StorePurchase } from './purchase-adapter';
 import { verifyReceipt } from './receipt';
+import { purchasesClosed, PURCHASES_CLOSED_NOTE } from './purchase-config';
+export { purchasesClosed, PURCHASES_CLOSED_NOTE } from './purchase-config';
 export { storeModuleAvailable, PRODUCT_IDS };
 
 // What PRO is allowed to be, in one place.
@@ -34,7 +36,7 @@ export const internalReviewBuild = (): boolean =>
 //   ① 내부 검수 APK (EMOTICON_INTERNAL_REVIEW=1 로 빌드)
 //   ② 개발 실행 (Expo Go / 개발 클라이언트 — __DEV__ 가 참)
 // 출시 구성은 둘 다 거짓이므로 스위치가 그려지지도, 저장된 값이 권한으로 인정되지도 않는다.
-export const reviewCapable = (): boolean => internalReviewBuild() || devBuild();
+export const reviewCapable = (): boolean => !purchasesClosed() && (internalReviewBuild() || devBuild());
 
 // 검수용 임시 해제. **구매가 아니고 영수증도 아니다.** 그래서 Entitlement 안에 넣지 않고 따로 둔다 —
 // 넣는 순간 언젠가 '이용권'으로 읽히고, 출시 앱으로 옮겨 갈 길이 생긴다. 저장소에 남더라도 출시
@@ -94,6 +96,7 @@ export type PaymentOptions = { endpoint?: string; fetchImpl?: typeof fetch; now?
 // 사람이 읽는 말. 스토어 오류 코드는 여기서 끝나고 화면에 나가지 않는다. 늘 **다음에 할 일**을 함께 준다.
 export function problemText(problem: PaymentProblem | 'save'): { title: string; next: string; action?: 'restore' | 'retry' } {
   switch (problem) {
+    case 'purchases-closed': return { title: 'PRO 구매 준비 중', next: PURCHASES_CLOSED_NOTE };
     case 'store-missing': return { title: '이 기기에서는 결제를 열 수 없어요', next: 'Play 스토어에서 받은 앱에서 결제할 수 있어요. 무료 기능은 그대로 쓸 수 있어요.' };
     case 'network': return { title: '스토어에 연결하지 못했어요', next: '인터넷 연결을 확인하고 다시 시도해 주세요. 결제는 진행되지 않았어요.', action: 'retry' };
     case 'store-unavailable': return { title: '지금은 스토어 결제를 쓸 수 없어요', next: 'Play 스토어에 로그인되어 있는지 확인하고 잠시 뒤 다시 시도해 주세요.', action: 'retry' };
@@ -121,18 +124,21 @@ async function confirm(productId: string, token: string, purchase: StorePurchase
   return { state: 'failed', problem: 'refused' };
 }
 export async function purchase(options: PaymentOptions = {}): Promise<PurchaseOutcome> {
+  if (purchasesClosed()) return { state: 'failed', problem: 'purchases-closed' };
   const result = await buy();
   if (result.state === 'purchased') return confirm(result.productId, result.token, result.purchase, options);
   if (result.state === 'cancelled' || result.state === 'pending') return { state: result.state };
   return { state: 'failed', problem: result.problem };
 }
 export async function restore(options: PaymentOptions = {}): Promise<PurchaseOutcome> {
+  if (purchasesClosed()) return { state: 'failed', problem: 'purchases-closed' };
   const owned = await ownedPurchase();
   if (owned.state === 'found') return confirm(owned.productId, owned.token, owned.purchase, options);
   if (owned.state === 'none') return { state: 'none' };
   return { state: 'failed', problem: owned.problem };
 }
-export const storePrices = (): Promise<ProductsResult> => listProducts();
+export const storePrices = (): Promise<ProductsResult> => purchasesClosed()
+  ? Promise.resolve({ state: 'unavailable', problem: 'purchases-closed' }) : listProducts();
 
 // 앱을 열 때 저장된 이용권을 스토어·서버에 다시 묻는다.
 //   - 물어볼 수 없으면(모듈 없음·오프라인·서버 없음·서버 연결 실패) 저장된 것을 **그대로 둔다.**
@@ -141,6 +147,7 @@ export const storePrices = (): Promise<ProductsResult> => listProducts();
 //   - 스토어에 살아 있는 구독이 있고 서버가 확인하면 새 기간으로 갱신한다(재설치 뒤 자동 복원 포함).
 export type RefreshResult = { state: 'unchanged' } | { state: 'updated'; entitlement: Entitlement };
 export async function refreshEntitlement(cached: Entitlement | undefined, options: PaymentOptions = {}): Promise<RefreshResult> {
+  if (purchasesClosed()) return { state: 'unchanged' };
   if (!storeModuleAvailable()) return { state: 'unchanged' };
   const now = options.now ?? new Date();
   const end = (): RefreshResult => cached && cached.source === 'store' && isPro(cached, now)

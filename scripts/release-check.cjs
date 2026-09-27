@@ -72,9 +72,11 @@ function checkConfig(config, { released = [], gradleText = null } = {}) {
   const out = [];
   const internal = config?.extra?.internalReview === true;
   out.push(row('CONFIG', 'internal_review_off', internal ? 'FAIL' : 'PASS', internal ? '내부 검수 빌드 설정이 켜져 있어요(EMOTICON_INTERNAL_REVIEW=1 없이 빌드)' : '내부 검수 스위치 꺼짐'));
+  out.push(...checkPurchases(config, 'CONFIG', ''));
   const endpoint = config?.extra?.receiptEndpoint;
   const endpointOk = typeof endpoint === 'string' && /^https:\/\//.test(endpoint);
-  out.push(row('CONFIG', 'receipt_endpoint', endpointOk ? 'PASS' : 'FAIL', endpointOk ? '영수증 확인 서버 주소 있음(https)' : '영수증 확인 서버 주소가 없어요 — 서버 배포 후 EMOTICON_RECEIPT_ENDPOINT 로 빌드', { external: !endpointOk }));
+  const closedMissing = config?.extra?.purchases === 'closed' && endpoint === undefined;
+  out.push(row('CONFIG', 'receipt_endpoint', endpointOk ? 'PASS' : closedMissing ? 'WARN' : 'FAIL', endpointOk ? '영수증 확인 서버 주소 있음(https)' : closedMissing ? '명시적 구매 비활성 테스트: 영수증 서버 미설정 허용' : '영수증 확인 서버 주소가 없어요 — 서버 배포 후 EMOTICON_RECEIPT_ENDPOINT 로 빌드', { external: !endpointOk }));
   const pkg = config?.android?.package;
   out.push(row('CONFIG', 'application_id', pkg === EXPECTED_APPLICATION_ID ? 'PASS' : 'FAIL', `android.package = ${pkg ?? '(없음)'}${pkg === EXPECTED_APPLICATION_ID ? '' : ` — ${EXPECTED_APPLICATION_ID} 이어야 해요`}`));
   const code = config?.android?.versionCode, maxReleased = Math.max(0, ...released.map(r => r.versionCode));
@@ -146,7 +148,13 @@ function inspectBundle(aabPath) {
   const certs = zip.names.filter(n => /^META-INF\/[^/]+\.(RSA|DSA|EC)$/i.test(n)).flatMap(n => certificatesFromPkcs7(zip.read(n)));
   return { sha256: sha256(buf), bytes: buf.length, isBundle: zip.names.includes('BundleConfig.pb') && !!manifest, manifest, appConfig, jsBundleBytes: jsBundle ? jsBundle.length : 0, iap, certificates: [...new Set(certs.map(c => sha256(c)))] };
 }
-function checkArtifact(info) {
+function checkPurchases(config, group, prefix) {
+  const mode = config?.extra?.purchases;
+  const valid = !!config && (mode === undefined || mode === 'closed');
+  return [row(group, prefix + 'purchases', valid ? 'PASS' : 'FAIL',
+    mode === 'closed' ? '명시적 구매 비활성 비공개 테스트' : mode === undefined ? '정상 출시 구성: 결제 검증 필수' : '지원하지 않는 구매 구성')];
+}
+function checkArtifact(info, expectedConfig) {
   const out = [];
   const r = (id, ok, msg, extra) => out.push(row('ARTIFACT', id, ok ? 'PASS' : 'FAIL', msg, extra));
   r('app_bundle', info.isBundle, info.isBundle ? 'Android App Bundle(BundleConfig.pb · base 모듈)' : 'AAB 구조가 아니에요');
@@ -155,8 +163,12 @@ function checkArtifact(info) {
   r('release_js_bundle', info.jsBundleBytes > 0, `index.android.bundle ${info.jsBundleBytes} bytes`);
   r('expo_iap_native', info.iap, 'expo-iap 네이티브 모듈(dex 에 expo/modules/iap)');
   r('bundle_internal_review_off', info.appConfig && info.appConfig.extra?.internalReview !== true, `묶인 app.config internalReview = ${info.appConfig?.extra?.internalReview}`);
+  out.push(...checkPurchases(info.appConfig, 'ARTIFACT', 'bundle_'));
+  if (expectedConfig) r('bundle_purchases_match', !!info.appConfig && info.appConfig.extra?.purchases === expectedConfig.extra?.purchases, '빌드 설정과 AAB 구매 구성 일치');
   const ep = info.appConfig?.extra?.receiptEndpoint;
-  r('bundle_receipt_endpoint', typeof ep === 'string' && /^https:\/\//.test(ep), ep ? '묶인 app.config 에 영수증 서버 주소 있음' : '묶인 app.config 에 영수증 서버 주소가 없어요', { external: !ep });
+  const closedMissing = info.appConfig?.extra?.purchases === 'closed' && ep === undefined;
+  const epOk = typeof ep === 'string' && /^https:\/\//.test(ep);
+  out.push(row('ARTIFACT', 'bundle_receipt_endpoint', epOk ? 'PASS' : closedMissing ? 'WARN' : 'FAIL', epOk ? '묶인 app.config 에 영수증 서버 주소 있음' : closedMissing ? '묶인 app.config: 구매 비활성 테스트의 서버 미설정' : '묶인 app.config 에 유효한 영수증 서버 주소가 없어요', { external: !epOk }));
   return out;
 }
 
@@ -189,7 +201,7 @@ if (require.main === module) {
   let bundle = null;
   if (aab) {
     bundle = inspectBundle(path.resolve(aab));
-    results.push(...checkCertificate(bundle.certificates, policy, process.env.EMOTICON_UPLOAD_CERT_SHA256), ...checkArtifact(bundle));
+    results.push(...checkCertificate(bundle.certificates, policy, process.env.EMOTICON_UPLOAD_CERT_SHA256), ...checkArtifact(bundle, config));
   }
   // ASSETS — 브랜드 에셋 미도착은 서명과 구분해 BLOCKED
   const assetCheck = require('./asset-check.cjs');
@@ -213,6 +225,7 @@ if (require.main === module) {
       aab: bundle ? { path: path.relative(root, path.resolve(aab)), sha256: bundle.sha256, bytes: bundle.bytes, builtAt: fs.statSync(path.resolve(aab)).mtime.toISOString() } : null,
       signingCertificateSha256: bundle?.certificates ?? [], signingCertificateKind: results.find(r => r.id === 'signing_certificate')?.kind ?? null,
       internalReview: bundle?.appConfig?.extra?.internalReview ?? config.extra?.internalReview ?? null,
+      purchases: (bundle ? bundle.appConfig?.extra?.purchases : config.extra?.purchases) ?? 'release',
       receiptEndpointPresent: !!(bundle?.appConfig?.extra?.receiptEndpoint ?? config.extra?.receiptEndpoint),
       groups, checkedAt: new Date().toISOString(),
     };

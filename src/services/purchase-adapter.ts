@@ -9,6 +9,7 @@
 // the store said. `pro.ts` sends the purchase token to our receipt server, and only a verified
 // answer becomes an entitlement. A purchase is finished (acknowledged) only after that answer.
 import { Platform } from 'react-native';
+import { purchasesClosed } from './purchase-config';
 
 // 45.28: PRO 는 **한 번 사면 끝나는 비소모성 일회성 상품** 하나다(구독 아님). 소비되지 않으므로
 // 스토어 계정에 계속 남고, 다시 설치해도 복원으로 돌아온다.
@@ -21,7 +22,7 @@ export const isOurProduct = (productId: string): boolean =>
   productId === PRODUCT_IDS.lifetime || productId in LEGACY_PRODUCT_IDS;
 
 // What went wrong, in words the screen can turn into a next step. Raw store codes stay in here.
-export type StoreProblem = 'store-missing' | 'network' | 'store-unavailable' | 'not-found' | 'already-owned' | 'unknown';
+export type StoreProblem = 'purchases-closed' | 'store-missing' | 'network' | 'store-unavailable' | 'not-found' | 'already-owned' | 'unknown';
 
 export type StoreProduct = { id: string; plan: PlanId; title: string; localizedPrice: string };
 // Only the fields this app relies on. `purchaseToken` is the Android purchase token (Play) and the
@@ -61,7 +62,7 @@ function loadModule(): IapModule | null {
     return typeof module?.initConnection === 'function' && typeof module.requestPurchase === 'function' ? module as IapModule : null;
   } catch { return null; }
 }
-export const storeModuleAvailable = () => loadModule() !== null;
+export const storeModuleAvailable = () => !purchasesClosed() && loadModule() !== null;
 
 let connected = false;
 async function connect(iap: IapModule) { if (!connected) { await iap.initConnection(); connected = true; } }
@@ -89,6 +90,7 @@ export function problemOf(error: unknown): StoreProblem | 'cancelled' | 'pending
 }
 
 export async function listProducts(): Promise<ProductsResult> {
+  if (purchasesClosed()) return { state: 'unavailable', problem: 'purchases-closed' };
   const iap = loadModule();
   if (!iap) return { state: 'unavailable', problem: 'store-missing' };
   try {
@@ -111,6 +113,7 @@ export async function listProducts(): Promise<ProductsResult> {
 // The store answers a purchase through listeners, not through the returned promise. This waits for
 // the first answer about *our* product, then lets go of both listeners.
 export async function buy(options: { timeoutMs?: number } = {}): Promise<PurchaseResult> {
+  if (purchasesClosed()) return { state: 'unavailable', problem: 'purchases-closed' };
   const iap = loadModule();
   if (!iap) return { state: 'unavailable', problem: 'store-missing' };
   const sku = PRODUCT_IDS.lifetime;
@@ -155,6 +158,7 @@ export async function buy(options: { timeoutMs?: number } = {}): Promise<Purchas
 // What the store account currently holds for our products. Suspended (payment failed) and pending
 // purchases are not counted; the newest live one wins.
 export async function ownedPurchase(): Promise<RestoreResult> {
+  if (purchasesClosed()) return { state: 'unavailable', problem: 'purchases-closed' };
   const iap = loadModule();
   if (!iap) return { state: 'unavailable', problem: 'store-missing' };
   try {
@@ -177,6 +181,7 @@ export async function ownedPurchase(): Promise<RestoreResult> {
 // 환불하므로, 확인되지 않은 것은 일부러 열어 둔다 — `ownedPurchase` 로 다시 올라와 다음 복원이나
 // 앱 시작에서 확인된다. **isConsumable: false** — 비소모성이라 소비 처리하지 않는다(다시 팔지 않는다).
 export async function finishPurchase(purchase: StorePurchase): Promise<boolean> {
+  if (purchasesClosed()) return false;
   const iap = loadModule();
   if (!iap) return false;
   try { await iap.finishTransaction({ purchase, isConsumable: false }); return true; }

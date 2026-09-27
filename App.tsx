@@ -3,6 +3,7 @@ import { Alert, AppState, BackHandler, KeyboardAvoidingView, Linking, Modal, Pla
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Constants from 'expo-constants';
+import { purchasesClosed, PURCHASES_CLOSED_NOTE } from './src/services/purchase-config';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import { Action, AssetSlot, Dialog, Elev, Field, IconButton, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font, Card } from './src/components/ui';
@@ -146,6 +147,7 @@ function Studio() {
   }, [store]);
   // PRO 화면을 열면 스토어의 실제 가격을 불러온다. 못 불러오면 제안가를 그대로 두고 왜 결제할 수 없는지 말한다.
   async function loadPrices() {
+    if (purchasesClosed()) return;
     setPayment({ phase: 'loading' });
     const result = await storePrices();
     if (result.state === 'ok') {
@@ -519,10 +521,12 @@ function Studio() {
   ];
   // A purchase only ever lands here, and only after the store and our receipt server both said yes.
   async function startPurchase() {
+    if (purchasesClosed()) return;
     setPayment({ phase: 'buying' });
     settlePayment(await purchase(), 'bought');
   }
   async function restorePro() {
+    if (purchasesClosed()) return;
     setPayment({ phase: 'restoring' });
     settlePayment(await restore(), 'restored');
   }
@@ -1589,6 +1593,7 @@ function Studio() {
           {expiredButRemembered(entitlement) && <Text style={{ fontSize: 12, color: C.ink }}>기간이 끝나도 이미 만든 움직임은 계속 재생되고 내보낼 수 있어요.</Text>}
           {/* 파는 것은 하나다: 한 번 구매하면 계속 쓰는 PRO. 값은 **스토어가 말해 주는 것만** 적는다.
               불러오지 못하면 값을 지어내지 않고, 지금 살 수 없다는 것과 다음에 할 일을 적는다. */}
+          {purchasesClosed() ? <Text testID="구매 비활성 안내" style={{ color: C.ink, fontSize: 15, lineHeight: 23 }}>{PURCHASES_CLOSED_NOTE}</Text> : <>
           <View accessibilityRole="summary" accessibilityLabel={prices?.lifetime ? 'PRO 가격 ' + prices.lifetime : 'PRO 가격을 불러오지 못했어요'}
             style={{ borderWidth: 1, borderColor: prices?.lifetime ? C.accentBorder : C.line, borderRadius: 16, padding: 14, gap: 2, backgroundColor: prices?.lifetime ? C.accentSoft : C.surface2 }}>
             <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{PLANS[0].label}</Text>
@@ -1602,13 +1607,14 @@ function Studio() {
           {payment.phase === 'bought' || payment.phase === 'restored'
             ? <Action primary title="PRO로 만들러 가기" onPress={() => { setProSheet(false); resetPayment(); }} />
             : <Action primary title="PRO 한 번 구매하기" busy={payment.phase === 'buying'} disabled={!prices?.lifetime || payment.phase === 'loading' || payment.phase === 'restoring' || isPro(entitlement)} onPress={() => void startPurchase()} />}
+          </>}
           {/* 내부 검수 빌드에서는 이 기기에서 결제를 열 수 없는 일이 흔하다. 잠금에 부딪힌 검수자가
               설정 깊은 곳의 토글을 찾아 헤매지 않도록, 막힌 바로 그 자리에서 켤 수 있게 한다.
               출시 구성에서는 internalReviewBuild() 가 거짓이라 이 줄이 아예 그려지지 않는다. 구매가 아니다. */}
           {reviewCapable() && !pro && <Action icon="key-variant" title="결제 없이 검수용 PRO 켜기"
             onPress={() => { try { commit(st => ({ ...st, reviewUnlock: true })); setProSheet(false); resetPayment(); setNotice(internalReviewBuild() ? REVIEW_BUILD_NOTE : REVIEW_DEV_NOTE); } catch (e) { setNotice('검수용 PRO 를 켜지 못했어요. ' + userMessage(e)); } }} />}
           <Action title="무료로 계속하기" onPress={() => { setProSheet(false); resetPayment(); }} />
-          <Pressable accessibilityRole="button" accessibilityLabel="구매 복원" disabled={payment.phase === 'buying' || payment.phase === 'restoring'} onPress={() => void restorePro()} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{payment.phase === 'restoring' ? '구매 내역을 확인하는 중…' : '구매 복원'}</Text></Pressable>
+          {!purchasesClosed() && <Pressable accessibilityRole="button" accessibilityLabel="구매 복원" disabled={payment.phase === 'buying' || payment.phase === 'restoring'} onPress={() => void restorePro()} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{payment.phase === 'restoring' ? '구매 내역을 확인하는 중…' : '구매 복원'}</Text></Pressable>}
           {/* 일회성 구매에는 해지가 없다. 영수증·환불은 스토어의 구매 내역에서 본다.
               예전 구독 저장본을 가진 사람에게는 구독 관리 길도 함께 둔다 — 길을 막지 않는다. */}
           {isPro(entitlement) && !!entitlement && entitlement.plan === 'lifetime' && <Pressable accessibilityRole="button" accessibilityLabel="구매 내역" onPress={() => { Linking.openURL(purchaseHistoryUrl()).catch(() => setPayment({ phase: 'failed', problem: 'store-unavailable' })); }} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>구매 내역 보기</Text></Pressable>}
