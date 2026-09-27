@@ -1,5 +1,7 @@
 # Android 출시 서명 · AAB (36차, 2026-09-14)
 
+> 갱신일: 2026-09-27 · 기준 커밋: `503e561` + C1~C7 작업본. 기존 감사 산출물은 당시 기록이며 새 AAB 검증을 대신하지 않습니다.
+
 이 문서는 **절차와 역할**만 적는다. 실제 비밀번호·키 파일·키 별칭 값은 저장소·문서·로그 어디에도 적지 않는다.
 
 ## 1. 키 세 종류
@@ -64,7 +66,9 @@ keytool -list -v -keystore <ASCII 경로>\emoticon-upload.jks   # SHA-256 확인
 | 갈래 | 항목 | FAIL 조건 |
 |---|---|---|
 | CONFIG | internal_review_off | `extra.internalReview === true` |
-| CONFIG | receipt_endpoint | https 영수증 서버 주소 없음 (EXTERNAL) |
+| CONFIG | receipt_endpoint | 정상 출시에서 https 서버 주소 없음은 FAIL. 명시적 purchases=closed 구성의 미설정만 WARN |
+| CONFIG/ARTIFACT | privacy_url · support_email (bundle_ 포함) | 유효한 개인정보 https URL·문의 이메일 없음은 FAIL [OWNER] |
+| ARTIFACT | bundle_purchases · bundle_purchases_match · no_overlay_permission | 구매 구성 오류·설정/AAB 불일치·오버레이 권한 잔존은 FAIL |
 | CONFIG | application_id | `com.emoticonstudio.app` 아님 |
 | CONFIG | version_code | 정수 아님 · 없음 · `version-history` 최대값 이하 |
 | CONFIG | version_name / native_version_sync | x.y.z 아님 · `android/` 버전이 설정과 다름 |
@@ -90,9 +94,17 @@ keytool -list -v -keystore <ASCII 경로>\emoticon-upload.jks   # SHA-256 확인
 | 업로드 키 | 입력 구조·가드·검사 | 실제 업로드 키 생성·백업, 첫 AAB 업로드로 등록 — EXTERNAL |
 | applicationId | `com.emoticonstudio.app` 고정·검사 | Play 에서 패키지 이름 선점(첫 업로드 시 영구) — EXTERNAL |
 | versionCode 증가 규칙 | §6 + 검사 | — |
-| 상품 `pro_monthly` / `pro_yearly` | 앱 코드·영수증 서버 코드(30차) | 구독 상품·기본 요금제 생성, 가격 — EXTERNAL |
+| 상품 `pro_lifetime` | 앱 코드·영수증 서버 코드(30차) | 비소모성 일회성 상품 생성, 가격 — EXTERNAL |
 | 라이선스 테스터 | — | 테스터 계정 등록, 내부 테스트 트랙 — EXTERNAL |
 | 영수증 서버 | `server/verify-receipt.js` | 배포 + 서비스 계정 권한(Play Developer API) + https 주소 — EXTERNAL |
 | 개인정보처리방침 URL | `docs/legal.md` 초안 | 공개 URL 게시 — EXTERNAL |
 | 스토어 등록정보 에셋 | 35차 명세·검사 | 아이콘 512·피처 그래픽·스크린샷 실물 — EXTERNAL(ASSET) |
 | 콘텐츠 선언 | — | 콘텐츠 등급 설문, 데이터 보안 양식, 광고 여부, 대상 연령 — EXTERNAL |
+
+## 8. 무료 기능 비공개 테스트 구성 (45.40)
+`EMOTICON_PURCHASES=closed`를 prebuild와 번들 생성 양쪽에 명시합니다. 값 누락은 정상 출시이며 서버 검증 요건을 그대로 적용합니다. 잘못된 값은 구성 오류로 중단합니다. `EMOTICON_INTERNAL_REVIEW=1`과 함께 사용할 수 없습니다.
+`EMOTICON_PRIVACY_URL`(https)·`EMOTICON_SUPPORT_EMAIL`은 실제 운영자 값으로 주입합니다. 미설정은 모든 외부 배포에서 FAIL [OWNER]입니다.
+이 구성만 영수증 서버 주소 누락을 WARN으로 처리합니다. AAB 내부 app.config에서도 동일하게 판독하며, 서명·BILLING·네이티브 결제 모듈·PRO 검수 우회 차단 검사는 유지합니다. 검사는 `--track` 인자로 예외를 켜지 않고 실제 설정/AAB 값을 사용합니다.
+이번 회차는 APK·AAB를 만들지 않습니다. 최종 업로드 키 확보 후 새 AAB에서 서명·권한·실제 Play 동작을 검증합니다. 임시 키를 출시용으로 쓰지 않습니다.
+
+예전 구독 `pro_monthly` / `pro_yearly`는 팔지 않지만 복원에서 알아봅니다.

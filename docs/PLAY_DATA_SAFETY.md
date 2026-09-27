@@ -1,5 +1,7 @@
 # Play Data Safety 작업표 + 데이터 흐름 감사 (37차, 2026-09-15)
 
+> 갱신일: 2026-09-27 · 기준 커밋: `503e561` + C1~C7 작업본. 기존 감사 산출물은 당시 기록이며 새 AAB 검증을 대신하지 않습니다.
+
 상태: **DRAFT** — Play Console 에 제출하지 않았다. 제출 전까지 DRAFT.
 표시: **CONFIRMED**(코드·빌드 산출물에서 직접 확인) · **UNKNOWN**(코드로 확인 불가) · **OWNER INPUT REQUIRED**(운영자 결정 필요).
 감사 대상: 저장소 HEAD `49206d38` + 미커밋 작업본, 36차 AAB(`app-release.aab`, SHA-256 `5da6aac1…9fda`)의 병합 매니페스트·dex, `:app:dependencies --configuration releaseRuntimeClasspath`.
@@ -31,23 +33,34 @@
 | 최근 색·내 팔레트·종이 질감 설정·보관한 움직임·컷아웃 | 사용자 | store JSON | DEVICE ONLY | 아니오 | — | 편의 | 삭제까지 | 예(목록에서 삭제) / 앱 삭제 | 선택 | CONFIRMED |
 | 이용권 표시 `entitlement`(plan·source·verified·expiresAt·checkedAt·test) | 영수증 서버 판정 결과 | store JSON | DEVICE ONLY | 아니오 | — | PRO 기능 개방 | 덮어쓰기·앱 삭제 | 앱 삭제 | PRO 사용자만 | CONFIRMED |
 | **구매 토큰 purchaseToken** | Google Play Billing | **앱 저장소에 저장하지 않음**(`Entitlement` 타입에 필드 없음). Google Play 쪽 보관은 Google 정책 | 서버로 전송 | **예** | 운영자 영수증 서버 → Google Play Developer API | 구매 진위 확인 | 앱: 메모리 내 처리. 서버: 코드상 저장 없음, 호스팅 로그 UNKNOWN | 서버 로그 삭제 요청 경로 OWNER INPUT REQUIRED | PRO 구매 시 필수 | CONFIRMED(앱·서버 코드) / 서버 운영 UNKNOWN |
-| productId (`pro_monthly`/`pro_yearly`) | 앱 상수 | 앱 코드 | 서버로 전송 | 예 | 영수증 서버 | 요청 상품 대조 | 서버 코드상 저장 없음 | — | PRO 구매 시 | CONFIRMED |
+| productId (`pro_lifetime`) | 앱 상수 | 앱 코드 | 서버로 전송 | 예 | 영수증 서버 | 요청 상품 대조 | 서버 코드상 저장 없음 | — | PRO 구매 시 | CONFIRMED |
 | platform (`android`) | 앱 | — | 서버로 전송 | 예 | 영수증 서버 | 스토어 구분 | 저장 없음 | — | PRO 구매 시 | CONFIRMED |
-| 구독 상태 판정 `{verified, plan, expiresAt, sandbox, reason}` | 영수증 서버 응답 | 필요한 값만 entitlement 로 | 기기 | 서버→앱 | 앱 | 권한 판단 | 위와 같음 | 앱 삭제 | — | CONFIRMED |
+| 구매 상태 판정 `{verified, plan, expiresAt, sandbox, reason}` | 영수증 서버 응답 | 필요한 값만 entitlement 로 | 기기 | 서버→앱 | 앱 | 권한 판단 | 위와 같음 | 앱 삭제 | — | CONFIRMED |
 | IP 주소 등 통신 메타데이터 | 네트워크 요청 자체 | 호스팅 제공자 로그 | SERVER | 요청 시 자동 | 호스팅(미정) | — | UNKNOWN | UNKNOWN | — | **UNKNOWN / OWNER INPUT REQUIRED** |
 | Google Play Billing Library 내부 로그/전송 | billing 9.1.0 → `datatransport`·`play-services-location`·`firebase-encoders` 의존 | — | UNKNOWN | UNKNOWN | Google | UNKNOWN | UNKNOWN | UNKNOWN | — | **UNKNOWN** — 의존성·매니페스트 컴포넌트는 CONFIRMED, 실제 수집 여부는 코드로 확인 불가 |
 | 기기 식별자 | — | 앱 코드에서 읽지 않음 | — | 앱 코드는 보내지 않음 | — | — | — | — | — | CONFIRMED(앱 코드) / 라이브러리 UNKNOWN |
+
+### 45.38~45.40 추가 데이터 흐름
+| 데이터 | 생성·읽기 | 보관·전송 | 삭제·미확정 사항 |
+|---|---|---|---|
+| 백업 ZIP 만들기 | backup.ts writeBackup, 작품과 이미지로 ZIP 생성 | 앱 폴더에 저장, 사용자가 공유 창에서 고른 앱으로만 전달 | 앱 데이터 삭제 시 로컬 ZIP 제거, 외부 사본은 사용자가 관리 |
+| 백업에서 되살리기 | expo-document-picker로 사용자가 고른 파일만 읽음 | 앱 폴더에 새 세트·이미지, 서버 전송 없음 | 기존 작품 보존, 선택한 원본 ZIP은 변경하지 않음 |
+| 휴지통 30일 | 세트 삭제 시 deletedAt 기록 | 기기 안, 30일 뒤 앱 실행·정리 시 영구 삭제 | 수동 영구 삭제 가능, 아직 다른 세트가 참조하는 이미지 보존 |
+| 제목 글꼴 파일 | Jua를 앱에 포함 | 기기 안, 네트워크 전송 없음 | 앱 삭제까지 |
+| 문의 메일 | 사용자가 문의하기 선택 | mailto에 앱 버전·OS 버전만 포함, 사용자 메일 앱에서 전송 | 운영자 수신·보관 기간 [OWNER INPUT REQUIRED], 작품 자동 첨부 없음 |
+
+구매 비활성 비공개 테스트는 extra.purchases='closed'를 명시해야 합니다. 이때 가격·구매·복원·자동 재확인과 영수증 요청은 모두 0회입니다. 결제 서버 미설정 예외는 이 구성에만 적용하며 Data Safety 확인·서명·검수 우회 차단 의무는 유지합니다.
 
 ## 3. SDK / PERMISSIONS
 ### 권한 (36차 AAB 번들 매니페스트 `uses-permission`)
 | 권한 | 출처 | 필요 이유 | 판단 |
 |---|---|---|---|
-| `INTERNET` | 생성된 `AndroidManifest.xml` | 영수증 서버 요청, 구독 관리·공식 안내 링크는 브라우저로 열림 | 필요 |
+| `INTERNET` | 생성된 `AndroidManifest.xml` | 영수증 서버 요청, 구매 내역·공식 안내 링크는 브라우저로 열림 | 필요 |
 | `ACCESS_NETWORK_STATE` | 라이브러리 병합(정확한 출처 UNKNOWN) | 네트워크 상태 확인 | 라이브러리 필요로 추정되나 출처 미확인 → 보고만 |
-| `com.android.vending.BILLING` | expo-iap/Billing Library | Google Play 구독 결제 | 필요 |
+| `com.android.vending.BILLING` | expo-iap/Billing Library | Google Play 일회성 결제 | 필요 |
 | `READ_EXTERNAL_STORAGE` (maxSdk 32) | `expo-image-picker` 매니페스트 | Android 12 이하 사진 선택 | 필요 가능(구형 기기) — 유지 |
 | `WRITE_EXTERNAL_STORAGE` (maxSdk 32) | 생성된 매니페스트(템플릿) | 앱 코드는 외부 저장소에 쓰지 않음(앱 폴더·공유 시트만) | **불필요 가능 — 보고, 제거 안 함** |
-| `SYSTEM_ALERT_WINDOW` | 생성된 매니페스트(템플릿, 출처 UNKNOWN) | 앱 코드에서 사용하지 않음(다른 앱 위 표시 없음) | **불필요 가능 — 보고, 제거 안 함** |
+| `SYSTEM_ALERT_WINDOW` | 기존 병합 보고서 201~204행: app/src/main/AndroidManifest.xml:6 | 앱 사용처 없음 | 45.40 withReleasePermissions로 release에서 tools:node="remove"; debug 보존. 새 APK/AAB 검증은 후속 |
 | `VIBRATE` | 생성된 매니페스트(템플릿) | 앱 코드에 Vibration/Haptics 호출 없음 | **불필요 가능 — 보고, 제거 안 함** |
 | `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX 자동 추가 | 앱 내부 브로드캐스트 보호 | 시스템 생성 |
 | 카메라·마이크 | `tools:node="remove"`, image-picker 설정 `false` | — | 없음 CONFIRMED |
@@ -57,7 +70,7 @@
 ### SDK
 | SDK | 역할 | 데이터 관련 |
 |---|---|---|
-| expo-iap 5.6.0 → openiap-google 3.5.1 → Play Billing 9.1.0 | 구독 결제 | 결제 정보는 Google 이 처리. Billing 이 datatransport·play-services-location 을 끌어옴 → UNKNOWN |
+| expo-iap 5.6.0 → openiap-google 3.5.1 → Play Billing 9.1.0 | 일회성 결제 | 결제 정보는 Google 이 처리. Billing 이 datatransport·play-services-location 을 끌어옴 → UNKNOWN |
 | react-native-webview 13.16.1 | 캔버스·움직임 인코딩·이미지 분석 | `source={{ html }}` 인라인, `originWhitelist=['about:*']`, `about:blank` 외 이동 차단, HTML 에 원격 주소 없음 → 네트워크 없음 CONFIRMED |
 | expo-image-picker / expo-image-manipulator | 사진 선택·변환 | 기기 안, 캐시 파일 |
 | expo-file-system | 저장 | 앱 전용 폴더 |
@@ -68,12 +81,12 @@
 ## 4. NETWORK FLOWS
 | 요청 | 트리거 | endpoint | payload | 목적 | 상태 |
 |---|---|---|---|---|---|
-| 영수증 확인 POST | ① 구매 완료 직후 ② "구매 복원" ③ **앱 실행 시 1회** — 스토어에 소유 구독이 있으면(`App.tsx` 88~96행 `refreshEntitlement` → `ownedPurchase` → `confirm`) | 빌드 설정 `extra.receiptEndpoint`(https 만). **현재 빌드 비어 있음 → 요청 자체 없음** | JSON `{ platform, productId, purchaseToken }` — `pro.ts` 103행에서 이 세 필드만 채움. `ReceiptRequest` 타입에 선택 필드 `packageName` 이 있으나 앱은 채우지 않음 | 구매 진위 확인 | CONFIRMED |
-| 영수증 서버 → Google | 위 요청 처리 | `oauth2.googleapis.com/token`, `androidpublisher.googleapis.com/.../purchases/subscriptionsv2/tokens/{token}` | 서비스 계정 JWT, 토큰(URL 경로) | Play 에 구독 상태 조회 | CONFIRMED(코드) · 배포 안 됨 |
+| 영수증 확인 POST | ① 구매 완료 직후 ② "구매 복원" ③ **앱 실행 시 1회** — 스토어에 소유 구매가 있으면(`App.tsx` 88~96행 `refreshEntitlement` → `ownedPurchase` → `confirm`) | 빌드 설정 `extra.receiptEndpoint`(https 만). **현재 빌드 비어 있음 → 요청 자체 없음** | JSON `{ platform, productId, purchaseToken }` — `pro.ts` 103행에서 이 세 필드만 채움. `ReceiptRequest` 타입에 선택 필드 `packageName` 이 있으나 앱은 채우지 않음 | 구매 진위 확인 | CONFIRMED |
+| 영수증 서버 → Google | 위 요청 처리 | `oauth2.googleapis.com/token`, `androidpublisher.googleapis.com/.../purchases/subscriptionsv2/tokens/{token}` | 서비스 계정 JWT, 토큰(URL 경로) | Play 에 구매 상태 조회 | CONFIRMED(코드) · 배포 안 됨 |
 | 서버 응답 | — | — | `{verified, plan, expiresAt?, sandbox?, reason?}` | — | CONFIRMED |
 | 서버 로그 | 실패 시 | 표준 오류 | 오류 문자열(Play 응답 앞 200자 포함 가능), 요청 본문은 기록 안 함 | 장애 확인 | CONFIRMED(코드) / 호스팅 로그 UNKNOWN |
 | Google Play 결제 | 구매·가격 조회·복원 | Google Play 앱(Billing) | Google 처리 | 결제 | Google 영역 |
-| 외부 링크 열기 | 사용자 탭 | 카카오 이모티콘 스튜디오 안내(notion), webp-animator, Play 구독 관리(`sku`·`package` 쿼리) | URL 만, 개인정보 없음 | 안내·해지 | CONFIRMED — 브라우저/Play 앱에서 열림 |
+| 외부 링크 열기 | 사용자 탭 | 카카오 이모티콘 스튜디오 안내(notion), webp-animator, Play 구매 내역 | URL 만, 개인정보 없음 | 안내·구매 내역 | CONFIRMED — 브라우저/Play 앱에서 열림 |
 | 공유 시트 | 사용자 탭 | 사용자가 고른 앱 | ZIP·PNG·GIF·store 스냅샷 | 전달 | CONFIRMED — 사용자 시작 |
 | 라이브러리 백그라운드 통신(datatransport 등) | — | UNKNOWN | UNKNOWN | UNKNOWN | **UNKNOWN** |
 
@@ -103,4 +116,6 @@
 1. Billing Library 의 datatransport 사용 — Google Play SDK Index 의 `com.android.billingclient:billing` 데이터 안내를 OWNER 가 Console 로그인 상태로 확인(37차 비로그인 조회에서 본문 없음).
 2. 영수증 서버 호스팅의 요청 로그(IP 등)·보관 기간 — 호스팅 선택 시 결정.
 3. 자동 백업 — 유지할지(`allowBackup`) OWNER 결정 후 방침·Data Safety 에 반영.
-4. 권한 3종(SYSTEM_ALERT_WINDOW·VIBRATE·WRITE_EXTERNAL_STORAGE≤32) 필요성 — 제거는 별도 회차에서 결정·실기기 확인.
+4. SYSTEM_ALERT_WINDOW는 45.40 release 전용 제거. VIBRATE·WRITE_EXTERNAL_STORAGE≤32 필요성은 후속 실기기 확인. 최종 서명 산출물의 권한 재확인 필요.
+
+예전 구독 `pro_monthly` / `pro_yearly`는 팔지 않지만 복원에서 알아봅니다.
