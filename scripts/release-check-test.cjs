@@ -104,6 +104,17 @@ try {
   const info = rc.inspectBundle(aab);
   assert.deepEqual(info.certificates, [sha(cert)], 'AAB 서명 인증서 지문');
   assert.deepEqual(rc.checkArtifact(info).filter(r => r.status !== 'PASS').map(r => r.id), [], '완전한 AAB 는 산출물 검사 PASS');
+  for (const purchases of [undefined, 'closed', 'close', false]) {
+    const config = { extra: { internalReview: false, purchases, privacyPolicyUrl: 'https://privacy.example/policy', supportEmail: 'support@example.com' } };
+    fs.writeFileSync(aab, zip(bundleEntries(config)));
+    const read = rc.inspectBundle(aab);
+    assert.equal(read.appConfig.extra.purchases, purchases);
+    const rows = Object.fromEntries(rc.checkArtifact(read, config).map(r => [r.id, r.status]));
+    assert.equal(rows.bundle_receipt_endpoint, purchases === 'closed' ? 'WARN' : 'FAIL');
+    assert.equal(rows.bundle_purchases, purchases === undefined || purchases === 'closed' ? 'PASS' : 'FAIL');
+    assert.equal(rows.bundle_internal_review_off, 'PASS');
+    assert.equal(rows.billing_permission, 'PASS');
+  }
   fs.writeFileSync(aab, zip(bundleEntries({ extra: { internalReview: true } }).filter(([n]) => !n.startsWith('base/dex'))));
   const bad = Object.fromEntries(rc.checkArtifact(rc.inspectBundle(aab)).map(r => [r.id, r.status]));
   assert.deepEqual([bad.bundle_internal_review_off, bad.bundle_receipt_endpoint, bad.expo_iap_native], ['FAIL', 'FAIL', 'FAIL'], '내부 검수 켜짐·서버 주소 없음·expo-iap 없음 → 각각 FAIL');

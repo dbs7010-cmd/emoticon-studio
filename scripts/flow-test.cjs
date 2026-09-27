@@ -30,6 +30,7 @@ class File {
     fs.writeFileSync(real(this.uri), options?.encoding === 'base64' ? Buffer.from(data, 'base64') : Buffer.isBuffer(data) || data instanceof Uint8Array ? Buffer.from(data) : data);
   }
   textSync() { return fs.readFileSync(real(this.uri), 'utf8'); }
+  async bytes() { return this.bytesSync(); }
   bytesSync() { return new Uint8Array(fs.readFileSync(real(this.uri))); }
   async base64() { return fs.readFileSync(real(this.uri)).toString('base64'); }
   delete() { fs.unlinkSync(real(this.uri)); }

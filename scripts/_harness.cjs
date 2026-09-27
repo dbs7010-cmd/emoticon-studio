@@ -18,6 +18,7 @@ class File {
   get exists() { return files.has(this.uri); }
   write(d, o) { files.set(this.uri, o?.encoding === 'base64' ? Buffer.from(d, 'base64') : d); }
   textSync() { return files.get(this.uri); }
+  async bytes() { return this.bytesSync(); }
   bytesSync() { return new Uint8Array(files.get(this.uri)); }
   delete() { files.delete(this.uri); }
 }

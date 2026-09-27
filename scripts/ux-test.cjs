@@ -11,6 +11,7 @@ class File {
   get exists() { return files.has(this.uri); }
   write(data, options) { if (failWrite && this.uri.endsWith('.json')) { files.set(this.uri, '{'); throw new Error('disk full'); } files.set(this.uri, options?.encoding === 'base64' ? Buffer.from(data,'base64') : data); }
   textSync() { return files.get(this.uri); }
+  async bytes() { return this.bytesSync(); }
   bytesSync() { return new Uint8Array(files.get(this.uri)); }
   delete() { if (!files.delete(this.uri)) throw new Error('missing ' + this.uri); }
 }

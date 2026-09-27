@@ -11,6 +11,7 @@ class File {
   get exists() { return files.has(this.uri); }
   write(data) { files.set(this.uri, data); }
   textSync() { return files.get(this.uri); }
+  async bytes() { return this.bytesSync(); }
   bytesSync() { return files.get(this.uri); }
   delete() { files.delete(this.uri); }
 }

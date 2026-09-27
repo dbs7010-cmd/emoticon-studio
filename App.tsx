@@ -1606,7 +1606,7 @@ function Studio() {
           {/* 실제로 PRO 인 것만 적는다. 그리기 기본 도구(진하기·보정·스포이드·팔레트·RGB)는 무료라 넣지 않는다. */}
           {proFeatures.map(([title, hint, icon]) =>
             <View key={title} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-              <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name={icon} size={19} color={C.ink} /></View>
+              <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.proSoft, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name={icon} size={19} color={C.pro} /></View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{title}</Text>
                 <Text style={{ fontSize: 12, color: C.muted }}>{hint}</Text>
