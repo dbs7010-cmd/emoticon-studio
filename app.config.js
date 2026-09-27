@@ -16,6 +16,7 @@
 //                    그리고 같은 환경변수를 둔 채 gradlew :app:assembleRelease
 //   출시 빌드:       환경변수를 두지 않는다. 그것이 기본값이다.
 const base = require('./app.json');
+const { httpsUrl, email } = require('./release/config-values.cjs');
 
 const internalReview = process.env.EMOTICON_INTERNAL_REVIEW === '1';
 const purchases = process.env.EMOTICON_PURCHASES;
@@ -58,6 +59,7 @@ module.exports = () => {
   }
   // 출시 서명: prebuild 때마다 app/build.gradle 의 release 서명을 업로드 키로 바꾸고 AAB 디버그 서명을 막는다(docs/RELEASE_SIGNING.md).
   plugins.push('./plugins/withReleaseSigning');
+  plugins.push('./plugins/withReleasePermissions');
   // 제목 글꼴(45.39 확정 디자인 D): Jua(SIL OFL 1.1, assets/fonts/Jua-OFL.txt). 빌드 때 APK 에 넣는다 — 실행 중 내려받지 않는다.
   // 본문은 기기 기본 한글 글꼴을 그대로 쓴다(한글 본문 글꼴은 굵기마다 수 MB 라 넣지 않는다).
   plugins.push(['expo-font', {
@@ -84,6 +86,8 @@ module.exports = () => {
     internalReview,
     purchases,
     receiptEndpoint,
+    privacyPolicyUrl: httpsUrl(process.env.EMOTICON_PRIVACY_URL) ? process.env.EMOTICON_PRIVACY_URL : undefined,
+    supportEmail: email(process.env.EMOTICON_SUPPORT_EMAIL) ? process.env.EMOTICON_SUPPORT_EMAIL : undefined,
   },
   };
 };

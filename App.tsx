@@ -113,6 +113,16 @@ function Studio() {
   const [place, setPlace] = useState({ scale: 1, dx: 0, dy: 0 });
   const composer = useRef<Composer>(null);
   const [settings, setSettings] = useState(false);
+  const [contactFallback, setContactFallback] = useState(false);
+  const privacyUrl = Constants.expoConfig?.extra?.privacyPolicyUrl as string | undefined;
+  const supportEmail = Constants.expoConfig?.extra?.supportEmail as string | undefined;
+  async function openSupport() {
+    if (!supportEmail) return;
+    const subject = encodeURIComponent('[임티제작소] 문의');
+    const body = encodeURIComponent(`앱 버전: ${appVersion}\nOS: ${Platform.OS} ${Platform.Version}`);
+    try { await Linking.openURL(`mailto:${supportEmail}?subject=${subject}&body=${body}`); }
+    catch { setContactFallback(true); }
+  }
   // 홈 아래 두 화면(44차): 전체 작업(여러 세트 찾기·다시 열기)과 표현 가이드("무엇을 그릴까?"). 세트 안 칸 관리는 보드가 맡는다.
   const [homeView, setHomeView] = useState<'home' | 'all' | 'guide'>('home');
   const [guideCategory, setGuideCategory] = useState<string>(EXPRESSION_GUIDE.categories[0]);
@@ -1544,12 +1554,25 @@ function Studio() {
         <Text style={{ flex: 1, fontSize: 13, color: C.muted }}>버전</Text>
         <Text accessibilityLabel={'앱 버전 ' + appVersion} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{appVersion}</Text>
       </View>
+      <Pressable accessibilityRole="button" accessibilityLabel="개인정보처리방침" accessibilityState={{ disabled: !privacyUrl }} disabled={!privacyUrl}
+        onPress={() => privacyUrl && void Linking.openURL(privacyUrl).catch(() => setNotice('개인정보처리방침을 열지 못했어요. 잠시 뒤 다시 시도해 주세요.'))}
+        style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Text style={{ flex: 1, color: C.ink }}>개인정보처리방침</Text><Text style={{ color: C.muted }}>{privacyUrl ? '열기 ›' : '준비 중'}</Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="문의하기" accessibilityState={{ disabled: !supportEmail }} disabled={!supportEmail}
+        onPress={() => void openSupport()} style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Text style={{ flex: 1, color: C.ink }}>문의하기</Text><Text style={{ color: C.muted }}>{supportEmail ? '메일 보내기 ›' : '준비 중'}</Text>
+      </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="PRO 이용" onPress={() => { setSettings(false); setProSheet(true); }}
         style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? T.fill : 'transparent' })}>
         <MaterialCommunityIcons name="star-four-points-outline" size={19} color={C.muted} />
         <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: C.ink }}>PRO 이용</Text>
         <MaterialCommunityIcons name="chevron-right" size={18} color={C.muted} />
       </Pressable>
+    </Dialog>}
+    {contactFallback && <Dialog title="문의 이메일" onClose={() => setContactFallback(false)}>
+      <Text>메일 앱을 열지 못했어요. 아래 주소를 길게 눌러 복사해 주세요.</Text>
+      <Text selectable accessibilityLabel="복사할 문의 이메일" style={{ fontSize: 17, color: C.ink }}>{supportEmail}</Text>
     </Dialog>}
     {proSheet && <Modal animationType="slide" onRequestClose={() => { setProSheet(false); resetPayment(); }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>

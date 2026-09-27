@@ -14,6 +14,7 @@ const os = require('os');
 const zlib = require('zlib');
 const crypto = require('crypto');
 const { execFileSync } = require('child_process');
+const { httpsUrl, email } = require('../release/config-values.cjs');
 
 const root = path.resolve(__dirname, '..');
 const EXPECTED_APPLICATION_ID = 'com.emoticonstudio.app';
@@ -73,6 +74,7 @@ function checkConfig(config, { released = [], gradleText = null } = {}) {
   const internal = config?.extra?.internalReview === true;
   out.push(row('CONFIG', 'internal_review_off', internal ? 'FAIL' : 'PASS', internal ? '내부 검수 빌드 설정이 켜져 있어요(EMOTICON_INTERNAL_REVIEW=1 없이 빌드)' : '내부 검수 스위치 꺼짐'));
   out.push(...checkPurchases(config, 'CONFIG', ''));
+  out.push(...checkContact(config, 'CONFIG', ''));
   const endpoint = config?.extra?.receiptEndpoint;
   const endpointOk = typeof endpoint === 'string' && /^https:\/\//.test(endpoint);
   const closedMissing = config?.extra?.purchases === 'closed' && endpoint === undefined;
@@ -148,6 +150,12 @@ function inspectBundle(aabPath) {
   const certs = zip.names.filter(n => /^META-INF\/[^/]+\.(RSA|DSA|EC)$/i.test(n)).flatMap(n => certificatesFromPkcs7(zip.read(n)));
   return { sha256: sha256(buf), bytes: buf.length, isBundle: zip.names.includes('BundleConfig.pb') && !!manifest, manifest, appConfig, jsBundleBytes: jsBundle ? jsBundle.length : 0, iap, certificates: [...new Set(certs.map(c => sha256(c)))] };
 }
+function checkContact(config, group, prefix) {
+  return [
+    row(group, prefix + 'privacy_url', httpsUrl(config?.extra?.privacyPolicyUrl) ? 'PASS' : 'FAIL', '개인정보처리방침 https URL 필요', { owner: true }),
+    row(group, prefix + 'support_email', email(config?.extra?.supportEmail) ? 'PASS' : 'FAIL', '유효한 문의 이메일 필요', { owner: true }),
+  ];
+}
 function checkPurchases(config, group, prefix) {
   const mode = config?.extra?.purchases;
   const valid = !!config && (mode === undefined || mode === 'closed');
@@ -160,10 +168,12 @@ function checkArtifact(info, expectedConfig) {
   r('app_bundle', info.isBundle, info.isBundle ? 'Android App Bundle(BundleConfig.pb · base 모듈)' : 'AAB 구조가 아니에요');
   r('application_id_in_bundle', !!info.manifest && info.manifest.includes(EXPECTED_APPLICATION_ID), `매니페스트 패키지 ${EXPECTED_APPLICATION_ID}`);
   r('billing_permission', !!info.manifest && info.manifest.includes('com.android.vending.BILLING'), 'com.android.vending.BILLING 권한');
+  r('no_overlay_permission', !!info.manifest && !info.manifest.includes('android.permission.SYSTEM_ALERT_WINDOW'), '출시 매니페스트에 SYSTEM_ALERT_WINDOW 없음');
   r('release_js_bundle', info.jsBundleBytes > 0, `index.android.bundle ${info.jsBundleBytes} bytes`);
   r('expo_iap_native', info.iap, 'expo-iap 네이티브 모듈(dex 에 expo/modules/iap)');
   r('bundle_internal_review_off', info.appConfig && info.appConfig.extra?.internalReview !== true, `묶인 app.config internalReview = ${info.appConfig?.extra?.internalReview}`);
   out.push(...checkPurchases(info.appConfig, 'ARTIFACT', 'bundle_'));
+  out.push(...checkContact(info.appConfig, 'ARTIFACT', 'bundle_'));
   if (expectedConfig) r('bundle_purchases_match', !!info.appConfig && info.appConfig.extra?.purchases === expectedConfig.extra?.purchases, '빌드 설정과 AAB 구매 구성 일치');
   const ep = info.appConfig?.extra?.receiptEndpoint;
   const closedMissing = info.appConfig?.extra?.purchases === 'closed' && ep === undefined;
@@ -214,7 +224,7 @@ if (require.main === module) {
   const { groups, exitCode } = summarize(results);
   for (const g of Object.keys(groups)) {
     console.log(`${g.padEnd(8)} ${groups[g]}`);
-    for (const r of results.filter(x => x.group === g)) console.log(`   ${r.status.padEnd(7)} ${r.id}${r.external ? ' [EXTERNAL]' : ''} — ${r.message}`);
+    for (const r of results.filter(x => x.group === g)) console.log(`   ${r.status.padEnd(7)} ${r.id}${r.owner && r.status === 'FAIL' ? ' [OWNER]' : r.external ? ' [EXTERNAL]' : ''} — ${r.message}`);
   }
   const identityOut = arg('--identity');
   if (identityOut) {

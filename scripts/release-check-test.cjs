@@ -33,7 +33,7 @@ try {
   assert.throws(() => applyReleaseSigning(template.replace(/(release \{\n[\s\S]*?)signingConfig signingConfigs\.debug/, '$1signingConfig = signingConfigs.debug')), /template changed/, 'release 줄 표기가 바뀌면 플러그인이 멈춘다(조용히 디버그 서명을 남기지 않음)');
 
   // ── CONFIG ────────────────────────────────────────────────────────────────────────────────
-  const good = { version: '1.0.0', android: { package: 'com.emoticonstudio.app', versionCode: 3 }, extra: { internalReview: false, receiptEndpoint: 'https://verify.example/receipt' } };
+  const good = { version: '1.0.0', android: { package: 'com.emoticonstudio.app', versionCode: 3 }, extra: { internalReview: false, receiptEndpoint: 'https://verify.example/receipt', privacyPolicyUrl: 'https://privacy.example/policy', supportEmail: 'support@example.com' } };
   const status = (cfg, opts) => Object.fromEntries(rc.checkConfig(cfg, opts).map(r => [r.id, r.status]));
   assert.deepEqual(Object.values(status(good, { released: [{ versionCode: 2 }] })).filter(s => s !== 'PASS'), [], '좋은 설정은 전부 PASS');
   assert.equal(status({ ...good, extra: { ...good.extra, internalReview: true } }).internal_review_off, 'FAIL', '내부 검수 켜짐 → FAIL');
@@ -100,7 +100,7 @@ try {
     ...extra,
   ];
   const aab = path.join(tmp, 'good.aab');
-  fs.writeFileSync(aab, zip(bundleEntries({ extra: { internalReview: false, receiptEndpoint: 'https://verify.example/receipt' } })));
+  fs.writeFileSync(aab, zip(bundleEntries({ extra: { internalReview: false, receiptEndpoint: 'https://verify.example/receipt', privacyPolicyUrl: 'https://privacy.example/policy', supportEmail: 'support@example.com' } })));
   const info = rc.inspectBundle(aab);
   assert.deepEqual(info.certificates, [sha(cert)], 'AAB 서명 인증서 지문');
   assert.deepEqual(rc.checkArtifact(info).filter(r => r.status !== 'PASS').map(r => r.id), [], '완전한 AAB 는 산출물 검사 PASS');
