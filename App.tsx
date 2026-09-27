@@ -10,7 +10,8 @@ import { ASSET_SLOTS, EXPRESSION_GUIDE, HOME_NOTICE, type ExpressionExample, typ
 import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
 import { MotionBaker, type Baker } from './src/components/motion-baker';
 import { ExtraComposer, placeInFrame, type Composer } from './src/components/extra-composer';
-import { Painter, type CopiedWork, type Tool } from './src/painter/painter';
+import { Painter, CATALOG, type CopiedWork, type Tool } from './src/painter/painter';
+import { isProPreset } from './src/motion-math';
 import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC as SPEC, STAGES, WEBP_TOOL_RULE, WEBP_ANIMATOR_URL, REQUIRED_EXTRAS } from './src/constants/kakao-spec';
 import { TRASH_DAYS, inTrash, trashExpired, captionText, createProject, doneCount, usesPro, droppedImagePaths, duplicateCaptions, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
 import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, readPickedFile, saveStore, type StoreReport } from './src/services/storage';
@@ -24,6 +25,14 @@ import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, 
 
 const colors: Record<string, string> = { PASS: T.success, WARNING: STATUS_TONE.warn, FAIL: STATUS_TONE.fail, EMPTY: T.faint, DRAWING: T.info, REVIEW: '#8B6FCB', PLANNED: T.success };
 const C = T;
+const proBrushes = CATALOG.filter(b => b.pro);
+const proMotions = PRESETS.filter(p => isProPreset(p.id));
+const proFeatures = [
+  [`PRO 움직임 ${proMotions.length}종`, proMotions.map(p => p.label).join(' · '), 'motion-play-outline'],
+  ['부분만 움직이기 · 두 모습 번갈아', '손, 귀, 꼬리처럼 원하는 곳만 따로, 차례로', 'hand-back-right-outline'],
+  ['여러 칸에 같은 움직임 한 번에', '보관한 움직임을 고른 칸 전부에', 'content-duplicate'],
+  [`PRO 브러시 ${proBrushes.length}종`, proBrushes.map(b => b.title).join(' · '), 'brush-variant'],
+] as const;
 // 설정 화면에 보여 줄 앱 버전. app.json 의 값을 그대로 읽는다.
 const appVersion = Constants.expoConfig?.version ?? '—';
 // 감정 카드의 대표 그림을 꺼낸다. 홈 미리보기와 감정 목록이 같은 규칙을 쓴다.
@@ -1541,7 +1550,7 @@ function Studio() {
           <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: C.ink }}>PRO</Text>
         </View>
         <ScrollView contentContainerStyle={{ padding: T.gap.lg, gap: T.gap.md, paddingBottom: 32 }}>
-          <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink, lineHeight: 30, letterSpacing: -.5 }}>{'더 섬세하게 움직이고\n여러 칸을 한 번에'}</Text>
+          <Text style={{ fontFamily: Font.display, fontSize: 24, color: C.ink, lineHeight: 32 }}>{'다양한 붓과 움직임으로\n여러 칸을 한 번에'}</Text>
           {/* proFeatureArtwork 자리(16:9). 지금은 앱 기본 캐릭터 두 장으로 전후를 보여 준다. */}
           <View accessibilityLabel="움직임 전후 미리보기" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 14, aspectRatio: 16 / 9, maxHeight: 214, borderRadius: 24, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
             {/* 왼쪽·오른쪽은 같은 그림이다. 달라지는 것은 '무엇이 움직이는가'뿐이라, 그 차이만 앱이 그린다. */}
@@ -1564,9 +1573,7 @@ function Studio() {
             </View>
           </View>
           {/* 실제로 PRO 인 것만 적는다. 그리기 기본 도구(진하기·보정·스포이드·팔레트·RGB)는 무료라 넣지 않는다. */}
-          {([['부분만 움직이기 · 두 모습 번갈아', '손, 귀, 꼬리처럼 원하는 곳만 따로, 차례로', 'hand-back-right-outline'],
-             ['여러 칸에 같은 움직임 한 번에', '보관한 움직임을 고른 칸 전부에', 'content-duplicate'],
-             ['고급 브러시 8종', '매끈한 잉크, 부드러운 펜, 결 연필, 캘리그래피, 크레용, 에어브러시, 납작펜, 거친 선', 'brush-variant']] as const).map(([title, hint, icon]) =>
+          {proFeatures.map(([title, hint, icon]) =>
             <View key={title} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
               <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name={icon} size={19} color={C.ink} /></View>
               <View style={{ flex: 1 }}>
@@ -1576,7 +1583,7 @@ function Studio() {
             </View>)}
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start', paddingVertical: 4 }}>
             <MaterialCommunityIcons name="check" size={16} color={C.muted} />
-            <Text style={{ flex: 1, fontSize: 12, lineHeight: 18, color: C.muted }}>무료로도 워터마크 없이 한 세트를 끝까지 그리고, 기본 움직임을 넣고, 파일 묶음으로 내보낼 수 있어요.</Text>
+            <Text style={{ flex: 1, fontSize: 12, lineHeight: 18, color: C.muted }}>{`무료 브러시 ${CATALOG.filter(b => !b.pro).length}종 · 무료 움직임 ${PRESETS.filter(p => !isProPreset(p.id)).length}종으로 한 세트를 끝까지 만들고, 워터마크 없이 파일 묶음으로 내보낼 수 있어요.`}</Text>
           </View>
           {entitlementLabel(entitlement) !== '무료' && <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>}
           {expiredButRemembered(entitlement) && <Text style={{ fontSize: 12, color: C.ink }}>기간이 끝나도 이미 만든 움직임은 계속 재생되고 내보낼 수 있어요.</Text>}

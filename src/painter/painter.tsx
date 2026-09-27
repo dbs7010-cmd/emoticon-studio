@@ -136,7 +136,7 @@ export type BrushKey = string;
 // key 와 preset 은 저장되는 값이고, 효과가 같으면 예전 이름을 그대로 쓴다.
 // group 은 목록 분류(선·채색·질감·효과)다. use 는 고른 뒤 한 줄로 보여 주는 설명이다.
 type Group = '선' | '채색' | '질감' | '효과';
-const CATALOG: { key: BrushKey; title: string; pro: boolean; group: Group; base?: Brush; preset?: NonNullable<BrushSettings['preset']>; use: string; stroke: ImageSourcePropType }[] = [
+export const CATALOG: { key: BrushKey; title: string; pro: boolean; group: Group; base?: Brush; preset?: NonNullable<BrushSettings['preset']>; use: string; stroke: ImageSourcePropType }[] = [
   // ── 무료 10 ──
   { key: 'pen', title: '기본 펜', pro: false, group: '선', base: 'pen', use: '고른 굵기의 또렷한 선 · 외곽선', stroke: require('../../assets/art/stroke-pen.png') },
   { key: 'inknatural', title: '자연 잉크', pro: false, group: '선', preset: 'inknatural', use: '가장자리가 살아 있는 손맛 선', stroke: require('../../assets/art/stroke-inknatural.png') },
