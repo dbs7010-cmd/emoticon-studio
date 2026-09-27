@@ -60,3 +60,4 @@ verification/**
 !verification/**/*.json
 !verification/**/*.txt
 verification/**/node_modules/
+verification/_latest/

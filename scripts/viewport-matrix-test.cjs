@@ -359,13 +359,13 @@ const heights = [568, 640, 720, 800, 900, 1000];
     }
     await act(async () => tree.unmount());
   }
-  fs.mkdirSync('verification/round45_23', { recursive: true });
-  fs.writeFileSync('verification/round45_23/font-scale.json', JSON.stringify(scaleRows, null, 2));
+  fs.mkdirSync('verification/_latest', { recursive: true });
+  fs.writeFileSync('verification/_latest/font-scale.json', JSON.stringify(scaleRows, null, 2));
   for (const name of ['홈', '그리기', '보드', '내보내기'])
     console.log('  글자 배율 ' + name.padEnd(5) + ' — 훑은 글자 ' + scaleRows.filter(r => r.screen === name).reduce((a, r) => Math.max(a, r.texts), 0) + '곳 · 1.0/1.3/1.5 에서 잘림 0곳');
   console.log('  (렌더된 스타일 계산이다. 실기기 캡처가 아니다 — 실제 줄바꿈·글꼴 메트릭은 기기가 판정한다.)');
 
-  const outDir = 'verification/round39';
+  const outDir = 'verification/_latest';
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(outDir + '/viewport-matrix.json', JSON.stringify(rows, null, 2));
   console.log('  viewport  canvas share brush detail color ref layers motion kbRoom boardTile exportCell');
