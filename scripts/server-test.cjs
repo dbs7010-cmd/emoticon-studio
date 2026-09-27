@@ -61,5 +61,16 @@ assert.equal(decide(live(), askOnce, { now }).verified, false, '일회성 상품
 const onceTest = boughtOnce({ purchaseType: 0 });
 assert.deepEqual([decide(onceTest, askOnce, { now }).verified, decide(onceTest, askOnce, { now }).sandbox], [false, true], '운영 설정에서는 테스트 구매를 받지 않고, 그 사실은 남긴다');
 assert.equal(decide(onceTest, askOnce, { now, acceptTestPurchases: true }).verified, true, '내부 테스트 설정에서는 받는다');
+// 45.40 테스터 보상(docs/closed-test/08): Play 프로모션 코드로 받은 구매(purchaseType 1)는 **운영 설정에서도** 정식 구매로 인정한다.
+// 테스트 구매로 표시하지 않고(sandbox 없음), 기한도 없다. 대신 상태·상품이 어긋나면 일반 구매와 똑같이 거절한다.
+const promo = boughtOnce({ purchaseType: 1 });
+const promoOk = decide(promo, askOnce, { now });
+assert.equal(promoOk.verified, true, '프로모션 코드 구매는 운영 설정에서 인정한다');
+assert.equal(promoOk.sandbox, undefined, '프로모션 구매는 테스트 구매로 표시하지 않는다');
+assert.equal(promoOk.plan, 'lifetime'); assert.equal(promoOk.expiresAt, undefined, '프로모션 구매도 기한이 없다(pro_lifetime)');
+assert.equal(decide(boughtOnce({ purchaseType: 1, purchaseState: 1 }), askOnce, { now }).verified, false, '취소된 프로모션 구매는 거절');
+assert.equal(decide(boughtOnce({ purchaseType: 1, purchaseState: 2 }), askOnce, { now }).verified, false, '보류 중인 프로모션 구매는 거절');
+assert.equal(decide(boughtOnce({ purchaseType: 1, productId: 'other_app_product' }), askOnce, { now }).verified, false, '다른 상품의 프로모션 구매는 거절');
+assert.equal(decide(promo, { ...askOnce, productId: 'not_ours' }, { now }).verified, false, '우리 상품이 아닌 요청은 프로모션이어도 거절');
 
-console.log('PASS: 서버 판정 — 비소모성 일회성 상품은 구매 상태만 보고 기한 없이 통과(취소·보류·다른 상품·구독 응답은 거절), 예전 구독은 살아 있는 것만 통과하고 상품·기간·상태가 어긋나면 거절, 테스트 구매는 서버 설정이 정하고 그 사실이 응답에 남는다. 실제 스토어 호출은 서비스 계정 키가 있어야 하므로 여기서 검증하지 않는다.');
+console.log('PASS: 서버 판정 — 비소모성 일회성 상품은 구매 상태만 보고 기한 없이 통과(취소·보류·다른 상품·구독 응답은 거절), 예전 구독은 살아 있는 것만 통과하고 상품·기간·상태가 어긋나면 거절, 테스트 구매는 서버 설정이 정하고 그 사실이 응답에 남는다. 프로모션 코드 구매는 운영 설정에서도 인정(테스트 표시 없음·기한 없음)하고, 취소·보류·다른 상품·우리 상품 아님은 거절한다. 실제 스토어 호출은 서비스 계정 키가 있어야 하므로 여기서 검증하지 않는다.');
