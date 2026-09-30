@@ -5,7 +5,7 @@
 개인정보처리방침은 [PRIVACY_POLICY_KO.md](PRIVACY_POLICY_KO.md), 데이터 흐름·권한은 [PLAY_DATA_SAFETY.md](PLAY_DATA_SAFETY.md)를 원본으로 사용합니다. 이 문서의 과거 중복 방침은 그 문서로 대체합니다.
 
 ## 1. 이 약관에 대하여
-이 약관은 `이모티`(이하 "앱")을 쓰는 데 적용된다. 운영자는 `[OWNER INPUT REQUIRED: 상호/사업자명]`
+이 약관은 `imoti 이모티`(이하 "앱")을 쓰는 데 적용된다. 운영자는 `[OWNER INPUT REQUIRED: 상호/사업자명]`
 (이하 "운영자")이다.
 
 ## 2. 앱이 하는 일

@@ -68,6 +68,12 @@ const render = async el => { let t; await act(async () => { t = create(el); }); 
   timings.length = 0; let go = 0;
   t = await render(React.createElement(U.CompleteCard, { total: 32, actionLabel: '파일 묶음 만들기', onAction: () => go++ }, React.createElement('View', { testID: '작품 격자' })));
   assert.ok(texts(t).includes('32칸 완성!'));
+  // 칸 수는 고정 문구가 아니다: 보드는 세트의 실제 칸 수(project.slots.length)를 넘긴다. 24칸 세트면 '24칸 완성!'.
+  {
+    const t24 = await render(React.createElement(U.CompleteCard, { total: 24, actionLabel: '내보내기', onAction: () => {} }));
+    assert.ok(texts(t24).includes('24칸 완성!') && !texts(t24).includes('32칸 완성!'), '완성 카드 칸 수 = 넘겨준 실제 칸 수');
+  }
+  assert.ok(/<CompleteCard total=\{total\}/.test(require('node:fs').readFileSync('App.tsx', 'utf8')) && /const total = project\.slots\.length;/.test(require('node:fs').readFileSync('App.tsx', 'utf8')), '보드는 세트의 실제 칸 수를 넘긴다');
   assert.equal(flat(t.root.findAll(n => n.type === 'View' && n.props.testID === '완성 카드')[0].props.style).backgroundColor, T.paper, '흰 카드');
   const check = flat(t.root.findAll(n => n.props.testID === '완성 체크')[0].props.style);
   assert.equal(check.backgroundColor, T.accent); assert.equal(check.transform[0].scale.__getValue(), 1, '튀어 올라 제 크기');

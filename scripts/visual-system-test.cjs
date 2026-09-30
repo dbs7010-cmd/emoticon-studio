@@ -149,9 +149,10 @@ async function ready() {
   assert.equal(slots.HOME_NOTICE.enabled, false, '알림은 꺼져 있다');
   // 41차: 앱 표시 이름(런처·스토어 제목의 원본)과 홈 브랜드는 하나다.
   const appName = JSON.parse(fs.readFileSync('app.json', 'utf8')).expo.name;
-  assert.equal(appName, '이모티', 'app.json expo.name 은 제품 브랜드');
+  assert.equal(appName, 'imoti 이모티', 'app.json expo.name 은 제품명(브랜드 병기)');
   assert.equal(require('../app.config.js')().name, appName, 'app.config.js 가 이름을 바꾸지 않는다');
-  assert.ok(fs.readFileSync('App.tsx', 'utf8').includes(`>${appName}</Text>`), '홈 머리 브랜드 글자와 앱 이름이 같다');
+  // 홈 로고는 소문자 imoti 주표기 + 작은 '이모티' 보조표기. 화면 읽기 이름은 제품명과 같다.
+  assert.ok(fs.readFileSync('App.tsx', 'utf8').includes(`accessibilityLabel="${appName}"`), '홈 로고를 읽는 이름과 앱 이름이 같다');
   assert.ok(fs.readFileSync('docs/PLAY_STORE_LISTING_KO.md', 'utf8').includes('`' + appName + '`'), '스토어 등록정보 초안 제목도 같다');
 
   // ── 3. 홈: 브랜드 → 창작 표면 → 최근 작업. 알림이 꺼지면 자리 0 ───────────────────────────────
@@ -159,7 +160,13 @@ async function ready() {
   p.slots = p.slots.map((s, i) => i < 2 ? { ...s, finalImage: { path: 'image-a.png', width: 360, height: 360 }, done: i === 0 } : s);
   saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
   await act(async () => { tree = create(React.createElement(App)); });
-  assert.equal(texts()[0], '이모티', '첫 글자는 브랜드');
+  assert.deepEqual(texts().slice(0, 2), ['imoti', '이모티'], '첫 글자는 브랜드(imoti 주표기 + 이모티 보조표기)');
+  {
+    const brand = tree.root.findAll(n => n.type === 'View' && n.props.testID === '홈 브랜드')[0];
+    assert.equal(brand.props.accessibilityLabel, appName, '로고는 제품명 한 번으로 읽힌다');
+    const [main, sub] = brand.findAll(n => n.type === 'Text').map(n => flat(n.props.style));
+    assert.ok(main.fontSize > sub.fontSize * 1.5, 'imoti 가 주표기, 이모티는 작은 보조표기');
+  }
   // 명세 H02: 작업이 있으면 이어하기가 맨 위다. 소개용 큰 표면은 작업 목록 위에 두지 않는다.
   const startAt = tree.root.findAll(n => n.type === 'Pressable').findIndex(n => n.props.accessibilityLabel === '새 세트 만들기');
   const cardAt = tree.root.findAll(n => n.type === 'Pressable').findIndex(n => n.props.accessibilityLabel === '시각 세트');

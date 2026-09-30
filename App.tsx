@@ -116,7 +116,7 @@ function Studio() {
   const supportEmail = Constants.expoConfig?.extra?.supportEmail as string | undefined;
   async function openSupport() {
     if (!supportEmail) return;
-    const subject = encodeURIComponent('[이모티] 문의');
+    const subject = encodeURIComponent('[imoti 이모티] 문의');
     const body = encodeURIComponent(`앱 버전: ${appVersion}\nOS: ${Platform.OS} ${Platform.Version}`);
     try { await Linking.openURL(`mailto:${supportEmail}?subject=${subject}&body=${body}`); }
     catch { setContactFallback(true); }
@@ -858,7 +858,12 @@ function Studio() {
               <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
                 <ImtiIcon name="brush" size={IconSize.row} />
               </View>
-              <Text numberOfLines={1} style={{ fontSize: 23, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>이모티</Text>
+              {/* 브랜드 병기(사용자 확정 2026-10-01): 소문자 imoti 가 주표기, 작은 '이모티'가 보조표기. 로고 자리만 바꿨다(배치 그대로).
+                  화면 읽기는 두 글자를 따로 읽지 않고 제품명 'imoti 이모티' 한 번으로 읽는다. */}
+              <View testID="홈 브랜드" accessible accessibilityRole="header" accessibilityLabel="imoti 이모티" style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                <Text numberOfLines={1} style={{ fontSize: 23, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>imoti</Text>
+                <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 12, fontWeight: '700', color: C.muted }}>이모티</Text>
+              </View>
             </View>
             {/* 무료일 때 'PRO 보기', 산 뒤에는 'PRO'(잉크 면) — 지금 PRO 인지 글자로 구분한다(출시 검사도 이 글자를 본다). */}
             <ProBadge label="PRO 보기" text={pro ? 'PRO' : 'PRO 보기'} owned={pro} onPress={() => setProSheet(true)} />
