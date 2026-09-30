@@ -440,7 +440,8 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   // S01: 빈 칸은 '+' 로 알린다. 누르면 예전과 똑같이 그 칸이 열린다.
   const empty = tree.root.findAll(n => n.type === 'Pressable' && n.props.testID === 'slot-20')[0];
   assert.ok(empty, '빈 칸이 있다');
-  assert.equal(empty.findAll(n => n.type === 'Icon' && n.props.name === 'plus').length, 1, '빈 칸에 + 표시');
+  // 45.43 S5: '+' 는 「이모티 라인」 plus 아이콘(SVG)이다.
+  assert.equal(empty.findAll(n => n.type === 'Svg' && n.props.testID === 'icon-plus').length, 1, '빈 칸에 + 표시');
   await act(async () => byTestID('slot-1')[0].props.onPress());
   await ready();
 

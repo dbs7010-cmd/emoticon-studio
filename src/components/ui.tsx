@@ -381,15 +381,21 @@ export function SaveToast({ slot, onNext, nextLabel = '다음 칸', message }: {
 }
 
 // 완성 카드: 흰 카드 + 튀어 오르는 노란 체크 + 'N칸 완성!' + 작품 격자(children) + 노란 행동 하나.
-export function CompleteCard({ total, children, actionLabel, onAction, testID = '완성 카드' }: { total: number; children?: React.ReactNode; actionLabel: string; onAction: () => void; testID?: string }) {
+// 완성 B(시안 WB2-States '완료 B · White 유지', 사용자 확정): 흰 카드 · 튀어 오르는 노란 체크 옆에 'N칸 완성!' + 한 줄 · 작품 격자 · 노란 행동 하나.
+export function CompleteCard({ total, subtitle, children, actionLabel, actionIcon, onAction, testID = '완성 카드' }: { total: number; subtitle?: string; children?: React.ReactNode; actionLabel: string; actionIcon?: IconName; onAction: () => void; testID?: string }) {
   const pop = useMicro('pop');
-  return <View testID={testID} style={{ backgroundColor: T.paper, borderRadius: T.radius.card, padding: T.gap.xl, gap: T.gap.lg, alignItems: 'center', ...Card.border, ...Card.shadow }}>
-    <Animated.View testID="완성 체크" style={[{ width: 56, height: 56, borderRadius: 28, backgroundColor: T.accent, borderWidth: T.stroke, borderColor: T.edge, alignItems: 'center', justifyContent: 'center' }, pop]}>
-      <ImtiIcon name="check" size={IconSize.tool} />
-    </Animated.View>
-    <Text accessibilityRole="header" style={{ ...Type.screenName, textAlign: 'center' }}>{total}칸 완성!</Text>
+  return <View testID={testID} style={{ backgroundColor: T.paper, borderRadius: 22, padding: T.gap.lg, gap: T.gap.md, ...Card.border, ...Card.shadow }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: T.gap.md }}>
+      <Animated.View testID="완성 체크" style={[{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.accent, borderWidth: T.stroke, borderColor: T.edge, alignItems: 'center', justifyContent: 'center' }, pop]}>
+        <ImtiIcon name="check" size={IconSize.tool} />
+      </Animated.View>
+      <View style={{ flex: 1 }}>
+        <Text accessibilityRole="header" style={{ fontSize: 22, lineHeight: 28, fontFamily: Font.display, fontWeight: '400', color: T.ink }}>{total}칸 완성!</Text>
+        {!!subtitle && <Text numberOfLines={2} style={{ fontSize: 12, color: T.muted }}>{subtitle}</Text>}
+      </View>
+    </View>
     {children}
-    <View style={{ alignSelf: 'stretch' }}><Action primary title={actionLabel} onPress={onAction} /></View>
+    <Action primary title={actionLabel} icon={actionIcon} onPress={onAction} />
   </View>;
 }
 

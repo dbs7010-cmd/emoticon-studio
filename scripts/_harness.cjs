@@ -184,13 +184,17 @@ const SCREENS = [
     // 45.35: 세부 설정은 접히는 줄이 아니라 같은 창의 다른 화면이다. 목록으로 돌아와서 견준다.
     await press('브러시 목록으로');
   }],
+  // 45.43 S5: 32칸을 다 채운 보드 — 완성 카드 B. 렌더용 데이터만 바꾼다(검토 세트의 모든 칸을 완성으로).
+  ['board-complete', '보드 · 전부 완성', async () => {
+    await unmount(); seed(2, false, true); await fresh(); await press('검토 세트');
+  }],
 ];
 
 // pro=false 는 렌더용 상태만 바꾼다(저장소의 검수용 PRO 표시를 끔). 결제·권한 코드는 건드리지 않는다.
-function seed(count, pro = true) {
+function seed(count, pro = true, complete = false) {
   files.clear();
   const p = createProject('검토 세트', '콩이');
-  p.slots = p.slots.map((s, i) => i < 18
+  p.slots = p.slots.map((s, i) => complete ? { ...s, finalImage: { path: 'a.png', width: 360, height: 360 }, done: true } : i < 18
     ? { ...s, finalImage: { path: 'a.png', width: 360, height: 360 }, done: i < 14, dialogue: i === 0 ? '고마워요' : '' }
     : s);
   p.lastSlot = 15;

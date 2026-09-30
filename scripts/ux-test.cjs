@@ -726,10 +726,12 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await press('전체 보기로 가기');
  assert.equal(tree.root.findAllByType('WebView').length,0,'finishing the last open cut closes the painter');
  assert.equal(tiles().length,32,'and lands on the board, where the whole set is visible at once');
- assert.ok(shown().some(t=>t==='32개 완성'),'with every cut counted and none left in progress');
+ // 45.43 S5: 다 채운 보드는 완성 카드 B(시안 '완료 B')가 머리를 맡는다 — 칸 수는 이 세트의 실제 칸 수.
+ assert.ok(shown().some(t=>t==='32칸 완성!'),'with every cut counted and none left in progress');
+ assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='완성 카드').length,1,'the complete card is on the board');
 
  // ── 내보내기: the result comes first, then what to fix, then one action ─────────────────────
- assert.equal(labelled('내보내기').length,1,'a finished set offers 내보내기 on the board');
+ assert.equal(labelled('내보내기').length,1,'a finished set offers 내보내기 on the board (one yellow action, in the complete card)');
  assert.equal(labelled('제출 준비').length,0,'the old 제출 준비 button is gone');
  await press('내보내기');
  assert.ok(shown().some(t=>t.includes('멈춰있는 이모티콘')),'the official profile is named');
@@ -1174,7 +1176,8 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
    assert.ok(addTiles<=1,label+': 빈 칸마다 추가 버튼을 반복하지 않는다 ('+addTiles+'개)');
    assert.ok(!shown().some(t=>/칸이 아직 비어 있어요/.test(t)),label+': 격자가 이미 보여 주는 것을 문장으로 반복하지 않는다');
    assert.equal(tiles().length,32,label+': 칸 수는 언제나 32개다');
-   assert.ok(shown().some(t=>t.startsWith(count+'개 완성')),label+': 완성 개수를 정확히 말한다');
+   // 45.43 S5: 다 찬 세트는 완성 카드 B 가 'N칸 완성!'으로 말한다(N = 이 세트의 칸 수).
+   assert.ok(shown().some(t=>count===32?t==='32칸 완성!':t.startsWith(count+'개 완성')),label+': 완성 개수를 정확히 말한다');
    await press('뒤로');
   }
   // 검사에 쓴 상태를 되돌린다.

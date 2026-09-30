@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 import { purchasesClosed, PURCHASES_CLOSED_NOTE } from './src/services/purchase-config';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
-import { Action, AssetSlot, Dialog, Elev, EmptyState, Field, IconButton, ProBadge, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font, Card } from './src/components/ui';
+import { Action, AssetSlot, CompleteCard, Dialog, Elev, EmptyState, Field, IconButton, ProBadge, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font, Card } from './src/components/ui';
 import { ImtiIcon, IconSize, type IconName as ImtiName } from './src/design/icons';
 import { ASSET_SLOTS, EXPRESSION_GUIDE, HOME_NOTICE, type ExpressionExample, type ExpressionGuideCard } from './src/design/asset-slots';
 import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
@@ -1369,24 +1369,42 @@ function Studio() {
             const done = doneCount(project);
             const working = project.slots.filter(isWorking).length;
             const drawnCount = project.slots.filter(s => s.finalImage).length;
-            // 한 줄 요약 + 노랑 진행 막대 + 상태 점 범례. 격자가 주인공이라 요약은 낮고 조용하다.
+            const total = project.slots.length;
+            const nextCut = nextUnfinished(project, project.lastSlot ?? 0);
+            const playButton = drawnCount >= 2 && <Pressable accessibilityRole="button" accessibilityLabel={playing ? '전체 재생 멈추기' : '전체 재생'} onPress={() => { setPlayIndex(0); setPlaying(!playing); }}
+              style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: playing ? C.accent : C.paper, alignItems: 'center', justifyContent: 'center', ...Elev[1] }}>
+              <MaterialCommunityIcons name={playing ? 'pause' : 'play'} size={22} color={C.ink} />
+            </Pressable>;
+            // 45.43 S5: 전부 완성하면 완성 카드 B(흰 카드 · 노란 체크 · 작품 격자 · 노란 행동 하나)가 머리를 맡는다.
+            // 행동 글자는 시안의 '파일 묶음 만들기' 대신 '내보내기' — 이 버튼은 묶음을 바로 만들지 않고 내보내기 화면을 연다(거기서 파일 묶음 만들기).
+            if (done === total) return <><CompleteCard total={total} subtitle={`${project.projectName} · 파일 묶음을 만들 수 있어요`} actionLabel="내보내기" actionIcon="tray-arrow-up" onAction={() => setScreen('export')}>
+              <View testID="완성 작품 격자" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                {project.slots.slice(0, 16).map(s => <View key={s.number} style={{ width: '10.9%', aspectRatio: 1, borderRadius: 8, backgroundColor: C.surface2, overflow: 'hidden' }}>
+                  {!!s.finalImage && <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />}
+                </View>)}
+              </View>
+            </CompleteCard>
+            {/* 다 채운 세트도 전체 재생은 그대로 쓸 수 있다. */}
+            {!!playButton && <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>{playButton}</View>}</>;
+            // 한 줄 요약 + 칸 수만큼 나뉜 막대(시안 카드 A · 이 세트의 실제 칸 수) + 네 상태 범례. 격자가 주인공이라 요약은 낮고 조용하다.
             return <View style={{ flexDirection: 'row', alignItems: 'center', gap: T.gap.md, paddingBottom: 4 }}>
               <View style={{ flex: 1, gap: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
                   <Text style={{ fontSize: 16, lineHeight: 22, color: C.ink, fontWeight: '700' }}>{done}개 완성{working ? ` · ${working}개 작업 중` : ''}</Text>
-                  <Text style={{ fontSize: 12, color: C.muted }}>/ {project.slots.length}칸</Text>
+                  <Text style={{ fontSize: 12, color: C.muted }}>/ {total}칸</Text>
                 </View>
-                <View style={{ height: 4, borderRadius: 2, backgroundColor: C.line, overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / project.slots.length * 100)}%`, height: '100%', borderRadius: 2, backgroundColor: C.accent }} /></View>
-                {/* 범례는 두 상태가 실제로 같이 있을 때만 설명할 것이 있다(45.2차). */}
-                {done > 0 && working > 0 && <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><StatusDot tone="done" size={8} /><Text style={{ fontSize: 11, color: C.muted }}>완성</Text></View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><StatusDot tone="working" size={8} /><Text style={{ fontSize: 11, color: C.muted }}>고치는 중</Text></View>
+                <View testID="보드 진행" accessible accessibilityLabel={`${total}칸 중 ${done}칸 완성${nextCut !== null ? `, 지금 ${nextCut}번 칸` : ''}`} style={{ flexDirection: 'row', gap: 2, height: 10 }}>
+                  {project.slots.map(s => <View key={s.number} style={{ flex: 1, borderRadius: 3, backgroundColor: isDone(s) ? C.accent : s.number === nextCut ? C.ink : C.surface2 }} />)}
+                </View>
+                {/* 범례는 완성과 그리는 중이 같이 있을 때만 설명할 것이 있다(45.2차 규칙 유지). 네 상태 표시는 시안 그대로. */}
+                {done > 0 && working > 0 && <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 12, rowGap: 4 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="check" size={IconSize.meta} /></View><Text style={{ fontSize: 11, color: C.muted }}>완성</Text></View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: C.accentLine }} /><Text style={{ fontSize: 11, color: C.muted }}>그리는 중</Text></View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ width: 11, height: 11, borderRadius: 3, borderWidth: 1.5, borderColor: C.edge, backgroundColor: C.accentSoft }} /><Text style={{ fontSize: 11, color: C.muted }}>지금</Text></View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ width: 11, height: 11, borderRadius: 3, borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.lineStrong }} /><Text style={{ fontSize: 11, color: C.muted }}>빈 칸</Text></View>
                 </View>}
               </View>
-              {drawnCount >= 2 && <Pressable accessibilityRole="button" accessibilityLabel={playing ? '전체 재생 멈추기' : '전체 재생'} onPress={() => { setPlayIndex(0); setPlaying(!playing); }}
-                style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: playing ? C.accent : C.paper, alignItems: 'center', justifyContent: 'center', ...Elev[1] }}>
-                <MaterialCommunityIcons name={playing ? 'pause' : 'play'} size={22} color={C.ink} />
-              </Pressable>}
+              {playButton}
             </View>;
           })()}
           {reordering && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 12, borderRadius: T.radius.md, backgroundColor: T.infoSoft }}>
@@ -1405,21 +1423,20 @@ function Studio() {
               <Text style={{ fontSize: 11, color: C.muted }}>{pad(shown.number)} · {playIndex + 1} / {made.length}</Text>
             </View>;
           })()}
-          {/* 칸 격자가 주인공. 상태는 글자 배지 대신 모서리 점 하나(초록 완성 · 노랑 고치는 중), 손볼 곳은 아래 점. 완성한 칸을 고치면 점이 노랑으로 바뀐다. */}
-          <View testID="slot-grid" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{project.slots.map(s => {
+          {/* 칸 격자가 주인공(45.43 S5 · 시안 '진행' 네 상태). 완성 = 흰 칸 + 노란 체크 · 그리는 중 = 흐린 작품 + 노란 테두리 점 ·
+              지금(이어서 그리기가 여는 칸, 홈의 '다음은 N번 칸'과 같다) = 옅은 노랑 면 + 잉크 테두리 · 빈 칸 = 점선 + '+'. 손볼 곳은 왼쪽 위 점. */}
+          <View testID="slot-grid" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{(() => { const nextCut = nextUnfinished(project, project.lastSlot ?? 0); return project.slots.map(s => {
             const done = isDone(s), working = isWorking(s);
-            const firstEmpty = project.slots.find(x => !x.finalImage)?.number;
-            const current = project.lastSlot === s.number, adding = !s.finalImage && s.number === firstEmpty;
-            return <Pressable key={s.number} testID={`slot-${s.number}`} accessibilityRole="button" accessibilityLabel={`슬롯 ${s.number} ${done ? '완성' : working ? '작업 중' : '미착수'}`} onPress={() => { setSlotNumber(s.number); setPainting(true); }} style={{ width: tileWidth, gap: 4 }}>
-              <View style={{ width: tileWidth, aspectRatio: 1, borderRadius: 16, backgroundColor: s.finalImage ? C.paper : adding ? C.paper : C.surface2, borderWidth: current ? 2 : adding ? 1.5 : s.finalImage ? 1 : 0, borderColor: current ? C.accent : adding ? C.lineStrong : C.line, borderStyle: adding ? 'dashed' : 'solid', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 4 }}>
+            const current = s.number === nextCut, empty = !s.finalImage;
+            return <Pressable key={s.number} testID={`slot-${s.number}`} accessibilityRole="button" accessibilityLabel={`슬롯 ${s.number} ${done ? '완성' : working ? '작업 중' : '미착수'}`} accessibilityState={{ selected: current }} onPress={() => { setSlotNumber(s.number); setPainting(true); }} style={{ width: tileWidth, gap: 4 }}>
+              <View testID={`slot-face-${s.number}`} style={{ width: tileWidth, aspectRatio: 1, borderRadius: 16, backgroundColor: current ? C.accentSoft : C.paper, borderWidth: current ? 2 : 1.5, borderColor: current ? C.edge : empty ? C.lineStrong : C.cardLine, borderStyle: empty && !current ? 'dashed' : 'solid', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 4 }}>
                 {s.finalImage
-                  ? <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%', opacity: done ? 1 : .72 }} resizeMode="contain" />
-                  : adding
-                    ? <View style={{ alignItems: 'center', gap: 4 }}><View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="plus" size={18} color={C.accentInk} /></View><Text style={{ fontSize: 11, color: C.ink, fontWeight: '700' }}>그림 추가</Text></View>
-                    // 명세 S01: 빈 칸은 '+' 로 분명히 알린다. 누르면 예전과 똑같이 그 칸이 열린다(동작은 그대로).
-                    : <MaterialCommunityIcons name="plus" size={22} color={C.lineStrong} />}
-                {(done || working) && <View pointerEvents="none" style={{ position: 'absolute', right: 6, top: 6 }}><StatusDot tone={done ? 'done' : 'working'} /></View>}
-                {(s.status === 'FAIL' || s.status === 'WARNING') && <View pointerEvents="none" style={{ position: 'absolute', right: 6, bottom: 6 }}><StatusDot tone={s.status === 'FAIL' ? 'fail' : 'warn'} /></View>}
+                  ? <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%', opacity: done ? 1 : .55 }} resizeMode="contain" />
+                  // 명세 S01: 빈 칸은 '+' 로 분명히 알린다(지금 칸은 붓). 누르면 예전과 똑같이 그 칸이 열린다(동작은 그대로).
+                  : <ImtiIcon name={current ? 'brush' : 'plus'} size={IconSize.tool} color={current ? C.ink : C.muted} />}
+                {done && <View pointerEvents="none" testID="완성 표시" style={{ position: 'absolute', right: 5, bottom: 5, width: 20, height: 20, borderRadius: 10, backgroundColor: C.accent, borderWidth: 1.5, borderColor: C.paper, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="check" size={IconSize.meta} /></View>}
+                {working && <View pointerEvents="none" testID="그리는 중 표시" style={{ position: 'absolute', right: 6, bottom: 6, width: 14, height: 14, borderRadius: 7, borderWidth: 2.5, borderColor: C.accentLine, backgroundColor: C.paper }} />}
+                {(s.status === 'FAIL' || s.status === 'WARNING') && <View pointerEvents="none" style={{ position: 'absolute', left: 6, top: 6 }}><StatusDot tone={s.status === 'FAIL' ? 'fail' : 'warn'} /></View>}
               </View>
               {reordering && !!s.finalImage && <View style={{ flexDirection: 'row', gap: 2 }}>
                 <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 앞으로'} disabled={s.number === 1} onPress={() => moveSlot(s.number, s.number - 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === 1 ? 'transparent' : C.surface2 }}><MaterialCommunityIcons name="chevron-left" size={18} color={s.number === 1 ? C.lineStrong : C.ink} /></Pressable>
@@ -1427,11 +1444,11 @@ function Studio() {
               </View>}
               <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted, paddingHorizontal: 2 }}><Text style={{ fontWeight: '700', color: done || working ? C.ink : C.muted }}>{pad(s.number)}</Text>{captionText(s) ? ' ' + captionText(s) : ''}</Text>
             </Pressable>;
-          })}</View>
+          }); })()}</View>
         </>}
       </ScrollView>
       {/* 보드 아래 고정 줄: 남은 칸이 있으면 이어서 그리기가 먼저, 완성이 생기면 내보내기. 다 채우면 내보내기가 노랑이다. */}
-      {project && screen === 'board' && !canonOpen && (() => {
+      {project && screen === 'board' && !canonOpen && doneCount(project) < project.slots.length && (() => {
         const next = nextUnfinished(project, project.lastSlot ?? 0);
         const done = doneCount(project), started = done > 0 || project.slots.some(isWorking);
         return <View testID="board-action-dock" style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: C.paper, ...Elev[2] }}>
