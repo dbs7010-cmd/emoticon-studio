@@ -173,6 +173,30 @@ async function ready() {
   assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 남은 일 카드가 있다');
   assert.ok(texts().includes('이모티콘 31칸 더 그리기'), '남은 칸을 제안 기준(멈춘 32칸)으로 센다');
   assert.ok(texts().includes('대표 아이콘'), '대표 아이콘 줄');
+  // 45.42 홈(시안 WB2-Home · 카드 B, 사용자 확정): 숫자 + 막대 + 다음 칸. 32칸 격자는 홈 카드에 두지 않는다.
+  {
+    const ids = n => n.findAll(x => x.type === 'Svg').map(x => x.props.testID);
+    const card = labelled('시각 세트')[0];
+    assert.equal(card.findAll(n => n.type === 'View' && n.props.testID === '홈 진행')[0].props.accessibilityLabel, '32칸 중 1칸 완성', '카드 B: 제안 기준 칸 수와 완성 수');
+    assert.ok(card.findAll(n => n.type === 'Text').some(n => /^다음은 \d+번 칸$/.test([n.props.children].flat(9).join(''))), '카드 B: 다음 칸 표시');
+    assert.ok(!card.findAll(n => typeof n.props.testID === 'string' && /^slot-/.test(n.props.testID)).length, '홈 카드에는 32칸 격자가 없다');
+    assert.ok(ids(labelled('시각 세트 이어서 만들기')[0]).includes('icon-brush'), '이어 그리기 = 붓 아이콘 + 글자');
+    const fresh = flat(labelled('새 이모티콘 만들기')[0].props.style);
+    assert.equal(fresh.borderColor, T.edge); assert.equal(fresh.backgroundColor, T.paper, '새로 만들기 = 흰 바탕 잉크 테두리(노랑 아님)');
+    assert.ok(fresh.minHeight >= T.tap, '새로 만들기 누르는 자리');
+    const rows = byTestID('제안까지 남은 일')[0];
+    assert.ok(['icon-brush', 'icon-eye', 'icon-reference'].every(i => ids(rows).includes(i)) || ids(rows).includes('icon-check'), '제안까지 줄마다 아이콘');
+    assert.ok(ids(rows).every(i => i !== 'icon-pro'), '제안 목록에 PRO 표시 없음');
+    const own = labelled('내 그림으로 시작')[0];
+    assert.equal(flat(own.props.style).backgroundColor, T.surface2, '내 그림으로 시작 = 가라앉은 한 줄'); assert.ok(ids(own).includes('icon-reference'));
+    const badge = labelled('PRO 보기')[0];
+    assert.ok(ids(badge).includes('icon-pro') && texts().includes('PRO 보기'), 'PRO 배지 = 반짝 아이콘 + 글자');
+    assert.ok(badge.findAll(n => n.type === 'View' && flat(n.props.style).borderColor === T.edge && flat(n.props.style).backgroundColor === T.paper).length === 1, '무료일 때 PRO 배지는 흰 바탕 잉크 테두리');
+    assert.ok(ids(labelled('설정')[0]).includes('icon-settings'), '설정 = 선 아이콘');
+    // 아이콘 크기는 세 가지뿐이고, 누르는 자리(48)와 따로다.
+    const sizes = tree.root.findAll(n => n.type === 'Svg').map(n => n.props.width);
+    assert.ok(sizes.length && sizes.every(s => [14, 18, 22].includes(s)), '홈 아이콘 크기 14/18/22: ' + [...new Set(sizes)]);
+  }
 
   // ── 44차: 세트가 늘어도 홈은 최근 넷 + 전체 보기. 여러 세트는 전체 작업, 세트 안 칸은 보드. 표현 가이드는 홈의 조용한 한 줄 ─────
   assert.equal(labelled('표현 가이드').length, 1, '홈에 표현 가이드 입구 한 줄');

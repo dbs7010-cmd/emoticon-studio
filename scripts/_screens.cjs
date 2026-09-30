@@ -18,7 +18,7 @@ const PX = new Set(['width', 'height', 'minWidth', 'minHeight', 'maxWidth', 'max
   'padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'paddingHorizontal', 'paddingVertical',
   'borderWidth', 'borderTopWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderRightWidth', 'borderRadius', 'fontSize', 'lineHeight', 'letterSpacing']);
 const PAIRS = { marginHorizontal: ['margin-left', 'margin-right'], marginVertical: ['margin-top', 'margin-bottom'], paddingHorizontal: ['padding-left', 'padding-right'], paddingVertical: ['padding-top', 'padding-bottom'] };
-const RENAME = { backgroundColor: 'background-color', borderColor: 'border-color', borderRadius: 'border-radius', borderWidth: 'border-width', borderTopWidth: 'border-top-width', borderBottomWidth: 'border-bottom-width', borderLeftWidth: 'border-left-width', borderRightWidth: 'border-right-width', flexDirection: 'flex-direction', justifyContent: 'justify-content', alignItems: 'align-items', alignSelf: 'align-self', flexWrap: 'flex-wrap', flexGrow: 'flex-grow', flexShrink: 'flex-shrink', flexBasis: 'flex-basis', fontSize: 'font-size', fontWeight: 'font-weight', lineHeight: 'line-height', letterSpacing: 'letter-spacing', textAlign: 'text-align', zIndex: 'z-index', aspectRatio: 'aspect-ratio', minWidth: 'min-width', minHeight: 'min-height', maxWidth: 'max-width', maxHeight: 'max-height', marginTop: 'margin-top', marginBottom: 'margin-bottom', marginLeft: 'margin-left', marginRight: 'margin-right', paddingTop: 'padding-top', paddingBottom: 'padding-bottom', paddingLeft: 'padding-left', paddingRight: 'padding-right', textDecorationLine: 'text-decoration-line', textTransform: 'text-transform', boxShadow: 'box-shadow', fontFamily: 'font-family' };
+const RENAME = { backgroundColor: 'background-color', borderColor: 'border-color', borderRadius: 'border-radius', borderWidth: 'border-width', borderTopWidth: 'border-top-width', borderBottomWidth: 'border-bottom-width', borderLeftWidth: 'border-left-width', borderRightWidth: 'border-right-width', flexDirection: 'flex-direction', justifyContent: 'justify-content', alignItems: 'align-items', alignSelf: 'align-self', flexWrap: 'flex-wrap', flexGrow: 'flex-grow', flexShrink: 'flex-shrink', flexBasis: 'flex-basis', fontSize: 'font-size', fontWeight: 'font-weight', lineHeight: 'line-height', letterSpacing: 'letter-spacing', textAlign: 'text-align', zIndex: 'z-index', aspectRatio: 'aspect-ratio', minWidth: 'min-width', minHeight: 'min-height', maxWidth: 'max-width', maxHeight: 'max-height', marginTop: 'margin-top', marginBottom: 'margin-bottom', marginLeft: 'margin-left', marginRight: 'margin-right', paddingTop: 'padding-top', paddingBottom: 'padding-bottom', paddingLeft: 'padding-left', paddingRight: 'padding-right', textDecorationLine: 'text-decoration-line', textTransform: 'text-transform', boxShadow: 'box-shadow', fontFamily: 'font-family', borderStyle: 'border-style' };
 const SKIP = new Set(['resizeMode', 'shadowColor', 'shadowOffset', 'shadowOpacity', 'shadowRadius', 'elevation', 'textAlignVertical', 'includeFontPadding', 'transform', 'borderCurve', 'objectFit']);
 
 function css(style) {
@@ -110,6 +110,14 @@ function render(node, flat) {
     // css() 는 마지막 속성 뒤에 세미콜론을 붙이지 않는다. 그대로 이으면 앞 속성과 붙어 **둘 다 깨진다** —
     // 45.35 검토 렌더에서 '불투명도' 라벨의 color 와 말줄임이 통째로 죽어, 라벨이 기둥 밖으로 흘러 나갔다.
     return `<span class="t" style="${s}${s && clamp ? ';' : ''}${clamp}">${kids()}</span>`;
+  }
+  // 45.42: 「임티 라인」 아이콘(react-native-svg 검사 목 → 브라우저 SVG). 경로·선 속성은 소스 값 그대로다.
+  // 브라우저 SVG 렌더이지 안드로이드 react-native-svg 렌더가 아니다(그건 APK 에서 본다).
+  if (type === 'Svg') return `<svg width="${p.width}" height="${p.height}" viewBox="${esc(p.viewBox ?? '0 0 24 24')}" fill="none" style="flex-shrink:0;display:block"${title}>${kids()}</svg>`;
+  if (type === 'SvgPath' || type === 'SvgCircle' || type === 'SvgRect') {
+    const line = `stroke="${esc(p.stroke)}" stroke-width="${p.strokeWidth}" stroke-linecap="${p.strokeLinecap}" stroke-linejoin="${p.strokeLinejoin}" fill="${esc(p.fill ?? 'none')}"`;
+    return type === 'SvgPath' ? `<path d="${esc(p.d)}" ${line}/>` : type === 'SvgCircle' ? `<circle cx="${p.cx}" cy="${p.cy}" r="${p.r}" ${line}/>`
+      : `<rect x="${p.x}" y="${p.y}" width="${p.width}" height="${p.height}" rx="${p.rx ?? 0}" ${line}/>`;
   }
   if (type === 'Icon') {
     const size = p.size ?? 20;

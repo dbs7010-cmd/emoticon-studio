@@ -1163,7 +1163,8 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
    // 작업실: 썸네일은 몇 장이든 같은 크기다.
    const cardThumbs=tree.root.findAll(n=>n.type==='View'&&!!n.props.style&&n.props.style.width===52&&n.props.style.height===52);
    assert.ok(cardThumbs.every(n=>n.props.style.width===52),label+': 작업실 썸네일이 장수에 따라 커지지 않는다');
-   if(count===0)assert.ok(tree.root.findAll(n=>n.type==='Icon'&&n.props.name==='draw').length>=1,'빈 세트도 카드 모양을 지킨다');
+   // 45.42: 빈 칸 자리 표시는 「임티 라인」 brush 아이콘(SVG)이다.
+   if(count===0)assert.ok(tree.root.findAll(n=>n.type==='Svg'&&n.props.testID==='icon-brush').length>=1,'빈 세트도 카드 모양을 지킨다');
    assert.equal(labelled('새 이모티콘 만들기').length,1,label+': 새 세트는 언제나 한 자리에 있다');
    // 세트 화면: 추가 타일은 하나, 남은 칸은 한 줄로 말한다.
    await openSet(live.projectName);

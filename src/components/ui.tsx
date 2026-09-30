@@ -392,12 +392,14 @@ export function CompleteCard({ total, children, actionLabel, onAction, testID = 
   </View>;
 }
 
-// PRO 배지(45.42): 보라 없이 잉크 테두리 + 반짝 아이콘 + 'PRO'. 누를 수 있으면 누르는 자리는 48dp.
-export function ProBadge({ onPress, label = 'PRO 이용', owned }: { onPress?: () => void; label?: string; owned?: boolean }) {
-  const face = <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, borderWidth: T.stroke, borderColor: T.edge, backgroundColor: T.paper }}>
-    <ImtiIcon name="pro" size={IconSize.meta} /><Text style={{ fontSize: 12, fontWeight: '800', color: T.ink, letterSpacing: .4 }}>PRO</Text>
+// PRO 배지(45.42): 보라 없이 잉크 테두리 + 반짝 아이콘 + 글자. 산 뒤(owned)에는 잉크 면 + 흰 글자로 '지금 PRO' 임을 구분한다.
+// 누를 수 있으면 누르는 자리는 48dp.
+export function ProBadge({ onPress, label = 'PRO 이용', text = 'PRO', owned }: { onPress?: () => void; label?: string; text?: string; owned?: boolean }) {
+  const ink = owned ? T.paper : T.ink;
+  const face = <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 30, paddingHorizontal: 11, borderRadius: 15, borderWidth: T.stroke, borderColor: T.edge, backgroundColor: owned ? T.ink : T.paper }}>
+    <ImtiIcon name="pro" size={IconSize.meta} color={ink} /><Text style={{ fontSize: 12, fontWeight: '800', color: ink, letterSpacing: .2 }}>{text}</Text>
   </View>;
-  if (!onPress) return <View accessible accessibilityLabel={owned ? 'PRO 이용 중' : 'PRO'}>{face}</View>;
+  if (!onPress) return <View accessible accessibilityLabel={owned ? 'PRO 이용 중' : text}>{face}</View>;
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!owned }} onPress={onPress}
     style={({ pressed }) => ({ minHeight: T.tap, minWidth: T.tap, alignItems: 'center', justifyContent: 'center', transform: pressed ? [{ scale: .96 }] : [] })}>{face}</Pressable>;
 }

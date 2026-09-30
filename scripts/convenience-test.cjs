@@ -86,7 +86,7 @@ const homeSections = () => {
   const out = [];
   for (const n of all()) {
     const id = n.props?.testID, label = n.props?.accessibilityLabel;
-    if (id === '홈 창작 표면') out.push('창작');
+    if (id === '홈 창작 표면' && n.type === 'View') out.push('창작');   // 45.42: EmptyState 부품과 속 View 가 같은 testID — 실제 View 하나만 센다
     else if (id === '홈 알림') out.push('공지');
     else if (n.type === 'Pressable' && label === '표현 가이드') out.push('가이드');
     else if (n.type === 'Text' && text(n) === '최근 작업') out.push('최근 작업');

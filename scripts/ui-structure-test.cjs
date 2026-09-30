@@ -81,7 +81,7 @@ const homeSections = () => {
   const out = [];
   for (const n of all()) {
     const id = n.props?.testID, label = n.props?.accessibilityLabel;
-    if (id === '홈 창작 표면') out.push('창작');
+    if (id === '홈 창작 표면' && n.type === 'View') out.push('창작');   // 45.42: EmptyState 부품과 속 View 가 같은 testID — 실제 View 하나만 센다
     else if (id === '홈 알림') out.push('공지');
     else if (n.type === 'Pressable' && label === '표현 가이드') out.push('가이드');
     else if (n.type === 'Pressable' && label === '새 이모티콘 만들기' && !out.includes('창작')) out.push('시작 줄');
@@ -118,6 +118,15 @@ const homeSections = () => {
       assert.equal(yellow.length, 1, '홈의 노랑 버튼은 하나(' + where + '): ' + JSON.stringify(yellow));
       assert.ok(count ? /^세트 [0-9]+ 이어서 만들기$/.test(yellow[0]) : yellow[0] === '새 이모티콘 만들기', '노랑은 지금 할 일(' + where + '): ' + yellow[0]);
       if (count) assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 남은 일 카드(' + where + ')');
+      // 45.42 빈 홈 = EmptyState(그림 · 제목 · 노란 행동 하나 · 그리기 › 움직이기 › 내보내기 흐름) + 내 그림으로 시작 한 줄.
+      if (!count) {
+        const empty = tree.root.findAll(n => n.type === 'View' && n.props.testID === '홈 창작 표면')[0];
+        assert.equal(flat(empty.props.style).backgroundColor, T.surface2, '빈 홈은 가라앉은 면(' + where + ')');
+        assert.equal(empty.findAll(n => n.props.testID === 'asset-slot-homeHeroArtwork').length, 1, '빈 홈 그림 자리');
+        const flow = empty.findAll(n => n.type === 'View' && n.props.testID === '흐름 아이콘')[0];
+        assert.deepEqual(flow.findAll(n => n.type === 'Svg').map(n => n.props.testID).filter(i => i !== 'icon-next'), ['icon-brush', 'icon-motion', 'icon-export'], '흐름 아이콘');
+        assert.equal(labelled('내 그림으로 시작').length, 1, '빈 홈에도 내 그림으로 시작');
+      }
     }
   }
 
