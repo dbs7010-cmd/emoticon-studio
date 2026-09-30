@@ -1379,9 +1379,12 @@ function Studio() {
             // 45.43 S5: 전부 완성하면 완성 카드 B(흰 카드 · 노란 체크 · 작품 격자 · 노란 행동 하나)가 머리를 맡는다.
             // 행동 글자는 시안의 '파일 묶음 만들기' 대신 '내보내기' — 이 버튼은 묶음을 바로 만들지 않고 내보내기 화면을 연다(거기서 파일 묶음 만들기).
             if (done === total) return <><CompleteCard total={total} subtitle={`${project.projectName} · 파일 묶음을 만들 수 있어요`} actionLabel="내보내기" actionIcon="tray-arrow-up" onAction={() => setScreen('export')}>
-              <View testID="완성 작품 격자" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                {project.slots.slice(0, 16).map(s => <View key={s.number} style={{ width: '10.9%', aspectRatio: 1, borderRadius: 8, backgroundColor: C.surface2, overflow: 'hidden' }}>
-                  {!!s.finalImage && <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />}
+              {/* 시안처럼 여덟 칸씩 두 줄(앞 16칸). 전체는 아래 격자에 있다. */}
+              <View testID="완성 작품 격자" style={{ gap: 6 }}>
+                {[0, 1].map(row => <View key={row} style={{ flexDirection: 'row', gap: 6 }}>
+                  {project.slots.slice(row * 8, row * 8 + 8).map(s => <View key={s.number} style={{ flex: 1, aspectRatio: 1, borderRadius: 8, backgroundColor: C.surface2, overflow: 'hidden' }}>
+                    {!!s.finalImage && <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />}
+                  </View>)}
                 </View>)}
               </View>
             </CompleteCard>
@@ -1398,7 +1401,7 @@ function Studio() {
                   {project.slots.map(s => <View key={s.number} style={{ flex: 1, borderRadius: 3, backgroundColor: isDone(s) ? C.accent : s.number === nextCut ? C.ink : C.surface2 }} />)}
                 </View>
                 {/* 범례는 완성과 그리는 중이 같이 있을 때만 설명할 것이 있다(45.2차 규칙 유지). 네 상태 표시는 시안 그대로. */}
-                {done > 0 && working > 0 && <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 12, rowGap: 4 }}>
+                {done > 0 && working > 0 && <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="check" size={IconSize.meta} /></View><Text style={{ fontSize: 11, color: C.muted }}>완성</Text></View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: C.accentLine }} /><Text style={{ fontSize: 11, color: C.muted }}>그리는 중</Text></View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ width: 11, height: 11, borderRadius: 3, borderWidth: 1.5, borderColor: C.edge, backgroundColor: C.accentSoft }} /><Text style={{ fontSize: 11, color: C.muted }}>지금</Text></View>
