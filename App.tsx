@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 import { purchasesClosed, PURCHASES_CLOSED_NOTE } from './src/services/purchase-config';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
-import { Action, AssetSlot, CompleteCard, Dialog, Elev, EmptyState, Field, IconButton, ProBadge, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font, Card } from './src/components/ui';
+import { Action, AssetSlot, CompleteCard, Dialog, Elev, EmptyState, Field, IconButton, ProBadge, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font, Card, Glyph } from './src/components/ui';
 import { ImtiIcon, IconSize, type IconName as ImtiName } from './src/design/icons';
 import { ASSET_SLOTS, EXPRESSION_GUIDE, HOME_NOTICE, type ExpressionExample, type ExpressionGuideCard } from './src/design/asset-slots';
 import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
@@ -25,7 +25,8 @@ import { PLANS, REVIEW_BUILD_NOTE, REVIEW_DEV_NOTE, entitlementLabel, expiredBut
 import { PRESETS } from './src/painter/motion-panel';
 import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, PainterWork } from './src/types';
 
-const colors: Record<string, string> = { PASS: T.success, WARNING: STATUS_TONE.warn, FAIL: STATUS_TONE.fail, EMPTY: T.faint, DRAWING: T.info, REVIEW: '#8B6FCB', PLANNED: T.success };
+// 45.43 S8: 상태 글자·점 색도 승인 팔레트 안에서(보라 없음). 경고·실패는 글자로 읽혀야 하므로 대비가 되는 짙은 토큰(흰 면 4.5:1 이상)을 쓴다.
+const colors: Record<string, string> = { PASS: T.success, WARNING: T.warning, FAIL: T.danger, EMPTY: T.faint, DRAWING: T.ink, REVIEW: T.muted, PLANNED: T.success };
 const C = T;
 const proBrushes = CATALOG.filter(b => b.pro);
 const proMotions = PRESETS.filter(p => isProPreset(p.id));
@@ -674,17 +675,17 @@ function Studio() {
   return <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}><StatusBar style="dark" /><ImageAnalyzer ref={analyzer} /><MotionBaker ref={baker} /><ExtraComposer ref={composer} />
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 4, minHeight: 56, backgroundColor: C.bg }}>
-        <Pressable accessibilityRole="button" accessibilityLabel="뒤로" disabled={!!busy} onPress={back} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="chevron-left" size={28} color={C.ink} /></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="뒤로" disabled={!!busy} onPress={back} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={28} color={C.ink} /></Pressable>
         <View style={{ flex: 1 }}>
           <Text numberOfLines={1} style={{ fontSize: 20, lineHeight: 27, color: C.ink, fontWeight: '800', letterSpacing: -.2 }}>{canonOpen ? '캐릭터 기준' : screen === 'export' ? '내보내기' : screen === 'batch' ? '움직임 한 번에 적용' : screen === 'extras' ? '부가 이미지' : project.projectName}</Text>
           {(canonOpen || screen !== 'board') && <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{project.projectName}</Text>}
         </View>
-        {screen === 'board' && !canonOpen && <Pressable accessibilityRole="button" accessibilityLabel="세트 메뉴" disabled={!!busy} onPress={() => setMenu(true)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="dots-horizontal" size={24} color={C.ink} /></Pressable>}
+        {screen === 'board' && !canonOpen && <Pressable accessibilityRole="button" accessibilityLabel="세트 메뉴" disabled={!!busy} onPress={() => setMenu(true)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={24} color={C.ink} /></Pressable>}
       </View>}
-      {!!busy && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 6 }}><MaterialCommunityIcons name="timer-sand" size={15} color={C.muted} /><Text style={{ fontSize: 12, color: C.muted }}>{busy}</Text></View>}
+      {!!busy && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 6 }}><Glyph name="timer-sand" size={15} color={C.muted} /><Text style={{ fontSize: 12, color: C.muted }}>{busy}</Text></View>}
       {!!saveError && <View style={{ margin: 12, padding: 12, gap: 8, borderRadius: T.radius.md, backgroundColor: T.dangerSoft }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <MaterialCommunityIcons name="content-save-alert-outline" size={20} color={T.danger} />
+          <Glyph name="content-save-alert-outline" size={20} color={T.danger} />
           <Text style={{ flex: 1, fontSize: 16, fontWeight: '800', color: C.ink }}>변경 내용을 아직 저장하지 못했어요</Text>
         </View>
         <Text style={{ fontSize: 12, color: C.ink, lineHeight: 18 }}>작업은 화면에 그대로 있어요. 다시 저장을 눌러 주세요.</Text>
@@ -693,15 +694,15 @@ function Studio() {
       <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}/${homeView}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, !project && !loadError && { flexGrow: 1 }, !project && !loadError && homeView === 'home' && { paddingHorizontal: screenWidth < 340 ? 16 : 20, paddingTop: 14, gap: 14 }]}>
         {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="알림 닫기" onPress={() => setNotice('')}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, paddingVertical: 10, paddingHorizontal: 14, borderRadius: T.radius.md, backgroundColor: C.paper, ...Elev[1] }}>
-          <MaterialCommunityIcons name="information-outline" size={18} color={C.muted} />
+          <Glyph name="information-outline" size={18} color={C.muted} />
           <Text style={{ flex: 1, fontSize: 13, color: C.ink, lineHeight: 19 }}>{notice}</Text>
-          <MaterialCommunityIcons name="close" size={18} color={C.muted} />
+          <Glyph name="close" size={18} color={C.muted} />
         </Pressable>}
         {loadError ? <>
           <View style={[styles.card, { gap: 12 }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: T.dangerSoft, alignItems: 'center', justifyContent: 'center' }}>
-                <MaterialCommunityIcons name="file-alert-outline" size={22} color={T.danger} />
+                <Glyph name="file-alert-outline" size={22} color={T.danger} />
               </View>
               <Text style={[styles.subtitle, { flex: 1 }]}>저장 파일을 열지 못했어요</Text>
             </View>
@@ -712,7 +713,7 @@ function Studio() {
           <Pressable accessibilityRole="button" accessibilityLabel={diagOpen ? '문의용 파일 접기' : '문의용 파일 보내기'} accessibilityState={{ expanded: diagOpen }} onPress={() => setDiagOpen(!diagOpen)}
             style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>문의용 파일 보내기</Text>
-            <MaterialCommunityIcons name={diagOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
+            <Glyph name={diagOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
           </Pressable>
           {!!report && diagOpen && <View testID="문의용 파일" style={[styles.card, { gap: 8 }]}>
             {report.snapshots.map((file, i) => file.exists ? <Action key={file.name} title={`저장 사본 ${i + 1} 보내기`} icon="share-variant" disabled={!!busy} onPress={() => shareSnapshot(file.name)} /> : null)}
@@ -736,14 +737,14 @@ function Studio() {
                 <Pressable accessibilityRole="button" accessibilityLabel={p.projectName} onPress={() => { setProjectId(p.id); setScreen('board'); }}
                   style={({ pressed }) => ({ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72, opacity: pressed ? .6 : 1 })}>
                   <View style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: C.surface2, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
-                    {cover ? <Image source={{ uri: imageUri((cover.motionImage ?? cover.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <MaterialCommunityIcons name="draw" size={20} color={C.lineStrong} />}
+                    {cover ? <Image source={{ uri: imageUri((cover.motionImage ?? cover.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Glyph name="draw" size={20} color={C.lineStrong} />}
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>{p.projectName}</Text>
                     <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{m.moving ? '움직이는' : '멈춰있는'} · {m.done}개 완성{m.stamp ? ` · ${m.stamp}` : ''}</Text>
                   </View>
                 </Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="dots-horizontal" size={22} color={C.muted} /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={22} color={C.muted} /></Pressable>
               </View>;
             })}
           </View>
@@ -783,7 +784,7 @@ function Studio() {
                       <AssetSlot name="expressionGuideArtwork" size={Math.round((cell - 18) * .84)} sourceOverride={shownArt(x)} />
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 2, paddingBottom: 2 }}>
-                      {on && <MaterialCommunityIcons name="check" size={15} color={C.ink} />}
+                      {on && <Glyph name="check" size={15} color={C.ink} />}
                       <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: on ? '800' : '700', color: has ? C.ink : C.faint }}>{x.label}</Text>
                     </View>
                     {!has && <Text style={{ paddingHorizontal: 2, fontSize: 11, color: C.faint }}>그림 준비 중이에요</Text>}
@@ -801,7 +802,7 @@ function Studio() {
                   const open = dest ? nextUnfinished(dest, dest.lastSlot ?? 0) : null;
                   const text = !dest ? '새 이모티콘 세트의 01번 칸' : open === null ? `${dest.projectName} · 빈 칸 없음(보드에서 골라요)` : `${dest.projectName} · ${pad(open)}번 칸`;
                   return <View testID="표현 넣을 곳" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, borderRadius: 12, backgroundColor: C.surface2 }}>
-                    <MaterialCommunityIcons name="arrow-down-bold-box-outline" size={18} color={C.muted} />
+                    <Glyph name="arrow-down-bold-box-outline" size={18} color={C.muted} />
                     <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: C.ink }}><Text style={{ color: C.muted }}>넣을 곳 </Text><Text style={{ fontWeight: '800' }}>{text}</Text></Text>
                     {!!sortedProjects.length && <Pressable accessibilityRole="button" accessibilityLabel="넣을 곳 바꾸기" onPress={() => setGuideTargetPick(true)}
                       style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 12, backgroundColor: pressed ? C.fill : 'transparent' })}>
@@ -1008,7 +1009,7 @@ function Studio() {
                 <Text numberOfLines={1} style={{ fontSize: 16, fontWeight: '700', color: C.ink }}>{HOME_NOTICE.title}</Text>
                 <Text numberOfLines={1} style={{ fontSize: 12, lineHeight: 17, color: C.muted }}>{HOME_NOTICE.body}</Text>
               </View>
-              {!!HOME_NOTICE.link && <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />}
+              {!!HOME_NOTICE.link && <Glyph name="chevron-right" size={18} color={C.faint} />}
             </>;
             const row = { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: T.radius.card, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line } as const;
             // 넘어갈 곳이 있을 때만 누를 수 있는 줄이 된다. 행동은 최대 하나다.
@@ -1090,7 +1091,7 @@ function Studio() {
                     style={{ width: tileWidth, gap: 3 }}>
                     <View style={{ width: tileWidth, aspectRatio: 1, borderRadius: T.radius.md, borderWidth: picked ? 2.5 : 1, borderColor: picked ? C.accent : C.line, overflow: 'hidden', backgroundColor: picked ? C.accentSoft : C.paper }}>
                       {s.finalImage ? <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : null}
-                      {picked && <View style={{ position: 'absolute', left: 4, top: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="check" size={14} color={C.accentInk} /></View>}
+                      {picked && <View style={{ position: 'absolute', left: 4, top: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><Glyph name="check" size={14} color={C.accentInk} /></View>}
                       {!!result && <View style={{ position: 'absolute', right: 4, bottom: 4, width: 12, height: 12, borderRadius: 6, backgroundColor: result.ok ? colors.PASS : colors.FAIL, borderWidth: 1.5, borderColor: '#FFF' }} />}
                     </View>
                     <Text numberOfLines={1} style={{ fontSize: 10, color: C.muted }}>{pad(s.number)}{isAnimated(s) ? ' · 움직임 있음' : ''}</Text>
@@ -1114,7 +1115,7 @@ function Studio() {
                   <View style={{ width: 160, height: 160, borderRadius: T.radius.md, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                     {batchPreview
                       ? <Image accessibilityLabel="적용 전 미리보기" source={{ uri: batchPreview.data }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-                      : <MaterialCommunityIcons name="play-circle-outline" size={40} color="#B8B8BD" />}
+                      : <Glyph name="play-circle-outline" size={40} color="#B8B8BD" />}
                   </View>
                   <Text style={{ fontSize: 11, color: C.muted }}>{pad(target)}번{batchPreview ? ` · ${batchPreview.loop.toFixed(1)}초 반복 · 적용 전` : ''}</Text>
                   <Action title={batchPreview ? '다시 만들어 보기' : '미리 만들어 보기'} icon="play" disabled={!!busy || previewing || !pro}
@@ -1184,7 +1185,7 @@ function Studio() {
                    ['공유 이미지', !!project.extras?.share, project.extras?.share ? `${project.extras.share.width}×${project.extras.share.height}` : '아직 없어요'],
                    ['대표 이미지', !!project.extras?.coverSlot, project.extras?.coverSlot ? `${pad(project.extras.coverSlot)}번` : '아직 없어요']] as const).map(([label, ok, detail]) =>
                   <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36 }}>
-                    <MaterialCommunityIcons name={ok ? 'check-circle' : 'circle-outline'} size={18} color={ok ? colors.PASS : C.muted} />
+                    <Glyph name={ok ? 'check-circle' : 'circle-outline'} size={18} color={ok ? colors.PASS : C.muted} />
                     <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>{label}</Text>
                     <Text style={{ flexShrink: 1, fontSize: 12, color: C.muted, textAlign: 'right' }}>{detail}</Text>
                   </View>)}
@@ -1226,7 +1227,7 @@ function Studio() {
             ];
             const prepShort = requirements.filter(r => !r.ok).length;
             const row = (key: string, ok: boolean, label: string, detail: string) => <View key={key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 38 }}>
-              <MaterialCommunityIcons name={ok ? 'check-circle' : 'circle-outline'} size={18} color={ok ? T.success : C.lineStrong} />
+              <Glyph name={ok ? 'check-circle' : 'circle-outline'} size={18} color={ok ? T.success : C.lineStrong} />
               <Text style={{ flex: 1, fontSize: 16, fontWeight: '500', color: C.ink }}>{label}</Text>
               <Text style={{ flexShrink: 1, fontSize: 12, color: ok ? C.muted : colors.WARNING, textAlign: 'right' }}>{detail}</Text>
             </View>;
@@ -1267,10 +1268,10 @@ function Studio() {
                   {problems.map((c, i) => <Pressable key={c.label + i} accessibilityRole="button" accessibilityLabel={`${c.label} 고치기`} disabled={!c.slot} onPress={() => c.slot && fixSlot(c.slot)}
                     style={({ pressed }) => ({ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderColor: C.line, backgroundColor: pressed && c.slot ? C.fill : 'transparent' })}>
                     <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.status === 'FAIL' ? T.dangerSoft : T.warningSoft, alignItems: 'center', justifyContent: 'center' }}>
-                      <MaterialCommunityIcons name={c.status === 'FAIL' ? 'alert-circle-outline' : 'alert-outline'} size={17} color={c.status === 'FAIL' ? T.danger : T.warning} />
+                      <Glyph name={c.status === 'FAIL' ? 'alert-circle-outline' : 'alert-outline'} size={17} color={c.status === 'FAIL' ? T.danger : T.warning} />
                     </View>
                     <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: C.muted }}><Text style={{ fontWeight: '700', color: C.ink }}>{c.label}</Text> · {c.detail}</Text>
-                    {!!c.slot && <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />}
+                    {!!c.slot && <Glyph name="chevron-right" size={18} color={C.faint} />}
                   </Pressable>)}
                 </View>
               </View>}
@@ -1278,7 +1279,7 @@ function Studio() {
               {/* 4. 지금 할 일. 이 화면의 노란 버튼은 이것 하나다. */}
               <Action primary icon="package-variant-closed" title="파일 묶음 만들기" disabled={!!busy || !drawn.length} onPress={exportProject} />
               {!!lastExport && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, borderRadius: 16, backgroundColor: T.successSoft }}>
-                <MaterialCommunityIcons name="check-circle" size={20} color={colors.PASS} />
+                <Glyph name="check-circle" size={20} color={colors.PASS} />
                 <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>{lastExport.count}칸을 묶었어요</Text>
                 <Pressable accessibilityRole="button" accessibilityLabel="다시 공유" disabled={!!busy} onPress={shareAgain} style={{ minHeight: T.tap, paddingHorizontal: 14, justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>다시 공유</Text></Pressable>
               </View>}
@@ -1288,7 +1289,7 @@ function Studio() {
                 style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>제출 준비</Text>
                 <Text style={{ flex: 1, fontSize: 12, color: prepShort ? C.warning : C.muted }}>{prepShort ? `${prepShort}가지 더 필요해요` : '필요한 것을 다 채웠어요'}</Text>
-                <MaterialCommunityIcons name={prepOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
+                <Glyph name={prepOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
               </Pressable>
               {prepOpen && <View style={{ padding: 14, gap: 4, borderRadius: T.radius.card, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
                 <Segmented dense value={stage} onChange={setStage} items={[{ key: 'proposal', label: '제안에 필요한 것', a11y: '제안 기준으로 보기' }, { key: 'release', label: '출시에 필요한 것', a11y: '출시 기준으로 보기' }]} />
@@ -1298,23 +1299,23 @@ function Studio() {
               <Pressable accessibilityRole="button" accessibilityLabel="부가 이미지 만들기" onPress={() => setScreen('extras')}
                 style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>부가 이미지 만들기</Text>
-                <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+                <Glyph name="chevron-right" size={18} color={C.faint} />
               </Pressable>
 
               {/* 5. 규격·직접 확인·파일 검사는 접어 둔다. 지우지 않고, 필요할 때 펼친다. */}
               <Pressable accessibilityRole="button" accessibilityLabel={specOpen ? '자세히 접기' : '자세히 보기'} accessibilityState={{ expanded: specOpen }} onPress={() => setSpecOpen(!specOpen)}
                 style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>규격 · 직접 확인 · 파일 검사</Text>
-                <MaterialCommunityIcons name={specOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
+                <Glyph name={specOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
               </Pressable>
               {specOpen && <>
                 {/* 가이드가 정한 제작 도구 규칙. 앱이 대신하지 않는 일을 한 줄로 분명히 한다. */}
                 {moving && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16, backgroundColor: C.surface2 }}>
-                  <MaterialCommunityIcons name="movie-open-outline" size={20} color={C.muted} />
+                  <Glyph name="movie-open-outline" size={20} color={C.muted} />
                   <Text style={{ flex: 1, fontSize: 12, color: C.ink, lineHeight: 18 }}>움직이는 칸은 카카오 WebPAnimator에서 WebP로 마무리해요. 묶음에 칸별 프레임이 들어 있어요.</Text>
                   <Pressable accessibilityRole="button" accessibilityLabel="WebPAnimator 열기" onPress={() => { Linking.openURL(WEBP_ANIMATOR_URL).catch(() => Alert.alert('링크를 열지 못했어요', '잠시 후 다시 시도해 주세요.')); }}
                     style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}>
-                    <MaterialCommunityIcons name="open-in-new" size={18} color={C.muted} />
+                    <Glyph name="open-in-new" size={18} color={C.muted} />
                   </Pressable>
                 </View>}
                 <View style={styles.card}>
@@ -1341,7 +1342,7 @@ function Studio() {
                     onPress={() => updateProject(p => ({ ...p, selfChecked: !p.selfChecked }))}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
                     <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: project.selfChecked ? C.ink : C.line, backgroundColor: project.selfChecked ? C.ink : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                      {project.selfChecked && <MaterialCommunityIcons name="check" size={14} color="#FFF" />}
+                      {project.selfChecked && <Glyph name="check" size={14} color="#FFF" />}
                     </View>
                     <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>표현과 문구를 확인했어요</Text>
                   </Pressable>
@@ -1357,7 +1358,7 @@ function Studio() {
                     </Pressable>
                     <Pressable accessibilityRole="button" accessibilityLabel="공식 가이드 보기" onPress={() => { Linking.openURL(SPEC.officialUrl).catch(() => Alert.alert('링크를 열지 못했어요', '잠시 후 다시 시도해 주세요.')); }} style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>공식 가이드</Text>
-                      <MaterialCommunityIcons name="open-in-new" size={15} color={C.muted} />
+                      <Glyph name="open-in-new" size={15} color={C.muted} />
                     </Pressable>
                   </View>
                 </View>
@@ -1373,7 +1374,7 @@ function Studio() {
             const nextCut = nextUnfinished(project, project.lastSlot ?? 0);
             const playButton = drawnCount >= 2 && <Pressable accessibilityRole="button" accessibilityLabel={playing ? '전체 재생 멈추기' : '전체 재생'} onPress={() => { setPlayIndex(0); setPlaying(!playing); }}
               style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: playing ? C.accent : C.paper, alignItems: 'center', justifyContent: 'center', ...Elev[1] }}>
-              <MaterialCommunityIcons name={playing ? 'pause' : 'play'} size={22} color={C.ink} />
+              <Glyph name={playing ? 'pause' : 'play'} size={22} color={C.ink} />
             </Pressable>;
             // 45.43 S5: 전부 완성하면 완성 카드 B(흰 카드 · 노란 체크 · 작품 격자 · 노란 행동 하나)가 머리를 맡는다.
             // 행동 글자는 시안의 '파일 묶음 만들기' 대신 '내보내기' — 이 버튼은 묶음을 바로 만들지 않고 내보내기 화면을 연다(거기서 파일 묶음 만들기).
@@ -1408,7 +1409,7 @@ function Studio() {
             </View>;
           })()}
           {reordering && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 12, borderRadius: T.radius.md, backgroundColor: T.infoSoft }}>
-            <MaterialCommunityIcons name="swap-horizontal" size={18} color={T.info} />
+            <Glyph name="swap-horizontal" size={18} color={T.info} />
             <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: T.info }}>순서 바꾸는 중</Text>
             <Pressable accessibilityRole="button" accessibilityLabel="순서 바꾸기 끝" onPress={() => setReordering(false)} style={{ minHeight: T.tap, paddingHorizontal: 16, justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '800', color: T.info }}>끝</Text></Pressable>
           </View>}
@@ -1439,8 +1440,8 @@ function Studio() {
                 {(s.status === 'FAIL' || s.status === 'WARNING') && <View pointerEvents="none" style={{ position: 'absolute', left: 6, top: 6 }}><StatusDot tone={s.status === 'FAIL' ? 'fail' : 'warn'} /></View>}
               </View>
               {reordering && !!s.finalImage && <View style={{ flexDirection: 'row', gap: 2 }}>
-                <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 앞으로'} disabled={s.number === 1} onPress={() => moveSlot(s.number, s.number - 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === 1 ? 'transparent' : C.surface2 }}><MaterialCommunityIcons name="chevron-left" size={18} color={s.number === 1 ? C.lineStrong : C.ink} /></Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 뒤로'} disabled={s.number === project.slots.length} onPress={() => moveSlot(s.number, s.number + 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === project.slots.length ? 'transparent' : C.surface2 }}><MaterialCommunityIcons name="chevron-right" size={18} color={s.number === project.slots.length ? C.lineStrong : C.ink} /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 앞으로'} disabled={s.number === 1} onPress={() => moveSlot(s.number, s.number - 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === 1 ? 'transparent' : C.surface2 }}><Glyph name="chevron-left" size={18} color={s.number === 1 ? C.lineStrong : C.ink} /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 뒤로'} disabled={s.number === project.slots.length} onPress={() => moveSlot(s.number, s.number + 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === project.slots.length ? 'transparent' : C.surface2 }}><Glyph name="chevron-right" size={18} color={s.number === project.slots.length ? C.lineStrong : C.ink} /></Pressable>
               </View>}
               <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted, paddingHorizontal: 2 }}><Text style={{ fontWeight: '700', color: done || working ? C.ink : C.muted }}>{pad(s.number)}</Text>{captionText(s) ? ' ' + captionText(s) : ''}</Text>
             </Pressable>;
@@ -1488,12 +1489,12 @@ function Studio() {
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 12, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 15, fontWeight: on ? '800' : '700', color: C.ink }}>{p.projectName}</Text>
           <Text style={{ fontSize: 12, color: C.muted }}>{open === null ? '빈 칸 없음' : pad(open) + '번 칸'}</Text>
-          {on && <MaterialCommunityIcons name="check" size={18} color={C.ink} />}
+          {on && <Glyph name="check" size={18} color={C.ink} />}
         </Pressable>; })}
       <Pressable accessibilityRole="button" accessibilityLabel="넣을 곳 새 세트" accessibilityState={{ selected: guideTargetId === 'new' }}
         onPress={() => { setGuideTargetId('new'); setGuideTargetPick(false); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 12, borderRadius: 12, backgroundColor: guideTargetId === 'new' ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
-        <MaterialCommunityIcons name="plus" size={18} color={C.ink} />
+        <Glyph name="plus" size={18} color={C.ink} />
         <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: C.ink }}>새 이모티콘 세트</Text>
       </Pressable>
     </Dialog>}
@@ -1542,16 +1543,16 @@ function Studio() {
       </View>}
       <Pressable accessibilityRole="button" accessibilityLabel="백업에서 되살리기" onPress={restoreFromBackup}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
-        <MaterialCommunityIcons name="archive-arrow-up-outline" size={20} color={C.muted} />
+        <Glyph name="archive-arrow-up-outline" size={20} color={C.muted} />
         <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>백업에서 되살리기</Text>
-        <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+        <Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={'휴지통 ' + trashed.length + '개'} onPress={() => { setSettings(false); setTrashOpen(true); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
-        <MaterialCommunityIcons name="delete-restore" size={20} color={C.muted} />
+        <Glyph name="delete-restore" size={20} color={C.muted} />
         <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>휴지통</Text>
         <Text style={{ fontSize: 13, color: C.muted }}>{trashed.length ? trashed.length + '개' : '비어 있음'}</Text>
-        <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+        <Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
       <Pressable accessibilityRole="switch" accessibilityLabel="캔버스 종이 질감" accessibilityState={{ checked: store?.paperTexture === true }}
         onPress={() => { try { commit(st => ({ ...st, paperTexture: st.paperTexture !== true })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
@@ -1580,9 +1581,9 @@ function Studio() {
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="PRO 이용" onPress={() => { setSettings(false); setProSheet(true); }}
         style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? T.fill : 'transparent' })}>
-        <MaterialCommunityIcons name="star-four-points-outline" size={19} color={C.muted} />
+        <Glyph name="star-four-points-outline" size={19} color={C.muted} />
         <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: C.ink }}>PRO 이용</Text>
-        <MaterialCommunityIcons name="chevron-right" size={18} color={C.muted} />
+        <Glyph name="chevron-right" size={18} color={C.muted} />
       </Pressable>
     </Dialog>}
     {contactFallback && <Dialog title="문의 이메일" onClose={() => setContactFallback(false)}>
@@ -1592,7 +1593,7 @@ function Studio() {
     {proSheet && <Modal animationType="slide" onRequestClose={() => { setProSheet(false); resetPayment(); }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 4 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="PRO 닫기" onPress={() => { setProSheet(false); resetPayment(); }} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="chevron-left" size={28} color={C.ink} /></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="PRO 닫기" onPress={() => { setProSheet(false); resetPayment(); }} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={28} color={C.ink} /></Pressable>
           <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: C.ink }}>PRO</Text>
         </View>
         <ScrollView contentContainerStyle={{ padding: T.gap.lg, gap: T.gap.md, paddingBottom: 32 }}>
@@ -1635,7 +1636,7 @@ function Studio() {
               </View>
             </View>)}
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start', paddingVertical: 4 }}>
-            <MaterialCommunityIcons name="check" size={16} color={C.muted} />
+            <Glyph name="check" size={16} color={C.muted} />
             <Text style={{ flex: 1, fontSize: 12, lineHeight: 18, color: C.muted }}>{`무료 브러시 ${CATALOG.filter(b => !b.pro).length}종 · 무료 움직임 ${PRESETS.filter(p => !isProPreset(p.id)).length}종으로 한 세트를 끝까지 만들고, 워터마크 없이 파일 묶음으로 내보낼 수 있어요.`}</Text>
           </View>
           {entitlementLabel(entitlement) !== '무료' && <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>}
@@ -1684,7 +1685,7 @@ function Studio() {
           }] as const] : []),
         ] as readonly (readonly [string, React.ComponentProps<typeof MaterialCommunityIcons>['name'], boolean, () => void])[]).map(([label, icon, locked, run], i) =>
           <Pressable key={label} accessibilityRole="button" accessibilityLabel={label} onPress={() => { setMenu(false); run(); }} style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: T.gap.lg, borderTopWidth: i ? 1 : 0, borderColor: C.line }}>
-            <MaterialCommunityIcons name={icon} size={19} color={C.muted} />
+            <Glyph name={icon} size={19} color={C.muted} />
             <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: C.ink }}>{label}</Text>
             {locked && <ProTag />}
           </Pressable>)}
@@ -1781,7 +1782,7 @@ function PaymentStatus({ payment, onRestore, onRetry }: { payment: Payment; onRe
   const good = view.tone === 'good';
   return <View testID="결제 상태" accessibilityLiveRegion="polite" style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: good ? '#CFE8D8' : T.line, backgroundColor: good ? T.successSoft : T.paper }}>
     <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: good ? T.paper : view.tone === 'warn' ? T.warningSoft : T.surface2, alignItems: 'center', justifyContent: 'center' }}>
-      <MaterialCommunityIcons name={view.icon} size={19} color={view.tone === 'warn' ? T.warning : good ? T.success : T.ink} />
+      <Glyph name={view.icon} size={19} color={view.tone === 'warn' ? T.warning : good ? T.success : T.ink} />
     </View>
     <View style={{ flex: 1, gap: 2 }}>
       <Text style={{ fontSize: 14, fontWeight: '800', color: T.ink }}>{view.title}</Text>

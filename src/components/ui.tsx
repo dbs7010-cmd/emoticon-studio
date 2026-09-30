@@ -40,7 +40,7 @@ export const T = {
   success: '#1E8E5A', successSoft: '#E3F4EA', // 저장 성공 등 성공 순간에만
   warning: '#9A5B00', warningSoft: '#FFEACC',
   danger: '#B42318', dangerSoft: '#FCE3DF',
-  info: '#3D4FC4', infoSoft: '#E9E5FF',
+  info: '#1F1D1A', infoSoft: '#F6F5F2',     // 45.43 S8: 파랑·보라 안내 → 잉크·가라앉은 면(승인 팔레트 밖 색 정리)
   pro: '#1F1D1A', proSoft: '#F6F5F2',         // PRO 는 보라 없이 잉크·중립으로(배지 모양이 구분한다)
   edge: '#1F1D1A', stroke: 2,                // 검정 테두리 — 노란 버튼·고른 것에만
   cardLine: '#ECE9E3', paperLine: '#DCD7CE', // 카드·캔버스의 옅은 중립 선
@@ -106,10 +106,10 @@ type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 // 45.43 S7: 화면에서 쓰던 MDI 이름 → 「이모티 라인」 아이콘. 같은 뜻의 선 아이콘이 있으면 그것을 그리고(크기는 14/18/22 로 맞춤),
 // 없는 모양(선택 영역·스포이드·손가락 제스처 등)은 MDI 그대로 둔다 — 남은 목록은 S8 정리 문서에 있다.
 export const LINE_ICON: Partial<Record<IconName, ImtiName>> = {
-  'fountain-pen-tip': 'brush', brush: 'brush', 'brush-variant': 'brush', pencil: 'brush', draw: 'brush',
+  'fountain-pen-tip': 'brush', brush: 'brush', 'brush-variant': 'brush', pencil: 'brush', 'pencil-outline': 'brush', draw: 'brush',
   eraser: 'eraser', 'format-color-fill': 'fill', palette: 'color', 'palette-outline': 'color',
   'image-outline': 'reference', 'layers-outline': 'layer', 'format-text': 'caption', 'motion-play-outline': 'motion',
-  'tray-arrow-up': 'export', 'export-variant': 'export', 'content-save-outline': 'save', 'star-four-points': 'pro',
+  'tray-arrow-up': 'export', 'export-variant': 'export', 'content-save-outline': 'save', 'star-four-points': 'pro', 'star-four-points-outline': 'pro',
   'chevron-left': 'back', 'chevron-right': 'next', close: 'close', plus: 'plus', 'delete-outline': 'delete',
   'eye-outline': 'eye', 'eye-off-outline': 'eyeOff', 'undo-variant': 'undo', 'redo-variant': 'redo', undo: 'undo', redo: 'redo',
   'dots-horizontal': 'more', check: 'check', 'check-bold': 'check', 'cog-outline': 'settings',
@@ -157,7 +157,7 @@ export function EmptyState(props: { icon: IconName; message: string; action: Rea
   }
   const { icon, message, action } = props;
   return <View style={{ minHeight: 132, alignItems: 'center', justifyContent: 'center', gap: T.gap.sm, padding: T.gap.lg }}>
-    <MaterialCommunityIcons name={icon} size={30} color={T.faint} />
+    <Glyph name={icon} size={30} color={T.faint} />
     <Text style={{ ...Type.bodySecondary, textAlign: 'center' }}>{message}</Text>
     {action}
   </View>;
@@ -228,7 +228,7 @@ export function Segmented<K extends string>({ items, value, onChange, testID, de
         style={{ flex: 1, minHeight: dense ? 40 : 44, borderRadius: 11, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6,
           backgroundColor: on ? T.paper : 'transparent', borderWidth: on ? T.stroke : 0, borderColor: on ? T.edge : 'transparent' }}>
         {!!item.image && <Image source={item.image} style={{ width: 13, height: 18, opacity: on ? 1 : .7 }} resizeMode="contain" />}
-        {!!item.icon && <MaterialCommunityIcons name={item.icon} size={16} color={on ? T.ink : T.muted} />}
+        {!!item.icon && <Glyph name={item.icon} size={16} color={on ? T.ink : T.muted} />}
         <Text numberOfLines={1} style={{ fontSize: dense ? 13 : 14, fontWeight: on ? '800' : '600', color: on ? T.ink : T.muted }}>{item.label}</Text>
       </Pressable>; })}
   </View>;
@@ -239,7 +239,7 @@ export function Chip({ label, on, onPress, icon, wide, a11y }: { label: string; 
   return <Pressable accessibilityRole="button" accessibilityLabel={a11y ?? label} accessibilityState={{ selected: on }} onPress={onPress}
     style={({ pressed }) => ({ flex: wide ? 1 : undefined, minHeight: 44, paddingHorizontal: 14, borderRadius: 22, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center',
       borderWidth: on ? T.stroke : 1, borderColor: on ? T.edge : T.line, backgroundColor: on ? T.accentSoft : pressed ? T.fill : T.paper })}>
-    {!!icon && <MaterialCommunityIcons name={icon} size={16} color={on ? T.ink : T.muted} />}
+    {!!icon && <Glyph name={icon} size={16} color={on ? T.ink : T.muted} />}
     <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? T.ink : T.muted }}>{label}</Text>
   </Pressable>;
 }
@@ -256,7 +256,7 @@ export function SheetHeader({ title, onClose, closeLabel, right, left, grab = fa
     {right}
     {onClose && <Pressable accessibilityRole="button" accessibilityLabel={closeLabel ?? title + ' 닫기'} onPress={onClose} hitSlop={2}
       style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : 'transparent' })}>
-      <MaterialCommunityIcons name="close" size={20} color={T.muted} />
+      <Glyph name="close" size={20} color={T.muted} />
     </Pressable>}
   </View>;
 }
@@ -440,7 +440,7 @@ export function ProTag() {
 export function Dialog({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return <Modal transparent animationType="fade" onRequestClose={onClose}><View style={{ flex: 1, backgroundColor: '#1716144D', justifyContent: 'center', padding: 20 }}>
     <View accessibilityViewIsModal style={{ maxHeight: '82%', backgroundColor: C.paper, borderRadius: T.radius.xl, paddingHorizontal: T.gap.xl, paddingTop: T.gap.md, paddingBottom: T.gap.xl, gap: T.gap.sm, ...Card.border, ...Card.float }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={styles.subtitle}>{title}</Text><Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={{ width: T.tap, height: T.tap, marginRight: -12, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="close" size={20} color={T.muted} /></Pressable></View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={styles.subtitle}>{title}</Text><Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={{ width: T.tap, height: T.tap, marginRight: -12, alignItems: 'center', justifyContent: 'center' }}><Glyph name="close" size={20} color={T.muted} /></Pressable></View>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 12 }}><View style={{ gap: 12 }}>{children}</View></ScrollView>
     </View>
   </View></Modal>;

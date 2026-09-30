@@ -41,9 +41,9 @@ const render = async el => { let t; await act(async () => { t = create(el); }); 
   assert.deepEqual(t.root.findAll(n => n.type === 'View' && n.props.testID === '흐름 아이콘')[0].findAll(n => n.type === 'Svg').map(n => n.props.testID).filter(x => x !== 'icon-next'), ['icon-brush', 'icon-motion', 'icon-export'], '흐름 아이콘: 그리기 › 움직이기 › 내보내기');
   assert.equal(t.root.findAll(n => n.props.testID === '흐름 아이콘' && n.props.accessibilityLabel).length, 1, '흐름은 한 문장으로 읽힌다');
   assert.equal(flat(t.root.findAll(n => n.type === 'View' && n.props.testID === '빈 홈')[0].props.style).backgroundColor, T.surface2, '가라앉은 면 위');
-  // 예전 모양(참고 패널의 빈 목록)은 그대로 남는다 — S7 전까지 그리기 화면을 바꾸지 않는다.
+  // 예전 모양(참고 패널의 빈 목록)은 그대로 남는다. 45.43 S8: 아이콘은 같은 뜻의 「이모티 라인」(image-outline → reference).
   t = await render(React.createElement(U.EmptyState, { icon: 'image-outline', message: '참고 사진을 추가해 보세요.', action: null }));
-  assert.ok(texts(t).includes('참고 사진을 추가해 보세요.')); assert.equal(t.root.findAll(n => n.type === 'Icon').length, 1);
+  assert.ok(texts(t).includes('참고 사진을 추가해 보세요.')); assert.equal(t.root.findAll(n => n.type === 'Svg' && n.props.testID === 'icon-reference').length, 1);
 
   // ── SaveToast: 흰 알약 + 초록 체크 + 칸 번호 + 잉크 '다음 칸', 올라오며 나타남 ──
   timings.length = 0; let next = 0;
