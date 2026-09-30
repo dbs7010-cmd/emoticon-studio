@@ -1103,7 +1103,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               {b.pro && <ProTag />}
               {/* 표시 자리는 고르든 말든 같은 너비다 — 고를 때 줄 안이 밀리지 않는다. */}
               <View style={{ width: 24, alignItems: 'center', justifyContent: 'center' }}>
-                {favEdit ? <MaterialCommunityIcons name={fav >= 0 ? 'pin' : 'pin-outline'} size={18} color={fav >= 0 ? C.ink : C.faint} />
+                {favEdit ? <MaterialCommunityIcons name={fav >= 0 ? 'pin' : 'pin-outline'} size={18} color={fav >= 0 ? C.ink : C.muted} />
                   : on ? <MaterialCommunityIcons name="check" size={20} color={C.ink} /> : null}
               </View>
             </Pressable>; })}
@@ -1115,7 +1115,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper })}>
           <MaterialCommunityIcons name="tune-variant" size={18} color={C.muted} />
           <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>세부 설정</Text>
-          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.faint, textAlign: 'right' }}>진하기 {Math.round(effectiveBrush.opacity * 100)}% · 선 보정 {STAB_LEVELS.find(([k]) => k === stab)?.[1] ?? '끔'}</Text>
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted, textAlign: 'right' }}>진하기 {Math.round(effectiveBrush.opacity * 100)}% · 선 보정 {STAB_LEVELS.find(([k]) => k === stab)?.[1] ?? '끔'}</Text>
           <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
         </Pressable>
       </View>
@@ -1292,9 +1292,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           {/* 저장 표시는 칸 번호 옆 작은 자리다. 예전에는 머리줄에 28dp 칸을 따로 차지해, 320dp 에서 세트 이름이 설 자리를 빼앗았다(45.36-R1 G3).
               자리 폭은 늘 같아서 표시가 뜨고 사라져도 글자가 밀리지 않는다. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', maxWidth: '100%' }}>
-            <Text numberOfLines={1} accessibilityLabel="현재 칸" style={{ flexShrink: 1, fontSize: 11, lineHeight: 14, fontWeight: '600', color: C.faint, letterSpacing: .4 }}>{String(slot.number).padStart(2, '0') + ' / ' + slotCount}</Text>
+            <Text numberOfLines={1} accessibilityLabel="현재 칸" style={{ flexShrink: 1, fontSize: 11, lineHeight: 14, fontWeight: '600', color: C.muted, letterSpacing: .4 }}>{String(slot.number).padStart(2, '0') + ' / ' + slotCount}</Text>
             <View testID="저장 표시" accessibilityLabel={saveMark === 'saving' ? '저장 중' : saveMark === 'done' ? '저장됨' : undefined} style={{ width: 16, height: 14, marginLeft: 3, alignItems: 'center', justifyContent: 'center' }}>
-              {saveMark === 'saving' && <MaterialCommunityIcons name="cloud-upload-outline" size={13} color={C.faint} />}
+              {saveMark === 'saving' && <MaterialCommunityIcons name="cloud-upload-outline" size={13} color={C.muted} />}
               {saveMark === 'done' && <MaterialCommunityIcons name="cloud-check-outline" size={13} color={C.success} />}
             </View>
           </View>
@@ -1314,7 +1314,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: tab === key }}
               onPress={() => switchTab(key)}
               style={{ minHeight: 48, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 18, fontFamily: Font.display, fontWeight: '400', color: tab === key ? C.ink : C.faint }}>{title}</Text>
+              <Text style={{ fontSize: 18, fontFamily: Font.display, fontWeight: '400', color: tab === key ? C.ink : C.muted }}>{title}</Text>
               <View pointerEvents="none" style={{ position: 'absolute', left: 8, right: 8, bottom: 0, height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: tab === key ? C.accent : 'transparent' }} />
             </Pressable>)}
           </View>
@@ -1518,7 +1518,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <Text style={{ fontSize: 11, color: C.muted }}>같은 캐릭터를 이어 그려요</Text>
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="이전 칸 그림 안 쓰기" onPress={() => setContinueDismissed(true)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-            <MaterialCommunityIcons name="close" size={18} color={C.faint} />
+            <MaterialCommunityIcons name="close" size={18} color={C.muted} />
           </Pressable>
         </View>}
         {/* 표현 예시 참고 창(45.17차): 캔버스 위에 떠 있는 작은 창. 손잡이로 옮기고 접고 닫는다.
@@ -1621,7 +1621,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: typing ? 8 : 16, paddingTop: typing ? 8 : 0, paddingBottom: 8 }}>
             {/* 지금 색을 보여 주기만 한다(45.10차). 색을 고르는 입구는 아래 '팔레트' 하나 — 같은 일을 하는 자리를 둘 두지 않는다. */}
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color, borderWidth: 2, borderColor: '#FFFFFF', ...{ shadowColor: '#000', shadowOpacity: .15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } } }} />
-            <TextInput accessibilityLabel="문구 내용" value={captionDraft} onChangeText={setCaptionDraft} multiline={false} autoFocus returnKeyType="done" onSubmitEditing={() => applyCaption(captionDraft)} placeholder="예: 고마워" placeholderTextColor={C.faint} style={{ flex: 1, fontSize: 17, height: C.tap, paddingVertical: 0, textAlignVertical: 'center', borderRadius: 14, paddingHorizontal: 14, backgroundColor: C.surface2, color: C.ink }} />
+            <TextInput accessibilityLabel="문구 내용" value={captionDraft} onChangeText={setCaptionDraft} multiline={false} autoFocus returnKeyType="done" onSubmitEditing={() => applyCaption(captionDraft)} placeholder="예: 고마워" placeholderTextColor={C.muted} style={{ flex: 1, fontSize: 17, height: C.tap, paddingVertical: 0, textAlignVertical: 'center', borderRadius: 14, paddingHorizontal: 14, backgroundColor: C.surface2, color: C.ink }} />
             {/* 360dp 미만에서는 키보드 닫기 아이콘을 두지 않는다 — 입력칸이 70dp 까지 줄어 글자를 쓸 자리가 없었다(45.36-R1).
                 키보드는 안드로이드 뒤로 가기로 닫히고, 닫아도 적용·삭제되지 않는 것은 그대로다(명세 E07). */}
             {typing && !narrow && <IconButton label="키보드 닫기" icon="keyboard-close" color={C.muted} size={20} onPress={() => Keyboard.dismiss()} />}
@@ -1700,7 +1700,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                   <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, overflow: 'hidden', opacity: layer.visible ? 1 : .35 }}>
                     {thumbs[layer.id] ? <Image source={{ uri: thumbs[layer.id] }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : null}
                   </View>
-                  <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: active ? '800' : '600', color: layer.visible ? C.ink : C.faint }}>{name}</Text>
+                  <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: active ? '800' : '600', color: layer.visible ? C.ink : C.muted }}>{name}</Text>
                   <View style={{ width: 18, alignItems: 'center' }}>{active ? <MaterialCommunityIcons name="pencil" size={16} color={C.ink} /> : null}</View>
                 </Pressable>
                 <EyeToggle label={`${name} ${layer.visible ? '숨기기' : '보이기'}`} on={layer.visible} onPress={() => changeTransform(layer.id, { visible: !layer.visible })} />
@@ -1918,7 +1918,7 @@ function BuiltinReferences({ maxHeight, category, onCategory, onPick }: { maxHei
             </Pressable>)}
         </ScrollView>
       : <Text style={{ paddingHorizontal: 12, paddingVertical: 16, fontSize: 12, color: T.muted }}>이 분류에는 아직 그림이 없어요</Text>}
-    <Text style={{ paddingHorizontal: 12, paddingBottom: 8, fontSize: 11, color: T.faint }}>{BUILTIN_REFERENCES.ready ? '누르면 캔버스에 참고로 깔려요' : '관절 인형 그림은 준비 중이에요'}</Text>
+    <Text style={{ paddingHorizontal: 12, paddingBottom: 8, fontSize: 11, color: T.muted }}>{BUILTIN_REFERENCES.ready ? '누르면 캔버스에 참고로 깔려요' : '관절 인형 그림은 준비 중이에요'}</Text>
   </View>;
 }
 function PoseStrip({ category, index, count, onIndex }: { category: string; index: number; count: number; onIndex: (next: number) => void }) {
@@ -2012,7 +2012,7 @@ function GuideStrip({ title, hint, artwork, collapsed, onCollapse, onClose, onUn
 function EyeToggle({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ checked: on }} onPress={onPress}
     style={({ pressed }) => ({ width: T.tap, height: T.tap, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : 'transparent' })}>
-    <MaterialCommunityIcons name={on ? 'eye-outline' : 'eye-off-outline'} size={20} color={on ? T.ink : T.faint} />
+    <MaterialCommunityIcons name={on ? 'eye-outline' : 'eye-off-outline'} size={20} color={on ? T.ink : T.muted} />
   </Pressable>;
 }
 // 하단에서 올라오는 설정 패널의 공통 껍데기.
@@ -2074,7 +2074,7 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
         더 가리고 팔레트 마지막 줄이 도구 줄 경계에서 잘렸다(43차 실기기). 직접 선택에서는 이 자리에 색 값이 보인다. */}
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48 }}>
       {view === 'palette' && <Text style={{ fontSize: 12, fontWeight: '700', color: T.muted }}>최근</Text>}
-      {view === 'palette' && !recent.length && <Text style={{ flex: 1, fontSize: 12, color: T.faint }}>아직 쓴 색이 없어요</Text>}
+      {view === 'palette' && !recent.length && <Text style={{ flex: 1, fontSize: 12, color: T.muted }}>아직 쓴 색이 없어요</Text>}
       {view === 'palette' && recent.length
         ? <ScrollView testID="최근 색" horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center', gap: 12, paddingHorizontal: 6, paddingVertical: 6 }}>
             {recent.slice(0, 7).map(c => <Swatch round key={'r' + c} label={'최근 색 ' + c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}

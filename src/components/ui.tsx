@@ -13,7 +13,8 @@ import type { LocalImage } from '../types';
 // · 초록(success)은 저장 성공 같은 '정말 성공한 순간'에만 제한적으로. PRO 는 색 세계관을 따로 두지 않는다(보라 없음) —
 //   배지·아이콘·구성으로 표현한다. pro·proSoft 이름은 남겨 두되 잉크·중립 값을 가리킨다.
 // · 검정 2px 테두리(+ Pop 그림자)는 '누를 노란 버튼'과 '지금 고른 것'에만(45.39 절충안 유지). 카드·캔버스는 옅은 중립 선.
-// · 글자 대비(흰 바탕): ink 16.8 · muted 5.8(가라앉은 면 5.3, 누름 면 5.1) · faint 3.3 — 45.39 값보다 낮추지 않는다.
+// · 글자 대비: 읽는 글자는 ink(16.8) 또는 muted(흰 5.8 · 가라앉은 면 5.3 · 누름 5.1 · 누름 진함 4.6 · 옅은 노랑 5.2) — 모두 4.5:1 이상.
+//   faint(흰 3.3)는 비활성 표시(WCAG 1.4.3 예외)와 장식 화살표에만 쓴다.
 // · 노랑 위 글자는 언제나 잉크(흰 글씨 금지). 노랑을 글자색으로 쓰지 않는다.
 // 이 앱은 카카오 이모티콘 제출을 돕지만 카카오가 만든 앱이 아니다. 카카오의 노랑(#FEE500)·로고·캐릭터·화면 구성을 따라 하지 않는다.
 export const T = {
@@ -23,7 +24,7 @@ export const T = {
   warm: '#F6F5F2',          // (45.39 크림 제안 면) → 가라앉은 면과 같게
   ink: '#1F1D1A',           // 본문·아이콘·검정 테두리
   muted: '#6B655E',         // 보조 설명
-  faint: '#948D84',         // 아주 작은 보조 글자와 비활성 아이콘
+  faint: '#948D84',         // 비활성 표시와 장식(화살표·구분 기호) 전용 — 읽어야 하는 글자에는 쓰지 않는다(흰 면 3.3:1). 글자는 muted
   line: '#ECE9E3',          // 구분선
   lineStrong: '#DCD7CE',
   accent: '#FFCC2E',        // MAKER YELLOW — 주 행동과 고른 것
@@ -73,7 +74,7 @@ export const Type = {
   bodySecondary: { fontSize: 13, lineHeight: 19, fontWeight: '400', color: T.muted },
   button: { fontSize: 15, lineHeight: 20, fontWeight: '700', color: T.ink },
   caption: { fontSize: 12, lineHeight: 17, fontWeight: '500', color: T.muted },
-  micro: { fontSize: 11, lineHeight: 14, fontWeight: '600', color: T.faint },
+  micro: { fontSize: 11, lineHeight: 14, fontWeight: '600', color: T.muted },
 } as const;
 
 // 그림자. 층을 가르는 부드러운 그림자(Elev)와, 스티커처럼 붙은 주요 표면의 딱 떨어지는 그림자(Pop) 두 가지.
@@ -419,7 +420,7 @@ export function Dialog({ title, onClose, children }: { title: string; onClose: (
   </View></Modal>;
 }
 export function Field({ label, value, onChangeText, multiline = true, flat = false }: { label: string; value: string; onChangeText: (s: string) => void; multiline?: boolean; flat?: boolean }) {
-  return <View style={{ gap: flat ? 2 : 6 }}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} multiline={multiline} style={[styles.input, multiline && { minHeight: 76, textAlignVertical: 'top' }, flat && { borderWidth: 0, backgroundColor: 'transparent', paddingHorizontal: 0, paddingVertical: 2, minHeight: 44 }, flat && multiline && { minHeight: 44 }]} placeholder={`${label} 입력`} placeholderTextColor={T.faint} /></View>;
+  return <View style={{ gap: flat ? 2 : 6 }}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} multiline={multiline} style={[styles.input, multiline && { minHeight: 76, textAlignVertical: 'top' }, flat && { borderWidth: 0, backgroundColor: 'transparent', paddingHorizontal: 0, paddingVertical: 2, minHeight: 44 }, flat && multiline && { minHeight: 44 }]} placeholder={`${label} 입력`} placeholderTextColor={T.muted} /></View>;
 }
 export function Preview({ image, label, size = 140 }: { image?: LocalImage; label: string; size?: number }) {
   return <View style={{ flex: 1, gap: 6 }}><Text style={styles.label}>{label}</Text><View style={{ height: size, backgroundColor: T.surface2, borderRadius: T.radius.md, justifyContent: 'center', overflow: 'hidden' }}>{image ? <Image accessibilityLabel={label} source={{ uri: imageUri(image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ textAlign: 'center', color: C.muted }}>이미지 없음</Text>}</View></View>;

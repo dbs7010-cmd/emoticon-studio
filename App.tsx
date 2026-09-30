@@ -720,7 +720,7 @@ function Studio() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4, marginLeft: -8 }}>
             <IconButton label="홈으로" icon="chevron-left" color={C.ink} onPress={() => setHomeView('home')} />
             <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>전체 작업</Text>
-            <Text style={{ fontSize: 12, color: C.faint }}>{sortedProjects.length}개 세트</Text>
+            <Text style={{ fontSize: 12, color: C.muted }}>{sortedProjects.length}개 세트</Text>
           </View>
           <Field label="세트 이름으로 찾기" value={projectQuery} onChangeText={setProjectQuery} multiline={false} />
           <Segmented dense testID="세트 분류" value={projectFilter} onChange={setProjectFilter} items={[{ key: 'all', label: '전체' }, { key: 'working', label: '작업 중' }, { key: 'done', label: '완성' }]} />
@@ -737,10 +737,10 @@ function Studio() {
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>{p.projectName}</Text>
-                    <Text numberOfLines={1} style={{ fontSize: 12, color: C.faint }}>{m.moving ? '움직이는' : '멈춰있는'} · {m.done}개 완성{m.stamp ? ` · ${m.stamp}` : ''}</Text>
+                    <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{m.moving ? '움직이는' : '멈춰있는'} · {m.done}개 완성{m.stamp ? ` · ${m.stamp}` : ''}</Text>
                   </View>
                 </Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="dots-horizontal" size={22} color={C.faint} /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="dots-horizontal" size={22} color={C.muted} /></Pressable>
               </View>;
             })}
           </View>
@@ -914,7 +914,7 @@ function Studio() {
                     return <View key={i} style={{ flex: 1, aspectRatio: 1, backgroundColor: i % 2 ? C.surface2 : C.paper, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                       {sl ? <Image source={{ uri: imageUri((sl.motionImage ?? sl.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
                         : i === drawn.length ? <ImtiIcon name="brush" size={IconSize.tool} color={C.lineStrong} /> : null}
-                      {more && <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: '#1F1D1A8C', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 15, fontWeight: '800', color: '#FFFFFF' }}>+{drawn.length - 3}</Text></View>}
+                      {more && <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: '#1F1D1AB3', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 15, fontWeight: '800', color: '#FFFFFF' }}>+{drawn.length - 3}</Text></View>}
                     </View>;
                   })}
                 </View>
@@ -924,10 +924,13 @@ function Studio() {
                       <Text numberOfLines={1} style={{ fontSize: 19, lineHeight: 25, color: C.ink, fontFamily: Font.display, fontWeight: '400' }}>{p.projectName}</Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         {moving && <ImtiIcon name="motion" size={IconSize.meta} color={C.muted} />}
-                        <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 12, color: C.muted }}>{moving ? '움직이는 이모티콘' : '멈춰있는 이모티콘'}{stamp ? ` · ${stamp}` : ''}</Text>
+                        {/* 좁은 화면(360dp)에서는 한 줄 말줄임이 날짜를 지웠다. 날짜는 줄어들지 않게 따로 두고,
+                            380dp 미만에서는 종류를 전체 작업 목록과 같은 짧은 말('멈춰있는'·'움직이는')로 쓴다. */}
+                        <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 12, color: C.muted }}>{moving ? '움직이는' : '멈춰있는'}{screenWidth < 380 ? '' : ' 이모티콘'}</Text>
+                        {!!stamp && <Text testID="홈 카드 날짜" numberOfLines={1} style={{ flexShrink: 0, fontSize: 12, color: C.muted }}>· {stamp}</Text>}
                       </View>
                     </View>
-                    <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={6} style={{ width: 40, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="more" size={IconSize.tool} color={C.faint} /></Pressable>
+                    <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={6} style={{ width: 40, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="more" size={IconSize.tool} color={C.muted} /></Pressable>
                     {/* 카드의 주 행동 하나: 이어 그리기(노랑). 카드 자체를 누르면 세트 보드가 열린다. */}
                     <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 이어서 만들기`} onPress={() => openCut(next)}
                       style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 14, borderRadius: 14, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.accentLine : C.accent, borderWidth: C.stroke, borderColor: C.edge, ...(pressed ? Pop.pressed : Pop.shadow) })}>
@@ -1268,7 +1271,7 @@ function Studio() {
                   const bad = problems.some(c => c.slot === s.number), shown = s.motionImage ?? s.finalImage;
                   return <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={`${pad(s.number)}번 칸 열기`} onPress={() => fixSlot(s.number)}
                     style={{ width: cell, height: cell, borderRadius: 10, borderWidth: bad ? 2 : shown ? 1 : 0, borderColor: bad ? STATUS_TONE.fail : C.line, backgroundColor: shown ? C.paper : C.surface2, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
-                    {shown ? <Image source={{ uri: imageUri(shown.path) }} style={{ width: '100%', height: '100%', opacity: isDone(s) ? 1 : .55 }} resizeMode="contain" /> : <Text style={{ fontSize: 10, fontWeight: '600', color: C.faint }}>{pad(s.number)}</Text>}
+                    {shown ? <Image source={{ uri: imageUri(shown.path) }} style={{ width: '100%', height: '100%', opacity: isDone(s) ? 1 : .55 }} resizeMode="contain" /> : <Text style={{ fontSize: 10, fontWeight: '600', color: C.muted }}>{pad(s.number)}</Text>}
                   </Pressable>;
                 })}
               </View>
@@ -1303,7 +1306,7 @@ function Studio() {
               <Pressable accessibilityRole="button" accessibilityLabel={prepOpen ? '제출 준비 접기' : '제출 준비 보기'} accessibilityState={{ expanded: prepOpen }} onPress={() => setPrepOpen(!prepOpen)}
                 style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>제출 준비</Text>
-                <Text style={{ flex: 1, fontSize: 12, color: prepShort ? colors.WARNING : C.muted }}>{prepShort ? `${prepShort}가지 더 필요해요` : '필요한 것을 다 채웠어요'}</Text>
+                <Text style={{ flex: 1, fontSize: 12, color: prepShort ? C.warning : C.muted }}>{prepShort ? `${prepShort}가지 더 필요해요` : '필요한 것을 다 채웠어요'}</Text>
                 <MaterialCommunityIcons name={prepOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
               </Pressable>
               {prepOpen && <View style={{ padding: 14, gap: 4, borderRadius: T.radius.card, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
@@ -1390,7 +1393,7 @@ function Studio() {
               <View style={{ flex: 1, gap: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
                   <Text style={{ fontSize: 16, lineHeight: 22, color: C.ink, fontWeight: '700' }}>{done}개 완성{working ? ` · ${working}개 작업 중` : ''}</Text>
-                  <Text style={{ fontSize: 12, color: C.faint }}>/ {project.slots.length}칸</Text>
+                  <Text style={{ fontSize: 12, color: C.muted }}>/ {project.slots.length}칸</Text>
                 </View>
                 <View style={{ height: 4, borderRadius: 2, backgroundColor: C.line, overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / project.slots.length * 100)}%`, height: '100%', borderRadius: 2, backgroundColor: C.accent }} /></View>
                 {/* 범례는 두 상태가 실제로 같이 있을 때만 설명할 것이 있다(45.2차). */}
@@ -1441,7 +1444,7 @@ function Studio() {
                 <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 앞으로'} disabled={s.number === 1} onPress={() => moveSlot(s.number, s.number - 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === 1 ? 'transparent' : C.surface2 }}><MaterialCommunityIcons name="chevron-left" size={18} color={s.number === 1 ? C.lineStrong : C.ink} /></Pressable>
                 <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 뒤로'} disabled={s.number === project.slots.length} onPress={() => moveSlot(s.number, s.number + 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === project.slots.length ? 'transparent' : C.surface2 }}><MaterialCommunityIcons name="chevron-right" size={18} color={s.number === project.slots.length ? C.lineStrong : C.ink} /></Pressable>
               </View>}
-              <Text numberOfLines={1} style={{ fontSize: 11, color: C.faint, paddingHorizontal: 2 }}><Text style={{ fontWeight: '700', color: done || working ? C.ink : C.faint }}>{pad(s.number)}</Text>{captionText(s) ? ' ' + captionText(s) : ''}</Text>
+              <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted, paddingHorizontal: 2 }}><Text style={{ fontWeight: '700', color: done || working ? C.ink : C.muted }}>{pad(s.number)}</Text>{captionText(s) ? ' ' + captionText(s) : ''}</Text>
             </Pressable>;
           })}</View>
         </>}
@@ -1498,7 +1501,7 @@ function Studio() {
     </Dialog>}
     {trashOpen && !pendingPurge && <Dialog title="휴지통" onClose={() => setTrashOpen(false)}>
       <Text style={styles.muted}>지운 세트는 {TRASH_DAYS}일 동안 여기 남아요. 되살리면 그림·움직임·참고가 그대로 돌아와요.</Text>
-      {!trashed.length && <Text style={{ fontSize: 13, color: C.faint }}>휴지통이 비어 있어요.</Text>}
+      {!trashed.length && <Text style={{ fontSize: 13, color: C.muted }}>휴지통이 비어 있어요.</Text>}
       {trashed.map(p => {
         const left = Math.max(0, TRASH_DAYS - Math.floor((Date.now() - Date.parse(p.deletedAt!)) / 86400000));
         return <View key={p.id} testID={'휴지통 ' + p.projectName} style={{ gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderColor: C.line }}>

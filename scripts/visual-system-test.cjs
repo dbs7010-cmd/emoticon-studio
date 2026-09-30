@@ -181,6 +181,9 @@ async function ready() {
     assert.ok(card.findAll(n => n.type === 'Text').some(n => /^다음은 \d+번 칸$/.test([n.props.children].flat(9).join(''))), '카드 B: 다음 칸 표시');
     assert.ok(!card.findAll(n => typeof n.props.testID === 'string' && /^slot-/.test(n.props.testID)).length, '홈 카드에는 32칸 격자가 없다');
     assert.ok(ids(labelled('시각 세트 이어서 만들기')[0]).includes('icon-brush'), '이어 그리기 = 붓 아이콘 + 글자');
+    // 좁은 화면에서 한 줄 말줄임이 날짜를 지우지 않는다: 날짜는 줄어들지 않는 따로 된 글자, 종류 글자만 줄어든다.
+    const date = card.findAll(n => n.type === 'Text' && n.props.testID === '홈 카드 날짜')[0];
+    assert.ok(date && flat(date.props.style).flexShrink === 0 && /^· \d+월 \d+일$/.test([date.props.children].flat(9).join('')), '홈 카드 날짜는 줄어들지 않는다');
     const fresh = flat(labelled('새 이모티콘 만들기')[0].props.style);
     assert.equal(fresh.borderColor, T.edge); assert.equal(fresh.backgroundColor, T.paper, '새로 만들기 = 흰 바탕 잉크 테두리(노랑 아님)');
     assert.ok(fresh.minHeight >= T.tap, '새로 만들기 누르는 자리');

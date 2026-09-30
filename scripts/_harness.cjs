@@ -131,8 +131,11 @@ async function holdRail(label, ratio) {
   await act(async () => node().props.onResponderMove({ nativeEvent: { locationX: 3, pageX: KNOB / 2 + ratio * (W - KNOB) } }));
 }
 const SCREENS = [
-  ['home-empty', '홈 · 작업 없음', async () => { seed(0); await fresh(); }],
-  ['home-work', '홈 · 작업 있음', async () => { seed(2); await fresh(); }],
+  // 45.42 보완: 무료 상태 홈(검수용 PRO 꺼짐). 결제 없이 PRO 가 아닌 상태 — 'PRO 보기' 배지를 본다.
+  ['home-empty-free', '홈 · 작업 없음 · 무료', async () => { seed(0, false); await fresh(); }],
+  ['home-work-free', '홈 · 작업 있음 · 무료', async () => { seed(2, false); await fresh(); }],
+  ['home-empty', '홈 · 작업 없음 · PRO(검수용)', async () => { seed(0); await fresh(); }],
+  ['home-work', '홈 · 작업 있음 · PRO(검수용)', async () => { seed(2); await fresh(); }],
   ['new-set', '새 세트 만들기', async () => { await press('새 이모티콘 만들기'); }],
   ['guide-emotions', '표현 가이드 · 감정 목록', async () => { await press('취소'); await press('표현 가이드'); }],
   ['guide-examples', '표현 가이드 · 표현 고르기', async () => { await press('고마워 · 두 손 모아 꾸벅'); await press('정중하게 고르기'); }],
@@ -183,7 +186,8 @@ const SCREENS = [
   }],
 ];
 
-function seed(count) {
+// pro=false 는 렌더용 상태만 바꾼다(저장소의 검수용 PRO 표시를 끔). 결제·권한 코드는 건드리지 않는다.
+function seed(count, pro = true) {
   files.clear();
   const p = createProject('검토 세트', '콩이');
   p.slots = p.slots.map((s, i) => i < 18
@@ -197,7 +201,7 @@ function seed(count) {
   // 검수용 PRO 를 켜 둔다 — 결제 없이 PRO 화면(부분 움직임)까지 그려 보기 위해서다. 구매가 아니다.
   // 칸이 가리키는 그림 파일을 실제로 둔다 — 없으면 내보내기가 '파일을 찾을 수 없어요'에서 멈춘다.
   files.set('document/emoticon-studio/a.png', fsNode.readFileSync(SLOT_ART));
-  saveStore({ version: 1, revision: 1, projects: count === 0 ? [] : count === 1 ? [p] : [p, second], palette: ['#54A9E8', '#E94F4F'], reviewUnlock: true });
+  saveStore({ version: 1, revision: 1, projects: count === 0 ? [] : count === 1 ? [p] : [p, second], palette: ['#54A9E8', '#E94F4F'], reviewUnlock: pro });
 }
 
 // 화면을 차례로 열고, 열릴 때마다 cb(id, title, tree, flat) 를 부른다.
