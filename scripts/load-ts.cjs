@@ -2,7 +2,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const ts = require('typescript');
-exports.loader = function (mocks = {}) {
+// 45.42 S0: react-native-svg 는 네이티브 모듈이라 노드에서 실제로 불러올 수 없다. 검사 로더에서만 이름 붙은 빈 요소로 바꾼다.
+// 이 목으로 통과한 검사는 '어떤 아이콘이 어디에 어떤 속성으로 그려지는가'까지만 확인한다 — 실제 SVG 렌더링 확인이 아니다.
+const SVG_MOCK = Object.assign(
+  Object.fromEntries(['Svg', 'Path', 'Circle', 'Rect', 'G', 'Line', 'Ellipse', 'Polyline', 'Polygon', 'Defs', 'ClipPath'].map(n => [n, 'Svg' + (n === 'Svg' ? '' : n)])),
+  { default: 'Svg', __esModule: true });
+exports.SVG_MOCK = SVG_MOCK;
+exports.loader = function (given = {}) {
+  const mocks = { 'react-native-svg': SVG_MOCK, ...given };
   const cache = new Map();
   function load(filename) {
     filename = path.resolve(filename);
