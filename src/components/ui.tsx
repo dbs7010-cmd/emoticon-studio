@@ -5,50 +5,58 @@ import { imageUri } from '../services/storage';
 import { ASSET_SLOTS, type AssetSlotName } from '../design/asset-slots';
 import type { LocalImage } from '../types';
 
-// ── 임티제작소 디자인 토큰 · 45.39 확정 방향 D '노랑 스티커' ─────────────────────────────────────
-// 사용자 확정(2026-09-27): B 의 굵은 테두리 + A 의 따뜻한 색감, 노랑이 기본색, 대비색으로 눈이 피로하지 않게 뚜렷하게.
-//
-// · 바탕은 따뜻한 크림(차가운 회색을 걷었다). 흰 표면이 그 위에 스티커처럼 붙는다.
-// · 노랑(#FFCC2E)은 지금 할 일(저장·새로 만들기)과 고른 것에만 넓게 쓴다. 넓은 노란 면은 화면에 하나.
-// · 대비색: 보라(PRO) · 초록(저장됨·완성) · 파스텔(감정 카드). 경고색은 정말 경고일 때만.
-// · 테두리 절충안(45.39 사용자 확정 — 검정이 모든 카드를 두르니 '뜬금없고 통일성이 약하다'):
-//   검정 2px(+ 딱 떨어지는 그림자 Pop)는 **누를 노란 버튼**과 **고른 것**에만 쓴다. 그래서 검정이 '누를 것·지금 고른 것'을 뜻한다.
-//   카드·캔버스·안내·목록 상자는 따뜻한 갈색 선 + 부드러운 그림자(Card · Paper). 목록 줄은 얇은 선 그대로.
-// · 노랑 위 글자는 언제나 짙은 색(흰 글씨 금지). 노랑을 글자색으로 쓰지 않는다.
+// ── 임티제작소 디자인 토큰 · 45.42 WHITE BASE (사용자 확정 2026-09-28) ─────────────────────────────────
+// 색은 네 가지 역할뿐이다: WHITE(바탕) · INK(글자·선·검정 테두리) · NEUTRAL(가라앉은 면·선·누름) · MAKER YELLOW.
+// · 사용자의 이모티콘이 화면에서 가장 화려해야 한다. UI 는 흰색과 중립색으로 물러선다.
+// · 노랑(#FFCC2E)은 주 행동 · 선택 · 진행 · 브랜드 순간에만. 한 화면의 주인공 노랑은 하나.
+// · 초록(success)은 저장 성공 같은 '정말 성공한 순간'에만 제한적으로. PRO 는 색 세계관을 따로 두지 않는다(보라 없음) —
+//   배지·아이콘·구성으로 표현한다. pro·proSoft 이름은 남겨 두되 잉크·중립 값을 가리킨다.
+// · 검정 2px 테두리(+ Pop 그림자)는 '누를 노란 버튼'과 '지금 고른 것'에만(45.39 절충안 유지). 카드·캔버스는 옅은 중립 선.
+// · 글자 대비(흰 바탕): ink 16.8 · muted 5.8(가라앉은 면 5.3, 누름 면 5.1) · faint 3.3 — 45.39 값보다 낮추지 않는다.
+// · 노랑 위 글자는 언제나 잉크(흰 글씨 금지). 노랑을 글자색으로 쓰지 않는다.
 // 이 앱은 카카오 이모티콘 제출을 돕지만 카카오가 만든 앱이 아니다. 카카오의 노랑(#FEE500)·로고·캐릭터·화면 구성을 따라 하지 않는다.
 export const T = {
-  bg: '#FFF9EC',            // 앱 바탕 — 따뜻한 크림
-  paper: '#FFFFFF',         // 스티커 표면
-  surface2: '#F6EBD3',      // 작업대 — 캔버스 바깥·세그먼트 바탕·빈 칸
-  warm: '#FFF3D6',          // 따뜻한 제안 면
-  ink: '#2A2320',           // 본문·아이콘·스티커 테두리
-  muted: '#6F6258',         // 보조 설명(흰 표면에서 6:1)
-  faint: '#9A8C7F',         // 아주 작은 보조 글자와 비활성 아이콘
-  line: '#EADFCB',          // 구분선
-  lineStrong: '#D3C4AA',
-  accent: '#FFCC2E',        // 기본색 노랑 — 지금 할 일과 고른 것
-  accentLine: '#F0B800',    // 노랑 눌림
-  accentSoft: '#FFF0B8',    // 고른 면
-  accentInk: '#2A2320',     // 노랑 위 글자
-  accentBorder: '#2A2320',  // 고른 면의 가장자리 — 스티커 테두리와 같은 짙은 색
-  warmLine: '#EFDDB0',
-  warmInk: '#7A5A00',
+  bg: '#FFFFFF',            // 앱 바탕 — 흰색
+  paper: '#FFFFFF',         // 카드·패널 표면
+  surface2: '#F6F5F2',      // 가라앉은 면 — 캔버스 바깥·세그먼트 바탕·빈 칸·보조 카드
+  warm: '#F6F5F2',          // (45.39 크림 제안 면) → 가라앉은 면과 같게
+  ink: '#1F1D1A',           // 본문·아이콘·검정 테두리
+  muted: '#6B655E',         // 보조 설명
+  faint: '#948D84',         // 아주 작은 보조 글자와 비활성 아이콘
+  line: '#ECE9E3',          // 구분선
+  lineStrong: '#DCD7CE',
+  accent: '#FFCC2E',        // MAKER YELLOW — 주 행동과 고른 것
+  accentLine: '#E6AE00',    // 노랑 눌림
+  accentSoft: '#FFF4CC',    // 옅은 노랑(목록형 선택 · 진행 표시의 부드러운 면)
+  accentInk: '#1F1D1A',     // 노랑 위 글자
+  accentBorder: '#1F1D1A',  // 고른 면의 가장자리 — 검정 테두리와 같은 잉크
+  warmLine: '#ECE9E3',      // (45.39 크림 선) → 중립 선
+  warmInk: '#6B655E',       // (45.39 크림 위 글자) → muted
   floating: '#FFFFFFF7',
   yellow: '#FFCC2E',
-  fill: '#F3EADA', fillPressed: '#EADFCB',
-  success: '#1E7F55', successSoft: '#D5F2E3',
+  fill: '#F2F0EC', fillPressed: '#E8E5DF',   // 누름
+  success: '#1E8E5A', successSoft: '#E3F4EA', // 저장 성공 등 성공 순간에만
   warning: '#9A5B00', warningSoft: '#FFEACC',
   danger: '#B42318', dangerSoft: '#FCE3DF',
   info: '#3D4FC4', infoSoft: '#E9E5FF',
-  pro: '#5B47E0', proSoft: '#ECE8FF',            // PRO 대비색(노랑의 반대편 보라)
-  mint: '#D5F2E3', blue: '#E3F1FF', lavender: '#ECE8FF',
-  lilac: '#DCD3FF', sky: '#CDEBFF', coral: '#FFD9CC',   // 감정 카드 파스텔
-  edge: '#2A2320', stroke: 2,                            // 검정 테두리 — 노란 버튼·고른 것에만
-  cardLine: '#E0CFAF', paperLine: '#D6C3A0',             // 카드·캔버스의 따뜻한 갈색 선
+  pro: '#1F1D1A', proSoft: '#F6F5F2',         // PRO 는 보라 없이 잉크·중립으로(배지 모양이 구분한다)
+  edge: '#1F1D1A', stroke: 2,                // 검정 테두리 — 노란 버튼·고른 것에만
+  cardLine: '#ECE9E3', paperLine: '#DCD7CE', // 카드·캔버스의 옅은 중립 선
   radius: { xs: 8, sm: 12, md: 16, lg: 20, xl: 24, chip: 10, button: 14, card: 20 },
   gap: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
-  tap: 48, // 편한 손가락 자리
+  tap: 48, // 편한 손가락 자리 — 아이콘 크기(22/18/14)와 따로 둔다
 };
+// 상태 토큰(45.42). 화면마다 제각각이던 누름·선택·비활성·성공 표시를 한 벌로 모은다.
+// 비활성은 **색만** 옅게 한다(투명도로 흐리지 않는다). 실제 비활성 동작(disabled)과 accessibilityState 는 각 버튼이 그대로 갖는다.
+export const S = {
+  pressed: { backgroundColor: T.fill },
+  selected: { backgroundColor: T.accent, borderColor: T.edge },   // 도구·탭형 선택: 노란 면 + 잉크(테두리 2px 는 도구 줄만)
+  selectedSoft: { backgroundColor: T.accentSoft },                // 목록형 선택(브러시 줄·레이어 줄)
+  disabledInk: T.faint,                                           // 비활성 글자·아이콘 색
+  success: { color: T.success, backgroundColor: T.successSoft },
+} as const;
+// 짧은 반응 시간(ms). 0.1~0.3초 — 동작 결과를 바로 알게 할 만큼만.
+export const Motion = { press: 100, pop: 280, rise: 240 } as const;
 const C = T;
 // 제목 글꼴: Jua(빌드 때 APK 에 들어간다, app.config.js). 한 굵기뿐이라 굵기는 400 으로 둔다 — 굵게를 걸면 가짜 굵기가 된다.
 export const Font = { display: 'Jua' } as const;
@@ -72,18 +80,18 @@ export const Type = {
 //   Pop: 2px 테두리와 함께 쓴다(주요 버튼·카드·캔버스·고른 것). 눌리면 그림자를 거두고 그만큼 내려앉는다.
 export const Elev = {
   0: {},
-  1: { shadowColor: '#5A4020', shadowOpacity: 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  2: { shadowColor: '#5A4020', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: -3 }, elevation: 8 },
+  1: { shadowColor: '#1F1D1A', shadowOpacity: 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  2: { shadowColor: '#1F1D1A', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: -3 }, elevation: 8 },
 } as const;
-// 카드(홈 세트·가이드·목록 상자·대화 상자·안내)와 캔버스 종이. 검정 없이 따뜻한 선과 부드러운 그림자로 층을 가른다.
+// 카드(홈 세트·가이드·목록 상자·대화 상자·안내)와 캔버스 종이. 검정 없이 옅은 중립 선과 부드러운 그림자로 층을 가른다.
 export const Card = {
-  border: { borderWidth: 1.5, borderColor: T.cardLine },
-  shadow: { boxShadow: '0px 3px 0px #EBDDC2' },
-  float: { boxShadow: '0px 8px 24px rgba(90, 64, 32, 0.16)' },
+  border: { borderWidth: 1, borderColor: T.cardLine },
+  shadow: { boxShadow: '0px 1px 2px rgba(31, 29, 26, 0.05), 0px 8px 24px rgba(31, 29, 26, 0.07)' },
+  float: { boxShadow: '0px 8px 24px rgba(31, 29, 26, 0.14)' },
 } as const;
 export const Paper = {
-  border: { borderWidth: 1.5, borderColor: T.paperLine },
-  shadow: { boxShadow: '0px 6px 18px rgba(90, 64, 32, 0.14)' },
+  border: { borderWidth: 1, borderColor: T.paperLine },
+  shadow: { boxShadow: '0px 6px 18px rgba(31, 29, 26, 0.10)' },
 } as const;
 export const Pop = {
   border: { borderWidth: T.stroke, borderColor: T.edge },

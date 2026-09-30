@@ -13,7 +13,7 @@ import Svg, { Path, Circle, Rect } from 'react-native-svg';
 // 색 기본값은 공통 토큰(ui.tsx T.ink · T.faint)과 같은 값이다. ui.tsx 가 이 파일을 쓰므로 여기서 ui.tsx 를 부르지 않는다
 // (순환 참조). 두 값이 어긋나지 않는지는 icon-test 가 확인한다.
 export const ICON_INK = '#1F1D1A';
-export const ICON_FAINT = '#B3ADA4';
+export const ICON_FAINT = '#948D84';
 export const IconSize = { tool: 22, row: 18, meta: 14 } as const;
 export type IconSizeValue = typeof IconSize[keyof typeof IconSize];
 export const ICON_STROKE = 1.8;

@@ -56,7 +56,7 @@ const load = loader({ ...mocks, './src/services/images': images, '../services/im
 const { loadStore, saveStore } = load('src/services/storage.ts');
 const App = load('App.tsx').default;
 const { BASE_H } = load('src/painter/painter.tsx');
-const { T } = load('src/components/ui.tsx');
+const { T, Card } = load('src/components/ui.tsx');
 
 const metrics = { coverage: .2, centerX: .5, centerY: .5, width: .5, height: .5, color: [.2, .2, .2], transparent: true };
 let tree, scene;
@@ -535,7 +535,13 @@ const saved = async (dirty = true) => {
   // 45.34: 앱 바탕을 흰색에서 옅은 회색으로 내렸다 — 흰 패널이 그 위에 떠 보이게 하기 위해서다.
   // 값을 글자로 박지 않고 토큰과 견준다. 지켜야 할 것은 '뿌리 바탕은 토큰의 앱 바탕'이다.
   assert.equal(root.props.style.backgroundColor, T.bg, '앱 뿌리 화면 바탕은 공통 토큰의 앱 바탕이다');
-  assert.notEqual(T.bg, T.paper, '앱 바탕과 패널이 같으면 층이 읽히지 않는다');
+  // 45.42 WHITE BASE(사용자 확정): 바탕과 패널이 모두 흰색이다. 층은 색 차이 대신 옅은 중립 선 + 부드러운 그림자로 읽힌다.
+  // 그래서 '층이 읽힌다'는 조건을 선·그림자·가라앉은 면으로 확인한다(같은 흰색끼리 선도 그림자도 없으면 실패).
+  if (T.bg === T.paper) {
+    assert.notEqual(T.cardLine, T.paper, '흰 바탕 위 흰 카드는 바탕과 다른 선이 있어야 층이 읽힌다');
+    assert.ok(Card.border.borderWidth >= 1 && /rgba\(/.test(Card.shadow.boxShadow), '흰 카드는 선과 그림자로 떠 보인다');
+    assert.notEqual(T.surface2, T.bg, '가라앉은 면은 바탕과 달라야 한다');
+  } else assert.notEqual(T.bg, T.paper, '앱 바탕과 패널이 같으면 층이 읽히지 않는다');
 
   // ── 홈 위계(40차): 브랜드 머리 → 창작 표면(새 이모티콘 만들기) → 최근 작업 ─────────────────────────
   await press('뒤로');

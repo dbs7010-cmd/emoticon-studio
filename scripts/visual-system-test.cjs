@@ -43,7 +43,7 @@ const images = { dataUrl: async () => pngData, pickImages: async () => [], saveP
 const load = loader({ ...mocks, './src/services/images': images, '../services/images': images });
 const { loadStore, saveStore } = load('src/services/storage.ts');
 const { createProject } = load('src/project.ts');
-const { T, Type, Elev, Pop, Font } = load('src/components/ui.tsx');
+const { T, S, Motion, Type, Elev, Pop, Font } = load('src/components/ui.tsx');
 const slots = load('src/design/asset-slots.ts');
 const App = load('App.tsx').default;
 
@@ -64,18 +64,30 @@ async function ready() {
 
 (async () => {
   // ── 1. 토큰: 명세 값 · 한 벌 ─────────────────────────────────────────────────────────────
-  // 45.39 확정 디자인 D '노랑 스티커'(사용자 확정 2026-09-27). 값이 되돌아가지 않게 못 박는다.
-  // 앱 바탕은 따뜻한 크림, 패널은 흰색 — 둘이 달라야 층이 읽힌다(45.34 원칙 유지).
-  assert.equal(T.bg, '#FFF9EC'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.surface2, '#F6EBD3');
-  assert.notEqual(T.bg, T.paper, '앱 바탕과 패널은 서로 달라야 층이 읽힌다');
+  // 45.42 WHITE BASE(사용자 확정 2026-09-28): WHITE · INK · NEUTRAL · MAKER YELLOW. 값이 되돌아가지 않게 못 박는다.
+  // 바탕과 패널이 모두 흰색이다 — 층은 옅은 중립 선 + 부드러운 그림자, 가라앉은 면(surface2)으로 읽힌다.
+  assert.equal(T.bg, '#FFFFFF'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.surface2, '#F6F5F2');
+  assert.notEqual(T.cardLine, T.paper, '흰 카드는 바탕과 다른 선으로 층이 읽힌다');
   assert.notEqual(T.bg, T.surface2, '눌린 면은 앱 바탕과도 달라야 한다');
-  assert.equal(T.ink, '#2A2320'); assert.equal(T.muted, '#6F6258'); assert.equal(T.line, '#EADFCB');
-  assert.equal(T.accent, '#FFCC2E'); assert.equal(T.accentSoft, '#FFF0B8'); assert.equal(T.danger, '#B42318');
+  assert.equal(T.ink, '#1F1D1A'); assert.equal(T.muted, '#6B655E'); assert.equal(T.faint, '#948D84'); assert.equal(T.line, '#ECE9E3');
+  assert.equal(T.accent, '#FFCC2E'); assert.equal(T.accentSoft, '#FFF4CC'); assert.equal(T.danger, '#B42318');
+  // 크림·갈색 잔재가 공통 토큰에 남지 않는다(초록은 성공 순간 전용 토큰에만).
+  for (const k of ['bg', 'paper', 'surface2', 'warm', 'line', 'lineStrong', 'cardLine', 'paperLine', 'warmLine', 'fill', 'fillPressed']) {
+    const [r, g, b] = [1, 3, 5].map(i => parseInt(T[k].substr(i, 2), 16));
+    assert.ok(r - b <= 16 && Math.abs(r - g) <= 8, k + ' 는 중립색이다(크림·갈색 아님): ' + T[k]);
+  }
   assert.notEqual(T.accent.toUpperCase(), '#FEE500', '카카오 노랑을 쓰지 않는다');
-  // 스티커 문법: 2px 짙은 테두리 + 딱 떨어지는 그림자. PRO 는 노랑의 반대편 보라.
+  // 스티커 문법: 2px 짙은 테두리 + 딱 떨어지는 그림자(노란 버튼·고른 것에만). PRO 는 보라 없이 잉크(배지 모양으로 구분).
   assert.equal(T.stroke, 2); assert.equal(T.edge, T.ink, '스티커 테두리는 본문 색');
   assert.equal(Pop.border.borderWidth, 2); assert.ok(/^3px 3px 0px /.test(Pop.shadow.boxShadow), '주요 표면 그림자는 흐림 없이 3px');
-  assert.equal(T.pro, '#5B47E0');
+  assert.equal(T.pro, T.ink, 'PRO 는 보라가 아니라 잉크'); assert.equal(T.proSoft, T.surface2);
+  for (const k of Object.keys(T)) if (typeof T[k] === 'string') assert.notEqual(T[k].toUpperCase(), '#5B47E0', 'PRO 보라가 남지 않는다: ' + k);
+  // 상태 토큰 한 벌(45.42): 선택 = 노란 면 + 잉크 가장자리, 비활성 = 옅은 색(투명도 아님).
+  assert.deepEqual(S.selected, { backgroundColor: T.accent, borderColor: T.edge }); assert.equal(S.selectedSoft.backgroundColor, T.accentSoft);
+  assert.equal(S.pressed.backgroundColor, T.fill); assert.equal(S.disabledInk, T.faint); assert.equal(S.success.color, T.success);
+  assert.ok(Object.values(Motion).every(ms => ms >= 100 && ms <= 300), '반응 시간은 0.1~0.3초');
+  // 아이콘 부품(icons.tsx)은 순환 참조를 피하려 색을 따로 들고 있다 — 토큰과 같은 값이어야 한다.
+  { const I = load('src/design/icons.tsx'); assert.equal(I.ICON_INK, T.ink, '아이콘 잉크 = T.ink'); assert.equal(I.ICON_FAINT, T.faint, '아이콘 비활성 = T.faint'); }
   // 제목 글꼴 Jua: 빌드 설정에 들어 있고, 파일과 OFL 사용권 문서가 함께 있다.
   assert.equal(Font.display, 'Jua'); assert.equal(Type.screenTitle.fontFamily, 'Jua'); assert.equal(Type.screenTitle.fontWeight, '400', '한 굵기 글꼴에 가짜 굵기를 걸지 않는다');
   {
@@ -94,6 +106,10 @@ async function ready() {
     assert.ok(ratio(T.muted, T.paper) >= 4.5, '보조 글자도 패널 위에서 4.5:1 이상');
     assert.ok(ratio(T.muted, T.bg) >= 4.5, '보조 글자는 앱 바탕 위에서도 4.5:1 이상');
     assert.ok(ratio(T.accentInk, T.accent) >= 4.5, '노랑 위 글자도 4.5:1 이상');
+    // 45.42: 가라앉은 면·누름 면 위 보조 글자, 비활성 글자·아이콘(3:1, 45.39 의 faint 3.27 보다 낮추지 않는다).
+    for (const face of ['surface2', 'fill']) assert.ok(ratio(T.muted, T[face]) >= 4.5, '보조 글자는 ' + face + ' 위에서도 4.5:1 이상');
+    assert.ok(ratio(T.faint, T.paper) >= 3.27, '비활성 글자·아이콘은 흰 면 위 3:1 이상(45.39 보다 옅어지지 않는다): ' + ratio(T.faint, T.paper).toFixed(2));
+    assert.ok(ratio(T.ink, T.accentSoft) >= 7, '옅은 노랑(목록형 선택) 위 본문 7:1 이상');
   }
   assert.deepEqual([T.radius.xs, T.radius.sm, T.radius.md, T.radius.lg, T.radius.xl], [8, 12, 16, 20, 24], '모서리는 8·12·16·20·24 한 벌');
   // 명세 §2 는 쓰임새로 부른다: 카드16 · 버튼12 · 칩10.
