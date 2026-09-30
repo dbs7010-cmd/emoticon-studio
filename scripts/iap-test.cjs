@@ -291,7 +291,7 @@ function fakeServer(reply = body => body.productId === 'pro_lifetime'
   assert.equal(labelled('PRO 한 번 구매하기')[0].props.disabled, true, '결제할 수 없으면 구매 버튼이 꺼진다');
   assert.equal(labelled('무료로 계속하기')[0].props.disabled, false, '무료로 계속하기는 그대로');
   await press('무료로 계속하기');
-  assert.equal(labelled('새 이모티콘 만들기').length, 1, '무료 작업 흐름 그대로');
+  assert.equal(labelled('새 세트 만들기').length, 1, '무료 작업 흐름 그대로');
   assert.equal(labelled('검수용 PRO 켜기').length, 0, '출시 구성: 검수 스위치 없음');
 
   // 화면에 나온 모든 글자에 스토어 오류 코드·모듈 이름이 없다

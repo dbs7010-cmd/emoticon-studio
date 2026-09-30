@@ -84,7 +84,7 @@ const homeSections = () => {
     if (id === '홈 창작 표면' && n.type === 'View') out.push('창작');   // 45.42: EmptyState 부품과 속 View 가 같은 testID — 실제 View 하나만 센다
     else if (id === '홈 알림') out.push('공지');
     else if (n.type === 'Pressable' && label === '표현 가이드') out.push('가이드');
-    else if (n.type === 'Pressable' && label === '새 이모티콘 만들기' && !out.includes('창작')) out.push('시작 줄');
+    else if (n.type === 'Pressable' && label === '새 세트 만들기' && !out.includes('창작')) out.push('시작 줄');
     else if (n.type === 'Text' && text(n) === '이어서 만들기') out.push('최근 작업');
     else if (n.type === 'Pressable' && /^세트 \d+$/.test(label ?? '')) out.push('카드');
   }
@@ -100,9 +100,10 @@ const homeSections = () => {
       setStore(makeProjects(count), revision++);
       await render(on ? AppNotice : App);
       // 명세 H01: 작업이 없으면 창작 표면이 첫 화면. H02: 작업이 있으면 이어하기(최근 작업)가 맨 위.
+      // 45.43(승인 시안 WB2-Home · 사용자 결정): 표현 가이드는 '이어서 만들기' 제목 옆 작은 링크다(하단 네 칸은 걷었다).
       const want = count
-        ? ['최근 작업', '카드', '시작 줄', ...(on ? ['공지'] : []), '가이드']
-        : ['창작', ...(on ? ['공지'] : []), '가이드'];
+        ? ['최근 작업', '가이드', '카드', '시작 줄', ...(on ? ['공지'] : [])]
+        : ['가이드', '창작', ...(on ? ['공지'] : [])];
       assert.deepEqual(homeSections(), want, '홈 순서(' + where + ')');
       assert.equal(byTestID('홈 알림').length, on ? 1 : 0, '공지가 꺼지면 자리도 없다(' + where + ')');
       assert.equal(tree.root.findAll(n => n.type === 'Pressable' && /^세트 \d+$/.test(n.props.accessibilityLabel ?? '')).length, cards, '홈에는 가장 최근 세트 하나만(' + where + ')');
@@ -114,9 +115,9 @@ const homeSections = () => {
         assert.ok(flat(notice.props.style).paddingVertical <= 12, '공지는 낮은 한 줄 배너');
       }
       const yellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
-      // 45.39 홈(시안 H4): 노랑은 하나 — 세트가 있으면 카드 안 '이어 그리기', 없으면 창작 표면의 '새 이모티콘 만들기'.
+      // 45.39 홈(시안 H4): 노랑은 하나 — 세트가 있으면 카드 안 '이어 그리기', 없으면 창작 표면의 '새 세트 만들기'.
       assert.equal(yellow.length, 1, '홈의 노랑 버튼은 하나(' + where + '): ' + JSON.stringify(yellow));
-      assert.ok(count ? /^세트 [0-9]+ 이어서 만들기$/.test(yellow[0]) : yellow[0] === '새 이모티콘 만들기', '노랑은 지금 할 일(' + where + '): ' + yellow[0]);
+      assert.ok(count ? /^세트 [0-9]+ 이어서 만들기$/.test(yellow[0]) : yellow[0] === '새 세트 만들기', '노랑은 지금 할 일(' + where + '): ' + yellow[0]);
       if (count) assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 남은 일 카드(' + where + ')');
       // 45.42 빈 홈 = EmptyState(그림 · 제목 · 노란 행동 하나 · 그리기 › 움직이기 › 내보내기 흐름) + 내 그림으로 시작 한 줄.
       if (!count) {

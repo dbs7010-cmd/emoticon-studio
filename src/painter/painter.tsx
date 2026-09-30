@@ -645,7 +645,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       const savedRefs = slot.work?.references ?? [];
       const refs = slot.referenceImages.map((image, i) => {
         const savedRef = savedRefs.find(ref => ref.image?.path === image.path);
-        const planned = slot.referenceKey === undefined ? i === 0 : image.path === slot.referenceKey;
+        // 45.43: 저장된 참고 설정(work.references)이 없는 참고는 숨긴 채 연다. 예전에는 첫 참고를 저절로 켰는데,
+        // 45.37 이전에 한 칸의 가이드 그림이 세트의 모든 칸에 들어간 데이터가 남아 있어 **새 빈 칸마다 참고 그림이 깔렸다**.
+        // 참고 그림 자체(데이터)는 지우지 않는다 — 참고 줄에서 다시 켤 수 있다. 기획에서 칸에 지정한 참고(referenceKey)만 켠다.
+        const planned = slot.referenceKey !== undefined && image.path === slot.referenceKey;
         return savedRef ?? { ...transform('ref-' + image.path, `참고 ${i + 1}`), visible: planned, opacity: .3, image };
       });
       const decodedLayers = await Promise.all(layers.map(async l => ({ ...l, data: 'image' in l && l.image ? await dataUrl(l.image) : undefined })));

@@ -88,10 +88,10 @@ export type BackupContents = { project: Project; images: Map<string, Uint8Array>
 export function readBackup(archive: Uint8Array): BackupContents {
   const entries = readZip(archive);
   const metaEntry = entries.find(entry => entry.name === 'backup.json');
-  if (!metaEntry) throw new Error('임티제작소 백업 파일이 아니에요.');
+  if (!metaEntry) throw new Error('이모티 백업 파일이 아니에요.');
   let meta: { format?: unknown; version?: unknown; createdAt?: unknown; missing?: unknown; project?: unknown };
   try { meta = JSON.parse(new TextDecoder().decode(metaEntry.data)); } catch { throw new Error('백업 정보를 읽지 못했어요.'); }
-  if (meta.format !== BACKUP_FORMAT) throw new Error('임티제작소 백업 파일이 아니에요.');
+  if (meta.format !== BACKUP_FORMAT) throw new Error('이모티 백업 파일이 아니에요.');
   if (meta.version !== BACKUP_VERSION) throw new Error('이 앱보다 새 버전에서 만든 백업이에요. 앱을 업데이트한 뒤 다시 시도해 주세요.');
   // 세트 모양은 저장소와 같은 검증으로 본다 — 손상된 세트를 저장소에 들이지 않는다.
   const project = parseStore(JSON.stringify({ version: 1, revision: 1, projects: [meta.project] })).projects[0];

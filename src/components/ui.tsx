@@ -6,7 +6,7 @@ import { imageUri } from '../services/storage';
 import { ASSET_SLOTS, type AssetSlotName } from '../design/asset-slots';
 import type { LocalImage } from '../types';
 
-// ── 임티제작소 디자인 토큰 · 45.42 WHITE BASE (사용자 확정 2026-09-28) ─────────────────────────────────
+// ── 이모티 디자인 토큰 · 45.42 WHITE BASE (사용자 확정 2026-09-28) ─────────────────────────────────
 // 색은 네 가지 역할뿐이다: WHITE(바탕) · INK(글자·선·검정 테두리) · NEUTRAL(가라앉은 면·선·누름) · MAKER YELLOW.
 // · 사용자의 이모티콘이 화면에서 가장 화려해야 한다. UI 는 흰색과 중립색으로 물러선다.
 // · 노랑(#FFCC2E)은 주 행동 · 선택 · 진행 · 브랜드 순간에만. 한 화면의 주인공 노랑은 하나.
@@ -397,8 +397,9 @@ export function CompleteCard({ total, children, actionLabel, onAction, testID = 
 // 누를 수 있으면 누르는 자리는 48dp.
 export function ProBadge({ onPress, label = 'PRO 이용', text = 'PRO', owned }: { onPress?: () => void; label?: string; text?: string; owned?: boolean }) {
   const ink = owned ? T.paper : T.ink;
-  const face = <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 30, paddingHorizontal: 11, borderRadius: 15, borderWidth: T.stroke, borderColor: T.edge, backgroundColor: owned ? T.ink : T.paper }}>
-    <ImtiIcon name="pro" size={IconSize.meta} color={ink} /><Text style={{ fontSize: 12, fontWeight: '800', color: ink, letterSpacing: .2 }}>{text}</Text>
+  // 치수는 승인 시안 WB2-Home 값(45.43): 높이 26 · 둥글기 8 · 선 1.5 · 옆 9 · 사이 3.
+  const face = <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height: 26, paddingHorizontal: 9, borderRadius: 8, borderWidth: 1.5, borderColor: T.edge, backgroundColor: owned ? T.ink : T.paper }}>
+    <ImtiIcon name="pro" size={IconSize.meta} color={ink} /><Text style={{ fontSize: 12, fontWeight: '800', color: ink, letterSpacing: .3 }}>{text}</Text>
   </View>;
   if (!onPress) return <View accessible accessibilityLabel={owned ? 'PRO 이용 중' : text}>{face}</View>;
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!owned }} onPress={onPress}

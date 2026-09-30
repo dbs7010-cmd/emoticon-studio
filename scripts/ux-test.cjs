@@ -113,20 +113,20 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
 
  // ── Home: one action, and it opens a canvas rather than a form ──────────────────────────────
  // 시안 A1: 빈 캔버스로 시작하는 길과 내 그림으로 시작하는 길, 두 가지다.
- assert.equal(labelled('새 이모티콘 만들기').length,1,'home offers a way to start an empty set');
+ assert.equal(labelled('새 세트 만들기').length,1,'home offers a way to start an empty set');
  assert.equal(labelled('내 그림으로 시작').length,1,'and a way to start from a picture');
  assert.ok(!shown().some(t=>t.includes('멈춰있는 이모티콘')&&t.includes('360')),'홈이 모든 세트를 정지형 32칸이라고 말하지 않는다');
 
  // 명세 H03: 이름을 한 번 확인하고 만든다. 확인 전에는 세트가 생기지 않는다.
  const setsBefore=loadStore().store.projects.length;
- await press('새 이모티콘 만들기');
+ await press('새 세트 만들기');
  assert.equal(loadStore().store.projects.length,setsBefore,'묻는 동안에는 빈 세트가 생기지 않는다');
  const nameBox=tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='세트 이름');
  assert.equal(nameBox.length,1,'이름 한 줄만 묻는다');
  assert.ok(/^새 이모티콘 세트/.test(nameBox[0].props.value),'기본 이름이 이미 적혀 있다');
  await press('취소');
  assert.equal(loadStore().store.projects.length,setsBefore,'되돌아가도 빈 세트가 남지 않는다');
- await press('새 이모티콘 만들기');
+ await press('새 세트 만들기');
  await press('만들기');
  assert.equal(loadStore().store.projects.length,setsBefore+1,'만들기를 눌렀을 때 하나만 생긴다');
  assert.equal(tree.root.findAllByType('WebView').length,1,'만들면 바로 빈 캔버스로 간다');
@@ -846,10 +846,12 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.equal(legacy.slots[0].emotion,'감정 유지');
  assert.equal(legacy.slots[0].referenceImages.length,1,'old reference images are preserved');
 
- // Legacy per-slot reference choice still decides what the canvas opens with.
+ // 45.43: 저장된 참고 설정이 없는 칸의 참고는 **숨긴 채** 연다(새 빈 칸에 참고 그림이 저절로 깔리던 문제). 참고 데이터는 그대로 남아
+ // 참고 줄에서 다시 켤 수 있다. 기획에서 칸에 지정한 참고(referenceKey)만 켜고 연다.
  await act(async()=>tiles()[1].props.onPress());
  await message({type:'ready'});
- assert.equal(lastCommand('init').references.filter(r=>r.visible).length,1,'exactly one reference opens on');
+ assert.equal(lastCommand('init').references.length,1,'the reference is still there');
+ assert.equal(lastCommand('init').references.filter(r=>r.visible).length,0,'but a cut without saved reference settings opens without it showing');
  scene={type:'state',undo:false,redo:false,dirty:false,activeLayerId:'draw-1',activeReferenceId:null,caption:null,layers:lastCommand('init').layers,references:lastCommand('init').references};
  await message(scene);await message({type:'initialized'});
  // References(45.1차): 타일을 고르면 그 참고가 캔버스에 바로 보인다. 숨기기는 눈이 맡고, 삭제는 세트 전체에서 뺀다.
@@ -1141,7 +1143,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
     assert.deepEqual(slot.motion,preset,n+'번: 앱을 껐다 켜도 움직임이 그대로다');
     assert.ok(slot.motionImage&&slot.motionImage.path,n+'번: 앱을 껐다 켜도 파일이 그대로다');
    }
-   assert.equal(labelled('새 이모티콘 만들기').length,1,'껐다 켜면 홈으로 돌아온다');
+   assert.equal(labelled('새 세트 만들기').length,1,'껐다 켜면 홈으로 돌아온다');
    await openSet(live.projectName);
   }
   await press('뒤로');
@@ -1165,7 +1167,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
    assert.ok(cardThumbs.every(n=>n.props.style.width===52),label+': 작업실 썸네일이 장수에 따라 커지지 않는다');
    // 45.42: 빈 칸 자리 표시는 「임티 라인」 brush 아이콘(SVG)이다.
    if(count===0)assert.ok(tree.root.findAll(n=>n.type==='Svg'&&n.props.testID==='icon-brush').length>=1,'빈 세트도 카드 모양을 지킨다');
-   assert.equal(labelled('새 이모티콘 만들기').length,1,label+': 새 세트는 언제나 한 자리에 있다');
+   assert.equal(labelled('새 세트 만들기').length,1,label+': 새 세트는 언제나 한 자리에 있다');
    // 세트 화면: 추가 타일은 하나, 남은 칸은 한 줄로 말한다.
    await openSet(live.projectName);
    const addTiles=shown().filter(t=>t==='그림 추가').length;
@@ -1247,7 +1249,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  for(const width of [320,360,390,412]){
   viewport.width=width;
   await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
-  await press('새 이모티콘 만들기');await press('만들기');await init();
+  await press('새 세트 만들기');await press('만들기');await init();
   // The three brush options share one row; width and smoothing belong to that panel.
   assert.equal(labelled('선 보정').length,0,'기본 화면에는 독립 선 보정 줄이 없다');
   assert.equal(tree.root.findAll(n=>n.type==='View'&&n.props.testID==='선 종류').length,0,'선 종류 카드는 기본 화면에서 접혀 있다 at '+width+'dp');

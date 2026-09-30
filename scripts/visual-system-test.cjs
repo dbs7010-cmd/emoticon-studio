@@ -149,7 +149,7 @@ async function ready() {
   assert.equal(slots.HOME_NOTICE.enabled, false, '알림은 꺼져 있다');
   // 41차: 앱 표시 이름(런처·스토어 제목의 원본)과 홈 브랜드는 하나다.
   const appName = JSON.parse(fs.readFileSync('app.json', 'utf8')).expo.name;
-  assert.equal(appName, '임티제작소', 'app.json expo.name 은 제품 브랜드');
+  assert.equal(appName, '이모티', 'app.json expo.name 은 제품 브랜드');
   assert.equal(require('../app.config.js')().name, appName, 'app.config.js 가 이름을 바꾸지 않는다');
   assert.ok(fs.readFileSync('App.tsx', 'utf8').includes(`>${appName}</Text>`), '홈 머리 브랜드 글자와 앱 이름이 같다');
   assert.ok(fs.readFileSync('docs/PLAY_STORE_LISTING_KO.md', 'utf8').includes('`' + appName + '`'), '스토어 등록정보 초안 제목도 같다');
@@ -159,9 +159,9 @@ async function ready() {
   p.slots = p.slots.map((s, i) => i < 2 ? { ...s, finalImage: { path: 'image-a.png', width: 360, height: 360 }, done: i === 0 } : s);
   saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
   await act(async () => { tree = create(React.createElement(App)); });
-  assert.equal(texts()[0], '임티제작소', '첫 글자는 브랜드');
+  assert.equal(texts()[0], '이모티', '첫 글자는 브랜드');
   // 명세 H02: 작업이 있으면 이어하기가 맨 위다. 소개용 큰 표면은 작업 목록 위에 두지 않는다.
-  const startAt = tree.root.findAll(n => n.type === 'Pressable').findIndex(n => n.props.accessibilityLabel === '새 이모티콘 만들기');
+  const startAt = tree.root.findAll(n => n.type === 'Pressable').findIndex(n => n.props.accessibilityLabel === '새 세트 만들기');
   const cardAt = tree.root.findAll(n => n.type === 'Pressable').findIndex(n => n.props.accessibilityLabel === '시각 세트');
   assert.ok(cardAt >= 0 && cardAt < startAt, '최근 작업이 시작 줄보다 먼저(H02)');
   assert.equal(byTestID('홈 창작 표면').length, 0, '작업이 있으면 소개용 큰 표면을 두지 않는다');
@@ -171,7 +171,7 @@ async function ready() {
   // 45.39 홈(시안 H4, 사용자 확정): 노랑은 카드 안 '이어 그리기' 하나. 새로 만들기는 카드와 같은 흰 칸이다.
   assert.deepEqual(primaryYellow, ['시각 세트 이어서 만들기'], '홈의 노랑 버튼은 하나: ' + JSON.stringify(primaryYellow));
   assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 남은 일 카드가 있다');
-  assert.ok(texts().includes('이모티콘 31칸 더 그리기'), '남은 칸을 제안 기준(멈춘 32칸)으로 센다');
+  assert.ok(texts().includes('31칸 더 그리기'), '남은 칸을 제안 기준(멈춘 32칸)으로 센다(시안 문구)');
   assert.ok(texts().includes('대표 아이콘'), '대표 아이콘 줄');
   // 45.42 홈(시안 WB2-Home · 카드 B, 사용자 확정): 숫자 + 막대 + 다음 칸. 32칸 격자는 홈 카드에 두지 않는다.
   {
@@ -183,12 +183,16 @@ async function ready() {
     assert.ok(ids(labelled('시각 세트 이어서 만들기')[0]).includes('icon-brush'), '이어 그리기 = 붓 아이콘 + 글자');
     // 좁은 화면에서 한 줄 말줄임이 날짜를 지우지 않는다: 날짜는 줄어들지 않는 따로 된 글자, 종류 글자만 줄어든다.
     const date = card.findAll(n => n.type === 'Text' && n.props.testID === '홈 카드 날짜')[0];
-    assert.ok(date && flat(date.props.style).flexShrink === 0 && /^· \d+월 \d+일$/.test([date.props.children].flat(9).join('')), '홈 카드 날짜는 줄어들지 않는다');
-    const fresh = flat(labelled('새 이모티콘 만들기')[0].props.style);
+    assert.ok(date && flat(date.props.style).flexShrink === 0 && /^· (오늘|어제|\d+월 \d+일)$/.test([date.props.children].flat(9).join('')), '홈 카드 날짜는 줄어들지 않는다');
+    const fresh = flat(labelled('새 세트 만들기')[0].props.style);
     assert.equal(fresh.borderColor, T.edge); assert.equal(fresh.backgroundColor, T.paper, '새로 만들기 = 흰 바탕 잉크 테두리(노랑 아님)');
-    assert.ok(fresh.minHeight >= T.tap, '새로 만들기 누르는 자리');
+    assert.ok((fresh.height ?? fresh.minHeight) >= T.tap, '새로 만들기 누르는 자리');
     const rows = byTestID('제안까지 남은 일')[0];
-    assert.ok(['icon-brush', 'icon-eye', 'icon-reference'].every(i => ids(rows).includes(i)) || ids(rows).includes('icon-check'), '제안까지 줄마다 아이콘');
+    assert.ok(['icon-brush', 'icon-reference'].every(i => ids(rows).includes(i)), '제안까지 줄마다 아이콘');
+    // 45.43 시안 WB2-Home 그대로: 제안까지는 칸 · (움직이는 세트면) 움직이는 칸 · 대표 아이콘. 손볼 곳은 내보내기 화면이 맡는다.
+    assert.ok(rows.findAll(n => n.type === 'Text').every(n => !/손볼 곳/.test([n.props.children].flat(9).join(''))), '홈 제안까지에 손볼 곳 줄이 없다');
+    assert.equal(byTestID('홈 가이드 미리보기').length, 0, '시안에 없는 표현 가이드 네 칸은 홈에 없다');
+    assert.ok(!texts().some(t => /^\+\d+$/.test(t)), '시안에 없는 +N 덮개가 없다');
     assert.ok(ids(rows).every(i => i !== 'icon-pro'), '제안 목록에 PRO 표시 없음');
     const own = labelled('내 그림으로 시작')[0];
     assert.equal(flat(own.props.style).backgroundColor, T.surface2, '내 그림으로 시작 = 가라앉은 한 줄'); assert.ok(ids(own).includes('icon-reference'));

@@ -117,7 +117,7 @@ const saved = async (dirty = true) => {
   const collect = () => seen.push(...texts());
   const noPaywall = where => assert.equal(labelled('PRO 닫기').length, 0, 'FREE 핵심 흐름에 결제 화면이 끼어들지 않는다: ' + where);
   collect();
-  await press('새 이모티콘 만들기');
+  await press('새 세트 만들기');
   await press('만들기');
   await ready();
   collect();
@@ -543,12 +543,12 @@ const saved = async (dirty = true) => {
     assert.notEqual(T.surface2, T.bg, '가라앉은 면은 바탕과 달라야 한다');
   } else assert.notEqual(T.bg, T.paper, '앱 바탕과 패널이 같으면 층이 읽히지 않는다');
 
-  // ── 홈 위계(40차): 브랜드 머리 → 창작 표면(새 이모티콘 만들기) → 최근 작업 ─────────────────────────
+  // ── 홈 위계(40차): 브랜드 머리 → 창작 표면(새 세트 만들기) → 최근 작업 ─────────────────────────
   await press('뒤로');
-  const home = tree.root.findAll(n => n.type === 'Pressable' && ['새 이모티콘 세트', '새 이모티콘 만들기'].includes(n.props.accessibilityLabel)).map(n => n.props.accessibilityLabel);
+  const home = tree.root.findAll(n => n.type === 'Pressable' && ['새 이모티콘 세트', '새 세트 만들기'].includes(n.props.accessibilityLabel)).map(n => n.props.accessibilityLabel);
   // 명세 H02: 이어하기가 먼저다. 시작 줄은 그 아래에 조용히 선다.
-  assert.deepEqual(home, ['새 이모티콘 세트', '새 이모티콘 만들기'], '최근 작업이 시작 줄보다 먼저');
-  assert.ok(texts().includes('임티제작소'), '홈 머리는 브랜드가 먼저');
+  assert.deepEqual(home, ['새 이모티콘 세트', '새 세트 만들기'], '최근 작업이 시작 줄보다 먼저');
+  assert.ok(texts().includes('이모티'), '홈 머리는 브랜드가 먼저');
   assert.equal(tree.root.findAll(n => n.props.testID === '홈 알림').length, 0, '알림이 꺼져 있으면 자리도 없다');
   const page = tree.root.findAll(n => n.type === 'ScrollView' && Array.isArray(n.props.contentContainerStyle))[0];
   assert.ok(page && Object.assign({}, ...page.props.contentContainerStyle.filter(Boolean)).flexGrow === 1, '홈은 화면 높이를 채워 아래 행동을 바닥에 둔다');

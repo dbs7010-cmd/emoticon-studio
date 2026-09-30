@@ -51,7 +51,7 @@ const order = () => {
     if (id === '홈 창작 표면') out.push('창작 표면');
     else if (n.type === 'Text' && txt(n) === '이어서 만들기') out.push('이어서 만들기');
     else if (n.type === 'Pressable' && /^보기 세트 \d+$/.test(label ?? '')) out.push('세트 카드');
-    else if (n.type === 'Pressable' && label === '새 이모티콘 만들기') out.push('시작 줄');
+    else if (n.type === 'Pressable' && label === '새 세트 만들기') out.push('시작 줄');
     else if (n.type === 'Pressable' && label === '표현 가이드') out.push('표현 가이드');
     else if (n.type === 'Pressable' && /표현 보기$/.test(label ?? '')) out.push('가이드 미리보기');
     else if (n.type === 'Pressable' && label === '전체 작업 보기') out.push('전체 보기');

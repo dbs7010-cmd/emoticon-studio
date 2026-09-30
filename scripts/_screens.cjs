@@ -217,14 +217,14 @@ const PAGE = (id, title, body) => `<!doctype html>
     console.log('  ' + id.padEnd(16) + ('실제 그림 ' + assets.ok + '장').padEnd(14) + (assets.missing.length ? '· 이 렌더에 없는 그림 ' + assets.missing.length + '장' : '') + '  ' + title);
   }, HEIGHT);
   // 비교용 목록: 한 줄에 하나씩, 열어 볼 링크와 함께.
-  const index = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>임티제작소 화면 목록 · 390dp</title>
+  const index = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>이모티 화면 목록 · 390dp</title>
 <style>body{margin:0;padding:28px;background:#14161A;color:#E7E9EE;font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif}
 h1{font-size:20px;margin:0 0 4px}p{color:#9BA2AE;font-size:13px;line-height:1.7;max-width:760px}
 ol{padding-left:20px;line-height:2}a{color:#FFD52A}code{color:#9BA2AE;font-size:12px}
 .grid{display:flex;flex-wrap:wrap;gap:20px;margin-top:24px}
 .cell{width:${WIDTH / 2}px}.cell h2{font-size:12px;font-weight:600;color:#C7CCD6;margin:0 0 6px}
 img.shot{width:${WIDTH / 2}px;display:block;box-shadow:0 4px 18px rgba(0,0,0,.5);background:#fff}</style></head>
-<body><h1>임티제작소 · 화면별 디자인 검토 자료 (390dp)</h1>
+<body><h1>이모티 · 화면별 디자인 검토 자료 (390dp)</h1>
 <p>최신 소스(<code>${process.env.HEAD_SHORT ?? 'HEAD'}</code>)를 실제로 그려 만든 <b>대체 렌더</b>입니다. 꾸민 시안이 아니라 소스가 낸 노드·스타일을 옮긴 것입니다.
 <b>실기기 캡처가 아닙니다</b> — 그림 에셋, 그리기 캔버스 내용, 글꼴 메트릭, 실제 스크롤 잘림은 이 자료로 판정할 수 없습니다.</p>
 <ol>${made.map(m => `<li><a href="${m.id}.png">${esc(m.title)}</a> · <a href="${m.file}">HTML</a> <code>${m.id}</code></li>`).join('')}</ol>

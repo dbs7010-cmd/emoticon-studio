@@ -88,7 +88,7 @@ async function render(projects = []) {
   await press('문의하기');
   const mail = new URL(urls.at(-1));
   assert.equal(mail.protocol, 'mailto:'); assert.equal(mail.pathname, config.extra.supportEmail);
-  assert.equal(mail.searchParams.get('subject'), '[임티제작소] 문의');
+  assert.equal(mail.searchParams.get('subject'), '[이모티] 문의');
   assert.equal(mail.searchParams.get('body'), '앱 버전: 1.0.0\nOS: android 36');
   linkFails = true; await press('문의하기');
   assert.equal(tree.root.findAll(n => n.type === 'Text' && n.props.accessibilityLabel === '복사할 문의 이메일')[0].props.selectable, true);
@@ -102,13 +102,12 @@ async function render(projects = []) {
   p.slots[0].qa = { status: 'FAIL', checks: [], notes: [], consistency: [], checkedAt: new Date().toISOString() };
   let finishRead; waitBytes = new Promise(resolve => { finishRead = resolve; });
   await render([p]);
-  assert.ok(texts().includes('손볼 곳 확인 중'));
+  // 45.43(승인 시안 WB2-Home · 사용자 결정): 홈의 '제안까지'는 세 줄뿐이고 손볼 곳은 내보내기 화면이 맡는다.
+  assert.ok(!texts().some(t => /^손볼 곳/.test(t)), '홈에는 손볼 곳 줄이 없다');
   await act(async () => { finishRead(); await waitBytes; }); waitBytes = null;
   const expected = setIssues(p, [[1, 2]]);
   assert.equal(expected.length, 5);
-  const homeTexts = texts();
-  assert.ok(homeTexts.includes(`손볼 곳 ${expected.length}개`));
-  const homeDetail = homeTexts.find(t => t === expected.map(c => c.label).join(' · ')); assert.ok(homeDetail);
+  assert.ok(!texts().some(t => /^손볼 곳/.test(t)), '비교가 끝나도 홈에는 손볼 곳 줄이 없다');
   const count = reads;
   await press('개인 작품 이름'); await press('내보내기');
   assert.ok(texts().includes(`손볼 곳 ${expected.length}개`));

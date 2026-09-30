@@ -26,7 +26,7 @@ const ADB = process.env.ADB || path.join(process.env.ANDROID_HOME || 'C:\\Androi
 
 // 현재 UI 라벨(38.5차). 옛 라벨(펜 굵기·저장·제출 준비·문구 위치 조절·움직임 적용·＋ 새 세트)은 쓰지 않는다.
 const L = {
-  newSet: '새 이모티콘 만들기',fromImage: '내 그림으로 시작', settings: '설정', proEntry: 'PRO 보기',
+  newSet: '새 세트 만들기',fromImage: '내 그림으로 시작', settings: '설정', proEntry: 'PRO 보기',
   toolPen: '그리기 도구 펜', toolEraser: '지우개', toolFill: '채우기', toolSelect: '선택', color: '색',
   brushAll: '브러시 전체', quickPen: '기본 펜', favPin: '즐겨찾기에 고정 크레용',
   tabDraw: '그리기', tabMotion: '움직이기', reference: '참고', layers: '레이어', caption: '문구',
