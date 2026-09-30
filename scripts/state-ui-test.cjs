@@ -38,7 +38,7 @@ const render = async el => { let t; await act(async () => { t = create(el); }); 
   const cta = t.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === '새 세트 만들기');
   assert.equal(cta.length, 1, '행동은 하나'); await act(async () => cta[0].props.onPress()); assert.equal(pressed, 1);
   assert.equal(flat(cta[0].props.style).backgroundColor, T.accent, '행동은 노란 주요 버튼');
-  assert.deepEqual(icons(t).filter(x => x !== 'icon-next'), ['icon-brush', 'icon-motion', 'icon-export'], '흐름 아이콘: 그리기 › 움직이기 › 내보내기');
+  assert.deepEqual(t.root.findAll(n => n.type === 'View' && n.props.testID === '흐름 아이콘')[0].findAll(n => n.type === 'Svg').map(n => n.props.testID).filter(x => x !== 'icon-next'), ['icon-brush', 'icon-motion', 'icon-export'], '흐름 아이콘: 그리기 › 움직이기 › 내보내기');
   assert.equal(t.root.findAll(n => n.props.testID === '흐름 아이콘' && n.props.accessibilityLabel).length, 1, '흐름은 한 문장으로 읽힌다');
   assert.equal(flat(t.root.findAll(n => n.type === 'View' && n.props.testID === '빈 홈')[0].props.style).backgroundColor, T.surface2, '가라앉은 면 위');
   // 예전 모양(참고 패널의 빈 목록)은 그대로 남는다 — S7 전까지 그리기 화면을 바꾸지 않는다.

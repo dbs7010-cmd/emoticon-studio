@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Image, Animated, type ImageSourcePropType } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Pop, ProTag, Range, T } from '../components/ui';
+import { Pop, ProTag, Range, T, Glyph } from '../components/ui';
 import { ASSET_SLOTS } from '../design/asset-slots';
 import { usesPro } from '../project';
 import { isProPreset, loopScale, presetDelta, type MotionDirection } from '../motion-math';
@@ -209,7 +209,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   return <View style={{ flex: 1 }}>
     {view !== 'basic' && <Pressable accessibilityRole="button" accessibilityLabel={back.label} onPress={() => setView(back.to)}
       style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: C.tap, paddingHorizontal: 8 }}>
-      <MaterialCommunityIcons name="chevron-left" size={22} color={C.ink} />
+      <Glyph name="chevron-left" size={22} color={C.ink} />
       <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{back.title}</Text>
     </Pressable>}
     {/* 손가락이 슬라이더나 순서 손잡이를 잡고 있는 동안에는 이 판이 따라 스크롤되면 안 된다. */}
@@ -222,7 +222,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       <Pressable accessibilityRole="button" accessibilityLabel="움직임 없음" accessibilityHint={hasPro ? '전체 움직임만 빼요. 부분 움직임은 남아요' : undefined} accessibilityState={{ selected: !base.preset }}
         onPress={() => { setTrialFrom(null); clearPreset(); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1, borderColor: !base.preset ? C.accentBorder : C.line, backgroundColor: !base.preset ? C.accentSoft : pressed ? C.fill : C.paper })}>
-        <MaterialCommunityIcons name="motion-pause-outline" size={16} color={C.ink} />
+        <Glyph name="motion-pause-outline" size={16} color={C.ink} />
         <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: !base.preset ? '800' : '600', color: C.ink }}>{hasPro ? '전체 없음' : '없음'}</Text>
       </Pressable>
       <View style={{ width: 1, height: 22, backgroundColor: C.line }} />
@@ -285,15 +285,15 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       const name = [PRESETS.find(p => p.id === previousMotion.preset)?.label, previousMotion.parts?.length ? `부분 ${previousMotion.parts.length}` : null].filter(Boolean).join(' · ');
       // 따뜻한 제안 한 줄: 24칸을 만드는 동안 가장 자주 누르는 행동.
       return <Pressable accessibilityRole="button" accessibilityLabel="직전 칸 움직임 다시 쓰기" onPress={() => locked ? onRequestPro() : onChange(previousMotion)} style={{ ...row, paddingHorizontal: 12, borderRadius: 14, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
-        <MaterialCommunityIcons name="history" size={20} color={C.ink} />
+        <Glyph name="history" size={20} color={C.ink} />
         <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>직전 칸 움직임 다시 쓰기{name ? ' · ' + name : ''}</Text>
-        {locked ? <ProTag /> : <MaterialCommunityIcons name="plus" size={18} color={C.muted} />}
+        {locked ? <ProTag /> : <Glyph name="plus" size={18} color={C.muted} />}
       </Pressable>;
     })()}
     <Pressable accessibilityRole="button" accessibilityLabel="보관한 움직임" onPress={() => setView('shelf')} style={row}>
-      <MaterialCommunityIcons name="folder-outline" size={20} color={C.muted} />
+      <Glyph name="folder-outline" size={20} color={C.muted} />
       <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '500', color: C.ink }}>보관한 움직임{savedMotions.length ? ` · ${savedMotions.length}개` : ''}</Text>
-      <MaterialCommunityIcons name="chevron-right" size={20} color={C.faint} />
+      <Glyph name="chevron-right" size={20} color={C.faint} />
     </Pressable>
     </View>
 
@@ -304,17 +304,17 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       <Toggle on={!!base.captionMoves} />
     </Pressable>}
     {clipped && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 14, backgroundColor: C.warningSoft }}>
-      <MaterialCommunityIcons name="crop" size={16} color={C.warning} />
+      <Glyph name="crop" size={16} color={C.warning} />
       <Text style={{ flex: 1, fontSize: 12, color: C.ink }}>그림이 칸 밖으로 나가요. 세기를 줄여 보세요.</Text>
     </View>}
 
     {/* 더 세밀하게: 한 줄뿐이라 제목이 필요 없다. PRO 표시는 작게 한 번(45.2차). */}
     <View style={{ gap: 6, paddingTop: 4 }}>
       <Pressable accessibilityRole="button" accessibilityLabel="부분만 움직이기" onPress={enterPro} style={row}>
-        <MaterialCommunityIcons name="hand-back-right-outline" size={20} color={C.ink} />
+        <Glyph name="hand-back-right-outline" size={20} color={C.ink} />
         <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '600', color: C.ink }}>부분만 움직이기{parts.length ? ` · ${parts.length}개` : ''}{base.alternate ? ' · 두 모습' : ''}</Text>
         {!pro && <ProTag />}
-        <MaterialCommunityIcons name="chevron-right" size={20} color={C.faint} />
+        <Glyph name="chevron-right" size={20} color={C.faint} />
       </Pressable>
     </View>
     </> : view === 'parts' ? <>
@@ -336,7 +336,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
               onResponderRelease={() => { if (dragFrom !== null && dragBy !== 0) movePart(dragFrom, dragFrom + dragBy); setDragFrom(null); setDragBy(0); }}
               onResponderTerminate={() => { setDragFrom(null); setDragBy(0); }}
               style={{ width: 40, height: 48, alignItems: 'center', justifyContent: 'center' }}>
-              <MaterialCommunityIcons name="drag-horizontal-variant" size={20} color={dragging ? C.ink : C.muted} />
+              <Glyph name="drag-horizontal-variant" size={20} color={dragging ? C.ink : C.muted} />
             </View>}
             <Pressable accessibilityRole="button" accessibilityLabel={`${name} 움직이기`} accessibilityState={{ expanded: open }}
               onPress={() => { const next = open ? null : part.id; setOpenPart(next); onFocusPart(next ? part.layerId : null); }}
@@ -346,14 +346,14 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
               </View>
               <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>{name}</Text>
               <Text style={{ fontSize: 12, color: C.muted }}>{effect.label}</Text>
-              <MaterialCommunityIcons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
+              <Glyph name={open ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
             </Pressable>
             <Pressable accessibilityRole="switch" accessibilityLabel={`${name} ${part.off ? '켜기' : '끄기'}`} accessibilityState={{ checked: !part.off }} onPress={() => editPart(part.id, { off: part.off ? undefined : true })}
               style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
               <Toggle on={!part.off} />
             </Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel={`${name} 부분 움직임 빼기`} onPress={() => dropPart(part.id)} style={{ width: 44, height: 48, alignItems: 'center', justifyContent: 'center' }}>
-              <MaterialCommunityIcons name="close" size={18} color={C.muted} />
+              <Glyph name="close" size={18} color={C.muted} />
             </Pressable>
           </View>
           {open && <>
@@ -365,7 +365,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
             <Pressable accessibilityRole="button" accessibilityLabel={`${name} 세부 조절`} accessibilityState={{ expanded: detail }} onPress={() => setDetailPart(detail ? null : part.id)}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 }}>
               <Text style={{ flex: 1, fontSize: 12, fontWeight: '800', color: C.muted }}>세부 조절</Text>
-              <MaterialCommunityIcons name={detail ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
+              <Glyph name={detail ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
             </Pressable>
             {detail && <>
               {parts.length > 1 && <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -390,7 +390,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
         {drawLayers.map(l => <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={`${layerLabel(l.name)} 부분 움직임 추가`} onPress={() => addPart(l.id)}
           style={{ minHeight: 48, flexDirection: 'row', gap: 4, paddingHorizontal: 12, borderRadius: 24, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center' }}>
-          <MaterialCommunityIcons name="plus" size={16} color={C.ink} />
+          <Glyph name="plus" size={16} color={C.ink} />
           <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{layerLabel(l.name)}</Text>
         </Pressable>)}
       </View>
@@ -406,10 +406,10 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       </>}
 
       <Pressable accessibilityRole="button" accessibilityLabel="두 모습 번갈아" onPress={() => setView('pose')} style={row}>
-        <MaterialCommunityIcons name="swap-horizontal" size={20} color={C.ink} />
+        <Glyph name="swap-horizontal" size={20} color={C.ink} />
         <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>두 모습 번갈아</Text>
         <Text style={{ fontSize: 12, color: C.muted }}>{base.alternate ? '켜짐' : '꺼짐'}</Text>
-        <MaterialCommunityIcons name="chevron-right" size={20} color={C.muted} />
+        <Glyph name="chevron-right" size={20} color={C.muted} />
       </Pressable>
     </> : view === 'pose' ? <>
       <Pressable accessibilityRole="switch" accessibilityLabel="두 모습 번갈아 켜기" accessibilityState={{ checked: !!base.alternate }}
@@ -427,7 +427,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
                 <Text style={{ flex: 1, fontSize: 12, fontWeight: '800', color: C.ink }}>{title}</Text>
                 <Pressable accessibilityRole="button" accessibilityLabel={title + ' 고쳐 그리기'} disabled={!members.length} onPress={() => onEditPose(members.map(l => l.id))}
                   style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center', opacity: members.length ? 1 : .3 }}>
-                  <MaterialCommunityIcons name="pencil-outline" size={16} color={C.muted} />
+                  <Glyph name="pencil-outline" size={16} color={C.muted} />
                 </Pressable>
               </View>
               {members.map(l => <Text key={l.id} numberOfLines={1} style={{ fontSize: 11, color: C.muted }}>{layerLabel(l.name)}</Text>)}
@@ -442,7 +442,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel="모습 1 복사해서 모습 2 만들기" onPress={onDuplicateForPose}
           style={{ minHeight: 48, flexDirection: 'row', gap: 6, borderRadius: C.radius.sm, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center' }}>
-          <MaterialCommunityIcons name="content-copy" size={16} color={C.ink} />
+          <Glyph name="content-copy" size={16} color={C.ink} />
           <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>모습 1 복사해서 모습 2 만들기</Text>
         </Pressable>
         <Row label="간격" value={base.alternate.interval} min={.2} max={1.2} step={.1} fmt={n => n.toFixed(1) + '초'} onActive={setHolding} onChange={interval => set({ alternate: { ...base.alternate!, interval: Number(interval.toFixed(2)) } })} />
@@ -450,7 +450,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     </> : <View style={{ gap: 8 }}>
       {!!motion && <Pressable accessibilityRole="button" accessibilityLabel="이 움직임 보관하기" onPress={onSaveMotion}
         style={{ minHeight: 48, flexDirection: 'row', gap: 6, borderRadius: C.radius.sm, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center' }}>
-        <MaterialCommunityIcons name="plus" size={16} color={C.ink} />
+        <Glyph name="plus" size={16} color={C.ink} />
         <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>이 움직임 보관하기</Text>
       </Pressable>}
       {savedMotions.map(saved => {
@@ -463,7 +463,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
             {locked && <ProTag />}
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel={saved.name + ' 보관 지우기'} onPress={() => onForgetMotion(saved.id)} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
-            <MaterialCommunityIcons name="close" size={18} color={C.muted} />
+            <Glyph name="close" size={18} color={C.muted} />
           </Pressable>
         </View>;
       })}

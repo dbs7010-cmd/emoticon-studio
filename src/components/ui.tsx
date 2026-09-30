@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, Image, Modal, Pressable, ScrollView, ActivityIndicator, Animated, type ImageSourcePropType } from 'react-native';
-import { ImtiIcon, IconSize } from '../design/icons';
+import { ImtiIcon, IconSize, type IconName as ImtiName } from '../design/icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { imageUri } from '../services/storage';
 import { ASSET_SLOTS, type AssetSlotName } from '../design/asset-slots';
@@ -103,6 +103,22 @@ export const Pop = {
 } as const;
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+// 45.43 S7: 화면에서 쓰던 MDI 이름 → 「이모티 라인」 아이콘. 같은 뜻의 선 아이콘이 있으면 그것을 그리고(크기는 14/18/22 로 맞춤),
+// 없는 모양(선택 영역·스포이드·손가락 제스처 등)은 MDI 그대로 둔다 — 남은 목록은 S8 정리 문서에 있다.
+export const LINE_ICON: Partial<Record<IconName, ImtiName>> = {
+  'fountain-pen-tip': 'brush', brush: 'brush', 'brush-variant': 'brush', pencil: 'brush', draw: 'brush',
+  eraser: 'eraser', 'format-color-fill': 'fill', palette: 'color', 'palette-outline': 'color',
+  'image-outline': 'reference', 'layers-outline': 'layer', 'format-text': 'caption', 'motion-play-outline': 'motion',
+  'tray-arrow-up': 'export', 'export-variant': 'export', 'content-save-outline': 'save', 'star-four-points': 'pro',
+  'chevron-left': 'back', 'chevron-right': 'next', close: 'close', plus: 'plus', 'delete-outline': 'delete',
+  'eye-outline': 'eye', 'eye-off-outline': 'eyeOff', 'undo-variant': 'undo', 'redo-variant': 'redo', undo: 'undo', redo: 'redo',
+  'dots-horizontal': 'more', check: 'check', 'check-bold': 'check', 'cog-outline': 'settings',
+};
+const snapIcon = (size: number) => (size <= 15 ? IconSize.meta : size <= 19 ? IconSize.row : IconSize.tool);
+export function Glyph({ name, size = 18, color = T.ink }: { name: IconName; size?: number; color?: string }) {
+  const line = LINE_ICON[name];
+  return line ? <ImtiIcon name={line} size={snapIcon(size)} color={color} /> : <MaterialCommunityIcons name={name} size={size} color={color} />;
+}
 
 // 같은 화면 안의 보기 전환은 모두 같은 문법을 쓴다: 배경 없이 굵은 글자와 노란 밑줄.
 export function TabBar<K extends string>({ items, value, onChange, testID }: { items: readonly { key: K; label: string; a11y?: string }[]; value: K; onChange: (key: K) => void; testID?: string }) {
@@ -187,7 +203,7 @@ export function Action({ title, onPress, disabled = false, primary = false, busy
       };
     }}>
     {busy && <ActivityIndicator size="small" color={kind === 'primary' ? T.accentInk : T.muted} />}
-    {!busy && !!icon && <MaterialCommunityIcons name={icon} size={18} color={off && kind === 'primary' ? T.faint : tint} />}
+    {!busy && !!icon && <Glyph name={icon} size={18} color={off && kind === 'primary' ? T.faint : tint} />}
     <Text numberOfLines={1} style={{ ...Type.button, fontSize: kind === 'primary' && !compact ? 16 : 14, fontWeight: kind === 'primary' ? '800' : '700', color: off && kind === 'primary' ? T.faint : tint }}>{title}</Text>
   </Pressable>;
 }
@@ -195,8 +211,8 @@ export function Action({ title, onPress, disabled = false, primary = false, busy
 // 아이콘만 있는 버튼. 보이는 아이콘은 작아도 누르는 자리는 48dp 다. 아이콘 둘레에 카드를 두르지 않는다.
 export function IconButton({ label, icon, onPress, disabled, size = 22, color = T.ink, active, testID }: { label: string; icon: IconName; onPress: () => void; disabled?: boolean; size?: number; color?: string; active?: boolean; testID?: string }) {
   return <Pressable testID={testID} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled, expanded: active }} disabled={disabled} onPress={onPress}
-    style={({ pressed }) => ({ width: T.tap, height: T.tap, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed || active ? T.fill : 'transparent', opacity: disabled ? .3 : 1 })}>
-    <MaterialCommunityIcons name={icon} size={size} color={color} />
+    style={({ pressed }) => ({ width: T.tap, height: T.tap, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed || active ? T.fill : 'transparent' })}>
+    <Glyph name={icon} size={size} color={disabled ? S.disabledInk : color} />
   </Pressable>;
 }
 
@@ -365,15 +381,16 @@ export function useMicro(kind: 'pop' | 'rise', play = true) {
 }
 
 // 저장 알림: 흰 알약 + 초록 체크 + 칸 번호 + 잉크 '다음 칸'. 경고창처럼 보이지 않게 — 노랑·빨강을 쓰지 않는다.
-export function SaveToast({ slot, onNext, nextLabel = '다음 칸', message }: { slot: number; onNext?: () => void; nextLabel?: string; message?: string }) {
+// done=false: 저장은 됐지만 완성으로 치지 않는 경우(빈 칸) — 초록 체크 대신 중립 저장 아이콘. nextA11y: 버튼을 읽는 이름(보이는 글자를 포함).
+export function SaveToast({ slot, onNext, nextLabel = '다음 칸', nextA11y, message, done = true }: { slot: number; onNext?: () => void; nextLabel?: string; nextA11y?: string; message?: string; done?: boolean }) {
   const rise = useMicro('rise');
   const text = message ?? `${slot}번 칸 저장됨`;
   return <Animated.View testID="저장 알림" accessibilityLiveRegion="polite" accessibilityLabel={text}
     style={[{ flexDirection: 'row', alignItems: 'center', gap: T.gap.sm, minHeight: T.tap, paddingLeft: T.gap.md, paddingRight: onNext ? 6 : T.gap.lg,
       borderRadius: 999, backgroundColor: T.paper, ...Card.border, ...Card.float }, rise]}>
-    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: T.success, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="check" size={IconSize.meta} color={T.paper} /></View>
+    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: done ? T.success : T.fill, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name={done ? 'check' : 'save'} size={IconSize.meta} color={done ? T.paper : T.muted} /></View>
     <Text numberOfLines={1} style={{ ...Type.button, color: T.ink, flexShrink: 1 }}>{text}</Text>
-    {!!onNext && <Pressable accessibilityRole="button" accessibilityLabel={nextLabel} onPress={onNext} hitSlop={6}
+    {!!onNext && <Pressable accessibilityRole="button" accessibilityLabel={nextA11y ?? nextLabel} onPress={onNext} hitSlop={6}
       style={({ pressed }) => ({ minHeight: 36, paddingHorizontal: T.gap.md, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: pressed ? '#3A3632' : T.ink })}>
       <Text style={{ ...Type.button, fontSize: 13, color: T.paper }}>{nextLabel}</Text><ImtiIcon name="next" size={IconSize.meta} color={T.paper} />
     </Pressable>}

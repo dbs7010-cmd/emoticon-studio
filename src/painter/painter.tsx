@@ -7,7 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { canvasHtml } from './canvas-html';
 import { alphaOf, hsv, hsvOf, light, parseHex, toHex, typedHex, withAlpha } from './color';
-import { Action, Dialog, Elev, EmptyState, IconButton, ProTag, Range, Segmented, SheetHeader, T, TabBar, userMessage, Pop, Font, Card, Paper } from '../components/ui';
+import { Action, Dialog, Elev, EmptyState, IconButton, ProTag, Range, Segmented, SheetHeader, T, TabBar, userMessage, Pop, Font, Card, Paper, Glyph, SaveToast } from '../components/ui';
 import { ASSET_SLOTS, BUILTIN_REFERENCES } from '../design/asset-slots';
 import { MotionPanel, layerLabel } from './motion-panel';
 import { KAKAO_STATIC_SPEC } from '../constants/kakao-spec';
@@ -1106,8 +1106,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               {b.pro && <ProTag />}
               {/* 표시 자리는 고르든 말든 같은 너비다 — 고를 때 줄 안이 밀리지 않는다. */}
               <View style={{ width: 24, alignItems: 'center', justifyContent: 'center' }}>
-                {favEdit ? <MaterialCommunityIcons name={fav >= 0 ? 'pin' : 'pin-outline'} size={18} color={fav >= 0 ? C.ink : C.muted} />
-                  : on ? <MaterialCommunityIcons name="check" size={20} color={C.ink} /> : null}
+                {favEdit ? <Glyph name={fav >= 0 ? 'pin' : 'pin-outline'} size={18} color={fav >= 0 ? C.ink : C.muted} />
+                  : on ? <Glyph name="check" size={20} color={C.ink} /> : null}
               </View>
             </Pressable>; })}
         </ScrollView>
@@ -1116,10 +1116,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           onPress={() => { ease(); setBrushDetail(true); }}
           style={({ pressed }) => ({ minHeight: C.tap, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16,
             borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper })}>
-          <MaterialCommunityIcons name="tune-variant" size={18} color={C.muted} />
+          <Glyph name="tune-variant" size={18} color={C.muted} />
           <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>세부 설정</Text>
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted, textAlign: 'right' }}>진하기 {Math.round(effectiveBrush.opacity * 100)}% · 선 보정 {STAB_LEVELS.find(([k]) => k === stab)?.[1] ?? '끔'}</Text>
-          <MaterialCommunityIcons name="chevron-right" size={18} color={C.faint} />
+          <Glyph name="chevron-right" size={18} color={C.faint} />
         </Pressable>
       </View>
 
@@ -1223,7 +1223,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         <Pressable key={label} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }} onPress={run} hitSlop={{ left: 2, right: 2 }}
           style={({ pressed }) => ({ width: 44, minHeight: 48, borderRadius: C.radius.button, alignItems: 'center', justifyContent: 'center', gap: 1,
             backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
-          <MaterialCommunityIcons name={icon} size={17} color={on ? C.ink : C.muted} />
+          <Glyph name={icon} size={17} color={on ? C.ink : C.muted} />
           <Text numberOfLines={1} style={{ fontSize: 10, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{title}</Text>
         </Pressable>)}
   </View>;
@@ -1297,8 +1297,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <View style={{ flexDirection: 'row', alignItems: 'center', maxWidth: '100%' }}>
             <Text numberOfLines={1} accessibilityLabel="현재 칸" style={{ flexShrink: 1, fontSize: 11, lineHeight: 14, fontWeight: '600', color: C.muted, letterSpacing: .4 }}>{String(slot.number).padStart(2, '0') + ' / ' + slotCount}</Text>
             <View testID="저장 표시" accessibilityLabel={saveMark === 'saving' ? '저장 중' : saveMark === 'done' ? '저장됨' : undefined} style={{ width: 16, height: 14, marginLeft: 3, alignItems: 'center', justifyContent: 'center' }}>
-              {saveMark === 'saving' && <MaterialCommunityIcons name="cloud-upload-outline" size={13} color={C.muted} />}
-              {saveMark === 'done' && <MaterialCommunityIcons name="cloud-check-outline" size={13} color={C.success} />}
+              {saveMark === 'saving' && <Glyph name="cloud-upload-outline" size={13} color={C.muted} />}
+              {saveMark === 'done' && <Glyph name="cloud-check-outline" size={13} color={C.success} />}
             </View>
           </View>
         </View>
@@ -1473,41 +1473,36 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {/* 확대한 동안에만: 작은 배율 표시. 누르면 100%. 캔버스 위 빈 띠에 뜨고, 띠가 없는 짧은 화면에서만 캔버스 모서리에 걸린다. */}
         {tab === 'draw' && zoom > 1.05 && <Pressable accessibilityRole="button" accessibilityLabel="원래 크기로 보기" onPress={resetZoom} hitSlop={8}
           style={({ pressed }) => ({ position: 'absolute', top: 8, right: 12, minHeight: 32, paddingHorizontal: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: pressed ? C.fill : C.floating, borderWidth: 1, borderColor: C.line })}>
-          <MaterialCommunityIcons name="magnify" size={14} color={C.muted} />
+          <Glyph name="magnify" size={14} color={C.muted} />
           <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{Math.round(zoom * 100)}%</Text>
         </Pressable>}
         {canvasMessage === 'zoomHint' && <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
-            <MaterialCommunityIcons name="gesture-spread" size={14} color={C.muted} />
+            <Glyph name="gesture-spread" size={14} color={C.muted} />
             <Text style={{ fontSize: 12, fontWeight: '600', color: C.muted }}>두 손가락으로 벌리면 크게 볼 수 있어요</Text>
           </View>
         </View>}
         {/* 캔버스 위 알림 자리(45.2차): 한 번에 하나만. 급한 순서 — 저장 중(길어질 때만) > 숨긴 레이어 > 스포이드 > 표현 힌트 > 이전 칸 > 확대 안내.
             확대 배율(%)은 알림이 아니라 상태라서 이 자리를 쓰지 않고 오른쪽 위에 따로 선다. */}
         {canvasMessage === 'saving' && <View accessibilityLabel="저장 중이라 잠시 그릴 수 없어요" pointerEvents="none" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingHorizontal: 12, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
-          <MaterialCommunityIcons name="cloud-upload-outline" size={14} color={C.muted} />
+          <Glyph name="cloud-upload-outline" size={14} color={C.muted} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}>저장 중이에요 · 잠시만요</Text>
         </View>}
         {/* 45.39: 저장 안내는 경고처럼 보이면 안 된다(사용자 지적). 흰 스티커 + 초록 체크 + 짙은 '다음 칸' 버튼. */}
-        {canvasMessage === 'saved' && <View testID="저장 안내" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, paddingLeft: 8, paddingRight: 4, borderRadius: 24, backgroundColor: C.paper, ...Card.border, ...Card.float }}>
-          <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: savedNote === 'done' ? C.successSoft : C.fill }}>
-            <MaterialCommunityIcons name={savedNote === 'done' ? 'check-bold' : 'content-save-outline'} size={16} color={savedNote === 'done' ? C.success : C.muted} />
-          </View>
-          <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>{savedNote === 'done' ? String(slot.number).padStart(2, '0') + '번 칸 저장했어요' : '저장했어요 · 빈 칸은 완성으로 치지 않아요'}</Text>
-          {savedNote === 'done' && <Pressable accessibilityRole="button" accessibilityLabel={completeTitle.includes('전체') ? '전체 보기로 가기' : '다음 칸으로 가기'}
-            onPress={() => { setSavedNote(null); onComplete(); }}
-            style={({ pressed }) => ({ minHeight: 40, paddingLeft: 14, paddingRight: 8, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: C.ink, opacity: pressed ? .85 : 1 })}>
-            <Text style={{ fontSize: 13, fontWeight: '800', color: C.paper }}>{completeTitle.includes('전체') ? '전체 보기' : '다음 칸'}</Text>
-            <MaterialCommunityIcons name="chevron-right" size={18} color={C.paper} />
-          </Pressable>}
+        {/* 45.43 S7: 공통 부품 SaveToast(시안 WB2-States '저장 완료': 흰 알약 · 초록 체크 한 점 · 잉크 '다음 칸', 0.24초 올라옴). */}
+        {canvasMessage === 'saved' && <View testID="저장 안내" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8 }}>
+          <SaveToast slot={slot.number} done={savedNote === 'done'}
+            message={savedNote === 'done' ? String(slot.number).padStart(2, '0') + '번 칸 저장했어요' : '저장했어요 · 빈 칸은 완성으로 치지 않아요'}
+            nextLabel={completeTitle.includes('전체') ? '전체 보기' : '다음 칸'} nextA11y={completeTitle.includes('전체') ? '전체 보기로 가기' : '다음 칸으로 가기'}
+            onNext={savedNote === 'done' ? () => { setSavedNote(null); onComplete(); } : undefined} />
         </View>}
         {canvasMessage === 'hidden' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.accentSoft, borderWidth: 1, borderColor: C.accentBorder }}>
-          <MaterialCommunityIcons name="eye-off-outline" size={16} color={C.accentInk} />
+          <Glyph name="eye-off-outline" size={16} color={C.accentInk} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.accentInk }}>'{layerLabel(hiddenWarning)}'이 숨겨져 있어요</Text>
           <Pressable accessibilityRole="button" accessibilityLabel="숨긴 레이어 다시 보이기" onPress={() => { changeTransform(scene.activeLayerId, { visible: true }); setHiddenWarning(''); }} style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>보이기</Text></Pressable>
         </View>}
         {canvasMessage === 'guide' && !!guideHint && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
-          <MaterialCommunityIcons name="lightbulb-on-outline" size={14} color={C.muted} />
+          <Glyph name="lightbulb-on-outline" size={14} color={C.muted} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}><Text style={{ fontWeight: '800' }}>{guideHint.name}</Text> · {guideHint.hint}</Text>
           <IconButton label="표현 힌트 닫기" icon="close" size={16} color={C.muted} onPress={() => { setGuideHintOpen(false); onGuideHintDone?.(); }} />
         </View>}
@@ -1521,7 +1516,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <Text style={{ fontSize: 11, color: C.muted }}>같은 캐릭터를 이어 그려요</Text>
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="이전 칸 그림 안 쓰기" onPress={() => setContinueDismissed(true)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-            <MaterialCommunityIcons name="close" size={18} color={C.muted} />
+            <Glyph name="close" size={18} color={C.muted} />
           </Pressable>
         </View>}
         {/* 표현 예시 참고 창(45.17차): 캔버스 위에 떠 있는 작은 창. 손잡이로 옮기고 접고 닫는다.
@@ -1536,7 +1531,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, fontWeight: '700', color: C.ink }}>캐릭터 기준{canonName ? ' · ' + canonName : ''}</Text>
               <Pressable accessibilityRole="button" accessibilityLabel="캐릭터 기준 닫기" onPress={() => setShowCanon(false)} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
-                <MaterialCommunityIcons name="close" size={18} color={C.muted} />
+                <Glyph name="close" size={18} color={C.muted} />
               </Pressable>
             </View>
             <View style={{ height: 120, borderRadius: C.radius.sm, backgroundColor: C.bg, overflow: 'hidden' }}>
@@ -1546,12 +1541,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           </View>
         </>}
         {refRail && !!selectedReference?.visible && <View pointerEvents="none" style={{ position: 'absolute', right: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F0FCEE', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 5 }}>
-          <MaterialCommunityIcons name="gesture-pinch" size={14} color={T.info} />
+          <Glyph name="gesture-pinch" size={14} color={T.info} />
           <Text style={{ fontSize: 10, color: T.info, fontWeight: '800' }}>옮기기 · 크기</Text>
         </View>}
 
         {canvasMessage === 'eyedrop' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 14, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
-          <MaterialCommunityIcons name="eyedropper-variant" size={18} color={C.ink} />
+          <Glyph name="eyedropper-variant" size={18} color={C.ink} />
           <Text style={{ flex: 1, fontSize: 12, fontWeight: '800', color: C.ink }}>캔버스에서 색을 누르세요</Text>
           <Pressable accessibilityRole="button" accessibilityLabel="스포이드 취소" onPress={() => { send({ type: 'eyedrop', on: false }); setPanel('color'); }} style={{ minHeight: C.tap, paddingHorizontal: 12, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.muted }}>취소</Text></Pressable>
         </View>}
@@ -1602,7 +1597,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               <Pressable key={title} accessibilityRole="button" accessibilityLabel={title} onPress={() => send({ type: 'selectTransform', ...change })}
                 // 변형 도구는 '아이콘 도구' 역할이다 — 아래 도구 줄처럼 바탕·테두리 없이 아이콘과 이름, 누르는 동안만 회색(45.36-R1 G8).
                 style={({ pressed }) => ({ flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: C.radius.button, backgroundColor: pressed ? C.fill : 'transparent' })}>
-                <MaterialCommunityIcons name={icon} size={20} color={C.ink} />
+                <Glyph name={icon} size={20} color={C.ink} />
                 <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: C.muted }}>{title}</Text>
               </Pressable>)}
           </View>
@@ -1704,7 +1699,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                     {thumbs[layer.id] ? <Image source={{ uri: thumbs[layer.id] }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : null}
                   </View>
                   <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: active ? '800' : '600', color: layer.visible ? C.ink : C.muted }}>{name}</Text>
-                  <View style={{ width: 18, alignItems: 'center' }}>{active ? <MaterialCommunityIcons name="pencil" size={16} color={C.ink} /> : null}</View>
+                  <View style={{ width: 18, alignItems: 'center' }}>{active ? <Glyph name="pencil" size={16} color={C.ink} /> : null}</View>
                 </Pressable>
                 <EyeToggle label={`${name} ${layer.visible ? '숨기기' : '보이기'}`} on={layer.visible} onPress={() => changeTransform(layer.id, { visible: !layer.visible })} />
                 {/* 손잡이: 누른 채 위아래로 끌면 차례가 바뀐다. 화면 읽기 사용자는 같은 자리에서 올리기·내리기 동작을 쓴다.
@@ -1715,9 +1710,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                   accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
                   onAccessibilityAction={e => send({ type: 'moveLayer', id: layer.id, by: e.nativeEvent.actionName === 'increment' ? 1 : -1 })}
                   style={{ width: 44, height: C.tap, borderRadius: C.radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: dragging ? C.fill : 'transparent' }}>
-                  <MaterialCommunityIcons name="drag-horizontal-variant" size={21} color={dragging ? C.ink : C.muted} />
+                  <Glyph name="drag-horizontal-variant" size={21} color={dragging ? C.ink : C.muted} />
                 </View>}
-                <Pressable accessibilityRole="button" accessibilityLabel={`${name} 관리`} onPress={() => setLayerMenu(layerMenu === layer.id ? null : layer.id)} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="dots-horizontal" size={20} color={C.muted} /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={`${name} 관리`} onPress={() => setLayerMenu(layerMenu === layer.id ? null : layer.id)} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={20} color={C.muted} /></Pressable>
               </View>
             {layerMenu === layer.id && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16 }}>
               {/* 겹치는 차례(45.7차): 위로/아래로 대신 '앞으로 보내기·뒤로 보내기' — 목록의 방향을 몰라도 결과가 그려진다. */}
@@ -1768,9 +1763,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
 
         {refRail && refSource === 'mine' && !!selectedReference && <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingBottom: 4, gap: 4 }}>
           <EyeToggle label={`참고 ${selectedReference.visible ? '숨기기' : '보이기'}`} on={selectedReference.visible} onPress={() => send({ type: 'toggleReference', id: selectedReference.id })} />
-          <MaterialCommunityIcons name="circle-opacity" size={16} color={C.muted} />
+          <Glyph name="circle-opacity" size={16} color={C.muted} />
           <View style={{ flex: 1 }}><Range testID="참고 진하기" label="진하기" value={selectedReference.opacity} min={.1} max={1} step={.05} onChange={opacity => changeTransform(selectedReference.id, { opacity: Math.round(opacity * 20) / 20 })} /></View>
-          <Pressable accessibilityRole="button" accessibilityLabel="참고 관리" onPress={() => setPanel(panel === 'reference' ? null : 'reference')} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="dots-horizontal" size={20} color={C.muted} /></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="참고 관리" onPress={() => setPanel(panel === 'reference' ? null : 'reference')} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={20} color={C.muted} /></Pressable>
         </View>}
 
         {/* 글씨를 고른 동안: 옮기기·크기는 캔버스에서 한다. 여기에는 내용 고치기와 끝내기만 둔다. */}
@@ -1811,7 +1806,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             onPress={() => { ease(); setPanel('brush'); setBrushDetail(false); setBrushGroup(brushInfo(currentBrushKey).group); setDrawRail(false); setRefRail(false); setCaptionOpen(false); }}
             style={({ pressed }) => ({ width: 56, minHeight: 62, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: C.radius.button,
               backgroundColor: pressed ? C.fill : 'transparent' })}>
-            <MaterialCommunityIcons name="view-grid-outline" size={20} color={C.muted} />
+            <Glyph name="view-grid-outline" size={20} color={C.muted} />
             <Text style={{ fontSize: 11, fontWeight: '600', color: C.muted }}>전체</Text>
           </Pressable>
         </View>
@@ -1822,7 +1817,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               onPress={() => selectTool(key)}
               style={({ pressed }) => ({ flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: C.radius.button,
                 backgroundColor: on ? C.accent : pressed ? C.fill : 'transparent', borderWidth: C.stroke, borderColor: on ? C.edge : 'transparent' })}>
-              <MaterialCommunityIcons name={icon} size={20} color={on ? C.ink : C.muted} />
+              <Glyph name={icon} size={20} color={on ? C.ink : C.muted} />
               <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{title}</Text>
             </Pressable>; })}
           <Pressable testID="지금 색" accessibilityRole="button" accessibilityLabel="색" accessibilityValue={{ text: color.toUpperCase() }} accessibilityState={{ expanded: panel === 'color' }}
@@ -1848,7 +1843,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <Image source={{ uri: imageUri(cut.path) }} style={{ width: 40, height: 40, borderRadius: 8 }} resizeMode="contain" />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: C.ink }}>{cut.name}</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={cut.name + ' 보관 지우기'} onPress={() => onForgetCutout(cut.id)} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name="close" size={18} color={C.muted} /></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={cut.name + ' 보관 지우기'} onPress={() => onForgetCutout(cut.id)} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><Glyph name="close" size={18} color={C.muted} /></Pressable>
       </View>)}
       <Action title="사진에서 고르기" icon="image-outline" onPress={() => { setCutoutPicker(false); void importDrawing(); }} />
     </Dialog>}
@@ -1875,7 +1870,7 @@ type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 // narrow: 폭 40 + 좌우 터치 여유 4 — 손가락 자리는 48dp 그대로, 줄 안에서 차지하는 폭만 줄인다(모드 줄에 되돌리기를 넣으려고, 45.37).
 function Bar({ label, icon, strong, narrow, active, disabled, onPress }: { label: string; icon: IconName; strong?: boolean; narrow?: boolean; active?: boolean; disabled?: boolean; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled, expanded: active }} disabled={disabled} onPress={onPress} hitSlop={narrow ? { left: 4, right: 4 } : undefined} style={{ width: narrow ? 40 : T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', opacity: disabled ? .3 : 1 }}>
-    <MaterialCommunityIcons name={icon} size={strong ? 28 : 22} color={T.ink} />
+    <Glyph name={icon} size={strong ? 28 : 22} color={T.ink} />
   </Pressable>;
 }
 function Switch({ on }: { on: boolean }) {
@@ -1936,7 +1931,7 @@ function PoseStrip({ category, index, count, onIndex }: { category: string; inde
     return <View key={offset} style={{ width: cell, height: Math.round(cell * 4 / 3), borderRadius: 10, overflow: 'hidden', backgroundColor: T.surface2,
       opacity: at < 0 || at > count - 1 ? 0 : offset === 0 ? 1 : .5, borderWidth: offset === 0 ? 2 : 0, borderColor: T.accent, alignItems: 'center', justifyContent: 'center' }}>
       {pose ? <Image accessibilityIgnoresInvertColors source={pose} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-        : <MaterialCommunityIcons name="human-handsup" size={20} color={T.lineStrong} />}
+        : <Glyph name="human-handsup" size={20} color={T.lineStrong} />}
     </View>;
   });
   return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -1968,7 +1963,7 @@ function RailTile({ label, caption, image, icon, selected, dashed, faded, onPres
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!selected }} onPress={onPress} style={{ width: 64, alignItems: 'center', gap: 4 }}>
     <View style={{ width: 56, height: 56, padding: 2, borderRadius: 14, borderWidth: selected ? 2 : dashed ? 1 : 0, borderStyle: dashed ? 'dashed' : 'solid', borderColor: selected ? T.accent : T.lineStrong, backgroundColor: dashed ? T.paper : T.surface2, alignItems: 'center', justifyContent: 'center' }}>
       {image ? <Image source={{ uri: image }} style={{ width: '100%', height: '100%', borderRadius: 10, opacity: faded ? .35 : 1 }} resizeMode="contain" />
-        : icon ? <MaterialCommunityIcons name={icon} size={22} color={T.muted} /> : null}
+        : icon ? <Glyph name={icon} size={22} color={T.muted} /> : null}
     </View>
     <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: selected ? '700' : '500', color: selected ? T.ink : T.muted }}>{caption}</Text>
   </Pressable>;
@@ -1983,15 +1978,15 @@ function GuideStrip({ title, hint, artwork, collapsed, onCollapse, onClose, onUn
 }) {
   return <View testID="표현 예시 참고 자리" style={{ borderBottomWidth: 1, borderColor: T.line, backgroundColor: T.paper }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, paddingLeft: 12, paddingRight: 2, gap: 2 }}>
-      <MaterialCommunityIcons name="lightbulb-on-outline" size={15} color={T.muted} />
+      <Glyph name="lightbulb-on-outline" size={15} color={T.muted} />
       <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, fontWeight: '800', color: T.ink, marginLeft: 4 }}>{title}</Text>
       <Pressable accessibilityRole="button" accessibilityLabel={collapsed ? '표현 예시 펼치기' : '표현 예시 접기'} onPress={onCollapse}
         style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }} hitSlop={2}>
-        <MaterialCommunityIcons name={collapsed ? 'chevron-down' : 'chevron-up'} size={18} color={T.muted} />
+        <Glyph name={collapsed ? 'chevron-down' : 'chevron-up'} size={18} color={T.muted} />
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="표현 예시 닫기" onPress={onClose}
         style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }} hitSlop={2}>
-        <MaterialCommunityIcons name="close" size={17} color={T.muted} />
+        <Glyph name="close" size={17} color={T.muted} />
       </Pressable>
     </View>
     {/* 펼친 모습: 그림은 왼쪽에 작게, 할 말과 행동은 오른쪽에. 가로로 눕혀 세로 자리를 아낀다. */}
@@ -2015,7 +2010,7 @@ function GuideStrip({ title, hint, artwork, collapsed, onCollapse, onClose, onUn
 function EyeToggle({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ checked: on }} onPress={onPress}
     style={({ pressed }) => ({ width: T.tap, height: T.tap, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : 'transparent' })}>
-    <MaterialCommunityIcons name={on ? 'eye-outline' : 'eye-off-outline'} size={20} color={on ? T.ink : T.muted} />
+    <Glyph name={on ? 'eye-outline' : 'eye-off-outline'} size={20} color={on ? T.ink : T.muted} />
   </Pressable>;
 }
 // 하단에서 올라오는 설정 패널의 공통 껍데기.
@@ -2091,12 +2086,12 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
       {/* 누르면 예전처럼 캔버스를 눌러 집고, 누른 채 캔버스로 끌면 끌리는 자리 색을 바로 집는다(45.4차). */}
       <View {...eyedropHandlers} accessibilityRole="button" accessibilityLabel="스포이드" accessibilityHint="누른 채 그림 위로 끌면 그 자리 색을 집어요"
         style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-        <MaterialCommunityIcons name="eyedropper-variant" size={19} color={T.ink} />
+        <Glyph name="eyedropper-variant" size={19} color={T.ink} />
         <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: T.muted }}>색 추출</Text>
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel={kept ? '내 팔레트에 있음' : '내 팔레트에 저장'} disabled={kept} onPress={() => onSave(color)}
         style={({ pressed }) => ({ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: 12, backgroundColor: pressed ? T.fill : 'transparent' })}>
-        <MaterialCommunityIcons name={kept ? 'check' : 'palette-swatch-outline'} size={19} color={kept ? T.success : T.ink} />
+        <Glyph name={kept ? 'check' : 'palette-swatch-outline'} size={19} color={kept ? T.success : T.ink} />
         <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: kept ? T.success : T.muted }}>{kept ? '저장됨' : '색 저장'}</Text>
       </Pressable>
     </View>
@@ -2113,7 +2108,7 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
           {saved.map(c => tidy
             ? <Pressable key={'u' + c} accessibilityRole="button" accessibilityLabel={'내 팔레트 ' + c + ' 지우기'} onPress={() => onForget(c)} hitSlop={6}
                 style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: c, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#00000033' }}>
-                <MaterialCommunityIcons name="close" size={16} color={light(c) ? '#1B1B1D' : '#FFFFFF'} />
+                <Glyph name="close" size={16} color={light(c) ? '#1B1B1D' : '#FFFFFF'} />
               </Pressable>
             : <Swatch key={'u' + c} label={'내 팔레트 ' + c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
         </View> : null}
@@ -2150,7 +2145,7 @@ function Swatch({ color, selected, onPress, size = 34, label, round }: { color: 
     // 흰색·아주 밝은 색은 옅은 테두리로는 바탕과 구분되지 않아 빈칸처럼 보인다. 밝은 색에만 또렷한 선을 준다.
     style={{ width: size, height: size, borderRadius: round ? size / 2 : 9, backgroundColor: color, alignItems: 'center', justifyContent: 'center',
       borderWidth: selected ? 2.5 : 1, borderColor: selected ? T.ink : light(color) ? T.lineStrong : '#17171718' }}>
-    {selected && <MaterialCommunityIcons name="check" size={Math.round(size * .5)} color={light(color) ? '#1B1B1D' : '#FFFFFF'} />}
+    {selected && <Glyph name="check" size={Math.round(size * .5)} color={light(color) ? '#1B1B1D' : '#FFFFFF'} />}
   </Pressable>;
 }
 // ── 색 고르는 판(45.35 승인 시안) ─────────────────────────────────────────────────────────
@@ -2252,7 +2247,7 @@ function Minor({ title, onPress, danger }: { title: string; onPress: () => void;
 function MenuButton({ title, icon, onPress, danger }: { title: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; onPress: () => void; danger?: boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress}
     style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, borderRadius: T.radius.sm, backgroundColor: pressed ? T.fill : 'transparent' })}>
-    <MaterialCommunityIcons name={icon} size={18} color={danger ? T.danger : T.muted} />
+    <Glyph name={icon} size={18} color={danger ? T.danger : T.muted} />
     <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, fontWeight: '700', color: danger ? T.danger : T.ink }}>{title}</Text>
   </Pressable>;
 }
@@ -2268,7 +2263,7 @@ function MenuPair({ label, left, right, onLeft, onRight }: { label?: string; lef
         borderTopLeftRadius: side === 'l' ? 10 : 0, borderBottomLeftRadius: side === 'l' ? 10 : 0,
         borderTopRightRadius: side === 'r' ? 10 : 0, borderBottomRightRadius: side === 'r' ? 10 : 0,
         backgroundColor: pressed && run ? T.fillPressed : T.surface2, opacity: run ? 1 : .4 })}>
-      <MaterialCommunityIcons name={icon} size={15} color={T.ink} />
+      <Glyph name={icon} size={15} color={T.ink} />
       <Text style={{ fontSize: 12, fontWeight: '700', color: T.ink }}>{name}</Text>
     </Pressable>;
   return <View style={{ paddingHorizontal: 10, paddingVertical: 2, gap: 3 }}>
