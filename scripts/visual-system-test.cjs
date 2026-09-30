@@ -359,7 +359,7 @@ async function ready() {
   await press('움직이기');
   // 45.39: 스무 가지를 등장·동작·강조 세 묶음으로. 묶음마다 네 칸씩, 마지막 줄은 빈 칸으로 폭을 맞춘다. '없음'은 격자 위 칩 줄로 옮겼다.
   const grid = tree.root.findAll(n => n.props.testID === '움직임 격자')[0];
-  const gridRows = grid.findAll(n => n.type === 'View' && flat(n.props.style).flexDirection === 'row' && flat(n.props.style).alignItems !== 'baseline');
+  const gridRows = grid.findAll(n => n.type === 'View' && n.props.testID !== 'PRO 표시' && flat(n.props.style).flexDirection === 'row' && flat(n.props.style).alignItems !== 'baseline');   // 45.43: PRO 배지(가로 줄)는 칸 줄이 아니다
   assert.deepEqual(gridRows.map(r => r.children.length), [4, 4, 4, 4, 4, 4, 4], '묶음마다 네 칸씩(등장 2줄 · 동작 3줄 · 강조 2줄)');
   assert.equal(labelled('움직임 없음').length, 1, "'없음'은 격자 위에 하나");
   for (const label of ['뿅', '쓱', '빼꼼', '쿵', '사라지기', '둥실', '통통', '까딱', '폴짝', '끄덕', '꾸벅', '들썩', '살랑', '빙글', '두근거리기', '흔들기', '부르르', '덜덜', '쾅', '쭈욱']) {

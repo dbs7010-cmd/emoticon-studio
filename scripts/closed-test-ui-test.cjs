@@ -77,6 +77,13 @@ async function render(projects = []) {
   assert.ok(texts().includes(`PRO 브러시 ${CATALOG.filter(b => b.pro).length}종`));
   assert.ok(texts().includes(`PRO 움직임 ${PRESETS.filter(p => isProPreset(p.id)).length}종`));
   assert.ok(texts().includes(PRESETS.filter(p => isProPreset(p.id)).map(p => p.label).join(' · ')));
+  // 45.43 S6: 전/후 아래 칩은 실제 PRO 움직임 이름뿐이다(앞 다섯 + 나머지 수). 무료 움직임이 섞이지 않는다.
+  {
+    const pros = PRESETS.filter(p => isProPreset(p.id));
+    const chips = tree.root.findAll(n => n.type === 'View' && n.props.testID === 'PRO 움직임 칩')[0].findAll(n => n.type === 'Text').map(n => [n.props.children].flat(9).join(''));
+    assert.deepEqual(chips, [...pros.slice(0, 5).map(p => p.label), ...(pros.length > 5 ? ['+' + (pros.length - 5)] : [])]);
+    assert.ok(!chips.some(c => PRESETS.some(p => !isProPreset(p.id) && p.label === c)), 'PRO 칩에 무료 움직임이 없다');
+  }
   assert.ok(texts().some(t => t.includes('무료 브러시 10종 · 무료 움직임 6종')));
   await press('PRO 닫기');
   await press('설정');

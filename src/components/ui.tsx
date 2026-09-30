@@ -413,9 +413,11 @@ export function ProBadge({ onPress, label = 'PRO 이용', text = 'PRO', owned }:
 }
 
 // PRO 표시는 한 가지 모양뿐이다: 옅은 바탕의 작은 글자. 누르는 버튼(노랑)처럼 보이지 않게, 경고처럼 튀지 않게.
+// 45.43 S6(시안 WB2-States 'PRO 표현'): 보라 없이 잉크 테두리 + 반짝 아이콘 + 'PRO'. 누르는 버튼(노랑)처럼 보이지 않고, 경고처럼 튀지 않는다.
 export function ProTag() {
-  return <View style={{ paddingHorizontal: 6, height: 18, borderRadius: 6, backgroundColor: T.proSoft, justifyContent: 'center' }}>
-    <Text style={{ fontSize: 10, fontWeight: '800', color: T.pro, letterSpacing: .4 }}>PRO</Text>
+  return <View testID="PRO 표시" style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingLeft: 3, paddingRight: 6, height: 20, borderRadius: 6, borderWidth: 1.2, borderColor: T.edge, backgroundColor: T.paper }}>
+    <ImtiIcon name="pro" size={IconSize.meta} />
+    <Text style={{ fontSize: 10, fontWeight: '800', color: T.ink, letterSpacing: .3 }}>PRO</Text>
   </View>;
 }
 export function Dialog({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {

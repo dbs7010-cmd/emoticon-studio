@@ -30,10 +30,10 @@ const C = T;
 const proBrushes = CATALOG.filter(b => b.pro);
 const proMotions = PRESETS.filter(p => isProPreset(p.id));
 const proFeatures = [
-  [`PRO 움직임 ${proMotions.length}종`, proMotions.map(p => p.label).join(' · '), 'motion-play-outline'],
-  ['부분만 움직이기 · 두 모습 번갈아', '손, 귀, 꼬리처럼 원하는 곳만 따로, 차례로', 'hand-back-right-outline'],
-  ['여러 칸에 같은 움직임 한 번에', '보관한 움직임을 고른 칸 전부에', 'content-duplicate'],
-  [`PRO 브러시 ${proBrushes.length}종`, proBrushes.map(b => b.title).join(' · '), 'brush-variant'],
+  [`PRO 움직임 ${proMotions.length}종`, proMotions.map(p => p.label).join(' · '), 'motion'],
+  ['부분만 움직이기 · 두 모습 번갈아', '손, 귀, 꼬리처럼 원하는 곳만 따로, 차례로', 'layer'],
+  ['여러 칸에 같은 움직임 한 번에', '보관한 움직임을 고른 칸 전부에', 'check'],
+  [`PRO 브러시 ${proBrushes.length}종`, proBrushes.map(b => b.title).join(' · '), 'brush'],
 ] as const;
 // 설정 화면에 보여 줄 앱 버전. app.json 의 값을 그대로 읽는다.
 const appVersion = Constants.expoConfig?.version ?? '—';
@@ -1597,34 +1597,41 @@ function Studio() {
         </View>
         <ScrollView contentContainerStyle={{ padding: T.gap.lg, gap: T.gap.md, paddingBottom: 32 }}>
           <Text style={{ fontFamily: Font.display, fontSize: 24, color: C.ink, lineHeight: 32 }}>{'다양한 붓과 움직임으로\n여러 칸을 한 번에'}</Text>
-          {/* proFeatureArtwork 자리(16:9). 지금은 앱 기본 캐릭터 두 장으로 전후를 보여 준다. */}
-          <View accessibilityLabel="움직임 전후 미리보기" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 14, aspectRatio: 16 / 9, maxHeight: 214, borderRadius: 24, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
-            {/* 왼쪽·오른쪽은 같은 그림이다. 달라지는 것은 '무엇이 움직이는가'뿐이라, 그 차이만 앱이 그린다. */}
-            <View style={{ alignItems: 'center', gap: 5 }}>
-              <View style={{ width: 86, height: 86 }}>
-                <Image accessibilityIgnoresInvertColors source={ASSET_SLOTS.proFeatureArtwork.source ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
-                {/* 전체가 함께 움직인다: 그림 전체를 한 테두리로 감싼다. */}
-                <View pointerEvents="none" style={{ position: 'absolute', left: 2, top: 2, right: 2, bottom: 2, borderRadius: 14, borderWidth: 2, borderColor: C.warmInk }} />
-              </View>
-              <Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>전체 움직임</Text>
+          {/* 45.43 S6 전/후(시안 WB2-States 'PRO 표현'): 색이 아니라 배지·구성으로 PRO 를 보인다(보라 없음).
+              왼쪽·오른쪽은 같은 그림(proFeatureArtwork source / sourceAfter)이다. 달라지는 것은 '무엇이 움직이는가'뿐 —
+              실제 PRO 기능인 '부분만 움직이기'(고른 레이어만 따로)를 그린다. 흔드는 손 자리만 점선 원으로 표시한다. */}
+          <View testID="PRO 전후" accessibilityLabel="움직임 전후 미리보기" style={{ gap: 12, padding: 14, borderRadius: 22, backgroundColor: C.paper, ...Card.border }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <ProTag />
+              <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>원하는 부분만 움직이기</Text>
             </View>
-            <MaterialCommunityIcons name="arrow-right" size={24} color={C.ink} />
-            <View style={{ alignItems: 'center', gap: 5 }}>
-              <View style={{ width: 86, height: 86 }}>
-                <Image accessibilityIgnoresInvertColors source={ASSET_SLOTS.proFeatureArtwork.sourceAfter ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
-                {/* 고른 곳만 움직인다: 흔드는 손 자리 하나만 감싼다. */}
-                <View pointerEvents="none" style={{ position: 'absolute', left: 6, top: 20, width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: C.warmInk }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ flex: 1, aspectRatio: 1, maxHeight: 150, borderRadius: 16, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Image accessibilityIgnoresInvertColors source={ASSET_SLOTS.proFeatureArtwork.source ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
+                <View style={{ flexDirection: 'row', gap: 3 }}><Text style={{ fontSize: 11, color: C.muted }}>무료 ·</Text><Text style={{ fontSize: 11, fontWeight: '700', color: C.muted }}>전체 움직임</Text></View>
               </View>
-              <Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>부분 움직임</Text>
+              <ImtiIcon name="next" size={IconSize.row} color={C.muted} />
+              <View style={{ flex: 1, aspectRatio: 1, maxHeight: 150, borderRadius: 16, backgroundColor: C.paper, borderWidth: 1.5, borderColor: C.edge, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <View style={{ width: 86, height: 86 }}>
+                  <Image accessibilityIgnoresInvertColors source={ASSET_SLOTS.proFeatureArtwork.sourceAfter ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
+                  <View pointerEvents="none" style={{ position: 'absolute', left: 5, top: 18, width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.edge }} />
+                </View>
+                <View style={{ flexDirection: 'row', gap: 3 }}><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>PRO ·</Text><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>부분 움직임</Text></View>
+              </View>
+            </View>
+            {/* PRO 움직임 칩: 실제 PRO 효과 이름(PRESETS 에서 PRO 인 것)을 앞에서 다섯, 나머지는 +N. */}
+            <View testID="PRO 움직임 칩" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {proMotions.slice(0, 5).map(m => <View key={m.id} style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: C.surface2, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{m.label}</Text></View>)}
+              {proMotions.length > 5 && <View style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: C.surface2, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>+{proMotions.length - 5}</Text></View>}
             </View>
           </View>
-          {/* 실제로 PRO 인 것만 적는다. 그리기 기본 도구(진하기·보정·스포이드·팔레트·RGB)는 무료라 넣지 않는다. */}
+          {/* 실제로 PRO 인 것만 적는다(짧게). 그리기 기본 도구(진하기·보정·스포이드·팔레트·RGB)는 무료라 넣지 않는다. */}
           {proFeatures.map(([title, hint, icon]) =>
             <View key={title} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-              <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.proSoft, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name={icon} size={19} color={C.pro} /></View>
+              <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name={icon} size={IconSize.row} /></View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{title}</Text>
-                <Text style={{ fontSize: 12, color: C.muted }}>{hint}</Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{title}</Text>
+                <Text numberOfLines={2} style={{ fontSize: 12, color: C.muted }}>{hint}</Text>
               </View>
             </View>)}
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start', paddingVertical: 4 }}>
