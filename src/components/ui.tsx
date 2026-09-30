@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, Image, Modal, Pressable, ScrollView, ActivityIndicator, type ImageSourcePropType } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Image, Modal, Pressable, ScrollView, ActivityIndicator, Animated, type ImageSourcePropType } from 'react-native';
+import { ImtiIcon, IconSize } from '../design/icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { imageUri } from '../services/storage';
 import { ASSET_SLOTS, type AssetSlotName } from '../design/asset-slots';
@@ -114,7 +115,30 @@ export function TabBar<K extends string>({ items, value, onChange, testID }: { i
   </View>;
 }
 
-export function EmptyState({ icon, message, action }: { icon: IconName; message: string; action: React.ReactNode }) {
+// 빈 상태(45.42 S3). 두 모양이 있다.
+// · 작은 빈 목록(예전 모양): icon + message + action — 패널 안의 빈 목록(참고 사진 등).
+// · 첫 화면 빈 상태(새 모양): title 을 주면 가라앉은 면 위에 그림(art) · 제목 한 줄 · 설명 한 줄 · 노란 행동 하나,
+//   그리고 선택으로 '그리기 › 움직이기 › 내보내기' 흐름 아이콘. 노란 행동은 화면에 하나뿐이다.
+export function EmptyState(props: { icon: IconName; message: string; action: React.ReactNode } | {
+  title: string; body: string; actionLabel: string; onAction: () => void; art?: React.ReactNode; flow?: boolean; testID?: string }) {
+  if ('title' in props) {
+    const { title, body, actionLabel, onAction, art, flow, testID } = props;
+    return <View testID={testID} style={{ backgroundColor: T.surface2, borderRadius: T.radius.card, paddingHorizontal: T.gap.xl, paddingVertical: T.gap.xxl, alignItems: 'center', gap: T.gap.md }}>
+      {art}
+      <View style={{ alignItems: 'center', gap: T.gap.xs }}>
+        <Text accessibilityRole="header" style={{ ...Type.sectionTitle, textAlign: 'center' }}>{title}</Text>
+        <Text style={{ ...Type.bodySecondary, textAlign: 'center' }}>{body}</Text>
+      </View>
+      <Action primary title={actionLabel} onPress={onAction} icon="plus" />
+      {flow && <View testID="흐름 아이콘" accessible accessibilityLabel="그리기, 움직이기, 내보내기 순서" style={{ flexDirection: 'row', alignItems: 'center', gap: T.gap.sm }}>
+        {([['brush', '그리기'], ['motion', '움직이기'], ['export', '내보내기']] as const).map(([name, label], i) => <React.Fragment key={name}>
+          {i > 0 && <ImtiIcon name="next" size={IconSize.meta} color={T.faint} />}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><ImtiIcon name={name} size={IconSize.meta} color={T.muted} /><Text style={{ ...Type.caption, color: T.muted }}>{label}</Text></View>
+        </React.Fragment>)}
+      </View>}
+    </View>;
+  }
+  const { icon, message, action } = props;
   return <View style={{ minHeight: 132, alignItems: 'center', justifyContent: 'center', gap: T.gap.sm, padding: T.gap.lg }}>
     <MaterialCommunityIcons name={icon} size={30} color={T.faint} />
     <Text style={{ ...Type.bodySecondary, textAlign: 'center' }}>{message}</Text>
@@ -308,6 +332,76 @@ export function Range({ label, hideLabel, value, min, max, step, onChange, displ
     {!!shownText && <Text accessibilityLabel={label ? label + ' 값' : undefined} style={{ minWidth: 42, fontSize: 12, color: T.muted, textAlign: 'right' }}>{shownText}</Text>}
   </View>;
 }
+// ── 45.42 S3 공통 상태 부품 ────────────────────────────────────────────────────────────────
+// 선택·비활성 규칙(한 벌). 선택은 아이콘이 아니라 담는 면이 말한다: 도구·탭 = 노란 면 + 잉크 테두리, 목록 = 옅은 노랑 면.
+// 비활성은 색만 옅게 — 투명도로 흐리지 않고, 실제 disabled 와 accessibilityState 는 부르는 버튼이 그대로 갖는다.
+export function selectedFace(on: boolean, kind: 'tool' | 'list' = 'tool') {
+  if (!on) return { backgroundColor: 'transparent', borderColor: 'transparent' };
+  return kind === 'tool' ? { ...S.selected } : { ...S.selectedSoft, borderColor: 'transparent' };
+}
+export const inkFor = (disabled?: boolean) => (disabled ? S.disabledInk : T.ink);
+
+// 짧은 반응(0.24~0.28초). Animated 네이티브 구동(transform · opacity 만). 보간을 쓰지 않고 값 자체를 움직인다.
+// pop  = 0.6 배에서 튀어 오르며 나타남(완성 체크) · rise = 12 아래에서 올라오며 나타남(저장 알림)
+export function useMicro(kind: 'pop' | 'rise', play = true) {
+  const scale = React.useRef(new Animated.Value(kind === 'pop' ? .6 : 1)).current;
+  const lift = React.useRef(new Animated.Value(kind === 'rise' ? 12 : 0)).current;
+  const fade = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    if (!play) return;
+    const ms = kind === 'pop' ? Motion.pop : Motion.rise;
+    const out = (x: number) => 1 - Math.pow(1 - x, 3);
+    const back = (x: number) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2);   // 살짝 넘쳤다 돌아오는 끝
+    const a = Animated.parallel([
+      Animated.timing(fade, { toValue: 1, duration: ms, easing: out, useNativeDriver: true }),
+      kind === 'pop' ? Animated.timing(scale, { toValue: 1, duration: ms, easing: back, useNativeDriver: true })
+        : Animated.timing(lift, { toValue: 0, duration: ms, easing: out, useNativeDriver: true }),
+    ]);
+    a.start();
+    return () => a.stop();
+  }, [play, kind, scale, lift, fade]);
+  return { opacity: fade, transform: kind === 'pop' ? [{ scale }] : [{ translateY: lift }] };
+}
+
+// 저장 알림: 흰 알약 + 초록 체크 + 칸 번호 + 잉크 '다음 칸'. 경고창처럼 보이지 않게 — 노랑·빨강을 쓰지 않는다.
+export function SaveToast({ slot, onNext, nextLabel = '다음 칸', message }: { slot: number; onNext?: () => void; nextLabel?: string; message?: string }) {
+  const rise = useMicro('rise');
+  const text = message ?? `${slot}번 칸 저장됨`;
+  return <Animated.View testID="저장 알림" accessibilityLiveRegion="polite" accessibilityLabel={text}
+    style={[{ flexDirection: 'row', alignItems: 'center', gap: T.gap.sm, minHeight: T.tap, paddingLeft: T.gap.md, paddingRight: onNext ? 6 : T.gap.lg,
+      borderRadius: 999, backgroundColor: T.paper, ...Card.border, ...Card.float }, rise]}>
+    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: T.success, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="check" size={IconSize.meta} color={T.paper} /></View>
+    <Text numberOfLines={1} style={{ ...Type.button, color: T.ink, flexShrink: 1 }}>{text}</Text>
+    {!!onNext && <Pressable accessibilityRole="button" accessibilityLabel={nextLabel} onPress={onNext} hitSlop={6}
+      style={({ pressed }) => ({ minHeight: 36, paddingHorizontal: T.gap.md, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: pressed ? '#3A3632' : T.ink })}>
+      <Text style={{ ...Type.button, fontSize: 13, color: T.paper }}>{nextLabel}</Text><ImtiIcon name="next" size={IconSize.meta} color={T.paper} />
+    </Pressable>}
+  </Animated.View>;
+}
+
+// 완성 카드: 흰 카드 + 튀어 오르는 노란 체크 + 'N칸 완성!' + 작품 격자(children) + 노란 행동 하나.
+export function CompleteCard({ total, children, actionLabel, onAction, testID = '완성 카드' }: { total: number; children?: React.ReactNode; actionLabel: string; onAction: () => void; testID?: string }) {
+  const pop = useMicro('pop');
+  return <View testID={testID} style={{ backgroundColor: T.paper, borderRadius: T.radius.card, padding: T.gap.xl, gap: T.gap.lg, alignItems: 'center', ...Card.border, ...Card.shadow }}>
+    <Animated.View testID="완성 체크" style={[{ width: 56, height: 56, borderRadius: 28, backgroundColor: T.accent, borderWidth: T.stroke, borderColor: T.edge, alignItems: 'center', justifyContent: 'center' }, pop]}>
+      <ImtiIcon name="check" size={IconSize.tool} />
+    </Animated.View>
+    <Text accessibilityRole="header" style={{ ...Type.screenName, textAlign: 'center' }}>{total}칸 완성!</Text>
+    {children}
+    <View style={{ alignSelf: 'stretch' }}><Action primary title={actionLabel} onPress={onAction} /></View>
+  </View>;
+}
+
+// PRO 배지(45.42): 보라 없이 잉크 테두리 + 반짝 아이콘 + 'PRO'. 누를 수 있으면 누르는 자리는 48dp.
+export function ProBadge({ onPress, label = 'PRO 이용', owned }: { onPress?: () => void; label?: string; owned?: boolean }) {
+  const face = <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, borderWidth: T.stroke, borderColor: T.edge, backgroundColor: T.paper }}>
+    <ImtiIcon name="pro" size={IconSize.meta} /><Text style={{ fontSize: 12, fontWeight: '800', color: T.ink, letterSpacing: .4 }}>PRO</Text>
+  </View>;
+  if (!onPress) return <View accessible accessibilityLabel={owned ? 'PRO 이용 중' : 'PRO'}>{face}</View>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!owned }} onPress={onPress}
+    style={({ pressed }) => ({ minHeight: T.tap, minWidth: T.tap, alignItems: 'center', justifyContent: 'center', transform: pressed ? [{ scale: .96 }] : [] })}>{face}</Pressable>;
+}
+
 // PRO 표시는 한 가지 모양뿐이다: 옅은 바탕의 작은 글자. 누르는 버튼(노랑)처럼 보이지 않게, 경고처럼 튀지 않게.
 export function ProTag() {
   return <View style={{ paddingHorizontal: 6, height: 18, borderRadius: 6, backgroundColor: T.proSoft, justifyContent: 'center' }}>
