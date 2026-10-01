@@ -61,3 +61,6 @@ verification/**
 !verification/**/*.txt
 verification/**/node_modules/
 verification/_latest/
+
+# 개인정보처리방침 미리보기(운영자 입력 남은 상태, 게시 금지)
+site/privacy/preview.html
