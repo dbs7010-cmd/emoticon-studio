@@ -9,7 +9,7 @@ import type { LocalImage } from '../types';
 // ── 이모티 디자인 토큰 · 45.42 WHITE BASE (사용자 확정 2026-09-28) ─────────────────────────────────
 // 색은 네 가지 역할뿐이다: WHITE(바탕) · INK(글자·선·검정 테두리) · NEUTRAL(가라앉은 면·선·누름) · MAKER YELLOW.
 // · 사용자의 이모티콘이 화면에서 가장 화려해야 한다. UI 는 흰색과 중립색으로 물러선다.
-// · 노랑(#FFCC2E)은 주 행동 · 선택 · 진행 · 브랜드 순간에만. 한 화면의 주인공 노랑은 하나.
+// · 브랜드 레몬(#F5E642, 2026-10-03 사용자 검토 후보 — 예전 노랑 #FFCC2E)은 주 행동 · 선택 · 진행 · 브랜드 순간에만. 한 화면의 주인공 노랑은 하나.
 // · 초록(success)은 저장 성공 같은 '정말 성공한 순간'에만 제한적으로. PRO 는 색 세계관을 따로 두지 않는다(보라 없음) —
 //   배지·아이콘·구성으로 표현한다. pro·proSoft 이름은 남겨 두되 잉크·중립 값을 가리킨다.
 // · 검정 2px 테두리(+ Pop 그림자)는 '누를 노란 버튼'과 '지금 고른 것'에만(45.39 절충안 유지). 카드·캔버스는 옅은 중립 선.
@@ -27,15 +27,15 @@ export const T = {
   faint: '#948D84',         // 비활성 표시와 장식(화살표·구분 기호) 전용 — 읽어야 하는 글자에는 쓰지 않는다(흰 면 3.3:1). 글자는 muted
   line: '#ECE9E3',          // 구분선
   lineStrong: '#DCD7CE',
-  accent: '#FFCC2E',        // MAKER YELLOW — 주 행동과 고른 것
-  accentLine: '#E6AE00',    // 노랑 눌림
-  accentSoft: '#FFF4CC',    // 옅은 노랑(목록형 선택 · 진행 표시의 부드러운 면)
+  accent: '#F5E642',        // 브랜드 레몬 — 주 행동과 고른 것(잉크 글자 13.0:1)
+  accentLine: '#C9B500',    // 레몬 눌림 · '그리는 중' 고리(흰 면과의 구분 2.1:1 — 예전 노랑과 같은 수준)
+  accentSoft: '#FCF8CF',    // 옅은 레몬(목록형 선택 · 진행 표시의 부드러운 면, 잉크 글자 15.6:1)
   accentInk: '#1F1D1A',     // 노랑 위 글자
   accentBorder: '#1F1D1A',  // 고른 면의 가장자리 — 검정 테두리와 같은 잉크
   warmLine: '#ECE9E3',      // (45.39 크림 선) → 중립 선
   warmInk: '#6B655E',       // (45.39 크림 위 글자) → muted
   floating: '#FFFFFFF7',
-  yellow: '#FFCC2E',
+  yellow: '#F5E642',
   fill: '#F2F0EC', fillPressed: '#E8E5DF',   // 누름
   success: '#1E8E5A', successSoft: '#E3F4EA', // 저장 성공 등 성공 순간에만
   warning: '#9A5B00', warningSoft: '#FFEACC',

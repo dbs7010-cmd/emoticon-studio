@@ -940,7 +940,7 @@ function Studio() {
                 <View testID="홈 작품 미리보기" style={{ flexDirection: 'row', gap: 2, backgroundColor: C.line }}>
                   {[0, 1, 2, 3].map(i => {
                     const sl = drawn[i];
-                    return <View key={i} style={{ flex: 1, aspectRatio: 1, backgroundColor: i % 2 ? '#FFFBF0' : C.paper, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                    return <View key={i} style={{ flex: 1, aspectRatio: 1, backgroundColor: i % 2 ? '#FEFCE6' : C.paper, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                       {sl ? <Image source={{ uri: imageUri((sl.motionImage ?? sl.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
                         : i === drawn.length ? <ImtiIcon name="brush" size={IconSize.tool} color={C.lineStrong} /> : null}
                     </View>;

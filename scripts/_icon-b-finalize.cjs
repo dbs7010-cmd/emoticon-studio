@@ -35,5 +35,5 @@ for (const [name, dest, rgb] of plan) {
   console.log(`${dest}  ${img.w}×${img.h}  ${rgb ? 'RGB(알파 없음)' : 'RGBA(투명)'}  ${fs.statSync(path.join(root, dest)).size} bytes`);
 }
 // 적응형 배경색·스플래시 바탕(앱 바탕과 같은 흰색)·스플래시 그림 폭
-fs.writeFileSync(path.join(root, 'assets/brand/brand.json'), JSON.stringify({ adaptiveBackgroundColor: '#FFCC2E', splashBackgroundColor: '#FFFFFF', splashImageWidth: 200 }, null, 2) + '\n');
+fs.writeFileSync(path.join(root, 'assets/brand/brand.json'), JSON.stringify({ adaptiveBackgroundColor: '#F5E642', splashBackgroundColor: '#FFFFFF', splashImageWidth: 200 }, null, 2) + '\n');
 console.log('assets/brand/brand.json');

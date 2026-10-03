@@ -70,7 +70,7 @@ async function ready() {
   assert.notEqual(T.cardLine, T.paper, '흰 카드는 바탕과 다른 선으로 층이 읽힌다');
   assert.notEqual(T.bg, T.surface2, '눌린 면은 앱 바탕과도 달라야 한다');
   assert.equal(T.ink, '#1F1D1A'); assert.equal(T.muted, '#6B655E'); assert.equal(T.faint, '#948D84'); assert.equal(T.line, '#ECE9E3');
-  assert.equal(T.accent, '#FFCC2E'); assert.equal(T.accentSoft, '#FFF4CC'); assert.equal(T.danger, '#B42318');
+  assert.equal(T.accent, '#F5E642'); assert.equal(T.accentSoft, '#FCF8CF');   // 2026-10-03 브랜드 레몬 assert.equal(T.danger, '#B42318');
   // 크림·갈색 잔재가 공통 토큰에 남지 않는다(초록은 성공 순간 전용 토큰에만).
   for (const k of ['bg', 'paper', 'surface2', 'warm', 'line', 'lineStrong', 'cardLine', 'paperLine', 'warmLine', 'fill', 'fillPressed']) {
     const [r, g, b] = [1, 3, 5].map(i => parseInt(T[k].substr(i, 2), 16));

@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const out = process.argv[2] || 'verification/round45_44/icon-b';
 fs.mkdirSync(out, { recursive: true });
-const INK = '#2A2320', YELLOW = '#FFCC2E';
+const INK = '#2A2320', YELLOW = '#F5E642';   // 2026-10-03 브랜드 레몬(예전 #FFCC2E). 모양·비율은 그대로
 // 연필(시안 그대로: 100 격자 → 92px, 오른쪽 20 · 아래 16, 40도)
 const pencil = mono => `<g transform="translate(144 148) rotate(40 46 46) scale(.92)">
   <rect x="40" y="8" width="20" height="62" rx="3" fill="${mono ? 'none' : '#FFF3D6'}" stroke="${INK}" stroke-width="4.5"/>
