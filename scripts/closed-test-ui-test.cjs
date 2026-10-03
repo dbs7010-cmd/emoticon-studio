@@ -95,7 +95,7 @@ async function render(projects = []) {
   await press('문의하기');
   const mail = new URL(urls.at(-1));
   assert.equal(mail.protocol, 'mailto:'); assert.equal(mail.pathname, config.extra.supportEmail);
-  assert.equal(mail.searchParams.get('subject'), '[imoti 이모티] 문의');
+  assert.equal(mail.searchParams.get('subject'), '[emoti 이모티] 문의');
   assert.equal(mail.searchParams.get('body'), '앱 버전: 1.0.0\nOS: android 36');
   linkFails = true; await press('문의하기');
   assert.equal(tree.root.findAll(n => n.type === 'Text' && n.props.accessibilityLabel === '복사할 문의 이메일')[0].props.selectable, true);

@@ -39,7 +39,7 @@ for (const line of md.split('\n')) {
 flush();
 const html = `<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>imoti 이모티 · 개인정보처리방침</title>
+<title>emoti 이모티 · 개인정보처리방침</title>
 <style>
 :root{--ink:#1F1D1A;--muted:#6B655E;--line:#ECE9E3;--soft:#F6F5F2;--accent:#FFCC2E}
 body{margin:0;background:#fff;color:var(--ink);font:16px/1.7 system-ui,-apple-system,"Noto Sans KR",sans-serif}

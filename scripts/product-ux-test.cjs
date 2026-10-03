@@ -548,7 +548,7 @@ const saved = async (dirty = true) => {
   const home = tree.root.findAll(n => n.type === 'Pressable' && ['새 이모티콘 세트', '새 세트 만들기'].includes(n.props.accessibilityLabel)).map(n => n.props.accessibilityLabel);
   // 명세 H02: 이어하기가 먼저다. 시작 줄은 그 아래에 조용히 선다.
   assert.deepEqual(home, ['새 이모티콘 세트', '새 세트 만들기'], '최근 작업이 시작 줄보다 먼저');
-  assert.ok(texts().includes('imoti'), '홈 머리는 브랜드가 먼저');
+  assert.ok(texts().includes('emoti'), '홈 머리는 브랜드가 먼저');
   assert.equal(tree.root.findAll(n => n.props.testID === '홈 알림').length, 0, '알림이 꺼져 있으면 자리도 없다');
   const page = tree.root.findAll(n => n.type === 'ScrollView' && Array.isArray(n.props.contentContainerStyle))[0];
   assert.ok(page && Object.assign({}, ...page.props.contentContainerStyle.filter(Boolean)).flexGrow === 1, '홈은 화면 높이를 채워 아래 행동을 바닥에 둔다');
