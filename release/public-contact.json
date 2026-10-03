@@ -2,5 +2,5 @@
   "note": "앱·스토어·개인정보처리방침에 공개되는 연락처(비밀 아님). 환경변수 EMOTICON_SUPPORT_EMAIL / EMOTICON_PRIVACY_URL 이 있으면 그 값이 우선이다. privacyPolicyUrl 은 공개 주소가 실제로 열린 뒤에만 채운다.",
   "operatorName": "엉성이",
   "supportEmail": "emoticon755@gmail.com",
-  "privacyPolicyUrl": null
+  "privacyPolicyUrl": "https://dbs7010-cmd.github.io/emoticon-studio/privacy/"
 }
