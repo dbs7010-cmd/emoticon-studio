@@ -65,6 +65,8 @@ const { saveStore } = load('src/services/storage.ts');
 const { createProject } = load('src/project.ts');
 const App = load('App.tsx').default;
 
+// 홍보용 대체 렌더(scripts/promo)는 세트 이름을 바꿔 찍는다. 기본값은 검사와 같은 '검토 세트'.
+const SET_NAME = process.env.PROMO_SET_NAME || '검토 세트';
 let tree;
 const flat = style => Object.assign({}, ...[style].flat(9).filter(Boolean).map(s => typeof s === 'function' ? s({ pressed: false }) : s));
 const labelled = label => tree.root.findAll(n => (n.type === 'Pressable' || n.type === 'View') && n.props.accessibilityLabel === label && typeof n.props.onPress === 'function');
@@ -139,7 +141,7 @@ const SCREENS = [
   ['new-set', '새 세트 만들기', async () => { await press('새 세트 만들기'); }],
   ['guide-emotions', '표현 가이드 · 감정 목록', async () => { await press('취소'); await press('표현 가이드'); }],
   ['guide-examples', '표현 가이드 · 표현 고르기', async () => { await press('고마워 · 두 손 모아 꾸벅'); await press('정중하게 고르기'); }],
-  ['set-detail', '세트 상세(보드)', async () => { await press('표현 가이드로'); await press('홈으로'); await press('검토 세트 이어서 만들기'); await ready(); await closePainter(); }],
+  ['set-detail', '세트 상세(보드)', async () => { await press('표현 가이드로'); await press('홈으로'); await press(SET_NAME + ' 이어서 만들기'); await ready(); await closePainter(); }],
   ['draw-base', '그리기 · 기본', async () => { await tap('slot-1'); await ready(); }],
   ['draw-size', '그리기 · 굵기 조절 중', async () => { await holdRail('브러시 굵기', .62); }],
   ['draw-ink', '그리기 · 불투명도 조절 중', async () => {
@@ -186,14 +188,14 @@ const SCREENS = [
   }],
   // 45.43 S5: 32칸을 다 채운 보드 — 완성 카드 B. 렌더용 데이터만 바꾼다(검토 세트의 모든 칸을 완성으로).
   ['board-complete', '보드 · 전부 완성', async () => {
-    await unmount(); seed(2, false, true); await fresh(); await press('검토 세트');
+    await unmount(); seed(2, false, true); await fresh(); await press(SET_NAME);
   }],
 ];
 
 // pro=false 는 렌더용 상태만 바꾼다(저장소의 검수용 PRO 표시를 끔). 결제·권한 코드는 건드리지 않는다.
 function seed(count, pro = true, complete = false) {
   files.clear();
-  const p = createProject('검토 세트', '콩이');
+  const p = createProject(SET_NAME, '콩이');
   p.slots = p.slots.map((s, i) => complete ? { ...s, finalImage: { path: 'a.png', width: 360, height: 360 }, done: true } : i < 18
     ? { ...s, finalImage: { path: 'a.png', width: 360, height: 360 }, done: i < 14, dialogue: i === 0 ? '고마워요' : '' }
     : s);
