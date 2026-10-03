@@ -408,7 +408,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await press('움직임 처음으로');
  await press('움직임 없음');
  scene={...scene,motion:null};await message(scene);
- assert.ok(!shown().some(t=>t.includes('부분 움직임은 PRO')),'the free flow never meets a save-time paywall');
+ assert.ok(!shown().some(t=>t.includes('PRO 효과는 저장되지 않아요')),'the free flow never meets a save-time paywall');
  await press('그리기');
  assert.deepEqual(lastSent(),{type:'stop'},'leaving the tab stops the preview');
  // ── 색 고르기: 기본 줄은 간결하고, 열면 넓은 범위에 닿는다 ─────────────────────────────

@@ -1853,8 +1853,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         style={{ fontSize: 18, minHeight: C.tap, borderWidth: 1, borderColor: C.line, borderRadius: C.radius.sm, paddingHorizontal: 12, backgroundColor: '#FFF', color: C.ink }} />
       <Action primary title="이름 바꾸기" onPress={() => { if (renaming.name.trim()) send({ type: 'renameLayer', id: renaming.id, name: renaming.name }); setRenaming(null); }} />
     </Dialog>}
-    {proSheet && <Dialog title="부분 움직임은 PRO" onClose={() => { setProSheet(false); pendingAction.current = null; }}>
-      <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>PRO 기간이 끝나 새로 바꾼 부분 움직임은 저장할 수 없어요. 그림과 전체 움직임은 그대로 저장돼요.</Text>
+    {proSheet && <Dialog title="PRO 효과는 저장되지 않아요" onClose={() => { setProSheet(false); pendingAction.current = null; }}>
+      <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>미리 본 PRO 효과는 PRO 에서만 저장돼요. 빼고 저장하면 그림과 무료 움직임은 그대로 남아요.</Text>
       <Action primary title="PRO 알아보기" onPress={() => { setProSheet(false); onRequestPro(); }} />
       <Action title="PRO 효과 빼고 저장" onPress={saveWithoutPro} />
     </Dialog>}

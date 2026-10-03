@@ -481,7 +481,7 @@ const saved = async (dirty = true) => {
   await press('PRO 닫기');
   assert.deepEqual([...new Set(seen.filter(t => /제출 파일|작업 파일/.test(t)))], [], '"제출 파일"과 "작업 파일"이 서로 다른 약속을 하지 않는다');
   assert.deepEqual([...new Set(seen.filter(t => /revision|JSON|Error|undefined|WARNING|\bnull\b|NaN/.test(t)))], [], '개발자 문구·오류 원문이 화면에 없다');
-  assert.ok(!seen.some(t => t.includes('부분 움직임은 PRO')), '저장 시점 결제벽을 한 번도 만나지 않았다');
+  assert.ok(!seen.some(t => t.includes('PRO 효과는 저장되지 않아요')), '저장 시점 결제벽을 한 번도 만나지 않았다');
 
   // ── 24~32컷 벤치마크: 같은 캐릭터 다음 칸 만들기 ───────────────────────────────────────────
   // FLOW A: 빈 다음 칸 → 이전 그림으로 시작 → 브러시(붓) → 굵기 → 최근 색 → 문구 입력·배치 → 완성·다음
