@@ -64,7 +64,7 @@ emoticon755@gmail.com
 
 [Console › 앱 콘텐츠 › 개인정보처리방침 URL]
 ── (공개 주소가 실제로 열린 뒤에 입력)
-https://dbs7010-cmd.github.io/emoticon-studio/privacy/   ← 게시 예정 주소(아직 열리지 않음)
+https://dbs7010-cmd.github.io/emoticon-studio/privacy/   ← 2026-10-02 공개됨. 단 게시된 내용은 옛 이름(임티제작소)·옛 결제 문구라 교체 필요(로컬 브랜치 privacy-page-update)
 ──
 
 [Console › 앱 콘텐츠 › 앱 액세스]  (현재 테스트 버전 기준)
