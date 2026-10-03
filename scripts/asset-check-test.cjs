@@ -108,7 +108,8 @@ try {
 
   // ── 네이티브: 템플릿으로 만든 리소스가 남으면 FAIL ──────────────────────────────────────────
   const nativeDir = path.join(tmp, 'android/app/src/main/res');
-  const realNative = path.join(root, 'android/app/src/main/res/drawable-mdpi/splashscreen_logo.png');
+  // 템플릿 스플래시 견본: 이 저장소의 android/ 는 실제 에셋으로 바뀌었으므로(2026-10-03) 보관해 둔 템플릿 파일을 쓴다.
+  const realNative = path.join(root, 'scripts/fixtures/template-splashscreen_logo.png');
   if (fs.existsSync(realNative)) {
     put('android/app/src/main/res/drawable-mdpi/splashscreen_logo.png', fs.readFileSync(realNative));
     assert.equal(byId(checkAll({ root: tmp, contract, nativeDir }), 'native_resources').status, 'FAIL', 'prebuild 전 템플릿 스플래시 리소스 → FAIL');

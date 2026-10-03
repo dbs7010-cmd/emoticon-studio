@@ -528,8 +528,18 @@ const saved = async (dirty = true) => {
   assert.ok(/SplashScreen[\s\S]*windowBackground">@color\/activityBackground/.test(launch.applyToStylesXml(template)), '실행 창 배경은 앱의 밝은 색');
   const parsed = launch.applyLaunchBackground({ resources: { style: [{ $: { name: 'Theme.App.SplashScreen' }, item: [{ $: { name: 'android:windowBackground' }, _: '@drawable/splashscreen_logo' }] }] } });
   assert.deepEqual(parsed.resources.style[0].item, [{ $: { name: 'android:windowBackground' }, _: '@color/activityBackground' }], 'prebuild 모드도 같은 결과');
-  assert.ok(require('../app.config.js')().plugins.includes('./plugins/withLaunchBackground'), '스플래시 에셋이 없는 동안 설정에 연결돼 있다');
-  if (fs.existsSync('android/app/src/main/res/values/styles.xml')) assert.ok(!/Theme\.App\.SplashScreen[\s\S]*?splashscreen_logo[\s\S]*?<\/style>/.test(fs.readFileSync('android/app/src/main/res/values/styles.xml', 'utf8')), '생성된 android/ 에도 반영');
+  // 2026-10-03: 실제 스플래시 에셋(확정 아이콘 B)과 expo-splash-screen 이 들어왔다. 그 뒤로는 공식 스플래시 API 가 진짜 로고를 띄우고,
+  // 검은 화면의 원인이던 '투명 템플릿 비트맵'은 native_resources 검사(템플릿 지문)가 막는다. 에셋이 없을 때는 예전 보호를 그대로 쓴다.
+  const launchPlugins = require('../app.config.js')().plugins;
+  const splashPlugin = launchPlugins.find(x => Array.isArray(x) && x[0] === 'expo-splash-screen');
+  if (fs.existsSync('assets/brand/splash-icon.png')) {
+    assert.ok(splashPlugin && splashPlugin[1].image === './assets/brand/splash-icon.png', '스플래시 에셋이 있으면 expo-splash-screen 이 그 그림을 쓴다');
+    assert.ok(!launchPlugins.includes('./plugins/withLaunchBackground'), '실행 배경 대체 플러그인은 빠진다');
+    if (fs.existsSync('android/app/src/main/res/values/styles.xml')) assert.ok(/windowSplashScreenAnimatedIcon">@drawable\/splashscreen_logo/.test(fs.readFileSync('android/app/src/main/res/values/styles.xml', 'utf8')), '생성된 android/ 는 공식 스플래시 API 로 로고를 띄운다');
+  } else {
+    assert.ok(launchPlugins.includes('./plugins/withLaunchBackground'), '스플래시 에셋이 없는 동안 설정에 연결돼 있다');
+    if (fs.existsSync('android/app/src/main/res/values/styles.xml')) assert.ok(!/Theme\.App\.SplashScreen[\s\S]*?splashscreen_logo[\s\S]*?<\/style>/.test(fs.readFileSync('android/app/src/main/res/values/styles.xml', 'utf8')), '생성된 android/ 에도 반영');
+  }
   assert.ok(/body\{margin:0;background:#F4F4F5/.test(fs.readFileSync('src/painter/canvas-html.ts', 'utf8')), '캔버스 WebView 바탕도 밝다');
   const root = tree.root.findAll(n => n.type === 'SafeAreaView')[0];
   // 45.34: 앱 바탕을 흰색에서 옅은 회색으로 내렸다 — 흰 패널이 그 위에 떠 보이게 하기 위해서다.
