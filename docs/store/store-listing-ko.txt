@@ -78,4 +78,4 @@ https://dbs7010-cmd.github.io/emoticon-studio/privacy/   ← 게시 예정 주�
 - 앱 아이콘(512×512): play-icon-512.png  → 스토어 등록정보 › 그래픽 › 앱 아이콘
 - 그래픽 이미지(1024×500): feature-graphic-1024x500.png → 스토어 등록정보 › 그래픽 › 그래픽 이미지
 - 휴대전화 스크린샷(1080×1920, 4장): phone-01.png ~ phone-04.png → 스토어 등록정보 › 휴대전화 스크린샷 (번호 순서대로)
-  ※ 지금 들어 있는 phone-0N-DRAFT.png 는 대체 렌더 초안이다. 실기기 캡처로 바꾼 phone-0N.png 만 올린다.
+  ※ 2026-10-03: 네 장 모두 에뮬레이터에서 실행한 앱의 실제 캡처로 교체했다(DRAFT 없음). phone-01.png ~ phone-04.png 를 그대로 올린다.

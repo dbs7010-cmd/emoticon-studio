@@ -16,3 +16,5 @@
   - 실기기 캡처가 생기면 `--device <폴더>`(phone-1.png~phone-4.png)로 화면 칸만 바꾼다.
 - `backup/` — 홍보 세트 '몽이의 하루' 백업 파일(앱 '설정 › 백업에서 되살리기'). `scripts/promo/backup-set.cjs` 가 앱의 writeBackup/readBackup/restoreBackup 으로 만들고 검사한다
   (새 세트로 추가 · 그림 새 이름 · 기존 파일 불변 · 두 번째는 '(복원)' 사본). 실기기 가져오기는 아직 안 해 봤다. 가져오기·캡처 동선: `backup/가져오기와_캡처_안내.txt`
+- `store-final/` — **최종(2026-10-03)**: 휴대전화 ①~④의 앱 화면을 에뮬레이터 실제 캡처로 교체, DRAFT 없음. `node scripts/promo/compose.cjs verification/promo/store-v3 --ui verification/promo/ui-v2 --device assets/promo/device-captures`
+- `device-captures/` — 에뮬레이터(Android 14 x86_64, 별도 AVD)에서 '몽이의 하루' 백업을 실제로 되살린 뒤 찍은 원본 4장(1080×2400). 앱은 같은 소스의 x86_64 빌드(arm64 APK 는 에뮬레이터 ARM 변환에서 libreactnative.so 로딩 실패).

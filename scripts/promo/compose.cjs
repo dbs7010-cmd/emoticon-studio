@@ -85,7 +85,8 @@ const phone = ({ n, title, sub, hero, s, chip = '', pro = false, ui }) => {
   const device = deviceDir && fs.existsSync(path.join(deviceDir, `phone-${n}.png`)) ? path.join(deviceDir, `phone-${n}.png`) : null;
   // 실기기 캡처(1080 폭 등 기기 해상도)는 화면 폭에 맞춰 위에서부터, 대체 렌더는 화면 영역만 잘라 맞춘다.
   const shot = device
-    ? `<img src="${url(device)}" style="position:absolute;left:0;top:0;width:${sw}px">`
+    // 기기 캡처의 맨 위 상태 표시줄(시계·아이콘, 1080 폭 기준 70px)은 잘라 낸다 — 캡처마다 달라 그림이 어수선해진다.
+    ? `<img src="${url(device)}" style="position:absolute;left:0;top:${-70 * sw / 1080}px;width:${sw}px">`
     : `<img src="${url(ui)}" style="position:absolute;width:${500 * s}px;left:${-55 * s}px;top:${-58 * s}px">`;
   const html = `<!doctype html><meta charset="utf-8"><style>${FONT}
 .c{width:1080px;height:1920px;background:${LEMON};position:relative;overflow:hidden}
@@ -127,7 +128,7 @@ made.push(phone({ n: 3, s: 1.56, ui: uiPng('promo-3-parts'),
   title: '손만 까딱,<br>원하는 부분만<span class="pro">PRO</span>', sub: '레이어를 골라 그 부분만 움직여요',
   hero: at(540 - 230, -58, waveStack(460)) + tag(120, 250, '몸 · 그대로') + tag(800, 40, '손 · 회전') }));
 // ④ 다양한 표정을 한 세트에 — 축하해. 화면: '몽이의 하루' 보드(12개 완성 / 32칸).
-made.push(phone({ n: 4, s: 1.56, ui: uiPng('promo-4-board'),
+made.push(phone({ n: 4, s: 1.34, ui: uiPng('promo-4-board'),
   title: '다양한 표정을<br>한 세트에', sub: '완성한 이모티콘을 파일로 내보내요',
   hero: at(540 - 180, -10, still('congrats', 360)) }));
 console.log(out, made.join(' '));
