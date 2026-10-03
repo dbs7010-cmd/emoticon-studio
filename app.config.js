@@ -17,6 +17,8 @@
 //   출시 빌드:       환경변수를 두지 않는다. 그것이 기본값이다.
 const base = require('./app.json');
 const { httpsUrl, email } = require('./release/config-values.cjs');
+const publicContact = require('./release/public-contact.json');
+const pick = (envValue, fileValue, valid) => envValue !== undefined ? (valid(envValue) ? envValue : undefined) : (valid(fileValue) ? fileValue : undefined);
 
 const internalReview = process.env.EMOTICON_INTERNAL_REVIEW === '1';
 const purchases = process.env.EMOTICON_PURCHASES;
@@ -86,8 +88,9 @@ module.exports = () => {
     internalReview,
     purchases,
     receiptEndpoint,
-    privacyPolicyUrl: httpsUrl(process.env.EMOTICON_PRIVACY_URL) ? process.env.EMOTICON_PRIVACY_URL : undefined,
-    supportEmail: email(process.env.EMOTICON_SUPPORT_EMAIL) ? process.env.EMOTICON_SUPPORT_EMAIL : undefined,
+    // 공개 연락처: 환경변수가 있으면 그 값(형식이 틀리면 비움), 없으면 release/public-contact.json(저장소에 둔 공개 값).
+    privacyPolicyUrl: pick(process.env.EMOTICON_PRIVACY_URL, publicContact.privacyPolicyUrl, httpsUrl),
+    supportEmail: pick(process.env.EMOTICON_SUPPORT_EMAIL, publicContact.supportEmail, email),
   },
   };
 };
