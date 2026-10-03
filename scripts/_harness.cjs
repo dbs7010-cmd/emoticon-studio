@@ -210,17 +210,71 @@ function seed(count, pro = true, complete = false) {
   saveStore({ version: 1, revision: 1, projects: count === 0 ? [] : count === 1 ? [p] : [p, second], palette: ['#54A9E8', '#E94F4F'], reviewUnlock: pro });
 }
 
+// ── 홍보 캡처 대체 렌더(PROMO_SCENES=1 일 때만, 검사에는 영향 없음) ─────────────────────────────
+// 세트 '몽이의 하루' — scripts/promo/backup-set.cjs 가 만드는 백업과 같은 상태(12칸 완성 · 1칸 몸/손 + 부분 회전 · 2칸 통통).
+// 캔버스 자리는 화면마다 다른 그림: 엔진이 그린 순간(verification/promo/motion/*.png) 또는 그 칸의 그림.
+const PROMO_DIR = pathNode.resolve(__dirname, '..', 'assets', 'promo', 'characters');
+const PROMO_ORDER = ['hello', 'excited', 'thanks', 'sorry', 'good', 'congrats', 'sleepy', 'teary', 'surprised', 'cheer', 'pouty', 'goodnight'];
+const PROMO_LABEL = ['안녕', '신나', '고마워', '미안해', '좋아', '축하해', '졸려', '울먹', '놀람', '응원', '삐짐', '잘 자'];
+const promoArt = Object.fromEntries(PROMO_ORDER.map(k => [`mongi-${k}.png`, pathNode.join(PROMO_DIR, `mongi-${k}.png`)]));
+const PROMO_MOTION = {
+  hello: { version: 1, speed: .5, strength: .5, captionMoves: false, parts: [{ id: 'p1', layerId: 'draw-2', effect: 'rotate', pivotX: 250 / 360, pivotY: 222 / 360, amount: 30, angle: 0, speed: .6, delay: 0 }] },
+  excited: { version: 1, preset: 'bounce', speed: .5, strength: .7, captionMoves: false },
+  pouty: { version: 1, preset: 'shake', speed: .5, strength: .7, captionMoves: false },
+};
+const canvasArt = {};
+function seedPromo() {
+  files.clear();
+  const p = createProject(SET_NAME, '몽이');
+  const L = (id, name, path) => ({ id, name, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0, image: { path, width: 360, height: 360 } });
+  p.slots = p.slots.map((s, i) => {
+    if (i >= 12) return s;
+    const k = PROMO_ORDER[i], path = `mongi-${k}.png`;
+    files.set('document/emoticon-studio/' + path, fsNode.readFileSync(promoArt[path]));
+    const layers = k === 'hello' ? [L('draw-1', '몸', path), L('draw-2', '손', path)] : [L('draw-1', '그림 1', path)];
+    return { ...s, dialogue: PROMO_LABEL[i], finalImage: { path, width: 360, height: 360 }, done: true, status: 'REVIEW', work: { version: 1, activeLayerId: layers.at(-1).id, layers, references: [] },
+      ...(PROMO_MOTION[k] ? { motion: PROMO_MOTION[k], motionImage: { path, width: 360, height: 360 } } : {}) };
+  });
+  p.lastSlot = 12; p.updatedAt = '2026-10-03T00:00:00.000Z';
+  saveStore({ version: 1, revision: 1, projects: [p], palette: ['#2A2320', '#F5E642', '#E9897E'], reviewUnlock: true });
+}
+const layersOf = names => names.map((name, i) => ({ id: 'draw-' + (i + 1), name, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 }));
+const PROMO_MOTION_DIR = pathNode.resolve(__dirname, '..', 'verification', 'promo', 'motion');
+const PROMO_SCREENS = [
+  // ① 통통이 적용된 '신나'(2칸) 움직이기 화면 — 세기·속도 조절 줄이 보이는 상태. 캔버스: 엔진 순간(공중).
+  ['promo-1-motion', '① 움직이기 · 통통 적용', async () => {
+    canvasArt['promo-1-motion'] = pathNode.join(PROMO_MOTION_DIR, 'bounce-excited-t1.png');
+    seedPromo(); await fresh(); await press(SET_NAME); await tap('slot-2');
+    await ready({ caption: null, motion: PROMO_MOTION.excited }); await press('움직이기'); await press('움직임 묶음 동작');
+  }],
+  // ② '응원'(10칸) 그리기 화면.
+  ['promo-2-draw', '② 그리기 · 응원', async () => {
+    canvasArt['promo-2-draw'] = promoArt['mongi-cheer.png'];
+    await unmount(); seedPromo(); await fresh(); await press(SET_NAME); await tap('slot-10');
+    await ready({ caption: null });
+  }],
+  // ③ '안녕'(1칸) 부분만 움직이기 — 손 레이어 회전. 캔버스: 엔진 순간(손이 돌아간 때).
+  ['promo-3-parts', '③ 부분만 움직이기 · 손', async () => {
+    canvasArt['promo-3-parts'] = pathNode.join(PROMO_MOTION_DIR, 'part-wave-hello-t1.png');
+    await unmount(); seedPromo(); await fresh(); await press(SET_NAME); await tap('slot-1');
+    await ready({ caption: null, activeLayerId: 'draw-2', layers: layersOf(['몸', '손']), motion: PROMO_MOTION.hello });
+    await press('움직이기'); await press('부분만 움직이기');
+  }],
+  // ④ 보드 — 12칸 완성 · 나머지 빈칸(완성으로 표시하지 않음).
+  ['promo-4-board', '④ 보드 · 몽이의 하루', async () => { await unmount(); seedPromo(); await fresh(); await press(SET_NAME); }],
+];
+
 // 화면을 차례로 열고, 열릴 때마다 cb(id, title, tree, flat) 를 부른다.
 // 45.35: 높이도 받는다. 예전에는 폭만 바꿔서, 320×568 로 찍어도 화면은 **844 높이로 배치된 뒤**
 // 568 에서 잘렸다 — 짧은 화면의 문제를 보는 것이 아니라 없는 문제를 만들어 보고 있었다.
 async function walk(width, cb, height) {
   viewport.width = width;
   if (height) viewport.height = height;
-  for (const [id, title, open] of SCREENS) {
+  for (const [id, title, open] of (process.env.PROMO_SCENES ? PROMO_SCREENS : SCREENS)) {
     await open();
     await cb(id, title, tree, flat);
   }
   await unmount();
 }
 
-module.exports = { deviceArt: { 'a.png': SLOT_ART }, alerts, closePainter, debugFiles: () => [...files.keys()].map(k => [k, String(files.get(k))]), walk, SCREENS, flat, viewport, press, tap, fresh, unmount, ready, seed, get tree() { return tree; } };
+module.exports = { deviceArt: { 'a.png': SLOT_ART, ...promoArt }, canvasArt, alerts, closePainter, debugFiles: () => [...files.keys()].map(k => [k, String(files.get(k))]), walk, SCREENS, flat, viewport, press, tap, fresh, unmount, ready, seed, get tree() { return tree; } };

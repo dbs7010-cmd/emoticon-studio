@@ -4,7 +4,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { execSync } = require('node:child_process');
-const { walk, SCREENS, viewport, deviceArt } = require('./_harness.cjs');
+const { walk, SCREENS, viewport, deviceArt, canvasArt } = require('./_harness.cjs');
+let currentId = '';
 // 찍은 소스를 그림에 박아 둔다 — 이전 회차 화면과 섞이지 않게.
 const COMMIT = (() => { try { return execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim(); } catch { return '?'; } })();
 
@@ -139,7 +140,9 @@ function render(node, flat) {
   if (type === 'WebView') {
     // 캔버스 안은 기존 엔진(canvas-html.ts)에 앱과 같은 init → save 를 보내 받은 합성 PNG 다.
     // 따로 그린 가짜가 아니다. 바탕(투명 바둑판·정사각 면)은 엔진 자신의 CSS 를 옮겼다.
-    const shot = fs.existsSync(path.join(OUT, 'assets', 'canvas-sample.png')) ? 'assets/canvas-sample.png' : null;
+    // 홍보 장면은 화면마다 캔버스 그림이 다르다(canvasArt). 없으면 공용 시험 그림.
+    if (canvasArt?.[currentId]) fs.copyFileSync(canvasArt[currentId], path.join(OUT, 'assets', 'canvas-' + currentId + '.png'));
+    const shot = canvasArt?.[currentId] ? 'assets/canvas-' + currentId + '.png' : fs.existsSync(path.join(OUT, 'assets', 'canvas-sample.png')) ? 'assets/canvas-sample.png' : null;
     return shot
       ? `<div class="canvas"><div class="surface"><img src="${shot}" alt="엔진이 그린 시험 그림"></div></div>`
       : `<div class="canvas nofile"><span>엔진 시험 그림이 없다<br><small>scripts/_canvas.cjs 를 먼저 돌린다</small></span></div>`;
@@ -208,7 +211,7 @@ const PAGE = (id, title, body) => `<!doctype html>
   if (!fs.existsSync(sample)) throw new Error('엔진 시험 그림이 없다: ' + shared + ' — node scripts/_canvas.cjs 를 띄우고 브라우저로 열어 먼저 만든다');
   const made = [];
   await walk(WIDTH, async (id, title, tree, flat) => {
-    modals = []; assets.ok = 0; assets.missing = [];
+    modals = []; assets.ok = 0; assets.missing = []; currentId = id;
     const main = render(tree.toJSON(), flat);
     const body = main + modals.map(m => `<div class="modal">${m}</div>`).join('');
     const file = path.join(OUT, id + '.html');
