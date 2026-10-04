@@ -1,5 +1,16 @@
 {
   "note": "Play Console 에 실제로 올린 AAB 만 기록한다(업로드 뒤 추가). release-check 는 app.json android.versionCode 가 여기 최대값보다 커야 통과시킨다. 검증용·내부 빌드는 적지 않는다.",
   "applicationId": "com.emoticonstudio.app",
-  "released": []
+  "released": [
+    {
+      "versionCode": 2,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc2-closedtest-protrial-1e6791a.aab",
+      "commit": "1e6791a",
+      "sha256": "85d3f2a79e65dfdc64a3770072342914c21c20ae2ab9ea160d21a79ddeb5c075",
+      "uploaded": "2026-10-04",
+      "source": "사용자 보고(업로드·심사 제출)"
+    }
+  ]
 }
