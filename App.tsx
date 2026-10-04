@@ -21,7 +21,7 @@ import { restoreBackup, writeBackup } from './src/services/backup';
 import { exportSet, decodeDataUrl, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinalsAsync, finalsKey, inspectImage } from './src/services/qa';
-import { PLANS, REVIEW_BUILD_NOTE, REVIEW_DEV_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, purchase, purchaseHistoryUrl, refreshEntitlement, restore, reviewCapable, reviewEnvLabel, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
+import { PLANS, REVIEW_BUILD_NOTE, REVIEW_DEV_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, proTrial, PRO_TRIAL_NOTE, purchase, purchaseHistoryUrl, refreshEntitlement, restore, reviewCapable, reviewEnvLabel, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
 import { PRESETS } from './src/painter/motion-panel';
 import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, PainterWork } from './src/types';
 
@@ -103,7 +103,11 @@ function Studio() {
   const [specOpen, setSpecOpen] = useState(false);
   // 홈 공지는 asset-slots 의 HOME_NOTICE 하나로 켜고 끈다. 검수용 빌드에서만 설정에서 켠 상태를 미리 볼 수 있다(저장하지 않는다).
   const [noticePreview, setNoticePreview] = useState(false);
-  const noticeOn = HOME_NOTICE.enabled || (reviewCapable() && noticePreview);
+  // 비공개 테스트 PRO 체험 빌드에서는 같은 홈 공지 자리(승인된 한 줄 배너)에 체험 안내를 둔다 — 팝업이 아니라 늘 보이는 한 줄이고,
+  // 누르면 PRO 화면(전체 안내)이 열린다. 체험이 아닌 빌드에서는 기존 공지 규칙 그대로다.
+  const trialNotice = proTrial();
+  const homeNotice = trialNotice ? { title: 'PRO 무료 체험 중 · 비공개 테스트', body: '정식 출시 시 일부 기능은 별도 구매가 필요해요', link: undefined } : HOME_NOTICE;
+  const noticeOn = trialNotice || HOME_NOTICE.enabled || (reviewCapable() && noticePreview);
   const [prepOpen, setPrepOpen] = useState(false); // 제출 준비는 묶음을 만든 뒤 보는 일이라 접어 둔다(45.2차).
   // 부가 이미지 만들기. 고른 컷을 프레임 안에서 옮기고 키우기만 한다 — 원본 컷은 건드리지 않는다.
   const [extraKind, setExtraKind] = useState<'icon' | 'share' | 'cover'>('icon');
@@ -161,7 +165,10 @@ function Studio() {
   const entitlement = store?.entitlement;
   // 내부 검수 빌드에서만 검수용 해제가 함께 인정된다. 출시 구성에서는 reviewUnlocked() 가 늘 거짓이라
   // 저장소에 값이 남아 있어도 효력이 없다 — 검수하며 만든 작품은 남고, 권한만 따라오지 않는다.
-  const pro = isPro(entitlement) || reviewUnlocked(store ?? undefined);
+  // 비공개 테스트 PRO 체험(구매 닫힘 빌드 전용 빌드 값)도 같은 자리에서 인정한다. 저장소에 아무것도 쓰지 않으므로
+  // 정식 빌드로 업데이트하면 사라지고 실제 구매(isPro)만 남는다. 구매 기록과 섞이지 않는다.
+  const trial = proTrial();
+  const pro = isPro(entitlement) || reviewUnlocked(store ?? undefined) || trial;
   // 앱을 열 때 한 번, 저장된 이용권을 스토어와 영수증 서버에 다시 묻는다. 물어볼 수 없으면 그대로 둔다.
   const rechecked = useRef(false);
   useEffect(() => {
@@ -866,7 +873,7 @@ function Studio() {
               </View>
             </View>
             {/* 무료일 때 'PRO 보기', 산 뒤에는 'PRO'(잉크 면) — 지금 PRO 인지 글자로 구분한다(출시 검사도 이 글자를 본다). */}
-            <ProBadge label="PRO 보기" text={pro ? 'PRO' : 'PRO 보기'} owned={pro} onPress={() => setProSheet(true)} />
+            <ProBadge label="PRO 보기" text={trial && !isPro(entitlement) ? 'PRO 체험' : pro ? 'PRO' : 'PRO 보기'} owned={pro} onPress={() => setProSheet(true)} />
             <Pressable accessibilityRole="button" accessibilityLabel="설정" onPress={() => setSettings(true)}
               style={({ pressed }) => ({ width: T.tap, height: T.tap, marginRight: -6, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : 'transparent' })}>
               <ImtiIcon name="settings" size={IconSize.tool} color={C.muted} />
@@ -1011,16 +1018,16 @@ function Studio() {
             const body = <>
               <AssetSlot name="noticeArtwork" size={44} />
               <View style={{ flex: 1, gap: 1 }}>
-                <Text numberOfLines={1} style={{ fontSize: 16, fontWeight: '700', color: C.ink }}>{HOME_NOTICE.title}</Text>
-                <Text numberOfLines={1} style={{ fontSize: 12, lineHeight: 17, color: C.muted }}>{HOME_NOTICE.body}</Text>
+                <Text numberOfLines={1} style={{ fontSize: 16, fontWeight: '700', color: C.ink }}>{homeNotice.title}</Text>
+                <Text numberOfLines={1} style={{ fontSize: 12, lineHeight: 17, color: C.muted }}>{homeNotice.body}</Text>
               </View>
-              {!!HOME_NOTICE.link && <Glyph name="chevron-right" size={18} color={C.faint} />}
+              {(!!homeNotice.link || trialNotice) && <Glyph name="chevron-right" size={18} color={C.faint} />}
             </>;
             const row = { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: T.radius.card, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line } as const;
             // 넘어갈 곳이 있을 때만 누를 수 있는 줄이 된다. 행동은 최대 하나다.
-            return HOME_NOTICE.link
-              ? <Pressable testID="홈 알림" accessibilityRole="button" accessibilityLabel={HOME_NOTICE.title}
-                  onPress={() => { Linking.openURL(HOME_NOTICE.link!).catch(() => setNotice('링크를 열지 못했어요.')); }}
+            return homeNotice.link || trialNotice
+              ? <Pressable testID="홈 알림" accessibilityRole="button" accessibilityLabel={homeNotice.title}
+                  onPress={() => { if (trialNotice) { setProSheet(true); return; } Linking.openURL(homeNotice.link!).catch(() => setNotice('링크를 열지 못했어요.')); }}
                   style={({ pressed }) => ({ ...row, backgroundColor: pressed ? C.fill : C.paper })}>{body}</Pressable>
               : <View testID="홈 알림" style={row}>{body}</View>;
           })()}
@@ -1527,7 +1534,7 @@ function Studio() {
       <Action title="취소" onPress={() => setConfirmPurgeId(null)} />
     </Dialog>}
     {settings && <Dialog title="설정" onClose={() => setSettings(false)}>
-      <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>
+      <Text style={{ fontSize: 12, color: C.muted }}>{trial && !isPro(entitlement) ? 'PRO 체험 · 비공개 테스트' : entitlementLabel(entitlement)}</Text>
       {/* 검수용 빌드는 스스로 그렇다고 말한다. 출시 구성에서는 아예 그려지지 않는다(internalReviewBuild() 가 거짓). */}
       {reviewCapable() && <View style={{ gap: 8, padding: 12, borderRadius: T.radius.md, backgroundColor: C.accentSoft }}>
         <Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>{reviewEnvLabel()}</Text>
@@ -1651,7 +1658,7 @@ function Studio() {
           {expiredButRemembered(entitlement) && <Text style={{ fontSize: 12, color: C.ink }}>기간이 끝나도 이미 만든 움직임은 계속 재생되고 내보낼 수 있어요.</Text>}
           {/* 파는 것은 하나다: 한 번 구매하면 계속 쓰는 PRO. 값은 **스토어가 말해 주는 것만** 적는다.
               불러오지 못하면 값을 지어내지 않고, 지금 살 수 없다는 것과 다음에 할 일을 적는다. */}
-          {purchasesClosed() ? <Text testID="구매 비활성 안내" style={{ color: C.ink, fontSize: 15, lineHeight: 23 }}>{PURCHASES_CLOSED_NOTE}</Text> : <>
+          {purchasesClosed() ? <Text testID={trial ? 'PRO 체험 안내' : '구매 비활성 안내'} style={{ color: C.ink, fontSize: 15, lineHeight: 23 }}>{trial ? PRO_TRIAL_NOTE : PURCHASES_CLOSED_NOTE}</Text> : <>
           <View accessibilityRole="summary" accessibilityLabel={prices?.lifetime ? 'PRO 가격 ' + prices.lifetime : 'PRO 가격을 불러오지 못했어요'}
             style={{ borderWidth: 1, borderColor: prices?.lifetime ? C.accentBorder : C.line, borderRadius: 16, padding: 14, gap: 2, backgroundColor: prices?.lifetime ? C.accentSoft : C.surface2 }}>
             <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{PLANS[0].label}</Text>
@@ -1671,7 +1678,7 @@ function Studio() {
               출시 구성에서는 internalReviewBuild() 가 거짓이라 이 줄이 아예 그려지지 않는다. 구매가 아니다. */}
           {reviewCapable() && !pro && <Action icon="key-variant" title="결제 없이 검수용 PRO 켜기"
             onPress={() => { try { commit(st => ({ ...st, reviewUnlock: true })); setProSheet(false); resetPayment(); setNotice(internalReviewBuild() ? REVIEW_BUILD_NOTE : REVIEW_DEV_NOTE); } catch (e) { setNotice('검수용 PRO 를 켜지 못했어요. ' + userMessage(e)); } }} />}
-          <Action title="무료로 계속하기" onPress={() => { setProSheet(false); resetPayment(); }} />
+          <Action title={trial ? 'PRO 체험 계속하기' : '무료로 계속하기'} onPress={() => { setProSheet(false); resetPayment(); }} />
           {!purchasesClosed() && <Pressable accessibilityRole="button" accessibilityLabel="구매 복원" disabled={payment.phase === 'buying' || payment.phase === 'restoring'} onPress={() => void restorePro()} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{payment.phase === 'restoring' ? '구매 내역을 확인하는 중…' : '구매 복원'}</Text></Pressable>}
           {/* 일회성 구매에는 해지가 없다. 영수증·환불은 스토어의 구매 내역에서 본다.
               예전 구독 저장본을 가진 사람에게는 구독 관리 길도 함께 둔다 — 길을 막지 않는다. */}

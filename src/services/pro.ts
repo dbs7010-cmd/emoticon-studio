@@ -4,7 +4,7 @@ import Constants from 'expo-constants';
 import { buy, finishPurchase, listProducts, ownedPurchase, storeModuleAvailable, PRODUCT_IDS, type ProductsResult, type StoreProblem, type StorePurchase } from './purchase-adapter';
 import { verifyReceipt } from './receipt';
 import { purchasesClosed, PURCHASES_CLOSED_NOTE } from './purchase-config';
-export { purchasesClosed, PURCHASES_CLOSED_NOTE } from './purchase-config';
+export { purchasesClosed, PURCHASES_CLOSED_NOTE, proTrial, PRO_TRIAL_NOTE } from './purchase-config';
 export { storeModuleAvailable, PRODUCT_IDS };
 
 // What PRO is allowed to be, in one place.

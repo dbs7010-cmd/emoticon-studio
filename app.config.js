@@ -24,6 +24,11 @@ const internalReview = process.env.EMOTICON_INTERNAL_REVIEW === '1';
 const purchases = process.env.EMOTICON_PURCHASES;
 if (purchases !== undefined && purchases !== 'closed') throw new Error('EMOTICON_PURCHASES must be closed or unset');
 if (purchases === 'closed' && internalReview) throw new Error('Closed free tests cannot enable internalReview');
+// 비공개 테스트 PRO 체험: 기본 꺼짐. EMOTICON_PRO_TRIAL=1 이고 구매가 닫힌 빌드에서만 켤 수 있다.
+// 일반 출시 구성(구매 열림)에서 켜려 하면 여기서 멈춘다 — 실수로 PRO 를 공짜로 여는 출시본이 나오지 않게.
+const proTrial = process.env.EMOTICON_PRO_TRIAL === '1';
+if (process.env.EMOTICON_PRO_TRIAL !== undefined && !['0', '1'].includes(process.env.EMOTICON_PRO_TRIAL)) throw new Error('EMOTICON_PRO_TRIAL must be 1, 0 or unset');
+if (proTrial && purchases !== 'closed') throw new Error('EMOTICON_PRO_TRIAL=1 needs EMOTICON_PURCHASES=closed (never in a purchase-enabled release)');
 // 영수증 확인 서버 주소(https 만). 비밀 키가 아니라 공개 주소다 — 키는 서버에만 둔다.
 // 비어 있으면 앱은 구매를 확인하지 못하고, 그 사실을 화면에 말한다(PRO 를 열지 않는다).
 const receiptEndpoint = /^https:\/\//.test(process.env.EMOTICON_RECEIPT_ENDPOINT || '') ? process.env.EMOTICON_RECEIPT_ENDPOINT : undefined;
@@ -87,6 +92,8 @@ module.exports = () => {
     // 이 값이 참인 빌드에서만 설정 화면에 검수용 스위치가 나타난다. 거짓이면 그 화면도, 그 길도 없다.
     internalReview,
     purchases,
+    // 비공개 테스트 PRO 체험(구매 닫힘 빌드 전용). 저장되지 않는 빌드 값이다.
+    proTrial,
     receiptEndpoint,
     // 공개 연락처: 환경변수가 있으면 그 값(형식이 틀리면 비움), 없으면 release/public-contact.json(저장소에 둔 공개 값).
     privacyPolicyUrl: pick(process.env.EMOTICON_PRIVACY_URL, publicContact.privacyPolicyUrl, httpsUrl),

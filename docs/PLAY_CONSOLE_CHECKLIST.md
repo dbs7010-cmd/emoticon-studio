@@ -25,7 +25,7 @@
 | AAB | EXTERNAL BLOCKER | 36차 dry-run AAB 는 임시 키·영수증 서버 없음 → 출시 후보 아님 | 업로드 키 + 연락처 설정 + 에셋 + clean prebuild 후 (정상 출시에는 영수증 서버도 필수) `release:check` exit 0 |
 | testing track (internal) | FINAL QA | — | 내부 테스트 트랙 설치 → 구매·복원·만료·오프라인 확인 |
 | app access (심사용 안내) | OWNER ACTION | 로그인 없음 | "제한 없음" 선택 여부 확인 |
-| 권한 선언 검토 | OWNER ACTION | 감사 결과 `PLAY_DATA_SAFETY.md` §권한 | SYSTEM_ALERT_WINDOW release 전용 제거, VIBRATE·저장소(≤32)는 후속 검토 |
+| 권한 선언 검토 | OWNER ACTION | 감사 결과 `PLAY_DATA_SAFETY.md` §권한 | SYSTEM_ALERT_WINDOW release 전용 제거, VIBRATE·저장소(≤32)는 2026-10-04 제거(blockedPermissions), 그 전 기록: 후속 검토 |
 | Android 자동 백업 | OWNER ACTION | `allowBackup=true`, 백업 규칙 없음 | 백업 허용 유지 여부 결정 → 방침·Data Safety 문구에 반영 |
 | 기기 QA (28차 PARTIAL) | FINAL QA | MANUAL QA DEFERRED | 실기기 확인 |
 

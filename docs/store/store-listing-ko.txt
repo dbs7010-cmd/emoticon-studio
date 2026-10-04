@@ -52,7 +52,7 @@ emoti 이모티는 내가 그린 캐릭터를 움직이는 이모티콘으로 �
 - 원하는 부분만 따로 움직이기 · 두 모습 번갈아
 - 여러 칸에 같은 움직임을 한 번에 넣기
 - PRO 브러시 20종
-※ 지금 배포 중인 테스트 버전에서는 PRO 구매가 열리지 않아요. PRO 기능은 소개와 미리보기만 볼 수 있어요.
+※ 비공개 테스트 버전에서는 PRO 기능을 무료로 체험할 수 있어요. 정식 출시 시 일부 기능은 별도 구매가 필요합니다.
 
 문의: emoticon755@gmail.com
 ──
@@ -67,26 +67,26 @@ emoticon755@gmail.com
 https://dbs7010-cmd.github.io/emoticon-studio/privacy/   ← 2026-10-04 현재 내용으로 교체 게시·본문 확인 완료
 ──
 
-[Console › 앱 콘텐츠 › 앱 액세스]  (현재 테스트 빌드 d1a49fe 기준 · 2026-10-04 재검토)
-── 선택: 'All or some functionality is restricted' → '+ Add new instructions'
-   Username / Password: 비워 둔다(로그인 없음). 아래 영어 문장을 'Any other information' 칸에 넣는다.
-   (Console 칸 이름이 다르면 같은 뜻의 안내 칸에 넣는다.)
-Instruction name: No sign-in · PRO not available in this test build
+[Console › 앱 콘텐츠 › 앱 액세스]  (PRO 체험 테스트 빌드, versionCode 2 기준 · 2026-10-04)
+── 이 빌드는 로그인이 없고, 모든 사용자(심사자 포함)가 PRO 기능 전체를 결제 없이 쓴다. 유료 장벽이 없다.
+   권장 선택: 'All functionality is available without special access'(이 선택에는 안내 칸이 없다).
+   이미 'All or some functionality is restricted' 로 안내를 넣어 두었다면, 그 안내 내용을 아래 영어 문장으로 바꾼다.
+Instruction name: No sign-in · all features open in this test build
 ──
-This app has no sign-in and no accounts. Every free feature works right after installing: drawing (10 free brushes), 6 free motion effects, the set board, backup/restore, and exporting a ZIP file bundle.
+This app has no sign-in and no accounts. In this closed test build, every feature is available to every user, including reviewers, without payment: all brushes, all motion effects, part motion, two-pose alternation, and applying motion to several cells, with saving, reopening, and exporting.
 
-This is a closed test build. PRO in-app purchase is not open in this build, so no user — including reviewers — can buy or unlock PRO. There are no test accounts, promo codes, or hidden switches in this build.
-
-What you can check without PRO:
-1. Open any cell (or create a new set), draw something, then tap the "움직이기" (Motion) tab.
-2. Tap any effect marked "PRO" (for example "쓱"). It plays on your own drawing as a preview. All 14 PRO motion effects can be previewed this way.
-3. If you tap "저장" (Save) while previewing, a dialog explains that PRO effects are not saved. "PRO 효과 빼고 저장" saves the drawing and any free motion only.
-4. PRO brushes, part motion ("부분만 움직이기"), two-pose alternation, and applying motion to several cells open the PRO introduction screen. They cannot be previewed or used in this build.
-5. The PRO introduction screen is "PRO 보기" on the top right of the home screen. It states that PRO purchase is not open in this test version.
+In-app purchase is turned off in this build. Features marked "PRO" are free to try during the closed test; the PRO screen ("PRO 보기" at the top right of the home screen) explains that some features will require a one-time purchase at full release. No test accounts, promo codes, or hidden switches are needed.
 ──
-근거(공식): Play Console 도움말 'Requirements for providing sign in details for review' — 로그인이 없어도 유료 장벽 뒤 기능이 있으면 추가 안내나 접근 정보를 주라고 하며, 접근하지 못하면 거부될 수 있다.
-남는 위험: 이 안내는 실제 상태를 설명할 뿐 PRO 기능 접근을 제공하지 않는다. 심사에서 접근 불가로 볼 가능성은 남는다(보장 불가).
-(유료 출시 버전에서는: 구매가 열린 빌드에서 심사 접근 수단을 따로 정한다 — 09_출시준비_점검 §19.)
+근거: Play Console 도움말 'Requirements for providing sign in details for review' — 로그인·유료 장벽 등으로 막힌 부분이 있을 때 접근 안내를 요구한다. 이 빌드에는 막힌 부분이 없다.
+(정식 출시 버전에서는: 구매가 열린 빌드에서 PRO 심사 접근 수단을 다시 정한다.)
+
+[Console › 테스트 및 출시 › 비공개 테스트 › 새 버전 › 출시 노트]
+<ko-KR>
+비공개 테스트 버전이에요.
+- 이번 테스트에서는 PRO 기능(PRO 브러시·움직임 14종·부분 움직임·두 모습 번갈아·여러 칸 한 번에)을 무료로 체험할 수 있어요.
+- 실제 결제는 일어나지 않아요. 정식 출시 시 일부 기능은 별도 구매(한 번 결제)가 필요합니다.
+- 써 보신 뒤 설문에 의견을 남겨 주세요.
+</ko-KR>
 
 [그래픽 업로드 위치]
 - 앱 아이콘(512×512): play-icon-512.png  → 스토어 등록정보 › 그래픽 › 앱 아이콘

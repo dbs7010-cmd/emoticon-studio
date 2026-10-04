@@ -58,10 +58,10 @@
 | `INTERNET` | 생성된 `AndroidManifest.xml` | 영수증 서버 요청, 구매 내역·공식 안내 링크는 브라우저로 열림 | 필요 |
 | `ACCESS_NETWORK_STATE` | 라이브러리 병합(정확한 출처 UNKNOWN) | 네트워크 상태 확인 | 라이브러리 필요로 추정되나 출처 미확인 → 보고만 |
 | `com.android.vending.BILLING` | expo-iap/Billing Library | Google Play 일회성 결제 | 필요 |
-| `READ_EXTERNAL_STORAGE` (maxSdk 32) | `expo-image-picker` 매니페스트 | Android 12 이하 사진 선택 | 필요 가능(구형 기기) — 유지 |
-| `WRITE_EXTERNAL_STORAGE` (maxSdk 32) | 생성된 매니페스트(템플릿) | 앱 코드는 외부 저장소에 쓰지 않음(앱 폴더·공유 시트만) | **불필요 가능 — 보고, 제거 안 함** |
+| `READ_EXTERNAL_STORAGE` (maxSdk 32) | `expo-image-picker`·`expo-file-system` 매니페스트 | 사진 선택은 androidx `PickVisualMedia`(시스템 사진 선택기, 없는 기기는 문서 선택기) — 고른 파일만 읽기 권한이 주어져 저장소 권한이 필요 없다(Expo v57 문서: "No permissions request is necessary for launching the image library", 앱 코드에 권한 요청 없음) | **2026-10-04 제거**(`app.json` `android.blockedPermissions`). Android 12 이하 실기기 확인은 미검증 |
+| `WRITE_EXTERNAL_STORAGE` (maxSdk 32) | 생성된 매니페스트(템플릿)·라이브러리 | 앱 코드는 외부 저장소에 쓰지 않음(앱 폴더·공유 시트만) | **2026-10-04 제거**(`blockedPermissions`) |
 | `SYSTEM_ALERT_WINDOW` | 기존 병합 보고서 201~204행: app/src/main/AndroidManifest.xml:6 | 앱 사용처 없음 | 45.40 withReleasePermissions로 release에서 tools:node="remove"; debug 보존. 새 APK/AAB 검증은 후속 |
-| `VIBRATE` | 생성된 매니페스트(템플릿) | 앱 코드에 Vibration/Haptics 호출 없음 | **불필요 가능 — 보고, 제거 안 함** |
+| `VIBRATE` | 생성된 매니페스트(템플릿) | 앱 코드에 Vibration/Haptics 호출 없음 | **2026-10-04 제거**(`blockedPermissions`) |
 | `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX 자동 추가 | 앱 내부 브로드캐스트 보호 | 시스템 생성 |
 | 카메라·마이크 | `tools:node="remove"`, image-picker 설정 `false` | — | 없음 CONFIRMED |
 | 사진 권한(Android 13+ READ_MEDIA_*) | 매니페스트에 없음 | 사진 선택기 사용 | 없음 CONFIRMED |
