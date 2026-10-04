@@ -75,7 +75,7 @@ Instruction name: No sign-in · all features open in this test build
 ──
 This app has no sign-in and no accounts. In this closed test build, every feature is available to every user, including reviewers, without payment: all brushes, all motion effects, part motion, two-pose alternation, and applying motion to several cells, with saving, reopening, and exporting.
 
-In-app purchase is turned off in this build. Features marked "PRO" are free to try during the closed test; the PRO screen ("PRO 보기" at the top right of the home screen) explains that some features will require a one-time purchase at full release. No test accounts, promo codes, or hidden switches are needed.
+In-app purchase is turned off in this build. Features marked "PRO" are free to try during the closed test; the PRO screen (tap the "PRO 체험" badge at the top right of the home screen) explains that some features will require a one-time purchase at full release. No test accounts, promo codes, or hidden switches are needed.
 ──
 근거: Play Console 도움말 'Requirements for providing sign in details for review' — 로그인·유료 장벽 등으로 막힌 부분이 있을 때 접근 안내를 요구한다. 이 빌드에는 막힌 부분이 없다.
 (정식 출시 버전에서는: 구매가 열린 빌드에서 PRO 심사 접근 수단을 다시 정한다.)
