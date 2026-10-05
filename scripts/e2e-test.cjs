@@ -17,7 +17,7 @@ class File {
 }
 const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } }, 'expo-image-picker': {}, 'expo-image-manipulator': {}, 'expo-asset': { Asset: { fromModule: () => ({ downloadAsync: async () => ({ localUri: 'bundled://art', uri: 'bundled://art' }) }) } } });
 const { createProject, doneCount, duplicateCaptions, isDone, nextUnfinished, previousDrawn, reorderSlots, storeImagePaths } = load('src/project.ts');
-const { loadStore, saveStore, localFile } = load('src/services/storage.ts');
+const { loadStore, saveStore, localFile, exportUri } = load('src/services/storage.ts');
 const { saveDrawing } = load('src/services/images.ts');
 const { inspectImage } = load('src/services/qa.ts');
 const { exportSet, readZipNames } = load('src/services/export.ts');
@@ -160,7 +160,7 @@ for (const slot of project.slots.filter(s => s.finalImage)) {
 const result = exportSet(project);
 assert.equal(result.count, drawn.length);
 assert.equal(result.missing, SPEC.count - drawn.length, 'the caller learns the set is not finished yet');
-const archive = files.get(localFile(result.path).uri);
+const archive = files.get(exportUri(result.path));
 assert.deepEqual(readZipNames(archive), ['01.png', '02.png', '03.png', '04.png', '05.png'], 'entries are named and ordered by slot');
 
 const view = new DataView(archive.buffer, archive.byteOffset, archive.byteLength);

@@ -16,9 +16,9 @@ import { Painter, CATALOG, type CopiedWork, type Tool } from './src/painter/pain
 import { isProPreset } from './src/motion-math';
 import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC as SPEC, STAGES, WEBP_TOOL_RULE, WEBP_ANIMATOR_URL, REQUIRED_EXTRAS } from './src/constants/kakao-spec';
 import { TRASH_DAYS, inTrash, trashExpired, captionText, createProject, doneCount, usesPro, droppedImagePaths, setIssues, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
-import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, readPickedFile, saveStore, type StoreReport } from './src/services/storage';
+import { cutFile, deleteLocalImages, exportUri, imageUri, inspectStore, localFile, loadStore, readPickedFile, saveStore, type StoreReport } from './src/services/storage';
 import { restoreBackup, writeBackup } from './src/services/backup';
-import { exportSet, decodeDataUrl, type HandoffFrames, exportFormatSummary } from './src/services/export';
+import { exportSet, decodeDataUrl, fileStamp, safeName, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinalsAsync, finalsKey, inspectImage } from './src/services/qa';
 import { PLANS, REVIEW_BUILD_NOTE, REVIEW_DEV_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, problemText, proTrial, PRO_TRIAL_NOTE, purchase, purchaseHistoryUrl, refreshEntitlement, restore, reviewCapable, reviewEnvLabel, reviewUnlocked, storePrices, subscriptionManageUrl, type PaymentProblem, type PurchaseOutcome } from './src/services/pro';
@@ -115,6 +115,10 @@ function Studio() {
   const [place, setPlace] = useState({ scale: 1, dx: 0, dy: 0 });
   const composer = useRef<Composer>(null);
   const [settings, setSettings] = useState(false);
+  // 첫 실행 사용 안내(2026-10-05): 그리기 → 움직이기 → 저장·내보내기 세 장. 새 사용자(세트 없음 · introDone 없음)에게 한 번만,
+  // 건너뛰기·다 보기 모두 introDone 을 남겨 다시 뜨지 않는다. 설정의 '사용 안내 다시 보기'로 언제든 다시 연다(저장값은 바꾸지 않음).
+  const [introStep, setIntroStep] = useState<number | null>(null);
+  const introOffered = useRef(false);
   const [contactFallback, setContactFallback] = useState(false);
   const privacyUrl = Constants.expoConfig?.extra?.privacyPolicyUrl as string | undefined;
   const supportEmail = Constants.expoConfig?.extra?.supportEmail as string | undefined;
@@ -169,6 +173,12 @@ function Studio() {
   // 정식 빌드로 업데이트하면 사라지고 실제 구매(isPro)만 남는다. 구매 기록과 섞이지 않는다.
   const trial = proTrial();
   const pro = isPro(entitlement) || reviewUnlocked(store ?? undefined) || trial;
+  // 첫 실행 안내: 저장소를 읽은 뒤 한 번만 판단한다. 세트가 하나라도 있으면(기존 사용자·백업 복원) 띄우지 않는다.
+  useEffect(() => {
+    if (!store || introOffered.current) return;
+    introOffered.current = true;
+    if (!store.introDone && store.projects.length === 0) setIntroStep(0);
+  }, [store]);
   // 앱을 열 때 한 번, 저장된 이용권을 스토어와 영수증 서버에 다시 묻는다. 물어볼 수 없으면 그대로 둔다.
   const rechecked = useRef(false);
   useEffect(() => {
@@ -1490,6 +1500,22 @@ function Studio() {
       <Text style={{ fontSize: 12, color: C.muted, lineHeight: 17 }}>그림·레이어·문구·움직임·참고를 파일 하나로 보관해요. 앱을 지우거나 기기를 바꾸기 전에 만들어 두면 설정 › 백업에서 되살리기로 그대로 돌아와요.</Text>
       <Action danger icon="delete-outline" title="세트 삭제" onPress={() => setConfirmDeleteId(managed.id)} />
     </Dialog>}
+    {introStep !== null && (() => {
+      const steps = [
+        { icon: 'pencil-outline' as const, title: '그리기', body: '새 세트를 만들고 칸을 눌러 그려요. 다 그리면 위의 저장을 눌러요. 저장한 칸은 보드에 바로 보여요.' },
+        { icon: 'motion-play-outline' as const, title: '움직이기', body: `'움직이기' 탭에서 효과를 고르면 내 그림으로 바로 미리 봐요. 세기·속도도 바꿀 수 있어요. 무료 움직임 ${PRESETS.filter(x => !isProPreset(x.id)).length}종으로도 한 세트를 끝까지 만들 수 있어요.` },
+        { icon: 'export-variant' as const, title: '저장·내보내기', body: '그린 칸은 기기 안에 저장돼요. 세트 화면의 내보내기에서 파일 묶음(ZIP)을 만들어 원하는 앱으로 보내요.' },
+      ];
+      const step = steps[introStep]; const last = introStep === steps.length - 1;
+      const finish = () => { setIntroStep(null); if (!store?.introDone) { try { commit(st => ({ ...st, introDone: true })); } catch { /* 저장 실패는 다음 실행에 다시 보일 뿐이다 */ } } };
+      return <Dialog title={`사용 안내 ${introStep + 1}/${steps.length}`} onClose={finish}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Glyph name={step.icon} size={22} /><Text style={{ fontSize: 17, fontWeight: '800', color: C.ink }}>{step.title}</Text></View>
+        <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{step.body}</Text>
+        {last && trial && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{PRO_TRIAL_NOTE}</Text>}
+        <Action primary title={last ? '시작하기' : '다음'} onPress={() => last ? finish() : setIntroStep(introStep + 1)} />
+        {!last && <Action title="건너뛰기" onPress={finish} />}
+      </Dialog>;
+    })()}
     {pendingDelete && <Dialog title="세트 삭제" onClose={() => setConfirmDeleteId(null)}>
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{pendingDelete.projectName}</Text>
       <Text style={styles.muted}>휴지통으로 옮겨요. {TRASH_DAYS}일 안에는 설정 › 휴지통에서 그림까지 그대로 되살릴 수 있고, 그 뒤에는 영구 삭제돼요.</Text>
@@ -1556,6 +1582,12 @@ function Studio() {
           <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>홈 공지 미리 보기 {noticePreview ? '켜짐' : '꺼짐'}</Text>
         </Pressable>
       </View>}
+      <Pressable accessibilityRole="button" accessibilityLabel="사용 안내 다시 보기" onPress={() => { setSettings(false); setIntroStep(0); }}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+        <Glyph name="help-circle-outline" size={20} color={C.muted} />
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>사용 안내 다시 보기</Text>
+        <Glyph name="chevron-right" size={18} color={C.faint} />
+      </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="백업에서 되살리기" onPress={restoreFromBackup}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
         <Glyph name="archive-arrow-up-outline" size={20} color={C.muted} />
@@ -1769,7 +1801,11 @@ function Studio() {
         // 공식 도구에 넘길 PNG 프레임은 여기서 만들지 않는다. 내보낼 때 지금 그림·움직임에서 새로 만든다.
         return saveFinal(finalImage, work, dialogue, complete, motion, motionImage, submitImage);
       }}
-      onShare={async () => { const latest = current.current!.projects.find(p => p.id === project.id)!.slots.find(s => s.number === slot.number)!; if (!latest.finalImage || !await Sharing.isAvailableAsync()) throw new Error('공유할 이미지가 없거나 공유 기능을 사용할 수 없습니다.'); await Sharing.shareAsync(imageUri(latest.finalImage.path), { mimeType: 'image/png', UTI: 'public.png' }); }} />}
+      onShare={async () => { const latest = current.current!.projects.find(p => p.id === project.id)!.slots.find(s => s.number === slot.number)!; if (!latest.finalImage || !await Sharing.isAvailableAsync()) throw new Error('공유할 이미지가 없거나 공유 기능을 사용할 수 없습니다.'); // 2026-10-05: 움직임이 있는 칸은 움직이는 GIF 를 보낸다(예전에는 정지 PNG 만 보내 받는 쪽에서 움직임이 없어 보였다).
+        // 받는 앱·갤러리에 보이는 이름이 작품을 알아보게 '세트이름-칸번호-시각' 사본을 만들어 보낸다. 원본 파일은 그대로다.
+        const source = latest.motion && latest.motionImage ? latest.motionImage : latest.finalImage; const gif = source.path.endsWith('.gif');
+        const copy = cutFile(`${safeName(project.projectName)}-${String(slot.number).padStart(2, '0')}-${fileStamp()}.${gif ? 'gif' : 'png'}`); copy.write(localFile(source.path).bytesSync());
+        await Sharing.shareAsync(copy.uri, { mimeType: gif ? 'image/gif' : 'image/png', UTI: gif ? 'com.compuserve.gif' : 'public.png' }); }} />}
   </SafeAreaView>;
 }
 

@@ -90,7 +90,7 @@ async function walk(App, { sourcesOn }) {
   });
 
   // ① 홈(세트 0) — 창작 표면 · 빈 상태 · 공지
-  saveStore({ version: 1, revision: ++revision, projects: [], palette: [] });
+  saveStore({ version: 1, introDone: true, revision: ++revision, projects: [], palette: [] });
   await render(App);
   note();
   const home = { hero: byTestID('asset-slot-homeHeroArtwork').length, notice: byTestID('asset-slot-noticeArtwork').length };
@@ -118,7 +118,7 @@ async function walk(App, { sourcesOn }) {
 
   // ④ 그리기: 빈 칸의 움직임 견본 · 기본 레퍼런스 격자
   const project = createProject('계약 세트', '콩이');
-  saveStore({ version: 1, revision: ++revision, projects: [project], palette: [] });
+  saveStore({ version: 1, introDone: true, revision: ++revision, projects: [project], palette: [] });
   await render(App);
   await press('계약 세트');
   await act(async () => byTestID('slot-1')[0].props.onPress());
@@ -139,7 +139,7 @@ async function walk(App, { sourcesOn }) {
   // ⑤ 내보내기: 다 채운 세트의 완성 그림
   const full = createProject('다 한 세트', '콩이');
   full.slots = full.slots.map(s => ({ ...s, finalImage: drawn('done-' + s.number + '.png'), done: true }));
-  saveStore({ version: 1, revision: ++revision, projects: [full], palette: [] });
+  saveStore({ version: 1, introDone: true, revision: ++revision, projects: [full], palette: [] });
   await render(App);
   await press('다 한 세트');
   await press('내보내기');

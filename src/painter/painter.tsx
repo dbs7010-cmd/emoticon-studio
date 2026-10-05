@@ -509,6 +509,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const guideUsed = useRef(false);
   // 이 칸에 깔아 둔 밑그림의 참고 id. 같은 예시를 또 눌러도 그림이 두 장 쌓이지 않게 한다.
   const guideLaid = useRef<string | null>(null);
+  // 그림 전체 크기(2026-10-05): 작품 레이어 전체를 함께 키우고 줄이는 창. 화면 보기 확대(두 손가락)와 다르다.
+  const [sizeOpen, setSizeOpen] = useState(false);
   const [showCanon, setShowCanon] = useState(false), [showQA, setShowQA] = useState(false), [qa, setQA] = useState<QA | undefined>(slot.qa);
   // 빈 칸을 열면 한 번 보여 주는 '이전 칸 그림으로 시작'. 닫거나 그리기 시작하면 사라진다.
   const [continueDismissed, setContinueDismissed] = useState(false);
@@ -1359,7 +1361,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             bubble={n => <RailBubble testID="불투명도 말풍선"><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>{Math.round(n)}%</Text></RailBubble>} />
         </View>}
         {tab === 'motion' && motionMoving && <View testID="조절대 내용" style={{ height: canvasSide ?? undefined, paddingVertical: 4, justifyContent: 'flex-start', gap: 20 }}>
-          <VSlider testID="세기 조절대" label="세기" height={railTrack} value={Math.round((scene.motion?.strength ?? .5) * 20)} min={0} max={20} step={1}
+          <VSlider testID="세기 조절대" label="세기" height={railTrack} value={Math.round((scene.motion?.strength ?? .5) * 20)} min={1} max={20} step={1}
             onCommit={n => scene.motion && setMotion({ ...scene.motion, strength: n / 20 })}
             bubble={n => <RailBubble><Text numberOfLines={1} style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>{MOTION_WORDS(n / 20).replace('아주 ', '')}</Text></RailBubble>} />
           <VSlider testID="속도 조절대" label="속도" height={railTrack} value={Math.round((scene.motion?.speed ?? .5) * 20)} min={0} max={20} step={1}
@@ -1379,7 +1381,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         </>}
         {/* 움직이기: 세기·속도가 캔버스 바로 위(시안 D). 효과를 고르기 전에는 무엇을 하면 되는지만 말한다. */}
         {tab === 'motion' && (motionMoving ? <>
-          <BarSlider testID="세기 조절대" label="세기" value={scene.motion?.strength ?? .5} min={0} max={1} step={.05}
+          <BarSlider testID="세기 조절대" label="세기" value={scene.motion?.strength ?? .5} min={.05} max={1} step={.05}
             onCommit={n => scene.motion && setMotion({ ...scene.motion, strength: Math.round(n * 20) / 20 })} show={MOTION_WORDS} />
           <BarSlider testID="속도 조절대" label="속도" value={scene.motion?.speed ?? .5} min={0} max={1} step={.05}
             onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: Math.round(n * 20) / 20 })} show={MOTION_WORDS} />
@@ -1413,6 +1415,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               setMotion({ ...scene.motion, parts });
             }
             if (m.type === 'zoom' && Number.isFinite(m.zoom)) setZoom(m.zoom);
+            if (m.type === 'fitted') { if (m.factor === 0) Alert.alert('칸 안에 다 들어가지 않아요', '그림을 줄여도 움직이는 동안 칸 밖으로 나가요. 세기를 줄여 주세요.'); else if (m.factor > 0 && m.factor < 1) setSizeOpen(false); }
             // 이미 고른 글씨를 한 번 더 누르면 내용 고치기.
             if (m.type === 'captionEdit') openCaption();
             if (m.type === 'sampled') { dropped.current = m.color ?? null; setDropper(d => d ? { ...d, color: m.color ?? null } : d); return; }
@@ -1564,6 +1567,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           {/* 캐릭터 기준은 세트 전체의 일이라 참고 사진 줄에서 내려왔다(45.2차). 보드의 세트 메뉴와 같은 계열이다. */}
           {!!canon && <MenuButton icon="account-star-outline" title={showCanon ? '캐릭터 기준 숨기기' : '캐릭터 기준 보기'} onPress={() => { setPanel(null); setShowCanon(!showCanon); }} />}
           <MenuButton icon="bookmark-outline" title={canon ? '이 칸을 캐릭터 기준으로 바꾸기' : '이 칸을 캐릭터 기준으로'} onPress={() => { setPanel(null); setShowCanon(false); save('reference'); }} />
+          <MenuButton icon="resize" title="그림 전체 크기" onPress={() => { setPanel(null); setSizeOpen(true); }} />
           <MenuButton icon="share-variant" title="이 칸 공유" onPress={() => { setPanel(null); save('share'); }} />
           <MenuButton icon="clipboard-check-outline" title="이 칸 검사" onPress={() => { setPanel(null); setShowQA(true); }} />
           <MenuButton danger icon="delete-outline" title="지금 레이어 비우기" onPress={() => { setPanel(null); Alert.alert('지금 레이어 비우기', '지금 고른 레이어의 그림이 지워져요. 되돌리기로 되살릴 수 있어요.', [{ text: '취소', style: 'cancel' }, { text: '비우기', style: 'destructive', onPress: () => send({ type: 'clear' }) }]); }} />
@@ -1582,7 +1586,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           savedMotions={savedMotions} onSaveMotion={() => scene.motion && onSaveMotion(scene.motion)}
           onUseMotion={saved => setMotion(saved.motion)} onForgetMotion={onForgetMotion}
           onChange={setMotion} onRequestPro={onRequestPro}
-          thumbs={thumbs} previousMotion={previousMotion ?? null} onFocusPart={layerId => send({ type: 'focusPart', layerId })} />
+          thumbs={thumbs} previousMotion={previousMotion ?? null} onFocusPart={layerId => send({ type: 'focusPart', layerId })} onFit={() => send({ type: 'fitMotion' })} />
       </View> : <View style={dock} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
         {scene.selection ? <View style={{ maxHeight: panelRoom(0.5) }}>
           {/* 명세 E08: 여기서 하는 일은 아직 임시다. 무엇이 임시인지 글로 말하고, 나가는 길은 취소·적용 둘뿐이다.
@@ -1857,6 +1861,16 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>미리 본 PRO 효과는 PRO 에서만 저장돼요. 빼고 저장하면 그림과 무료 움직임은 그대로 남아요.</Text>
       <Action primary title="PRO 알아보기" onPress={() => { setProSheet(false); onRequestPro(); }} />
       <Action title="PRO 효과 빼고 저장" onPress={saveWithoutPro} />
+    </Dialog>}
+    {sizeOpen && <Dialog title="그림 전체 크기" onClose={() => setSizeOpen(false)}>
+      <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>모든 그림 레이어를 칸 가운데를 기준으로 함께 키우거나 줄여요. 레이어 사이 위치와 부분 움직임도 같이 맞춰져요. 참고 사진과 문구는 그대로예요.</Text>
+      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>두 손가락으로 화면을 키우는 것은 보기만 바뀌고, 이 기능은 저장되는 그림 크기가 바뀌어요. 되돌리기로 돌아갈 수 있어요.</Text>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <View style={{ flex: 1 }}><Action icon="magnify-minus-outline" title="10% 작게" onPress={() => send({ type: 'scaleAll', factor: .9 })} /></View>
+        <View style={{ flex: 1 }}><Action icon="magnify-plus-outline" title="10% 크게" onPress={() => send({ type: 'scaleAll', factor: 1 / .9 })} /></View>
+      </View>
+      {!!scene.motion && !!scene.clipped && <Action primary icon="fit-to-page-outline" title="칸 안에 맞추기" onPress={() => send({ type: 'fitMotion' })} />}
+      <Action title="닫기" onPress={() => setSizeOpen(false)} />
     </Dialog>}
     {showQA && <Dialog title="이 칸 검사" onClose={() => setShowQA(false)}>
       {!qa ? <Text style={{ fontSize: 13, color: C.ink }}>아직 검사한 결과가 없어요.</Text> : qa.status === 'PASS' ? <Text style={{ fontSize: 15, fontWeight: '700', color: C.success }}>기본 검사를 모두 통과했어요.</Text>

@@ -17,8 +17,8 @@ class File {
 }
 const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } } });
 const { createProject } = load('src/project.ts');
-const { localFile } = load('src/services/storage.ts');
-const { buildZip, crc32, setEntries, exportSet, safeName, exportFormatSummary } = load('src/services/export.ts');
+const { localFile, exportUri } = load('src/services/storage.ts');
+const { buildZip, crc32, setEntries, exportSet, safeName, fileStamp, exportFormatSummary } = load('src/services/export.ts');
 
 // CRC32 must agree with a known-good implementation, or every archiver will reject the bundle.
 for (const sample of ['', 'a', 'hello world', '이모티콘', 'x'.repeat(1000)]) {
@@ -195,16 +195,21 @@ for (const entry of archive) {
   assert.throws(() => decodeDataUrl('data:image/png,notbase64'), 'base64 가 아니면 조용히 넘기지 않는다');
 }
 
-const result = exportSet(project);
+const result = exportSet(project, [], new Date(2026, 9, 5, 14, 3, 9));
 assert.equal(result.count, 3);
 assert.equal(result.missing, 32 - 3, 'the caller learns how many slots are still empty');
-assert.equal(result.path, `set-emoticon-set-${project.id.slice(-6)}-3.zip`, 'a Korean title falls back to a name that still identifies the set');
+// 2026-10-05: 세트 이름(한글)이 파일 이름에 남는다. 공백·특수문자는 '-', 같은 세트를 다시 내보내도 초 단위 시각으로 겹치지 않는다.
+assert.equal(result.path, `set-내-첫-세트-${project.id.slice(-6)}-20261005-140309.zip`, 'the Korean set name stays in the file name');
+assert.notEqual(exportSet(project, [], new Date(2026, 9, 5, 14, 3, 10)).path, result.path, 'exporting the same set again does not overwrite the earlier file');
 const twin = createProject('다른 한글 이름', '두부');
 twin.slots[0].finalImage = image('image-final-1.png');
-assert.notEqual(exportSet(twin).path, result.path, 'two Korean-named sets do not collide');
-assert.ok(files.has(localFile(result.path).uri), 'the bundle is written');
-assert.ok(!/[^a-zA-Z0-9._-]/.test(result.path), 'no unsafe characters survive in the name');
+assert.notEqual(exportSet(twin, [], new Date(2026, 9, 5, 14, 3, 9)).path, result.path, 'two sets exported in the same second do not collide');
+assert.ok(files.has(exportUri(result.path)), 'the bundle is written');
+assert.ok(!/[\\/:*?"<>| ]/.test(result.path), 'no path separators, spaces or reserved characters survive in the name');
 assert.equal(safeName('   '), 'emoticon-set', 'an unusable name falls back');
+assert.equal(safeName('../../etc'), 'etc', 'no path traversal survives');
+assert.equal(safeName('몽이의 하루 🐱!'), '몽이의-하루', 'emoji and symbols become separators and are trimmed');
+assert.equal(fileStamp(new Date(2026, 0, 2, 3, 4, 5)), '20260102-030405');
 
 const empty = createProject('빈 세트', '콩이');
 assert.throws(() => exportSet(empty), /저장된 그림이 없습니다/, 'exporting nothing is refused, not silently empty');

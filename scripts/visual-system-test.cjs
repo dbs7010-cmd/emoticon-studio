@@ -158,7 +158,7 @@ async function ready() {
   // ── 3. 홈: 브랜드 → 창작 표면 → 최근 작업. 알림이 꺼지면 자리 0 ───────────────────────────────
   const p = createProject('시각 세트', '콩이');
   p.slots = p.slots.map((s, i) => i < 2 ? { ...s, finalImage: { path: 'image-a.png', width: 360, height: 360 }, done: i === 0 } : s);
-  saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
   await act(async () => { tree = create(React.createElement(App)); });
   assert.deepEqual(texts().slice(0, 2), ['emoti', '이모티'], '첫 글자는 브랜드(emoti 주표기 + 이모티 보조표기)');
   {
@@ -217,7 +217,7 @@ async function ready() {
   assert.equal(labelled('전체 작업 보기').length, 0, '세트가 넷 이하면 전체 보기가 없다');
   {
     const many = Array.from({ length: 12 }, (_, i) => { const q = createProject('많은 세트 ' + (i + 1), '콩이'); q.updatedAt = new Date(Date.UTC(2026, 8, 1 + i)).toISOString(); return q; });
-    saveStore({ version: 1, revision: 50, projects: many, palette: [] });
+    saveStore({ version: 1, introDone: true, revision: 50, projects: many, palette: [] });
     await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); });
     const setButtons = () => tree.root.findAll(n => n.type === 'Pressable' && /^많은 세트 \d+$/.test(n.props.accessibilityLabel ?? '')).map(n => n.props.accessibilityLabel);
     // 45.5: 홈은 시작 화면이다 — 가장 최근 세트 하나만, 나머지는 전체 작업에서.
@@ -253,7 +253,7 @@ async function ready() {
     await press('표현 힌트 닫기');
     assert.equal(hintLine().length, 0, '닫으면 사라진다 — 상시 UI 가 아니다');
     assert.equal(loadStore().store.projects.length, 12, '가이드는 저장 구조를 바꾸지 않는다');
-    saveStore({ version: 1, revision: 60, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
+    saveStore({ version: 1, introDone: true, revision: 60, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
     await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); });
   }
 

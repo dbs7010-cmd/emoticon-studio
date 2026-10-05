@@ -59,7 +59,7 @@ assert.equal(adapter.storeModuleAvailable(), false, '이 빌드에는 결제 모
   // ---------- 저장과 복원 ----------
   const project = createProject('이용권', '콩이');
   const entitlement = { plan: 'yearly', source: 'store', verified: false, expiresAt: future };
-  saveStore({ version: 1, revision: 1, projects: [project], entitlement });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [project], entitlement });
   assert.deepEqual(loadStore().store.entitlement, entitlement, '이용권은 저장되고 그대로 돌아온다');
   assert.throws(() => parseStore(JSON.stringify({ version: 1, revision: 1, projects: [project], entitlement: { plan: 'gold', source: 'store' } })), /이용권/, '모르는 플랜은 거부한다');
   assert.throws(() => parseStore(JSON.stringify({ version: 1, revision: 1, projects: [project], entitlement: { plan: 'yearly', source: 'store', verified: 'yes' } })), /검증 표시/, '검증 표시가 망가지면 거부한다');
@@ -75,7 +75,7 @@ assert.equal(adapter.storeModuleAvailable(), false, '이 빌드에는 결제 모
 
   const expired = { plan: 'monthly', source: 'store', expiresAt: past };
   const saved = { ...project, slots: project.slots.map(s => s.number === 1 ? { ...s, motion: partMotion, done: true } : s) };
-  saveStore({ version: 1, revision: 2, projects: [saved], entitlement: expired });
+  saveStore({ version: 1, introDone: true, revision: 2, projects: [saved], entitlement: expired });
   const reopened = loadStore().store;
   assert.equal(pro.isPro(reopened.entitlement, now), false, '기간이 끝났다');
   assert.deepEqual(reopened.projects[0].slots[0].motion, partMotion, '그래도 저장해 둔 PRO 움직임은 그대로 남아 있다');

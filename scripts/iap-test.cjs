@@ -223,7 +223,7 @@ function fakeServer(reply = body => body.productId === 'pro_lifetime'
   const restart = async () => { if (tree) await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); await flush(); }); await act(async () => { await flush(10); }); };
   const ent = () => loadStore().store.entitlement;
 
-  saveStore({ version: 1, revision: 1, projects: [createProject('결제 세트', '콩이')] });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [createProject('결제 세트', '콩이')] });
   st = fakeStore(); uiAdapter.useStoreModuleForTests(st.module);
   await restart();
   assert.equal(ent(), undefined, '처음엔 무료');

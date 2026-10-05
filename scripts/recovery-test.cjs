@@ -22,7 +22,7 @@ class File {
 }
 const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } } });
 const { createProject, duplicateCaptions, isDone, parseStore, droppedImagePaths } = load('src/project.ts');
-const { loadStore, saveStore, localFile, deleteLocalImages, inspectStore } = load('src/services/storage.ts');
+const { loadStore, saveStore, localFile, deleteLocalImages, inspectStore, exportUri } = load('src/services/storage.ts');
 const { exportSet, brokenSlots, readZipNames, buildZip } = load('src/services/export.ts');
 
 const image = path => ({ path, width: 360, height: 360 });
@@ -137,7 +137,7 @@ const shipping = createProject('내보내기', '콩이');
 for (const n of [1, 2]) { shipping.slots[n - 1].finalImage = image(`image-s${n}.png`); files.set(localFile(`image-s${n}.png`).uri, png('s' + n)); }
 const ok = exportSet(shipping);
 assert.equal(ok.count, 2);
-const names = readZipNames(files.get(localFile(ok.path).uri));
+const names = readZipNames(files.get(exportUri(ok.path)));
 assert.deepEqual(names, ['01.png', '02.png'], 'the written archive reopens with the expected entries');
 assert.equal(new Set(names).size, names.length, 'and carries no duplicate entry');
 

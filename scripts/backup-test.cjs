@@ -17,7 +17,7 @@ class File {
 }
 const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } } });
 const { createProject, imagePaths } = load('src/project.ts');
-const { localFile } = load('src/services/storage.ts');
+const { localFile, exportUri } = load('src/services/storage.ts');
 const { buildZip, crc32 } = load('src/services/export.ts');
 const { buildBackup, writeBackup, readBackup, restoreBackup, readZip, backupPaths } = load('src/services/backup.ts');
 
@@ -40,10 +40,11 @@ const paths = backupPaths(p);
 assert.deepEqual(paths, [...imagePaths(p), 'image-icon.png'].sort(), '백업은 세트가 가리키는 그림을 모두 담는다(부가 이미지 포함)');
 
 const written = writeBackup(p, new Date('2026-09-27T10:00:00Z'));
-assert.ok(/^set-backup-.+-20260927\.zip$/.test(written.path), '백업 파일 이름: ' + written.path);
+// 2026-10-05: 같은 날 여러 번 백업해도 겹치지 않게 초 단위 시각(기기 시각)이 붙는다.
+assert.ok(/^set-backup-콩이-세트-.+-\d{8}-\d{6}\.zip$/.test(written.path), '백업 파일 이름: ' + written.path);
 assert.equal(written.images, paths.length, '담은 그림 수를 말한다');
 assert.equal(written.missing, 0, '빠진 그림 없음');
-const archive = localFile(written.path).bytesSync();
+const archive = files.get(exportUri(written.path));
 const names = readZip(archive).map(e => e.name);
 assert.equal(names[0], 'backup.json', '백업 정보가 맨 앞');
 assert.ok(paths.every(path => names.includes('images/' + path)), '그림이 images/ 아래에 모두 있다');

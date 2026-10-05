@@ -207,7 +207,7 @@ function seed(count, pro = true, complete = false) {
   // 검수용 PRO 를 켜 둔다 — 결제 없이 PRO 화면(부분 움직임)까지 그려 보기 위해서다. 구매가 아니다.
   // 칸이 가리키는 그림 파일을 실제로 둔다 — 없으면 내보내기가 '파일을 찾을 수 없어요'에서 멈춘다.
   files.set('document/emoticon-studio/a.png', fsNode.readFileSync(SLOT_ART));
-  saveStore({ version: 1, revision: 1, projects: count === 0 ? [] : count === 1 ? [p] : [p, second], palette: ['#54A9E8', '#E94F4F'], reviewUnlock: pro });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: count === 0 ? [] : count === 1 ? [p] : [p, second], palette: ['#54A9E8', '#E94F4F'], reviewUnlock: pro });
 }
 
 // ── 홍보 캡처 대체 렌더(PROMO_SCENES=1 일 때만, 검사에는 영향 없음) ─────────────────────────────
@@ -236,7 +236,7 @@ function seedPromo() {
       ...(PROMO_MOTION[k] ? { motion: PROMO_MOTION[k], motionImage: { path, width: 360, height: 360 } } : {}) };
   });
   p.lastSlot = 12; p.updatedAt = '2026-10-03T00:00:00.000Z';
-  saveStore({ version: 1, revision: 1, projects: [p], palette: ['#2A2320', '#F5E642', '#E9897E'], reviewUnlock: true });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [p], palette: ['#2A2320', '#F5E642', '#E9897E'], reviewUnlock: true });
 }
 const layersOf = names => names.map((name, i) => ({ id: 'draw-' + (i + 1), name, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 }));
 const PROMO_MOTION_DIR = pathNode.resolve(__dirname, '..', 'verification', 'promo', 'motion');

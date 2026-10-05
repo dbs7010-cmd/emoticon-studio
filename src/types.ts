@@ -113,7 +113,8 @@ export type Cutout = { id: string; name: string; image: LocalImage };
 // reviewUnlock: 내부 검수 빌드에서만 효력이 있는 임시 해제. 이용권(entitlement)과 따로 둔다 —
 // 같은 자리에 두면 출시 앱에서 구매한 이용권으로 읽힐 길이 생긴다.
 // userPalette: 사용자가 이름 붙여 모아 둔 색(PRO로 저장). 최근 색(palette)과 달리 자동으로 밀려나지 않는다.
-export type Store = { version: 1; revision: number; projects: Project[]; palette?: string[]; userPalette?: string[]; entitlement?: Entitlement; reviewUnlock?: boolean; paperTexture?: boolean; savedMotions?: SavedMotion[]; cutouts?: Cutout[];
+// introDone(2026-10-05): 첫 실행 사용 안내를 마치거나 건너뛰었는가. 없으면 아직 안 본 것 — 단, 이미 세트가 있는 사용자에게는 띄우지 않는다.
+export type Store = { version: 1; revision: number; projects: Project[]; introDone?: boolean; palette?: string[]; userPalette?: string[]; entitlement?: Entitlement; reviewUnlock?: boolean; paperTexture?: boolean; savedMotions?: SavedMotion[]; cutouts?: Cutout[];
   // 즐겨찾기 세 칸. **사용자가 직접 고정한다** — 다른 브러시를 썼다고 저절로 바뀌지 않는다(45.31).
   // 없으면 기본값(기본 펜·연필·마커)으로 연다. 예전 저장본에는 이 칸이 없고, 그대로 읽힌다.
   favoriteBrushes?: string[] };

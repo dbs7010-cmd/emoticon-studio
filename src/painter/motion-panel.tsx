@@ -126,6 +126,8 @@ type Props = {
   pivotRole: string;
   onPickPivot: (id: string | null, role?: string) => void;
   onFocusPart: (layerId: string | null) => void;
+  // 움직이는 동안 칸 밖으로 나갈 때 '칸 안에 맞추기'(그림 전체를 함께 줄임). 없으면 버튼을 그리지 않는다.
+  onFit?: () => void;
   onDuplicateForPose: () => void;
   // Opening a pose for editing means selecting the drawings it is made of on the drawing tab.
   onEditPose: (layerIds: string[]) => void;
@@ -141,7 +143,7 @@ type Props = {
 // 움직이기 화면. 결과(캔버스와 효과 견본)가 먼저이고 설정은 고른 다음에 나온다.
 // 무료 효과는 누르는 즉시 칸에 들어간다. PRO(부분 움직임·두 모습)는 **들어가기 전에** PRO 라고 알리고,
 // 무료 사용자는 입구에서 PRO 안내로 간다 — 만들고 난 뒤 저장할 때 막지 않는다.
-export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, previousMotion, pivotPick, pivotRole, onPickPivot, onFocusPart, onDuplicateForPose, onEditPose, savedMotions, onSaveMotion, onUseMotion, onForgetMotion, onChange, onRequestPro, thumbs }: Props) {
+export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, previousMotion, pivotPick, pivotRole, onPickPivot, onFocusPart, onFit, onDuplicateForPose, onEditPose, savedMotions, onSaveMotion, onUseMotion, onForgetMotion, onChange, onRequestPro, thumbs }: Props) {
   const [view, setView] = React.useState<'basic' | 'parts' | 'pose' | 'shelf'>('basic');
   const base: Motion = motion ?? { version: 1, speed: .5, strength: .5, captionMoves: false };
   const set = (patch: Partial<Motion>) => onChange({ ...base, ...patch });
@@ -305,7 +307,10 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     </Pressable>}
     {clipped && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 14, backgroundColor: C.warningSoft }}>
       <Glyph name="crop" size={16} color={C.warning} />
-      <Text style={{ flex: 1, fontSize: 12, color: C.ink }}>그림이 칸 밖으로 나가요. 세기를 줄여 보세요.</Text>
+      <Text style={{ flex: 1, fontSize: 12, color: C.ink }}>움직이는 동안 그림이 칸 밖으로 나가요(빨간 띠). 세기를 줄이거나 그림을 칸 안에 맞춰 보세요.</Text>
+      {!!onFit && <Pressable accessibilityRole="button" accessibilityLabel="칸 안에 맞추기" onPress={onFit} style={{ paddingHorizontal: 10, minHeight: 36, borderRadius: 12, justifyContent: 'center', backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
+        <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>칸 안에 맞추기</Text>
+      </Pressable>}
     </View>}
 
     {/* 더 세밀하게: 한 줄뿐이라 제목이 필요 없다. PRO 표시는 작게 한 번(45.2차). */}

@@ -57,7 +57,7 @@ const press = async label => { assert.equal(labelled(label).length, 1, label); a
 const texts = () => tree.root.findAllByType('Text').map(n => [n.props.children].flat(9).filter(x => typeof x === 'string' || typeof x === 'number').join(''));
 async function render(projects = []) {
   if (tree) await act(async () => tree.unmount());
-  saveStore({ version: 1, revision: Date.now(), projects, palette: [] });
+  saveStore({ version: 1, introDone: true, revision: Date.now(), projects, palette: [] });
   await act(async () => { tree = create(React.createElement(App)); });
 }
 (async () => {

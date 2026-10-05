@@ -82,7 +82,7 @@ async function openPainter() {
     files.clear(); commands.length = 0;
     const p = createProject('검수 세트', '콩이');
     p.slots = p.slots.map((s, i) => i < 3 ? { ...s, finalImage: { path: 'a.png', width: 360, height: 360 }, done: true } : s);
-    saveStore({ version: 1, revision: 1, projects: [p], palette: [] });
+    saveStore({ version: 1, introDone: true, revision: 1, projects: [p], palette: [] });
     await act(async () => { tree = create(React.createElement(App)); });
     const where = internalReview ? '내부 검수 구성' : '출시 구성';
 

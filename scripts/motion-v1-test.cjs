@@ -95,7 +95,7 @@ const closePainter = async () => { await press('그리기 닫기'); await answer
   const range = label => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === label);
   const motionCommands = () => sent().filter(m => m.type === 'motion').length;
   // 이전 버전 저장본 모양: 움직임·브러시·내 팔레트 필드가 전혀 없다.
-  saveStore({ version: 1, revision: 1, projects: [project] });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [project] });
   assert.equal(fresh().slots.length, 32);
   const untouched = JSON.stringify(fresh().slots.filter(s => ![1, 2, 3, 4].includes(s.number)));
 

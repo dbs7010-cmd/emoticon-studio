@@ -112,6 +112,7 @@ async function answerSave(motion) {
     layers: [{ id: 'draw-1', name: '몸', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0, data: pngData }, { id: 'draw-2', name: '손', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0, data: pngData }], references: [] });
   await settle(12);
 }
+const PRO_TRIAL = '비공개 테스트에서는 PRO 기능을 무료로 체험할 수 있어요. 정식 출시 시 일부 기능은 별도 구매가 필요합니다.';
 const PART = { version: 1, speed: .5, strength: .5, parts: [{ id: 'p1', layerId: 'draw-2', effect: 'rotate', pivotX: .7, pivotY: .6, amount: 30, angle: 0, speed: .6, delay: 0 }] };
 
 (async () => {
@@ -124,6 +125,26 @@ const PART = { version: 1, speed: .5, strength: .5, parts: [{ id: 'p1', layerId:
       { id: 'draw-2', name: '손', visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0, image: { path: 'image-a.png', width: 360, height: 360 } }] };
     return p;
   };
+
+  // 3-0. 첫 실행 사용 안내(2026-10-05): 새 사용자에게 한 번, 건너뛰기/다 보기 모두 기록, 기존 사용자에게는 안 뜸, 설정에서 다시 보기
+  await render({ version: 1, revision: 1, projects: [], palette: [] });
+  assert.ok(texts().includes('사용 안내 1/3'), '새 사용자는 첫 실행에 안내를 본다');
+  assert.ok(texts().includes('그리기'));
+  await press('다음');
+  assert.ok(texts().includes('사용 안내 2/3') && texts().some(t => t.includes('무료 움직임 6종')), '무료 범위를 실제 개수로 말한다');
+  await press('건너뛰기');
+  assert.ok(!texts().some(t => t.startsWith('사용 안내 ')), '건너뛰면 닫힌다');
+  assert.equal(loadStore().store.introDone, true, '건너뛰기도 완료로 남는다');
+  await render(loadStore().store);
+  assert.ok(!texts().some(t => t.startsWith('사용 안내 ')), '다시 열어도 반복하지 않는다');
+  await press('설정'); await press('사용 안내 다시 보기');
+  assert.ok(texts().includes('사용 안내 1/3'), '설정에서 다시 볼 수 있다');
+  await press('다음'); await press('다음');
+  assert.ok(texts().includes(PRO_TRIAL), '체험 빌드에서는 마지막 장에 체험 안내');
+  await press('시작하기');
+  assert.ok(!texts().some(t => t.startsWith('사용 안내 ')));
+  await render({ version: 1, revision: 1, projects: [project()], palette: [] });
+  assert.ok(!texts().some(t => t.startsWith('사용 안내 ')), '이미 세트가 있는 사용자(기존·복원)에게는 띄우지 않는다');
 
   // 3-1. 체험 켜짐: 화면
   await render({ version: 1, revision: 1, projects: [project()], palette: [] });

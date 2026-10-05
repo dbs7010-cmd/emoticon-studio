@@ -220,7 +220,7 @@ async function echoReferences(scene) {
   console.log('  에셋 등록: 기존 ' + EXPECTED_EXISTING_ASSETS + ' + 신규 ' + EXPECTED_NEW_ASSETS + ' = ' + withArtwork.length + ' · id/파일 중복 0 · 파일 없음 0 · 가장자리 잉크 0');
 
   // ── 2. 그림이 없을 때: 준비 중으로 두고 두 버튼을 내주지 않는다 ────────────────────────────
-  saveStore({ version: 1, revision: 1, projects: [], palette: [] });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [], palette: [] });
   await render(withArt(false));
   await press('표현 가이드');
   assert.equal(labelled('고마워 · 두 손 모아 꾸벅').length, 1, '감정 카드는 예전처럼 하나의 누를 곳이다');
@@ -241,7 +241,7 @@ async function echoReferences(scene) {
 
   // ── 3. 테스트 그림 두 장: 고른 표현의 그림·힌트가 그 표현에만 간다 ─────────────────────────
   const project = createProject('가이드 세트', '콩이');
-  saveStore({ version: 1, revision: 2, projects: [project], palette: [] });
+  saveStore({ version: 1, introDone: true, revision: 2, projects: [project], palette: [] });
   const App = withArt(true);
   await render(App);
   await press('표현 가이드');
@@ -453,7 +453,7 @@ async function echoReferences(scene) {
   const RealApp = loader(base)('App.tsx').default;
   for (const [cardName, cardHint, exLabel] of [['안녕', '손 크게 흔들기', '손 흔들며'], ['잘 자', '이불 덮고 눕기', '이불 덮고']]) {
     const project = createProject('진입 세트 ' + cardName, '콩이');
-    saveStore({ version: 1, revision: 100 + cardName.length, projects: [project], palette: [] });
+    saveStore({ version: 1, introDone: true, revision: 100 + cardName.length, projects: [project], palette: [] });
     commands.length = 0;
     await render(RealApp);
     await press('표현 가이드');
@@ -565,7 +565,7 @@ async function echoReferences(scene) {
   {
     const older = { ...createProject('예전 세트', '콩이'), updatedAt: '2026-01-01T00:00:00.000Z' };
     const newer = { ...createProject('최근 세트', '콩이'), updatedAt: '2026-09-01T00:00:00.000Z' };
-    saveStore({ version: 1, revision: 9000, projects: [older, newer], palette: [] });   // 앞 단계 저장본보다 새 번호
+    saveStore({ version: 1, introDone: true, revision: 9000, projects: [older, newer], palette: [] });   // 앞 단계 저장본보다 새 번호
     await render(withArt(true));
     await press('표현 가이드');
     await press('고마워 · 두 손 모아 꾸벅');

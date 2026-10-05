@@ -132,7 +132,7 @@ const heights = [568, 640, 720, 800, 900, 1000];
   for (const height of heights) for (const width of widths) {
     viewport.width = width; viewport.height = height;
     files.clear();
-    saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
+    saveStore({ version: 1, introDone: true, revision: 1, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
     const area = await openPainter();
     const side = Math.min(area.width, area.height) - CANVAS_GAP * 2;   // 캔버스 둘레 여백(45.37)
     const screen = height - STATUS - NAV;
@@ -308,7 +308,7 @@ const heights = [568, 640, 720, 800, 900, 1000];
   // 넓은 화면(412): 재기 전에도, 들어가면 한 줄. 넘치면 두 줄. 글자와 손가락 자리는 그대로.
   viewport.width = 412; viewport.height = 900;
   files.clear();
-  saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8'] });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [p], palette: ['#54A9E8'] });
   await openPainter();
   assert.deepEqual(aidNames(), [1, 1, 1, 1, 1], '보조 셋과 되돌리기·다시 실행이 모두 있다');
   assert.equal(labelled('저장').length, 1, '윗줄에는 저장 하나');
@@ -326,7 +326,7 @@ const heights = [568, 640, 720, 800, 900, 1000];
   // 좁은 화면(320): 모드 줄은 한 줄 그대로, 되돌리기·다시 실행은 윗줄(이름 옆)로 간다 — 줄을 하나 더 쓰지 않는다.
   viewport.width = 320; viewport.height = 800;
   files.clear();
-  saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8'] });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [p], palette: ['#54A9E8'] });
   await openPainter();
   assert.equal(rowsIn(headOf()), 1, '320: 모드 줄은 한 줄');
   assert.deepEqual(aidNames(), [1, 1, 1, 1, 1], '320: 모두 하나씩');
@@ -339,7 +339,7 @@ const heights = [568, 640, 720, 800, 900, 1000];
   for (const width of [320, 360, 390, 412]) {
     viewport.width = width; viewport.height = 800;
     files.clear();
-    saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8'] });
+    saveStore({ version: 1, introDone: true, revision: 1, projects: [p], palette: ['#54A9E8'] });
     await act(async () => { tree = create(React.createElement(App)); });
     // 홈 → 그리기 → 보드 → 내보내기 순서로 한 번씩 훑는다. 여는 데 실패하면 press 가 바로 멈춘다.
     const screens = [

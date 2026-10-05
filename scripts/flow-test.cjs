@@ -95,7 +95,7 @@ const say = (text) => { step.push(text); console.log('  ' + text); };
     const fileUrl = p => 'data:image/png;base64,' + fs.readFileSync(p).toString('base64');
 
     let project = createProject('실행 검증 세트', '');
-    const commit = () => { saveStore({ version: 1, revision: (loadStore().store.revision ?? 0) + 1, projects: [project], palette: palette }); };
+    const commit = () => { saveStore({ version: 1, introDone: true, revision: (loadStore().store.revision ?? 0) + 1, projects: [project], palette: palette }); };
     let palette = [];
 
     // ── 1. First drawing, on an empty canvas, with nothing set up first ──────────────────────

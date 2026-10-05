@@ -178,17 +178,24 @@ export function readZipNames(archive: Uint8Array): string[] {
 }
 // Local file names are ASCII-only by design, so a Korean set title cannot survive here.
 // The archive still needs to be unique and recognisable, hence the project suffix.
+// 파일 이름에 쓸 세트 이름. 한글 등 글자·숫자는 그대로 두고, 공백·특수문자는 '-' 로 바꾼다(2026-10-05: 예전에는 한글을 모두 지워
+// 받는 쪽에서 어느 세트인지 알 수 없었다). 비면 'emoticon-set'.
 export function safeName(name: string) {
-  return (name.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'emoticon-set').slice(0, 40);
+  return (name.normalize('NFC').replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/\.{2,}/g, '.').replace(/^[-.]+|[-.]+$/g, '') || 'emoticon-set').slice(0, 40).replace(/[-.]+$/, '') || 'emoticon-set';
 }
-export function exportSet(project: Project, handoff: HandoffFrames[] = []): { path: string; count: number; missing: number } {
+// 같은 세트를 여러 번 내보내도 이름이 겹치지 않게 하는 시각 꼬리표(기기 시각, 초 단위).
+export function fileStamp(now = new Date()) {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
+}
+export function exportSet(project: Project, handoff: HandoffFrames[] = [], now = new Date()): { path: string; count: number; missing: number } {
   const broken = brokenSlots(project);
   if (broken.length) throw new Error(`${broken.map(n => String(n).padStart(2, '0')).join(', ')}번 그림 파일을 찾을 수 없어요. 그 칸을 다시 그려 저장한 뒤 내보내 주세요.`);
   const entries = setEntries(project, handoff);
   if (!entries.length) throw new Error('아직 저장된 그림이 없습니다.');
   const count = shippedSlots(project).length;
   const packed = withDirectories(entries);
-  const file = exportFile(`${safeName(project.projectName)}-${project.id.slice(-6)}-${count}.zip`);
+  const file = exportFile(`${safeName(project.projectName)}-${project.id.slice(-6)}-${fileStamp(now)}.zip`);
   file.write(buildZip(packed));
   // Reopen what we just wrote. The bytes shipped must be the bytes we inspected.
   const written = file.bytesSync();

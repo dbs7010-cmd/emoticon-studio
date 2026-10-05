@@ -59,7 +59,7 @@ const depth = () => {
 (async () => {
   const p = createProject('상자 세트', '콩');
   p.slots = p.slots.map((s, i) => i < 32 ? { ...s, finalImage: { path: 'a.png', width: 360, height: 360 }, done: true } : s);
-  saveStore({ version: 1, revision: 1, projects: [p], palette: [] });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [p], palette: [] });
   await act(async () => { tree = create(React.createElement(App)); });
   console.log('홈      ', JSON.stringify(depth()));
   await press('상자 세트 이어서 만들기'); await press('그리기 닫기');

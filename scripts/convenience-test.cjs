@@ -74,7 +74,7 @@ async function ready() {
   scene = { type: 'state', undo: false, redo: false, dirty: false, activeLayerId: 'draw-1', activeReferenceId: null, caption: null, motion: null, layers: init.layers.map(l => ({ id: l.id, name: l.name, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 })), references: [] };
   await message(scene); await message({ type: 'initialized' });
 }
-const setStore = (projects, revision) => saveStore({ version: 1, revision, projects, palette: ['#54A9E8'] });
+const setStore = (projects, revision) => saveStore({ version: 1, introDone: true, revision, projects, palette: ['#54A9E8'] });
 const makeProjects = (count, from = 1) => Array.from({ length: count }, (_, i) => {
   const p = createProject('세트 ' + (from + i), '콩이');
   p.updatedAt = new Date(Date.UTC(2026, 8, from + i)).toISOString();
@@ -101,7 +101,7 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
 
 (async () => {
   const p = createProject('편의 세트', '콩이');
-  saveStore({ version: 1, revision: 1, projects: [p], palette: ['#54A9E8'] });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [p], palette: ['#54A9E8'] });
   await act(async () => { tree = create(React.createElement(App)); });
   await press('편의 세트');
   await act(async () => byTestID('slot-1')[0].props.onPress());

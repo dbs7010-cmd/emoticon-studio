@@ -10,8 +10,17 @@ export function localFile(path: string) {
 }
 export function imageUri(path: string) { return localFile(path).uri; }
 // Export bundles live beside the images but are never image files, so cleanup never sees them.
-export function exportFile(name: string) { ensureRoot(); return localFile('set-' + name); }
-export function exportUri(name: string) { return localFile(name).uri; }
+// 2026-10-05: 내보내는 파일 이름에는 세트 이름(한글 포함)이 들어간다. 그림 파일(localFile)의 ASCII 규칙과 따로,
+// 글자·숫자·. _ - 만 받는다(경로 구분자·공백 없음) — 받는 앱·갤러리에 보이는 이름이 작품을 알아보게 한다.
+const EXPORT_NAME = /^[\p{L}\p{N}._-]+$/u;
+function exportLocal(name: string) {
+  if (!EXPORT_NAME.test(name) || name.includes('..')) throw new Error('잘못된 내보내기 파일 이름');
+  return new File(root(), name);
+}
+export function exportFile(name: string) { ensureRoot(); return exportLocal('set-' + name); }
+export function exportUri(name: string) { return exportLocal(name).uri; }
+// 한 칸 공유용 사본(cut-…). 공유 창으로 넘길 때만 만든다.
+export function cutFile(name: string) { ensureRoot(); return exportLocal('cut-' + name); }
 // 사용자가 고른 파일(문서 선택 창이 앱 캐시로 복사한 것)을 읽는다. 앱 폴더 밖이라 localFile 의 이름 규칙을 쓰지 않는다.
 export function readPickedFile(uri: string): Uint8Array { return new File(uri).bytesSync(); }
 export function newImageFile() { ensureRoot(); return localFile(`image-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.png`); }

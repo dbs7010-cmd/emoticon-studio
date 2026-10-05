@@ -82,7 +82,7 @@ const clean = where => { const g = guideOf(); assert.ok(!g.hint && !g.example &&
 (async () => {
   const results = [];
   const set = createProject('검토 세트', '콩이');
-  saveStore({ version: 1, revision: 1, projects: [set], palette: [] });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [set], palette: [] });
   await fresh();
 
   // ① 가이드를 직접 고른 시작: 그 칸(1번)에 밑그림이 깔린다.

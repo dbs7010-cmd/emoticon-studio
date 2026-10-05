@@ -72,7 +72,7 @@ other.slots = other.slots.map(s => ({ ...s, referenceImages: [otherImage('image-
 other.canon = { ...other.canon, image: otherImage('image-other-canon.png') };
 other.slots[0].finalImage = otherImage('image-other-final.png');
 const otherPaths = ['image-other-ref.png', 'image-other-canon.png', 'image-other-final.png'];
-saveStore({ version: 1, revision: 8, projects: [p, other] });
+saveStore({ version: 1, introDone: true, revision: 8, projects: [p, other] });
 const png = Buffer.alloc(33);Buffer.from([137,80,78,71,13,10,26,10]).copy(png);png.writeUInt32BE(360,16);png.writeUInt32BE(360,20);
 files.set(localFile('image-old.png').uri,png); files.set(localFile('image-new.png').uri,png);
 otherPaths.forEach(path => files.set(localFile(path).uri, png));

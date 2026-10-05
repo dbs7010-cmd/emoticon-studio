@@ -61,7 +61,7 @@ const order = () => {
 
 (async () => {
   console.log('── H01 작업 없음 ──');
-  saveStore({ version: 1, revision: 1, projects: [], palette: [] });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [], palette: [] });
   await act(async () => { tree = create(React.createElement(App)); });
   console.log('  순서:', order().join(' → '));
   console.log('  빈 상태 점선 카드:', tree.root.findAll(n => n.props.testID === 'asset-slot-homeEmptyArtwork').length, '개(0이어야 한다)');
@@ -70,7 +70,7 @@ const order = () => {
   await act(async () => tree.unmount());
   const ps = [createProject('보기 세트 1', '콩'), createProject('보기 세트 2', '콩')];
   ps[0].slots = ps[0].slots.map((s, i) => i < 2 ? { ...s, finalImage: { path: 'a.png', width: 360, height: 360 }, done: i === 0 } : s);
-  saveStore({ version: 1, revision: 2, projects: ps, palette: [] });
+  saveStore({ version: 1, introDone: true, revision: 2, projects: ps, palette: [] });
   await act(async () => { tree = create(React.createElement(App)); });
   console.log('  순서:', order().join(' → '));
   console.log('  창작 표면:', tree.root.findAll(n => n.props.testID === '홈 창작 표면').length, '개(0이어야 한다)');

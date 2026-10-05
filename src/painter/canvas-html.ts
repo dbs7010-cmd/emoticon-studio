@@ -108,10 +108,10 @@ function activeDraw(){return layers.find(l=>l.id===activeDrawLayerId)||layers[0]
 function activeReference(){return references.find(l=>l.id===activeReferenceId&&l.visible);}
 function selectDrawLayer(id){const target=layers.find(l=>l.id===id)||layers[0];if(target){activeLayerId=target.id;activeDrawLayerId=target.id;}}
 function snapshot(){return {layers:layers.map(l=>({...meta(l),pixels:l.bitmap.getContext('2d').getImageData(0,0,W,H)})),references:references.map(l=>({...l})),activeLayerId,activeDrawLayerId,activeReferenceId,caption:caption&&{...caption},motion:motion&&JSON.parse(JSON.stringify(motion)),selection:selection&&{...selection,bitmap:copyOf(selection.bitmap)}};}
-function restore(s){trace('restore:before');layers=s.layers.map(l=>{const b=bitmap();b.getContext('2d').putImageData(l.pixels,0,0);return {...meta(l),bitmap:b};});references=s.references;activeLayerId=s.activeLayerId;activeDrawLayerId=s.activeDrawLayerId||layers[0]?.id||'';activeReferenceId=s.activeReferenceId||null;caption=s.caption||null;motion=s.motion||null;selection=s.selection||null;render();state();trace('restore:after');}
+function restore(s){trace('restore:before');extentCache=null;layers=s.layers.map(l=>{const b=bitmap();b.getContext('2d').putImageData(l.pixels,0,0);return {...meta(l),bitmap:b};});references=s.references;activeLayerId=s.activeLayerId;activeDrawLayerId=s.activeDrawLayerId||layers[0]?.id||'';activeReferenceId=s.activeReferenceId||null;caption=s.caption||null;motion=s.motion||null;selection=s.selection||null;render();state();trace('restore:after');}
 function checkpoint(preserveFuture=false){history.push(snapshot());if(history.length>40)history.shift();if(!preserveFuture)future=[];dirty=true;}
-function composite(g,l,d){if(!l.visible||(d&&d.hidden))return;g.save();g.globalAlpha=l.opacity;if(d){g.translate(d.px+d.dx,d.py+d.dy);g.rotate(d.rot*Math.PI/180);g.scale(d.sx,d.sy);g.translate(-d.px,-d.py);}g.translate(W/2+l.x,H/2+l.y);g.rotate(l.rotation*Math.PI/180);g.scale(l.scale,l.scale);g.drawImage(l.bitmap,-W/2,-H/2);g.restore();}
-function render(t){ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));layers.forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
+function composite(g,l,d){if(!l.visible||(d&&d.hidden))return;g.save();g.globalAlpha=l.opacity;if(d){g.translate(d.px+d.dx,d.py+d.dy);g.rotate(d.rot*Math.PI/180);g.scale(d.sx,d.sy);g.translate(-d.px,-d.py);if(d.part){const q=d.part;g.translate(q.px+q.dx,q.py+q.dy);g.rotate(q.rot*Math.PI/180);g.scale(q.sx,q.sy);g.translate(-q.px,-q.py);}}g.translate(W/2+l.x,H/2+l.y);g.rotate(l.rotation*Math.PI/180);g.scale(l.scale,l.scale);g.drawImage(l.bitmap,-W/2,-H/2);g.restore();}
+function render(t){ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));layers.forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
@@ -369,28 +369,31 @@ var LONG_PRESETS=${JSON.stringify(LONG_MOTION_PRESETS)},ENTRANCE_REST=${JSON.str
 function cyclesFor(speed){return Math.max(1,Math.min(4,Math.round((speed==null?.5:speed)*3)+1));}
 function wholeDelta(t){
  if(!motion||!motion.preset)return {px:W/2,py:H/2,dx:0,dy:0,sx:1,sy:1,rot:0};
- const a=Math.max(0,Math.min(1,motion.strength==null?.5:motion.strength));
+ // 세기 0 이면 효과를 골랐는데도 아무것도 움직이지 않았다(2026-10-05 '일부 움직임 미작동' 원인 중 하나). 가장 약한 값은 한 칸(0.05).
+ const a=Math.max(.05,Math.min(1,motion.strength==null?.5:motion.strength));
  const L=loopSeconds(),u=((t/L)%1+1)%1;
  // 스무 가지 식은 motion-math.ts 한 곳에 있다(효과 견본과 같은 식). 앞의 여섯은 45.38 과 같은 값을 낸다.
  return presetDelta(motion.preset,u,a,motion.direction,W,H);
 }
 ${MOTION_MATH_JS}
 // One part moving on its own, combined with whatever the whole picture is doing.
+// 2026-10-05: 부분 움직임은 **그림 전체 움직임 안쪽**에서 따로 건다(d.part). 예전에는 전체 효과의 크기·회전을
+// 부분의 회전 중심(어깨 등)을 축으로 다시 걸어, 통통·까딱·쾅과 손 흔들기를 함께 쓰면 손이 몸에서 떨어져 나갔다(쾅은 41px).
 function partDelta(part,t,base){
  const L=loopSeconds(),cycles=cyclesFor(part.speed);
  const local=((t-(part.delay||0))%L+L)%L;
  const phase=local/L*Math.PI*2*cycles;
- const d={px:part.pivotX*W,py:part.pivotY*H,dx:base.dx,dy:base.dy,sx:base.sx,sy:base.sy,rot:base.rot};
+ const d={px:part.pivotX*W,py:part.pivotY*H,dx:0,dy:0,sx:1,sy:1,rot:0};
  const wave=Math.sin(phase);
- if(part.effect==='rotate')d.rot=base.rot+wave*part.amount;
+ if(part.effect==='rotate')d.rot=wave*part.amount;
  if(part.effect==='move'){
   if(Number.isFinite(part.fromX)&&Number.isFinite(part.toX)){
    const half=(wave+1)/2;
-   d.dx=base.dx+((part.toX-part.fromX)*W)*half;d.dy=base.dy+((part.toY-part.fromY)*H)*half;
-  } else {const r=part.angle*Math.PI/180,travel=wave*part.amount*W;d.dx=base.dx+Math.cos(r)*travel;d.dy=base.dy+Math.sin(r)*travel;}
+   d.dx=((part.toX-part.fromX)*W)*half;d.dy=((part.toY-part.fromY)*H)*half;
+  } else {const r=part.angle*Math.PI/180,travel=wave*part.amount*W;d.dx=Math.cos(r)*travel;d.dy=Math.sin(r)*travel;}
  }
- if(part.effect==='scale'){const s=1+wave*part.amount;d.sx=base.sx*s;d.sy=base.sy*s;}
- return d;
+ if(part.effect==='scale'){const s=1+wave*part.amount;d.sx=s;d.sy=s;}
+ return Object.assign({},base,{part:d});
 }
 // Two poses taking turns: the layers named in poseB replace the others for half the loop.
 function poseHides(l,t){
@@ -423,10 +426,13 @@ function motionClips(){
    if(rest&&i/steps<rest&&!part)continue;
    const d=deltaFor(l,L*i/steps);
    if(!d||d.hidden)continue;
-   const corners=[[box.minX,box.minY],[box.maxX,box.minY],[box.minX,box.maxY],[box.maxX,box.maxY]];
+   // 레이어 자체 변환(위치·크기·회전)을 먼저 건다(2026-10-05: 예전에는 빠져 있어, 레이어를 옮기거나 줄여도 잘림 판단이 바뀌지 않았다).
+   const lt={px:W/2,py:H/2,dx:l.x,dy:l.y,sx:l.scale,sy:l.scale,rot:l.rotation},lstep=(q,px,py)=>{const r=q.rot*Math.PI/180,ox=(px-q.px)*q.sx,oy=(py-q.py)*q.sy;return [q.px+q.dx+ox*Math.cos(r)-oy*Math.sin(r),q.py+q.dy+ox*Math.sin(r)+oy*Math.cos(r)];};
+   const corners=[[box.minX,box.minY],[box.maxX,box.minY],[box.minX,box.maxY],[box.maxX,box.maxY]].map(([x,y])=>lstep(lt,x,y));
    for(const [x,y] of corners){
-    const ox=(x-d.px)*d.sx+d.px+d.dx,oy=(y-d.py)*d.sy+d.py+d.dy;
-    const r=d.rot*Math.PI/180,rx=(ox-d.px)*Math.cos(r)-(oy-d.py)*Math.sin(r)+d.px,ry=(ox-d.px)*Math.sin(r)+(oy-d.py)*Math.cos(r)+d.py;
+    // 그릴 때와 같은 순서: 부분(있으면) → 전체. 점 p 는 축 기준으로 크기 → 회전 → 이동.
+    const step=(q,px,py)=>{const r=q.rot*Math.PI/180,ox=(px-q.px)*q.sx,oy=(py-q.py)*q.sy;return [q.px+q.dx+ox*Math.cos(r)-oy*Math.sin(r),q.py+q.dy+ox*Math.sin(r)+oy*Math.cos(r)];};
+    const inner=d.part?step(d.part,x,y):[x,y],[rx,ry]=step(d,inner[0],inner[1]);
     if(rx<0||ry<0||rx>W-1||ry>H-1)return true;
    }
   }
@@ -446,7 +452,7 @@ function inkBox(bitmap){
 // image stack. Colours are counted, not guessed: if a set uses more than the 255 a GIF allows,
 // the least used are merged into their nearest neighbour and that fact is reported.
 function now(){return (typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();}
-function startPlaying(){if(playing)return;playing=true;playStart=now();const step=()=>{if(!playing)return;render((now()-playStart)/1000%loopSeconds());rafId=requestAnimationFrame(step);};rafId=requestAnimationFrame(step);state();}
+function startPlaying(){if(playing)return;playing=true;extentCache=null;playStart=now();const step=()=>{if(!playing)return;render((now()-playStart)/1000%loopSeconds());rafId=requestAnimationFrame(step);};rafId=requestAnimationFrame(step);state();}
 function stopPlaying(){if(!playing)return;playing=false;if(rafId)cancelAnimationFrame(rafId);rafId=null;}
 function quantize(frames){
  // Anything below this alpha becomes the transparent index, which is how a sticker keeps its
@@ -722,6 +728,53 @@ function drawTrail(g){
   g.beginPath();g.arc(cx,cy,reach*grow,0,Math.PI*2);g.stroke();
  }
  g.restore();
+}
+// ── 움직임 범위 안내(2026-10-05) ── 미리보기 재생 중에만 그린다. 저장·내보내기 프레임(buildLoop·save)은 render 를 거치지 않아 들어가지 않는다.
+// 한 바퀴 동안 그림이 지나가는 범위를 점선 상자로, 칸 밖으로 나가는 쪽은 그 가장자리에 빨간 띠로 보여 준다. 앱 안의 안내이며 플랫폼 제출 규격이 아니다.
+let extentCache=null;
+function motionExtent(){
+ if(!motion)return null;
+ const L=loopSeconds(),steps=24;let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+ const step=(q,px,py)=>{const r=q.rot*Math.PI/180,ox=(px-q.px)*q.sx,oy=(py-q.py)*q.sy;return [q.px+q.dx+ox*Math.cos(r)-oy*Math.sin(r),q.py+q.dy+ox*Math.sin(r)+oy*Math.cos(r)];};
+ for(const l of layers){
+  if(!l.visible)continue;const box=inkBox(l.bitmap);if(!box)continue;
+  // 레이어 자체 변환(위치·크기·회전)까지 건 네 모서리
+  const lc=[[box.minX,box.minY],[box.maxX,box.minY],[box.minX,box.maxY],[box.maxX,box.maxY]].map(([x,y])=>step({px:W/2,py:H/2,dx:l.x,dy:l.y,sx:l.scale,sy:l.scale,rot:l.rotation},x,y));
+  for(let i=0;i<steps;i++){const d=deltaFor(l,L*i/steps);if(!d||d.hidden)continue;for(const [x,y] of lc){const inner=d.part?step(d.part,x,y):[x,y],[rx,ry]=step(d,inner[0],inner[1]);if(rx<minX)minX=rx;if(ry<minY)minY=ry;if(rx>maxX)maxX=rx;if(ry>maxY)maxY=ry;}}
+ }
+ return minX===Infinity?null:{minX,minY,maxX,maxY};
+}
+function drawExtent(g){
+ if(!motion||!playing)return;
+ if(extentCache===null)extentCache=motionExtent()||false;
+ const e=extentCache;if(!e)return;
+ g.save();g.setLineDash([6,5]);g.lineWidth=1.5;g.strokeStyle='rgba(42,35,32,.45)';
+ const x0=Math.max(1,e.minX),y0=Math.max(1,e.minY),x1=Math.min(W-1,e.maxX),y1=Math.min(H-1,e.maxY);
+ g.strokeRect(x0,y0,x1-x0,y1-y0);g.setLineDash([]);g.fillStyle='rgba(214,69,65,.85)';
+ if(e.minX<0)g.fillRect(0,0,4,H);if(e.maxX>W-1)g.fillRect(W-4,0,4,H);if(e.minY<0)g.fillRect(0,0,W,4);if(e.maxY>H-1)g.fillRect(0,H-4,W,4);
+ g.restore();
+}
+// 그림 전체 크기(2026-10-05): 모든 그림 레이어를 칸 가운데를 축으로 함께 키우거나 줄인다. 레이어 사이 위치·비율이 그대로이고,
+// 부분 움직임의 회전 중심·이동 경로·이동 거리도 같은 배율로 옮겨 움직임이 그림에 붙어 있다. 참고 사진·문구는 작품 레이어가 아니라 그대로 둔다.
+// 픽셀을 다시 그리지 않는 레이어 변환이라 되돌리기로 정확히 돌아간다.
+function scaleBounds(){let lo=0,hi=Infinity;for(const l of layers){lo=Math.max(lo,.1/l.scale);hi=Math.min(hi,4/l.scale);}return [lo,hi];}
+function applyScaleAll(f){
+ for(const l of layers){l.scale=l.scale*f;l.x=l.x*f;l.y=l.y*f;}
+ if(motion&&motion.parts)motion=Object.assign({},motion,{parts:motion.parts.map(p=>{const q=Object.assign({},p,{pivotX:.5+(p.pivotX-.5)*f,pivotY:.5+(p.pivotY-.5)*f});
+  if(Number.isFinite(p.fromX)&&Number.isFinite(p.toX)){q.fromX=.5+(p.fromX-.5)*f;q.toX=.5+(p.toX-.5)*f;q.fromY=.5+(p.fromY-.5)*f;q.toY=.5+(p.toY-.5)*f;}
+  else if(p.effect==='move')q.amount=p.amount*f;return q;})});
+}
+function scaleAll(f){const [lo,hi]=scaleBounds();f=Math.max(lo,Math.min(hi,f));if(!(f>0)||Math.abs(f-1)<1e-4)return false;checkpoint();applyScaleAll(f);extentCache=null;return true;}
+// 칸 안에 맞추기: 움직이는 동안 칸 밖으로 나가지 않는 가장 큰 배율(지금보다 키우지는 않는다)을 찾아 한 번에 건다. 사용자가 누를 때만.
+function fitMotion(){
+ if(!motion||!motionClips())return 1;
+ const keep={layers:layers.map(l=>({l,scale:l.scale,x:l.x,y:l.y})),motion};
+ const reset=()=>{keep.layers.forEach(k=>{k.l.scale=k.scale;k.l.x=k.x;k.l.y=k.y;});motion=keep.motion;};
+ let lo=Math.max(.2,scaleBounds()[0]),hi=1;
+ for(let i=0;i<12;i++){const mid=(lo+hi)/2;applyScaleAll(mid);const c=motionClips();reset();if(c)hi=mid;else lo=mid;}
+ applyScaleAll(lo);const ok=!motionClips();reset();
+ if(!ok)return 0;
+ scaleAll(lo);return lo;
 }
 function drawPivot(g){
  if(!pivotPick||!motion||!motion.parts)return;
@@ -1147,7 +1200,7 @@ async function command(m){try{
  if(m.type==='toggleReference'){
    const target=references.find(l=>l.id===m.id);if(target){checkpoint();const turnOff=target.visible&&activeReferenceId===target.id;references.forEach(l=>l.visible=false);if(turnOff){activeReferenceId=null;}else{target.visible=true;activeReferenceId=target.id;}render();state();}
  }
- if(m.type==='transform'){const l=[...layers,...references].find(l=>l.id===(m.id||activeLayerId));if(l){checkpoint();for(const k of ['x','y','rotation'])if(Number.isFinite(m[k]))l[k]=m[k];if(Number.isFinite(m.scale))l.scale=Math.max(.1,Math.min(4,m.scale));if(Number.isFinite(m.opacity))l.opacity=Math.max(0,Math.min(1,m.opacity));if(typeof m.visible==='boolean')l.visible=m.visible;render();state();}}
+ if(m.type==='transform'){const l=[...layers,...references].find(l=>l.id===(m.id||activeLayerId));if(l){checkpoint();extentCache=null;for(const k of ['x','y','rotation'])if(Number.isFinite(m[k]))l[k]=m[k];if(Number.isFinite(m.scale))l.scale=Math.max(.1,Math.min(4,m.scale));if(Number.isFinite(m.opacity))l.opacity=Math.max(0,Math.min(1,m.opacity));if(typeof m.visible==='boolean')l.visible=m.visible;render();state();}}
  if(m.type==='addReferences'){const added=await Promise.all(m.references.map(l=>loadLayer(l)));checkpoint();references.push(...added);if(!activeReferenceId&&added[0]){references.forEach(l=>l.visible=false);added[0].visible=true;activeReferenceId=added[0].id;}render();state();}
  if(m.type==='removeReference'){const index=references.findIndex(l=>l.id===m.id);if(index>=0){checkpoint();const removed=references[index];references.splice(index,1);if(activeReferenceId===removed.id)activeReferenceId=null;render();state();}}
  if(m.type==='undo')undo();
@@ -1240,7 +1293,9 @@ async function command(m){try{
   if(m.reset){caption.dx=0;caption.dy=0;caption.scale=1;caption.rot=0;}
   dirty=true;render();state();
  }
- if(m.type==='motion'){checkpoint();motion=m.motion||null;dirty=true;if(!motion)stopPlaying();render(playing?(now()-playStart)/1000:undefined);state();}
+ if(m.type==='scaleAll'){if(scaleAll(Number(m.factor)))dirty=true;render(playing?(now()-playStart)/1000:undefined);state();send({type:'scaled',factor:Number(m.factor)});}
+ if(m.type==='fitMotion'){const f=fitMotion();if(f>0&&f<1)dirty=true;render(playing?(now()-playStart)/1000:undefined);state();send({type:'fitted',factor:f});}
+ if(m.type==='motion'){checkpoint();motion=m.motion||null;dirty=true;extentCache=null;if(!motion)stopPlaying();render(playing?(now()-playStart)/1000:undefined);state();}
  if(m.type==='play'){startPlaying();}
  if(m.type==='stop'){stopPlaying();render();state();}
  if(m.type==='frames'){const was=playing;stopPlaying();send({type:'frames',id:m.id,gif:buildLoop(m.fps,!!m.sheets)});if(was)startPlaying();else{render();state();}}

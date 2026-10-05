@@ -111,7 +111,7 @@ const saved = async (dirty = true) => {
 };
 
 (async () => {
-  saveStore({ version: 1, revision: 1, projects: [] });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [] });
   await act(async () => { tree = create(React.createElement(App)); });
   const seen = [];
   const collect = () => seen.push(...texts());

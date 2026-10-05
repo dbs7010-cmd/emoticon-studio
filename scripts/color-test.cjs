@@ -80,7 +80,7 @@ async function openPainter() {
   const dropTap = async () => { await act(async () => dropper().props.onResponderGrant({ nativeEvent: { pageX: 0, pageY: 0 } })); await act(async () => dropper() && dropper().props.onResponderRelease({ nativeEvent: { pageX: 0, pageY: 0 } })); };
   // ── PRO ─────────────────────────────────────────────────────────────────────────────────────
   const p = createProject('색 세트', '콩이');
-  saveStore({ version: 1, revision: 1, projects: [p], entitlement: { plan: 'yearly', source: 'store', verified: true, expiresAt: '2099-01-01T00:00:00.000Z' } });
+  saveStore({ version: 1, introDone: true, revision: 1, projects: [p], entitlement: { plan: 'yearly', source: 'store', verified: true, expiresAt: '2099-01-01T00:00:00.000Z' } });
   await openPainter();
   await press('색');
   assert.ok(dropper(), '스포이드');

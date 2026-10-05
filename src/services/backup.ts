@@ -7,7 +7,7 @@
 // 되살릴 때는 먼저 전부 검사하고, 하나라도 어긋나면 아무것도 쓰지 않는다:
 // 형식·버전 · 저장 데이터 검증(parseStore) · 그림 이름 규칙(경로 조작 차단) · CRC · 세트가 가리키는 그림이 빠짐없이 있는지.
 // 검사를 통과하면 그림을 **새 이름**으로 쓰고 세트 안의 경로를 바꿔 넣는다 — 이미 있는 파일을 덮어쓰지 않는다.
-import { buildZip, crc32, safeName, type ExportEntry } from './export';
+import { buildZip, crc32, fileStamp, safeName, type ExportEntry } from './export';
 import { exportFile, localFile, ensureRoot } from './storage';
 import { imagePaths, parseStore } from '../project';
 import type { Project } from '../types';
@@ -45,8 +45,8 @@ export function buildBackup(project: Project, now = new Date()): { bytes: Uint8A
 export function writeBackup(project: Project, now = new Date()): { path: string; images: number; missing: number } {
   ensureRoot();
   const { bytes, images, missing } = buildBackup(project, now);
-  const stamp = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const file = exportFile(`backup-${safeName(project.projectName)}-${project.id.slice(-6)}-${stamp}.zip`);
+  // 같은 날 여러 번 백업해도 이름이 겹치지 않게 초 단위 시각을 붙인다(2026-10-05).
+  const file = exportFile(`backup-${safeName(project.projectName)}-${project.id.slice(-6)}-${fileStamp(now)}.zip`);
   file.write(bytes);
   readBackup(file.bytesSync());   // 방금 쓴 것이 되살릴 수 있는 파일인지 바로 확인한다
   return { path: file.name, images, missing: missing.length };
