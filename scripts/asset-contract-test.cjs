@@ -273,7 +273,10 @@ async function walk(App, { sourcesOn }) {
       assert.ok(types.includes("'" + old + "'"), '예전 브러시 ' + old + ' 는 저장 형식에 남는다');
   }
   const slotsSrc = fs.readFileSync('src/design/asset-slots.ts', 'utf8');
-  assert.ok(/mascot-paper\.png/.test(slotsSrc), '지금 쓰는 자리표시 그림은 asset-slots 한 곳에만 있다');
+  // 2026-10-06: 종이 질감 입체 캐릭터(mascot-*)는 예전 디자인이라 어떤 자리·화면에서도 쓰지 않는다. 파일은 기록으로 assets 에 남긴다.
+  assert.ok(!/require\([^)]*mascot-(paper|ink|eraser)\.png/.test(slotsSrc), '예전 마스코트 그림은 자리에서 쓰지 않는다');
+  assert.ok(fs.existsSync('assets/art/mascot-paper.png'), '예전 그림 파일은 지우지 않고 남긴다');
+  assert.ok(/expression-guides\/display\/greeting-hello-wave\.png/.test(slotsSrc), '움직임 견본 기본 그림은 지금 앱의 선 그림 캐릭터');
   const motionSrc = fs.readFileSync('src/painter/motion-panel.tsx', 'utf8');
   assert.ok(/ASSET_SLOTS\.motionExampleArtwork\.source/.test(motionSrc), '움직임 견본은 자리에서 받는다');
   const painterSrc = fs.readFileSync('src/painter/painter.tsx', 'utf8');

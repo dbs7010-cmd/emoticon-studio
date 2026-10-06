@@ -110,7 +110,7 @@ export function readBackup(archive: Uint8Array): BackupContents {
 }
 
 // 세트 안의 그림 경로를 새 이름으로 바꾼다. 경로는 모두 'image-…' 로 서로 겹치지 않으므로 같은 글자인 값만 바꾼다.
-function remap<T>(value: T, names: Map<string, string>): T {
+export function remap<T>(value: T, names: Map<string, string>): T {
   if (typeof value === 'string') return (names.get(value) ?? value) as T;
   if (Array.isArray(value)) return value.map(item => remap(item, names)) as T;
   if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, remap(v, names)])) as T;

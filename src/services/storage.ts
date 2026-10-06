@@ -13,9 +13,17 @@ export function imageUri(path: string) { return localFile(path).uri; }
 // 2026-10-05: 내보내는 파일 이름에는 세트 이름(한글 포함)이 들어간다. 그림 파일(localFile)의 ASCII 규칙과 따로,
 // 글자·숫자·. _ - 만 받는다(경로 구분자·공백 없음) — 받는 앱·갤러리에 보이는 이름이 작품을 알아보게 한다.
 const EXPORT_NAME = /^[\p{L}\p{N}._-]+$/u;
+// 2026-10-06: 내보낸 **사본**(제출 묶음·세트 백업·전체 백업 set-…, 한 칸 공유 cut-…)은 작품 원본과 다른 폴더(exports/)에 둔다.
+//  - 원본(그림·저장본)과 섞이지 않아, 사용자가 설정에서 사본만 골라 정리할 수 있다(앱이 저절로 지우지는 않는다).
+//  - Android 자동 백업 규칙이 이 폴더를 뺀다(plugins/with-backup-rules) — 쌓인 사본이 앱당 25MB 한도를 채워
+//    작품 백업까지 멈추게 하지 않는다. 사본은 이미 사용자가 고른 앱으로 보낸 파일이다.
+// 예전 빌드가 앱 폴더 바로 아래 만든 사본은 migrateExports() 가 지우지 않고 이 폴더로 옮긴다.
+const EXPORT_PREFIX = /^(set|cut)-/;
+const exportsDir = () => new Directory(root(), 'exports');
+function ensureExports() { ensureRoot(); exportsDir().create({ idempotent: true, intermediates: true }); }
 function exportLocal(name: string) {
   if (!EXPORT_NAME.test(name) || name.includes('..')) throw new Error('잘못된 내보내기 파일 이름');
-  return new File(root(), name);
+  return new File(exportsDir(), name);
 }
 // 같은 세트를 같은 초에 다시 내보내면 이름(초 단위 시각)이 같아 앞 파일을 덮어썼다(2026-10-06 확인). 이미 있으면 -2, -3 … 을 붙인다.
 function freshExport(name: string) {
@@ -27,10 +35,44 @@ function freshExport(name: string) {
   }
   return file;
 }
-export function exportFile(name: string) { ensureRoot(); return freshExport('set-' + name); }
-export function exportUri(name: string) { return exportLocal(name).uri; }
+export function exportFile(name: string) { ensureExports(); return freshExport('set-' + name); }
+export function exportUri(name: string) {
+  const file = exportLocal(name);
+  if (file.exists) return file.uri;
+  // 옮기기 전(예전 빌드)의 사본이 아직 앱 폴더 바로 아래 있으면 그 자리를 준다.
+  const legacy = new File(root(), name);
+  return legacy.exists && EXPORT_PREFIX.test(name) ? legacy.uri : file.uri;
+}
+// 예전 위치의 사본을 exports/ 로 옮긴다. 지우지 않는다 — 같은 이름이 이미 있으면 그대로 둔다. 실패해도 앱 사용은 막지 않는다.
+export function migrateExports(): { moved: number; kept: number } {
+  let moved = 0, kept = 0;
+  try {
+    ensureExports();
+    for (const item of root().list()) {
+      if (!(item instanceof File) || !EXPORT_PREFIX.test(item.name) || !EXPORT_NAME.test(item.name)) continue;
+      const target = new File(exportsDir(), item.name);
+      if (target.exists) { kept++; continue; }
+      try { item.move(target); moved++; } catch { kept++; }
+    }
+  } catch { /* 목록을 못 읽으면 다음 실행에 다시 한다 */ }
+  return { moved, kept };
+}
+// 설정 › 내보낸 파일: 사본의 개수·크기. 원본(그림·저장본)은 세지 않는다.
+export function listExports(): { name: string; bytes: number }[] {
+  ensureExports();
+  return exportsDir().list().filter((x): x is File => x instanceof File && EXPORT_PREFIX.test(x.name)).map(x => ({ name: x.name, bytes: x.size ?? 0 }));
+}
+// 사용자가 확인한 뒤에만 부른다. exports/ 안의 사본만 지운다 — 이름 규칙이 다른 파일·원본 폴더는 건드리지 않는다.
+export function removeExports(names: string[]): { removed: number; skipped: number } {
+  let removed = 0, skipped = 0;
+  for (const name of names) {
+    if (!EXPORT_PREFIX.test(name)) { skipped++; continue; }
+    try { const file = exportLocal(name); if (file.exists) { file.delete(); removed++; } } catch { skipped++; }
+  }
+  return { removed, skipped };
+}
 // 한 칸 공유용 사본(cut-…). 공유 창으로 넘길 때만 만든다.
-export function cutFile(name: string) { ensureRoot(); return freshExport('cut-' + name); }
+export function cutFile(name: string) { ensureExports(); return freshExport('cut-' + name); }
 // 사용자가 고른 파일(문서 선택 창이 앱 캐시로 복사한 것)을 읽는다. 앱 폴더 밖이라 localFile 의 이름 규칙을 쓰지 않는다.
 export function readPickedFile(uri: string): Uint8Array { return new File(uri).bytesSync(); }
 export function newImageFile() { ensureRoot(); return localFile(`image-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.png`); }

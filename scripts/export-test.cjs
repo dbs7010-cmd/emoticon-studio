@@ -4,7 +4,9 @@ const zlib = require('node:zlib');
 const { loader } = require('./load-ts.cjs');
 
 const files = new Map();
-class Directory { constructor(...parts) { this.uri = parts.map(p => p.uri ?? p).join('/'); } create() {} }
+class Directory { constructor(...parts) { this.uri = parts.map(p => p.uri ?? p).join('/'); } create() {}
+  // 바로 아래 파일만(하위 폴더 안 파일은 제외) — 실제 Directory.list 와 같은 범위.
+  list() { return [...files.keys()].filter(u => u.startsWith(this.uri + '/') && !u.slice(this.uri.length + 1).includes('/')).map(u => new File(u)); } }
 class File {
   constructor(...parts) { this.uri = parts.map(p => p.uri ?? p).join('/'); }
   get name() { return this.uri.split('/').pop(); }
@@ -14,10 +16,12 @@ class File {
   async bytes() { return this.bytesSync(); }
   bytesSync() { return files.get(this.uri); }
   delete() { files.delete(this.uri); }
+  get size() { return files.get(this.uri)?.length ?? 0; }
+  move(target) { if (files.has(target.uri)) throw new Error('exists'); files.set(target.uri, files.get(this.uri)); files.delete(this.uri); this.uri = target.uri; }
 }
 const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } } });
 const { createProject } = load('src/project.ts');
-const { localFile, exportUri, cutFile } = load('src/services/storage.ts');
+const { localFile, exportUri, cutFile, migrateExports, listExports, removeExports, saveStore } = load('src/services/storage.ts');
 const { buildZip, crc32, setEntries, exportSet, safeName, fileStamp, exportFormatSummary } = load('src/services/export.ts');
 
 // CRC32 must agree with a known-good implementation, or every archiver will reject the bundle.
@@ -223,6 +227,30 @@ assert.equal(safeName('   '), 'emoticon-set', 'an unusable name falls back');
 assert.equal(safeName('../../etc'), 'etc', 'no path traversal survives');
 assert.equal(safeName('몽이의 하루 🐱!'), '몽이의-하루', 'emoji and symbols become separators and are trimmed');
 assert.equal(fileStamp(new Date(2026, 0, 2, 3, 4, 5)), '20260102-030405');
+
+// 2026-10-06: 내보낸 사본은 원본과 다른 폴더(exports/)에 있다. 예전 빌드가 앱 폴더 바로 아래 둔 사본은 옮기고(지우지 않음),
+// 목록·정리는 사본만 다룬다 — 그림 원본(image-…)·저장본(store-…)은 세지도 지우지도 않는다.
+assert.ok(exportUri(result.path).includes('/emoticon-studio/exports/'), '제출 묶음은 exports/ 에 있다');
+assert.ok(cut1.uri.includes('/emoticon-studio/exports/'), '한 칸 공유 사본도 exports/ 에 있다');
+files.set('document/emoticon-studio/set-예전-묶음-20261001-101010.zip', new Uint8Array([7, 7]));
+files.set('document/emoticon-studio/cut-예전-01-20261001-101010.gif', new Uint8Array([8]));
+files.set('document/emoticon-studio/store-a.json', '{}');
+const originalImage = 'document/emoticon-studio/image-final-1.png';
+assert.equal(exportUri('set-예전-묶음-20261001-101010.zip'), 'document/emoticon-studio/set-예전-묶음-20261001-101010.zip', '옮기기 전에는 예전 자리를 그대로 준다(다시 공유 가능)');
+const moved = migrateExports();
+assert.equal(moved.moved, 2, '예전 사본 두 개를 옮겼다');
+assert.ok(files.has('document/emoticon-studio/exports/set-예전-묶음-20261001-101010.zip') && !files.has('document/emoticon-studio/set-예전-묶음-20261001-101010.zip'), '옮겼고(내용 그대로) 원래 자리에는 없다');
+assert.deepEqual([...files.get('document/emoticon-studio/exports/set-예전-묶음-20261001-101010.zip')], [7, 7]);
+assert.ok(files.has('document/emoticon-studio/store-a.json') && files.has(originalImage), '저장본·그림 원본은 옮기지 않는다');
+assert.equal(migrateExports().moved, 0, '두 번째 실행은 할 일이 없다');
+const listed = listExports();
+assert.ok(listed.length >= 5 && listed.every(x => /^(set|cut)-/.test(x.name)), '목록은 사본만: ' + listed.map(x => x.name).join(','));
+assert.ok(!listed.some(x => x.name.startsWith('image-') || x.name.startsWith('store-')));
+const cleaned = removeExports([...listed.map(x => x.name), 'image-final-1.png', 'store-a.json']);
+assert.equal(cleaned.removed, listed.length, '확인 후 사본만 지운다');
+assert.equal(cleaned.skipped, 2, '사본이 아닌 이름은 건너뛴다');
+assert.ok(files.has(originalImage) && files.has('document/emoticon-studio/store-a.json'), '원본·저장본은 그대로');
+assert.equal(listExports().length, 0);
 
 const empty = createProject('빈 세트', '콩이');
 assert.throws(() => exportSet(empty), /저장된 그림이 없습니다/, 'exporting nothing is refused, not silently empty');

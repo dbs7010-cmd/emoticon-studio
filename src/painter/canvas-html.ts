@@ -423,8 +423,8 @@ function motionClips(){
  const exit=motion.preset&&ENTRANCE_EXIT[motion.preset]||1;
  for(const l of layers){
   if(!l.visible)continue;
-  const box=inkBox(l.bitmap);
-  if(!box)continue;
+  const hull=inkHull(l.bitmap);
+  if(!hull)continue;
   for(const u of us){
    const part=(motion.parts||[]).some(pp=>pp.layerId===l.id&&!pp.off);
    if(rest===null&&!part)continue;
@@ -434,7 +434,9 @@ function motionClips(){
    // 레이어 자체 변환(위치·크기·회전)을 먼저 건다(2026-10-05: 예전에는 빠져 있어, 레이어를 옮기거나 줄여도 잘림 판단이 바뀌지 않았다).
    const lt={px:W/2,py:H/2,dx:l.x,dy:l.y,sx:l.scale,sy:l.scale,rot:l.rotation},lstep=(q,px,py)=>{const r=q.rot*Math.PI/180,ox=(px-q.px)*q.sx,oy=(py-q.py)*q.sy;return [q.px+q.dx+ox*Math.cos(r)-oy*Math.sin(r),q.py+q.dy+ox*Math.sin(r)+oy*Math.cos(r)];};
    // 칠해진 픽셀은 [min, max+1) 을 차지한다 — max 로 재면 1px 모자라 가장자리 줄에 그림이 남았다(2026-10-06).
-   const corners=[[box.minX,box.minY],[box.maxX+1,box.minY],[box.minX,box.maxY+1],[box.maxX+1,box.maxY+1]].map(([x,y])=>lstep(lt,x,y));
+   // 2026-10-06: 네모(잉크 상자)의 네 모서리 대신 **그림 윤곽(볼록 껍질)**을 돌린다. 빙글처럼 크게 도는 효과에서 상자 모서리는
+   // 그림보다 훨씬 바깥을 지나가, 그림이 칸 안에 있어도 '칸 밖' 경고가 떴다. 볼록 껍질은 그림의 모든 칠한 픽셀을 감싸므로 놓치는 잘림은 없다.
+   const corners=hull.map(([x,y])=>lstep(lt,x,y));
    for(const [x,y] of corners){
     // 그릴 때와 같은 순서: 부분(있으면) → 전체. 점 p 는 축 기준으로 크기 → 회전 → 이동.
     const step=(q,px,py)=>{const r=q.rot*Math.PI/180,ox=(px-q.px)*q.sx,oy=(py-q.py)*q.sy;return [q.px+q.dx+ox*Math.cos(r)-oy*Math.sin(r),q.py+q.dy+ox*Math.sin(r)+oy*Math.cos(r)];};
@@ -444,6 +446,20 @@ function motionClips(){
   }
  }
  return false;
+}
+// 칠한 픽셀 전체를 감싸는 볼록 껍질(꼭짓점 목록). 줄마다 가장 왼쪽·오른쪽 픽셀의 바깥 가장자리([x, x+1) × [y, y+1))를 모아
+// 단조 사슬로 껍질을 만든다. 아무것도 없으면 null.
+function inkHull(bitmap){
+ const g=bitmap.getContext('2d',{willReadFrequently:true}),d=g.getImageData(0,0,W,H).data,pts=[];
+ for(let y=0;y<H;y++){let lo=-1,hi=-1;const row=y*W*4;for(let x=0;x<W;x++){if(d[row+x*4+3]===0)continue;if(lo<0)lo=x;hi=x;}
+  if(lo<0)continue;pts.push([lo,y],[lo,y+1],[hi+1,y],[hi+1,y+1]);}
+ if(!pts.length)return null;
+ pts.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+ const cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+ const lower=[],upper=[];
+ for(const p of pts){while(lower.length>=2&&cross(lower[lower.length-2],lower[lower.length-1],p)<=0)lower.pop();lower.push(p);}
+ for(let i=pts.length-1;i>=0;i--){const p=pts[i];while(upper.length>=2&&cross(upper[upper.length-2],upper[upper.length-1],p)<=0)upper.pop();upper.push(p);}
+ return lower.slice(0,-1).concat(upper.slice(0,-1));
 }
 function inkBox(bitmap){
  const g=bitmap.getContext('2d',{willReadFrequently:true}),d=g.getImageData(0,0,W,H).data;
@@ -743,9 +759,9 @@ function motionExtent(){
  const L=loopSeconds(),us=clipTimes();let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
  const step=(q,px,py)=>{const r=q.rot*Math.PI/180,ox=(px-q.px)*q.sx,oy=(py-q.py)*q.sy;return [q.px+q.dx+ox*Math.cos(r)-oy*Math.sin(r),q.py+q.dy+ox*Math.sin(r)+oy*Math.cos(r)];};
  for(const l of layers){
-  if(!l.visible)continue;const box=inkBox(l.bitmap);if(!box)continue;
+  if(!l.visible)continue;const hull=inkHull(l.bitmap);if(!hull)continue;
   // 레이어 자체 변환(위치·크기·회전)까지 건 네 모서리
-  const lc=[[box.minX,box.minY],[box.maxX+1,box.minY],[box.minX,box.maxY+1],[box.maxX+1,box.maxY+1]].map(([x,y])=>step({px:W/2,py:H/2,dx:l.x,dy:l.y,sx:l.scale,sy:l.scale,rot:l.rotation},x,y));
+  const lc=hull.map(([x,y])=>step({px:W/2,py:H/2,dx:l.x,dy:l.y,sx:l.scale,sy:l.scale,rot:l.rotation},x,y));
   for(const u of us){const d=deltaFor(l,L*u);if(!d||d.hidden)continue;for(const [x,y] of lc){const inner=d.part?step(d.part,x,y):[x,y],[rx,ry]=step(d,inner[0],inner[1]);if(rx<minX)minX=rx;if(ry<minY)minY=ry;if(rx>maxX)maxX=rx;if(ry>maxY)maxY=ry;}}
  }
  return minX===Infinity?null:{minX,minY,maxX,maxY};

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, AppState, BackHandler, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, Image, useWindowDimensions, type ImageSourcePropType } from 'react-native';
+import { Alert, Animated, AppState, BackHandler, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, Image, useWindowDimensions, type ImageSourcePropType } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Constants from 'expo-constants';
@@ -16,8 +16,9 @@ import { Painter, CATALOG, type CopiedWork, type Tool } from './src/painter/pain
 import { isProPreset } from './src/motion-math';
 import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC as SPEC, STAGES, WEBP_TOOL_RULE, WEBP_ANIMATOR_URL, REQUIRED_EXTRAS } from './src/constants/kakao-spec';
 import { TRASH_DAYS, inTrash, trashExpired, captionText, createProject, doneCount, usesPro, droppedImagePaths, setIssues, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
-import { cutFile, deleteLocalImages, exportUri, imageUri, inspectStore, localFile, loadStore, readPickedFile, saveStore, type StoreReport } from './src/services/storage';
+import { cutFile, deleteLocalImages, exportUri, listExports, migrateExports, removeExports, imageUri, inspectStore, localFile, loadStore, readPickedFile, saveStore, type StoreReport } from './src/services/storage';
 import { restoreBackup, writeBackup } from './src/services/backup';
+import { isFullBackup, restoreFullBackup, writeFullBackup } from './src/services/full-backup';
 import { exportSet, decodeDataUrl, fileStamp, safeName, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinalsAsync, finalsKey, inspectImage } from './src/services/qa';
@@ -115,6 +116,8 @@ function Studio() {
   const [place, setPlace] = useState({ scale: 1, dx: 0, dy: 0 });
   const composer = useRef<Composer>(null);
   const [settings, setSettings] = useState(false);
+  // 설정 › 내보낸 파일(2026-10-06): 이미 다른 앱으로 보낸 사본(exports/)의 개수·크기. 사용자가 확인할 때만 지운다.
+  const [exportsConfirm, setExportsConfirm] = useState<{ name: string; bytes: number }[] | null>(null);
   // 첫 실행 사용 안내(2026-10-05): 그리기 → 움직이기 → 저장·내보내기 세 장. 새 사용자(세트 없음 · introDone 없음)에게 한 번만,
   // 건너뛰기·다 보기 모두 introDone 을 남겨 다시 뜨지 않는다. 설정의 '사용 안내 다시 보기'로 언제든 다시 연다(저장값은 바꾸지 않음).
   const [introStep, setIntroStep] = useState<number | null>(null);
@@ -214,6 +217,8 @@ function Studio() {
       const result = loadStore();
       current.current = result.store; setStore(result.store); setLoadError(''); setReport(result.report);
       if (result.recovered) setNotice('저장 파일 하나가 손상돼 다른 사본으로 열었어요. 손상된 파일도 지우지 않았어요.');
+      // 예전 빌드가 앱 폴더 바로 아래 둔 내보낸 사본을 exports/ 로 옮긴다(지우지 않는다, 실패해도 다음 실행에 다시).
+      migrateExports();
     } catch (e) {
       // Nothing is written or removed on this path: the files stay exactly as they are found.
       const found = (e as { report?: StoreReport }).report ?? safely(inspectStore);
@@ -432,6 +437,17 @@ function Studio() {
       setNotice(`${target.projectName} 백업 파일을 만들었어요(그림 ${made.images}개).${lost} 공유 창에서 드라이브·메일 등 앱 밖에 보관해 주세요.`);
     });
   }
+  // 전체 백업(2026-10-06): 모든 세트와 앱 설정을 파일 하나로. 구매 권한(PRO)은 담지 않는다.
+  function backupAll() {
+    void task('전체 백업 만드는 중…', async () => {
+      if (!current.current) return;
+      const made = writeFullBackup(current.current);
+      const lost = made.missing ? ` 그림 ${made.missing}개는 이 기기에 이미 없어 빼고 만들었어요.` : '';
+      if (!await Sharing.isAvailableAsync()) { setNotice(`전체 백업 파일을 만들었어요(세트 ${made.sets}개).${lost} 이 기기에서는 공유 창을 열 수 없어요.`); return; }
+      await Sharing.shareAsync(exportUri(made.path), { mimeType: 'application/zip', UTI: 'public.zip', dialogTitle: '전체 백업 보관' });
+      setNotice(`전체 백업 파일을 만들었어요(세트 ${made.sets}개 · 그림 ${made.images}개 · 설정 포함).${lost} 공유 창에서 드라이브·메일 등 앱 밖에 보관해 주세요. PRO 구매는 백업에 들어가지 않고 구매 복원으로 돌아와요.`);
+    });
+  }
   // 백업에서 되살리기: 파일을 고르면 먼저 전부 검사하고, 통과하면 새 세트로 들인다. 같은 세트가 있으면 덮어쓰지 않고 사본으로.
   function restoreFromBackup() {
     void task('백업 확인하는 중…', async () => {
@@ -439,7 +455,19 @@ function Studio() {
       const picker = require('expo-document-picker') as typeof import('expo-document-picker');
       const picked = await picker.getDocumentAsync({ type: ['application/zip', 'application/octet-stream', '*/*'], copyToCacheDirectory: true, multiple: false });
       if (picked.canceled || !picked.assets?.length) return;
-      const restored = restoreBackup(readPickedFile(picked.assets[0].uri), current.current?.projects ?? []);
+      const bytes = readPickedFile(picked.assets[0].uri);
+      // 전체 백업(2026-10-06)이면 세트·설정을 지금 것에 **더한다**. PRO 이용권은 파일에서 읽지 않는다(구매 복원으로만).
+      if (isFullBackup(bytes)) {
+        if (!current.current) return;
+        const all = restoreFullBackup(bytes, current.current);
+        commit(() => all.store);
+        setSettings(false); setHomeView('all');
+        const extra = [all.added.savedMotions && `보관한 움직임 ${all.added.savedMotions}개`, all.added.cutouts && `조각 ${all.added.cutouts}개`, all.added.userPalette && `내 색 ${all.added.userPalette}개`].filter(Boolean).join(' · ');
+        const full = all.skipped.savedMotions + all.skipped.cutouts + all.skipped.userPalette;
+        setNotice(`전체 백업에서 세트 ${all.sets}개를 되살렸어요(그림 ${all.images}개${all.copies ? `, 같은 세트 ${all.copies}개는 사본으로` : ''})${extra ? '. ' + extra + '도 더했어요' : ''}${full ? `. 보관 칸이 차서 ${full}개는 넣지 못했어요` : ''}. PRO는 구매 복원으로 다시 켜 주세요.`);
+        return;
+      }
+      const restored = restoreBackup(bytes, current.current?.projects ?? []);
       commit(s => ({ ...s, projects: [...s.projects, restored.project] }));
       setSettings(false); setHomeView('all');
       setNotice(`${restored.project.projectName} 세트를 되살렸어요(그림 ${restored.images}개)${restored.copy ? ' — 같은 세트가 있어 사본으로 넣었어요' : ''}.`);
@@ -1501,25 +1529,18 @@ function Studio() {
       <Action danger icon="delete-outline" title="세트 삭제" onPress={() => setConfirmDeleteId(managed.id)} />
     </Dialog>}
     {introStep !== null && (() => {
+      // 첫 실행 안내(2026-10-06 정리): 그림은 '장식 캐릭터'가 아니라 **실제 기능의 축소판**이다 — 표현 가이드의 선 그림 캐릭터를
+      // 캔버스·보드에 놓고, 앱의 선 아이콘·노랑 선택 표시로 그 쪽의 실제 버튼(펜·지우개·가져오기 / 효과 / 자동 저장·묶음·공유)을 보여 준다.
+      // 예전 종이 질감 입체 캐릭터(mascot-paper)·사진 같은 펜 그림은 쓰지 않는다. 문구는 실제 저장·공유 동작과 맞춘다.
       const steps = [
-        { icon: 'pencil-outline' as const, art: ASSET_SLOTS.homeHeroArtwork.source, title: '그리기', body: '새 세트를 만들고 칸을 눌러 그려요. 다 그리면 위의 저장을 눌러요. 저장한 칸은 보드에 바로 보여요.' },
-        { icon: 'motion-play-outline' as const, art: ASSET_SLOTS.proFeatureArtwork.source, title: '움직이기', body: `'움직이기' 탭에서 효과를 고르면 내 그림으로 바로 미리 봐요. 세기·속도도 바꿀 수 있어요. 무료 움직임 ${PRESETS.filter(x => !isProPreset(x.id)).length}종으로도 한 세트를 끝까지 만들 수 있어요.` },
-        { icon: 'export-variant' as const, art: ASSET_SLOTS.exportSuccessArtwork.source ?? ASSET_SLOTS.motionExampleArtwork.source, title: '저장·내보내기', body: '그린 칸은 기기 안에 저장돼요. 세트 화면의 내보내기에서 파일 묶음(ZIP)을 만들어 원하는 앱으로 보내요.' },
+        { icon: 'pencil-outline' as const, title: '그리기·가져오기', body: "세트의 칸을 눌러 손가락으로 그려요. 사진이나 그림은 홈의 '내 그림으로 시작'이나 그리기 화면의 더보기 › 그림 가져오기로 가져와요. 그리는 동안 자동으로 저장되고, 저장을 누르면 보드에 바로 올라가요." },
+        { icon: 'motion-play-outline' as const, title: '움직임 적용', body: `'움직이기' 탭에서 효과를 고르면 내 그림으로 바로 미리 봐요. 세기·속도도 바꿀 수 있어요. 무료 움직임 ${PRESETS.filter(x => !isProPreset(x.id)).length}종으로도 한 세트를 끝까지 만들 수 있어요.` },
+        { icon: 'export-variant' as const, title: '저장·내보내기', body: '그린 칸은 이 기기 안에만 저장돼요. 세트의 내보내기는 제출용 파일 묶음(ZIP)을, 그리기 화면의 이 칸 공유는 그 칸 하나(움직이면 GIF)를 만들어 고른 앱으로 보내요. 앱을 지우거나 기기를 바꾸기 전에는 설정 › 백업에서 백업 파일을 만들어 두세요.' },
       ];
       const step = steps[introStep]; const last = introStep === steps.length - 1;
       const finish = () => { setIntroStep(null); if (!store?.introDone) { try { commit(st => ({ ...st, introDone: true })); } catch { /* 저장 실패는 다음 실행에 다시 보일 뿐이다 */ } } };
-      // 시각 보완(2026-10-06): 글만 있던 창에 단계마다 그림 자리와 진행 점을 더한다. 그림은 에셋 자리에서만 받는다(새 자리·새 파일 없음):
-      // 그리기 = 홈 대표 그림(아직 없으면 큰 연필 표시) · 움직이기 = PRO 비교의 손 흔드는 그림 · 내보내기 = 내보내기 완료 그림(없으면 기본 캐릭터).
-      // 제작 그림이 자리에 들어오면 안내도 따라 바뀐다. 문구·버튼·저장 동작은 그대로다.
       return <Dialog title={`사용 안내 ${introStep + 1}/${steps.length}`} onClose={finish}>
-        <View testID="사용 안내 그림" style={{ height: 132, borderRadius: 16, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}>
-          {step.art ? <Image accessibilityIgnoresInvertColors source={step.art} style={{ width: 120, height: 108 }} resizeMode="contain" />
-            // 홈 대표 그림이 아직 없을 때: 그리기 도구 창의 펜 그림과 그 선 견본으로 '선을 긋는 펜'을 보여 준다(같은 파일, 새 에셋 없음).
-            : <View style={{ width: 220, height: 108 }}>
-              <Image accessibilityIgnoresInvertColors source={require('./assets/art/stroke-pen.png')} style={{ position: 'absolute', left: 4, top: 54, width: 160, height: 44 }} resizeMode="contain" />
-              <Image accessibilityIgnoresInvertColors source={require('./assets/art/tool-pen.png')} style={{ position: 'absolute', left: 145, top: 4, width: 42, height: 72, transform: [{ rotate: '200deg' }] }} resizeMode="contain" />
-            </View>}
-        </View>
+        <IntroArt step={introStep} />
         <View accessibilityLabel={`${steps.length}단계 중 ${introStep + 1}단계`} style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
           {steps.map((_, i) => <View key={i} style={{ width: i === introStep ? 20 : 8, height: 8, borderRadius: 4, backgroundColor: i === introStep ? C.accent : C.line, borderWidth: i === introStep ? 1 : 0, borderColor: C.accentLine }} />)}
         </View>
@@ -1602,12 +1623,35 @@ function Studio() {
         <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>사용 안내 다시 보기</Text>
         <Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="전체 백업 만들기" onPress={() => { setSettings(false); backupAll(); }}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+        <Glyph name="archive-arrow-down-outline" size={20} color={C.muted} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>전체 백업 만들기</Text>
+          <Text style={{ fontSize: 11, color: C.muted }}>모든 세트 · 색 · 보관한 움직임 · 조각 · 설정 (PRO 구매 제외)</Text>
+        </View>
+        <Glyph name="chevron-right" size={18} color={C.faint} />
+      </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="백업에서 되살리기" onPress={restoreFromBackup}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
         <Glyph name="archive-arrow-up-outline" size={20} color={C.muted} />
         <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>백업에서 되살리기</Text>
         <Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
+      {(() => {
+        const copies = settings ? safely(listExports) ?? [] : [];
+        if (!copies.length) return null;
+        const mb = copies.reduce((t, x) => t + x.bytes, 0) / 1048576;
+        return <Pressable accessibilityRole="button" accessibilityLabel={`내보낸 파일 ${copies.length}개`} onPress={() => { setSettings(false); setExportsConfirm(copies); }}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+          <Glyph name="folder-zip-outline" size={20} color={C.muted} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>내보낸 파일</Text>
+            <Text style={{ fontSize: 11, color: C.muted }}>{`보낸 뒤 앱에 남은 사본 ${copies.length}개 · ${mb < .1 ? '0.1MB 미만' : mb.toFixed(1) + 'MB'}`}</Text>
+          </View>
+          <Glyph name="chevron-right" size={18} color={C.faint} />
+        </Pressable>;
+      })()}
       <Pressable accessibilityRole="button" accessibilityLabel={'휴지통 ' + trashed.length + '개'} onPress={() => { setSettings(false); setTrashOpen(true); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
         <Glyph name="delete-restore" size={20} color={C.muted} />
@@ -1646,6 +1690,12 @@ function Studio() {
         <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: C.ink }}>PRO 이용</Text>
         <Glyph name="chevron-right" size={18} color={C.muted} />
       </Pressable>
+    </Dialog>}
+    {exportsConfirm && <Dialog title="내보낸 파일 정리" onClose={() => setExportsConfirm(null)}>
+      <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{`제출 묶음·백업·한 칸 공유를 만들 때 앱에 남은 사본 ${exportsConfirm.length}개예요. 지워도 세트·그림 원본은 그대로이고, 이미 다른 앱(드라이브·메신저 등)으로 보낸 파일도 그대로예요.`}</Text>
+      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>앱 안에만 있는 백업 파일은 지우면 되돌릴 수 없어요. 앱 밖에 보관했는지 먼저 확인해 주세요.</Text>
+      <Action danger icon="delete-outline" title="사본 지우기" onPress={() => { const done = removeExports(exportsConfirm.map(x => x.name)); setExportsConfirm(null); setNotice(`내보낸 사본 ${done.removed}개를 지웠어요. 세트·그림은 그대로예요.`); }} />
+      <Action title="그대로 두기" onPress={() => setExportsConfirm(null)} />
     </Dialog>}
     {contactFallback && <Dialog title="문의 이메일" onClose={() => setContactFallback(false)}>
       <Text>메일 앱을 열지 못했어요. 아래 주소를 길게 눌러 복사해 주세요.</Text>
@@ -1857,5 +1907,64 @@ function PaymentStatus({ payment, onRestore, onRetry }: { payment: Payment; onRe
         <Text style={{ fontSize: 13, fontWeight: '800', color: T.ink, textDecorationLine: 'underline' }}>{view.action === 'restore' ? '구매 복원' : '다시 시도'}</Text>
       </Pressable>}
     </View>
+  </View>;
+}
+
+// 첫 실행 안내의 그림 칸(2026-10-06). 표현 가이드 캐릭터(선 그림, 몸 안이 흰 표시용 그림)를 실제 화면 요소처럼 배치한다.
+// 새 그림 파일은 없다. 칩은 실제 버튼 이름 그대로다(펜·지우개·그림 가져오기 / 무료 효과 이름 / 자동 저장·파일 묶음·공유).
+const guideFigure = (id: string) => { for (const card of EXPRESSION_GUIDE.cards) for (const x of card.examples ?? []) if (x.id === id) return shownArt(x); return null; };
+function IntroChip({ icon, label, on }: { icon?: React.ComponentProps<typeof Glyph>['name']; label: string; on?: boolean }) {
+  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: on ? C.accent : C.paper, borderWidth: 1, borderColor: on ? C.accentBorder : C.line }}>
+    {!!icon && <Glyph name={icon} size={14} color={C.ink} />}
+    <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: C.ink }}>{label}</Text>
+  </View>;
+}
+function IntroCanvas({ id, size, lift }: { id: string; size: number; lift?: Animated.Value }) {
+  const art = guideFigure(id);
+  return <View style={{ width: size, height: size, borderRadius: 10, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+    {!!art && <Animated.Image accessibilityIgnoresInvertColors source={art} resizeMode="contain" style={{ width: size * .8, height: size * .8, transform: lift ? [{ translateY: lift }] : [] }} />}
+  </View>;
+}
+function IntroArt({ step }: { step: number }) {
+  // 움직임 쪽만 그림이 실제로 통통 뛴다(앱의 '통통'과 같은 느낌의 위아래 반복). 다른 쪽은 멈춘 그림이다.
+  const lift = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (step !== 1) return;
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(lift, { toValue: -8, duration: 280, useNativeDriver: true }),
+      Animated.timing(lift, { toValue: 0, duration: 320, useNativeDriver: true }),
+      Animated.delay(260),
+    ]));
+    loop.start();
+    return () => { loop.stop(); lift.setValue(0); };
+  }, [step, lift]);
+  const free = PRESETS.filter(p => !isProPreset(p.id));
+  const shown = [free.find(p => p.id === 'bounce'), ...free.filter(p => p.id !== 'bounce')].filter(Boolean).slice(0, 3) as typeof free;
+  return <View testID="사용 안내 그림" accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+    style={{ height: 136, borderRadius: 16, backgroundColor: C.surface2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 12 }}>
+    {step === 0 && <>
+      <IntroCanvas id="greeting-hello-wave" size={104} />
+      <View style={{ gap: 6 }}>
+        <IntroChip icon="pencil-outline" label="펜" on />
+        <IntroChip icon="eraser" label="지우개" />
+        <IntroChip icon="image-plus" label="그림 가져오기" />
+      </View>
+    </>}
+    {step === 1 && <>
+      <IntroCanvas id="greeting-excited-cheer" size={104} lift={lift} />
+      <View style={{ gap: 6 }}>
+        {shown.map((p, i) => <IntroChip key={p.id} label={p.label} on={i === 0} />)}
+      </View>
+    </>}
+    {step === 2 && <>
+      <View style={{ width: 104, flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+        {['greeting-hello-wave', 'greeting-like-thumb', 'greeting-excited-jump', 'greeting-like-content'].map(id => <IntroCanvas key={id} id={id} size={50} />)}
+      </View>
+      <View style={{ gap: 6 }}>
+        <IntroChip icon="content-save-outline" label="자동 저장" />
+        <IntroChip icon="folder-zip-outline" label="파일 묶음(ZIP)" on />
+        <IntroChip icon="share-variant" label="공유" />
+      </View>
+    </>}
   </View>;
 }

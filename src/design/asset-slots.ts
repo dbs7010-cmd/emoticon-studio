@@ -61,7 +61,8 @@ export const ASSET_SLOTS = {
   // 움직이기 효과 견본에 그림이 없을 때(빈 칸) 쓰는 기본 캐릭터.
   motionExampleArtwork: { aspectRatio: 1, display: '48×48 견본 칸 안 41×41 그림(86%)', sourceSize: '123(@3x) · 82 · 41 / 마스터 512', safeArea: '가운데 86% — 통통 위로 16%, 흔들기 ±9° 회전, 두근거리기 1.14배에서도 칸 안', background: 'transparent',
     // 최종 그림이 올 때까지 앱 기본 캐릭터. 그림이 있는 칸에서는 언제나 사용자의 그림이 먼저다(44.2차 규칙 그대로).
-    source: require('../../assets/art/mascot-paper.png') },
+    // 2026-10-06: 종이 질감 입체 캐릭터(mascot-paper, 예전 디자인)를 지금 앱의 선 그림 캐릭터(표현 가이드 '손 흔들며' 표시용)로 바꿨다.
+    source: require('../../assets/expression-guides/display/greeting-hello-wave.png') },
   // 내보내기에서 모든 칸이 완성됐을 때 요약 표면 오른쪽.
   exportSuccessArtwork: { aspectRatio: 1, display: '84×84', sourceSize: '252(@3x) · 168 · 84 / 마스터 1024', safeArea: '가운데 84%', background: 'transparent', source: null },
   // PRO 화면 위쪽 비교(App.tsx proSheet). 16:9 따뜻한 표면(폭 화면-32, 최대 높이 214, 안쪽 여백 14)은 앱이 그리고,

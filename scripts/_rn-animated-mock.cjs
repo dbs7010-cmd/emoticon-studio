@@ -16,6 +16,8 @@ module.exports = {
   timing: (value, { toValue }) => run(() => value.setValue(toValue)),
   spring: (value, { toValue }) => run(() => value.setValue(toValue)),
   parallel: list => run(() => list.forEach(a => a.start())),
+  sequence: list => run(() => list.forEach(a => a.start())),
+  delay: () => run(() => {}),
   // 끝없이 도는 견본은 검사에서 돌리지 않는다.
   loop: () => ({ start() {}, stop() {} }),
 };
