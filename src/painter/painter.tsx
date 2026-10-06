@@ -1387,8 +1387,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: Math.round(n * 20) / 20 })} show={MOTION_WORDS} />
         </> : <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>효과를 고르면 여기서 세기·속도를 바꿔요</Text>)}
       </View>}
-      {/* 캔버스 영역: 그리기 탭은 가운데, 움직이기 탭은 위(아래를 움직임 판이 쓴다). */}
-      <View testID="캔버스 영역" pointerEvents="box-none" style={{ flex: 1, padding: CANVAS_GAP, alignItems: 'center', justifyContent: tab === 'motion' ? 'flex-start' : 'center', backgroundColor: C.bg }}
+      {/* 캔버스 영역: 그리기 탭은 가운데, 움직이기 탭은 위(아래를 움직임 판이 쓴다).
+          더보기 메뉴는 이 영역 안에 열리므로, 열린 동안만 아래 판(dock, zIndex 20)보다 위로 올린다 — 움직이기 탭에서
+          판이 메뉴 아래쪽(그림 전체 크기·공유·검사)을 덮어 누를 수 없었다(2026-10-06 에뮬레이터). */}
+      <View testID="캔버스 영역" pointerEvents="box-none" style={{ flex: 1, padding: CANVAS_GAP, alignItems: 'center', justifyContent: tab === 'motion' ? 'flex-start' : 'center', backgroundColor: C.bg, zIndex: panel === 'more' ? 30 : 0 }}
         onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; const side = Math.floor(Math.min(w, h) - CANVAS_GAP * 2); if (side > 0 && side !== canvasSide) setCanvasSide(side); if (h > 0 && Math.round(h) !== canvasArea) setCanvasArea(Math.round(h)); if (w > 0 && Math.round(w) !== canvasWide) setCanvasWide(Math.round(w)); }}>
         {/* 캔버스 바깥 여백의 손가락(45.39): 두 손가락 톡 = 되돌리기, 세 손가락 톡 = 다시 실행. 캔버스 안(엔진)과 같은 약속이다 —
             작은 화면에서 종이 안에만 두 손가락을 올리기 불편하다는 신고. 캔버스 뒤에 깔려 있어 캔버스 위 손가락은 엔진이 받는다. */}

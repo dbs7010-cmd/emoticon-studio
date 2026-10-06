@@ -1,5 +1,5 @@
 import { KAKAO_STATIC_SPEC as SPEC } from '../constants/kakao-spec';
-import { MOTION_MATH_JS, LONG_MOTION_PRESETS, ENTRANCE_REST } from '../motion-math';
+import { MOTION_MATH_JS, LONG_MOTION_PRESETS, ENTRANCE_REST, ENTRANCE_EXIT } from '../motion-math';
 
 // Local-only Painter engine. Reference images are preview layers and never enter final export.
 export const canvasHtml = `<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>
@@ -365,7 +365,7 @@ function loopSeconds(){
  // 들어오고 머무는 효과(뿅·쓱·빼꼼 …)는 한 바퀴가 두 배다 — 짧으면 들어오자마자 다시 시작해 읽히지 않는다.
  return motion.preset&&LONG_PRESETS.indexOf(motion.preset)>=0?base*2:base;
 }
-var LONG_PRESETS=${JSON.stringify(LONG_MOTION_PRESETS)},ENTRANCE_REST=${JSON.stringify(ENTRANCE_REST)};
+var LONG_PRESETS=${JSON.stringify(LONG_MOTION_PRESETS)},ENTRANCE_REST=${JSON.stringify(ENTRANCE_REST)},ENTRANCE_EXIT=${JSON.stringify(ENTRANCE_EXIT)};
 function cyclesFor(speed){return Math.max(1,Math.min(4,Math.round((speed==null?.5:speed)*3)+1));}
 function wholeDelta(t){
  if(!motion||!motion.preset)return {px:W/2,py:H/2,dx:0,dy:0,sx:1,sy:1,rot:0};
@@ -411,29 +411,35 @@ function deltaFor(l,t){
  return d;
 }
 // Does the movement push the drawing outside the picture at any point in the loop?
+// 잘림 판단·안내선이 보는 시점(2026-10-06): 내보내기 프레임은 늘 한 바퀴의 i/n(n=2~MAX_FRAMES) 자리에 놓이므로 그 자리를 모두 본다.
+// 예전에는 12곳만 봐서 쾅처럼 짧게 튀는 효과의 끝을 놓쳤고, '칸 안에 맞추기'가 잘림이 남은 배율에서 멈췄다(안내선·내보내기 GIF 는 여전히 칸 밖).
+let clipUs=null;
+function clipTimes(){if(clipUs)return clipUs;const set=new Set([0]);for(let n=2;n<=MAX_FRAMES;n++)for(let i=1;i<n;i++)set.add(Math.round(i/n*1e9)/1e9);return clipUs=[...set].sort((a,b)=>a-b);}
 function motionClips(){
  if(!motion)return false;
- const L=loopSeconds(),steps=12;
+ const L=loopSeconds(),us=clipTimes();
  // 밖에서 들어오는 효과는 들어오는 동안 밖에 있는 것이 정상이다. 들어온 뒤(머무는 동안)만 본다. 빼꼼은 늘 일부가 가려진다.
  const rest=motion.preset&&Object.prototype.hasOwnProperty.call(ENTRANCE_REST,motion.preset)?ENTRANCE_REST[motion.preset]:0;
+ const exit=motion.preset&&ENTRANCE_EXIT[motion.preset]||1;
  for(const l of layers){
   if(!l.visible)continue;
   const box=inkBox(l.bitmap);
   if(!box)continue;
-  for(let i=0;i<steps;i++){
+  for(const u of us){
    const part=(motion.parts||[]).some(pp=>pp.layerId===l.id&&!pp.off);
    if(rest===null&&!part)continue;
-   if(rest&&i/steps<rest&&!part)continue;
-   const d=deltaFor(l,L*i/steps);
+   if(rest&&(u<rest||u>=exit)&&!part)continue;
+   const d=deltaFor(l,L*u);
    if(!d||d.hidden)continue;
    // 레이어 자체 변환(위치·크기·회전)을 먼저 건다(2026-10-05: 예전에는 빠져 있어, 레이어를 옮기거나 줄여도 잘림 판단이 바뀌지 않았다).
    const lt={px:W/2,py:H/2,dx:l.x,dy:l.y,sx:l.scale,sy:l.scale,rot:l.rotation},lstep=(q,px,py)=>{const r=q.rot*Math.PI/180,ox=(px-q.px)*q.sx,oy=(py-q.py)*q.sy;return [q.px+q.dx+ox*Math.cos(r)-oy*Math.sin(r),q.py+q.dy+ox*Math.sin(r)+oy*Math.cos(r)];};
-   const corners=[[box.minX,box.minY],[box.maxX,box.minY],[box.minX,box.maxY],[box.maxX,box.maxY]].map(([x,y])=>lstep(lt,x,y));
+   // 칠해진 픽셀은 [min, max+1) 을 차지한다 — max 로 재면 1px 모자라 가장자리 줄에 그림이 남았다(2026-10-06).
+   const corners=[[box.minX,box.minY],[box.maxX+1,box.minY],[box.minX,box.maxY+1],[box.maxX+1,box.maxY+1]].map(([x,y])=>lstep(lt,x,y));
    for(const [x,y] of corners){
     // 그릴 때와 같은 순서: 부분(있으면) → 전체. 점 p 는 축 기준으로 크기 → 회전 → 이동.
     const step=(q,px,py)=>{const r=q.rot*Math.PI/180,ox=(px-q.px)*q.sx,oy=(py-q.py)*q.sy;return [q.px+q.dx+ox*Math.cos(r)-oy*Math.sin(r),q.py+q.dy+ox*Math.sin(r)+oy*Math.cos(r)];};
     const inner=d.part?step(d.part,x,y):[x,y],[rx,ry]=step(d,inner[0],inner[1]);
-    if(rx<0||ry<0||rx>W-1||ry>H-1)return true;
+    if(rx<0||ry<0||rx>W||ry>H)return true;
    }
   }
  }
@@ -734,13 +740,13 @@ function drawTrail(g){
 let extentCache=null;
 function motionExtent(){
  if(!motion)return null;
- const L=loopSeconds(),steps=24;let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+ const L=loopSeconds(),us=clipTimes();let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
  const step=(q,px,py)=>{const r=q.rot*Math.PI/180,ox=(px-q.px)*q.sx,oy=(py-q.py)*q.sy;return [q.px+q.dx+ox*Math.cos(r)-oy*Math.sin(r),q.py+q.dy+ox*Math.sin(r)+oy*Math.cos(r)];};
  for(const l of layers){
   if(!l.visible)continue;const box=inkBox(l.bitmap);if(!box)continue;
   // 레이어 자체 변환(위치·크기·회전)까지 건 네 모서리
-  const lc=[[box.minX,box.minY],[box.maxX,box.minY],[box.minX,box.maxY],[box.maxX,box.maxY]].map(([x,y])=>step({px:W/2,py:H/2,dx:l.x,dy:l.y,sx:l.scale,sy:l.scale,rot:l.rotation},x,y));
-  for(let i=0;i<steps;i++){const d=deltaFor(l,L*i/steps);if(!d||d.hidden)continue;for(const [x,y] of lc){const inner=d.part?step(d.part,x,y):[x,y],[rx,ry]=step(d,inner[0],inner[1]);if(rx<minX)minX=rx;if(ry<minY)minY=ry;if(rx>maxX)maxX=rx;if(ry>maxY)maxY=ry;}}
+  const lc=[[box.minX,box.minY],[box.maxX+1,box.minY],[box.minX,box.maxY+1],[box.maxX+1,box.maxY+1]].map(([x,y])=>step({px:W/2,py:H/2,dx:l.x,dy:l.y,sx:l.scale,sy:l.scale,rot:l.rotation},x,y));
+  for(const u of us){const d=deltaFor(l,L*u);if(!d||d.hidden)continue;for(const [x,y] of lc){const inner=d.part?step(d.part,x,y):[x,y],[rx,ry]=step(d,inner[0],inner[1]);if(rx<minX)minX=rx;if(ry<minY)minY=ry;if(rx>maxX)maxX=rx;if(ry>maxY)maxY=ry;}}
  }
  return minX===Infinity?null:{minX,minY,maxX,maxY};
 }
@@ -751,7 +757,7 @@ function drawExtent(g){
  g.save();g.setLineDash([6,5]);g.lineWidth=1.5;g.strokeStyle='rgba(42,35,32,.45)';
  const x0=Math.max(1,e.minX),y0=Math.max(1,e.minY),x1=Math.min(W-1,e.maxX),y1=Math.min(H-1,e.maxY);
  g.strokeRect(x0,y0,x1-x0,y1-y0);g.setLineDash([]);g.fillStyle='rgba(214,69,65,.85)';
- if(e.minX<0)g.fillRect(0,0,4,H);if(e.maxX>W-1)g.fillRect(W-4,0,4,H);if(e.minY<0)g.fillRect(0,0,W,4);if(e.maxY>H-1)g.fillRect(0,H-4,W,4);
+ if(e.minX<0)g.fillRect(0,0,4,H);if(e.maxX>W)g.fillRect(W-4,0,4,H);if(e.minY<0)g.fillRect(0,0,W,4);if(e.maxY>H)g.fillRect(0,H-4,W,4);
  g.restore();
 }
 // 그림 전체 크기(2026-10-05): 모든 그림 레이어를 칸 가운데를 축으로 함께 키우거나 줄인다. 레이어 사이 위치·비율이 그대로이고,

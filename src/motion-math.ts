@@ -20,6 +20,9 @@ export const LONG_MOTION_PRESETS: readonly MotionPreset[] = ['pop', 'slide', 'pe
 export const loopScale = (preset?: MotionPreset | null): number => preset && LONG_MOTION_PRESETS.includes(preset) ? 2 : 1;
 // 일부러 캔버스 밖에서 들어오는 효과. '칸 밖으로 나가요' 경고는 들어온 뒤(머무는 동안)만 본다. 빼꼼은 늘 일부가 가려진다.
 export const ENTRANCE_REST: Partial<Record<MotionPreset, number | null>> = { slide: .5, drop: .55, peek: null };
+// 머문 뒤 일부러 칸 밖으로 나가는 구간의 시작(쓱은 .88 부터 들어온 쪽으로 빠진다). 경고는 이 구간도 보지 않는다 —
+// 잘림 판단이 한 바퀴의 모든 내보내기 프레임 시점을 보게 된 뒤(2026-10-06) 이 구간이 잡혀 쓱이 늘 '칸 밖' 경고를 받았다.
+export const ENTRANCE_EXIT: Partial<Record<MotionPreset, number>> = { slide: .88 };
 
 // ── 엔진에 들어가는 글자 ─────────────────────────────────────────────────────────────
 export const MOTION_MATH_JS = `
