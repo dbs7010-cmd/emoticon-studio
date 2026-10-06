@@ -41,12 +41,12 @@ export function buildFullBackup(store: Store, now = new Date()): { bytes: Uint8A
   return { bytes: buildZip(entries), sets: projects.length, images: present.length, missing };
 }
 
-export function writeFullBackup(store: Store, now = new Date()): { path: string; sets: number; images: number; missing: number } {
+export function writeFullBackup(store: Store, now = new Date()): { path: string; sets: number; images: number; missing: number; trashed: number } {
   const { bytes, sets, images, missing } = buildFullBackup(store, now);
   const file = exportFile(`all-backup-${fileStamp(now)}.zip`);
   file.write(bytes);
   readFullBackup(file.bytesSync());   // 방금 쓴 것이 되살릴 수 있는 파일인지 바로 확인한다
-  return { path: file.name, sets, images, missing: missing.length };
+  return { path: file.name, sets, images, missing: missing.length, trashed: store.projects.filter(p => p.deletedAt).length };
 }
 
 export const isFullBackup = (archive: Uint8Array) => { try { return readZip(archive).some(e => e.name === 'full-backup.json'); } catch { return false; } };
@@ -80,20 +80,23 @@ export function readFullBackup(archive: Uint8Array): FullBackupContents {
   return { settings: settingsOf(checked), projects: checked.projects, images, createdAt: typeof meta.createdAt === 'string' ? meta.createdAt : '' };
 }
 
-export type FullRestore = { store: Store; sets: number; copies: number; images: number; added: { savedMotions: number; cutouts: number; userPalette: number }; skipped: { savedMotions: number; cutouts: number; userPalette: number } };
+export type FullRestore = {
+  store: Store; sets: number; copies: number; images: number;
+  added: { savedMotions: number; cutouts: number; userPalette: number; palette: number };
+  // 보관 칸이 차서 넣지 못한 것. 조용히 버리지 않고 부르는 쪽이 사용자에게 말한다.
+  skipped: { savedMotions: number; cutouts: number; userPalette: number; palette: number };
+  // 지금 기기에 이미 정해 둔 값이 있어 백업 값으로 바꾸지 않은 설정(이름).
+  kept: string[];
+};
 // 검사를 통과한 전체 백업을 지금 저장소에 **더한다**. 돌려주는 store 를 저장하는 일은 부르는 쪽이 한다(commit).
 // 지금 저장소의 이용권·검수 해제·세트·설정은 그대로 둔다.
+// 순서(2026-10-07): ① 무엇을 들일지 먼저 정하고 ② 들이는 것이 가리키는 그림만 새 이름으로 쓴다(못 넣은 조각의 그림은 쓰지 않음)
+// ③ 쓰는 도중 실패하면 이번에 쓴 새 파일만 지우고 오류를 낸다 — 기존 작품·파일은 처음부터 건드리지 않는다.
 export function restoreFullBackup(archive: Uint8Array, current: Store, now = new Date()): FullRestore {
   const { settings, projects, images } = readFullBackup(archive);
-  ensureRoot();
   const names = new Map<string, string>();
   let n = 0;
-  for (const [path, data] of images) {
-    const ext = path.split('.').pop();
-    const fresh = `image-${now.getTime()}-a${(n++).toString(36)}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    localFile(fresh).write(data);
-    names.set(path, fresh);
-  }
+  for (const path of images.keys()) names.set(path, `image-${now.getTime()}-a${(n++).toString(36)}-${Math.random().toString(36).slice(2, 8)}.${path.split('.').pop()}`);
   const stamp = now.toISOString();
   const ids = new Set(current.projects.map(p => p.id)), taken = new Set(current.projects.map(p => p.projectName));
   let copies = 0;
@@ -108,17 +111,31 @@ export function restoreFullBackup(archive: Uint8Array, current: Store, now = new
     ids.add(id);
     return { ...restored, id, projectName: name, updatedAt: stamp, deletedAt: undefined };
   });
-  // 목록: 지금 것을 앞에 그대로 두고, 없는 것만 상한까지 뒤에 붙인다.
+  // 목록: 지금 것을 앞에 그대로 두고, 없는 것만 상한까지 뒤에 붙인다. 못 넣은 개수는 센다.
   const merge = <T,>(mine: T[] | undefined, theirs: T[] | undefined, key: (x: T) => string, cap: number) => {
-    const out = [...(mine ?? [])], seen = new Set(out.map(key));
-    let added = 0, skipped = 0;
-    for (const x of theirs ?? []) { if (seen.has(key(x))) continue; if (out.length >= cap) { skipped++; continue; } out.push(x); seen.add(key(x)); added++; }
-    return { out, added, skipped };
+    const out = [...(mine ?? [])], seen = new Set(out.map(key)), fresh: T[] = [];
+    let skipped = 0;
+    for (const x of theirs ?? []) { if (seen.has(key(x))) continue; if (out.length >= cap) { skipped++; continue; } out.push(x); seen.add(key(x)); fresh.push(x); }
+    return { out, fresh, added: fresh.length, skipped };
   };
   const motions = merge(current.savedMotions, settings.savedMotions, m => m.id, CAP.savedMotions);
   const cutouts = merge(current.cutouts, (settings.cutouts ?? []).map(c => remap(c, names)), c => c.id, CAP.cutouts);
   const userPalette = merge(current.userPalette, settings.userPalette, c => c.toUpperCase(), CAP.userPalette);
   const palette = merge(current.palette, settings.palette, c => c.toUpperCase(), CAP.palette);
+  const kept: string[] = [];
+  if (current.paperTexture !== undefined && settings.paperTexture !== undefined && current.paperTexture !== settings.paperTexture) kept.push('종이 질감');
+  if (current.favoriteBrushes && settings.favoriteBrushes && current.favoriteBrushes.join() !== settings.favoriteBrushes.join()) kept.push('즐겨찾기 브러시');
+  // 들이는 세트·조각이 가리키는 그림만 쓴다.
+  const back = new Map([...names].map(([from, to]) => [to, from]));
+  const needed = [...storeImagePaths({ version: 1, revision: 1, projects: incoming, cutouts: cutouts.fresh })].filter(path => back.has(path));
+  ensureRoot();
+  const written: string[] = [];
+  try {
+    for (const path of needed) { localFile(path).write(images.get(back.get(path)!)!); written.push(path); }
+  } catch (e) {
+    for (const path of written) { try { localFile(path).delete(); } catch { /* 다음 정리에서 다시 */ } }
+    throw new Error('백업의 그림을 기기에 쓰지 못했어요(저장 공간을 확인해 주세요). 기존 작품은 그대로예요.' + (e instanceof Error ? ' ' + e.message : ''));
+  }
   const store: Store = {
     ...current,
     projects: [...current.projects, ...incoming],
@@ -131,8 +148,8 @@ export function restoreFullBackup(archive: Uint8Array, current: Store, now = new
     introDone: current.introDone || settings.introDone || undefined,
   };
   // 이용권·검수 해제는 지금 기기의 값 그대로다(...current). 백업의 값은 readFullBackup 에서 이미 버려졌다.
-  return { store, sets: incoming.length, copies, images: images.size,
-    added: { savedMotions: motions.added, cutouts: cutouts.added, userPalette: userPalette.added },
-    skipped: { savedMotions: motions.skipped, cutouts: cutouts.skipped, userPalette: userPalette.skipped } };
+  return { store, sets: incoming.length, copies, images: written.length,
+    added: { savedMotions: motions.added, cutouts: cutouts.added, userPalette: userPalette.added, palette: palette.added },
+    skipped: { savedMotions: motions.skipped, cutouts: cutouts.skipped, userPalette: userPalette.skipped, palette: palette.skipped },
+    kept };
 }
-

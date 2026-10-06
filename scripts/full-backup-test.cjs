@@ -4,12 +4,13 @@ const assert = require('node:assert/strict');
 const { loader } = require('./load-ts.cjs');
 
 const files = new Map();
+let failWrites = null;   // 숫자면 그만큼 쓴 뒤 실패(쓰기 도중 저장 공간 부족 흉내)
 class Directory { constructor(...parts) { this.uri = parts.map(p => p.uri ?? p).join('/'); } create() {} }
 class File {
   constructor(...parts) { this.uri = parts.map(p => p.uri ?? p).join('/'); }
   get name() { return this.uri.split('/').pop(); }
   get exists() { return files.has(this.uri); }
-  write(data) { files.set(this.uri, data); }
+  write(data) { if (failWrites !== null && failWrites-- <= 0) throw new Error('디스크 가득'); files.set(this.uri, data); }
   textSync() { return files.get(this.uri); }
   bytesSync() { return files.get(this.uri); }
   delete() { files.delete(this.uri); }
@@ -96,6 +97,29 @@ const full = { ...mine, savedMotions: Array.from({ length: 12 }, (_, i) => ({ id
 const r3 = restoreFullBackup(archive, full);
 assert.equal(r3.store.savedMotions.length, 12); assert.equal(r3.skipped.savedMotions, 1);
 
+// ── 수량 제한·지킨 설정은 조용히 넘어가지 않는다(2026-10-07) ─────────────────────────────────────
+assert.equal(r2.kept.join(), '종이 질감,즐겨찾기 브러시', '지금 값을 지킨 설정을 이름으로 알려 준다');
+const crowded = { version: 1, revision: 3, projects: [],
+  palette: ['#000001', '#000002', '#000003', '#000004', '#000005', '#000006', '#000007', '#000008'],
+  cutouts: Array.from({ length: 40 }, (_, i) => ({ id: 'k' + i, name: 'k' + i, image: put('image-k' + i + '.png', 'k' + i) })) };
+const filesBefore = files.size;
+const r5 = restoreFullBackup(archive, crowded);
+assert.equal(r5.skipped.palette, 2, '최근 색이 8개로 찼으면 못 넣은 2개를 센다');
+assert.equal(r5.skipped.cutouts, 1, '조각 40개가 찼으면 못 넣은 1개를 센다');
+assert.equal(r5.store.cutouts.length, 40);
+assert.equal(files.size - filesBefore, r5.images, '쓴 그림 수 = 보고한 그림 수');
+assert.equal(r5.images, 2, '세트 두 개의 그림만 쓴다 — 넣지 못한 조각의 그림(1개)은 쓰지 않는다');
+const restoredCutPaths = [...storeImagePaths(r5.store)];
+for (const [uri] of files) { const name = uri.split('/').pop(); if (name.startsWith('image-') && !uri.includes('/exports/') && !restoredCutPaths.includes(name) && !/^image-(a1|b1|t1|cut-1|kd+).png$/.test(name) && !storeImagePaths(r1.store).has(name) && !storeImagePaths(r2.store).has(name) && !storeImagePaths(r3.store).has(name)) assert.fail('못 넣은 조각의 그림이 남았다: ' + name); }
+
+// ── 쓰는 도중 실패: 이번에 쓴 새 파일만 지우고, 지금 저장소·기존 파일은 그대로 ────────────────────────
+const snapshot = JSON.stringify(mine), filesAt = new Map(files);
+failWrites = 1;
+assert.throws(() => restoreFullBackup(archive, mine), /기존 작품은 그대로예요/);
+failWrites = null;
+assert.equal(JSON.stringify(mine), snapshot, '지금 저장소 객체는 바뀌지 않는다');
+assert.deepEqual([...files.keys()].sort(), [...filesAt.keys()].sort(), '실패하면 이번에 쓴 그림을 남기지 않고, 원래 있던 파일은 하나도 없어지지 않는다');
+
 // ── 고친 파일: 이용권을 끼워 넣어도 읽지 않는다 ─────────────────────────────────────────────────
 const entries = readZip(archive);
 const tampered = entries.map(e => e.name === 'full-backup.json'
@@ -115,4 +139,4 @@ assert.equal(files.size, before, '거절하면 그림을 하나도 쓰지 않는
 assert.throws(() => readFullBackup(files.get(exportUri(made.path)) ?? buildZip([{ name: 'backup.json', data: new Uint8Array([123, 125]) }])), /전체 백업 파일이 아니에요|백업/);
 assert.equal(isFullBackup(buildZip([{ name: 'backup.json', data: new Uint8Array([123, 125]) }])), false, '세트 백업은 전체 백업이 아니다');
 
-console.log('PASS: full backup — every live set + settings (palettes, saved motions, cutouts, favourite brushes, paper, guide) in one file; never carries PRO entitlement or review unlock (even if injected); restore adds without overwriting (sets as copies, lists merged under caps, single settings only when unset); damaged or incomplete files write nothing');
+console.log('PASS: full backup — caps and kept settings are counted and reported, skipped cutouts leave no files, a failed write removes only its own new files; every live set + settings (palettes, saved motions, cutouts, favourite brushes, paper, guide) in one file; never carries PRO entitlement or review unlock (even if injected); restore adds without overwriting (sets as copies, lists merged under caps, single settings only when unset); damaged or incomplete files write nothing');

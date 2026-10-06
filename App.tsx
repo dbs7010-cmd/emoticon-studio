@@ -118,6 +118,8 @@ function Studio() {
   const [settings, setSettings] = useState(false);
   // 설정 › 내보낸 파일(2026-10-06): 이미 다른 앱으로 보낸 사본(exports/)의 개수·크기. 사용자가 확인할 때만 지운다.
   const [exportsConfirm, setExportsConfirm] = useState<{ name: string; bytes: number }[] | null>(null);
+  // 전체 백업에서 되살린 결과(2026-10-07): 들어온 것 · 보관 칸이 차서 못 넣은 것 · 지금 값을 지킨 설정 · 백업에 없는 것을 한 창에서 말한다.
+  const [restoreReport, setRestoreReport] = useState<{ done: string[]; missed: string[]; kept: string[] } | null>(null);
   // 첫 실행 사용 안내(2026-10-05): 그리기 → 움직이기 → 저장·내보내기 세 장. 새 사용자(세트 없음 · introDone 없음)에게 한 번만,
   // 건너뛰기·다 보기 모두 introDone 을 남겨 다시 뜨지 않는다. 설정의 '사용 안내 다시 보기'로 언제든 다시 연다(저장값은 바꾸지 않음).
   const [introStep, setIntroStep] = useState<number | null>(null);
@@ -445,7 +447,7 @@ function Studio() {
       const lost = made.missing ? ` 그림 ${made.missing}개는 이 기기에 이미 없어 빼고 만들었어요.` : '';
       if (!await Sharing.isAvailableAsync()) { setNotice(`전체 백업 파일을 만들었어요(세트 ${made.sets}개).${lost} 이 기기에서는 공유 창을 열 수 없어요.`); return; }
       await Sharing.shareAsync(exportUri(made.path), { mimeType: 'application/zip', UTI: 'public.zip', dialogTitle: '전체 백업 보관' });
-      setNotice(`전체 백업 파일을 만들었어요(세트 ${made.sets}개 · 그림 ${made.images}개 · 설정 포함).${lost} 공유 창에서 드라이브·메일 등 앱 밖에 보관해 주세요. PRO 구매는 백업에 들어가지 않고 구매 복원으로 돌아와요.`);
+      setNotice(`전체 백업 파일을 만들었어요(세트 ${made.sets}개 · 그림 ${made.images}개 · 설정 포함${made.trashed ? ` · 휴지통 세트 ${made.trashed}개 제외` : ''}).${lost} 공유 창에서 드라이브·메일 등 앱 밖에 보관해 주세요. PRO 구매는 백업에 들어가지 않고 구매 복원으로 돌아와요.`);
     });
   }
   // 백업에서 되살리기: 파일을 고르면 먼저 전부 검사하고, 통과하면 새 세트로 들인다. 같은 세트가 있으면 덮어쓰지 않고 사본으로.
@@ -459,15 +461,22 @@ function Studio() {
       // 전체 백업(2026-10-06)이면 세트·설정을 지금 것에 **더한다**. PRO 이용권은 파일에서 읽지 않는다(구매 복원으로만).
       if (isFullBackup(bytes)) {
         if (!current.current) return;
-        const all = restoreFullBackup(bytes, current.current);
+        let all;
+        try { all = restoreFullBackup(bytes, current.current); }
+        catch (e) { throw new Error(userMessage(e) + ' 기존 작품·설정은 바뀌지 않았어요.'); }
         commit(() => all.store);
         setSettings(false); setHomeView('all');
-        const extra = [all.added.savedMotions && `보관한 움직임 ${all.added.savedMotions}개`, all.added.cutouts && `조각 ${all.added.cutouts}개`, all.added.userPalette && `내 색 ${all.added.userPalette}개`].filter(Boolean).join(' · ');
-        const full = all.skipped.savedMotions + all.skipped.cutouts + all.skipped.userPalette;
-        setNotice(`전체 백업에서 세트 ${all.sets}개를 되살렸어요(그림 ${all.images}개${all.copies ? `, 같은 세트 ${all.copies}개는 사본으로` : ''})${extra ? '. ' + extra + '도 더했어요' : ''}${full ? `. 보관 칸이 차서 ${full}개는 넣지 못했어요` : ''}. PRO는 구매 복원으로 다시 켜 주세요.`);
+        const count = (n: number, what: string) => n ? [`${what} ${n}개`] : [];
+        setRestoreReport({
+          done: [`세트 ${all.sets}개(그림 ${all.images}개)${all.copies ? ` — 같은 세트 ${all.copies}개는 '(복원)' 사본으로` : ''}`, ...count(all.added.savedMotions, '보관한 움직임'), ...count(all.added.cutouts, '조각'), ...count(all.added.userPalette, '내 색'), ...count(all.added.palette, '최근 색')],
+          missed: [...count(all.skipped.savedMotions, '보관한 움직임(최대 12개)'), ...count(all.skipped.cutouts, '조각(최대 40개)'), ...count(all.skipped.userPalette, '내 색(최대 48개)'), ...count(all.skipped.palette, '최근 색(최대 8개)')],
+          kept: all.kept,
+        });
         return;
       }
-      const restored = restoreBackup(bytes, current.current?.projects ?? []);
+      let restored;
+      try { restored = restoreBackup(bytes, current.current?.projects ?? []); }
+      catch (e) { throw new Error(userMessage(e) + ' 기존 작품은 바뀌지 않았어요.'); }
       commit(s => ({ ...s, projects: [...s.projects, restored.project] }));
       setSettings(false); setHomeView('all');
       setNotice(`${restored.project.projectName} 세트를 되살렸어요(그림 ${restored.images}개)${restored.copy ? ' — 같은 세트가 있어 사본으로 넣었어요' : ''}.`);
@@ -1690,6 +1699,13 @@ function Studio() {
         <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: C.ink }}>PRO 이용</Text>
         <Glyph name="chevron-right" size={18} color={C.muted} />
       </Pressable>
+    </Dialog>}
+    {restoreReport && <Dialog title="전체 백업에서 되살렸어요" onClose={() => setRestoreReport(null)}>
+      {restoreReport.done.map(line => <Text key={line} style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{'· ' + line}</Text>)}
+      {!!restoreReport.missed.length && <Text style={{ fontSize: 13, lineHeight: 19, color: C.ink }}>{'보관 칸이 차서 넣지 못했어요: ' + restoreReport.missed.join(', ') + '. 지금 것을 정리한 뒤 같은 파일로 다시 되살리면 들어와요(세트는 사본이 하나 더 생겨요).'}</Text>}
+      {!!restoreReport.kept.length && <Text style={{ fontSize: 13, lineHeight: 19, color: C.ink }}>{'이 기기에서 정해 둔 ' + restoreReport.kept.join('·') + '은(는) 바꾸지 않았어요.'}</Text>}
+      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>PRO 구매는 백업에 들어가지 않아요. 구매했다면 PRO 화면의 구매 복원으로 다시 켜 주세요. 휴지통에 있던 세트는 백업에 없어요.</Text>
+      <Action primary title="확인" onPress={() => setRestoreReport(null)} />
     </Dialog>}
     {exportsConfirm && <Dialog title="내보낸 파일 정리" onClose={() => setExportsConfirm(null)}>
       <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{`제출 묶음·백업·한 칸 공유를 만들 때 앱에 남은 사본 ${exportsConfirm.length}개예요. 지워도 세트·그림 원본은 그대로이고, 이미 다른 앱(드라이브·메신저 등)으로 보낸 파일도 그대로예요.`}</Text>
