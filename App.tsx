@@ -1502,13 +1502,22 @@ function Studio() {
     </Dialog>}
     {introStep !== null && (() => {
       const steps = [
-        { icon: 'pencil-outline' as const, title: '그리기', body: '새 세트를 만들고 칸을 눌러 그려요. 다 그리면 위의 저장을 눌러요. 저장한 칸은 보드에 바로 보여요.' },
-        { icon: 'motion-play-outline' as const, title: '움직이기', body: `'움직이기' 탭에서 효과를 고르면 내 그림으로 바로 미리 봐요. 세기·속도도 바꿀 수 있어요. 무료 움직임 ${PRESETS.filter(x => !isProPreset(x.id)).length}종으로도 한 세트를 끝까지 만들 수 있어요.` },
-        { icon: 'export-variant' as const, title: '저장·내보내기', body: '그린 칸은 기기 안에 저장돼요. 세트 화면의 내보내기에서 파일 묶음(ZIP)을 만들어 원하는 앱으로 보내요.' },
+        { icon: 'pencil-outline' as const, art: ASSET_SLOTS.homeHeroArtwork.source, title: '그리기', body: '새 세트를 만들고 칸을 눌러 그려요. 다 그리면 위의 저장을 눌러요. 저장한 칸은 보드에 바로 보여요.' },
+        { icon: 'motion-play-outline' as const, art: ASSET_SLOTS.proFeatureArtwork.source, title: '움직이기', body: `'움직이기' 탭에서 효과를 고르면 내 그림으로 바로 미리 봐요. 세기·속도도 바꿀 수 있어요. 무료 움직임 ${PRESETS.filter(x => !isProPreset(x.id)).length}종으로도 한 세트를 끝까지 만들 수 있어요.` },
+        { icon: 'export-variant' as const, art: ASSET_SLOTS.exportSuccessArtwork.source ?? ASSET_SLOTS.motionExampleArtwork.source, title: '저장·내보내기', body: '그린 칸은 기기 안에 저장돼요. 세트 화면의 내보내기에서 파일 묶음(ZIP)을 만들어 원하는 앱으로 보내요.' },
       ];
       const step = steps[introStep]; const last = introStep === steps.length - 1;
       const finish = () => { setIntroStep(null); if (!store?.introDone) { try { commit(st => ({ ...st, introDone: true })); } catch { /* 저장 실패는 다음 실행에 다시 보일 뿐이다 */ } } };
+      // 시각 보완(2026-10-06): 글만 있던 창에 단계마다 그림 자리와 진행 점을 더한다. 그림은 에셋 자리에서만 받는다(새 자리·새 파일 없음):
+      // 그리기 = 홈 대표 그림(아직 없으면 큰 연필 표시) · 움직이기 = PRO 비교의 손 흔드는 그림 · 내보내기 = 내보내기 완료 그림(없으면 기본 캐릭터).
+      // 제작 그림이 자리에 들어오면 안내도 따라 바뀐다. 문구·버튼·저장 동작은 그대로다.
       return <Dialog title={`사용 안내 ${introStep + 1}/${steps.length}`} onClose={finish}>
+        <View testID="사용 안내 그림" style={{ height: 132, borderRadius: 16, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}>
+          {step.art ? <Image accessibilityIgnoresInvertColors source={step.art} style={{ width: 120, height: 108 }} resizeMode="contain" /> : <Glyph name={step.icon} size={56} color={C.ink} />}
+        </View>
+        <View accessibilityLabel={`${steps.length}단계 중 ${introStep + 1}단계`} style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
+          {steps.map((_, i) => <View key={i} style={{ width: i === introStep ? 20 : 8, height: 8, borderRadius: 4, backgroundColor: i === introStep ? C.accent : C.line, borderWidth: i === introStep ? 1 : 0, borderColor: C.accentLine }} />)}
+        </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Glyph name={step.icon} size={22} /><Text style={{ fontSize: 17, fontWeight: '800', color: C.ink }}>{step.title}</Text></View>
         <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{step.body}</Text>
         {last && trial && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{PRO_TRIAL_NOTE}</Text>}
