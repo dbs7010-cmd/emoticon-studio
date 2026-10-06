@@ -1535,7 +1535,7 @@ function Studio() {
       const steps = [
         { icon: 'pencil-outline' as const, title: '그리기·가져오기', body: "세트의 칸을 눌러 손가락으로 그려요. 사진이나 그림은 홈의 '내 그림으로 시작'이나 그리기 화면의 더보기 › 그림 가져오기로 가져와요. 그리는 동안 자동으로 저장되고, 저장을 누르면 보드에 바로 올라가요." },
         { icon: 'motion-play-outline' as const, title: '움직임 적용', body: `'움직이기' 탭에서 효과를 고르면 내 그림으로 바로 미리 봐요. 세기·속도도 바꿀 수 있어요. 무료 움직임 ${PRESETS.filter(x => !isProPreset(x.id)).length}종으로도 한 세트를 끝까지 만들 수 있어요.` },
-        { icon: 'export-variant' as const, title: '저장·내보내기', body: '그린 칸은 이 기기 안에만 저장돼요. 세트의 내보내기는 제출용 파일 묶음(ZIP)을, 그리기 화면의 이 칸 공유는 그 칸 하나(움직이면 GIF)를 만들어 고른 앱으로 보내요. 앱을 지우거나 기기를 바꾸기 전에는 설정 › 백업에서 백업 파일을 만들어 두세요.' },
+        { icon: 'export-variant' as const, title: '저장·내보내기', body: '그린 칸은 이 기기 안에만 저장돼요. 세트의 내보내기는 제출용 파일 묶음(ZIP)을, 그리기 화면의 이 칸 공유는 그 칸 하나(움직이면 GIF)를 만들어 고른 앱으로 보내요. 앱을 지우거나 기기를 바꾸기 전에는 설정 › 전체 백업 만들기로 백업 파일을 만들어 앱 밖에 보관해 두세요.' },
       ];
       const step = steps[introStep]; const last = introStep === steps.length - 1;
       const finish = () => { setIntroStep(null); if (!store?.introDone) { try { commit(st => ({ ...st, introDone: true })); } catch { /* 저장 실패는 다음 실행에 다시 보일 뿐이다 */ } } };
@@ -1961,7 +1961,7 @@ function IntroArt({ step }: { step: number }) {
         {['greeting-hello-wave', 'greeting-like-thumb', 'greeting-excited-jump', 'greeting-like-content'].map(id => <IntroCanvas key={id} id={id} size={50} />)}
       </View>
       <View style={{ gap: 6 }}>
-        <IntroChip icon="content-save-outline" label="자동 저장" />
+        <IntroChip icon="check" label="자동 저장" />
         <IntroChip icon="folder-zip-outline" label="파일 묶음(ZIP)" on />
         <IntroChip icon="share-variant" label="공유" />
       </View>
