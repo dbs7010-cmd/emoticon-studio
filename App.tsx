@@ -1513,7 +1513,12 @@ function Studio() {
       // 제작 그림이 자리에 들어오면 안내도 따라 바뀐다. 문구·버튼·저장 동작은 그대로다.
       return <Dialog title={`사용 안내 ${introStep + 1}/${steps.length}`} onClose={finish}>
         <View testID="사용 안내 그림" style={{ height: 132, borderRadius: 16, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}>
-          {step.art ? <Image accessibilityIgnoresInvertColors source={step.art} style={{ width: 120, height: 108 }} resizeMode="contain" /> : <Glyph name={step.icon} size={56} color={C.ink} />}
+          {step.art ? <Image accessibilityIgnoresInvertColors source={step.art} style={{ width: 120, height: 108 }} resizeMode="contain" />
+            // 홈 대표 그림이 아직 없을 때: 그리기 도구 창의 펜 그림과 그 선 견본으로 '선을 긋는 펜'을 보여 준다(같은 파일, 새 에셋 없음).
+            : <View style={{ width: 220, height: 108 }}>
+              <Image accessibilityIgnoresInvertColors source={require('./assets/art/stroke-pen.png')} style={{ position: 'absolute', left: 4, top: 54, width: 160, height: 44 }} resizeMode="contain" />
+              <Image accessibilityIgnoresInvertColors source={require('./assets/art/tool-pen.png')} style={{ position: 'absolute', left: 145, top: 4, width: 42, height: 72, transform: [{ rotate: '200deg' }] }} resizeMode="contain" />
+            </View>}
         </View>
         <View accessibilityLabel={`${steps.length}단계 중 ${introStep + 1}단계`} style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
           {steps.map((_, i) => <View key={i} style={{ width: i === introStep ? 20 : 8, height: 8, borderRadius: 4, backgroundColor: i === introStep ? C.accent : C.line, borderWidth: i === introStep ? 1 : 0, borderColor: C.accentLine }} />)}
