@@ -37,5 +37,6 @@
 `EMOTICON_PURCHASES=closed`를 명시합니다. `EMOTICON_INTERNAL_REVIEW`는 두지 않습니다. 개인정보처리방침 URL·문의 이메일·서명·데이터 보호·BILLING 검사에는 예외가 없습니다. 서버 미설정만 WARN입니다. 무료 브러시 10·무료 움직임 6, PRO 브러시 20·PRO 움직임 14 구성은 유지합니다.
 백업 ZIP 공유, 선택한 백업 읽기, 휴지통 30일, 로컬 제목 글꼴은 데이터 보안 작업표에 반영했습니다.
 문의 이메일·공개 개인정보 URL: [OWNER INPUT REQUIRED]. 실제 업로드 키는 아직 없으며 임시 키는 사용하지 않습니다.
+> 2026-10-06 현재: 문의 이메일 emoticon755@gmail.com · 개인정보 URL https://dbs7010-cmd.github.io/emoticon-studio/privacy/ (공개본 = main `ae25526`, 바이트 일치 확인) · 업로드 키 있음(`00_배포준비.md` §1 현재 상태). 위 줄은 당시 기록.
 
 예전 구독 `pro_monthly` / `pro_yearly`는 팔지 않지만 복원에서 알아봅니다.
