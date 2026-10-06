@@ -17,7 +17,7 @@ class File {
 }
 const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } } });
 const { createProject } = load('src/project.ts');
-const { localFile, exportUri } = load('src/services/storage.ts');
+const { localFile, exportUri, cutFile } = load('src/services/storage.ts');
 const { buildZip, crc32, setEntries, exportSet, safeName, fileStamp, exportFormatSummary } = load('src/services/export.ts');
 
 // CRC32 must agree with a known-good implementation, or every archiver will reject the bundle.
@@ -201,6 +201,19 @@ assert.equal(result.missing, 32 - 3, 'the caller learns how many slots are still
 // 2026-10-05: 세트 이름(한글)이 파일 이름에 남는다. 공백·특수문자는 '-', 같은 세트를 다시 내보내도 초 단위 시각으로 겹치지 않는다.
 assert.equal(result.path, `set-내-첫-세트-${project.id.slice(-6)}-20261005-140309.zip`, 'the Korean set name stays in the file name');
 assert.notEqual(exportSet(project, [], new Date(2026, 9, 5, 14, 3, 10)).path, result.path, 'exporting the same set again does not overwrite the earlier file');
+// 2026-10-06: 같은 세트를 **같은 초**에 다시 내보내도 앞 파일을 덮어쓰지 않는다(-2, -3 이 붙고 앞 파일 내용은 그대로).
+const firstBytes = Buffer.from(files.get(exportUri(result.path))).toString('base64');
+const again = exportSet(project, [], new Date(2026, 9, 5, 14, 3, 9)), third = exportSet(project, [], new Date(2026, 9, 5, 14, 3, 9));
+assert.equal(again.path, `set-내-첫-세트-${project.id.slice(-6)}-20261005-140309-2.zip`, 'same set, same second: a -2 copy, not an overwrite');
+assert.equal(third.path, `set-내-첫-세트-${project.id.slice(-6)}-20261005-140309-3.zip`, 'and a third gets -3');
+assert.ok(files.has(exportUri(result.path)) && files.has(exportUri(again.path)) && files.has(exportUri(third.path)), 'all three files exist side by side');
+assert.equal(Buffer.from(files.get(exportUri(result.path))).toString('base64'), firstBytes, 'the first file is untouched');
+// 한 칸 공유 사본도 같은 규칙: 같은 초에 두 번 공유해도 앞 사본이 남는다.
+const cut1 = cutFile('몽이의-하루-01-20261005-140309.gif'); cut1.write(new Uint8Array([1]));
+const cut2 = cutFile('몽이의-하루-01-20261005-140309.gif'); cut2.write(new Uint8Array([2]));
+assert.equal(cut1.name, 'cut-몽이의-하루-01-20261005-140309.gif');
+assert.equal(cut2.name, 'cut-몽이의-하루-01-20261005-140309-2.gif', 'a second cut share in the same second gets -2');
+assert.deepEqual([...files.get(cut1.uri)], [1], 'the first cut copy is untouched');
 const twin = createProject('다른 한글 이름', '두부');
 twin.slots[0].finalImage = image('image-final-1.png');
 assert.notEqual(exportSet(twin, [], new Date(2026, 9, 5, 14, 3, 9)).path, result.path, 'two sets exported in the same second do not collide');

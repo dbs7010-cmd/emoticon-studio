@@ -17,10 +17,20 @@ function exportLocal(name: string) {
   if (!EXPORT_NAME.test(name) || name.includes('..')) throw new Error('잘못된 내보내기 파일 이름');
   return new File(root(), name);
 }
-export function exportFile(name: string) { ensureRoot(); return exportLocal('set-' + name); }
+// 같은 세트를 같은 초에 다시 내보내면 이름(초 단위 시각)이 같아 앞 파일을 덮어썼다(2026-10-06 확인). 이미 있으면 -2, -3 … 을 붙인다.
+function freshExport(name: string) {
+  let file = exportLocal(name);
+  const dot = name.lastIndexOf('.'), stem = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
+  for (let n = 2; file.exists; n++) {
+    if (n > 99) throw new Error('같은 이름의 파일이 너무 많아요. 잠시 뒤 다시 해 주세요.');
+    file = exportLocal(`${stem}-${n}${ext}`);
+  }
+  return file;
+}
+export function exportFile(name: string) { ensureRoot(); return freshExport('set-' + name); }
 export function exportUri(name: string) { return exportLocal(name).uri; }
 // 한 칸 공유용 사본(cut-…). 공유 창으로 넘길 때만 만든다.
-export function cutFile(name: string) { ensureRoot(); return exportLocal('cut-' + name); }
+export function cutFile(name: string) { ensureRoot(); return freshExport('cut-' + name); }
 // 사용자가 고른 파일(문서 선택 창이 앱 캐시로 복사한 것)을 읽는다. 앱 폴더 밖이라 localFile 의 이름 규칙을 쓰지 않는다.
 export function readPickedFile(uri: string): Uint8Array { return new File(uri).bytesSync(); }
 export function newImageFile() { ensureRoot(); return localFile(`image-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.png`); }
