@@ -59,6 +59,12 @@
 | 권한(빌드 `9311bcb`/`28ead0e` universal APK, aapt2) | — | INTERNET · ACCESS_NETWORK_STATE · BILLING 만. 저장소·카메라·위치 권한 없음 | CONFIRMED |
 | 네트워크 | 구매 닫힘 빌드 | `fetch` 는 `receipt.ts` 한 곳, 구매 닫힘에서 0회 | CONFIRMED(코드) |
 
+### 2026-10-06 추가(코드 `51f95ab`·`5b4ac45`)
+| 데이터 | 생성·읽기 | 보관·전송 | 삭제·미확정 사항 |
+|---|---|---|---|
+| 전체 백업 ZIP `set-all-backup-<시각>.zip` | 설정 › 전체 백업 만들기: 휴지통 뺀 세트·그림 + 색·보관한 움직임·조각·브러시·화면 설정. **PRO 이용권·검수 해제 없음** | exports/, 사용자가 공유 창에서 고른 앱으로만 | 되살리기는 지금 데이터에 더하기만. 설정 › 내보낸 파일에서 사본 정리 |
+| 내보낸 사본 폴더 `files/emoticon-studio/exports/` | 제출 묶음·백업 ZIP·한 칸 공유 사본 | 기기 안. **Android 클라우드 자동 백업에서 제외**(규칙 파일) | 앱이 저절로 지우지 않음 — 사용자가 확인 후 정리. 예전 위치 사본은 옮김(삭제 없음) |
+
 ## 3. SDK / PERMISSIONS
 ### 권한 (36차 AAB 번들 매니페스트 `uses-permission`)
 | 권한 | 출처 | 필요 이유 | 판단 |

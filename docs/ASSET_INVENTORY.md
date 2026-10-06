@@ -247,3 +247,5 @@ UI 로 해결되는 문제는 넣지 않았다. 이번 라운드에서 에셋을
 
 현재 APK와 5종 연결은 **내부 기능 검수용으로 유지한다. 되돌리거나 다시 빌드하지 않는다.**
 다음은 사용자의 APK 직접 설치 검수 결과 또는 최종 에셋 전달을 기다리는 것이다.
+
+> **2026-10-06 현재(위 표는 당시 기록):** 종이 질감 입체 마스코트(`mascot-paper/ink/eraser`)는 화면에서 쓰지 않는다. `motionExampleArtwork` = `expression-guides/display/greeting-hello-wave.png`(선 그림 캐릭터). 첫 실행 안내는 표현 가이드 그림으로 실제 기능을 보여 준다(`App.tsx` IntroArt). 목록·근거: `docs/closed-test/09_출시준비_점검_45_43.md` §31.
