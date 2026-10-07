@@ -3,6 +3,7 @@
     "name": "emoti 이모티",
     "slug": "emoticon-studio",
     "version": "1.0.0",
+    "scheme": "emoti",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -38,6 +39,7 @@
         }
       ],
       "expo-sharing",
+      "expo-web-browser",
       "expo-iap",
       [
         "expo-image-picker",

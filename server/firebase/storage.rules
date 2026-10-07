@@ -15,6 +15,7 @@ service firebase.storage {
       allow read: if owner(uid);
       allow create, update: if owner(uid)
         && userDoc(uid).data.get('pro', {}).get('active', false) == true
+        && (userDoc(uid).data.get('pro', {}).get('until', null) == null || request.time.toMillis() < userDoc(uid).data.get('pro', {}).get('until', 0))
         && sha.matches('[0-9a-f]{64}')
         && request.resource.size <= 20 * 1024 * 1024;
       allow delete: if owner(uid);

@@ -10,7 +10,8 @@ service cloud.firestore {
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
     function pro(uid) {
       let u = get(/databases/$(database)/documents/users/$(uid)).data;
-      return u.get('pro', {}).get('active', false) == true;
+      let p = u.get('pro', {});
+      return p.get('active', false) == true && (p.get('until', null) == null || request.time.toMillis() < p.get('until', 0));
     }
 
     match /users/{uid} {

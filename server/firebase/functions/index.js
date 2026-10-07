@@ -20,15 +20,13 @@ const db = getFirestore();
 const bucket = () => getStorage().bucket();
 
 const env = () => ({
-  kakaoAppId: process.env.KAKAO_APP_ID || '',
-  kakaoApi: process.env.KAKAO_API_BASE || 'https://kapi.kakao.com',
-  naverApi: process.env.NAVER_API_BASE || 'https://openapi.naver.com',
-  // 비공개 테스트 동안 로그인한 모든 사람에게 '체험' PRO(서버 기록상 source=trial, verified=false). 실제 구매와 섞지 않는다.
-  proTrialAll: process.env.PRO_TRIAL_ALL === 'true',
+  // 체험 PRO 는 관리자만 준다(adminSetPro, 기간 필수). 로그인만으로 PRO 가 열리는 설정은 없다.
+  trialMaxDays: Number(process.env.TRIAL_MAX_DAYS || 30),
   backupQuota: Number(process.env.BACKUP_QUOTA_BYTES || 1024 * 1024 * 1024),
   staleHours: Number(process.env.STALE_UPLOAD_HOURS || 24),
 });
 
+const toMillis = v => (v && typeof v.toMillis === 'function') ? v.toMillis() : (typeof v === 'number' ? v : Date.parse(v));
 const need = (cond, code, message) => { if (!cond) throw new HttpsError(code, message); };
 const signedIn = req => { need(req.auth && req.auth.uid, 'unauthenticated', '로그인이 필요해요.'); return req.auth.uid; };
 const adminOnly = req => { signedIn(req); need(req.auth.token.admin === true, 'permission-denied', '관리자만 할 수 있어요.'); };
@@ -39,49 +37,29 @@ async function ensureUser(uid, provider) {
   await db.runTransaction(async tx => {
     const snap = await tx.get(ref);
     if (snap.exists) { tx.update(ref, { lastSignInAt: FieldValue.serverTimestamp() }); return; }
-    const pro = env().proTrialAll ? { active: true, source: 'trial', verified: false } : { active: false, source: 'none', verified: false };
+    const pro = { active: false, source: 'none', verified: false };
     tx.set(ref, { provider, createdAt: FieldValue.serverTimestamp(), lastSignInAt: FieldValue.serverTimestamp(), pro, backupBytes: 0 });
   });
   return (await ref.get()).data();
 }
 
-async function getJson(url, token) {
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  let body = null; try { body = await res.json(); } catch { body = null; }
-  return { ok: res.ok, status: res.status, body };
-}
+// 카카오·네이버·구글 로그인: 서버가 인가 코드를 직접 끝내는 중계(auth.js). 앱이 들고 온 회사 토큰을 믿지 않는다.
+const broker = require('./auth')({ db, ensureUser });
+exports.authStart = broker.authStart;
+exports.authCallbackKakao = broker.authCallbackKakao;
+exports.authCallbackNaver = broker.authCallbackNaver;
+exports.authCallbackGoogle = broker.authCallbackGoogle;
+exports.redeemAuth = broker.redeemAuth;
 
-// 카카오: GET /v1/user/access_token_info → app_id 가 우리 앱인지, id(회원번호)를 돌려준다(공식 문서 확인 2026-10-07).
-exports.exchangeKakao = onCall(async req => {
-  const token = String(req.data?.accessToken || '');
-  need(token.length >= 10 && token.length <= 4096, 'invalid-argument', '카카오 로그인 정보가 없어요.');
-  need(env().kakaoAppId, 'failed-precondition', '카카오 로그인이 아직 서버에 설정되지 않았어요.');
-  const info = await getJson(`${env().kakaoApi}/v1/user/access_token_info`, token);
-  need(info.ok && info.body && info.body.id, 'unauthenticated', '카카오 로그인을 확인하지 못했어요. 다시 로그인해 주세요.');
-  need(String(info.body.app_id) === env().kakaoAppId, 'permission-denied', '이 앱에서 받은 카카오 로그인이 아니에요.');
-  const uid = `kakao:${info.body.id}`;
-  await ensureUser(uid, 'kakao');
-  return { token: await getAuth().createCustomToken(uid, { provider: 'kakao' }) };
-});
-
-// 네이버: GET /v1/nid/me → resultcode '00' 이면 response.id 가 회원 식별자.
-// 주의: 이 응답만으로는 토큰을 받은 클라이언트(앱)를 대조할 수 없다 — 운영 전 네이버 공식 문서에서 토큰 검증 방법을 확인한다(BLOCKED 표기).
-exports.exchangeNaver = onCall(async req => {
-  const token = String(req.data?.accessToken || '');
-  need(token.length >= 10 && token.length <= 4096, 'invalid-argument', '네이버 로그인 정보가 없어요.');
-  const me = await getJson(`${env().naverApi}/v1/nid/me`, token);
-  need(me.ok && me.body && me.body.resultcode === '00' && me.body.response && me.body.response.id, 'unauthenticated', '네이버 로그인을 확인하지 못했어요. 다시 로그인해 주세요.');
-  const uid = `naver:${me.body.response.id}`;
-  await ensureUser(uid, 'naver');
-  return { token: await getAuth().createCustomToken(uid, { provider: 'naver' }) };
-});
+// PRO 가 지금 유효한가(서버 기록만). until 이 있으면 그 시각까지(체험은 항상 기간이 있다).
+const proActive = u => !!(u && u.pro && u.pro.active === true && (u.pro.until == null || toMillis(u.pro.until) > Date.now()));
 
 // 구글은 Firebase 인증이 직접 확인한다. 로그인 뒤 회원 문서를 만든다.
 exports.registerUser = onCall(async req => {
   const uid = signedIn(req);
   const provider = req.auth.token.provider || (req.auth.token.firebase && req.auth.token.firebase.sign_in_provider) || 'unknown';
   const user = await ensureUser(uid, provider);
-  return { pro: user.pro, backupBytes: user.backupBytes || 0 };
+  return { pro: { ...user.pro, active: proActive(user) }, backupBytes: user.backupBytes || 0 };
 });
 
 // ── PRO 개인 백업 ──────────────────────────────────────────────────────────────────────────
@@ -106,7 +84,7 @@ async function backupFinalized(uid, sha, name, size) {
   let keep = false;
   await db.runTransaction(async tx => {
     const u = (await tx.get(ref)).data() || {}, seen = await tx.get(counted);
-    const pro = u.pro && u.pro.active === true;
+    const pro = proActive(u);
     if (seen.exists && real === sha) { keep = true; return; }   // 같은 파일을 다시 올림 — 이미 센 것, 다시 더하지 않는다
     const used = Number(u.backupBytes || 0);
     keep = real === sha && pro && used + size <= env().backupQuota;
@@ -133,7 +111,6 @@ exports.onBackupDeleted = onObjectDeleted(async event => {
 
 // ── 공모전 ─────────────────────────────────────────────────────────────────────────────────
 const KEY = /^[A-Za-z0-9_-]{8,64}$/;
-const toMillis = v => (v && typeof v.toMillis === 'function') ? v.toMillis() : (typeof v === 'number' ? v : Date.parse(v));
 
 // 접수 시작(또는 재시도). 접수 문서 id = 사용자 uid → 한 공모전에 한 사람 한 건. 같은 제출 키로 다시 부르면 같은 접수다.
 exports.createSubmission = onCall(async req => {
@@ -290,13 +267,25 @@ exports.adminPublishResults = onCall(async req => {
 });
 
 // 비공개 테스트·심사용 PRO 부여(관리자만). 실제 구매로 여는 길(verify-receipt)은 아직 연결 전이다 — source 로 구분한다.
+// 체험(trial)은 기간(일)이 꼭 있어야 하고 TRIAL_MAX_DAYS 를 넘지 못한다. 이미 있는 회원(한 번 로그인한 사람)에게만 준다.
+// 끝낼 때(active=false)는 endedAt 을 남긴다 — 보관 기간 계산의 기준.
 exports.adminSetPro = onCall(async req => {
   adminOnly(req);
-  const { uid, active, source } = req.data || {};
-  need(typeof uid === 'string' && uid, 'invalid-argument', '회원이 필요해요.');
+  const { uid, active, source, days } = req.data || {};
+  need(typeof uid === 'string' && /^(kakao|naver|google):[A-Za-z0-9_.-]{1,128}$/.test(uid), 'invalid-argument', '회원 번호가 올바르지 않아요.');
   need(['trial', 'admin'].includes(source), 'invalid-argument', '부여 출처는 trial 또는 admin 이에요(구매 검증은 별도).');
-  await db.doc(`users/${uid}`).set({ pro: { active: active === true, source, verified: false, at: FieldValue.serverTimestamp() } }, { merge: true });
-  return { ok: true };
+  const ref = db.doc(`users/${uid}`);
+  need((await ref.get()).exists, 'not-found', '한 번 이상 로그인한 회원에게만 줄 수 있어요.');
+  if (active !== true) {
+    await ref.set({ pro: { active: false, source, verified: false, at: FieldValue.serverTimestamp(), endedAt: Date.now(), until: null } }, { merge: true });
+    return { ok: true };
+  }
+  const d = Number(days);
+  if (source === 'trial') need(Number.isInteger(d) && d >= 1 && d <= env().trialMaxDays, 'invalid-argument', `체험 기간은 1~${env().trialMaxDays}일이에요.`);
+  else need(days == null || (Number.isInteger(d) && d >= 1 && d <= 3650), 'invalid-argument', '기간이 올바르지 않아요.');
+  const until = days == null ? null : Date.now() + d * 864e5;
+  await ref.set({ pro: { active: true, source, verified: false, at: FieldValue.serverTimestamp(), until, endedAt: null } }, { merge: true });
+  return { ok: true, until };
 });
 
 exports.adminCleanupNow = onCall(async req => { adminOnly(req); return { expired: await cleanupStale(Number(req.data?.now) || Date.now()) }; });
