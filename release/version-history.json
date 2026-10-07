@@ -11,6 +11,16 @@
       "sha256": "85d3f2a79e65dfdc64a3770072342914c21c20ae2ab9ea160d21a79ddeb5c075",
       "uploaded": "2026-10-04",
       "source": "사용자 보고(업로드·심사 제출)"
+    },
+    {
+      "versionCode": 3,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc3-closedtest-protrial-5d59acd.aab",
+      "commit": "5d59acd",
+      "sha256": "f464deba5aee7c36e62d0dbde05f5d8ae19e8903edb9e1cadb8f2aa43e9f4511",
+      "uploaded": "2026-10-07",
+      "source": "사용자 보고(업로드·심사 제출). Console 경고 1개: 가독화 파일 없음(R8 미사용 — 비차단), 지원 기기 변동 0"
     }
   ]
 }
