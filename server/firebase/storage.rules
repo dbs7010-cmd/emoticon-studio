@@ -1,0 +1,34 @@
+rules_version = '2';
+// emoti 이모티 Storage 규칙(2026-10-07).
+//  backups/{uid}/blobs/{sha256}  개인 백업 파일(내용 해시 이름 — 같은 파일은 한 번만). 쓰기: 본인 + 서버가 준 PRO, 한 파일 20MB 이하.
+//                                읽기: 본인(PRO 가 끝나도 — 서버 작품을 바로 지우지 않는다).
+//  contests/{cid}/{uid}/{key}.zip 공모전 제출 묶음. 쓰기: 본인 + 그 접수가 '올리는 중'이고 제출 키가 같을 때만, ZIP·120MB 이하.
+//                                읽기: 본인·관리자. 지우기는 서버만.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.token.admin == true; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function userDoc(uid) { return firestore.get(/databases/(default)/documents/users/$(uid)); }
+
+    match /backups/{uid}/blobs/{sha} {
+      allow read: if owner(uid);
+      allow create, update: if owner(uid)
+        && userDoc(uid).data.get('pro', {}).get('active', false) == true
+        && sha.matches('[0-9a-f]{64}')
+        && request.resource.size <= 20 * 1024 * 1024;
+      allow delete: if owner(uid);
+    }
+
+    match /contests/{cid}/{uid}/{file} {
+      allow read: if owner(uid) || isAdmin();
+      allow create, update: if owner(uid)
+        && file.matches('[A-Za-z0-9_-]{8,64}[.]zip')
+        && firestore.get(/databases/(default)/documents/contests/$(cid)/submissions/$(uid)).data.status == 'uploading'
+        && firestore.get(/databases/(default)/documents/contests/$(cid)/submissions/$(uid)).data.submissionKey + '.zip' == file
+        && request.resource.contentType == 'application/zip'
+        && request.resource.size <= 120 * 1024 * 1024;
+      allow delete: if false;
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "emoti-firebase",
+  "private": true,
+  "description": "emoti 이모티 서버(Firebase): 로그인 교환·PRO 개인 백업·공모전 접수·관리자. 로컬 에뮬레이터로 검사한다(운영 배포 전).",
+  "scripts": {
+    "test": "firebase emulators:exec --project demo-emoti --only auth,firestore,storage,functions \"node test/run.cjs\""
+  },
+  "devDependencies": {
+    "firebase": "12.19.0",
+    "firebase-admin": "13.10.0",
+    "firebase-tools": "13.35.1"
+  }
+}

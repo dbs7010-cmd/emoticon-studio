@@ -1,0 +1,41 @@
+rules_version = '2';
+// emoti 이모티 Firestore 규칙(2026-10-07). 원칙:
+//  - 회원 문서(users)의 PRO·사용량은 **서버(관리 SDK)만** 쓴다. 앱은 자기 문서를 읽기만 한다.
+//  - 개인 백업 목록(backups/{uid}/sets)은 본인만. 쓰기는 서버가 준 PRO 가 있을 때만, 읽기는 PRO 가 끝나도 본인이면 된다(바로 지우지 않음).
+//  - 공모전·접수 문서는 앱이 직접 쓰지 않는다(함수만). 공모전은 공개된 것만 누구나 읽고, 접수는 본인·관리자만 읽는다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.token.admin == true; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function pro(uid) {
+      let u = get(/databases/$(database)/documents/users/$(uid)).data;
+      return u.get('pro', {}).get('active', false) == true;
+    }
+
+    match /users/{uid} {
+      allow read: if owner(uid) || isAdmin();
+      allow write: if false;
+    }
+
+    match /backups/{uid}/sets/{setId} {
+      allow read: if owner(uid);
+      allow delete: if owner(uid);
+      allow create, update: if owner(uid) && pro(uid)
+        && request.resource.data.keys().hasOnly(['name', 'updatedAt', 'device', 'files', 'bytes', 'store'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 80
+        && request.resource.data.files is list && request.resource.data.files.size() <= 400
+        && request.resource.data.bytes is int && request.resource.data.bytes <= 209715200
+        && request.resource.data.store is string && request.resource.data.store.size() <= 400000;
+    }
+
+    match /contests/{cid} {
+      allow read: if resource.data.status != 'draft' || isAdmin();
+      allow write: if false;
+      match /submissions/{uid} {
+        allow read: if owner(uid) || isAdmin();
+        allow write: if false;
+      }
+    }
+  }
+}
