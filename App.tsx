@@ -1929,8 +1929,8 @@ function PaymentStatus({ payment, onRestore, onRetry }: { payment: Payment; onRe
 // 첫 실행 안내의 그림 칸(2026-10-06). 표현 가이드 캐릭터(선 그림, 몸 안이 흰 표시용 그림)를 실제 화면 요소처럼 배치한다.
 // 새 그림 파일은 없다. 칩은 실제 버튼 이름 그대로다(펜·지우개·그림 가져오기 / 무료 효과 이름 / 자동 저장·파일 묶음·공유).
 const guideFigure = (id: string) => { for (const card of EXPRESSION_GUIDE.cards) for (const x of card.examples ?? []) if (x.id === id) return shownArt(x); return null; };
-function IntroChip({ icon, label, on }: { icon?: React.ComponentProps<typeof Glyph>['name']; label: string; on?: boolean }) {
-  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: on ? C.accent : C.paper, borderWidth: 1, borderColor: on ? C.accentBorder : C.line }}>
+function IntroChip({ icon, label, on, small }: { icon?: React.ComponentProps<typeof Glyph>['name']; label: string; on?: boolean; small?: boolean }) {
+  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, height: small ? 24 : 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: on ? C.accent : C.paper, borderWidth: 1, borderColor: on ? C.accentBorder : C.line }}>
     {!!icon && <Glyph name={icon} size={14} color={C.ink} />}
     <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: C.ink }}>{label}</Text>
   </View>;
@@ -1945,7 +1945,7 @@ function IntroArt({ step }: { step: number }) {
   // 짧은 화면(높이 720dp 미만, 예: 360×640)에서는 그림 칸을 줄인다 — 줄이지 않으면 창이 최대 높이를 넘어
   // 3쪽 '시작하기'·1쪽 '건너뛰기'가 스크롤해야 보이는 자리로 밀려났다(2026-10-07 360×640 에뮬레이션 캡처).
   const compact = useWindowDimensions().height < 720;
-  const canvas = compact ? 78 : 104, tile = compact ? 37 : 50;
+  const canvas = compact ? 70 : 104, tile = compact ? 33 : 50, gap = compact ? 4 : 6;
   // 움직임 쪽만 그림이 실제로 통통 뛴다(앱의 '통통'과 같은 느낌의 위아래 반복). 다른 쪽은 멈춘 그림이다.
   const lift = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -1961,29 +1961,29 @@ function IntroArt({ step }: { step: number }) {
   const free = PRESETS.filter(p => !isProPreset(p.id));
   const shown = [free.find(p => p.id === 'bounce'), ...free.filter(p => p.id !== 'bounce')].filter(Boolean).slice(0, 3) as typeof free;
   return <View testID="사용 안내 그림" accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
-    style={{ height: compact ? 100 : 136, borderRadius: 16, backgroundColor: C.surface2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 12 }}>
+    style={{ height: compact ? 84 : 136, borderRadius: 16, backgroundColor: C.surface2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 12 }}>
     {step === 0 && <>
       <IntroCanvas id="greeting-hello-wave" size={canvas} />
-      <View style={{ gap: 6 }}>
-        <IntroChip icon="pencil-outline" label="펜" on />
-        <IntroChip icon="eraser" label="지우개" />
-        <IntroChip icon="image-plus" label="그림 가져오기" />
+      <View style={{ gap }}>
+        <IntroChip small={compact} icon="pencil-outline" label="펜" on />
+        <IntroChip small={compact} icon="eraser" label="지우개" />
+        <IntroChip small={compact} icon="image-plus" label="그림 가져오기" />
       </View>
     </>}
     {step === 1 && <>
       <IntroCanvas id="greeting-excited-cheer" size={canvas} lift={lift} />
-      <View style={{ gap: 6 }}>
-        {shown.map((p, i) => <IntroChip key={p.id} label={p.label} on={i === 0} />)}
+      <View style={{ gap }}>
+        {shown.map((p, i) => <IntroChip small={compact} key={p.id} label={p.label} on={i === 0} />)}
       </View>
     </>}
     {step === 2 && <>
       <View style={{ width: canvas, flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
         {['greeting-hello-wave', 'greeting-like-thumb', 'greeting-excited-jump', 'greeting-like-content'].map(id => <IntroCanvas key={id} id={id} size={tile} />)}
       </View>
-      <View style={{ gap: 6 }}>
-        <IntroChip icon="check" label="자동 저장" />
-        <IntroChip icon="folder-zip-outline" label="파일 묶음(ZIP)" on />
-        <IntroChip icon="share-variant" label="공유" />
+      <View style={{ gap }}>
+        <IntroChip small={compact} icon="check" label="자동 저장" />
+        <IntroChip small={compact} icon="folder-zip-outline" label="파일 묶음(ZIP)" on />
+        <IntroChip small={compact} icon="share-variant" label="공유" />
       </View>
     </>}
   </View>;
