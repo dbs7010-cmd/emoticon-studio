@@ -282,7 +282,7 @@ export function AssetSlot({ name, size, style, sourceOverride }: { name: AssetSl
   const spec = ASSET_SLOTS[name];
   const width = size, height = size / spec.aspectRatio;
   const source = sourceOverride === undefined ? spec.source : sourceOverride;
-  if (source) return <Image accessibilityIgnoresInvertColors source={source} style={[{ width, height }, style]} resizeMode="contain" />;
+  if (source) return <Image testID={'asset-art-' + name} accessibilityIgnoresInvertColors source={source} style={[{ width, height }, style]} resizeMode="contain" />;
   return <View testID={'asset-slot-' + name} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[{ width, height }, style]}>
     <View style={{ position: 'absolute', right: 0, bottom: 0, width: width * .82, height: width * .82, borderRadius: width, backgroundColor: '#FFE89A', opacity: .55 }} />
     <View style={{ position: 'absolute', left: width * .12, top: height * .18, width: width * .5, height: width * .5, borderRadius: width * .16, backgroundColor: '#FFFFFF', transform: [{ rotate: '-8deg' }], ...Elev[1] }} />

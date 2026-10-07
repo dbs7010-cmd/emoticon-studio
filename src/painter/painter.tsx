@@ -1157,6 +1157,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const raised = dockOpen || tab === 'motion';
   // 색을 고를 때는 도구 줄 자리까지 쓴다. 캔버스를 더 가리지 않고 색 선택 영역을 확보한다.
   const colorDock = tab === 'draw' && panel === 'color' && !scene.selection;
+  // 더보기가 열린 동안 아래 판(움직임 판·브러시 줄·도구 줄)도 어둡게 덮고, 누르면 메뉴를 닫는다(2026-10-07).
+  // 예전에는 메뉴 위쪽만 어두워 아래 판이 그대로 눌렸다. 판마다 맨 위 자식으로 넣는다(부모가 달라 하나로 덮을 수 없다).
+  const moreDim = panel === 'more' ? <Pressable accessibilityLabel="더보기 닫기(바깥)" onPress={() => { ease(); setPanel(null); }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 50, elevation: 50, backgroundColor: '#00000055' }} /> : null;
   const dock = { position: 'absolute', left: 0, right: 0, bottom: tab === 'draw' && !typing && !colorDock ? BASE_H : 0, zIndex: 20, borderTopWidth: raised ? 1 : 0, borderLeftWidth: raised ? 1 : 0, borderRightWidth: raised ? 1 : 0, borderColor: C.line, borderTopLeftRadius: raised ? 24 : 0, borderTopRightRadius: raised ? 24 : 0, overflow: 'hidden', backgroundColor: C.paper, flexShrink: 0 } as const;
   const narrow = windowWidth < 360;
   // 머리줄이 두 줄로 갈릴지는 '실제로 잰 폭'으로 정한다 — 화면이 좁아서든 글자가 커서든 같은 규칙이다.
@@ -1591,6 +1594,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           onUseMotion={saved => setMotion(saved.motion)} onForgetMotion={onForgetMotion}
           onChange={setMotion} onRequestPro={onRequestPro}
           thumbs={thumbs} previousMotion={previousMotion ?? null} onFocusPart={layerId => send({ type: 'focusPart', layerId })} onFit={() => send({ type: 'fitMotion' })} />
+        {moreDim}
       </View> : <View style={dock} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
         {scene.selection ? <View style={{ maxHeight: panelRoom(0.5) }}>
           {/* 명세 E08: 여기서 하는 일은 아직 임시다. 무엇이 임시인지 글로 말하고, 나가는 길은 취소·적용 둘뿐이다.
@@ -1782,6 +1786,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <Minor title="문구 선택 끝" onPress={() => { ease(); send({ type: 'captionPick', on: false }); }} />
         </View>}
         </>}
+        {moreDim}
       </View>}
       {/* ── 기본 도구 줄 ─────────────────────────────────────────────────────────────────
           늘 같은 높이(BASE_H)로 캔버스 아래 제자리를 차지한다. 움직이기 탭·키보드 입력 중에는 내용만 비우고 자리는 남긴다.
@@ -1839,6 +1844,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           </Pressable>
         </View>
         </>}
+        {moreDim}
       </View>
     </KeyboardAvoidingView>
     {/* 브러시 창은 머리줄·캔버스·아래 줄을 모두 덮는 독립 창이다(승인 시안). */}

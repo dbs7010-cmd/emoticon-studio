@@ -110,7 +110,7 @@ const homeSections = () => {
       assert.equal(labelled('전체 작업 보기').length, count > 1 ? 1 : 0, '세트가 둘 이상이면 전체 작업으로 가는 길(' + where + ')');
       if (on) {
         const notice = byTestID('홈 알림')[0];
-        assert.equal(notice.findAll(n => n.props.testID === 'asset-slot-noticeArtwork').length, 1, '공지에도 그림 자리는 남는다');
+        assert.equal(notice.findAll(n => ['asset-slot-noticeArtwork', 'asset-art-noticeArtwork'].includes(n.props.testID)).length, 1, '공지에도 그림 자리는 남는다');
         assert.ok(notice.findAll(n => n.type === 'Pressable').length <= 1, '공지의 행동은 많아야 하나');
         assert.ok(flat(notice.props.style).paddingVertical <= 12, '공지는 낮은 한 줄 배너');
       }
@@ -123,7 +123,8 @@ const homeSections = () => {
       if (!count) {
         const empty = tree.root.findAll(n => n.type === 'View' && n.props.testID === '홈 창작 표면')[0];
         assert.equal(flat(empty.props.style).backgroundColor, T.surface2, '빈 홈은 가라앉은 면(' + where + ')');
-        assert.equal(empty.findAll(n => n.props.testID === 'asset-slot-homeHeroArtwork').length, 1, '빈 홈 그림 자리');
+        // 2026-10-07: 대표 그림 자리에 선 그림 캐릭터가 들어갔다 — 자리표시(asset-slot-) 또는 실제 그림(asset-art-) 중 하나가 정확히 한 번.
+        assert.equal(empty.findAll(n => ['asset-slot-homeHeroArtwork', 'asset-art-homeHeroArtwork'].includes(n.props.testID)).length, 1, '빈 홈 그림 자리');
         const flow = empty.findAll(n => n.type === 'View' && n.props.testID === '흐름 아이콘')[0];
         assert.deepEqual(flow.findAll(n => n.type === 'Svg').map(n => n.props.testID).filter(i => i !== 'icon-next'), ['icon-brush', 'icon-motion', 'icon-export'], '흐름 아이콘');
         assert.equal(labelled('내 그림으로 시작').length, 1, '빈 홈에도 내 그림으로 시작');
@@ -243,7 +244,7 @@ const homeSections = () => {
   assert.equal(labelled('제안 기준으로 보기').length, 0, '제출 준비는 접혀 있다');
   assert.ok(texts().some(t => /가지 더 필요해요$/.test(t)), '접혀 있어도 덜 됐다는 사실은 보인다');
   assert.ok(!texts().some(t => t.includes('WebPAnimator')), 'WebP 설명은 기본 화면에 없다');
-  assert.equal(byTestID('asset-slot-exportSuccessArtwork').length, 0, '덜 된 세트는 다 된 것처럼 보이지 않는다');
+  assert.equal(byTestID('asset-slot-exportSuccessArtwork').length + byTestID('asset-art-exportSuccessArtwork').length, 0, '덜 된 세트는 다 된 것처럼 보이지 않는다');
   await press('제출 준비 보기');
   assert.equal(labelled('제안 기준으로 보기').length, 1, '펼치면 기준과 목록이 나온다');
   await press('제출 준비 접기');
@@ -259,7 +260,7 @@ const homeSections = () => {
   await press('다 한 세트');
   await press('내보내기');
   assert.deepEqual(exportOrder().filter(x => x !== '손볼 곳'), ['요약', '격자', '만들기', '제출 준비', '부가 이미지', '자세히'], '다 채워도 차례는 같다');
-  assert.equal(byTestID('asset-slot-exportSuccessArtwork').length, 1, '다 채우면 요약이 완성 그림 자리를 쓴다');
+  assert.equal(byTestID('asset-slot-exportSuccessArtwork').length + byTestID('asset-art-exportSuccessArtwork').length, 1, '다 채우면 요약이 완성 그림 자리를 쓴다');
   assert.equal(labelled('제안 기준으로 보기').length, 0, '다 채워도 제출 준비는 접혀 있다');
 
   await act(async () => tree.unmount());

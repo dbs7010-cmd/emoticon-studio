@@ -50,9 +50,13 @@ export type ExpressionExample = {
 export const ASSET_SLOTS = {
   // 홈 첫 화면 오른쪽. 창작 표면 위에 겹쳐 앉는 캐릭터. 표면 바탕이 비치도록 투명 PNG.
   // 40차 최종 배치(App.tsx): 창작 표면 오른쪽 위 right 14 · top 16, 화면폭 < 380dp 이면 96, 아니면 112. 아래 12% 는 행동 줄과 겹칠 수 있어 비운다.
-  homeHeroArtwork: { aspectRatio: 1, display: '96×96 (폭 < 380dp) / 112×112 (그 외) — 표면 오른쪽 위', sourceSize: '336(@3x) · 224 · 112 / 마스터 1024', safeArea: '주 피사체는 칸의 오른쪽 79% × 위쪽 89% 안(왼쪽 21%·아래 11% 비움 — 제목·행동 줄 침범 방지)', background: 'transparent', source: null },
+  homeHeroArtwork: { aspectRatio: 1, display: '96×96 (폭 < 380dp) / 112×112 (그 외) — 표면 오른쪽 위', sourceSize: '336(@3x) · 224 · 112 / 마스터 1024', safeArea: '주 피사체는 칸의 오른쪽 79% × 위쪽 89% 안(왼쪽 21%·아래 11% 비움 — 제목·행동 줄 침범 방지)', background: 'transparent', 
+    // 2026-10-07: 코드로 그린 임시 자리표시(노랑 원 + 흰 스티커 얼굴) 대신 지금 앱의 선 그림 캐릭터(표현 가이드 표시용 그림)를 쓴다.
+    source: require('../../assets/expression-guides/display/greeting-hello-welcome.png') },
   // 공식 알림 카드 왼쪽 작은 그림.
-  noticeArtwork: { aspectRatio: 1, display: '44×44', sourceSize: '132(@3x) · 88 · 44 / 마스터 512', safeArea: '가운데 76%', background: 'transparent', source: null },
+  noticeArtwork: { aspectRatio: 1, display: '44×44', sourceSize: '132(@3x) · 88 · 44 / 마스터 512', safeArea: '가운데 76%', background: 'transparent', 
+    // 2026-10-07: 코드로 그린 임시 자리표시(노랑 원 + 흰 스티커 얼굴) 대신 지금 앱의 선 그림 캐릭터(표현 가이드 표시용 그림)를 쓴다.
+    source: require('../../assets/expression-guides/display/greeting-like-content.png') },
   // 기본 레퍼런스 한 칸. 2~2.5등신 관절 인형 전신이 들어가므로 세로형. 44차 LOCK: 참고 패널의 4열 격자(좌우 여백 12, 간격 8).
   // source 가 없으면 BuiltinReferences 가 회색 관절 인형 자리표시를 그린다. source 를 넣으면 같은 칸에 그 그림이 들어간다(분류별 목록은 에셋 라운드).
   referencePoseThumbnail: { aspectRatio: 3 / 4, display: '4열 격자 한 칸: 폭 floor((화면폭 − 24 − 8×3) / 4), 높이 = 폭 × 4/3 → 360dp 78×104 · 384dp 84×112 · 412dp 91×121', sourceSize: '썸네일 192×255 + 캔버스용 투명 원본 1080×1440', safeArea: '위아래 6%, 좌우 10% 여백 — 전신이 칸 안, 발끝 바닥선 94%', background: 'opaque', source: null },
@@ -64,7 +68,9 @@ export const ASSET_SLOTS = {
     // 2026-10-06: 종이 질감 입체 캐릭터(mascot-paper, 예전 디자인)를 지금 앱의 선 그림 캐릭터(표현 가이드 '손 흔들며' 표시용)로 바꿨다.
     source: require('../../assets/expression-guides/display/greeting-hello-wave.png') },
   // 내보내기에서 모든 칸이 완성됐을 때 요약 표면 오른쪽.
-  exportSuccessArtwork: { aspectRatio: 1, display: '84×84', sourceSize: '252(@3x) · 168 · 84 / 마스터 1024', safeArea: '가운데 84%', background: 'transparent', source: null },
+  exportSuccessArtwork: { aspectRatio: 1, display: '84×84', sourceSize: '252(@3x) · 168 · 84 / 마스터 1024', safeArea: '가운데 84%', background: 'transparent', 
+    // 2026-10-07: 코드로 그린 임시 자리표시(노랑 원 + 흰 스티커 얼굴) 대신 지금 앱의 선 그림 캐릭터(표현 가이드 표시용 그림)를 쓴다.
+    source: require('../../assets/expression-guides/display/greeting-excited-cheer.png') },
   // PRO 화면 위쪽 비교(App.tsx proSheet). 16:9 따뜻한 표면(폭 화면-32, 최대 높이 214, 안쪽 여백 14)은 앱이 그리고,
   // 그 안에 1:1 그림 두 장(86×86, 왼쪽 '전체 움직임' · 오른쪽 '부분 움직임')과 화살표·부분 표시·라벨이 들어간다.
   // 두 장은 **같은 그림**이다 — 바뀌는 것은 캐릭터가 아니라 무엇이 움직이느냐이기 때문이다.
