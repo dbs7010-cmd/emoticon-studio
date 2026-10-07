@@ -121,4 +121,9 @@ export type Cutout = { id: string; name: string; image: LocalImage };
 export type Store = { version: 1; revision: number; projects: Project[]; introDone?: boolean; palette?: string[]; userPalette?: string[]; entitlement?: Entitlement; reviewUnlock?: boolean; paperTexture?: boolean; savedMotions?: SavedMotion[]; cutouts?: Cutout[];
   // 즐겨찾기 세 칸. **사용자가 직접 고정한다** — 다른 브러시를 썼다고 저절로 바뀌지 않는다(45.31).
   // 없으면 기본값(기본 펜·연필·마커)으로 연다. 예전 저장본에는 이 칸이 없고, 그대로 읽힌다.
-  favoriteBrushes?: string[] };
+  favoriteBrushes?: string[];
+  // vc4(2026-10-07): 공모전 제출 기록(세트마다 제출 키를 남겨 재시도해도 같은 접수) · 클라우드 백업 결과(마지막 시각·실패). 서버 연결 전에는 비어 있다.
+  contestEntries?: ContestEntry[];
+  cloudBackups?: Record<string, CloudBackupNote> };
+export type ContestEntry = { contestId: string; projectId: string; key: string; status: string; receiptNo?: string; reason?: string; at: string };
+export type CloudBackupNote = { at: string; ok: boolean; files: number; sent: number; error?: string };

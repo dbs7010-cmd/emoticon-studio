@@ -209,6 +209,10 @@ export function parseStore(raw: string): Store {
       if (typeof cutout.id !== 'string' || typeof cutout.name !== 'string' || !cutout.image || typeof cutout.image.path !== 'string') throw new Error('보관한 그림이 손상되었습니다.');
     }
   }
+  if (value.contestEntries !== undefined && (!Array.isArray(value.contestEntries) || value.contestEntries.length > 200 || value.contestEntries.some((e: { contestId?: unknown; projectId?: unknown; key?: unknown; status?: unknown; at?: unknown }) => typeof e.contestId !== 'string' || typeof e.projectId !== 'string' || typeof e.key !== 'string' || typeof e.status !== 'string' || typeof e.at !== 'string')))
+    throw new Error('공모전 제출 기록이 손상되었습니다.');
+  if (value.cloudBackups !== undefined && (typeof value.cloudBackups !== 'object' || value.cloudBackups === null || Object.values(value.cloudBackups).some((n: unknown) => !n || typeof (n as { at?: unknown }).at !== 'string' || typeof (n as { ok?: unknown }).ok !== 'boolean')))
+    throw new Error('클라우드 백업 기록이 손상되었습니다.');
   if (value.favoriteBrushes !== undefined) {
     if (!Array.isArray(value.favoriteBrushes) || value.favoriteBrushes.length > 3 || value.favoriteBrushes.some((k: unknown) => typeof k !== 'string'))
       throw new Error('즐겨찾기 브러시 목록이 손상되었습니다.');

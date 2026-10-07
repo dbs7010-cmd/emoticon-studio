@@ -19,6 +19,8 @@ import { TRASH_DAYS, inTrash, trashExpired, captionText, createProject, doneCoun
 import { cutFile, deleteLocalImages, exportUri, listExports, migrateExports, removeExports, imageUri, inspectStore, localFile, loadStore, readPickedFile, saveStore, type StoreReport } from './src/services/storage';
 import { restoreBackup, writeBackup } from './src/services/backup';
 import { isFullBackup, restoreFullBackup, writeFullBackup } from './src/services/full-backup';
+import { CloudScreen } from './src/components/cloud-screen';
+import { appCloud, cloudConfig } from './src/services/cloud/firebase';
 import { exportSet, decodeDataUrl, fileStamp, safeName, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinalsAsync, finalsKey, inspectImage } from './src/services/qa';
@@ -120,6 +122,9 @@ function Studio() {
   const [exportsConfirm, setExportsConfirm] = useState<{ name: string; bytes: number }[] | null>(null);
   // 전체 백업에서 되살린 결과(2026-10-07): 들어온 것 · 보관 칸이 차서 못 넣은 것 · 지금 값을 지킨 설정 · 백업에 없는 것을 한 창에서 말한다.
   const [restoreReport, setRestoreReport] = useState<{ done: string[]; missed: string[]; kept: string[] } | null>(null);
+  // vc4(2026-10-07): 계정·클라우드. 앱 설정(extra.cloud)에 서버 설정이 있을 때만 연결한다 — 없으면 null 이고 화면은 '준비 중'만 보인다.
+  const [cloudOpen, setCloudOpen] = useState(false);
+  const cloud = useRef(appCloud(cloudConfig(Constants.expoConfig?.extra))).current;
   // 첫 실행 사용 안내(2026-10-05): 그리기 → 움직이기 → 저장·내보내기 세 장. 새 사용자(세트 없음 · introDone 없음)에게 한 번만,
   // 건너뛰기·다 보기 모두 introDone 을 남겨 다시 뜨지 않는다. 설정의 '사용 안내 다시 보기'로 언제든 다시 연다(저장값은 바꾸지 않음).
   const [introStep, setIntroStep] = useState<number | null>(null);
@@ -1632,6 +1637,15 @@ function Studio() {
         <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>사용 안내 다시 보기</Text>
         <Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="계정·클라우드" onPress={() => { setSettings(false); setCloudOpen(true); }}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+        <Glyph name="account-circle-outline" size={20} color={C.muted} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>계정 · 클라우드</Text>
+          <Text style={{ fontSize: 11, color: C.muted }}>{cloud ? '로그인 · PRO 클라우드 백업 · 공모전' : '준비 중 — 서버 연결 전'}</Text>
+        </View>
+        <Glyph name="chevron-right" size={18} color={C.faint} />
+      </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="전체 백업 만들기" onPress={() => { setSettings(false); backupAll(); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
         <Glyph name="archive-arrow-down-outline" size={20} color={C.muted} />
@@ -1700,6 +1714,11 @@ function Studio() {
         <Glyph name="chevron-right" size={18} color={C.muted} />
       </Pressable>
     </Dialog>}
+    {store && cloudOpen && <CloudScreen visible={cloudOpen} onClose={() => setCloudOpen(false)} cloud={cloud} extra={Constants.expoConfig?.extra} device={`${Platform.OS} ${Platform.Version}`}
+      store={store} projects={store.projects} commit={commit} task={task}
+      // 회사 로그인 SDK 는 운영자 앱 키가 생긴 뒤에 넣는다. 그 전에는 버튼이 눌리지 않고, 여기로 오지 않는다.
+      login={async () => { throw new Error('이 빌드에는 아직 로그인 기능이 없어요(운영자 설정 전).'); }}
+      bakeHandoff={bakeHandoff} />}
     {restoreReport && <Dialog title="전체 백업에서 되살렸어요" onClose={() => setRestoreReport(null)}>
       {restoreReport.done.map(line => <Text key={line} style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{'· ' + line}</Text>)}
       {!!restoreReport.missed.length && <Text style={{ fontSize: 13, lineHeight: 19, color: C.ink }}>{'보관 칸이 차서 넣지 못했어요: ' + restoreReport.missed.join(', ') + '. 지금 것을 정리한 뒤 같은 파일로 다시 되살리면 들어와요(세트는 사본이 하나 더 생겨요).'}</Text>}

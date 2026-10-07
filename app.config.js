@@ -50,6 +50,12 @@ const brandSettings = (() => { try { return JSON.parse(fs.readFileSync(path.join
 // 실패하므로, 이미지와 모듈이 둘 다 있을 때만 넣는다. 둘 중 하나라도 없으면 asset-check 가 FAIL 로 알린다.
 const splashModuleInstalled = (() => { try { require.resolve('expo-splash-screen/package.json', { paths: [__dirname] }); return true; } catch { return false; } })();
 
+// 공개 웹 설정 JSON(apiKey·projectId·storageBucket·appId 필수). 형식이 틀리면 연결하지 않는다(조용히 반쯤 켜지지 않게).
+function cloudSettings() {
+  const raw = process.env.EMOTICON_FIREBASE_CONFIG;
+  if (!raw) return null;
+  try { const c = JSON.parse(raw); return ['apiKey', 'projectId', 'storageBucket', 'appId'].every(k => typeof c[k] === 'string' && c[k]) ? c : null; } catch { return null; }
+}
 module.exports = () => {
   const adaptive = (base.expo.android && base.expo.android.adaptiveIcon) || {};
   const splashImage = brand('splash_icon');
@@ -99,6 +105,10 @@ module.exports = () => {
     // 공개 연락처: 환경변수가 있으면 그 값(형식이 틀리면 비움), 없으면 release/public-contact.json(저장소에 둔 공개 값).
     privacyPolicyUrl: pick(process.env.EMOTICON_PRIVACY_URL, publicContact.privacyPolicyUrl, httpsUrl),
     supportEmail: pick(process.env.EMOTICON_SUPPORT_EMAIL, publicContact.supportEmail, email),
+    // vc4(2026-10-07) 계정·클라우드: 운영 Firebase 프로젝트의 **공개** 웹 설정(JSON, 비밀 아님)이 있을 때만 서버에 연결한다.
+    // 없으면 앱은 '준비 중'만 보이고 아무 요청도 보내지 않는다. 로그인 버튼은 그 회사 SDK·키를 넣은 빌드에서만 켠다(EMOTICON_LOGIN=kakao,naver,google).
+    ...(cloudSettings() ? { cloud: cloudSettings() } : {}),
+    login: Object.fromEntries(String(process.env.EMOTICON_LOGIN || '').split(',').map(x => x.trim()).filter(x => ['kakao', 'naver', 'google'].includes(x)).map(x => [x, true])),
   },
   };
 };

@@ -165,6 +165,10 @@ function checkPurchases(config, group, prefix) {
   const trialOk = trial === undefined || trial === false || (trial === true && mode === 'closed');
   return [row(group, prefix + 'purchases', valid ? 'PASS' : 'FAIL',
     mode === 'closed' ? '명시적 구매 비활성 비공개 테스트' : mode === undefined ? '정상 출시 구성: 결제 검증 필수' : '지원하지 않는 구매 구성'),
+  // vc4: 계정·클라우드 연결 상태를 매 빌드 그대로 말한다(서버 미연결은 실패가 아니라 '준비 중' 빌드). 로그인 SDK 를 켰는데 서버가 없으면 실패.
+  (() => { const cloud = config?.extra?.cloud, login = Object.keys(config?.extra?.login ?? {});
+    const status = !config || (login.length && !cloud) ? 'FAIL' : 'PASS';
+    return row(group, prefix + 'cloud', status, !cloud ? (login.length ? '로그인을 켰는데 서버 설정이 없어요' : '서버 미연결 — 계정·클라우드·공모전은 앱에서 “준비 중”(요청 0회)') : `서버 연결: ${cloud.projectId} · 로그인 ${login.join(',') || '없음'}`); })(),
   row(group, prefix + 'pro_trial', !!config && trialOk ? 'PASS' : 'FAIL',
     trial === true ? (mode === 'closed' ? '비공개 테스트 PRO 체험 켜짐(구매 닫힘 빌드 전용)' : 'PRO 체험이 구매가 열린 구성에서 켜져 있어요 — 출시 금지') : trial === undefined || trial === false ? 'PRO 체험 꺼짐' : '지원하지 않는 PRO 체험 값')];
 }
