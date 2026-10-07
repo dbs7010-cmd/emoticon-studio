@@ -7,7 +7,7 @@
 // 모든 식은 한 바퀴(u: 0→1) 안에서 끝나고 u=1 이 u=0 과 같다 — 반복해도 이음매가 없다.
 // 들어오는 효과(뿅·쓱·쿵)는 끝에 짧게 빠져나간다(작아지거나 들어온 쪽으로 나감). 그래서 다시 들어올 때 튀지 않는다.
 // 앞의 여섯(float·bounce·pulse·tilt·shake·jitter)은 45.34~45.38 과 **같은 값**을 낸다. 저장된 칸이 달라 보이면 안 된다.
-import type { MotionPreset } from './types';
+import type { MotionPreset, MotionStep } from './types';
 
 export type MotionDirection = 'left' | 'right' | 'up' | 'down';
 export type Delta = { px: number; py: number; dx: number; dy: number; sx: number; sy: number; rot: number };
@@ -76,7 +76,21 @@ function presetDelta(p,u,a,dir,W,H){
   d.sx=s3;d.sy=s3;}
  else if(p==='stretch'){d.py=H*.92;var w=Math.sin(phase);d.sy=1+.15*k*w;d.sx=1-.11*k*w;}
  return d;
-}`;
+}
+var STEP_ENTER={pop:.6,slide:.6,drop:.7},STEP_BLEND=.12,STEP_REST={slide:.5,drop:.55};
+function stepTotal(steps){var t=0;for(var i=0;i<steps.length;i++)t+=steps[i].duration*steps[i].repeat;return t;}
+function stepLocal(st,local){var u=(local%st.duration)/st.duration;if(STEP_ENTER[st.preset]!==undefined)u=(local>=st.duration?1:u)*STEP_ENTER[st.preset];return u;}
+function stepEndU(st){return STEP_ENTER[st.preset]!==undefined?STEP_ENTER[st.preset]:.9999;}
+function stepAt(steps,t){var total=stepTotal(steps),tt=((t%total)+total)%total,acc=0;for(var i=0;i<steps.length;i++){var len=steps[i].duration*steps[i].repeat;if(tt<acc+len||i===steps.length-1)return {i:i,local:Math.min(tt-acc,len)};acc+=len;}return {i:0,local:0};}
+function stepDelta(steps,t,a,dir,W,H){
+ var at=stepAt(steps,t),st=steps[at.i],sa=st.strength==null?a:st.strength,sd=st.direction||dir;
+ var d=presetDelta(st.preset,stepLocal(st,at.local),sa,sd,W,H);
+ if(steps.length>1&&at.local<STEP_BLEND){var pv=steps[(at.i+steps.length-1)%steps.length],pa=pv.strength==null?a:pv.strength,e=presetDelta(pv.preset,stepEndU(pv),pa,pv.direction||dir,W,H),m=at.local/STEP_BLEND;m=m*m*(3-2*m);
+  d={px:e.px+(d.px-e.px)*m,py:e.py+(d.py-e.py)*m,dx:e.dx+(d.dx-e.dx)*m,dy:e.dy+(d.dy-e.dy)*m,sx:e.sx+(d.sx-e.sx)*m,sy:e.sy+(d.sy-e.sy)*m,rot:e.rot+(d.rot-e.rot)*m};}
+ return d;
+}
+function stepEntering(steps,t){var at=stepAt(steps,t),st=steps[at.i];return STEP_REST[st.preset]!==undefined&&at.local<st.duration&&stepLocal(st,at.local)<STEP_REST[st.preset];}
+`;
 
 // ── RN 견본이 쓰는 같은 식 ──────────────────────────────────────────────────────────
 export function presetDelta(p: MotionPreset | undefined, u: number, a: number, dir: MotionDirection | undefined, W: number, H: number): Delta {
@@ -144,3 +158,31 @@ export function presetDelta(p: MotionPreset | undefined, u: number, a: number, d
   else if (p === 'stretch') { d.py = H * .92; const w = Math.sin(phase); d.sy = 1 + .15 * k * w; d.sx = 1 - .11 * k * w; }
   return d;
 }
+
+// ── V2 다중 동작(2026-10-07): 엔진 문자열(stepDelta)과 같은 식. motion-step-test 가 두 벌을 비교한다. ──────────────
+export const STEP_LIMITS = { maxSteps: 3, minDuration: .4, maxDuration: 2, maxRepeat: 4, maxTotal: 3 } as const;
+// 들어오는 효과는 '머무는 자세'까지만 재생하고 멈춘다(그 뒤 원래 식의 빠져나가기 구간을 쓰지 않음).
+export const STEP_ENTER: Partial<Record<MotionPreset, number>> = { pop: .6, slide: .6, drop: .7 };
+// 단계로 이을 수 없는 효과: 빼꼼(늘 일부가 가려진 자세로 끝남)·사라지기(보이지 않는 자세로 끝남) — 다음 단계로 튄다.
+export const STEP_EXCLUDED: readonly MotionPreset[] = ['peek', 'vanish'];
+const STEP_BLEND = .12, STEP_REST: Partial<Record<MotionPreset, number>> = { slide: .5, drop: .55 };
+export const stepTotal = (steps: MotionStep[]) => steps.reduce((t, s) => t + s.duration * s.repeat, 0);
+const stepLocal = (st: MotionStep, local: number) => { let u = (local % st.duration) / st.duration; const e = STEP_ENTER[st.preset]; if (e !== undefined) u = (local >= st.duration ? 1 : u) * e; return u; };
+const stepEndU = (st: MotionStep) => STEP_ENTER[st.preset] ?? .9999;
+export function stepAt(steps: MotionStep[], t: number): { i: number; local: number } {
+  const total = stepTotal(steps), tt = ((t % total) + total) % total;
+  let acc = 0;
+  for (let i = 0; i < steps.length; i++) { const len = steps[i].duration * steps[i].repeat; if (tt < acc + len || i === steps.length - 1) return { i, local: Math.min(tt - acc, len) }; acc += len; }
+  return { i: 0, local: 0 };
+}
+export function stepDelta(steps: MotionStep[], t: number, a: number, dir: MotionDirection | undefined, W: number, H: number): Delta {
+  const at = stepAt(steps, t), st = steps[at.i], sa = st.strength ?? a;
+  let d = presetDelta(st.preset, stepLocal(st, at.local), sa, st.direction ?? dir, W, H);
+  if (steps.length > 1 && at.local < STEP_BLEND) {
+    const pv = steps[(at.i + steps.length - 1) % steps.length], e = presetDelta(pv.preset, stepEndU(pv), pv.strength ?? a, pv.direction ?? dir, W, H);
+    let m = at.local / STEP_BLEND; m = m * m * (3 - 2 * m);
+    d = { px: e.px + (d.px - e.px) * m, py: e.py + (d.py - e.py) * m, dx: e.dx + (d.dx - e.dx) * m, dy: e.dy + (d.dy - e.dy) * m, sx: e.sx + (d.sx - e.sx) * m, sy: e.sy + (d.sy - e.sy) * m, rot: e.rot + (d.rot - e.rot) * m };
+  }
+  return d;
+}
+export const stepEntering = (steps: MotionStep[], t: number) => { const at = stepAt(steps, t), st = steps[at.i], r = STEP_REST[st.preset]; return r !== undefined && at.local < st.duration && stepLocal(st, at.local) < r; };

@@ -44,6 +44,9 @@ export type PartMotion = {
   fromX?: number; fromY?: number; toX?: number; toY?: number;
   speed: number; delay: number;
 };
+// V2 다중 동작(2026-10-07, PRO): 전체 그림에 효과를 시간 순서로 잇는다(예: 쓱 들어와서 → 흔들고 → 두근). 한 바퀴 = 단계 길이 × 반복의 합.
+// 없으면 예전과 똑같이 preset 하나가 돈다(옛 작품 그대로). 들어오는 효과(뿅·쓱·쿵)는 '머무는 자세'에서 멈춰 다음 단계로 이어진다.
+export type MotionStep = { id: string; preset: MotionPreset; duration: number; repeat: number; strength?: number; direction?: 'left' | 'right' | 'up' | 'down' };
 export type Motion = {
   version: 1;
   preset?: MotionPreset;            // the whole picture moving (무료 6 · PRO 14 — motion-math.ts)
@@ -55,6 +58,7 @@ export type Motion = {
   stagger?: number;                // PRO: how those parts share the loop
   alternate?: { poseB: string[]; interval: number }; // PRO: two poses taking turns
   captionMoves?: boolean;           // words stay still unless the user says otherwise
+  steps?: MotionStep[];             // PRO V2: whole-picture effects in sequence (preset is ignored while steps exist)
 };
 // `slot` is set only by set-level checks, where a problem can be opened and fixed in one tap.
 export type Check = { label: string; status: Verdict; detail: string; slot?: number };

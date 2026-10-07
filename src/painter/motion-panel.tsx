@@ -4,8 +4,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pop, ProTag, Range, T, Glyph } from '../components/ui';
 import { ASSET_SLOTS } from '../design/asset-slots';
 import { usesPro } from '../project';
-import { isProPreset, loopScale, presetDelta, type MotionDirection } from '../motion-math';
-import type { LayerTransform, Motion, PartMotion, SavedMotion, MotionPreset } from '../types';
+import { isProPreset, loopScale, presetDelta, STEP_EXCLUDED, STEP_LIMITS, stepTotal, type MotionDirection } from '../motion-math';
+import type { LayerTransform, Motion, MotionStep, PartMotion, SavedMotion, MotionPreset } from '../types';
 
 const C = T;
 // Everyday words for what the movement does. The effect ids stay in English in the data.
@@ -60,8 +60,8 @@ const Row = ({ label, value, onChange, min, max, step, fmt, onActive }: { label:
   return <Range label={label} value={value} min={min} max={max} step={step ?? (max - min) / 20} onChange={onChange} display={text(value)} format={text} onActive={onActive} />;
 };
 
-const Chip = ({ label, on, onPress, wide }: { label: string; on: boolean; onPress: () => void; wide?: boolean }) =>
-  <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }} onPress={onPress}
+const Chip = ({ label, on, onPress, wide, a11y }: { label: string; on: boolean; onPress: () => void; wide?: boolean; a11y?: string }) =>
+  <Pressable accessibilityRole="button" accessibilityLabel={a11y ?? label} accessibilityState={{ selected: on }} onPress={onPress}
     style={{ flex: wide ? 1 : undefined, minHeight: 48, paddingHorizontal: 14, borderRadius: 24, alignItems: 'center', justifyContent: 'center',
       borderWidth: 1, borderColor: on ? C.accentBorder : C.line, backgroundColor: on ? C.accentSoft : C.paper }}>
     <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{label}</Text>
@@ -144,7 +144,7 @@ type Props = {
 // 무료 효과는 누르는 즉시 칸에 들어간다. PRO(부분 움직임·두 모습)는 **들어가기 전에** PRO 라고 알리고,
 // 무료 사용자는 입구에서 PRO 안내로 간다 — 만들고 난 뒤 저장할 때 막지 않는다.
 export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, previousMotion, pivotPick, pivotRole, onPickPivot, onFocusPart, onFit, onDuplicateForPose, onEditPose, savedMotions, onSaveMotion, onUseMotion, onForgetMotion, onChange, onRequestPro, thumbs }: Props) {
-  const [view, setView] = React.useState<'basic' | 'parts' | 'pose' | 'shelf'>('basic');
+  const [view, setView] = React.useState<'basic' | 'parts' | 'pose' | 'shelf' | 'steps'>('basic');
   const base: Motion = motion ?? { version: 1, speed: .5, strength: .5, captionMoves: false };
   const set = (patch: Partial<Motion>) => onChange({ ...base, ...patch });
   const parts = base.parts ?? [];
@@ -170,7 +170,26 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     next.splice(to, 0, moved);
     set({ parts: base.play === 'sequence' ? next.map((p, i) => ({ ...p, delay: Number((i * (base.stagger ?? .15)).toFixed(2)) })) : next });
   };
-  const hasPro = parts.length > 0 || !!base.alternate;
+  // V2 다중 동작(2026-10-07, PRO): 전체 그림 효과를 시간 순서로 잇는다. 단계가 있으면 아래 효과 하나 고르기 대신 단계가 돈다.
+  const steps = base.steps ?? [];
+  const stepRoom = (except?: string) => STEP_LIMITS.maxTotal - stepTotal(steps.filter(st => st.id !== except));
+  const setSteps = (next: MotionStep[]) => set({ steps: next.length ? next : undefined });
+  const addStep = () => {
+    if (steps.length >= STEP_LIMITS.maxSteps || stepRoom() < STEP_LIMITS.minDuration) return;
+    const first = steps.length ? undefined : (base.preset && !STEP_EXCLUDED.includes(base.preset) ? base.preset : undefined);
+    setSteps([...steps, { id: 'step-' + Date.now().toString(36), preset: first ?? (steps.length ? 'shake' : 'pop'), duration: Math.min(.8, Math.floor(stepRoom() * 10) / 10), repeat: 1 }]);
+  };
+  const editStep = (id: string, patch: Partial<MotionStep>) => setSteps(steps.map(st => {
+    if (st.id !== id) return st;
+    const next = { ...st, ...patch }, room = stepRoom(id);
+    // 한 바퀴가 3초를 넘지 않게: 길이 × 반복이 남은 시간을 넘으면 반복부터 줄이고, 그래도 넘으면 길이를 줄인다.
+    while (next.repeat > 1 && next.duration * next.repeat > room) next.repeat--;
+    if (next.duration * next.repeat > room) next.duration = Math.max(STEP_LIMITS.minDuration, Math.floor(room * 10) / 10);
+    return next;
+  }));
+  const moveStep = (from: number, to: number) => { if (to < 0 || to >= steps.length) return; const next = [...steps]; const [m] = next.splice(from, 1); next.splice(to, 0, m); setSteps(next); };
+  const enterSteps = () => { if (pro) setView('steps'); else onRequestPro(); };
+  const hasPro = parts.length > 0 || !!base.alternate || steps.length > 0;
   const moving = !!base.preset || hasPro;
   // 무료 사용자에게는 PRO 화면 대신 PRO 안내가 열린다. 들어가서 만든 뒤에 막히는 일이 없다.
   const enterPro = () => { if (pro) setView('parts'); else onRequestPro(); };
@@ -197,7 +216,8 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       return;
     }
     setTrialFrom(null);
-    set({ preset: id });
+    // 단계가 있을 때 효과 하나를 고르면 단계 대신 그 효과로 바꾼다(되돌리기로 단계가 돌아온다).
+    set({ preset: id, steps: undefined });
   };
   const endTrial = () => { const from = trialFrom; setTrialFrom(null); if (!from) return; if (!from.preset && !hasPro) onChange(null); else set({ preset: from.preset, direction: from.direction }); };
   const sections = MOTION_GROUPS.filter(g => group === 'all' || g.id === group).map(g => {
@@ -206,7 +226,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     return { ...g, rows };
   });
   const back = view === 'pose' ? { label: '부분 움직임으로 돌아가기', to: 'parts' as const, title: '두 모습 번갈아' }
-    : { label: '움직임 처음으로', to: 'basic' as const, title: view === 'parts' ? '부분만 움직이기' : '보관한 움직임' };
+    : { label: '움직임 처음으로', to: 'basic' as const, title: view === 'parts' ? '부분만 움직이기' : view === 'steps' ? '단계로 잇기' : '보관한 움직임' };
 
   return <View style={{ flex: 1 }}>
     {view !== 'basic' && <Pressable accessibilityRole="button" accessibilityLabel={back.label} onPress={() => setView(back.to)}
@@ -315,6 +335,12 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
 
     {/* 더 세밀하게: 한 줄뿐이라 제목이 필요 없다. PRO 표시는 작게 한 번(45.2차). */}
     <View style={{ gap: 6, paddingTop: 4 }}>
+      <Pressable accessibilityRole="button" accessibilityLabel="단계로 잇기" onPress={enterSteps} style={row}>
+        <Glyph name="timeline-outline" size={20} color={C.ink} />
+        <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '600', color: C.ink }}>단계로 잇기{steps.length ? ` · ${steps.length}단계 · ${stepTotal(steps).toFixed(1)}초` : ''}</Text>
+        {!pro && <ProTag />}
+        <Glyph name="chevron-right" size={20} color={C.faint} />
+      </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="부분만 움직이기" onPress={enterPro} style={row}>
         <Glyph name="hand-back-right-outline" size={20} color={C.ink} />
         <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '600', color: C.ink }}>부분만 움직이기{parts.length ? ` · ${parts.length}개` : ''}{base.alternate ? ' · 두 모습' : ''}</Text>
@@ -322,6 +348,29 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         <Glyph name="chevron-right" size={20} color={C.faint} />
       </Pressable>
     </View>
+    </> : view === 'steps' ? <>
+      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{`전체 그림의 효과를 순서대로 이어요(최대 ${STEP_LIMITS.maxSteps}단계 · 한 바퀴 ${STEP_LIMITS.maxTotal}초). 뿅·쓱·쿵은 들어와서 멈춘 자세로 다음 단계로 넘어가요. 빼꼼·사라지기는 이어 붙일 수 없어요.`}</Text>
+      {steps.map((st, index) => <View key={st.id} testID={'단계 ' + (index + 1)} style={{ gap: 8, padding: 10, borderRadius: C.radius.md, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={{ flex: 1, fontSize: 14, fontWeight: '800', color: C.ink }}>{`${index + 1}단계 · ${PRESETS.find(p => p.id === st.preset)?.label ?? st.preset}`}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={`${index + 1}단계 위로`} disabled={index === 0} onPress={() => moveStep(index, index - 1)} style={{ padding: 6, opacity: index === 0 ? .3 : 1 }}><Glyph name="chevron-up" size={20} color={C.ink} /></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={`${index + 1}단계 아래로`} disabled={index === steps.length - 1} onPress={() => moveStep(index, index + 1)} style={{ padding: 6, opacity: index === steps.length - 1 ? .3 : 1 }}><Glyph name="chevron-down" size={20} color={C.ink} /></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={`${index + 1}단계 빼기`} onPress={() => setSteps(steps.filter(x => x.id !== st.id))} style={{ padding: 6 }}><Glyph name="close" size={20} color={C.muted} /></Pressable>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+          {PRESETS.filter(p => !STEP_EXCLUDED.includes(p.id)).map(p => <Chip key={p.id} label={p.label} a11y={`${index + 1}단계 ${p.label}`} on={st.preset === p.id} onPress={() => editStep(st.id, { preset: p.id })} />)}
+        </ScrollView>
+        <Row label="길이" value={st.duration} min={STEP_LIMITS.minDuration} max={STEP_LIMITS.maxDuration} step={.1} fmt={n => n.toFixed(1) + '초'} onChange={n => editStep(st.id, { duration: Math.round(n * 10) / 10 })} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={{ fontSize: 13, color: C.ink, marginRight: 4 }}>반복</Text>
+          {Array.from({ length: STEP_LIMITS.maxRepeat }, (_, i) => i + 1).map(n => <Chip key={n} label={n + '번'} a11y={`${index + 1}단계 반복 ${n}번`} on={st.repeat === n} onPress={() => editStep(st.id, { repeat: n })} />)}
+        </View>
+      </View>)}
+      <Text testID="단계 한 바퀴" style={{ fontSize: 12, color: C.muted }}>{steps.length ? `한 바퀴 ${stepTotal(steps).toFixed(1)}초 / 최대 ${STEP_LIMITS.maxTotal}초` : '아직 단계가 없어요. 단계를 더하면 바로 미리 봐요.'}</Text>
+      {steps.length < STEP_LIMITS.maxSteps && stepRoom() >= STEP_LIMITS.minDuration && <Pressable accessibilityRole="button" accessibilityLabel="단계 더하기" onPress={addStep} style={row}>
+        <Glyph name="plus" size={20} color={C.ink} />
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>단계 더하기</Text>
+      </Pressable>}
     </> : view === 'parts' ? <>
       {parts.map((part, index) => {
         const effect = PART_EFFECTS.find(e => e.id === part.effect)!;

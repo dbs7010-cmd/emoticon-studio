@@ -360,6 +360,8 @@ function fillAt(spot){
 // cycles inside it, so the loop joins back to its own first frame with no seam.
 function loopSeconds(){
  if(!motion)return 1;
+ // V2 다중 동작: 한 바퀴 = 단계 길이 × 반복의 합(최대 3초 — 내보내기 24프레임 안에서 끊기지 않게).
+ if(motion.steps&&motion.steps.length)return Math.max(.2,Math.min(3,stepTotal(motion.steps)));
  if(motion.alternate&&motion.alternate.interval>0)return Math.max(.2,motion.alternate.interval*2);
  const base=1.2-Math.max(0,Math.min(1,motion.speed==null?.5:motion.speed))*.8;
  // 들어오고 머무는 효과(뿅·쓱·빼꼼 …)는 한 바퀴가 두 배다 — 짧으면 들어오자마자 다시 시작해 읽히지 않는다.
@@ -368,6 +370,7 @@ function loopSeconds(){
 var LONG_PRESETS=${JSON.stringify(LONG_MOTION_PRESETS)},ENTRANCE_REST=${JSON.stringify(ENTRANCE_REST)},ENTRANCE_EXIT=${JSON.stringify(ENTRANCE_EXIT)};
 function cyclesFor(speed){return Math.max(1,Math.min(4,Math.round((speed==null?.5:speed)*3)+1));}
 function wholeDelta(t){
+ if(motion&&motion.steps&&motion.steps.length){const a0=Math.max(.05,Math.min(1,motion.strength==null?.5:motion.strength));return stepDelta(motion.steps,t,a0,motion.direction,W,H);}
  if(!motion||!motion.preset)return {px:W/2,py:H/2,dx:0,dy:0,sx:1,sy:1,rot:0};
  // 세기 0 이면 효과를 골랐는데도 아무것도 움직이지 않았다(2026-10-05 '일부 움직임 미작동' 원인 중 하나). 가장 약한 값은 한 칸(0.05).
  const a=Math.max(.05,Math.min(1,motion.strength==null?.5:motion.strength));
@@ -419,8 +422,10 @@ function motionClips(){
  if(!motion)return false;
  const L=loopSeconds(),us=clipTimes();
  // 밖에서 들어오는 효과는 들어오는 동안 밖에 있는 것이 정상이다. 들어온 뒤(머무는 동안)만 본다. 빼꼼은 늘 일부가 가려진다.
- const rest=motion.preset&&Object.prototype.hasOwnProperty.call(ENTRANCE_REST,motion.preset)?ENTRANCE_REST[motion.preset]:0;
- const exit=motion.preset&&ENTRANCE_EXIT[motion.preset]||1;
+ // 단계(steps)가 있으면 preset 은 쓰이지 않는다 — 한 효과용 등장·퇴장 구간도 적용하지 않는다(단계별로 stepEntering 이 본다).
+ const solo=motion.steps&&motion.steps.length?null:motion.preset;
+ const rest=solo&&Object.prototype.hasOwnProperty.call(ENTRANCE_REST,solo)?ENTRANCE_REST[solo]:0;
+ const exit=solo&&ENTRANCE_EXIT[solo]||1;
  for(const l of layers){
   if(!l.visible)continue;
   const hull=inkHull(l.bitmap);
@@ -429,6 +434,7 @@ function motionClips(){
    const part=(motion.parts||[]).some(pp=>pp.layerId===l.id&&!pp.off);
    if(rest===null&&!part)continue;
    if(rest&&(u<rest||u>=exit)&&!part)continue;
+   if(motion.steps&&motion.steps.length&&!part&&stepEntering(motion.steps,L*u))continue;
    const d=deltaFor(l,L*u);
    if(!d||d.hidden)continue;
    // 레이어 자체 변환(위치·크기·회전)을 먼저 건다(2026-10-05: 예전에는 빠져 있어, 레이어를 옮기거나 줄여도 잘림 판단이 바뀌지 않았다).

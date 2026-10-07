@@ -1,6 +1,6 @@
 import { KAKAO_STATIC_SPEC as SPEC } from './constants/kakao-spec';
 import { MOTION_PRESETS } from './types';
-import { isProPreset } from './motion-math';
+import { isProPreset, STEP_EXCLUDED, STEP_LIMITS } from './motion-math';
 import type { Check, LocalImage, Motion, Project, Slot, Store } from './types';
 
 // Home and export share these issues. Missing cuts belong to progress, not defects.
@@ -81,13 +81,13 @@ export function previousDrawn(project: Project, exclude: number): Slot | undefin
 export const captionText = (slot: Slot): string => slot.work?.caption?.text.trim() ?? '';
 // A cut moves when it carries any movement at all. Absent motion is the still cut it always was.
 export const isAnimated = (slot: Slot): boolean =>
-  !!(slot.motion && (slot.motion.preset || slot.motion.parts?.length || slot.motion.alternate));
+  !!(slot.motion && (slot.motion.preset || slot.motion.parts?.length || slot.motion.alternate || slot.motion.steps?.length));
 export const setIsAnimated = (project: Project): boolean => project.slots.some(isAnimated);
 // Which movements are PRO. Derived from the motion itself so a saved effect can always be
 // replayed and re-exported, whatever the subscription says today.
 // 45.39: PRO 효과(무료 6 밖의 전체 움직임)도 PRO 다. 이미 저장된 칸은 painter 의 proPart 비교로 다시 묻지 않는다.
 export const usesPro = (motion?: Motion): boolean =>
-  !!(motion && ((motion.parts?.length ?? 0) > 0 || motion.alternate || isProPreset(motion.preset)));
+  !!(motion && ((motion.parts?.length ?? 0) > 0 || motion.alternate || (motion.steps?.length ?? 0) > 0 || isProPreset(motion.preset)));
 // Slot numbers are positions, so reordering moves the work and renumbers the places it sits in.
 // Everything a cut owns — drawing, layers, words, movement, the files behind them — travels with
 // it, because it all hangs off the cut itself and never off the number.
@@ -155,6 +155,16 @@ export function parseStore(raw: string): Store {
             if (![part.pivotX, part.pivotY, part.amount, part.angle, part.speed, part.delay].every(Number.isFinite)) throw new Error('부분 움직임 값이 손상되었습니다.');
             for (const point of [part.fromX, part.fromY, part.toX, part.toY]) if (point !== undefined && !Number.isFinite(point)) throw new Error('부분 이동 위치가 손상되었습니다.');
             if (part.speed < 0 || part.speed > 1 || part.delay < 0 || part.delay > 5) throw new Error('부분 움직임 값이 범위를 벗어났습니다.');
+          }
+        }
+        // V2 다중 동작(2026-10-07): 단계 수·길이·반복·효과는 화면 상한과 같은 범위만 받는다.
+        if (m.steps !== undefined) {
+          if (!Array.isArray(m.steps) || m.steps.length < 1 || m.steps.length > STEP_LIMITS.maxSteps) throw new Error('움직임 단계 데이터가 손상되었습니다.');
+          for (const st of m.steps) {
+            if (typeof st.id !== 'string' || !(MOTION_PRESETS as readonly string[]).includes(st.preset) || STEP_EXCLUDED.includes(st.preset)) throw new Error('움직임 단계 효과가 손상되었습니다.');
+            if (!Number.isFinite(st.duration) || st.duration < STEP_LIMITS.minDuration || st.duration > STEP_LIMITS.maxDuration || !Number.isInteger(st.repeat) || st.repeat < 1 || st.repeat > STEP_LIMITS.maxRepeat) throw new Error('움직임 단계 길이가 범위를 벗어났습니다.');
+            if (st.strength !== undefined && !(Number.isFinite(st.strength) && st.strength >= 0 && st.strength <= 1)) throw new Error('움직임 단계 세기가 손상되었습니다.');
+            if (st.direction !== undefined && !['left', 'right', 'up', 'down'].includes(st.direction)) throw new Error('움직임 단계 방향이 손상되었습니다.');
           }
         }
         if (m.alternate !== undefined) {
