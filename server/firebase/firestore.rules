@@ -30,7 +30,8 @@ service cloud.firestore {
     }
 
     match /contests/{cid} {
-      allow read: if resource.data.status != 'draft' || isAdmin();
+      // 목록 질의는 앱이 공개 상태(open·closed·judging·announced)로만 묻는다 — 규칙은 걸러 주지 않으므로 질의가 규칙을 만족해야 한다.
+      allow read: if resource.data.get('status', 'draft') in ['open', 'closed', 'judging', 'announced'] || isAdmin();
       allow write: if false;
       match /submissions/{uid} {
         allow read: if owner(uid) || isAdmin();

@@ -24,6 +24,7 @@ service firebase.storage {
       allow read: if owner(uid) || isAdmin();
       allow create, update: if owner(uid)
         && file.matches('[A-Za-z0-9_-]{8,64}[.]zip')
+        && firestore.exists(/databases/(default)/documents/contests/$(cid)/submissions/$(uid))
         && firestore.get(/databases/(default)/documents/contests/$(cid)/submissions/$(uid)).data.status == 'uploading'
         && firestore.get(/databases/(default)/documents/contests/$(cid)/submissions/$(uid)).data.submissionKey + '.zip' == file
         && request.resource.contentType == 'application/zip'

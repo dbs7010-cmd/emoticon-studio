@@ -2,7 +2,6 @@
 // 실제 카카오·네이버 대신 이 파일의 가짜 서버(127.0.0.1:7777)가 토큰 확인 응답을 준다 — 함수의 '확인 규칙'을 검사하는 것이지
 // 실제 회사 연동을 검사하는 것이 아니다(실연동은 운영자 앱 키가 생긴 뒤).
 const assert = require('node:assert/strict');
-const http = require('node:http');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -20,21 +19,7 @@ const PROJECT = 'demo-emoti', BUCKET = 'demo-emoti.appspot.com';
 adminInit({ projectId: PROJECT, storageBucket: BUCKET });
 const adb = adminFirestore();
 
-// ── 가짜 카카오·네이버 ─────────────────────────────────────────────────────────────────────
-const mock = http.createServer((req, res) => {
-  const token = (req.headers.authorization || '').replace(/^Bearer /, '');
-  const send = (code, body) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
-  if (req.url === '/v1/user/access_token_info') {
-    if (token === 'kakao-good-token') return send(200, { id: 111, expires_in: 3600, app_id: 424242 });
-    if (token === 'kakao-other-app') return send(200, { id: 222, expires_in: 3600, app_id: 999999 });
-    return send(401, { code: -401, msg: 'this access token does not exist' });
-  }
-  if (req.url === '/v1/nid/me') {
-    if (token === 'naver-good-token') return send(200, { resultcode: '00', message: 'success', response: { id: 'NV-abc' } });
-    return send(401, { resultcode: '024', message: 'Authentication failed' });
-  }
-  send(404, {});
-});
+const startMock = require('./mock-providers.cjs');
 
 // ── 앱 쪽 도구: 앱의 ZIP 작성기를 그대로 쓴다 ─────────────────────────────────────────────────
 const REPO = path.join(__dirname, '../../..');
@@ -68,7 +53,7 @@ const results = [];
 const ok = msg => { results.push(msg); console.log('  ✓ ' + msg); };
 
 (async () => {
-  await new Promise(r => mock.listen(7777, '127.0.0.1', r));
+  const mock = await startMock();
   try {
     // 1) 로그인 3종 ────────────────────────────────────────────────────────────────────────
     const kakao = client();
