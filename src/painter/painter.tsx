@@ -9,7 +9,7 @@ import { canvasHtml } from './canvas-html';
 import { alphaOf, hsv, hsvOf, light, parseHex, toHex, typedHex, withAlpha } from './color';
 import { Action, Dialog, Elev, EmptyState, IconButton, ProTag, Range, Segmented, SheetHeader, T, TabBar, userMessage, Pop, Font, Card, Paper, Glyph, SaveToast } from '../components/ui';
 import { ASSET_SLOTS, BUILTIN_REFERENCES } from '../design/asset-slots';
-import { MotionPanel, layerLabel } from './motion-panel';
+import { MotionPanel, Toggle, layerLabel } from './motion-panel';
 import { KAKAO_STATIC_SPEC } from '../constants/kakao-spec';
 import { usesPro } from '../project';
 import { isProPreset } from '../motion-math';
@@ -511,6 +511,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const guideLaid = useRef<string | null>(null);
   // 그림 전체 크기(2026-10-05): 작품 레이어 전체를 함께 키우고 줄이는 창. 화면 보기 확대(두 손가락)와 다르다.
   const [sizeOpen, setSizeOpen] = useState(false);
+  // '문구도 함께'(2026-10-07): 기본은 꺼짐 — 예전처럼 문구는 그대로다. 켜면 그림과 같은 배율로 문구 위치·크기도 바뀐다.
+  const [sizeWithCaption, setSizeWithCaption] = useState(false);
   const [showCanon, setShowCanon] = useState(false), [showQA, setShowQA] = useState(false), [qa, setQA] = useState<QA | undefined>(slot.qa);
   // 빈 칸을 열면 한 번 보여 주는 '이전 칸 그림으로 시작'. 닫거나 그리기 시작하면 사라진다.
   const [continueDismissed, setContinueDismissed] = useState(false);
@@ -1865,11 +1867,16 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       <Action title="PRO 효과 빼고 저장" onPress={saveWithoutPro} />
     </Dialog>}
     {sizeOpen && <Dialog title="그림 전체 크기" onClose={() => setSizeOpen(false)}>
-      <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>모든 그림 레이어를 칸 가운데를 기준으로 함께 키우거나 줄여요. 레이어 사이 위치와 부분 움직임도 같이 맞춰져요. 참고 사진과 문구는 그대로예요.</Text>
+      <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>{'모든 그림 레이어를 칸 가운데를 기준으로 함께 키우거나 줄여요. 레이어 사이 위치와 부분 움직임도 같이 맞춰져요. 참고 사진은 그대로예요.' + (scene.caption?.text?.trim() ? (sizeWithCaption ? ' 문구도 같은 배율로 바뀌어요.' : ' 문구는 그대로예요.') : '')}</Text>
+      {!!scene.caption?.text?.trim() && <Pressable accessibilityRole="switch" accessibilityLabel="문구도 함께" accessibilityState={{ checked: sizeWithCaption }} onPress={() => setSizeWithCaption(!sizeWithCaption)}
+        style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, gap: 10 }}>
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>문구도 함께</Text>
+        <Toggle on={sizeWithCaption} />
+      </Pressable>}
       <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>두 손가락으로 화면을 키우는 것은 보기만 바뀌고, 이 기능은 저장되는 그림 크기가 바뀌어요. 되돌리기로 돌아갈 수 있어요.</Text>
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <View style={{ flex: 1 }}><Action icon="magnify-minus-outline" title="10% 작게" onPress={() => send({ type: 'scaleAll', factor: .9 })} /></View>
-        <View style={{ flex: 1 }}><Action icon="magnify-plus-outline" title="10% 크게" onPress={() => send({ type: 'scaleAll', factor: 1 / .9 })} /></View>
+        <View style={{ flex: 1 }}><Action icon="magnify-minus-outline" title="10% 작게" onPress={() => send({ type: 'scaleAll', factor: .9, withCaption: sizeWithCaption })} /></View>
+        <View style={{ flex: 1 }}><Action icon="magnify-plus-outline" title="10% 크게" onPress={() => send({ type: 'scaleAll', factor: 1 / .9, withCaption: sizeWithCaption })} /></View>
       </View>
       {!!scene.motion && !!scene.clipped && <Action primary icon="fit-to-page-outline" title="칸 안에 맞추기" onPress={() => send({ type: 'fitMotion' })} />}
       <Action title="닫기" onPress={() => setSizeOpen(false)} />

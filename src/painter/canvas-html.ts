@@ -786,7 +786,15 @@ function applyScaleAll(f){
   if(Number.isFinite(p.fromX)&&Number.isFinite(p.toX)){q.fromX=.5+(p.fromX-.5)*f;q.toX=.5+(p.toX-.5)*f;q.fromY=.5+(p.fromY-.5)*f;q.toY=.5+(p.toY-.5)*f;}
   else if(p.effect==='move')q.amount=p.amount*f;return q;})});
 }
-function scaleAll(f){const [lo,hi]=scaleBounds();f=Math.max(lo,Math.min(hi,f));if(!(f>0)||Math.abs(f-1)<1e-4)return false;checkpoint();applyScaleAll(f);extentCache=null;return true;}
+// 문구도 함께(2026-10-07, 사용자 선택): 켜면 문구의 가운데를 칸 가운데 기준으로 같은 배율만큼 옮기고 크기도 같은 배율로 바꾼다
+// (문구 크기는 손가락 조절과 같은 0.4~3배 안). 끄면 예전처럼 문구는 그대로. 되돌리기 한 번에 그림·문구가 함께 돌아간다.
+function scaleCaption(f){
+ if(!caption||!caption.text.trim())return;const s=captionSpot(ctx);if(!s)return;
+ const cx=s.x,cy=s.box.y+s.box.h/2;
+ caption.dx=(caption.dx||0)+(W/2+(cx-W/2)*f-cx);caption.dy=(caption.dy||0)+(H/2+(cy-H/2)*f-cy);
+ caption.scale=Math.max(.4,Math.min(3,(caption.scale||1)*f));
+}
+function scaleAll(f,withCaption){const [lo,hi]=scaleBounds();f=Math.max(lo,Math.min(hi,f));if(!(f>0)||Math.abs(f-1)<1e-4)return false;checkpoint();applyScaleAll(f);if(withCaption)scaleCaption(f);extentCache=null;return true;}
 // 칸 안에 맞추기: 움직이는 동안 칸 밖으로 나가지 않는 가장 큰 배율(지금보다 키우지는 않는다)을 찾아 한 번에 건다. 사용자가 누를 때만.
 function fitMotion(){
  if(!motion||!motionClips())return 1;
@@ -1315,7 +1323,7 @@ async function command(m){try{
   if(m.reset){caption.dx=0;caption.dy=0;caption.scale=1;caption.rot=0;}
   dirty=true;render();state();
  }
- if(m.type==='scaleAll'){if(scaleAll(Number(m.factor)))dirty=true;render(playing?(now()-playStart)/1000:undefined);state();send({type:'scaled',factor:Number(m.factor)});}
+ if(m.type==='scaleAll'){if(scaleAll(Number(m.factor),!!m.withCaption))dirty=true;render(playing?(now()-playStart)/1000:undefined);state();send({type:'scaled',factor:Number(m.factor)});}
  if(m.type==='fitMotion'){const f=fitMotion();if(f>0&&f<1)dirty=true;render(playing?(now()-playStart)/1000:undefined);state();send({type:'fitted',factor:f});}
  if(m.type==='motion'){checkpoint();motion=m.motion||null;dirty=true;extentCache=null;if(!motion)stopPlaying();render(playing?(now()-playStart)/1000:undefined);state();}
  if(m.type==='play'){startPlaying();}

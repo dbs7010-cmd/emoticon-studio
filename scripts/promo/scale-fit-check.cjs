@@ -17,7 +17,7 @@ const { loader } = require('../load-ts.cjs');
 const [bodyPng, armPng] = process.argv.slice(2);
 const { canvasHtml } = loader()('src/painter/canvas-html.ts');
 const d = p => 'data:image/png;base64,' + fs.readFileSync(p).toString('base64');
-const hooks = "window.__build=(fps)=>buildLoop(fps,true);window.__state=()=>({layers:layers.map(meta),motion:JSON.parse(JSON.stringify(motion)),clips:motionClips()});window.__play=(on)=>on?startPlaying():stopPlaying();window.__ext=()=>motionExtent();window.__overflow=(fps)=>{const L=loopSeconds(),count=Math.max(2,Math.min(MAX_FRAMES,Math.round(L*Math.max(6,Math.min(24,fps)))));const M=60,out=[];for(let i=0;i<count;i++){const c=document.createElement('canvas');c.width=W+2*M;c.height=H+2*M;const g=c.getContext('2d');g.translate(M,M);layers.forEach(l=>composite(g,l,deltaFor(l,L*i/count)));const d=g.getImageData(0,0,c.width,c.height).data;let n=0,a=0;for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){if(x>=M&&y>=M&&x<M+W&&y<M+H)continue;const v=d[(y*c.width+x)*4+3];if(v>0){n++;a=Math.max(a,v);}}out.push([n,a]);}return out;};";
+const hooks = "window.__build=(fps)=>buildLoop(fps,true);window.__state=()=>({layers:layers.map(meta),motion:JSON.parse(JSON.stringify(motion)),clips:motionClips(),caption:caption&&{...caption},capCenter:(()=>{const p=captionSpot(ctx);return p?[p.x,p.box.y+p.box.h/2]:null;})()});window.__play=(on)=>on?startPlaying():stopPlaying();window.__ext=()=>motionExtent();window.__overflow=(fps)=>{const L=loopSeconds(),count=Math.max(2,Math.min(MAX_FRAMES,Math.round(L*Math.max(6,Math.min(24,fps)))));const M=60,out=[];for(let i=0;i<count;i++){const c=document.createElement('canvas');c.width=W+2*M;c.height=H+2*M;const g=c.getContext('2d');g.translate(M,M);layers.forEach(l=>composite(g,l,deltaFor(l,L*i/count)));const d=g.getImageData(0,0,c.width,c.height).data;let n=0,a=0;for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){if(x>=M&&y>=M&&x<M+W&&y<M+H)continue;const v=d[(y*c.width+x)*4+3];if(v>0){n++;a=Math.max(a,v);}}out.push([n,a]);}return out;};";
 const driver = `<script>(async()=>{
 const ready=()=>new Promise(r=>{const t=setInterval(()=>{if(window.messages.some(m=>m.type==='ready')){clearInterval(t);r();}},20);});
 await ready();
@@ -34,6 +34,11 @@ r.undone=window.__state();
 await window.command({type:'fitMotion'});
 r.fitted=window.__state();r.ext=window.__ext();
 r.overBeforeKeep=r.overBefore;r.over=[...window.__overflow(12),...window.__overflow(24)];
+// 문구도 함께(2026-10-07): 끄면 문구 그대로, 켜면 크기 ×0.9 · 가운데가 칸 가운데 쪽으로 ×0.9, 되돌리기로 정확히 원래대로
+await window.command({type:'init',layers:[L('draw-1','몸',${JSON.stringify(d(bodyPng))})],references:[],activeLayerId:'draw-1',caption:{text:'안녕',place:'bottom',color:'#242424',dx:20,dy:0,scale:1},color:'#242424',penWidth:8,eraserWidth:20});
+r.cap0=window.__state();
+await window.command({type:'scaleAll',factor:.9});r.capOff=window.__state();await window.command({type:'undo'});
+await window.command({type:'scaleAll',factor:.9,withCaption:true});r.capOn=window.__state();await window.command({type:'undo'});r.capUndo=window.__state();
 const edgeInk=async url=>{const i=new Image();await new Promise(x=>{i.onload=x;i.onerror=x;i.src=url;});if(!i.width)return -1;const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const g=c.getContext('2d');g.drawImage(i,0,0);const d=g.getImageData(0,0,c.width,c.height).data,w=c.width,h=c.height;let n=0;for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(x>0&&y>0&&x<w-1&&y<h-1)continue;if(d[(y*w+x)*4+3]>0)n++;}return n;};
 r.edge=[];for(const fps of [12,24]){for(const u of window.__build(fps).sheets)r.edge.push(await edgeInk(u));}r.fitMsg=window.messages.filter(m=>m.type==='fitted').at(-1);
 window.__play(false);const a=window.__build(12).sheets;window.__play(true);await new Promise(x=>setTimeout(x,300));const b=window.__build(12).sheets;window.__play(false);
@@ -78,9 +83,15 @@ const edge = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
     assert.ok(r.ext.minX >= 0 && r.ext.minY >= 0 && r.ext.maxX <= 360 && r.ext.maxY <= 360, '맞춘 뒤 안내선 범위도 칸 안: ' + JSON.stringify(r.ext));
     assert.ok(r.overBeforeKeep.some(([n]) => n > 0), '시험 조건: 맞추기 전에는 실제로 칸 밖으로 잘리는 프레임이 있다');
     assert.ok(r.over.length > 0 && r.over.every(([n]) => n === 0), '맞춘 뒤 내보내기 프레임(12·24fps)에서 칸 밖으로 잘려 나가는 그림 없음: ' + JSON.stringify(r.over));
+    // 3c) 문구도 함께
+    assert.deepEqual(r.capOff.caption, r.cap0.caption, '문구도 함께를 끄면 문구는 그대로');
+    near(r.capOn.caption.scale, .9, '문구 크기 ×0.9');
+    near(r.capOn.capCenter[0], 180 + (r.cap0.capCenter[0] - 180) * .9, '문구 가운데 x 가 칸 가운데 쪽으로 ×0.9');
+    near(r.capOn.capCenter[1], 180 + (r.cap0.capCenter[1] - 180) * .9, '문구 가운데 y 도');
+    assert.deepEqual(r.capUndo.caption, r.cap0.caption, '되돌리기 한 번에 문구도 원래대로');
     // 4) 안내선은 내보내기 프레임 밖
     assert.equal(r.sameFrames, true, '재생 중(안내선 켜짐) 만든 프레임 = 멈춘 상태 프레임');
-    console.log(`PASS: scaleAll(레이어·위치·회전 중심 ×0.9, 되돌리기 정확) · fitMotion(쾅+손 회전 잘림 → 배율 ${r.fitMsg.factor.toFixed(3)} 로 잘림 없음 · 안내선 범위 칸 안 · 12/24fps 프레임에서 잘려 나가는 픽셀 0) · 안내선은 내보내기 프레임에 없음`);
+    console.log(`PASS: scaleAll(레이어·위치·회전 중심 ×0.9, 되돌리기 정확) · fitMotion(쾅+손 회전 잘림 → 배율 ${r.fitMsg.factor.toFixed(3)} 로 잘림 없음 · 안내선 범위 칸 안 · 12/24fps 프레임에서 잘려 나가는 픽셀 0) · 문구도 함께(끄면 그대로·켜면 ×0.9·되돌리기) · 안내선은 내보내기 프레임에 없음`);
   } finally {
     proc.kill();
     if (process.platform === 'win32') try { require('child_process').execFileSync('powershell', ['-NoProfile', '-Command', `Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" | Where-Object { $_.CommandLine -like '*${path.basename(prof)}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: 'ignore' }); } catch {}

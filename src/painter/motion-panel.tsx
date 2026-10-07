@@ -479,7 +479,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   </View>;
 }
 
-function Toggle({ on }: { on: boolean }) {
+export function Toggle({ on }: { on: boolean }) {
   return <View style={{ width: 36, height: 22, borderRadius: 11, padding: 2, backgroundColor: on ? C.accent : C.lineStrong, justifyContent: 'center' }}>
     <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#FFF', alignSelf: on ? 'flex-end' : 'flex-start' }} />
   </View>;
