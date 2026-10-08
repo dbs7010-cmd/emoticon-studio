@@ -15,6 +15,7 @@ const { getAuth } = require('firebase-admin/auth');
 const crypto = require('node:crypto');
 const { checkPackage } = require('./package-check');
 const artist = require('./artist-name');
+const retention = require('./retention');
 
 initializeApp();
 const db = getFirestore();
@@ -315,6 +316,14 @@ exports.adminSetPro = onCall(async req => {
   return { ok: true, until };
 });
 
+// 보관 기간: 매일 '지울 대상'을 세어 ops/retention 에 남긴다(지우지 않음). 실제 삭제는 RETENTION_AUTO_DELETE=true + 관리자 실행 때만.
+exports.retentionReport = onSchedule('every 24 hours', async () => { await retention.run({ db, bucket, proActive, FieldValue }); });
+exports.adminRetention = onCall(async req => {
+  adminOnly(req);
+  const apply = req.data?.apply === true;
+  need(!apply || retention.settings().autoDelete, 'failed-precondition', '자동 삭제가 꺼져 있어요(보관 정책 확정 전). RETENTION_AUTO_DELETE 를 켜기 전에는 세기만 해요.');
+  return retention.run({ db, bucket, now: Number(req.data?.now) || Date.now(), apply, proActive, FieldValue });
+});
 exports.adminCleanupNow = onCall(async req => { adminOnly(req); return { expired: await cleanupStale(Number(req.data?.now) || Date.now()) }; });
 
 // ── 탈퇴 ───────────────────────────────────────────────────────────────────────────────────

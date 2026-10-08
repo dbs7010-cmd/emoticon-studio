@@ -41,7 +41,7 @@ function fakeCloud() {
     uid: () => st.uid,
     call: async (name, data) => {
       st.calls.push([name, data]);
-      if (name === 'registerUser') return { pro: { active: st.pro, source: 'trial', verified: false }, backupBytes: 0 };
+      if (name === 'registerUser') return { pro: { active: st.pro, source: 'trial', verified: false }, backupBytes: 0, artistName: '몽이작가' };
       if (name === 'createSubmission') {
         const cur = st.subs.get(data.contestId);
         if (cur && cur.status === 'received') return { status: 'received', receiptNo: cur.receiptNo, path: cur.path };
@@ -97,7 +97,8 @@ const render = async props => { await act(async () => { tree = create(React.crea
   // 3) 카카오 SDK 있는 빌드 → 로그인 → 무료 회원
   await render({ cloud, extra: { login: { kakao: true } }, login: async () => { cloud.st.uid = 'kakao:1'; } });
   await press('카카오로 로그인');
-  assert.ok(texts().some(t => t.startsWith('로그인됨 · 카카오')));
+  assert.ok(texts().includes('카카오 로그인'), '어느 회사로 로그인했는지');
+  assert.ok(texts().includes('몽이작가'), '작가명이 계정 이름');
   assert.ok(texts().some(t => t.includes('개인 클라우드 저장 공간을 드리지 않아요')), '무료 회원에게 개인 클라우드 공간 없음');
   assert.equal(btn('백업').length, 0);
 

@@ -285,6 +285,23 @@ async function login(c, provider, user, ret = 'app') {
     assert.equal((await getDoc(doc(naver.db, 'contests/c1'))).data().status, 'announced');
     ok('관리자: 접수 목록 · 제출 당시 묶음 내려받기(해시 일치) · 심사 상태 · 결과 발표(공개) · 일반 회원은 관리자 기능 거절');
 
+    // 보관 기간: 설정값으로 대상만 센다 · 자동 삭제 꺼짐이면 지우라고 해도 거절 · 일반 회원 거절
+    {
+      await adb.doc('users/kakao:111').set({ pro: { active: false, endedAt: Date.now() - 100 * 864e5 } }, { merge: true });
+      const before = (await adb.collection('backups/kakao:111/sets').get()).size;
+      const rep = await boss.call('adminRetention', {});
+      assert.deepEqual(rep.settings, { proLapseDays: 90, contestNotSelectedDays: 90, contestSelectedDays: 365, autoDelete: false });
+      assert.equal(rep.applied, false); assert.equal(rep.deleted, 0);
+      assert.ok(rep.backups.sample.includes('kakao:111'), 'PRO 끝나고 90일 지난 백업은 대상으로 센다');
+      const later = await boss.call('adminRetention', { now: Date.now() + 400 * 864e5 });
+      assert.ok(later.contests.count >= 1 && later.contests.selected >= 1, '발표 뒤 기간이 지난 공모전 묶음(선정 포함)을 센다');
+      await denied(boss.call('adminRetention', { apply: true }), /failed-precondition/, '자동 삭제가 꺼져 있으면 지우지 않는다');
+      await denied(naver.call('adminRetention', {}), /permission-denied/);
+      assert.equal((await adb.collection('backups/kakao:111/sets').get()).size, before, '센 뒤에도 아무것도 지우지 않았다');
+      assert.equal((await adb.doc('ops/retention').get()).data().applied, false, '보고서는 ops/retention');
+      ok('보관 기간: 설정값(90/90/365일)으로 지울 대상만 센다 · 자동 삭제 꺼짐(기본) → 삭제 요청 거절 · 아무것도 지우지 않음 · 관리자만');
+    }
+
     // 6) 탈퇴 ────────────────────────────────────────────────────────────────────────────────
     await denied(again.call('deleteMyAccount', {}), /failed-precondition/);
     const del = await again.call('deleteMyAccount', { confirm: 'DELETE' });

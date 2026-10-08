@@ -1,4 +1,4 @@
-// 계정 · 클라우드 백업 · 공모전(vc4, 2026-10-07). 설정 › 계정·클라우드에서 연다.
+// 계정 · 클라우드 백업 · 공모전(vc4, 2026-10-07). 2026-10-08부터 아래 탭(공모전 · 내 정보) 안에 그대로 들어간다(inline).
 // 서버 설정이 없는 빌드(cloud=null)에서는 '준비 중'만 보이고 아무 요청도 보내지 않는다 — 제출·백업이 된 것처럼 표시하지 않는다.
 // 로그인 버튼은 그 회사 로그인 SDK·키가 들어간 빌드에서만 눌린다(providerReady). 클라우드 백업은 **서버가 기록한** PRO 만 쓴다.
 import React, { useEffect, useState } from 'react';
@@ -91,11 +91,13 @@ export function CloudScreen(p: Props) {
   const body = <>
         {!p.cloud ? <View testID="클라우드 준비 중" style={{ gap: 10, paddingVertical: 14 }}>
           <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>준비 중이에요</Text>
-          <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>로그인(카카오·네이버·구글), PRO 클라우드 백업, 공모전 접수는 서버를 연결한 뒤에 열려요. 지금은 아무것도 서버로 보내지 않아요.</Text>
-          {muted('그동안 작품은 이 기기에 저장되고, 설정 › 전체 백업 만들기로 파일 백업을 만들어 앱 밖에 보관할 수 있어요.')}
+          <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{p.part === 'contest' ? '공모전 접수는 서버를 연결한 뒤에 열려요.' : p.part === 'account' ? '로그인과 PRO 클라우드 백업은 서버를 연결한 뒤에 열려요.' : '로그인(카카오·네이버·구글), PRO 클라우드 백업, 공모전 접수는 서버를 연결한 뒤에 열려요.'} 지금은 아무것도 서버로 보내지 않아요.</Text>
+          {p.part !== 'contest' && muted('그동안 작품은 이 기기에 저장되고, 아래 전체 백업 만들기로 파일 백업을 앱 밖에 보관할 수 있어요.')}
         </View> : <>
           {show('account') && section('계정', uid ? <>
-            <Text style={{ fontSize: 14, color: C.ink }}>{`로그인됨 · ${uid.split(':')[0] === uid ? '구글' : ({ kakao: '카카오', naver: '네이버' } as Record<string, string>)[uid.split(':')[0]] ?? uid.split(':')[0]}`}</Text>
+            {/* 작가명(바꿀 수 없음)이 이름이고, 어느 회사로 로그인했는지는 그 아래 작게. */}
+            {!!user?.artistName && <Text testID="내 작가명" style={{ fontSize: 20, fontWeight: '800', color: C.ink }}>{user.artistName}</Text>}
+            <Text style={{ fontSize: user?.artistName ? 13 : 14, color: user?.artistName ? C.muted : C.ink }}>{`${({ kakao: '카카오', naver: '네이버', google: '구글' } as Record<string, string>)[uid.split(':')[0]] ?? '구글'} 로그인`}</Text>
             {muted(user ? (user.pro.active ? `PRO(${user.pro.source === 'trial' ? '체험' : user.pro.source === 'store' && user.pro.verified ? '구매 확인됨' : '관리자 부여'}) · 클라우드 백업 ${(user.backupBytes / 1048576).toFixed(1)}MB 사용` : '무료 회원 — 개인 클라우드 백업은 PRO 전용이에요. 공모전은 참가할 수 있어요.') : '회원 정보를 불러오는 중…')}
             <Action icon="logout" title="로그아웃" onPress={() => void signOutAll(p.cloud!).then(refresh)} />
             <Action danger icon="account-remove-outline" title="탈퇴(서버 데이터 삭제)" onPress={() => Alert.alert('탈퇴', '서버에 있는 클라우드 백업·회원 정보·공모전 접수가 지워져요. 이 기기 안 작품은 그대로예요.', [
@@ -156,7 +158,7 @@ export function CloudScreen(p: Props) {
           </>)}
         </>}
   </>;
-  if (p.inline) return <View style={{ gap: 12 }}>{!p.cloud ? section(p.part === 'contest' ? '공모전' : '계정', body) : body}</View>;
+  if (p.inline) return <View style={{ gap: 12 }}>{!p.cloud ? <View style={{ padding: 20, borderRadius: 24, backgroundColor: C.paper }}>{body}</View> : body}</View>;
   return <Modal visible={p.visible} animationType="slide" onRequestClose={p.onClose}>
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 4 }}>
