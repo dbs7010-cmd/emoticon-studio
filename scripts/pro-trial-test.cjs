@@ -126,17 +126,17 @@ const PART = { version: 1, speed: .5, strength: .5, parts: [{ id: 'p1', layerId:
     return p;
   };
 
-  // 3-0. 첫 실행 사용 안내(2026-10-05): 새 사용자에게 한 번, 건너뛰기/다 보기 모두 기록, 기존 사용자에게는 안 뜸, 설정에서 다시 보기
+  // 3-0. 첫 실행(2026-10-08 토스식 개편): 새 사용자에게 '첫 실행 한 장' 한 번(서버 없는 빌드는 '시작하기' 하나), 누르면 기록, 기존 사용자에게는 안 뜸.
+  //      3장 사용 안내는 자동으로 뜨지 않고 내 정보 › 사용 안내 다시 보기에서 본다.
   await render({ version: 1, revision: 1, projects: [], palette: [] });
-  assert.ok(texts().includes('사용 안내 1/3'), '새 사용자는 첫 실행에 안내를 본다');
-  assert.ok(texts().includes('그리기'));
-  await press('다음');
-  assert.ok(texts().includes('사용 안내 2/3') && texts().some(t => t.includes('무료 움직임 6종')), '무료 범위를 실제 개수로 말한다');
-  await press('건너뛰기');
-  assert.ok(!texts().some(t => t.startsWith('사용 안내 ')), '건너뛰면 닫힌다');
-  assert.equal(loadStore().store.introDone, true, '건너뛰기도 완료로 남는다');
+  assert.equal(tree.root.findAll(n => n.props.testID === '첫 실행').length > 0, true, '새 사용자는 첫 실행 한 장을 본다');
+  assert.ok(texts().some(t => t.includes('움직이는 이모티콘')), '첫 화면은 움직이는 이모티콘을 앞세운다');
+  assert.ok(!texts().some(t => /^사용 안내 \d/.test(t)), '3장 안내 창은 자동으로 뜨지 않는다');
+  await press('시작하기');
+  assert.equal(tree.root.findAll(n => n.props.testID === '첫 실행').length, 0, '시작하기를 누르면 홈');
+  assert.equal(loadStore().store.introDone, true, '시작도 완료로 남는다');
   await render(loadStore().store);
-  assert.ok(!texts().some(t => t.startsWith('사용 안내 ')), '다시 열어도 반복하지 않는다');
+  assert.equal(tree.root.findAll(n => n.props.testID === '첫 실행').length, 0, '다시 열어도 반복하지 않는다');
   await press('내 정보'); await press('사용 안내 다시 보기');
   assert.ok(texts().includes('사용 안내 1/3'), '설정에서 다시 볼 수 있다');
   await press('다음'); await press('다음');
@@ -207,7 +207,7 @@ const PART = { version: 1, speed: .5, strength: .5, parts: [{ id: 'p1', layerId:
   const bought = { plan: 'lifetime', source: 'store', verified: true, checkedAt: '2026-10-01T00:00:00.000Z' };
   for (const trial of [true, false]) {
     config.extra.proTrial = trial;
-    await render({ version: 1, revision: 1, projects: [], palette: [], entitlement: bought });
+    await render({ version: 1, introDone: true, revision: 1, projects: [], palette: [], entitlement: bought });
     assert.ok(texts().includes('PRO') && !texts().includes('PRO 체험'), `구매자는 'PRO'(체험 ${trial})`);
     assert.deepEqual(loadStore().store.entitlement, bought, '이용권은 그대로');
   }

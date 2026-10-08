@@ -21,8 +21,9 @@ import { restoreBackup, writeBackup } from './src/services/backup';
 import { isFullBackup, restoreFullBackup, writeFullBackup } from './src/services/full-backup';
 import { CloudScreen } from './src/components/cloud-screen';
 import { TabBar, type HomeTab } from './src/components/tab-bar';
+import { ArtistNameScreen, StartScreen } from './src/components/onboarding';
 import { appCloud, cloudConfig } from './src/services/cloud/firebase';
-import { authBase, signInWithBrowser, type Provider } from './src/services/cloud/account';
+import { artistNameFormat, authBase, checkArtistName, providerReady, register, setArtistName, signInWithBrowser, type Provider } from './src/services/cloud/account';
 import { openContests } from './src/services/cloud/contest';
 import * as WebBrowser from 'expo-web-browser';
 import { getRandomBytes } from 'expo-crypto';
@@ -125,6 +126,13 @@ function Studio() {
   // 2026-10-08 토스식 개편: 첫 화면은 아래 탭 세 갈래(홈 · 공모전 · 내 정보). 예전 '설정' 창은 '내 정보' 탭이 되었다 —
   // settings 는 그 탭이 열려 있는지의 별명이고, 다른 화면으로 가며 부르던 setSettings(false) 는 탭을 바꾸지 않는다.
   const [homeTab, setHomeTab] = useState<HomeTab>('home');
+  // 로그인 관문(2026-10-08 사용자 결정: 무료·유료 모두 로그인 + 작가명). 서버 설정이 있는 빌드에서만 닫는다 —
+  // authUid: undefined = 기기에 남은 로그인을 되살리는 중, null = 로그인 전. artist: undefined = 모름(오프라인 등, 막지 않는다), null = 아직 안 정함.
+  const [startOpen, setStartOpen] = useState(false);
+  const [authUid, setAuthUid] = useState<string | null | undefined>(undefined);
+  const [artist, setArtist] = useState<string | null | undefined>(undefined);
+  const [loginBusy, setLoginBusy] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const [homeContest, setHomeContest] = useState<{ title: string; dday: string } | null>(null);
   const settings = homeTab === 'my';
   const setSettings = (open: boolean) => { if (open) setHomeTab('my'); };
@@ -138,6 +146,12 @@ function Studio() {
   // 시스템 브라우저로 서버 로그인 중계(/auth/start)를 연다. 서버 설정이 없는 빌드(cloud=null)에서는 부르지 않는다.
   const loginWith = async (provider: Provider) => { const config = cloudConfig(Constants.expoConfig?.extra); if (!cloud || !config) return;
     await signInWithBrowser(cloud, provider, { base: authBase(config), open: (url, ret) => WebBrowser.openAuthSessionAsync(url, ret), randomBytes: getRandomBytes }); };
+  useEffect(() => { if (!cloud) return;
+    return cloud.onAuth(uid => { setAuthUid(uid); setArtist(undefined);
+      if (uid) register(cloud).then(u => setArtist(u.artistName ?? null)).catch(() => setArtist(undefined)); }); }, [cloud]);
+  const finishStart = () => { setStartOpen(false); if (store && !store.introDone) { try { commit(st => ({ ...st, introDone: true })); } catch { /* 다음 실행에 다시 보일 뿐 */ } } };
+  const startLogin = (provider: Provider) => { setLoginError(''); setLoginBusy(true);
+    loginWith(provider).then(() => finishStart()).catch(e => setLoginError(String((e as Error).message ?? e))).finally(() => setLoginBusy(false)); };
   // 홈 공지 줄의 공모전: 서버가 있을 때만, 접수 중인 것 하나. 실패하면 조용히 없음(홈을 막지 않는다).
   useEffect(() => { if (!cloud) return; let alive = true;
     openContests(cloud).then(list => { const c = list.find(x => x.status === 'open'); if (!alive) return;
@@ -207,7 +221,8 @@ function Studio() {
   useEffect(() => {
     if (!store || introOffered.current) return;
     introOffered.current = true;
-    if (!store.introDone && store.projects.length === 0) setIntroStep(0);
+    // 2026-10-08: 새 사용자의 첫 화면은 3장 안내 창이 아니라 '첫 실행 한 장'(StartScreen). 3장 안내는 내 정보 › 사용 안내 다시 보기.
+    if (!store.introDone && store.projects.length === 0) setStartOpen(true);
   }, [store]);
   // 앱을 열 때 한 번, 저장된 이용권을 스토어와 영수증 서버에 다시 묻는다. 물어볼 수 없으면 그대로 둔다.
   const rechecked = useRef(false);
@@ -858,6 +873,14 @@ function Studio() {
       </Pressable>
   </View>;
   const setMeta = (p: Project) => { const when = new Date(p.updatedAt); return { moving: setIsAnimated(p), done: doneCount(p), working: p.slots.filter(isWorking).length, stamp: Number.isFinite(when.getTime()) ? `${when.getMonth() + 1}월 ${when.getDate()}일` : '' }; };
+  // 첫 실행 한 장 · 로그인 · 작가명. 서버가 있으면 로그인 전에는 앱 안으로 들어가지 않는다(기기 안 작품은 그대로 있다).
+  if (store && !loadError && cloud && authUid === undefined) return <SafeAreaView style={{ flex: 1, backgroundColor: C.paper, alignItems: 'center', justifyContent: 'center' }}><StatusBar style="dark" /><Text style={{ fontSize: 13, color: C.muted }}>불러오는 중…</Text></SafeAreaView>;
+  if (store && !loadError && ((cloud && authUid === null) || (!cloud && startOpen))) return <SafeAreaView style={{ flex: 1, backgroundColor: C.paper }}><StatusBar style="dark" />
+    <StartScreen providers={cloud ? { kakao: providerReady(Constants.expoConfig?.extra, 'kakao'), naver: providerReady(Constants.expoConfig?.extra, 'naver'), google: providerReady(Constants.expoConfig?.extra, 'google') } : null}
+      onLogin={startLogin} onStart={finishStart} busy={loginBusy} error={loginError} /></SafeAreaView>;
+  if (store && !loadError && cloud && authUid && artist === null) return <SafeAreaView style={{ flex: 1, backgroundColor: C.paper }}><StatusBar style="dark" />
+    <ArtistNameScreen formatError={artistNameFormat} check={name => checkArtistName(cloud, name)}
+      save={async name => { const r = await setArtistName(cloud, name); setArtist(r.artistName); }} /></SafeAreaView>;
   return <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}><StatusBar style="dark" /><ImageAnalyzer ref={analyzer} /><MotionBaker ref={baker} /><ExtraComposer ref={composer} />
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 4, minHeight: 56, backgroundColor: C.bg }}>

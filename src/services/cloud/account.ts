@@ -8,7 +8,7 @@ import type { Cloud, CloudConfig } from './firebase';
 import { sha256Hex } from './sha256';
 
 export type Provider = 'kakao' | 'naver' | 'google';
-export type ServerUser = { pro: { active: boolean; source: string; verified: boolean; until?: number | null }; backupBytes: number };
+export type ServerUser = { pro: { active: boolean; source: string; verified: boolean; until?: number | null }; backupBytes: number; artistName: string | null };
 export type OpenAuth = (url: string, returnUrl: string) => Promise<{ type: string; url?: string }>;
 export const APP_RETURN = 'emoti://auth';
 
@@ -46,6 +46,11 @@ export async function signInWithBrowser(cloud: Cloud, provider: Provider, opts: 
   return cloud.signInWithToken(token);
 }
 export const register = (cloud: Cloud) => cloud.call<ServerUser>('registerUser', {});
+// 작가명(2026-10-08): 한 번 정하면 바꿀 수 없다. 형식은 앱이 먼저 보고, 금지어·중복은 서버가 정한다.
+export const ARTIST_NAME = /^[가-힣A-Za-z0-9]{2,12}$/;
+export const artistNameFormat = (name: string) => ARTIST_NAME.test(name.normalize('NFC').trim()) ? null : '한글·영문·숫자 2~12자로 정해 주세요(띄어쓰기·기호 없이).';
+export const checkArtistName = (cloud: Cloud, name: string) => cloud.call<{ ok: boolean; reason?: string }>('checkArtistName', { name });
+export const setArtistName = (cloud: Cloud, name: string) => cloud.call<{ artistName: string }>('setArtistName', { name });
 export const signOutAll = (cloud: Cloud) => cloud.signOut();
 // 탈퇴: 서버의 개인 백업·회원 정보·공모전 접수·로그인 계정을 지운다. 기기 안 작품은 그대로다(따로 지우지 않는다).
 export const deleteAccount = (cloud: Cloud) => cloud.call<{ deleted: { backupSets: number; submissions: number } }>('deleteMyAccount', { confirm: 'DELETE' });

@@ -2,7 +2,7 @@
 // 설정이 없으면 cloudConfig() 가 null — 화면은 '준비 중'으로만 보이고, 어떤 요청도 보내지 않는다(제출·백업이 된 것처럼 표시하지 않음).
 // 나머지 코드(공모전·백업·계정)는 아래 Cloud 모양에만 기대어, 같은 코드를 Node 에서 로컬 에뮬레이터로 검사한다.
 import { initializeApp, getApps, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
-import { getAuth, initializeAuth, signInWithCustomToken, signOut, type Auth, type Persistence } from 'firebase/auth';
+import { getAuth, initializeAuth, onAuthStateChanged, signInWithCustomToken, signOut, type Auth, type Persistence } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where, type Firestore } from 'firebase/firestore';
 import { getStorage, ref, uploadBytesResumable, getBytes, getMetadata, type FirebaseStorage } from 'firebase/storage';
 import { getFunctions, httpsCallable, type Functions } from 'firebase/functions';
@@ -20,6 +20,8 @@ export type Cloud = {
   listWhereIn(path: string, field: string, values: string[]): Promise<{ id: string; data: Record<string, unknown> }[]>;
   signInWithToken(token: string): Promise<string>;
   signOut(): Promise<void>;
+  // 로그인 상태가 정해질 때(앱을 켜 기기에 남은 로그인을 되살린 뒤 포함)와 바뀔 때마다 부른다. 돌려준 함수로 그만 듣는다.
+  onAuth(listener: (uid: string | null) => void): () => void;
 };
 
 const isConfig = (x: unknown): x is CloudConfig => !!x && typeof x === 'object'
@@ -47,6 +49,7 @@ export function cloudFrom(app: FirebaseApp, parts: { auth: Auth; db?: Firestore;
     listWhereIn: async (path, field, values) => (await getDocs(query(collection(db, path), where(field, 'in', values)))).docs.map(d => ({ id: d.id, data: d.data() })),
     signInWithToken: async token => (await signInWithCustomToken(auth, token)).user.uid,
     signOut: () => signOut(auth),
+    onAuth: listener => onAuthStateChanged(auth, u => listener(u?.uid ?? null)),
   };
 }
 

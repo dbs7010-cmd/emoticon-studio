@@ -105,7 +105,7 @@ export function CloudScreen(p: Props) {
           </> : <>
             {PROVIDERS.map(x => <Action key={x.id} title={providerReady(p.extra, x.id) ? x.label : `${x.label} · 준비 중`} disabled={!providerReady(p.extra, x.id)}
               onPress={() => void p.task('로그인하는 중…', async () => { await p.login(x.id); await refresh(); })} />)}
-            {muted('로그인하지 않아도 그리기·저장·파일 백업은 그대로 쓸 수 있어요. 공모전 접수와 PRO 클라우드 백업에만 로그인이 필요해요.')}
+            {muted('로그인하면 공모전 접수와 PRO 클라우드 백업을 쓸 수 있어요. 기기 안 작품은 로그인과 상관없이 그대로 있어요.')}
           </>)}
           {show('account') && uid && section('클라우드 백업 · PRO', user?.pro.active ? <>
             {live.map(project => { const n = p.store.cloudBackups?.[project.id]; return <View key={project.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
