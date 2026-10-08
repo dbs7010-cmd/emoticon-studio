@@ -21,6 +21,9 @@ import { restoreBackup, writeBackup } from './src/services/backup';
 import { isFullBackup, restoreFullBackup, writeFullBackup } from './src/services/full-backup';
 import { CloudScreen } from './src/components/cloud-screen';
 import { appCloud, cloudConfig } from './src/services/cloud/firebase';
+import { authBase, signInWithBrowser } from './src/services/cloud/account';
+import * as WebBrowser from 'expo-web-browser';
+import { getRandomBytes } from 'expo-crypto';
 import { exportSet, decodeDataUrl, fileStamp, safeName, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinalsAsync, finalsKey, inspectImage } from './src/services/qa';
@@ -1716,8 +1719,9 @@ function Studio() {
     </Dialog>}
     {store && cloudOpen && <CloudScreen visible={cloudOpen} onClose={() => setCloudOpen(false)} cloud={cloud} extra={Constants.expoConfig?.extra} device={`${Platform.OS} ${Platform.Version}`}
       store={store} projects={store.projects} commit={commit} task={task}
-      // 회사 로그인 SDK 는 운영자 앱 키가 생긴 뒤에 넣는다. 그 전에는 버튼이 눌리지 않고, 여기로 오지 않는다.
-      login={async () => { throw new Error('이 빌드에는 아직 로그인 기능이 없어요(운영자 설정 전).'); }}
+      // 시스템 브라우저로 서버 로그인 중계(/auth/start)를 연다. 운영자가 그 회사를 켜기 전에는 버튼이 눌리지 않아 여기로 오지 않는다.
+      login={async provider => { const config = cloudConfig(Constants.expoConfig?.extra); if (!cloud || !config) return;
+        await signInWithBrowser(cloud, provider, { base: authBase(config), open: (url, ret) => WebBrowser.openAuthSessionAsync(url, ret), randomBytes: getRandomBytes }); }}
       bakeHandoff={bakeHandoff} />}
     {restoreReport && <Dialog title="전체 백업에서 되살렸어요" onClose={() => setRestoreReport(null)}>
       {restoreReport.done.map(line => <Text key={line} style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{'· ' + line}</Text>)}

@@ -9,7 +9,8 @@ const SVG_MOCK = Object.assign(
   { default: 'Svg', __esModule: true });
 exports.SVG_MOCK = SVG_MOCK;
 exports.loader = function (given = {}) {
-  const mocks = { 'react-native-svg': SVG_MOCK, ...given };
+  // 시스템 브라우저 로그인(expo-web-browser)·난수(expo-crypto)는 검사에서 대역 — 실제 동작은 APK·실기기에서.
+  const mocks = { 'react-native-svg': SVG_MOCK, 'expo-web-browser': { openAuthSessionAsync: async () => ({ type: 'cancel' }) }, 'expo-crypto': { getRandomBytes: n => new Uint8Array(require('node:crypto').randomBytes(n)) }, ...given };
   const cache = new Map();
   function load(filename) {
     filename = path.resolve(filename);

@@ -20,6 +20,8 @@ adminInit({ projectId: PROJECT, storageBucket: BUCKET });
 const adb = adminFirestore();
 
 const startMock = require('./mock-providers.cjs');
+const openAuth = require('./browser.cjs');
+const HOST = 'http://127.0.0.1:5000';   // Hosting 에뮬레이터 — /auth/* 를 함수로 넘기는 설정까지 함께 검사
 
 // ── 앱 쪽 도구: 앱의 ZIP 작성기를 그대로 쓴다 ─────────────────────────────────────────────────
 const REPO = path.join(__dirname, '../../..');
@@ -52,29 +54,83 @@ const until = async (fnc, what, ms = 40000) => { const end = Date.now() + ms; fo
 const results = [];
 const ok = msg => { results.push(msg); console.log('  ✓ ' + msg); };
 
+let mock;
+const verifierPair = () => { const v = crypto.randomBytes(32).toString('hex'); return { v, challenge: sha(Buffer.from(v)) }; };
+const ticketOf = url => new URLSearchParams(url.split(/[?#]/)[1] || '').get('ticket');
+// 앱과 같은 순서: /auth/start → (회사 화면) → /auth/callback/… → emoti://auth?ticket → redeemAuth(ticket, verifier) → 로그인
+async function login(c, provider, user, ret = 'app') {
+  mock.user = user;
+  const { v, challenge } = verifierPair();
+  const r = await openAuth(`${HOST}/auth/start?provider=${provider}&return=${ret}&challenge=${challenge}`, ret === 'web' ? `${HOST}/account/` : 'emoti://auth');
+  assert.equal(r.type, 'success', JSON.stringify(r).slice(0, 300));
+  const { token } = await c.call('redeemAuth', { ticket: ticketOf(r.url), verifier: v });
+  return (await signInWithCustomToken(c.auth, token)).user;
+}
+
 (async () => {
-  const mock = await startMock();
+  mock = await startMock();
   try {
-    // 1) 로그인 3종 ────────────────────────────────────────────────────────────────────────
+    // 1) 로그인 3종(서버 중계) ──────────────────────────────────────────────────────────────
     const kakao = client();
-    const kt = await kakao.call('exchangeKakao', { accessToken: 'kakao-good-token' });
-    const kUser = (await signInWithCustomToken(kakao.auth, kt.token)).user;
+    const kUser = await login(kakao, 'kakao', '111');
     assert.equal(kUser.uid, 'kakao:111');
-    assert.equal((await getDoc(doc(kakao.db, 'users/kakao:111'))).data().pro.active, false, '새 회원은 PRO 아님(체험 전체 부여 꺼짐)');
-    await denied(kakao.call('exchangeKakao', { accessToken: 'kakao-other-app' }), /permission-denied/, '다른 앱 카카오 토큰 거절');
-    await denied(kakao.call('exchangeKakao', { accessToken: 'kakao-bad-token-xx' }), /unauthenticated/, '가짜 카카오 토큰 거절');
-    ok('카카오: 서버가 토큰을 확인(app_id 대조)해 kakao:회원번호로 로그인 · 다른 앱/가짜 토큰 거절');
+    assert.equal((await getDoc(doc(kakao.db, 'users/kakao:111'))).data().pro.active, false, '새 회원은 PRO 아님(로그인만으로 체험이 열리지 않음)');
     const naver = client();
-    const nt = await naver.call('exchangeNaver', { accessToken: 'naver-good-token' });
-    assert.equal((await signInWithCustomToken(naver.auth, nt.token)).user.uid, 'naver:NV-abc');
-    await denied(naver.call('exchangeNaver', { accessToken: 'naver-bad-token-xx' }), /unauthenticated/);
-    ok('네이버: 서버가 토큰을 확인해 naver:회원ID 로 로그인 · 가짜 토큰 거절');
+    assert.equal((await login(naver, 'naver', 'abc')).uid, 'naver:NV-abc');
     const google = client();
-    const gUser = (await signInWithCredential(google.auth, GoogleAuthProvider.credential(JSON.stringify({ sub: 'g-1', email: 'g1@example.com', email_verified: true })))).user;
+    const gUser = await login(google, 'google', '1');
+    assert.equal(gUser.uid, 'google:G1');
     const reg = await google.call('registerUser', {});
     assert.equal(reg.pro.active, false);
-    assert.equal((await getDoc(doc(google.db, `users/${gUser.uid}`))).data().provider, 'google.com');
-    ok('구글: Firebase 인증 로그인 뒤 회원 문서 생성(provider google.com)');
+    assert.equal((await getDoc(doc(google.db, 'users/google:G1'))).data().provider, 'google');
+    for (const p of ['/oauth/token', '/v2/user/me', '/oauth2.0/token', '/v1/nid/me', '/google/token']) assert.ok(mock.requests.includes(p), '서버가 회사 토큰 교환·회원 확인을 직접 했다: ' + p);
+    ok('로그인 중계: 카카오(kakao:회원번호)·네이버(naver:고유ID)·구글(google:sub) — Hosting /auth/* → 함수 → 회사 코드 교환(서버 비밀값) → 표 → 로그인 · 새 회원 PRO 아님');
+
+    // 가로채기·재사용·취소·위조
+    const a = client();
+    {
+      mock.user = '555';
+      const { v, challenge } = verifierPair();
+      const r = await openAuth(`${HOST}/auth/start?provider=kakao&return=app&challenge=${challenge}`, 'emoti://auth');
+      const t = ticketOf(r.url);
+      await denied(a.call('redeemAuth', { ticket: t, verifier: crypto.randomBytes(32).toString('hex') }), /unauthenticated/, 'verifier 없이 가로챈 표');
+      await denied(a.call('redeemAuth', { ticket: t, verifier: v }), /unauthenticated/, '한 번 낸 표는 다시 못 쓴다(가로채기 시도로 태운 표 포함)');
+      const r2 = await openAuth(`${HOST}/auth/start?provider=kakao&return=app&challenge=${challenge}`, 'emoti://auth');
+      const t2 = ticketOf(r2.url);
+      await a.call('redeemAuth', { ticket: t2, verifier: v });
+      await denied(a.call('redeemAuth', { ticket: t2, verifier: v }), /unauthenticated/, '같은 표 두 번');
+    }
+    {
+      const { challenge } = verifierPair();
+      const start = await fetch(`${HOST}/auth/start?provider=naver&return=app&challenge=${challenge}`, { redirect: 'manual' });
+      const toProvider = start.headers.get('location');
+      assert.match(toProvider, /client_id=naver-client-id/); assert.match(toProvider, /redirect_uri=http%3A%2F%2F127.0.0.1%3A5000%2Fauth%2Fcallback%2Fnaver/);
+      assert.doesNotMatch(toProvider, /secret/i, '회사 화면 주소에 비밀값이 없다');
+      const cb = (await fetch(toProvider, { redirect: 'manual' })).headers.get('location');
+      const first = await fetch(cb, { redirect: 'manual' });
+      assert.equal(first.status, 302);
+      const replay = await fetch(cb, { redirect: 'manual' });
+      assert.equal(replay.status, 400, '같은 state 로 돌아온 응답을 다시 쓰면 거절');
+    }
+    mock.deny = true;
+    let r = await openAuth(`${HOST}/auth/start?provider=google&return=app&challenge=${verifierPair().challenge}`, 'emoti://auth');
+    assert.match(r.url, /error=cancelled/); mock.deny = false;
+    mock.wrongAud = true;
+    r = await openAuth(`${HOST}/auth/start?provider=google&return=app&challenge=${verifierPair().challenge}`, 'emoti://auth');
+    assert.match(r.url, /error=verify/, '다른 앱용 구글 토큰(aud 불일치) 거절'); mock.wrongAud = false;
+    assert.equal((await fetch(`${HOST}/auth/start?provider=apple&challenge=${verifierPair().challenge}`, { redirect: 'manual' })).status, 400);
+    assert.equal((await fetch(`${HOST}/auth/start?provider=kakao&challenge=short`, { redirect: 'manual' })).status, 400);
+    assert.equal((await fetch(`${HOST}/auth/callback/kakao?code=x&state=forged`, { redirect: 'manual' })).status, 400, '서버가 만들지 않은 state 거절');
+    await denied(getDoc(doc(kakao.db, 'authStates/x')), /permission/); await denied(getDoc(doc(kakao.db, 'authTickets/x')), /permission/);
+    ok('가로챈 표는 verifier 없이 못 씀 · 표·state 한 번만 · 회사 화면 주소에 비밀값 없음 · 취소는 cancelled · aud 다른 구글 토큰 거절 · 없는 회사/잘못된 challenge/위조 state 거절 · 로그인 기록은 앱이 못 읽음');
+    // 웹 탈퇴 페이지용: 웹으로 돌아오기(#ticket — 주소 기록에 남지 않게 조각으로)
+    mock.user = '111';
+    const w = verifierPair();
+    const wr = await openAuth(`${HOST}/auth/start?provider=kakao&return=web&challenge=${w.challenge}`, `${HOST}/account/`);
+    assert.match(wr.url, /\/account\/#ticket=/);
+    const webc = client();
+    assert.equal((await signInWithCustomToken(webc.auth, (await webc.call('redeemAuth', { ticket: ticketOf(wr.url), verifier: w.v })).token)).user.uid, 'kakao:111');
+    ok('웹으로 돌아오는 로그인(탈퇴 페이지용): /account/#ticket → 같은 회원 kakao:111');
 
     // 2) 남의 데이터·PRO 직접 쓰기 막힘 ──────────────────────────────────────────────────────
     await denied(getDoc(doc(kakao.db, 'users/naver:NV-abc')), /permission/, '남의 회원 문서');
@@ -93,9 +149,14 @@ const ok = msg => { results.push(msg); console.log('  ✓ ' + msg); };
     await adminAuth().setCustomUserClaims(bossUser.uid, { admin: true });
     await bossUser.getIdToken(true);
     await denied(kakao.call('adminSetPro', { uid: 'kakao:111', active: true, source: 'admin' }), /permission-denied/, '일반 회원은 관리자 함수를 못 부른다');
-    await boss.call('adminSetPro', { uid: 'kakao:111', active: true, source: 'trial' });
+    await denied(kakao.call('adminSetPro', { uid: 'kakao:111', active: true, source: 'trial', days: 7 }), /permission-denied/, '일반 회원은 자기에게 체험을 못 준다');
+    await denied(boss.call('adminSetPro', { uid: 'kakao:111', active: true, source: 'trial' }), /invalid-argument/, '체험은 기간이 꼭 있어야');
+    await denied(boss.call('adminSetPro', { uid: 'kakao:111', active: true, source: 'trial', days: 31 }), /invalid-argument/, '체험 최대 30일');
+    await denied(boss.call('adminSetPro', { uid: 'kakao:999', active: true, source: 'trial', days: 7 }), /not-found/, '로그인한 적 없는 회원');
     await denied(boss.call('adminSetPro', { uid: 'kakao:111', active: true, source: 'store' }), /invalid-argument/, '구매(store) 출처는 관리자 부여로 만들 수 없다');
-    ok('PRO 는 관리자(서버)만 부여 · 출처 trial/admin 만(구매 검증과 구분) · 일반 회원 거절');
+    const trial = await boss.call('adminSetPro', { uid: 'kakao:111', active: true, source: 'trial', days: 7 });
+    assert.ok(trial.until > Date.now() + 6.9 * 864e5);
+    ok('체험 PRO: 관리자만 · 기간 필수(1~30일) · 로그인한 회원에게만 · 출처 trial/admin 만(구매 검증과 구분) · 일반 회원 자가 부여 거절');
 
     // 4) PRO 원본 백업 · 복원 · 사용량 ───────────────────────────────────────────────────────
     await uploadBytes(ref(kakao.st, `backups/kakao:111/blobs/${bsha}`), blob);
@@ -113,8 +174,7 @@ const ok = msg => { results.push(msg); console.log('  ✓ ' + msg); };
     // 재설치: 새 클라이언트로 같은 카카오 계정 → 같은 uid → 목록·원본 그대로
     await signOut(kakao.auth);
     const again = client();
-    const kt2 = await again.call('exchangeKakao', { accessToken: 'kakao-good-token' });
-    assert.equal((await signInWithCustomToken(again.auth, kt2.token)).user.uid, 'kakao:111');
+    assert.equal((await login(again, 'kakao', '111')).uid, 'kakao:111');
     const sets = await getDocs(collection(again.db, 'backups/kakao:111/sets'));
     assert.equal(sets.size, 1);
     const got = sets.docs[0].data();
@@ -129,7 +189,12 @@ const ok = msg => { results.push(msg); console.log('  ✓ ' + msg); };
     assert.match((await adb.doc('users/kakao:111').get()).data().backupNotice, /용량/);
     ok('PRO 백업 용량 상한: 넘는 파일은 서버가 지우고 이유를 남김');
     // PRO 가 끝나도 읽기는 됨, 쓰기는 안 됨
+    // 체험 기간이 지나면(서버 기록 until 경과) 규칙·함수 모두 PRO 로 보지 않는다
+    await adb.doc('users/kakao:111').set({ pro: { until: Date.now() - 1000 } }, { merge: true });
+    await denied(uploadBytes(ref(again.st, `backups/kakao:111/blobs/${sha(Buffer.from('late'))}`), Buffer.from('late')), /unauthorized|permission/, '기간 지난 체험');
+    assert.equal((await again.call('registerUser', {})).pro.active, false, '기간 지난 체험은 PRO 아님');
     await boss.call('adminSetPro', { uid: 'kakao:111', active: false, source: 'trial' });
+    assert.ok((await adb.doc('users/kakao:111').get()).data().pro.endedAt > 0, '끝난 시각을 남긴다(보관 기간 기준)');
     assert.equal(sha(Buffer.from(await getBytes(ref(again.st, `backups/kakao:111/blobs/${bsha}`)))), bsha, 'PRO 가 끝나도 내 백업을 내려받을 수 있다');
     await denied(uploadBytes(ref(again.st, `backups/kakao:111/blobs/${sha(Buffer.from('new'))}`), Buffer.from('new')), /unauthorized|permission/);
     ok('PRO 가 끝난 뒤: 기존 백업은 지워지지 않고 내려받기 가능 · 새 백업은 거절');
@@ -159,7 +224,7 @@ const ok = msg => { results.push(msg); console.log('  ✓ ' + msg); };
     await denied(getBytes(ref(kakao.st, start.path)), /unauthorized|permission/, '남의 제출 묶음 읽기');
     ok('공모전: 세트 전체(32칸) 묶음 접수 → 서버 검사 후 접수번호 E1-00001 · 재시도는 같은 접수 · 두 번째 접수 거절 · 남의 묶음 읽기/쓰기 거절 · 시작 없이 올리기 거절');
     // 손상·끊긴 업로드 → 거절·파일 삭제 → 새로 제출하면 접수
-    await kakao.auth.currentUser || await signInWithCustomToken(kakao.auth, (await kakao.call('exchangeKakao', { accessToken: 'kakao-good-token' })).token);
+    if (!kakao.auth.currentUser) await login(kakao, 'kakao', '111');
     const key2 = 'sub' + crypto.randomBytes(6).toString('hex');
     const s2 = await kakao.call('createSubmission', { contestId: 'c1', submissionKey: key2, declared: { sha256: sha(good), bytes: good.length, kind: 'still', cuts: 32, setName: '카카오 세트' }, consentVersion: 'v1' });
     await uploadBytes(ref(kakao.st, s2.path), good.subarray(0, good.length - 500), { contentType: 'application/zip' });
@@ -215,7 +280,7 @@ const ok = msg => { results.push(msg); console.log('  ✓ ' + msg); };
     await assert.rejects(adminAuth().getUser('kakao:111'));
     ok('탈퇴: 백업 파일·목록·회원 문서·공모전 접수·로그인 계정 모두 삭제');
 
-    for (const c of [kakao, naver, google, boss, again]) await deleteApp(c.app);
+    for (const c of [kakao, naver, google, boss, again, a, webc]) await deleteApp(c.app);
     console.log(`PASS: emoti server (emulator) — ${results.length} groups`);
     process.exit(0);
   } catch (e) {

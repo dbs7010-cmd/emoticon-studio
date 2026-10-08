@@ -13,6 +13,7 @@ const { getFunctions, connectFunctionsEmulator } = require(path.join(REPO, 'node
 const { initializeApp: adminInit } = require('firebase-admin/app');
 const { getFirestore: adminFirestore } = require('firebase-admin/firestore');
 const startMock = require('./mock-providers.cjs');
+const openAuth = require('./browser.cjs');
 const PROJECT = 'demo-emoti', BUCKET = 'demo-emoti.appspot.com';
 adminInit({ projectId: PROJECT, storageBucket: BUCKET });
 const adb = adminFirestore();
@@ -67,14 +68,18 @@ function client(name) {
 }
 const ok = msg => console.log('  ✓ ' + msg);
 
+let mock;
+// 앱 코드(signInWithBrowser) 그대로 — 브라우저만 흉내(302 따라가기), 난수는 Node.
+const signIn = (cloud, provider, user) => { mock.user = user; return account.signInWithBrowser(cloud, provider, { base: 'http://127.0.0.1:5000', open: openAuth, randomBytes: n => new Uint8Array(crypto.randomBytes(n)) }); };
 (async () => {
-  const mock = await startMock();
+  mock = await startMock();
   try {
     // 로그인
     const cloud = client('phone-A');
-    assert.equal(await account.signInWithProviderToken(cloud, 'kakao', 'kakao-good-token'), 'kakao:111');
+    assert.equal(await signIn(cloud, 'kakao', '111'), 'kakao:111');
     assert.equal((await account.register(cloud)).pro.active, false);
-    ok('앱 코드: 카카오 토큰 → 서버 확인 → 로그인(kakao:111) · 새 회원 PRO 아님');
+    mock.deny = true; assert.equal(await signIn(client('cancel'), 'naver', 'x'), null, '취소하면 null(오류 아님)'); mock.deny = false;
+    ok('앱 코드: 시스템 브라우저 → 서버 중계 → 표+verifier → 로그인(kakao:111) · 새 회원 PRO 아님 · 취소는 조용히 null');
 
     // 무료: 백업 막힘
     const set = makeSet('몽이의 하루', 32, false);
@@ -95,7 +100,7 @@ const ok = msg => console.log('  ✓ ' + msg);
     // 재설치: 기기 저장소 비우고 같은 계정
     const before = new Map(files); files.clear();
     const phoneB = client('phone-B');
-    await account.signInWithProviderToken(phoneB, 'kakao', 'kakao-good-token');
+    await signIn(phoneB, 'kakao', '111');
     const listed = await cloudBackup.listSets(phoneB);
     assert.equal(listed.length, 1); assert.equal(listed[0].name, '몽이의 하루');
     const fresh = await cloudBackup.restoreSet(phoneB, listed[0].id, []);
@@ -136,7 +141,7 @@ const ok = msg => console.log('  ✓ ' + msg);
 
     // 공모전(움직임 24칸) — 다른 회원
     const other = client('phone-C');
-    await account.signInWithProviderToken(other, 'kakao', 'kakao-second-user');
+    await signIn(other, 'kakao', '333');
     await adb.doc('contests/move1').set({ title: '움직임 공모전', code: 'M', status: 'open', consentVersion: 'v1', startsAt: Date.now() - 1000, endsAt: Date.now() + 864e5, requirements: { kind: 'moving', cuts: 24, minAnimated: 3 }, maxBytes: 120 * 1024 * 1024, notice: '', rules: '' });
     const c2 = (await contest.openContests(other)).find(c => c.id === 'move1');
     const moving = makeSet('움직이는 몽이', 24, true);

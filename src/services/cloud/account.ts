@@ -1,18 +1,48 @@
-// 계정(2026-10-07). 카카오·네이버는 각 회사 SDK 로 받은 액세스 토큰을 서버(exchangeKakao/exchangeNaver)에 보내 확인받고
-// 서버가 준 토큰으로 로그인한다. 구글은 Firebase 인증. **각 회사 로그인 SDK 는 운영자 앱 키가 생긴 뒤에 넣는다** — 지금 빌드에는 없어서
-// providerReady() 가 false 이고 화면은 '준비 중'으로만 보인다.
-import type { Cloud } from './firebase';
+// 계정(2026-10-08). 카카오·네이버·구글 모두 같은 방식: 시스템 브라우저(안드로이드 Custom Tabs · iOS 인증 세션)로
+// 서버의 /auth/start 를 열면 서버가 회사 로그인을 끝내고 emoti://auth?ticket=… 로 돌려준다. 앱은 시작할 때 숨겨 둔
+// 원래 값(verifier)과 함께 표를 서버에 내고 Firebase 로그인 토큰을 받는다.
+// - 앱에는 회사 키·비밀값이 없다(서버 Secret Manager). 회사 로그인 SDK 도 넣지 않는다.
+// - emoti:// 주소를 다른 앱이 가로채도 verifier 가 없으면 표를 쓸 수 없다.
+// - 운영자가 서버에 그 회사 설정을 마친 뒤에만 앱 설정(extra.login)에서 버튼을 켠다. 꺼져 있으면 '준비 중'(요청 0회).
+import type { Cloud, CloudConfig } from './firebase';
+import { sha256Hex } from './sha256';
 
 export type Provider = 'kakao' | 'naver' | 'google';
-export type ServerUser = { pro: { active: boolean; source: string; verified: boolean }; backupBytes: number };
-// 이 빌드에 들어 있는 로그인 SDK(앱 설정 extra.login 이 켠 것만). 키·SDK 가 없으면 버튼을 누를 수 없게 둔다.
+export type ServerUser = { pro: { active: boolean; source: string; verified: boolean; until?: number | null }; backupBytes: number };
+export type OpenAuth = (url: string, returnUrl: string) => Promise<{ type: string; url?: string }>;
+export const APP_RETURN = 'emoti://auth';
+
 export function providerReady(extra: unknown, provider: Provider): boolean {
   const login = extra && typeof extra === 'object' ? (extra as { login?: Record<string, unknown> }).login : undefined;
   return !!login && login[provider] === true;
 }
-// 회사 SDK 가 준 액세스 토큰 → 서버 확인 → 로그인. (구글은 Firebase 인증 쪽에서 처리)
-export async function signInWithProviderToken(cloud: Cloud, provider: 'kakao' | 'naver', accessToken: string): Promise<string> {
-  const { token } = await cloud.call<{ token: string }>(provider === 'kakao' ? 'exchangeKakao' : 'exchangeNaver', { accessToken });
+// 로그인 중계 주소: 설정에 authBase 가 있으면 그것, 없으면 Firebase Hosting 기본 주소.
+export const authBase = (config: CloudConfig & { authBase?: string }) => (config.authBase || `https://${config.projectId}.web.app`).replace(/\/$/, '');
+
+const hex = (b: Uint8Array) => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+const ascii = (s: string) => Uint8Array.from(s, c => c.charCodeAt(0));
+export function startUrl(base: string, provider: Provider, verifier: string, ret: 'app' | 'web' = 'app') {
+  return `${base}/auth/start?provider=${provider}&return=${ret}&challenge=${sha256Hex(ascii(verifier))}`;
+}
+function params(url: string): Record<string, string> {
+  const q = url.split(/[?#]/).slice(1).join('&'), out: Record<string, string> = {};
+  for (const kv of q.split('&')) { if (!kv) continue; const [k, v = ''] = kv.split('='); out[decodeURIComponent(k)] = decodeURIComponent(v.replace(/\+/g, ' ')); }
+  return out;
+}
+const ERRORS: Record<string, string> = {
+  provider: '로그인 화면에서 문제가 생겼어요. 다시 시도해 주세요.',
+  verify: '로그인을 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.',
+};
+
+// 반환: 로그인한 uid, 사용자가 닫거나 취소하면 null.
+export async function signInWithBrowser(cloud: Cloud, provider: Provider, opts: { base: string; open: OpenAuth; randomBytes: (n: number) => Uint8Array }): Promise<string | null> {
+  const verifier = hex(opts.randomBytes(32));
+  const r = await opts.open(startUrl(opts.base, provider, verifier), APP_RETURN);
+  if (r.type !== 'success' || !r.url) return null;
+  const p = params(r.url);
+  if (p.error === 'cancelled') return null;
+  if (p.error || !p.ticket) throw new Error(ERRORS[p.error] ?? ERRORS.verify);
+  const { token } = await cloud.call<{ token: string }>('redeemAuth', { ticket: p.ticket, verifier });
   return cloud.signInWithToken(token);
 }
 export const register = (cloud: Cloud) => cloud.call<ServerUser>('registerUser', {});
