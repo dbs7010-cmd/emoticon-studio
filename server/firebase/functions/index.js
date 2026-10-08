@@ -14,6 +14,7 @@ const { getStorage } = require('firebase-admin/storage');
 const { getAuth } = require('firebase-admin/auth');
 const crypto = require('node:crypto');
 const { checkPackage } = require('./package-check');
+const artist = require('./artist-name');
 
 initializeApp();
 const db = getFirestore();
@@ -59,7 +60,33 @@ exports.registerUser = onCall(async req => {
   const uid = signedIn(req);
   const provider = req.auth.token.provider || (req.auth.token.firebase && req.auth.token.firebase.sign_in_provider) || 'unknown';
   const user = await ensureUser(uid, provider);
-  return { pro: { ...user.pro, active: proActive(user) }, backupBytes: user.backupBytes || 0 };
+  return { pro: { ...user.pro, active: proActive(user) }, backupBytes: user.backupBytes || 0, artistName: user.artistName || null };
+});
+
+// ── 작가명(한 번 정하면 바꿀 수 없음) ───────────────────────────────────────────────────────
+// 미리 보기: 형식·금지어·중복만 알려 준다(예약하지 않음).
+exports.checkArtistName = onCall(async req => {
+  signedIn(req);
+  const f = artist.checkFormat(req.data?.name);
+  if (!f.ok) return { ok: false, reason: f.reason };
+  const taken = (await db.doc(`artistNames/${f.key}`).get()).exists;
+  return taken ? { ok: false, reason: '이미 쓰는 작가명이에요.' } : { ok: true };
+});
+// 정하기: 회원 문서에 작가명이 없을 때만, 예약 문서와 함께 한 번에.
+exports.setArtistName = onCall(async req => {
+  const uid = signedIn(req);
+  const f = artist.checkFormat(req.data?.name);
+  need(f.ok, 'invalid-argument', f.reason);
+  const userRef = db.doc(`users/${uid}`), nameRef = db.doc(`artistNames/${f.key}`);
+  await db.runTransaction(async tx => {
+    const [u, n] = await Promise.all([tx.get(userRef), tx.get(nameRef)]);
+    need(u.exists, 'failed-precondition', '로그인을 다시 해 주세요.');
+    need(!u.data().artistName, 'failed-precondition', '작가명은 한 번 정하면 바꿀 수 없어요.');
+    need(!n.exists, 'already-exists', '이미 쓰는 작가명이에요.');
+    tx.set(nameRef, { uid, name: f.name, at: FieldValue.serverTimestamp() });
+    tx.update(userRef, { artistName: f.name, artistNameAt: FieldValue.serverTimestamp() });
+  });
+  return { artistName: f.name };
 });
 
 // ── PRO 개인 백업 ──────────────────────────────────────────────────────────────────────────
@@ -302,6 +329,8 @@ exports.deleteMyAccount = onCall(async req => {
   for (const d of subs.docs) { await bucket().file(d.data().path).delete({ ignoreNotFound: true }); await d.ref.delete(); }
   const blobs = await db.collection(`users/${uid}/blobs`).get();
   for (const d of blobs.docs) await d.ref.delete();
+  const name = (await db.doc(`users/${uid}`).get()).data()?.artistName;
+  if (name) await db.doc(`artistNames/${artist.key(name)}`).delete();   // 탈퇴하면 작가명도 풀린다(개인 정보 삭제)
   await db.doc(`users/${uid}`).delete();
   await getAuth().deleteUser(uid).catch(() => {});
   return { deleted: { backupSets: sets.size, submissions: subs.size } };

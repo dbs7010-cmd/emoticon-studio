@@ -132,6 +132,23 @@ async function login(c, provider, user, ret = 'app') {
     assert.equal((await signInWithCustomToken(webc.auth, (await webc.call('redeemAuth', { ticket: ticketOf(wr.url), verifier: w.v })).token)).user.uid, 'kakao:111');
     ok('웹으로 돌아오는 로그인(탈퇴 페이지용): /account/#ticket → 같은 회원 kakao:111');
 
+    // 작가명: 형식·금지어·중복·변경 불가·앱 직접 쓰기 막힘
+    assert.equal((await kakao.call('registerUser', {})).artistName, null, '처음엔 작가명 없음');
+    for (const [bad, why] of [['a', /2~12자/], ['몽이 작가', /2~12자/], ['몽이!', /2~12자/], ['씨발작가', /쓸 수 없는/], ['씨1발', /쓸 수 없는/], ['emoti공식', /쓸 수 없는/], ['ADMIN12', /쓸 수 없는/], ['운영자몽이', /쓸 수 없는/]]) {
+      const c = await kakao.call('checkArtistName', { name: bad });
+      assert.equal(c.ok, false, bad); assert.match(c.reason, why, bad);
+      await denied(kakao.call('setArtistName', { name: bad }), /invalid-argument/, bad);
+    }
+    assert.deepEqual(await kakao.call('checkArtistName', { name: '몽이작가' }), { ok: true });
+    assert.equal((await kakao.call('setArtistName', { name: '몽이작가' })).artistName, '몽이작가');
+    await denied(kakao.call('setArtistName', { name: '다른이름' }), /failed-precondition/, '한 번 정하면 못 바꾼다');
+    assert.equal((await naver.call('checkArtistName', { name: '몽이작가' })).ok, false, '남이 쓰는 이름');
+    await denied(naver.call('setArtistName', { name: 'MongArtist' }).then(() => naver.call('setArtistName', { name: 'x' })), /failed-precondition|invalid-argument/);
+    await denied(google.call('setArtistName', { name: 'mongartist' }), /already-exists/, '대소문자만 다른 이름도 중복');
+    await denied(setDoc(doc(google.db, 'artistNames/abc'), { uid: gUser.uid }), /permission/, '앱이 예약 문서를 직접 못 씀');
+    assert.equal((await kakao.call('registerUser', {})).artistName, '몽이작가');
+    ok('작가명: 한글·영문·숫자 2~12자 · 금지어(욕설·숫자 끼운 변형·운영/브랜드 사칭) 거절 · 중복(대소문자 무시) 거절 · 한 번 정하면 변경 불가 · 앱 직접 쓰기 막힘');
+
     // 2) 남의 데이터·PRO 직접 쓰기 막힘 ──────────────────────────────────────────────────────
     await denied(getDoc(doc(kakao.db, 'users/naver:NV-abc')), /permission/, '남의 회원 문서');
     await denied(setDoc(doc(kakao.db, 'users/kakao:111'), { pro: { active: true } }, { merge: true }), /permission/, '앱이 스스로 PRO 를 쓸 수 없다');
@@ -278,6 +295,7 @@ async function login(c, provider, user, ret = 'app') {
     assert.equal(left.length, 0);
     assert.equal((await adb.doc('contests/c1/submissions/kakao:111').get()).exists, false);
     await assert.rejects(adminAuth().getUser('kakao:111'));
+    assert.equal((await adb.doc('artistNames/몽이작가').get()).exists, false, '탈퇴하면 작가명 예약도 지운다');
     ok('탈퇴: 백업 파일·목록·회원 문서·공모전 접수·로그인 계정 모두 삭제');
 
     for (const c of [kakao, naver, google, boss, again, a, webc]) await deleteApp(c.app);
