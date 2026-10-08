@@ -14,7 +14,7 @@ import Svg, { Path, Circle, Rect } from 'react-native-svg';
 // (순환 참조). 두 값이 어긋나지 않는지는 icon-test 가 확인한다.
 export const ICON_INK = '#1F1D1A';
 export const ICON_FAINT = '#948D84';
-export const IconSize = { tool: 22, row: 18, meta: 14 } as const;
+export const IconSize = { tab: 24, tool: 22, row: 18, meta: 14 } as const;
 export type IconSizeValue = typeof IconSize[keyof typeof IconSize];
 export const ICON_STROKE = 1.8;
 
@@ -45,23 +45,33 @@ export const ICON_PATHS = {
   redo: [['p', 'M15 14l4.5-4.5L15 5'], ['p', 'M19.5 9.5H10a5.5 5.5 0 0 0 0 11h3']],
   more: [['c', 5.5, 12, .9], ['c', 12, 12, .9], ['c', 18.5, 12, .9]],
   check: [['p', 'M5 12.5l4.5 4.5L19 7.5']],
+  // ── 2026-10-08 토스식 개편(캔버스 T-Icons): 탭·내 정보·공모전 ──
+  home: [['p', 'M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z']],
+  contest: [['p', 'M8 4h8v5a4 4 0 0 1-8 0z'], ['p', 'M8 6H5.5a2.5 2.5 0 0 0 2.6 3.6M16 6h2.5a2.5 2.5 0 0 1-2.6 3.6'], ['p', 'M12 13v4M8.5 20h7']],
+  person: [['c', 12, 8.5, 3.5], ['p', 'M5 20c1-3.6 3.8-5.5 7-5.5s6 1.9 7 5.5']],
+  cloud: [['p', 'M7 18h10a4 4 0 0 0 .6-7.96A5.5 5.5 0 0 0 7 9.2 4.4 4.4 0 0 0 7 18z'], ['p', 'M12 15.5v-5M9.8 12.7 12 10.5l2.2 2.2']],
+  restore: [['p', 'M4.5 12a7.5 7.5 0 1 0 2.2-5.3'], ['p', 'M4.5 4.5v3.7h3.7']],
+  info: [['c', 12, 12, 8.5], ['p', 'M12 11v5M12 7.8v.1']],
+  guide: [['p', 'M5 5.5A1.5 1.5 0 0 1 6.5 4H18v14H6.5A1.5 1.5 0 0 0 5 19.5z'], ['p', 'M5 19.5A1.5 1.5 0 0 0 6.5 21H18v-3'], ['p', 'M9 8.5h5']],
   settings: [['p', 'M10.3 3.8h3.4l.5 2.3 1.6.9 2.2-.8 1.7 2.9-1.8 1.6v1.8l1.8 1.6-1.7 2.9-2.2-.8-1.6.9-.5 2.3h-3.4l-.5-2.3-1.6-.9-2.2.8-1.7-2.9 1.8-1.6v-1.8L4.3 9.1 6 6.2l2.2.8 1.6-.9z'], ['c', 12, 12, 2.6]],
 } satisfies Record<string, El[]>;
 export type IconName = keyof typeof ICON_PATHS;
 export const CORE_ICONS: IconName[] = ['brush', 'eraser', 'fill', 'color', 'reference', 'layer', 'caption', 'motion', 'export', 'save', 'pro'];
 
-export function ImtiIcon({ name, size = IconSize.row, color, disabled, accessibilityLabel }: {
-  name: IconName; size?: IconSizeValue; color?: string; disabled?: boolean; accessibilityLabel?: string;
+// filled: 탭 막대에서 지금 고른 탭만 면을 채운다(첫 경로만 — 집·트로피 컵·사람 머리).
+export function ImtiIcon({ name, size = IconSize.row, color, disabled, accessibilityLabel, filled }: {
+  name: IconName; size?: IconSizeValue; color?: string; disabled?: boolean; accessibilityLabel?: string; filled?: boolean;
 }) {
   const ink = color ?? (disabled ? ICON_FAINT : ICON_INK);
   const line = { stroke: ink, strokeWidth: ICON_STROKE, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' };
+  const solid = { ...line, fill: ink };
   // 글자가 옆에 있는 아이콘은 화면 읽기에서 숨긴다. 아이콘만 있는 버튼은 버튼 쪽에 이름을 둔다(부르는 쪽 규칙).
   const a11y = accessibilityLabel
     ? { accessible: true, accessibilityRole: 'image' as const, accessibilityLabel }
     : { accessible: false, accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
   return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" testID={'icon-' + name} {...a11y}>
-    {(ICON_PATHS[name] as readonly El[]).map((e, i) => e[0] === 'p' ? <Path key={i} d={e[1]} {...line} />
-      : e[0] === 'c' ? <Circle key={i} cx={e[1]} cy={e[2]} r={e[3]} {...line} />
+    {(ICON_PATHS[name] as readonly El[]).map((e, i) => e[0] === 'p' ? <Path key={i} d={e[1]} {...(filled && i === 0 ? solid : line)} />
+      : e[0] === 'c' ? <Circle key={i} cx={e[1]} cy={e[2]} r={e[3]} {...(filled && i === 0 ? solid : line)} />
       : <Rect key={i} x={e[1]} y={e[2]} width={e[3]} height={e[4]} rx={e[5]} {...line} />)}
   </Svg>;
 }

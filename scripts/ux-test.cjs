@@ -927,7 +927,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
  assert.equal(labelled('다른 프로젝트').length,0,'a restart does not bring the trashed set back into the lists');
  // 되살리기
- await press('설정');
+ await press('내 정보');
  await press('휴지통 1개');
  assert.equal(tree.root.findAll(n=>n.props.testID==='휴지통 다른 프로젝트').length,1,'the trash lists the set');
  await press('되살리기');
@@ -940,7 +940,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await press('세트 삭제');
  await press('휴지통으로 옮기기');
  await act(async()=>tree.unmount());await act(async()=>{tree=create(React.createElement(App));});
- await press('설정');
+ await press('내 정보');
  await press('휴지통 1개');
  await press('영구 삭제');
  assert.ok(shown().some(t=>t.includes('되돌릴 수 없')),'permanent delete warns it cannot be undone');
@@ -985,7 +985,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   const before = loadStore().store.projects.filter(x => !x.deletedAt).length;
   const original = loadStore().store.projects.find(x => x.projectName === '이전 프로젝트');
   pickedDocument = backupUri;
-  await press('설정');
+  await press('내 정보');
   await press('백업에서 되살리기');
   await act(async () => {});
   const after = loadStore().store.projects;

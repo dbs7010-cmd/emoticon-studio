@@ -87,11 +87,11 @@ async function openPainter() {
     const where = internalReview ? '내부 검수 구성' : '출시 구성';
 
     // ── 1. 토글이 있는 곳과 없는 곳 ─────────────────────────────────────────────────────
-    await press('설정');
+    await press('내 정보');
     const toggle = labelled('검수용 PRO 켜기');
     if (!internalReview) {
       assert.equal(toggle.length, 0, where + ': 검수용 토글은 아예 그려지지 않는다');
-      await press('닫기');
+      await press('홈');
       await act(async () => tree.unmount());
       continue;
     }
@@ -99,7 +99,7 @@ async function openPainter() {
     assert.equal(toggle[0].props.accessibilityState.checked, false, '처음에는 꺼져 있다');
 
     // ── 2. 끄면 잠겨 있다 ───────────────────────────────────────────────────────────────
-    await press('닫기');
+    await press('홈');
     assert.ok(texts().includes('PRO 보기'), '꺼짐: 홈 배지는 PRO 보기');
     await openPainter();
     await press('움직이기');
@@ -131,9 +131,9 @@ async function openPainter() {
     await message({ type: 'save', token: sent().filter(m => m.type === 'save').at(-1)?.token, dirty: false, data: pngData, metrics: { coverage: .2 }, activeLayerId: 'draw-1', layers: [], references: [] });
     await act(async () => {});
     await press('뒤로');
-    await press('설정');
+    await press('내 정보');
     await press('검수용 PRO 켜기');
-    await press('닫기');
+    await press('홈');
     await openPainter();
     await press('움직이기');
     await press('그리기');
@@ -145,10 +145,10 @@ async function openPainter() {
     await message({ type: 'save', token: sent().filter(m => m.type === 'save').at(-1)?.token, dirty: false, data: pngData, metrics: { coverage: .2 }, activeLayerId: 'draw-1', layers: [], references: [] });
     await act(async () => {});
     await press('뒤로');
-    await press('설정');
+    await press('내 정보');
     await press('검수용 PRO 켜기');
     assert.equal(labelled('검수용 PRO 켜기')[0].props.accessibilityState.checked, true, '켜짐 상태가 남는다');
-    await press('닫기');
+    await press('홈');
     assert.ok(texts().includes('PRO'), '켜짐: 홈 배지가 PRO 로 바뀐다');
     assert.equal(texts().includes('PRO 보기'), false, '켜짐: 더 이상 권유 문구가 아니다');
 
@@ -170,9 +170,9 @@ async function openPainter() {
     await message({ type: 'save', token: sent().filter(m => m.type === 'save').at(-1)?.token, dirty: false, data: pngData, metrics: { coverage: .2 }, activeLayerId: 'draw-1', layers: [], references: [] });
     await act(async () => {});
     await press('뒤로');
-    await press('설정');
+    await press('내 정보');
     await press('검수용 PRO 켜기');
-    await press('닫기');
+    await press('홈');
     assert.ok(texts().includes('PRO 보기'), '다시 끄면 잠금이 돌아온다');
     await act(async () => tree.unmount());
   }

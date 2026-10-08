@@ -160,61 +160,40 @@ async function ready() {
   p.slots = p.slots.map((s, i) => i < 2 ? { ...s, finalImage: { path: 'image-a.png', width: 360, height: 360 }, done: i === 0 } : s);
   saveStore({ version: 1, introDone: true, revision: 1, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
   await act(async () => { tree = create(React.createElement(App)); });
-  assert.deepEqual(texts().slice(0, 2), ['emoti', '이모티'], '첫 글자는 브랜드(emoti 주표기 + 이모티 보조표기)');
-  {
-    const brand = tree.root.findAll(n => n.type === 'View' && n.props.testID === '홈 브랜드')[0];
-    assert.equal(brand.props.accessibilityLabel, appName, '로고는 제품명 한 번으로 읽힌다');
-    const [main, sub] = brand.findAll(n => n.type === 'Text').map(n => flat(n.props.style));
-    assert.ok(main.fontSize > sub.fontSize * 1.5, 'emoti 가 주표기, 이모티는 작은 보조표기');
-  }
-  // 명세 H02: 작업이 있으면 이어하기가 맨 위다. 소개용 큰 표면은 작업 목록 위에 두지 않는다.
+  // 2026-10-08 토스식 개편(캔버스 T-Home, 사용자 확인): 회색 바탕 + 흰 카드 · 이어 그리기 카드 → 공지 한 줄 → 제안까지 세 칸 → 내 세트 한 줄 · 아래 탭.
+  assert.equal(texts()[0], 'emoti', '첫 글자는 브랜드 emoti');
+  assert.equal(tree.root.findAll(n => n.type === 'View' && n.props.testID === '홈 브랜드')[0].props.accessibilityLabel, appName, '로고는 제품명 한 번으로 읽힌다');
   const startAt = tree.root.findAll(n => n.type === 'Pressable').findIndex(n => n.props.accessibilityLabel === '새 세트 만들기');
   const cardAt = tree.root.findAll(n => n.type === 'Pressable').findIndex(n => n.props.accessibilityLabel === '시각 세트');
-  assert.ok(cardAt >= 0 && cardAt < startAt, '최근 작업이 시작 줄보다 먼저(H02)');
+  assert.ok(cardAt >= 0 && cardAt < startAt, '이어 그리기 카드가 맨 위(H02)');
   assert.equal(byTestID('홈 창작 표면').length, 0, '작업이 있으면 소개용 큰 표면을 두지 않는다');
-  assert.ok(texts().includes('이어서 만들기'), '맨 위 제목은 이어서 만들기');
-  assert.equal(byTestID('홈 알림').length, 0, '알림 꺼짐 → 자리 없음');
+  assert.equal(byTestID('홈 알림').length, 0, '알림·공모전 없음 → 자리 없음');
   const primaryYellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
-  // 45.39 홈(시안 H4, 사용자 확정): 노랑은 카드 안 '이어 그리기' 하나. 새로 만들기는 카드와 같은 흰 칸이다.
-  assert.deepEqual(primaryYellow, ['시각 세트 이어서 만들기'], '홈의 노랑 버튼은 하나: ' + JSON.stringify(primaryYellow));
-  assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 남은 일 카드가 있다');
-  assert.ok(texts().includes('31칸 더 그리기'), '남은 칸을 제안 기준(멈춘 32칸)으로 센다(시안 문구)');
-  assert.ok(texts().includes('대표 아이콘'), '대표 아이콘 줄');
-  // 45.42 홈(시안 WB2-Home · 카드 B, 사용자 확정): 숫자 + 막대 + 다음 칸. 32칸 격자는 홈 카드에 두지 않는다.
+  assert.deepEqual(primaryYellow, ['시각 세트 이어서 만들기', '새 세트 만들기'], '노랑은 큰 버튼 하나 + 내 세트 줄의 작은 + 칸: ' + JSON.stringify(primaryYellow));
+  assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 카드가 있다');
+  assert.ok(texts().includes('31칸 남음') && texts().includes('아이콘'), '제안까지는 두 마디 칸(32칸 · 31칸 남음 / 아이콘 · 만들기)');
   {
     const ids = n => n.findAll(x => x.type === 'Svg').map(x => x.props.testID);
     const card = labelled('시각 세트')[0];
-    assert.equal(card.findAll(n => n.type === 'View' && n.props.testID === '홈 진행')[0].props.accessibilityLabel, '32칸 중 1칸 완성', '카드 B: 제안 기준 칸 수와 완성 수');
-    assert.ok(card.findAll(n => n.type === 'Text').some(n => /^다음은 \d+번 칸$/.test([n.props.children].flat(9).join(''))), '카드 B: 다음 칸 표시');
+    assert.equal(card.findAll(n => n.type === 'View' && n.props.testID === '홈 진행')[0].props.accessibilityLabel, '32칸 중 1칸 완성', '제안 기준 칸 수와 완성 수');
     assert.ok(!card.findAll(n => typeof n.props.testID === 'string' && /^slot-/.test(n.props.testID)).length, '홈 카드에는 32칸 격자가 없다');
-    assert.ok(ids(labelled('시각 세트 이어서 만들기')[0]).includes('icon-brush'), '이어 그리기 = 붓 아이콘 + 글자');
-    // 좁은 화면에서 한 줄 말줄임이 날짜를 지우지 않는다: 날짜는 줄어들지 않는 따로 된 글자, 종류 글자만 줄어든다.
-    const date = card.findAll(n => n.type === 'Text' && n.props.testID === '홈 카드 날짜')[0];
-    assert.ok(date && flat(date.props.style).flexShrink === 0 && /^· (오늘|어제|\d+월 \d+일)$/.test([date.props.children].flat(9).join('')), '홈 카드 날짜는 줄어들지 않는다');
+    assert.ok(texts().includes('이어 그리기'), '큰 버튼 글자');
     const fresh = flat(labelled('새 세트 만들기')[0].props.style);
-    assert.equal(fresh.borderColor, T.edge); assert.equal(fresh.backgroundColor, T.paper, '새로 만들기 = 흰 바탕 잉크 테두리(노랑 아님)');
     assert.ok((fresh.height ?? fresh.minHeight) >= T.tap, '새로 만들기 누르는 자리');
     const rows = byTestID('제안까지 남은 일')[0];
-    assert.ok(['icon-brush', 'icon-reference'].every(i => ids(rows).includes(i)), '제안까지 줄마다 아이콘');
-    // 45.43 시안 WB2-Home 그대로: 제안까지는 칸 · (움직이는 세트면) 움직이는 칸 · 대표 아이콘. 손볼 곳은 내보내기 화면이 맡는다.
-    assert.ok(rows.findAll(n => n.type === 'Text').every(n => !/손볼 곳/.test([n.props.children].flat(9).join(''))), '홈 제안까지에 손볼 곳 줄이 없다');
-    assert.equal(byTestID('홈 가이드 미리보기').length, 0, '시안에 없는 표현 가이드 네 칸은 홈에 없다');
-    assert.ok(!texts().some(t => /^\+\d+$/.test(t)), '시안에 없는 +N 덮개가 없다');
+    assert.ok(['icon-brush', 'icon-reference'].every(i => ids(rows).includes(i)), '제안까지 칸마다 아이콘');
     assert.ok(ids(rows).every(i => i !== 'icon-pro'), '제안 목록에 PRO 표시 없음');
-    const own = labelled('내 그림으로 시작')[0];
-    assert.equal(flat(own.props.style).backgroundColor, T.surface2, '내 그림으로 시작 = 가라앉은 한 줄'); assert.ok(ids(own).includes('icon-reference'));
+    assert.ok(ids(labelled('내 그림으로 시작')[0]).includes('icon-reference'));
     const badge = labelled('PRO 보기')[0];
     assert.ok(ids(badge).includes('icon-pro') && texts().includes('PRO 보기'), 'PRO 배지 = 반짝 아이콘 + 글자');
-    assert.ok(badge.findAll(n => n.type === 'View' && flat(n.props.style).borderColor === T.edge && flat(n.props.style).backgroundColor === T.paper).length === 1, '무료일 때 PRO 배지는 흰 바탕 잉크 테두리');
-    assert.ok(ids(labelled('설정')[0]).includes('icon-settings'), '설정 = 선 아이콘');
-    // 아이콘 크기는 세 가지뿐이고, 누르는 자리(48)와 따로다.
+    assert.ok(ids(labelled('표현 가이드')[0]).includes('icon-guide'), '표현 가이드 = 선 아이콘');
+    assert.equal(byTestID('아래 탭').length, 1, '아래 탭 막대');
+    assert.deepEqual(tree.root.findAll(n => n.props.accessibilityRole === 'tab' && n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['홈', '공모전', '내 정보']);
     const sizes = tree.root.findAll(n => n.type === 'Svg').map(n => n.props.width);
-    assert.ok(sizes.length && sizes.every(s => [14, 18, 22].includes(s)), '홈 아이콘 크기 14/18/22: ' + [...new Set(sizes)]);
+    assert.ok(sizes.length && sizes.every(s => [14, 18, 22, 24].includes(s)), '아이콘 크기 14/18/22/24: ' + [...new Set(sizes)]);
   }
-
-  // ── 44차: 세트가 늘어도 홈은 최근 넷 + 전체 보기. 여러 세트는 전체 작업, 세트 안 칸은 보드. 표현 가이드는 홈의 조용한 한 줄 ─────
-  assert.equal(labelled('표현 가이드').length, 1, '홈에 표현 가이드 입구 한 줄');
-  assert.equal(labelled('전체 작업 보기').length, 0, '세트가 넷 이하면 전체 보기가 없다');
+  assert.equal(labelled('표현 가이드').length, 1, '홈에 표현 가이드 입구 하나');
+  assert.equal(labelled('전체 작업 보기').length, 1, '내 세트 줄에 전체 보기');
   {
     const many = Array.from({ length: 12 }, (_, i) => { const q = createProject('많은 세트 ' + (i + 1), '콩이'); q.updatedAt = new Date(Date.UTC(2026, 8, 1 + i)).toISOString(); return q; });
     saveStore({ version: 1, introDone: true, revision: 50, projects: many, palette: [] });

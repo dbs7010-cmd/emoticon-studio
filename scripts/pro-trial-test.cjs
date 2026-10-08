@@ -137,12 +137,12 @@ const PART = { version: 1, speed: .5, strength: .5, parts: [{ id: 'p1', layerId:
   assert.equal(loadStore().store.introDone, true, '건너뛰기도 완료로 남는다');
   await render(loadStore().store);
   assert.ok(!texts().some(t => t.startsWith('사용 안내 ')), '다시 열어도 반복하지 않는다');
-  await press('설정'); await press('사용 안내 다시 보기');
+  await press('내 정보'); await press('사용 안내 다시 보기');
   assert.ok(texts().includes('사용 안내 1/3'), '설정에서 다시 볼 수 있다');
   await press('다음'); await press('다음');
   assert.ok(texts().includes(PRO_TRIAL), '체험 빌드에서는 마지막 장에 체험 안내');
   await press('시작하기');
-  assert.ok(!texts().some(t => t.startsWith('사용 안내 ')));
+  assert.ok(!texts().some(t => /^사용 안내 \d/.test(t)), '안내 창이 닫혔다(내 정보 탭의 "사용 안내 다시 보기" 줄은 남는다)');
   await render({ version: 1, revision: 1, projects: [project()], palette: [] });
   assert.ok(!texts().some(t => t.startsWith('사용 안내 ')), '이미 세트가 있는 사용자(기존·복원)에게는 띄우지 않는다');
 
@@ -160,10 +160,10 @@ const PART = { version: 1, speed: .5, strength: .5, parts: [{ id: 'p1', layerId:
   for (const l of ['PRO 한 번 구매하기', '구매 복원', '결제 없이 검수용 PRO 켜기']) assert.equal(labelled(l).length, 0, l + ' 없음');
   assert.equal(labelled('PRO 체험 계속하기').length, 1);
   await press('PRO 체험 계속하기');
-  await press('설정');
+  await press('내 정보');
   assert.ok(texts().includes('PRO 체험 · 비공개 테스트'));
   assert.equal(labelled('검수용 PRO 켜기').length, 0, '검수용 스위치는 그려지지 않는다');
-  await press('닫기');
+  await press('홈');
   assert.equal(storeCalls, 0, '스토어 호출 0');
 
   // 3-2. 체험 켜짐: 부분 움직임(PRO)을 저장 창 없이 저장

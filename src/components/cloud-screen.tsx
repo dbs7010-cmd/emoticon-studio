@@ -15,6 +15,8 @@ import type { ContestEntry, Project, Store } from '../types';
 const C = T;
 type Props = {
   visible: boolean; onClose: () => void;
+  // 2026-10-08 토스식 개편: 아래 탭 안에 그대로 넣는다(inline). part 로 한 갈래만 — 공모전 탭은 'contest', 내 정보 탭은 'account'.
+  inline?: boolean; part?: 'contest' | 'account';
   cloud: Cloud | null; extra: unknown; device: string;
   store: Store; projects: Project[];
   commit: (transform: (s: Store) => Store) => void;
@@ -78,23 +80,21 @@ export function CloudScreen(p: Props) {
     } finally { setProgress(null); }
   });
 
-  const section = (title: string, children: React.ReactNode) => <View style={{ gap: 10, paddingVertical: 14, borderBottomWidth: 1, borderColor: C.line }}>
-    <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{title}</Text>{children}</View>;
+  // 흰 카드 한 장 = 한 구역(토스식). 모달로 열 때는 예전처럼 구분선 목록.
+  const section = (title: string, children: React.ReactNode) => <View style={p.inline
+    ? { gap: 12, padding: 20, borderRadius: 24, backgroundColor: C.paper }
+    : { gap: 10, paddingVertical: 14, borderBottomWidth: 1, borderColor: C.line }}>
+    <Text style={{ fontSize: p.inline ? 17 : 16, fontWeight: '800', color: C.ink }}>{title}</Text>{children}</View>;
+  const show = (part: 'contest' | 'account') => !p.part || p.part === part;
   const muted = (text: string) => <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{text}</Text>;
 
-  return <Modal visible={p.visible} animationType="slide" onRequestClose={p.onClose}>
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 4 }}>
-        <Pressable accessibilityRole="button" accessibilityLabel="계정·클라우드 닫기" onPress={p.onClose} style={{ padding: 12 }}><Glyph name="close" size={22} color={C.ink} /></Pressable>
-        <Text style={{ fontSize: 18, fontWeight: '800', color: C.ink }}>계정 · 클라우드</Text>
-      </View>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+  const body = <>
         {!p.cloud ? <View testID="클라우드 준비 중" style={{ gap: 10, paddingVertical: 14 }}>
           <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>준비 중이에요</Text>
           <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>로그인(카카오·네이버·구글), PRO 클라우드 백업, 공모전 접수는 서버를 연결한 뒤에 열려요. 지금은 아무것도 서버로 보내지 않아요.</Text>
           {muted('그동안 작품은 이 기기에 저장되고, 설정 › 전체 백업 만들기로 파일 백업을 만들어 앱 밖에 보관할 수 있어요.')}
         </View> : <>
-          {section('계정', uid ? <>
+          {show('account') && section('계정', uid ? <>
             <Text style={{ fontSize: 14, color: C.ink }}>{`로그인됨 · ${uid.split(':')[0] === uid ? '구글' : ({ kakao: '카카오', naver: '네이버' } as Record<string, string>)[uid.split(':')[0]] ?? uid.split(':')[0]}`}</Text>
             {muted(user ? (user.pro.active ? `PRO(${user.pro.source === 'trial' ? '체험' : user.pro.source === 'store' && user.pro.verified ? '구매 확인됨' : '관리자 부여'}) · 클라우드 백업 ${(user.backupBytes / 1048576).toFixed(1)}MB 사용` : '무료 회원 — 개인 클라우드 백업은 PRO 전용이에요. 공모전은 참가할 수 있어요.') : '회원 정보를 불러오는 중…')}
             <Action icon="logout" title="로그아웃" onPress={() => void signOutAll(p.cloud!).then(refresh)} />
@@ -107,7 +107,7 @@ export function CloudScreen(p: Props) {
               onPress={() => void p.task('로그인하는 중…', async () => { await p.login(x.id); await refresh(); })} />)}
             {muted('로그인하지 않아도 그리기·저장·파일 백업은 그대로 쓸 수 있어요. 공모전 접수와 PRO 클라우드 백업에만 로그인이 필요해요.')}
           </>)}
-          {uid && section('클라우드 백업 · PRO', user?.pro.active ? <>
+          {show('account') && uid && section('클라우드 백업 · PRO', user?.pro.active ? <>
             {live.map(project => { const n = p.store.cloudBackups?.[project.id]; return <View key={project.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{project.projectName}</Text>
@@ -122,7 +122,7 @@ export function CloudScreen(p: Props) {
             </View>)}
             {muted('바뀐 그림만 보내요. 되살리면 새 세트로 들어오고, 기기에 같은 세트가 있으면 덮어쓰지 않고 사본으로 넣어요.')}
           </> : muted('PRO 전용이에요. 무료 회원에게는 개인 클라우드 저장 공간을 드리지 않아요.'))}
-          {section('공모전', <>
+          {show('contest') && section('공모전', <>
             {(contests ?? []).length === 0 && muted(contests ? '지금 열린 공모전이 없어요.' : '불러오는 중…')}
             {(contests ?? []).map(c => { const e = entryOf(c.id); return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={'공모전 ' + c.title} onPress={() => { setPicked(c); setEntrySet(null); setAgree(false); }}
               style={{ padding: 12, borderRadius: 14, borderWidth: 1, borderColor: picked?.id === c.id ? C.accentBorder : C.line, backgroundColor: C.paper, gap: 4 }}>
@@ -155,7 +155,15 @@ export function CloudScreen(p: Props) {
             </View>}
           </>)}
         </>}
-      </ScrollView>
+  </>;
+  if (p.inline) return <View style={{ gap: 12 }}>{!p.cloud ? section(p.part === 'contest' ? '공모전' : '계정', body) : body}</View>;
+  return <Modal visible={p.visible} animationType="slide" onRequestClose={p.onClose}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 4 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="계정·클라우드 닫기" onPress={p.onClose} style={{ padding: 12 }}><Glyph name="close" size={22} color={C.ink} /></Pressable>
+        <Text style={{ fontSize: 18, fontWeight: '800', color: C.ink }}>계정 · 클라우드</Text>
+      </View>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>{body}</ScrollView>
     </SafeAreaView>
   </Modal>;
 }

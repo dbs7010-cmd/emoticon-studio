@@ -20,8 +20,10 @@ import { cutFile, deleteLocalImages, exportUri, listExports, migrateExports, rem
 import { restoreBackup, writeBackup } from './src/services/backup';
 import { isFullBackup, restoreFullBackup, writeFullBackup } from './src/services/full-backup';
 import { CloudScreen } from './src/components/cloud-screen';
+import { TabBar, type HomeTab } from './src/components/tab-bar';
 import { appCloud, cloudConfig } from './src/services/cloud/firebase';
-import { authBase, signInWithBrowser } from './src/services/cloud/account';
+import { authBase, signInWithBrowser, type Provider } from './src/services/cloud/account';
+import { openContests } from './src/services/cloud/contest';
 import * as WebBrowser from 'expo-web-browser';
 import { getRandomBytes } from 'expo-crypto';
 import { exportSet, decodeDataUrl, fileStamp, safeName, type HandoffFrames, exportFormatSummary } from './src/services/export';
@@ -120,7 +122,12 @@ function Studio() {
   const [extraSlot, setExtraSlot] = useState<number | null>(null);
   const [place, setPlace] = useState({ scale: 1, dx: 0, dy: 0 });
   const composer = useRef<Composer>(null);
-  const [settings, setSettings] = useState(false);
+  // 2026-10-08 토스식 개편: 첫 화면은 아래 탭 세 갈래(홈 · 공모전 · 내 정보). 예전 '설정' 창은 '내 정보' 탭이 되었다 —
+  // settings 는 그 탭이 열려 있는지의 별명이고, 다른 화면으로 가며 부르던 setSettings(false) 는 탭을 바꾸지 않는다.
+  const [homeTab, setHomeTab] = useState<HomeTab>('home');
+  const [homeContest, setHomeContest] = useState<{ title: string; dday: string } | null>(null);
+  const settings = homeTab === 'my';
+  const setSettings = (open: boolean) => { if (open) setHomeTab('my'); };
   // 설정 › 내보낸 파일(2026-10-06): 이미 다른 앱으로 보낸 사본(exports/)의 개수·크기. 사용자가 확인할 때만 지운다.
   const [exportsConfirm, setExportsConfirm] = useState<{ name: string; bytes: number }[] | null>(null);
   // 전체 백업에서 되살린 결과(2026-10-07): 들어온 것 · 보관 칸이 차서 못 넣은 것 · 지금 값을 지킨 설정 · 백업에 없는 것을 한 창에서 말한다.
@@ -128,6 +135,16 @@ function Studio() {
   // vc4(2026-10-07): 계정·클라우드. 앱 설정(extra.cloud)에 서버 설정이 있을 때만 연결한다 — 없으면 null 이고 화면은 '준비 중'만 보인다.
   const [cloudOpen, setCloudOpen] = useState(false);
   const cloud = useRef(appCloud(cloudConfig(Constants.expoConfig?.extra))).current;
+  // 시스템 브라우저로 서버 로그인 중계(/auth/start)를 연다. 서버 설정이 없는 빌드(cloud=null)에서는 부르지 않는다.
+  const loginWith = async (provider: Provider) => { const config = cloudConfig(Constants.expoConfig?.extra); if (!cloud || !config) return;
+    await signInWithBrowser(cloud, provider, { base: authBase(config), open: (url, ret) => WebBrowser.openAuthSessionAsync(url, ret), randomBytes: getRandomBytes }); };
+  // 홈 공지 줄의 공모전: 서버가 있을 때만, 접수 중인 것 하나. 실패하면 조용히 없음(홈을 막지 않는다).
+  useEffect(() => { if (!cloud) return; let alive = true;
+    openContests(cloud).then(list => { const c = list.find(x => x.status === 'open'); if (!alive) return;
+      if (!c) { setHomeContest(null); return; }
+      const days = Math.ceil((Number(c.endsAt) - Date.now()) / 864e5);
+      setHomeContest({ title: c.title, dday: Number.isFinite(days) && days >= 0 ? (days === 0 ? 'D-DAY' : 'D-' + days) : '' }); }).catch(() => {});
+    return () => { alive = false; }; }, [cloud]);
   // 첫 실행 사용 안내(2026-10-05): 그리기 → 움직이기 → 저장·내보내기 세 장. 새 사용자(세트 없음 · introDone 없음)에게 한 번만,
   // 건너뛰기·다 보기 모두 introDone 을 남겨 다시 뜨지 않는다. 설정의 '사용 안내 다시 보기'로 언제든 다시 연다(저장값은 바꾸지 않음).
   const [introStep, setIntroStep] = useState<number | null>(null);
@@ -733,6 +750,113 @@ function Studio() {
   const pendingPurge = store?.projects.find(p => p.id === confirmPurgeId);
   // 홈은 프로젝트 관리 화면이 아니라 시작 화면이다(45.5차): 가장 최근 세트 하나만 두고, 나머지는 전체 작업에서 관리한다.
   const HOME_RECENT = 1;
+  // 내 정보 탭의 줄들(예전 설정 창 내용 그대로 — 기능·이름을 바꾸지 않았다). 흰 카드 한 장에 담는다.
+  const myRows = <View testID="내 정보 설정" style={{ gap: 4, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 24, backgroundColor: C.paper }}>
+      <Text style={{ fontSize: 12, color: C.muted }}>{trial && !isPro(entitlement) ? 'PRO 체험 · 비공개 테스트' : entitlementLabel(entitlement)}</Text>
+      {/* 검수용 빌드는 스스로 그렇다고 말한다. 출시 구성에서는 아예 그려지지 않는다(internalReviewBuild() 가 거짓). */}
+      {reviewCapable() && <View style={{ gap: 8, padding: 12, borderRadius: T.radius.md, backgroundColor: C.accentSoft }}>
+        <Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>{reviewEnvLabel()}</Text>
+        <Text style={{ fontSize: 11, color: C.accentInk, lineHeight: 16 }}>{internalReviewBuild() ? REVIEW_BUILD_NOTE : REVIEW_DEV_NOTE}</Text>
+        <Pressable accessibilityRole="switch" accessibilityLabel="검수용 PRO 켜기" accessibilityState={{ checked: !!store?.reviewUnlock }}
+          onPress={() => { try { commit(st => ({ ...st, reviewUnlock: !st.reviewUnlock })); } catch { /* 저장 실패는 위 배너가 말한다 */ } }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
+          <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: store?.reviewUnlock ? C.accentLine : C.lineStrong }}>
+            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.reviewUnlock ? 18 : 0 }} />
+          </View>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>검수용 PRO {store?.reviewUnlock ? '켜짐' : '꺼짐'}</Text>
+        </Pressable>
+        <Pressable accessibilityRole="switch" accessibilityLabel="홈 공지 미리 보기" accessibilityState={{ checked: noticePreview }}
+          onPress={() => setNoticePreview(!noticePreview)}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
+          <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: noticePreview ? C.accentLine : C.lineStrong }}>
+            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: noticePreview ? 18 : 0 }} />
+          </View>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>홈 공지 미리 보기 {noticePreview ? '켜짐' : '꺼짐'}</Text>
+        </Pressable>
+      </View>}
+      <Pressable accessibilityRole="button" accessibilityLabel="사용 안내 다시 보기" onPress={() => { setSettings(false); setIntroStep(0); }}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+        <Glyph name="help-circle-outline" size={20} color={C.muted} />
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>사용 안내 다시 보기</Text>
+        <Glyph name="chevron-right" size={18} color={C.faint} />
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="계정·클라우드" onPress={() => { setSettings(false); setCloudOpen(true); }}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+        <Glyph name="account-circle-outline" size={20} color={C.muted} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>계정 · 클라우드</Text>
+          <Text style={{ fontSize: 11, color: C.muted }}>{cloud ? '로그인 · PRO 클라우드 백업 · 공모전' : '준비 중 — 서버 연결 전'}</Text>
+        </View>
+        <Glyph name="chevron-right" size={18} color={C.faint} />
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="전체 백업 만들기" onPress={() => { setSettings(false); backupAll(); }}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+        <Glyph name="archive-arrow-down-outline" size={20} color={C.muted} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>전체 백업 만들기</Text>
+          <Text style={{ fontSize: 11, color: C.muted }}>모든 세트 · 색 · 보관한 움직임 · 조각 · 설정 (PRO 구매 제외)</Text>
+        </View>
+        <Glyph name="chevron-right" size={18} color={C.faint} />
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="백업에서 되살리기" onPress={restoreFromBackup}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+        <Glyph name="archive-arrow-up-outline" size={20} color={C.muted} />
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>백업에서 되살리기</Text>
+        <Glyph name="chevron-right" size={18} color={C.faint} />
+      </Pressable>
+      {(() => {
+        const copies = settings ? safely(listExports) ?? [] : [];
+        if (!copies.length) return null;
+        const mb = copies.reduce((t, x) => t + x.bytes, 0) / 1048576;
+        return <Pressable accessibilityRole="button" accessibilityLabel={`내보낸 파일 ${copies.length}개`} onPress={() => { setSettings(false); setExportsConfirm(copies); }}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+          <Glyph name="folder-zip-outline" size={20} color={C.muted} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>내보낸 파일</Text>
+            <Text style={{ fontSize: 11, color: C.muted }}>{`보낸 뒤 앱에 남은 사본 ${copies.length}개 · ${mb < .1 ? '0.1MB 미만' : mb.toFixed(1) + 'MB'}`}</Text>
+          </View>
+          <Glyph name="chevron-right" size={18} color={C.faint} />
+        </Pressable>;
+      })()}
+      <Pressable accessibilityRole="button" accessibilityLabel={'휴지통 ' + trashed.length + '개'} onPress={() => { setSettings(false); setTrashOpen(true); }}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
+        <Glyph name="delete-restore" size={20} color={C.muted} />
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>휴지통</Text>
+        <Text style={{ fontSize: 13, color: C.muted }}>{trashed.length ? trashed.length + '개' : '비어 있음'}</Text>
+        <Glyph name="chevron-right" size={18} color={C.faint} />
+      </Pressable>
+      <Pressable accessibilityRole="switch" accessibilityLabel="캔버스 종이 질감" accessibilityState={{ checked: store?.paperTexture === true }}
+        onPress={() => { try { commit(st => ({ ...st, paperTexture: st.paperTexture !== true })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>캔버스 종이 질감</Text>
+          <Text style={{ fontSize: 11, color: C.muted }}>파일에는 들어가지 않아요</Text>
+        </View>
+        <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: store?.paperTexture === true ? C.accent : C.lineStrong }}>
+          <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.paperTexture === true ? 18 : 0 }} />
+        </View>
+      </Pressable>
+      {/* 앱 정보: 실제 설정에 적힌 버전만 보여 준다. 없는 도움말·백업 버튼은 만들지 않는다(명세 T01). */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, borderTopWidth: 1, borderColor: C.line }}>
+        <Text style={{ flex: 1, fontSize: 13, color: C.muted }}>버전</Text>
+        <Text accessibilityLabel={'앱 버전 ' + appVersion} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{appVersion}</Text>
+      </View>
+      <Pressable accessibilityRole="button" accessibilityLabel="개인정보처리방침" accessibilityState={{ disabled: !privacyUrl }} disabled={!privacyUrl}
+        onPress={() => privacyUrl && void Linking.openURL(privacyUrl).catch(() => setNotice('개인정보처리방침을 열지 못했어요. 잠시 뒤 다시 시도해 주세요.'))}
+        style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Text style={{ flex: 1, color: C.ink }}>개인정보처리방침</Text><Text style={{ color: C.muted }}>{privacyUrl ? '열기 ›' : '준비 중'}</Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="문의하기" accessibilityState={{ disabled: !supportEmail }} disabled={!supportEmail}
+        onPress={() => void openSupport()} style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Text style={{ flex: 1, color: C.ink }}>문의하기</Text><Text style={{ color: C.muted }}>{supportEmail ? '메일 보내기 ›' : '준비 중'}</Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="PRO 이용" onPress={() => { setSettings(false); setProSheet(true); }}
+        style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? T.fill : 'transparent' })}>
+        <Glyph name="star-four-points-outline" size={19} color={C.muted} />
+        <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: C.ink }}>PRO 이용</Text>
+        <Glyph name="chevron-right" size={18} color={C.muted} />
+      </Pressable>
+  </View>;
   const setMeta = (p: Project) => { const when = new Date(p.updatedAt); return { moving: setIsAnimated(p), done: doneCount(p), working: p.slots.filter(isWorking).length, stamp: Number.isFinite(when.getTime()) ? `${when.getMonth() + 1}월 ${when.getDate()}일` : '' }; };
   return <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}><StatusBar style="dark" /><ImageAnalyzer ref={analyzer} /><MotionBaker ref={baker} /><ExtraComposer ref={composer} />
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -753,7 +877,7 @@ function Studio() {
         <Text style={{ fontSize: 12, color: C.ink, lineHeight: 18 }}>작업은 화면에 그대로 있어요. 다시 저장을 눌러 주세요.</Text>
         <Action primary title="다시 저장" onPress={() => { try { commit(s => s); } catch {} }} />
       </View>}
-      <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}/${homeView}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, !project && !loadError && { flexGrow: 1 }, !project && !loadError && homeView === 'home' && { paddingHorizontal: screenWidth < 340 ? 16 : 20, paddingTop: 14, gap: 14 }]}>
+      <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}/${homeView}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, !project && !loadError && { flexGrow: 1 }, !project && !loadError && homeView === 'home' && { paddingHorizontal: screenWidth < 340 ? 12 : 16, paddingTop: 8, gap: 12, backgroundColor: T.page }]}>
         {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="알림 닫기" onPress={() => setNotice('')}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, paddingVertical: 10, paddingHorizontal: 14, borderRadius: T.radius.md, backgroundColor: C.paper, ...Elev[1] }}>
           <Glyph name="information-outline" size={18} color={C.muted} />
@@ -911,181 +1035,167 @@ function Studio() {
               : <Text style={{ paddingVertical: 24, textAlign: 'center', fontSize: 13, color: C.muted }}>이 분류에는 아직 표현이 없어요</Text>;
           })()}
         </> : !project ? <>
-          {/* 45.43 홈 = 승인 시안 WB2-Home 그대로(사용자 확정 · 브랜드 '이모티'). 치수는 시안 값이다:
-              머리 44 · 로고 28 · 이름 Jua 23 · PRO 배지 26 · 구역 제목 Jua 18 · 카드 둥글기 22 · 이어 그리기 44 · 새 세트 52 · 목록 줄 50.
-              시안에 없는 것은 두지 않는다 — 표현 가이드 네 칸·'손볼 곳' 줄·'+N' 덮개를 걷었다. 가이드 입구는 '이어서 만들기' 옆 작은 링크.
-              시안에 없지만 남긴 것 하나: 카드의 '⋯'(세트 관리). 세트가 하나면 이름 바꾸기·삭제·백업으로 가는 길이 이것뿐이다. */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: T.tap }}>
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
-                <ImtiIcon name="brush" size={IconSize.row} />
-              </View>
-              {/* 브랜드 병기(사용자 확정 2026-10-01 · 영문 표기 2026-10-03 imoti → emoti): 소문자 emoti 가 주표기, 작은 '이모티'가 보조표기. 로고 자리만 바꿨다(배치 그대로).
-                  화면 읽기는 두 글자를 따로 읽지 않고 제품명 'emoti 이모티' 한 번으로 읽는다. */}
-              <View testID="홈 브랜드" accessible accessibilityRole="header" accessibilityLabel="emoti 이모티" style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                <Text numberOfLines={1} style={{ fontSize: 23, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>emoti</Text>
-                <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 12, fontWeight: '700', color: C.muted }}>이모티</Text>
-              </View>
+          {/* 2026-10-08 토스식 개편(캔버스 T-Home, 사용자 확인): 회색 바탕 + 흰 카드. 글자를 줄이고 한눈에 —
+              ① 이어 그리기 카드(세트 이름 · n/32 · 네 칸 · 막대 · 노란 버튼 하나) ② 공지 한 줄(공모전·알림) ③ 제안까지 세 칸(아이콘 + 두 마디) ④ 내 세트 한 줄.
+              아래 탭(홈 · 공모전 · 내 정보)은 화면 밖 TabBar 가 맡는다. */}
+          {homeTab === 'home' && <>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: T.tap }}>
+            <View testID="홈 브랜드" accessible accessibilityRole="header" accessibilityLabel="emoti 이모티" style={{ flex: 1 }}>
+              <Text numberOfLines={1} style={{ fontSize: 23, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>emoti</Text>
             </View>
+            <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드" onPress={() => setHomeView('guide')}
+              style={({ pressed }) => ({ width: T.tap, height: T.tap, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : 'transparent' })}>
+              <ImtiIcon name="guide" size={IconSize.tool} />
+            </Pressable>
             {/* 무료일 때 'PRO 보기', 산 뒤에는 'PRO'(잉크 면) — 지금 PRO 인지 글자로 구분한다(출시 검사도 이 글자를 본다). */}
             <ProBadge label="PRO 보기" text={trial && !isPro(entitlement) ? 'PRO 체험' : pro ? 'PRO' : 'PRO 보기'} owned={pro} onPress={() => setProSheet(true)} />
-            <Pressable accessibilityRole="button" accessibilityLabel="설정" onPress={() => setSettings(true)}
-              style={({ pressed }) => ({ width: T.tap, height: T.tap, marginRight: -6, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : 'transparent' })}>
-              <ImtiIcon name="settings" size={IconSize.tool} color={C.muted} />
-            </Pressable>
           </View>
           {(() => {
-            // 구역 제목 줄(시안: Jua 18 + 오른쪽 12px 보조 링크). 링크는 보이는 글자는 작아도 누르는 자리는 44 이상이다.
-            const link = (label: string, text: string, onPress: () => void, icon?: ImtiName) =>
-              <Pressable key={label} accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }}
-                style={{ minHeight: 24, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                {!!icon && <ImtiIcon name={icon} size={IconSize.meta} color={C.muted} />}
-                <Text style={{ fontSize: 12, fontWeight: '600', color: C.muted }}>{text}</Text>
-              </Pressable>;
-            const head = (title: string, right: React.ReactNode) => <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-              <Text style={{ fontSize: 18, lineHeight: 24, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>{title}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>{right}</View>
-            </View>;
-            const guideLink = link('표현 가이드', '표현 가이드 ›', () => setHomeView('guide'));
-            const ownPicture = <Pressable accessibilityRole="button" accessibilityLabel="내 그림으로 시작" accessibilityState={{ disabled: !!busy }} disabled={!!busy} onPress={startFromImage}
-              style={({ pressed }) => ({ minHeight: T.tap, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: pressed ? C.fillPressed : C.surface2 })}>
-              <ImtiIcon name="reference" size={IconSize.row} disabled={!!busy} />
-              <View style={{ flex: 1 }}>
-                <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '800', color: busy ? C.faint : C.ink }}>내 그림으로 시작</Text>
-                <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>사진·그림을 가져와 첫 칸에</Text>
-              </View>
-              <ImtiIcon name="next" size={IconSize.row} color={C.muted} />
+            const card = { borderRadius: 24, backgroundColor: C.paper } as const;
+            const ownPicture = <Pressable key="own" accessibilityRole="button" accessibilityLabel="내 그림으로 시작" accessibilityState={{ disabled: !!busy }} disabled={!!busy} onPress={startFromImage}
+              style={({ pressed }) => ({ width: 76, height: 76, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : C.paper })}>
+              <ImtiIcon name="reference" size={IconSize.tool} disabled={!!busy} />
             </Pressable>;
+            const newSet = <Pressable key="new" accessibilityRole="button" accessibilityLabel="새 세트 만들기" onPress={createNewProject}
+              style={({ pressed }) => ({ width: 76, height: 76, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.accentLine : C.accent })}>
+              <ImtiIcon name="plus" size={IconSize.tool} />
+            </Pressable>;
+            // 공지 한 줄: 열린 공모전이 있으면 공모전(누르면 공모전 탭), 아니면 켜 둔 알림(체험 안내 등). 둘 다 없으면 자리도 없다.
+            const noticeLine = homeContest
+              ? <Pressable testID="홈 알림" accessibilityRole="button" accessibilityLabel={'공모전 ' + homeContest.title} onPress={() => setHomeTab('contest')}
+                  style={({ pressed }) => ({ ...card, minHeight: 56, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? C.fill : C.paper })}>
+                  <View style={{ height: 24, paddingHorizontal: 8, borderRadius: 12, backgroundColor: C.accent, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>공모전</Text></View>
+                  <Text numberOfLines={1} style={{ flex: 1, fontSize: 15, fontWeight: '600', color: C.ink }}>{homeContest.title}</Text>
+                  {!!homeContest.dday && <Text style={{ fontSize: 13, fontWeight: '800', color: C.muted }}>{homeContest.dday}</Text>}
+                  <ImtiIcon name="next" size={IconSize.row} color={C.faint} />
+                </Pressable>
+              : noticeOn ? (() => {
+                  const go = homeNotice.link || trialNotice;
+                  const body = <>
+                    <AssetSlot name="noticeArtwork" size={32} />
+                    <Text numberOfLines={1} style={{ flex: 1, fontSize: 15, fontWeight: '600', color: C.ink }}>{homeNotice.title}</Text>
+                    {!!go && <ImtiIcon name="next" size={IconSize.row} color={C.faint} />}
+                  </>;
+                  const row = { ...card, minHeight: 56, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 } as const;
+                  return go
+                    ? <Pressable testID="홈 알림" accessibilityRole="button" accessibilityLabel={homeNotice.title}
+                        onPress={() => { if (trialNotice) { setProSheet(true); return; } Linking.openURL(homeNotice.link!).catch(() => setNotice('링크를 열지 못했어요.')); }}
+                        style={({ pressed }) => ({ ...row, backgroundColor: pressed ? C.fill : C.paper })}>{body}</Pressable>
+                    : <View testID="홈 알림" style={row}>{body}</View>;
+                })() : null;
             if (!sortedProjects.length) return <>
-              {/* 빈 홈(시안 WB2-States '빈 상태'): 그림 · 제목 · 노란 행동 하나 · 흐름. 가이드 입구는 같은 자리의 작은 링크. */}
-              <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>{guideLink}</View>
+              {/* 빈 홈: 그림 · 제목 · 노란 행동 하나. */}
               <EmptyState testID="홈 창작 표면" flow
                 art={<AssetSlot name="homeHeroArtwork" size={screenWidth < 380 ? 96 : 112} />}
                 title="첫 칸부터 그려 볼까요?" body="한 세트 = 32칸 · 무료로 끝까지"
                 actionLabel="새 세트 만들기" onAction={createNewProject} />
-              {ownPicture}
+              {noticeLine}
+              <View style={{ flexDirection: 'row', gap: 10 }}>{ownPicture}</View>
             </>;
             const p = sortedProjects[0];
             const drawn = p.slots.filter(s => s.finalImage);
             const done = doneCount(p);
             const moving = setIsAnimated(p);
-            const when = new Date(p.updatedAt);
-            const days = Number.isFinite(when.getTime()) ? Math.round((new Date(new Date().toDateString()).getTime() - new Date(when.toDateString()).getTime()) / 864e5) : NaN;
-            const stamp = !Number.isFinite(days) ? '' : days === 0 ? '오늘' : days === 1 ? '어제' : `${when.getMonth() + 1}월 ${when.getDate()}일`;
             const next = nextUnfinished(p, p.lastSlot ?? 0);
             const openCut = (n: number | null) => { setProjectId(p.id); setScreen('board'); setSlotNumber(n ?? p.lastSlot ?? 1); setPainting(true); };
             // 제안까지: 카카오 제안 기준(STAGES.proposal)과 이 세트의 저장된 사실로만 센다. 그림을 판단하지 않는다.
-            // 시안대로 칸 · (움직이는 세트면) 움직이는 칸 · 대표 아이콘 세 줄. 손볼 곳은 내보내기 화면이 맡는다.
             const need = (moving ? STAGES.animated : STAGES.still).proposal;
             const left = Math.max(0, need.emoticons - done);
             const movingNeed = moving && 'animatedMin' in need ? need.animatedMin : 0;
             const movingHave = p.slots.filter(sl => sl.submitImage).length;
-            const rows: { key: string; icon: ImtiName; ok: boolean; title: string; detail: string; action?: string; run?: () => void }[] = [
-              left ? { key: 'cuts', icon: 'brush', ok: false, title: `${left}칸 더 그리기`, detail: `${need.emoticons}칸이 모두 있어야 해요`, action: '다음 칸', run: () => openCut(next) }
-                : { key: 'cuts', icon: 'brush', ok: true, title: `${need.emoticons}칸 모두 완성`, detail: '제안할 칸을 다 채웠어요' },
-              ...(moving ? [movingHave >= movingNeed
-                ? { key: 'moving', icon: 'motion' as const, ok: true, title: `움직이는 칸 ${movingNeed}개`, detail: `지금 ${movingHave}개` }
-                : { key: 'moving', icon: 'motion' as const, ok: false, title: `움직이는 칸 ${movingNeed - movingHave}개 더`, detail: `지금 ${movingHave}개` }] : []),
-              p.extras?.icon ? { key: 'icon', icon: 'reference', ok: true, title: '대표 아이콘', detail: '만들어 두었어요' }
-                : { key: 'icon', icon: 'reference', ok: false, title: '대표 아이콘', detail: drawn.length ? '그린 칸으로 만들어요' : '그린 칸이 생기면 만들어요',
-                    ...(drawn.length ? { action: '만들기', run: () => { setProjectId(p.id); setScreen('extras'); } } : {}) },
+            const tiles: { key: string; icon: ImtiName; ok: boolean; title: string; detail: string; run?: () => void }[] = [
+              { key: 'cuts', icon: 'brush', ok: !left, title: `${need.emoticons}칸`, detail: left ? `${left}칸 남음` : '완료', run: left ? () => openCut(next) : undefined },
+              ...(moving ? [{ key: 'moving', icon: 'motion' as const, ok: movingHave >= movingNeed, title: '움직임', detail: movingHave >= movingNeed ? '완료' : `${movingNeed - movingHave}개 더` }] : []),
+              { key: 'icon', icon: 'reference', ok: !!p.extras?.icon, title: '아이콘', detail: p.extras?.icon ? '완료' : '만들기',
+                run: !p.extras?.icon && drawn.length ? () => { setProjectId(p.id); setScreen('extras'); } : undefined },
             ];
             const shown = Math.min(done, need.emoticons);
+            const thumbs = sortedProjects.slice(1, 3);
             return <>
-              {head('이어서 만들기', <>
-                {guideLink}
-                {sortedProjects.length > HOME_RECENT && link('전체 작업 보기', `세트 ${sortedProjects.length}개 ›`, () => setHomeView('all'))}
-              </>)}
               <Pressable accessibilityRole="button" accessibilityLabel={p.projectName} onPress={() => { setProjectId(p.id); setScreen('board'); }}
-                style={({ pressed }) => ({ backgroundColor: pressed ? C.fill : C.paper, borderRadius: 22, overflow: 'hidden', ...Card.border, ...(pressed ? {} : Card.shadow) })}>
-                {/* 작품 네 칸: 카드 위를 꽉 채우는 한 줄. 칸 사이 2px 옅은 선, 바탕은 흰색·아주 옅은 노랑 번갈아(시안). */}
-                <View testID="홈 작품 미리보기" style={{ flexDirection: 'row', gap: 2, backgroundColor: C.line }}>
+                style={({ pressed }) => ({ ...card, padding: 20, gap: 16, backgroundColor: pressed ? C.fill : C.paper })}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text numberOfLines={1} style={{ flex: 1, fontSize: 22, lineHeight: 30, fontWeight: '800', color: C.ink, letterSpacing: -.3 }}>{p.projectName}</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{shown}<Text style={{ fontWeight: '500', color: C.muted }}>/{need.emoticons}</Text></Text>
+                  <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginRight: -6 }}><ImtiIcon name="more" size={IconSize.row} color={C.muted} /></Pressable>
+                </View>
+                <View testID="홈 작품 미리보기" style={{ flexDirection: 'row', gap: 8 }}>
                   {[0, 1, 2, 3].map(i => {
                     const sl = drawn[i];
-                    return <View key={i} style={{ flex: 1, aspectRatio: 1, backgroundColor: i % 2 ? '#FEFCE6' : C.paper, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                    return <View key={i} style={{ flex: 1, aspectRatio: 1, borderRadius: 16, backgroundColor: sl ? C.surface2 : C.paper, borderWidth: sl ? 0 : 2, borderStyle: 'dashed', borderColor: C.lineStrong, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                       {sl ? <Image source={{ uri: imageUri((sl.motionImage ?? sl.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-                        : i === drawn.length ? <ImtiIcon name="brush" size={IconSize.tool} color={C.lineStrong} /> : null}
+                        : i === drawn.length && next !== null ? <Text style={{ fontSize: 16, fontWeight: '800', color: C.muted }}>{next}</Text> : null}
                     </View>;
                   })}
                 </View>
-                <View style={{ padding: 14, gap: 12 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={{ flex: 1 }}>
-                      <Text numberOfLines={1} style={{ fontSize: 20, lineHeight: 26, color: C.ink, fontFamily: Font.display, fontWeight: '400' }}>{p.projectName}</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        {moving && <ImtiIcon name="motion" size={IconSize.meta} color={C.muted} />}
-                        {/* 날짜는 줄어들지 않는 따로 된 글자(좁은 화면에서도 지워지지 않게). 종류는 전체 작업 목록과 같은 짧은 말 —
-                            시안에 없는 '⋯'(세트 관리)가 자리를 쓰므로 '이모티콘'까지 쓰면 390dp 에서도 잘렸다. 날짜는 시안처럼 가까우면 '오늘'·'어제'. */}
-                        <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 12, color: C.muted }}>{moving ? '움직이는' : '멈춰있는'}</Text>
-                        {!!stamp && <Text testID="홈 카드 날짜" numberOfLines={1} style={{ flexShrink: 0, fontSize: 12, color: C.muted }}>· {stamp}</Text>}
-                      </View>
-                    </View>
-                    <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={{ top: 4, bottom: 4, left: 4, right: 0 }} style={{ width: 32, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="more" size={IconSize.row} color={C.muted} /></Pressable>
-                    {/* 카드의 주 행동 하나: 이어 그리기(노랑). 카드 자체를 누르면 세트 보드가 열린다. */}
-                    <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 이어서 만들기`} onPress={() => openCut(next)} hitSlop={{ top: 2, bottom: 2 }}
-                      style={({ pressed }) => ({ height: 44, paddingHorizontal: 16, borderRadius: 14, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.accentLine : C.accent, borderWidth: C.stroke, borderColor: C.edge, ...(pressed ? Pop.pressed : Pop.small) })}>
-                      <ImtiIcon name="brush" size={IconSize.row} />
-                      <Text style={{ fontSize: 14, fontWeight: '800', color: C.accentInk }}>{done || drawn.length ? '이어 그리기' : '그리기 시작'}</Text>
-                    </Pressable>
-                  </View>
-                  {/* 카드 B: 막대 + 완성 수/제안 기준 칸. 칸 하나하나(32칸 격자)는 보드와 완성 화면에서 보인다. */}
-                  <View testID="홈 진행" accessible accessibilityLabel={`${need.emoticons}칸 중 ${shown}칸 완성`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: C.surface2, overflow: 'hidden' }}><View style={{ width: `${Math.max(2, Math.min(100, done / need.emoticons * 100))}%`, height: '100%', borderRadius: 4, backgroundColor: C.accent }} /></View>
-                    <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{shown}<Text style={{ fontWeight: '600', color: C.muted }}>/{need.emoticons}</Text></Text>
-                  </View>
-                  <View testID="홈 다음 칸" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    {next !== null
-                      ? <View style={{ minWidth: 26, height: 26, paddingHorizontal: 3, borderRadius: 7, borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>{next}</Text></View>
-                      : <View style={{ width: 26, height: 26, borderRadius: 7, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="check" size={IconSize.meta} /></View>}
-                    <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{next !== null ? `다음은 ${next}번 칸` : '모든 칸을 채웠어요'}</Text>
-                  </View>
+                <View testID="홈 진행" accessible accessibilityLabel={`${need.emoticons}칸 중 ${shown}칸 완성`} style={{ height: 6, borderRadius: 3, backgroundColor: C.surface2, overflow: 'hidden' }}>
+                  <View style={{ width: `${Math.max(2, Math.min(100, done / need.emoticons * 100))}%`, height: '100%', borderRadius: 3, backgroundColor: C.accent }} />
                 </View>
+                <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 이어서 만들기`} onPress={() => openCut(next)}
+                  style={({ pressed }) => ({ height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.accentLine : C.accent })}>
+                  <Text style={{ fontSize: 17, fontWeight: '800', color: C.accentInk }}>{done || drawn.length ? '이어 그리기' : '그리기 시작'}</Text>
+                </Pressable>
               </Pressable>
-              {/* 새로 시작: 카드 바로 아래 잉크 테두리 한 줄(노랑은 '이어 그리기'에 양보한다). */}
-              <Pressable accessibilityRole="button" accessibilityLabel="새 세트 만들기" onPress={createNewProject}
-                style={({ pressed }) => ({ height: 52, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1.5, borderColor: C.edge })}>
-                <ImtiIcon name="brush" size={IconSize.row} />
-                <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>새 세트 만들기</Text>
-              </Pressable>
-              {head('제안까지', link('이 세트 내보내기', '내보내기', () => { setProjectId(p.id); setScreen('export'); }, 'export'))}
-              <View testID="제안까지 남은 일" style={{ borderRadius: 18, backgroundColor: C.paper, paddingHorizontal: 14, borderWidth: 1, borderColor: C.cardLine }}>
-                {rows.map((r, i) => {
-                  const body = <>
-                    <View style={{ width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: r.ok ? C.accentSoft : C.surface2 }}>
-                      <ImtiIcon name={r.ok ? 'check' : r.icon} size={IconSize.row} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: r.ok ? C.muted : C.ink }}>{r.title}</Text>
-                      <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{r.detail}</Text>
-                    </View>
-                    {!!r.action && <View style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{r.action}</Text></View>}
-                  </>;
-                  const line = { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 50, paddingVertical: 4, borderTopWidth: i ? 1 : 0, borderColor: C.line } as const;
-                  return r.run ? <Pressable key={r.key} accessibilityRole="button" accessibilityLabel={r.title + ' · ' + r.action} onPress={r.run} style={({ pressed }) => ({ ...line, backgroundColor: pressed ? C.fill : 'transparent', marginHorizontal: -14, paddingHorizontal: 14 })}>{body}</Pressable>
-                    : <View key={r.key} accessibilityLabel={(r.ok ? '완료 · ' : '') + r.title} style={line}>{body}</View>;
-                })}
+              {noticeLine}
+              <View testID="제안까지 남은 일" style={{ ...card, paddingTop: 18, paddingBottom: 16, paddingHorizontal: 12, gap: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>제안까지</Text>
+                  <Pressable accessibilityRole="button" accessibilityLabel="이 세트 내보내기" onPress={() => { setProjectId(p.id); setScreen('export'); }} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>내보내기 ›</Text>
+                  </Pressable>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {tiles.map(t => {
+                    const face = <>
+                      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: t.ok ? C.ink : C.paper }}>
+                        <ImtiIcon name={t.ok ? 'check' : t.icon} size={IconSize.row} color={t.ok ? C.paper : C.ink} />
+                      </View>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{t.title}</Text>
+                      <Text style={{ fontSize: 12, color: C.muted }}>{t.detail}</Text>
+                    </>;
+                    const box = { flex: 1, borderRadius: 18, paddingTop: 14, paddingBottom: 12, alignItems: 'center', gap: 6, backgroundColor: t.ok ? C.accentSoft : C.surface2 } as const;
+                    return t.run
+                      ? <Pressable key={t.key} accessibilityRole="button" accessibilityLabel={`${t.title} ${t.detail}`} onPress={t.run} style={({ pressed }) => ({ ...box, backgroundColor: pressed ? C.fillPressed : box.backgroundColor })}>{face}</Pressable>
+                      : <View key={t.key} accessible accessibilityLabel={(t.ok ? '완료 · ' : '') + `${t.title} ${t.detail}`} style={box}>{face}</View>;
+                  })}
+                </View>
               </View>
-              {ownPicture}
+              <View style={{ gap: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>내 세트</Text>
+                  <Pressable accessibilityRole="button" accessibilityLabel="전체 작업 보기" onPress={() => setHomeView('all')} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{`전체 ${sortedProjects.length} ›`}</Text>
+                  </Pressable>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {newSet}
+                  {thumbs.map(t => { const cover = t.slots.find(s => s.finalImage);
+                    return <Pressable key={t.id} accessibilityRole="button" accessibilityLabel={'세트 ' + t.projectName} onPress={() => { setProjectId(t.id); setScreen('board'); }}
+                      style={({ pressed }) => ({ width: 76, height: 76, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : C.paper })}>
+                      {cover ? <Image source={{ uri: imageUri((cover.motionImage ?? cover.finalImage)!.path) }} style={{ width: '82%', height: '82%' }} resizeMode="contain" />
+                        : <Text numberOfLines={2} style={{ paddingHorizontal: 6, textAlign: 'center', fontSize: 12, fontWeight: '700', color: C.muted }}>{t.projectName}</Text>}
+                    </Pressable>; })}
+                  {ownPicture}
+                </View>
+              </View>
             </>;
           })()}
-          {/* 공지/이벤트: 켤 때만 한 줄 배너(그림 자리 · 제목 · 짧은 정보 · 넘어가기 하나). 꺼져 있으면 자리도 간격도 0. */}
-          {noticeOn && (() => {
-            const body = <>
-              <AssetSlot name="noticeArtwork" size={44} />
-              <View style={{ flex: 1, gap: 1 }}>
-                <Text numberOfLines={1} style={{ fontSize: 16, fontWeight: '700', color: C.ink }}>{homeNotice.title}</Text>
-                <Text numberOfLines={1} style={{ fontSize: 12, lineHeight: 17, color: C.muted }}>{homeNotice.body}</Text>
-              </View>
-              {(!!homeNotice.link || trialNotice) && <Glyph name="chevron-right" size={18} color={C.faint} />}
-            </>;
-            const row = { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: T.radius.card, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line } as const;
-            // 넘어갈 곳이 있을 때만 누를 수 있는 줄이 된다. 행동은 최대 하나다.
-            return homeNotice.link || trialNotice
-              ? <Pressable testID="홈 알림" accessibilityRole="button" accessibilityLabel={homeNotice.title}
-                  onPress={() => { if (trialNotice) { setProSheet(true); return; } Linking.openURL(homeNotice.link!).catch(() => setNotice('링크를 열지 못했어요.')); }}
-                  style={({ pressed }) => ({ ...row, backgroundColor: pressed ? C.fill : C.paper })}>{body}</Pressable>
-              : <View testID="홈 알림" style={row}>{body}</View>;
-          })()}
+          </>}
+          {homeTab === 'contest' && <>
+            <Text accessibilityRole="header" style={{ fontSize: 26, lineHeight: 34, fontWeight: '800', color: C.ink, letterSpacing: -.4, paddingTop: 6 }}>공모전</Text>
+            {store && <CloudScreen inline part="contest" visible onClose={() => setHomeTab('home')} cloud={cloud} extra={Constants.expoConfig?.extra} device={`${Platform.OS} ${Platform.Version}`}
+              store={store} projects={store.projects} commit={commit} task={task} login={loginWith} bakeHandoff={bakeHandoff} />}
+            <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 4 }}>
+              <ImtiIcon name="info" size={IconSize.row} color={C.muted} />
+              <Text style={{ flex: 1, fontSize: 13, lineHeight: 20, color: C.muted }}>카카오·라인 같은 플랫폼 제안은 작가님 이름으로 직접 내요. emoti 가 대신 제출하지 않아요.</Text>
+            </View>
+          </>}
+          {homeTab === 'my' && <>
+            <Text accessibilityRole="header" style={{ fontSize: 26, lineHeight: 34, fontWeight: '800', color: C.ink, letterSpacing: -.4, paddingTop: 6 }}>내 정보</Text>
+            {store && <CloudScreen inline part="account" visible onClose={() => setHomeTab('home')} cloud={cloud} extra={Constants.expoConfig?.extra} device={`${Platform.OS} ${Platform.Version}`}
+              store={store} projects={store.projects} commit={commit} task={task} login={loginWith} bakeHandoff={bakeHandoff} />}
+            {myRows}
+          </>}
         </> : canonOpen ? <>
           {(() => {
             const pickReference = () => task('그림을 여는 중…', async () => { const images = await pickImages(); if (!images[0]) return; updateProject(p => ({ ...p, canon: { ...p.canon, image: images[0] } })); });
@@ -1518,6 +1628,7 @@ function Studio() {
           }); })()}</View>
         </>}
       </ScrollView>
+      {store && !loadError && !project && homeView === 'home' && <TabBar value={homeTab} onChange={tab => { setHomeTab(tab); setNotice(''); }} />}
       {/* 보드 아래 고정 줄: 남은 칸이 있으면 이어서 그리기가 먼저, 완성이 생기면 내보내기. 다 채우면 내보내기가 노랑이다. */}
       {project && screen === 'board' && !canonOpen && doneCount(project) < project.slots.length && (() => {
         const next = nextUnfinished(project, project.lastSlot ?? 0);
@@ -1611,117 +1722,9 @@ function Studio() {
       <Action danger title="영구 삭제" onPress={() => purgeProject(pendingPurge.id)} />
       <Action title="취소" onPress={() => setConfirmPurgeId(null)} />
     </Dialog>}
-    {settings && <Dialog title="설정" onClose={() => setSettings(false)}>
-      <Text style={{ fontSize: 12, color: C.muted }}>{trial && !isPro(entitlement) ? 'PRO 체험 · 비공개 테스트' : entitlementLabel(entitlement)}</Text>
-      {/* 검수용 빌드는 스스로 그렇다고 말한다. 출시 구성에서는 아예 그려지지 않는다(internalReviewBuild() 가 거짓). */}
-      {reviewCapable() && <View style={{ gap: 8, padding: 12, borderRadius: T.radius.md, backgroundColor: C.accentSoft }}>
-        <Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>{reviewEnvLabel()}</Text>
-        <Text style={{ fontSize: 11, color: C.accentInk, lineHeight: 16 }}>{internalReviewBuild() ? REVIEW_BUILD_NOTE : REVIEW_DEV_NOTE}</Text>
-        <Pressable accessibilityRole="switch" accessibilityLabel="검수용 PRO 켜기" accessibilityState={{ checked: !!store?.reviewUnlock }}
-          onPress={() => { try { commit(st => ({ ...st, reviewUnlock: !st.reviewUnlock })); } catch { /* 저장 실패는 위 배너가 말한다 */ } }}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
-          <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: store?.reviewUnlock ? C.accentLine : C.lineStrong }}>
-            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.reviewUnlock ? 18 : 0 }} />
-          </View>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>검수용 PRO {store?.reviewUnlock ? '켜짐' : '꺼짐'}</Text>
-        </Pressable>
-        <Pressable accessibilityRole="switch" accessibilityLabel="홈 공지 미리 보기" accessibilityState={{ checked: noticePreview }}
-          onPress={() => setNoticePreview(!noticePreview)}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
-          <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: noticePreview ? C.accentLine : C.lineStrong }}>
-            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: noticePreview ? 18 : 0 }} />
-          </View>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>홈 공지 미리 보기 {noticePreview ? '켜짐' : '꺼짐'}</Text>
-        </Pressable>
-      </View>}
-      <Pressable accessibilityRole="button" accessibilityLabel="사용 안내 다시 보기" onPress={() => { setSettings(false); setIntroStep(0); }}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
-        <Glyph name="help-circle-outline" size={20} color={C.muted} />
-        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>사용 안내 다시 보기</Text>
-        <Glyph name="chevron-right" size={18} color={C.faint} />
-      </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="계정·클라우드" onPress={() => { setSettings(false); setCloudOpen(true); }}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
-        <Glyph name="account-circle-outline" size={20} color={C.muted} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>계정 · 클라우드</Text>
-          <Text style={{ fontSize: 11, color: C.muted }}>{cloud ? '로그인 · PRO 클라우드 백업 · 공모전' : '준비 중 — 서버 연결 전'}</Text>
-        </View>
-        <Glyph name="chevron-right" size={18} color={C.faint} />
-      </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="전체 백업 만들기" onPress={() => { setSettings(false); backupAll(); }}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
-        <Glyph name="archive-arrow-down-outline" size={20} color={C.muted} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>전체 백업 만들기</Text>
-          <Text style={{ fontSize: 11, color: C.muted }}>모든 세트 · 색 · 보관한 움직임 · 조각 · 설정 (PRO 구매 제외)</Text>
-        </View>
-        <Glyph name="chevron-right" size={18} color={C.faint} />
-      </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="백업에서 되살리기" onPress={restoreFromBackup}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
-        <Glyph name="archive-arrow-up-outline" size={20} color={C.muted} />
-        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>백업에서 되살리기</Text>
-        <Glyph name="chevron-right" size={18} color={C.faint} />
-      </Pressable>
-      {(() => {
-        const copies = settings ? safely(listExports) ?? [] : [];
-        if (!copies.length) return null;
-        const mb = copies.reduce((t, x) => t + x.bytes, 0) / 1048576;
-        return <Pressable accessibilityRole="button" accessibilityLabel={`내보낸 파일 ${copies.length}개`} onPress={() => { setSettings(false); setExportsConfirm(copies); }}
-          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
-          <Glyph name="folder-zip-outline" size={20} color={C.muted} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>내보낸 파일</Text>
-            <Text style={{ fontSize: 11, color: C.muted }}>{`보낸 뒤 앱에 남은 사본 ${copies.length}개 · ${mb < .1 ? '0.1MB 미만' : mb.toFixed(1) + 'MB'}`}</Text>
-          </View>
-          <Glyph name="chevron-right" size={18} color={C.faint} />
-        </Pressable>;
-      })()}
-      <Pressable accessibilityRole="button" accessibilityLabel={'휴지통 ' + trashed.length + '개'} onPress={() => { setSettings(false); setTrashOpen(true); }}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
-        <Glyph name="delete-restore" size={20} color={C.muted} />
-        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>휴지통</Text>
-        <Text style={{ fontSize: 13, color: C.muted }}>{trashed.length ? trashed.length + '개' : '비어 있음'}</Text>
-        <Glyph name="chevron-right" size={18} color={C.faint} />
-      </Pressable>
-      <Pressable accessibilityRole="switch" accessibilityLabel="캔버스 종이 질감" accessibilityState={{ checked: store?.paperTexture === true }}
-        onPress={() => { try { commit(st => ({ ...st, paperTexture: st.paperTexture !== true })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>캔버스 종이 질감</Text>
-          <Text style={{ fontSize: 11, color: C.muted }}>파일에는 들어가지 않아요</Text>
-        </View>
-        <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: store?.paperTexture === true ? C.accent : C.lineStrong }}>
-          <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.paperTexture === true ? 18 : 0 }} />
-        </View>
-      </Pressable>
-      {/* 앱 정보: 실제 설정에 적힌 버전만 보여 준다. 없는 도움말·백업 버튼은 만들지 않는다(명세 T01). */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, borderTopWidth: 1, borderColor: C.line }}>
-        <Text style={{ flex: 1, fontSize: 13, color: C.muted }}>버전</Text>
-        <Text accessibilityLabel={'앱 버전 ' + appVersion} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{appVersion}</Text>
-      </View>
-      <Pressable accessibilityRole="button" accessibilityLabel="개인정보처리방침" accessibilityState={{ disabled: !privacyUrl }} disabled={!privacyUrl}
-        onPress={() => privacyUrl && void Linking.openURL(privacyUrl).catch(() => setNotice('개인정보처리방침을 열지 못했어요. 잠시 뒤 다시 시도해 주세요.'))}
-        style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ flex: 1, color: C.ink }}>개인정보처리방침</Text><Text style={{ color: C.muted }}>{privacyUrl ? '열기 ›' : '준비 중'}</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="문의하기" accessibilityState={{ disabled: !supportEmail }} disabled={!supportEmail}
-        onPress={() => void openSupport()} style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ flex: 1, color: C.ink }}>문의하기</Text><Text style={{ color: C.muted }}>{supportEmail ? '메일 보내기 ›' : '준비 중'}</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="PRO 이용" onPress={() => { setSettings(false); setProSheet(true); }}
-        style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? T.fill : 'transparent' })}>
-        <Glyph name="star-four-points-outline" size={19} color={C.muted} />
-        <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: C.ink }}>PRO 이용</Text>
-        <Glyph name="chevron-right" size={18} color={C.muted} />
-      </Pressable>
-    </Dialog>}
     {store && cloudOpen && <CloudScreen visible={cloudOpen} onClose={() => setCloudOpen(false)} cloud={cloud} extra={Constants.expoConfig?.extra} device={`${Platform.OS} ${Platform.Version}`}
       store={store} projects={store.projects} commit={commit} task={task}
-      // 시스템 브라우저로 서버 로그인 중계(/auth/start)를 연다. 운영자가 그 회사를 켜기 전에는 버튼이 눌리지 않아 여기로 오지 않는다.
-      login={async provider => { const config = cloudConfig(Constants.expoConfig?.extra); if (!cloud || !config) return;
-        await signInWithBrowser(cloud, provider, { base: authBase(config), open: (url, ret) => WebBrowser.openAuthSessionAsync(url, ret), randomBytes: getRandomBytes }); }}
+      login={loginWith}
       bakeHandoff={bakeHandoff} />}
     {restoreReport && <Dialog title="전체 백업에서 되살렸어요" onClose={() => setRestoreReport(null)}>
       {restoreReport.done.map(line => <Text key={line} style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{'· ' + line}</Text>)}

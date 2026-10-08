@@ -86,11 +86,11 @@ async function render(projects = []) {
   }
   assert.ok(texts().some(t => t.includes('무료 브러시 10종 · 무료 움직임 6종')));
   await press('PRO 닫기');
-  await press('설정');
+  await press('내 정보');
   for (const label of ['개인정보처리방침', '문의하기']) assert.equal(labelled(label)[0].props.disabled, true);
   assert.equal(texts().filter(t => t === '준비 중').length, 2);
   config.extra.privacyPolicyUrl = 'https://privacy.example/policy'; config.extra.supportEmail = 'support@example.com';
-  await render(); await press('설정');
+  await render(); await press('내 정보');
   await press('개인정보처리방침'); assert.equal(urls.at(-1), config.extra.privacyPolicyUrl);
   await press('문의하기');
   const mail = new URL(urls.at(-1));

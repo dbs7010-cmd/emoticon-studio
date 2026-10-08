@@ -67,7 +67,7 @@ const depth = () => {
   await press('내보내기');
   console.log('내보내기', JSON.stringify(depth()));
   await press('뒤로'); await press('뒤로');
-  await press('설정');
+  await press('내 정보');
   console.log('설정    ', JSON.stringify(depth()));
   console.log('    (설정의 3겹은 켜고 끄는 단추의 동그란 손잡이다 — 상자가 아니다)');
   await act(async () => tree.unmount());

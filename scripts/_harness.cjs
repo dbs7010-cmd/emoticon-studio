@@ -172,11 +172,11 @@ const SCREENS = [
   ['export-before', '내보내기 · 만들기 전', async () => { await press('그리기'); await closePainter(); await press('내보내기'); }],
   ['export-result', '내보내기 · 결과', async () => { await press('파일 묶음 만들기'); await settle(); }],
   // 설정을 먼저 연다. 여기서 검수용 PRO 를 꺼야 PRO 화면이 '사기 전' 모습으로 그려진다.
-  ['settings', '설정', async () => { await press('뒤로'); await press('뒤로'); await press('설정'); }],
+  ['settings', '설정', async () => { await press('뒤로'); await press('뒤로'); await press('내 정보'); }],
   ['pro', 'PRO', async () => { await press('검수용 PRO 켜기'); await press('PRO 이용'); }],
   // 브러시 네 상태(45.25차 6번). 참고 자리를 세우려면 표현 가이드에서 들어가야 한다.
   ['draw-brush-2', '그리기 · 브러시 선택', async () => {
-    await press('PRO 닫기');
+    await press('PRO 닫기'); await press('홈');   // 2026-10-08: 설정은 '내 정보' 탭 — 홈 탭으로 돌아와 가이드를 연다
     await press('표현 가이드'); await press('고마워 · 두 손 모아 꾸벅'); await press('정중하게 고르기'); await press('참고 보기');
     await ready();
     await press('브러시 전체');
