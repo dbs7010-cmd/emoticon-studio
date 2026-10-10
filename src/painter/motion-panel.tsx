@@ -199,8 +199,8 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   // 그래서 같은 규칙: 테두리 없음, 고른 칸만 옅은 노랑 면 + 짧은 노란 밑줄, 누르는 동안 회색.
   // 한 줄에 일곱을 욱여넣던 것을 네 칸 격자로 바꿨다 — 320dp 에서 흔들기·부르르가 화면 밖에 있어 고를 수 없었고,
   // 기기에서는 칸이 36dp 로 줄어 손가락 자리(48dp)도 글자도 모자랐다.
-  const card = (on: boolean) => ({ pressed }: { pressed: boolean }) => ({ flex: 1, minHeight: 84, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: C.radius.md, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.bg, borderWidth: C.stroke, borderColor: on ? C.edge : 'transparent' } as const);
-  const mark = (on: boolean) => <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 4, height: 3, borderRadius: 2, backgroundColor: on ? C.accent : 'transparent' }} />;
+  const card = (on: boolean) => ({ pressed }: { pressed: boolean }) => ({ flex: 1, minHeight: 84, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: C.radius.md, backgroundColor: on ? C.accentSoft : pressed ? C.fillPressed : C.surface2, borderWidth: C.stroke, borderColor: on ? C.edge : 'transparent' } as const);   // 2026-10-08 토스식: 쉬는 칸은 회색 면
+  const mark = (_on: boolean) => null;   // 2026-10-08: 고른 칸은 옅은 노랑 면 + 잉크 테두리로 충분 — 밑줄은 걷었다
   // 다른 화면으로 가는 줄은 **목록 줄** 역할이다 — 브러시·레이어 목록처럼 카드 없이 얇은 구분선으로 가른다.
   const row = { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 4, borderBottomWidth: 1, borderColor: C.line } as const;
   // 45.39: 묶음으로 나눈 격자. 묶음 칩으로 좁혀 볼 수 있다(전체가 기본).
@@ -243,7 +243,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }}>
       <Pressable accessibilityRole="button" accessibilityLabel="움직임 없음" accessibilityHint={hasPro ? '전체 움직임만 빼요. 부분 움직임은 남아요' : undefined} accessibilityState={{ selected: !base.preset }}
         onPress={() => { setTrialFrom(null); clearPreset(); }}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1, borderColor: !base.preset ? C.accentBorder : C.line, backgroundColor: !base.preset ? C.accentSoft : pressed ? C.fill : C.paper })}>
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, borderRadius: 20, borderWidth: !base.preset ? 1 : 0, borderColor: C.accentBorder, backgroundColor: !base.preset ? C.accentSoft : pressed ? C.fillPressed : C.fill })}>
         <Glyph name="motion-pause-outline" size={16} color={C.ink} />
         <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: !base.preset ? '800' : '600', color: C.ink }}>{hasPro ? '전체 없음' : '없음'}</Text>
       </Pressable>
@@ -251,7 +251,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       {([['all', '전체'], ...MOTION_GROUPS.map(g => [g.id, g.id])] as [MotionGroup | 'all', string][]).map(([id, label]) => {
         const on = group === id;
         return <Pressable key={id} accessibilityRole="button" accessibilityLabel={'움직임 묶음 ' + label} accessibilityState={{ selected: on }} onPress={() => setGroup(id)}
-          style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 20, backgroundColor: on ? C.ink : pressed ? C.fill : 'transparent', borderWidth: on ? 0 : 1, borderColor: C.line })}>
+          style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 20, backgroundColor: on ? C.ink : pressed ? C.fillPressed : C.fill })}>
           <Text style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.paper : C.muted }}>{label}</Text>
         </Pressable>;
       })}
