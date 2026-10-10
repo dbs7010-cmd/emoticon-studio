@@ -13,6 +13,9 @@ const RULES = `
 -keep class com.facebook.react.bridge.** { *; }
 -keep @com.facebook.proguard.annotations.DoNotStrip class *
 -keepclassmembers class * { @com.facebook.proguard.annotations.DoNotStrip *; }
+# 결제 모듈(expo-iap · OpenIAP)은 자체 keep 규칙이 없다 — 이름이 바뀌면 출시 검사(expo_iap_native)도, 나중에 열 결제도 깨진다.
+-keep class expo.modules.iap.** { *; }
+-keep class dev.hyo.openiap.** { *; }
 `;
 
 module.exports = function withReleaseOptimization(config) {
