@@ -268,7 +268,7 @@ async function ready() {
   const TOOLS = ['그리기 도구 펜', '지우개', '채우기', '선택'];
   // 45.39 디자인 D: 고른 도구는 노랑 채움 + 2px 짙은 테두리(스티커). 쉬는 도구는 테두리도 바탕도 없다.
   for (const label of TOOLS.slice(1)) assert.equal(seen(flat(labelled(label)[0].props.style)), 0, label + ' 쉬는 도구에 카드 테두리가 없다');
-  assert.equal(seen(flat(labelled(TOOLS[0])[0].props.style)), 2, '고른 도구는 2px 테두리');
+  assert.equal(seen(flat(labelled(TOOLS[0])[0].props.style)), 0, '고른 도구도 테두리 없이 노랑 면만(2026-10-08 토스식)');
   assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.accent, '고른 도구만 노랑 표면');
   assert.equal(flat(labelled('지우개')[0].props.style).backgroundColor, 'transparent', '고르지 않은 도구는 투명');
   // 노랑은 '지금 그리는 도구' 하나만 쓴다. 색은 도구가 아니라 패널 입구라 테두리로 말한다.
@@ -296,7 +296,7 @@ async function ready() {
   assert.ok(quick.every(n => { const h = flat(n.props.style).minHeight ?? 0; return h >= 56 && h <= 72; }), '획 견본이 보일 만큼 높다(56~72dp)');
   assert.ok(quick.every(n => n.findAll(x => x.type === 'Image').length === 1), '카드마다 그 브러시의 실제 획 견본');
   // 45.39: 고른 브러시는 흰 스티커 카드(2px 테두리 + 그림자). 도구의 노랑과 역할이 다르다. 스티커 카드는 한 장뿐.
-  assert.equal(quick.filter(n => seen(flat(n.props.style)) === 2).length, 1, '빠른 줄의 고른 카드는 한 장뿐');
+  assert.equal(quick.filter(n => flat(n.props.style).backgroundColor === T.accentSoft).length, 1, '빠른 줄의 고른 카드는 한 장뿐(옅은 노랑 면, 2026-10-08)');
   assert.ok(quick.every(n => flat(n.props.style).backgroundColor !== T.accent), '브러시 카드는 도구처럼 노랑으로 칠하지 않는다');
   // 45.35 승인 시안: 브러시 창은 선·채색·질감·효과 갈래의 세로 목록이다. 줄마다 카드를 두르지 않고
   // 얇은 구분선으로만 가르며, 이름 칸과 넓은 실제 획 견본이 따로 선다. 쓸 수 있는 것은 흐리게 죽이지 않는다.

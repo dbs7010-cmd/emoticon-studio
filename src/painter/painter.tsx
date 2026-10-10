@@ -1281,14 +1281,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 윗줄의 주 동작 하나: 저장. 누르면 **이 칸에 머문다**(45.38). 45.37 까지는 이름만 '저장'이고 실제로는 다음 칸으로 넘어가,
   // 단순히 저장하려던 사람이 작업 자리를 잃었다. 이제 저장한 뒤 캔버스 위 안내에서 '다음 칸'을 고를 수 있다.
   // 내보내기 검수에서 고치러 들어온 칸이면 저장 뒤 그 검수 화면으로 돌아간다.
-  // 모양: 노란 채움 + 짙은 테두리 + 딱 떨어지는 그림자(45.39 확정 디자인 D). 눌리면 내려앉는다.
+  // 모양(2026-10-08 토스식 개편): 노란 알약 면만 — 검정 테두리·스티커 그림자는 걷었다. 배치는 그대로.
   const saveButton = <Pressable accessibilityRole="button" accessibilityLabel="저장" accessibilityHint={returnToReview ? '저장한 뒤 내보내기 검수로 돌아가요' : '이 칸을 저장하고 완성으로 표시해요. 이 칸에 그대로 있어요'}
       disabled={busy || !initialized} onPress={() => save('manual')}
       hitSlop={{ top: 4, bottom: 4 }}
       style={({ pressed }) => ({ minHeight: 40, minWidth: 60, paddingHorizontal: 16, marginHorizontal: 4, borderRadius: 20,
         alignItems: 'center', justifyContent: 'center', backgroundColor: busy || !initialized ? C.fill : pressed ? C.accentLine : C.accent,
-        borderWidth: C.stroke, borderColor: busy || !initialized ? C.lineStrong : C.edge,
-        ...(busy || !initialized ? {} : pressed ? Pop.pressed : Pop.small) })}>
+        })}>
       <Text numberOfLines={1} style={{ color: busy || !initialized ? C.faint : C.accentInk, fontWeight: '800', fontSize: 15 }}>저장</Text>
     </Pressable>;
   return <Modal onRequestClose={() => { if (Keyboard.isVisible()) { Keyboard.dismiss(); return; } if (panel === 'brush' && brushDetail) { ease(); setBrushDetail(false); return; } if (panel === 'brush') { closeBrush(); return; } if (panel) { ease(); setPanel(null); return; } if (drawRail || refRail) { ease(); setDrawRail(false); setRefRail(false); return; } if (showCanon) { setShowCanon(false); return; } save('close'); }} animationType="slide"><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
@@ -1319,13 +1318,14 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       <View onLayout={e => { const w = Math.round(e.nativeEvent.layout.width); if (w !== headW) setHeadW(w); }}
         style={{ borderBottomWidth: 1, borderColor: C.line, backgroundColor: C.paper, paddingHorizontal: 6 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View onLayout={e => { const w = Math.ceil(e.nativeEvent.layout.width); if (w !== tabsW) setTabsW(w); }} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/* 그리기·움직이기: 회색 바탕의 두 칸 선택(공모전 탭과 같은 모양, 2026-10-08). 자리·순서는 그대로다. */}
+          <View onLayout={e => { const w = Math.ceil(e.nativeEvent.layout.width); if (w !== tabsW) setTabsW(w); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4, marginVertical: 2, marginLeft: 4, borderRadius: 12, backgroundColor: C.fill }}>
           {([['draw', '그리기'], ['motion', '움직이기']] as const).map(([key, title]) =>
             <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: tab === key }}
               onPress={() => switchTab(key)}
-              style={{ minHeight: 48, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 18, fontFamily: Font.display, fontWeight: '400', color: tab === key ? C.ink : C.muted }}>{title}</Text>
-              <View pointerEvents="none" style={{ position: 'absolute', left: 8, right: 8, bottom: 0, height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: tab === key ? C.accent : 'transparent' }} />
+              hitSlop={{ top: 4, bottom: 4 }}
+              style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: tab === key ? C.paper : 'transparent' }}>
+              <Text style={{ fontSize: 14, fontWeight: tab === key ? '800' : '600', color: tab === key ? C.ink : C.muted }}>{title}</Text>
             </Pressable>)}
           </View>
           <View style={{ flex: 1 }} />
@@ -1810,8 +1810,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               accessibilityState={{ selected: on }} accessibilityHint={on ? '다시 누르면 세부 설정이 열려요' : undefined}
               onPress={() => pickBrush(key)}
               style={({ pressed }) => ({ flex: 1, minHeight: 62, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: C.radius.button,
-                // 역할별 선택(45.36): 브러시 = 흰 스티커 카드(테두리 + 그림자). 도구 = 노랑 채움. 보조 = 옅은 노랑.
-                backgroundColor: on ? C.paper : pressed ? C.fill : 'transparent', borderWidth: C.stroke, borderColor: on ? C.edge : 'transparent' })}>
+                // 역할별 선택(2026-10-08 토스식): 브러시 = 옅은 노랑 면 · 도구 = 노랑 면. 테두리 없음.
+                backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
               <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '76%', height: 20, tintColor: color }} resizeMode="contain" />
               <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
             </Pressable>; })}
@@ -1829,7 +1829,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             return <Pressable key={key} testID={'도구 ' + title} accessibilityRole="button" accessibilityLabel={a11y} accessibilityState={{ selected: on }}
               onPress={() => selectTool(key)}
               style={({ pressed }) => ({ flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: C.radius.button,
-                backgroundColor: on ? C.accent : pressed ? C.fill : 'transparent', borderWidth: C.stroke, borderColor: on ? C.edge : 'transparent' })}>
+                backgroundColor: on ? C.accent : pressed ? C.fill : 'transparent' })}>
               <Glyph name={icon} size={20} color={on ? C.ink : C.muted} />
               <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{title}</Text>
             </Pressable>; })}
