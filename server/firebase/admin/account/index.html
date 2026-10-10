@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>emoti 이모티 · 계정 삭제</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#F2F1EE;--card:#FFFFFF;--ink:#1F1D1A;--muted:#6B655E;--line:#ECE9E3;--accent:#F5E642;--danger:#B42318;--soft:#F7F6F3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;line-height:1.55}
+main{max-width:520px;margin:0 auto;padding:32px 16px 48px;display:flex;flex-direction:column;gap:12px}
+h1{margin:0 0 4px;font-size:26px;letter-spacing:-.4px}
+.logo{font-weight:800;font-size:18px;margin-bottom:12px}
+.card{background:var(--card);border-radius:24px;padding:20px}
+.muted{color:var(--muted);font-size:14px;margin:0}
+ul{margin:8px 0 0;padding-left:20px}li{margin:4px 0}
+button{font:inherit;border:0;border-radius:14px;min-height:54px;width:100%;font-weight:700;font-size:16px;cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
+.kakao{background:#FEE500;color:rgba(0,0,0,.85)}.naver{background:#03C75A;color:#fff}.google{background:#fff;color:#1F1F1F;border:1px solid #DADCE0}
+.stack{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.danger{background:var(--danger);color:#fff}
+.ghost{background:var(--soft);color:var(--ink)}
+label.check{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:15px;cursor:pointer}
+label.check input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--ink)}
+.status{font-size:14px;margin:12px 0 0}
+.err{color:var(--danger)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <div class="logo">emoti</div>
+  <h1>계정 삭제</h1>
+  <p class="muted">앱 밖에서도 계정과 서버에 있는 내 데이터를 지울 수 있어요. 앱에서는 내 정보 › 탈퇴로 같은 일을 할 수 있어요.</p>
+
+  <section class="card">
+    <strong>지워지는 것</strong>
+    <ul>
+      <li>회원 정보(로그인 회사·회원 식별 번호·작가명·PRO 기록)</li>
+      <li>PRO 클라우드 백업(올린 세트 원본 전부)</li>
+      <li>공모전 접수(제출한 세트 묶음과 접수 기록)</li>
+      <li>로그인 계정</li>
+    </ul>
+    <p class="muted" style="margin-top:10px">휴대폰 안에 저장된 작품은 지워지지 않아요(서버에 없는 자료예요). 지운 뒤에는 되돌릴 수 없어요. 작가명은 다시 쓸 수 있게 풀려요.</p>
+  </section>
+
+  <section class="card" id="login">
+    <strong>먼저 본인 확인을 해 주세요</strong>
+    <p class="muted">앱에서 쓰던 회사로 로그인해야 같은 계정을 찾을 수 있어요.</p>
+    <div class="stack">
+      <button class="kakao" data-p="kakao">카카오로 로그인</button>
+      <button class="naver" data-p="naver">네이버로 로그인</button>
+      <button class="google" data-p="google">Google로 로그인</button>
+    </div>
+    <p class="status" id="loginStatus" role="status"></p>
+  </section>
+
+  <section class="card" id="confirm" hidden>
+    <strong id="who">로그인했어요</strong>
+    <p class="muted" id="whoDetail"></p>
+    <label class="check"><input type="checkbox" id="agree"> 위 내용을 확인했고, 계정과 서버 데이터를 지우는 데 동의해요.</label>
+    <div class="stack">
+      <button class="danger" id="del" disabled>계정 삭제</button>
+      <button class="ghost" id="cancel">취소(로그아웃)</button>
+    </div>
+    <p class="status" id="delStatus" role="status"></p>
+  </section>
+
+  <section class="card" id="done" hidden>
+    <strong>삭제했어요</strong>
+    <p class="muted" id="doneDetail"></p>
+  </section>
+  <p class="muted">문의: <a href="mailto:emoticon755@gmail.com">emoticon755@gmail.com</a> · <a href="https://dbs7010-cmd.github.io/emoticon-studio/privacy/">개인정보처리방침</a></p>
+</main>
+<script type="module">
+// 계정 삭제 요청(웹, 2026-10-08). 로그인 → 확인 → 삭제. 앱과 같은 서버 로그인 중계(/auth/start, return=web)와 같은 탈퇴 함수(deleteMyAccount)를 쓴다.
+// 비밀 값 없음: 공개 웹 설정(../config.json)만 읽는다. 로그인 표(ticket)는 주소의 # 뒤로 받아 서버 기록에 남지 않고, 읽은 즉시 주소에서 지운다.
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
+import { getAuth, connectAuthEmulator, signInWithCustomToken, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
+import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-functions.js';
+const local = ['127.0.0.1', 'localhost'].includes(location.hostname);
+const config = local ? { projectId: 'demo-emoti', apiKey: 'demo-key', authDomain: 'localhost', storageBucket: 'demo-emoti.appspot.com' }
+  : await (await fetch('../config.json')).json();
+const app = initializeApp(config), auth = getAuth(app), fn = getFunctions(app, config.functionsRegion || 'us-central1');
+if (local) { connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true }); connectFunctionsEmulator(fn, '127.0.0.1', 5001); }
+const call = (name, data) => httpsCallable(fn, name)(data).then(r => r.data);
+const $ = id => document.getElementById(id);
+const PROVIDER = { kakao: '카카오', naver: '네이버', google: '구글' };
+const hex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+
+// 1) 로그인 시작: 원래 값(verifier)은 이 탭에만 두고, 서버에는 그 해시(challenge)만 보낸다.
+for (const b of document.querySelectorAll('[data-p]')) b.addEventListener('click', async () => {
+  const verifier = hex(crypto.getRandomValues(new Uint8Array(32)));
+  sessionStorage.setItem('emoti-verifier', verifier);
+  const challenge = hex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))));
+  location.href = `${location.origin}/auth/start?provider=${b.dataset.p}&return=web&challenge=${challenge}`;
+});
+
+// 2) 돌아왔을 때: #ticket=… 또는 #error=…
+const back = new URLSearchParams(location.hash.slice(1));
+if (back.has('ticket') || back.has('error')) history.replaceState(null, '', location.pathname);
+if (back.get('error')) $('loginStatus').textContent = back.get('error') === 'cancelled' ? '로그인을 취소했어요.' : '로그인을 확인하지 못했어요. 다시 시도해 주세요.';
+if (back.get('ticket')) {
+  const verifier = sessionStorage.getItem('emoti-verifier'); sessionStorage.removeItem('emoti-verifier');
+  try {
+    if (!verifier) throw new Error('로그인을 시작한 탭에서 다시 시도해 주세요.');
+    const { token } = await call('redeemAuth', { ticket: back.get('ticket'), verifier });
+    await signInWithCustomToken(auth, token);
+  } catch (e) { $('loginStatus').textContent = e.message || '로그인을 마치지 못했어요.'; $('loginStatus').className = 'status err'; }
+}
+
+// 3) 로그인 상태 → 확인 단계
+onAuthStateChanged(auth, async user => {
+  $('login').hidden = !!user; $('confirm').hidden = !user;
+  if (!user) return;
+  const provider = PROVIDER[user.uid.split(':')[0]] || '';
+  $('who').textContent = `${provider} 계정으로 로그인했어요`;
+  try { const u = await call('registerUser', {}); $('whoDetail').textContent = u.artistName ? `작가명 ${u.artistName}` : '작가명을 정하지 않은 계정이에요.'; }
+  catch { $('whoDetail').textContent = ''; }
+});
+$('agree').addEventListener('change', () => { $('del').disabled = !$('agree').checked; });
+$('cancel').addEventListener('click', () => signOut(auth));
+$('del').addEventListener('click', async () => {
+  $('del').disabled = true; $('delStatus').className = 'status'; $('delStatus').textContent = '지우는 중…';
+  try {
+    const r = await call('deleteMyAccount', { confirm: 'DELETE' });
+    await signOut(auth).catch(() => {});
+    $('confirm').hidden = true; $('login').hidden = true; $('done').hidden = false;
+    $('doneDetail').textContent = `클라우드 백업 세트 ${r.deleted.backupSets}개, 공모전 접수 ${r.deleted.submissions}건과 회원 정보·로그인 계정을 지웠어요.`;
+  } catch (e) { $('delStatus').className = 'status err'; $('delStatus').textContent = (e.message || '지우지 못했어요.') + ' 잠시 뒤 다시 시도해 주세요.'; $('del').disabled = false; }
+});
+</script>
+</body>
+</html>
