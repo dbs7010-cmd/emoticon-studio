@@ -874,7 +874,7 @@ function Studio() {
       save={async name => { const r = await setArtistName(cloud, name); setArtist(r.artistName); }} /></SafeAreaView>;
   return <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}><StatusBar style="dark" /><ImageAnalyzer ref={analyzer} /><MotionBaker ref={baker} /><ExtraComposer ref={composer} />
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 4, minHeight: 56, backgroundColor: screen === 'board' && !canonOpen ? T.page : C.bg }}>
+      {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 4, minHeight: 56, backgroundColor: (screen === 'board' || screen === 'export') && !canonOpen ? T.page : C.bg }}>
         <Pressable accessibilityRole="button" accessibilityLabel="뒤로" disabled={!!busy} onPress={back} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={28} color={C.ink} /></Pressable>
         <View style={{ flex: 1 }}>
           <Text numberOfLines={1} style={{ fontSize: 20, lineHeight: 27, color: C.ink, fontWeight: '800', letterSpacing: -.2 }}>{canonOpen ? '캐릭터 기준' : screen === 'export' ? '내보내기' : screen === 'batch' ? '움직임 한 번에 적용' : screen === 'extras' ? '부가 이미지' : project.projectName}</Text>
@@ -892,7 +892,7 @@ function Studio() {
         <Action primary title="다시 저장" onPress={() => { try { commit(s => s); } catch {} }} />
       </View>}
       <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}/${homeView}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, !project && !loadError && { flexGrow: 1 }, !project && !loadError && homeView === 'home' && { paddingHorizontal: screenWidth < 340 ? 12 : 16, paddingTop: 8, gap: 12, backgroundColor: T.page },
-        project && screen === 'board' && !canonOpen && { gap: 12, backgroundColor: T.page }]}>
+        project && (screen === 'board' || screen === 'export') && !canonOpen && { gap: 12, backgroundColor: T.page }]}>
         {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="알림 닫기" onPress={() => setNotice('')}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, paddingVertical: 10, paddingHorizontal: 14, borderRadius: T.radius.md, backgroundColor: C.paper, ...Elev[1] }}>
           <Glyph name="information-outline" size={18} color={C.muted} />
@@ -1430,21 +1430,20 @@ function Studio() {
             return <>
               {/* 1. 내가 만든 결과가 먼저다. 손볼 칸은 테두리로 드러나고, 누르면 그 칸이 열린다. */}
               {/* 요약 표면: 완성 상태가 먼저. 모두 채우면 따뜻한 표면과 완성 그림 자리(exportSuccessArtwork). */}
-              <View testID="내보내기 요약" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 18, borderRadius: T.radius.card, backgroundColor: finished >= profile.count ? C.accent : C.paper, ...Card.border, ...Card.shadow }}>
+              {/* 2026-10-08 토스식(캔버스 U-Export): 흰 카드 · 세트 이름과 종류 · 큰 숫자 · 막대. 다 채우면 완성 그림. */}
+              <View testID="내보내기 요약" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 20, borderRadius: 24, backgroundColor: C.paper }}>
                 <View style={{ flex: 1, gap: 8 }}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: finished >= profile.count ? C.warmInk : C.muted }}>{finished >= profile.count ? `세트를 모두 완성했어요 · ${profile.profileLabel}` : profile.profileLabel}</Text>
-                  <Text style={{ fontSize: 24, lineHeight: 30, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{finished} / {profile.count} 완성</Text>
-                  <View style={{ height: 5, borderRadius: 3, backgroundColor: finished >= profile.count ? C.warmLine : C.line, overflow: 'hidden' }}><View style={{ width: `${Math.max(2, Math.min(100, finished / profile.count * 100))}%`, height: '100%', borderRadius: 3, backgroundColor: C.accent }} /></View>
+                  <Text style={{ fontSize: 14, color: C.muted }}>{finished >= profile.count ? `세트를 모두 완성했어요 · ${profile.profileLabel}` : `${project.projectName} · ${profile.profileLabel}`}</Text>
+                  <Text style={{ fontSize: 26, lineHeight: 32, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{finished}<Text style={{ fontSize: 17, fontWeight: '500', color: C.muted }}>{` / ${profile.count}칸 완성`}</Text></Text>
+                  <View style={{ height: 6, borderRadius: 3, backgroundColor: C.surface2, overflow: 'hidden' }}><View style={{ width: `${Math.max(2, Math.min(100, finished / profile.count * 100))}%`, height: '100%', borderRadius: 3, backgroundColor: C.accent }} /></View>
                 </View>
-                {finished >= profile.count
-                  ? <AssetSlot name="exportSuccessArtwork" size={84} />
-                  : <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{Math.round(finished / profile.count * 100)}%</Text></View>}
+                {finished >= profile.count && <AssetSlot name="exportSuccessArtwork" size={84} />}
               </View>
               <View testID="결과 격자" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {project.slots.map(s => {
                   const bad = problems.some(c => c.slot === s.number), shown = s.motionImage ?? s.finalImage;
                   return <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={`${pad(s.number)}번 칸 열기`} onPress={() => fixSlot(s.number)}
-                    style={{ width: cell, height: cell, borderRadius: 10, borderWidth: bad ? 2 : shown ? 1 : 0, borderColor: bad ? STATUS_TONE.fail : C.line, backgroundColor: shown ? C.paper : C.surface2, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                    style={{ width: cell, height: cell, borderRadius: 10, borderWidth: bad ? 2 : 0, borderColor: STATUS_TONE.fail, backgroundColor: shown ? C.paper : C.fillPressed, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                     {shown ? <Image source={{ uri: imageUri(shown.path) }} style={{ width: '100%', height: '100%', opacity: isDone(s) ? 1 : .55 }} resizeMode="contain" /> : <Text style={{ fontSize: 10, fontWeight: '600', color: C.muted }}>{pad(s.number)}</Text>}
                   </Pressable>;
                 })}
@@ -1452,11 +1451,13 @@ function Studio() {
 
               {/* 2·3. 손볼 곳과 고치는 길 */}
               {/* 손볼 곳: 한 표면 안의 목록. 상태는 옅은 호박/빨강 동그라미 하나로 — 강한 경고 상자를 쌓지 않는다. */}
-              {issuesPending && <Text>손볼 곳 확인 중</Text>}
-              {!issuesPending && !problems.length && <Text>손볼 곳 없음</Text>}
+              {issuesPending && <View style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, borderRadius: 20, backgroundColor: C.paper }}><Glyph name="timer-sand" size={18} color={C.muted} /><Text style={{ fontSize: 15, color: C.muted }}>손볼 곳 확인 중</Text></View>}
+              {!issuesPending && !problems.length && <View style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, borderRadius: 20, backgroundColor: C.paper }}>
+                <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="check" size={IconSize.meta} color={C.paper} /></View>
+                <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: C.ink }}>손볼 곳 없음</Text></View>}
               {!issuesPending && !!problems.length && <View style={{ gap: 8 }}>
                 <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink, marginTop: 4 }}>손볼 곳 {problems.length}개</Text>
-                <View style={{ borderRadius: T.radius.card, backgroundColor: C.paper, ...Card.border, ...Card.shadow, overflow: 'hidden' }}>
+                <View style={{ borderRadius: 20, backgroundColor: C.paper, overflow: 'hidden' }}>
                   {problems.map((c, i) => <Pressable key={c.label + i} accessibilityRole="button" accessibilityLabel={`${c.label} 고치기`} disabled={!c.slot} onPress={() => c.slot && fixSlot(c.slot)}
                     style={({ pressed }) => ({ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderColor: C.line, backgroundColor: pressed && c.slot ? C.fill : 'transparent' })}>
                     <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.status === 'FAIL' ? T.dangerSoft : T.warningSoft, alignItems: 'center', justifyContent: 'center' }}>
@@ -1469,7 +1470,8 @@ function Studio() {
               </View>}
 
               {/* 4. 지금 할 일. 이 화면의 노란 버튼은 이것 하나다. */}
-              <Action primary icon="package-variant-closed" title="파일 묶음 만들기" disabled={!!busy || !drawn.length} onPress={exportProject} />
+              <Action primary title="파일 묶음 만들기" disabled={!!busy || !drawn.length} onPress={exportProject} />
+              {!!drawn.length && drawn.length < project.slots.length && <Text style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>{`지금 있는 ${drawn.length}칸으로 만들어요 · 빈 칸은 빠져요`}</Text>}
               {!!lastExport && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, borderRadius: 16, backgroundColor: T.successSoft }}>
                 <Glyph name="check-circle" size={20} color={colors.PASS} />
                 <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>{lastExport.count}칸을 묶었어요</Text>
@@ -1477,29 +1479,31 @@ function Studio() {
               </View>}
 
               {/* 제출 준비: 지금 그리는 일보다 뒤에 오는 일이라 접어 둔다. 접힌 줄에도 몇 개가 남았는지 보인다(45.2차). */}
+              <View style={{ borderRadius: 24, backgroundColor: C.paper, paddingVertical: 6, paddingHorizontal: 20 }}>
               <Pressable accessibilityRole="button" accessibilityLabel={prepOpen ? '제출 준비 접기' : '제출 준비 보기'} accessibilityState={{ expanded: prepOpen }} onPress={() => setPrepOpen(!prepOpen)}
-                style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>제출 준비</Text>
-                <Text style={{ flex: 1, fontSize: 12, color: prepShort ? C.warning : C.muted }}>{prepShort ? `${prepShort}가지 더 필요해요` : '필요한 것을 다 채웠어요'}</Text>
+                style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>제출 준비</Text>
+                <Text style={{ flex: 1, fontSize: 13, color: prepShort ? C.warning : C.muted }}>{prepShort ? `${prepShort}가지 더 필요해요` : '필요한 것을 다 채웠어요'}</Text>
                 <Glyph name={prepOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
               </Pressable>
-              {prepOpen && <View style={{ padding: 14, gap: 4, borderRadius: T.radius.card, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
+              {prepOpen && <View style={{ paddingBottom: 10, gap: 4 }}>
                 <Segmented dense value={stage} onChange={setStage} items={[{ key: 'proposal', label: '제안에 필요한 것', a11y: '제안 기준으로 보기' }, { key: 'release', label: '출시에 필요한 것', a11y: '출시 기준으로 보기' }]} />
                 <View style={{ height: 4 }} />
                 {requirements.map(r => row(r.label, r.ok, r.label, r.detail))}
               </View>}
               <Pressable accessibilityRole="button" accessibilityLabel="부가 이미지 만들기" onPress={() => setScreen('extras')}
-                style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>부가 이미지 만들기</Text>
+                style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderColor: C.line }}>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: C.ink }}>부가 이미지 만들기</Text>
                 <Glyph name="chevron-right" size={18} color={C.faint} />
               </Pressable>
 
               {/* 5. 규격·직접 확인·파일 검사는 접어 둔다. 지우지 않고, 필요할 때 펼친다. */}
               <Pressable accessibilityRole="button" accessibilityLabel={specOpen ? '자세히 접기' : '자세히 보기'} accessibilityState={{ expanded: specOpen }} onPress={() => setSpecOpen(!specOpen)}
-                style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>규격 · 직접 확인 · 파일 검사</Text>
+                style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderColor: C.line }}>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: C.ink }}>규격 · 파일 검사</Text>
                 <Glyph name={specOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
               </Pressable>
+              </View>
               {specOpen && <>
                 {/* 가이드가 정한 제작 도구 규칙. 앱이 대신하지 않는 일을 한 줄로 분명히 한다. */}
                 {moving && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16, backgroundColor: C.surface2 }}>
