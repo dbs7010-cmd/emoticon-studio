@@ -219,12 +219,12 @@ export function IconButton({ label, icon, onPress, disabled, size = 22, color = 
 export type SegmentItem<K extends string> = { key: K; label: string; icon?: IconName; image?: number; a11y?: string };
 export function Segmented<K extends string>({ items, value, onChange, testID, dense }: { items: SegmentItem<K>[]; value: K | null; onChange: (key: K) => void; testID?: string; dense?: boolean }) {
   // 칸의 위아래 hitSlop 이 이 상자 밖으로 나가면 안드로이드가 잘라낸다. 그만큼 안쪽 여백을 둔다.
-  return <View testID={testID} style={{ flexDirection: 'row', paddingHorizontal: 3, paddingVertical: dense ? 4 : 2, borderRadius: 14, backgroundColor: T.surface2 }}>
+  return <View testID={testID} style={{ flexDirection: 'row', paddingHorizontal: 4, paddingVertical: dense ? 4 : 2, borderRadius: 14, backgroundColor: T.fill }}>
     {items.map(item => { const on = item.key === value;
       return <Pressable key={item.key} accessibilityRole="button" accessibilityLabel={item.a11y ?? item.label} accessibilityState={{ selected: on }} onPress={() => onChange(item.key)}
         hitSlop={{ top: dense ? 4 : 2, bottom: dense ? 4 : 2 }}
         style={{ flex: 1, minHeight: dense ? 40 : 44, borderRadius: 11, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6,
-          backgroundColor: on ? T.paper : 'transparent', borderWidth: on ? T.stroke : 0, borderColor: on ? T.edge : 'transparent' }}>
+          backgroundColor: on ? T.paper : 'transparent' }}>
         {!!item.image && <Image source={item.image} style={{ width: 13, height: 18, opacity: on ? 1 : .7 }} resizeMode="contain" />}
         {!!item.icon && <Glyph name={item.icon} size={16} color={on ? T.ink : T.muted} />}
         <Text numberOfLines={1} style={{ fontSize: dense ? 13 : 14, fontWeight: on ? '800' : '600', color: on ? T.ink : T.muted }}>{item.label}</Text>
@@ -236,7 +236,7 @@ export function Segmented<K extends string>({ items, value, onChange, testID, de
 export function Chip({ label, on, onPress, icon, wide, a11y }: { label: string; on: boolean; onPress: () => void; icon?: IconName; wide?: boolean; a11y?: string }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={a11y ?? label} accessibilityState={{ selected: on }} onPress={onPress}
     style={({ pressed }) => ({ flex: wide ? 1 : undefined, minHeight: 44, paddingHorizontal: 14, borderRadius: 22, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center',
-      borderWidth: on ? T.stroke : 1, borderColor: on ? T.edge : T.line, backgroundColor: on ? T.accentSoft : pressed ? T.fill : T.paper })}>
+      borderWidth: on ? 1 : 0, borderColor: T.edge, backgroundColor: on ? T.accentSoft : pressed ? T.fillPressed : T.fill })}>
     {!!icon && <Glyph name={icon} size={16} color={on ? T.ink : T.muted} />}
     <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? T.ink : T.muted }}>{label}</Text>
   </Pressable>;
@@ -399,13 +399,13 @@ export function SaveToast({ slot, onNext, nextLabel = '다음 칸', nextA11y, me
 // 완성 B(시안 WB2-States '완료 B · White 유지', 사용자 확정): 흰 카드 · 튀어 오르는 노란 체크 옆에 'N칸 완성!' + 한 줄 · 작품 격자 · 노란 행동 하나.
 export function CompleteCard({ total, subtitle, children, actionLabel, actionIcon, onAction, testID = '완성 카드' }: { total: number; subtitle?: string; children?: React.ReactNode; actionLabel: string; actionIcon?: IconName; onAction: () => void; testID?: string }) {
   const pop = useMicro('pop');
-  return <View testID={testID} style={{ backgroundColor: T.paper, borderRadius: 22, padding: T.gap.lg, gap: T.gap.md, ...Card.border, ...Card.shadow }}>
+  return <View testID={testID} style={{ backgroundColor: T.paper, borderRadius: 24, padding: T.gap.xl, gap: T.gap.md }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: T.gap.md }}>
-      <Animated.View testID="완성 체크" style={[{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.accent, borderWidth: T.stroke, borderColor: T.edge, alignItems: 'center', justifyContent: 'center' }, pop]}>
+      <Animated.View testID="완성 체크" style={[{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center' }, pop]}>
         <ImtiIcon name="check" size={IconSize.tool} />
       </Animated.View>
       <View style={{ flex: 1 }}>
-        <Text accessibilityRole="header" style={{ fontSize: 22, lineHeight: 28, fontFamily: Font.display, fontWeight: '400', color: T.ink }}>{total}칸 완성!</Text>
+        <Text accessibilityRole="header" style={{ fontSize: 22, lineHeight: 28, fontWeight: '800', color: T.ink }}>{total}칸 완성!</Text>
         {!!subtitle && <Text numberOfLines={2} style={{ fontSize: 12, color: T.muted }}>{subtitle}</Text>}
       </View>
     </View>
@@ -436,8 +436,11 @@ export function ProTag() {
   </View>;
 }
 export function Dialog({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  return <Modal transparent animationType="fade" onRequestClose={onClose}><View style={{ flex: 1, backgroundColor: '#1716144D', justifyContent: 'center', padding: 20 }}>
-    <View accessibilityViewIsModal style={{ maxHeight: '82%', backgroundColor: C.paper, borderRadius: T.radius.xl, paddingHorizontal: T.gap.xl, paddingTop: T.gap.md, paddingBottom: T.gap.xl, gap: T.gap.sm, ...Card.border, ...Card.float }}>
+  // 2026-10-08 토스식 개편: 가운데 상자 대신 아래에서 올라오는 시트(손잡이 · 큰 제목 · 닫기). 내용과 동작은 그대로.
+  return <Modal transparent animationType="slide" onRequestClose={onClose}><View style={{ flex: 1, backgroundColor: '#1716144D', justifyContent: 'flex-end' }}>
+    <Pressable accessibilityElementsHidden importantForAccessibility="no" style={{ flex: 1 }} onPress={onClose} />
+    <View accessibilityViewIsModal style={{ maxHeight: '86%', backgroundColor: C.paper, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: T.gap.xl, paddingTop: 10, paddingBottom: 28, gap: T.gap.sm }}>
+      <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: T.lineStrong }} />
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={styles.subtitle}>{title}</Text><Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={{ width: T.tap, height: T.tap, marginRight: -12, alignItems: 'center', justifyContent: 'center' }}><Glyph name="close" size={20} color={T.muted} /></Pressable></View>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 12 }}><View style={{ gap: 12 }}>{children}</View></ScrollView>
     </View>
@@ -451,11 +454,11 @@ export function Preview({ image, label, size = 140 }: { image?: LocalImage; labe
 }
 export const styles = StyleSheet.create({
   page: { padding: T.gap.lg, gap: T.gap.md, paddingBottom: 28, backgroundColor: C.bg },
-  card: { padding: T.gap.lg, gap: T.gap.sm, backgroundColor: C.paper, borderRadius: T.radius.lg, borderWidth: 1.5, borderColor: C.cardLine, boxShadow: '0px 3px 0px #EBDDC2' },
-  title: { fontSize: 26, fontFamily: Font.display, fontWeight: '400', color: C.ink },
-  subtitle: { fontSize: 20, fontFamily: Font.display, fontWeight: '400', color: C.ink },
+  card: { padding: T.gap.lg, gap: T.gap.sm, backgroundColor: C.surface2, borderRadius: T.radius.lg },   // 2026-10-08: 선·그림자 없이 회색 면
+  title: { fontSize: 26, fontWeight: '800', color: C.ink, letterSpacing: -.4 },      // 2026-10-08: Jua 는 로고(emoti)에만
+  subtitle: { fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.3 },
   label: { fontSize: 13, fontWeight: '700', color: C.muted },
-  input: { fontSize: 16, minHeight: T.tap, borderWidth: 1.5, borderColor: C.lineStrong, borderRadius: T.radius.sm, padding: T.gap.md, backgroundColor: '#FFFFFF', color: C.ink },
+  input: { fontSize: 16, minHeight: T.tap, borderWidth: 0, borderRadius: T.radius.sm, padding: T.gap.md, backgroundColor: T.fill, color: C.ink },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   muted: { color: C.muted, fontSize: 16, lineHeight: 24 },
 });

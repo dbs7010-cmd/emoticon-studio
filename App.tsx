@@ -931,7 +931,7 @@ function Studio() {
           <Segmented dense testID="세트 분류" value={projectFilter} onChange={setProjectFilter} items={[{ key: 'all', label: '전체' }, { key: 'working', label: '작업 중' }, { key: 'done', label: '완성' }]} />
           <Segmented dense testID="세트 정렬" value={projectOrder} onChange={setProjectOrder} items={[{ key: 'recent', label: '최근 수정순' }, { key: 'name', label: '이름순' }]} />
           {!visibleProjects.length && <Text style={{ fontSize: 13, color: C.muted }}>조건에 맞는 세트가 없어요. 찾는 말이나 분류를 바꿔 보세요.</Text>}
-          <View testID="전체 작업 목록" style={{ borderRadius: T.radius.card, backgroundColor: C.paper, ...Card.border, ...Card.shadow, overflow: 'hidden' }}>
+          <View testID="전체 작업 목록" style={{ borderRadius: 24, backgroundColor: C.surface2, overflow: 'hidden' }}>
             {visibleProjects.map((p, i) => {
               const m = setMeta(p), cover = p.slots.find(s => s.finalImage);
               return <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 12, paddingRight: 2, borderTopWidth: i ? 1 : 0, borderColor: C.line }}>
@@ -1764,11 +1764,11 @@ function Studio() {
           <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: C.ink }}>PRO</Text>
         </View>
         <ScrollView contentContainerStyle={{ padding: T.gap.lg, gap: T.gap.md, paddingBottom: 32 }}>
-          <Text style={{ fontFamily: Font.display, fontSize: 24, color: C.ink, lineHeight: 32 }}>{'다양한 붓과 움직임으로\n여러 칸을 한 번에'}</Text>
+          <Text style={{ fontSize: 24, fontWeight: '800', color: C.ink, lineHeight: 32, letterSpacing: -.4 }}>{'다양한 붓과 움직임으로\n여러 칸을 한 번에'}</Text>
           {/* 45.43 S6 전/후(시안 WB2-States 'PRO 표현'): 색이 아니라 배지·구성으로 PRO 를 보인다(보라 없음).
               왼쪽·오른쪽은 같은 그림(proFeatureArtwork source / sourceAfter)이다. 달라지는 것은 '무엇이 움직이는가'뿐 —
               실제 PRO 기능인 '부분만 움직이기'(고른 레이어만 따로)를 그린다. 흔드는 손 자리만 점선 원으로 표시한다. */}
-          <View testID="PRO 전후" accessibilityLabel="움직임 전후 미리보기" style={{ gap: 12, padding: 14, borderRadius: 22, backgroundColor: C.paper, ...Card.border }}>
+          <View testID="PRO 전후" accessibilityLabel="움직임 전후 미리보기" style={{ gap: 12, padding: 14, borderRadius: 24, backgroundColor: C.surface2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <ProTag />
               <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>원하는 부분만 움직이기</Text>
