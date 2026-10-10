@@ -4,7 +4,7 @@
     "slug": "emoticon-studio",
     "version": "1.0.0",
     "scheme": "emoti",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F7F4EE",

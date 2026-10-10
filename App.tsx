@@ -27,6 +27,8 @@ import { artistNameFormat, authBase, checkArtistName, providerReady, register, s
 import { openContests } from './src/services/cloud/contest';
 import * as WebBrowser from 'expo-web-browser';
 import { getRandomBytes } from 'expo-crypto';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { Dimensions } from 'react-native';
 import { exportSet, decodeDataUrl, fileStamp, safeName, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinalsAsync, finalsKey, inspectImage } from './src/services/qa';
@@ -65,7 +67,18 @@ function Doodle() {
   </View>;
 }
 function mergeImages(existing: LocalImage[], added: LocalImage[]) { return [...existing, ...added.filter(image => !existing.some(current => current.path === image.path))]; }
-export default function App() { return <SafeAreaProvider><Studio /></SafeAreaProvider>; }
+// 화면 방향(2026-10-10, Play 발견 항목 '대형 화면 크기 조절·방향 제한'): 설정 파일에서 세로 고정을 걷고, 휴대폰(짧은 변 600dp 미만)만 실행 중 세로로 잠근다.
+// 태블릿·폴더블 펼침은 가로·세로 모두 — Android 16 은 큰 화면에서 세로 고정을 어차피 무시한다.
+function lockPhonePortrait() {
+  const screen = Dimensions?.get?.('screen'); if (!screen) return;   // 검사 대역에는 Dimensions 가 없다
+  const { width, height } = screen;
+  const lock = Math.min(width, height) < 600 ? ScreenOrientation.OrientationLock.PORTRAIT_UP : ScreenOrientation.OrientationLock.DEFAULT;
+  ScreenOrientation.lockAsync(lock).catch(() => { /* 잠그지 못해도 앱은 그대로 쓴다 */ });
+}
+export default function App() {
+  useEffect(() => { lockPhonePortrait(); const sub = Dimensions?.addEventListener?.('change', lockPhonePortrait); return () => sub?.remove(); }, []);
+  return <SafeAreaProvider><Studio /></SafeAreaProvider>;
+}
 function Studio() {
   const [store, setStore] = useState<Store | null>(null), current = useRef<Store | null>(null);
   const [loadError, setLoadError] = useState(''), [saveError, setSaveError] = useState(''), [notice, setNotice] = useState('');
