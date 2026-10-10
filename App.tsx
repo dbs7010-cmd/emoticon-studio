@@ -75,6 +75,7 @@ function lockPhonePortrait() {
   const lock = Math.min(width, height) < 600 ? ScreenOrientation.OrientationLock.PORTRAIT_UP : ScreenOrientation.OrientationLock.DEFAULT;
   ScreenOrientation.lockAsync(lock).catch(() => { /* 잠그지 못해도 앱은 그대로 쓴다 */ });
 }
+const CONTENT_MAX = 720;
 export default function App() {
   useEffect(() => { lockPhonePortrait(); const sub = Dimensions?.addEventListener?.('change', lockPhonePortrait); return () => sub?.remove(); }, []);
   return <SafeAreaProvider><Studio /></SafeAreaProvider>;
@@ -261,7 +262,9 @@ function Studio() {
     }
   }
   useEffect(() => { if (proSheet) void loadPrices(); }, [proSheet]);
-  const { width: screenWidth } = useWindowDimensions();
+  // 큰 화면(태블릿·폴더블·가로, 2026-10-10): 내용 폭을 720dp 로 묶어 가운데 둔다 — 카드가 화면 끝까지 늘어나지 않게. 칸 수·크기도 이 폭으로 센다.
+  const { width: windowWidth } = useWindowDimensions();
+  const screenWidth = Math.min(windowWidth, CONTENT_MAX);
   // 폰 4열(2026-10-08 토스식 개편 · 캔버스 U-Board) / 좁은 폰 3열 / 태블릿 6~8열. 칸 자체가 커지는 것이 아니라 한 화면에 더 들어간다.
   const columns = screenWidth >= 900 ? 8 : screenWidth >= 600 ? 6 : screenWidth < 340 ? 3 : 4;
   const tileWidth = (screenWidth - T.gap.lg * 2 - T.gap.sm * (columns - 1)) / columns;
@@ -904,7 +907,7 @@ function Studio() {
         <Text style={{ fontSize: 12, color: C.ink, lineHeight: 18 }}>작업은 화면에 그대로 있어요. 다시 저장을 눌러 주세요.</Text>
         <Action primary title="다시 저장" onPress={() => { try { commit(s => s); } catch {} }} />
       </View>}
-      <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}/${homeView}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, !project && !loadError && { flexGrow: 1 }, !project && !loadError && homeView === 'home' && { paddingHorizontal: screenWidth < 340 ? 12 : 16, paddingTop: 8, gap: 12, backgroundColor: T.page },
+      <ScrollView style={{ backgroundColor: (!project && !loadError && homeView === 'home') || (project && (screen === 'board' || screen === 'export') && !canonOpen) ? T.page : C.bg }} pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}/${homeView}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, windowWidth > CONTENT_MAX && { width: '100%', maxWidth: CONTENT_MAX, alignSelf: 'center' }, !project && !loadError && { flexGrow: 1 }, !project && !loadError && homeView === 'home' && { paddingHorizontal: screenWidth < 340 ? 12 : 16, paddingTop: 8, gap: 12, backgroundColor: T.page },
         project && (screen === 'board' || screen === 'export') && !canonOpen && { gap: 12, backgroundColor: T.page }]}>
         {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="알림 닫기" onPress={() => setNotice('')}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, paddingVertical: 10, paddingHorizontal: 14, borderRadius: T.radius.md, backgroundColor: C.paper, ...Elev[1] }}>
