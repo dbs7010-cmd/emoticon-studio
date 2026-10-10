@@ -241,20 +241,20 @@ async function ready() {
   const tileTexts = tree.root.findAll(n => n.props.testID === 'slot-grid')[0].findAll(n => n.type === 'Text').map(n => [n.props.children].flat(9).filter(x => typeof x === 'string').join(''));
   assert.ok(!tileTexts.some(t => t === '완성' || t === '작업 중'), '칸마다 완성/작업 중 글자 배지를 붙이지 않는다');
   assert.equal(labelled('슬롯 1 완성').length, 1, '상태는 접근성 이름으로는 그대로 말한다');
-  // 45.43 S5(시안 '진행' 네 상태 · 카드 A 막대): 완성 = 노란 체크 · 그리는 중 = 테두리 점 · 지금 = 옅은 노랑 면 + 잉크 테두리 · 빈 칸 = 점선 +.
+  // 2026-10-08 토스식(캔버스 U-Board, 사용자 확인): 완성 = 초록 점 · 그리는 중 = 노란 점 · 지금 = 옅은 노랑 면 + 잉크 테두리 · 빈 칸 = 점선 + 번호.
   {
     const face = n => tree.root.findAll(x => x.type === 'View' && x.props.testID === 'slot-face-' + n)[0];
     const has = (n, id) => face(n).findAll(x => x.props.testID === id).length === 1;
-    assert.ok(has(1, '완성 표시') && !has(1, '그리는 중 표시'), '완성 칸 = 노란 체크');
-    assert.equal(flat(face(1).findAll(x => x.props.testID === '완성 표시')[0].props.style).backgroundColor, T.accent, '완성 체크는 노랑(초록은 저장 성공에만)');
-    assert.ok(has(2, '그리는 중 표시') && !has(2, '완성 표시'), '그리는 중 칸 = 테두리 점');
+    assert.ok(has(1, '완성 표시') && !has(1, '그리는 중 표시'), '완성 칸 = 점 하나');
+    assert.equal(flat(face(1).findAll(x => x.props.testID === '완성 표시')[0].props.style).backgroundColor, T.success, '완성 점은 초록(그리는 중 노랑과 구분)');
+    assert.ok(has(2, '그리는 중 표시') && !has(2, '완성 표시'), '그리는 중 칸 = 노란 점');
+    assert.equal(flat(face(2).findAll(x => x.props.testID === '그리는 중 표시')[0].props.style).backgroundColor, T.accent);
     const selected = tree.root.findAll(x => x.type === 'Pressable' && /^slot-\d+$/.test(x.props.testID ?? '') && x.props.accessibilityState?.selected);
     assert.equal(selected.length, 1, '지금 칸은 하나(접근성 selected)');
     const now = flat(face(selected[0].props.testID.slice(5)).props.style);
     assert.equal(now.backgroundColor, T.accentSoft); assert.equal(now.borderColor, T.edge, '지금 칸 = 옅은 노랑 면 + 잉크 테두리');
     assert.equal(flat(face(20).props.style).borderStyle, 'dashed', '빈 칸 = 점선');
     const bar = byTestID('보드 진행').find(x => x.type === 'View');
-    assert.equal(bar.children.length, loadStore().store.projects[0].slots.length, '진행 막대는 이 세트의 실제 칸 수만큼 나뉜다(32 를 박지 않는다)');
     assert.ok(/칸 중 1칸 완성/.test(bar.props.accessibilityLabel), '막대는 읽을 수 있는 이름을 가진다');
   }
   const dock = byTestID('board-action-dock')[0];

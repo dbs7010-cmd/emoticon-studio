@@ -188,18 +188,15 @@ export function Action({ title, onPress, disabled = false, primary = false, busy
   const tint = kind === 'primary' ? T.accentInk : kind === 'danger' ? T.danger : T.ink;
   return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ disabled: off, busy }} disabled={off} onPress={onPress}
     style={({ pressed }) => {
-      const sticker = (kind === 'primary' || kind === 'secondary') && !off;
       return {
-        minHeight: kind === 'primary' && !compact ? 52 : T.tap, borderRadius: T.radius.button,
+        minHeight: kind === 'primary' && !compact ? 56 : T.tap, borderRadius: kind === 'primary' && !compact ? 16 : T.radius.button,
         flexDirection: 'row', gap: T.gap.sm, alignItems: 'center', justifyContent: 'center', paddingHorizontal: kind === 'ghost' ? T.gap.sm : T.gap.lg,
         backgroundColor: kind === 'primary' ? (off ? '#F4E9C8' : pressed ? T.accentLine : T.accent)
           : kind === 'danger' ? T.dangerSoft
           : kind === 'ghost' ? (pressed ? T.fill : 'transparent')
-          : (pressed ? T.fill : T.paper),
-        // 절충안(45.39): 노란 주요 버튼만 검정 테두리 + 딱 떨어지는 그림자(눌리면 내려앉는다). 보조 버튼은 카드와 같은 갈색 선.
-        borderWidth: kind === 'primary' ? T.stroke : kind === 'secondary' ? 1.5 : 0,
-        borderColor: kind === 'primary' ? (off ? T.lineStrong : T.edge) : T.cardLine,
-        ...(sticker && kind === 'primary' ? (pressed ? Pop.pressed : Pop.shadow) : {}),
+          : (pressed ? T.fillPressed : T.fill),
+        // 2026-10-08 토스식 개편: 테두리·스티커 그림자 없이 면 색만 — 노랑(주 행동) · 회색(보조).
+        borderWidth: 0,
         opacity: off && kind !== 'primary' ? .5 : kind === 'danger' && pressed ? .8 : 1,
       };
     }}>

@@ -249,8 +249,8 @@ function Studio() {
   }
   useEffect(() => { if (proSheet) void loadPrices(); }, [proSheet]);
   const { width: screenWidth } = useWindowDimensions();
-  // 폰 3열 / 태블릿 4~6열. 칸 자체가 커지는 것이 아니라 한 화면에 더 들어간다.
-  const columns = screenWidth >= 900 ? 6 : screenWidth >= 600 ? 4 : 3;
+  // 폰 4열(2026-10-08 토스식 개편 · 캔버스 U-Board) / 좁은 폰 3열 / 태블릿 6~8열. 칸 자체가 커지는 것이 아니라 한 화면에 더 들어간다.
+  const columns = screenWidth >= 900 ? 8 : screenWidth >= 600 ? 6 : screenWidth < 340 ? 3 : 4;
   const tileWidth = (screenWidth - T.gap.lg * 2 - T.gap.sm * (columns - 1)) / columns;
   const projectCardWidth = (screenWidth - T.gap.lg * 2 - T.gap.md) / 2;
   const analyzer = useRef<Analyzer>(null), baker = useRef<Baker>(null);
@@ -874,7 +874,7 @@ function Studio() {
       save={async name => { const r = await setArtistName(cloud, name); setArtist(r.artistName); }} /></SafeAreaView>;
   return <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}><StatusBar style="dark" /><ImageAnalyzer ref={analyzer} /><MotionBaker ref={baker} /><ExtraComposer ref={composer} />
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 4, minHeight: 56, backgroundColor: C.bg }}>
+      {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 4, minHeight: 56, backgroundColor: screen === 'board' && !canonOpen ? T.page : C.bg }}>
         <Pressable accessibilityRole="button" accessibilityLabel="뒤로" disabled={!!busy} onPress={back} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={28} color={C.ink} /></Pressable>
         <View style={{ flex: 1 }}>
           <Text numberOfLines={1} style={{ fontSize: 20, lineHeight: 27, color: C.ink, fontWeight: '800', letterSpacing: -.2 }}>{canonOpen ? '캐릭터 기준' : screen === 'export' ? '내보내기' : screen === 'batch' ? '움직임 한 번에 적용' : screen === 'extras' ? '부가 이미지' : project.projectName}</Text>
@@ -891,7 +891,8 @@ function Studio() {
         <Text style={{ fontSize: 12, color: C.ink, lineHeight: 18 }}>작업은 화면에 그대로 있어요. 다시 저장을 눌러 주세요.</Text>
         <Action primary title="다시 저장" onPress={() => { try { commit(s => s); } catch {} }} />
       </View>}
-      <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}/${homeView}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, !project && !loadError && { flexGrow: 1 }, !project && !loadError && homeView === 'home' && { paddingHorizontal: screenWidth < 340 ? 12 : 16, paddingTop: 8, gap: 12, backgroundColor: T.page }]}>
+      <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}/${homeView}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, !project && !loadError && { flexGrow: 1 }, !project && !loadError && homeView === 'home' && { paddingHorizontal: screenWidth < 340 ? 12 : 16, paddingTop: 8, gap: 12, backgroundColor: T.page },
+        project && screen === 'board' && !canonOpen && { gap: 12, backgroundColor: T.page }]}>
         {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="알림 닫기" onPress={() => setNotice('')}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, paddingVertical: 10, paddingHorizontal: 14, borderRadius: T.radius.md, backgroundColor: C.paper, ...Elev[1] }}>
           <Glyph name="information-outline" size={18} color={C.muted} />
@@ -1564,7 +1565,7 @@ function Studio() {
             const total = project.slots.length;
             const nextCut = nextUnfinished(project, project.lastSlot ?? 0);
             const playButton = drawnCount >= 2 && <Pressable accessibilityRole="button" accessibilityLabel={playing ? '전체 재생 멈추기' : '전체 재생'} onPress={() => { setPlayIndex(0); setPlaying(!playing); }}
-              style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: playing ? C.accent : C.paper, alignItems: 'center', justifyContent: 'center', ...Elev[1] }}>
+              style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: playing ? C.accent : C.surface2, alignItems: 'center', justifyContent: 'center' }}>
               <Glyph name={playing ? 'pause' : 'play'} size={22} color={C.ink} />
             </Pressable>;
             // 45.43 S5: 전부 완성하면 완성 카드 B(흰 카드 · 노란 체크 · 작품 격자 · 노란 행동 하나)가 머리를 맡는다.
@@ -1581,23 +1582,17 @@ function Studio() {
             </CompleteCard>
             {/* 다 채운 세트도 전체 재생은 그대로 쓸 수 있다. */}
             {!!playButton && <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>{playButton}</View>}</>;
-            // 한 줄 요약 + 칸 수만큼 나뉜 막대(시안 카드 A · 이 세트의 실제 칸 수) + 네 상태 범례. 격자가 주인공이라 요약은 낮고 조용하다.
-            return <View style={{ flexDirection: 'row', alignItems: 'center', gap: T.gap.md, paddingBottom: 4 }}>
-              <View style={{ flex: 1, gap: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                  <Text style={{ fontSize: 16, lineHeight: 22, color: C.ink, fontWeight: '700' }}>{done}개 완성{working ? ` · ${working}개 작업 중` : ''}</Text>
-                  <Text style={{ fontSize: 12, color: C.muted }}>/ {total}칸</Text>
+            // 요약 카드(캔버스 U-Board): 큰 숫자 n / 32칸 · 종류 꼬리표 · 막대 하나 · 전체 재생. 네 상태 범례는 걷었다 — 칸 모서리 점이 말한다.
+            return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 18, paddingHorizontal: 20, borderRadius: 24, backgroundColor: C.paper }}>
+              <View style={{ flex: 1, gap: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <Text style={{ fontSize: 26, lineHeight: 32, color: C.ink, fontWeight: '800', letterSpacing: -.4 }}>{done}<Text style={{ fontSize: 17, fontWeight: '500', color: C.muted }}>{` / ${total}칸`}</Text></Text>
+                  <View style={{ height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: C.surface2, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{setIsAnimated(project) ? '움직이는 세트' : '멈춰 있는 세트'}</Text></View>
                 </View>
-                <View testID="보드 진행" accessible accessibilityLabel={`${total}칸 중 ${done}칸 완성${nextCut !== null ? `, 지금 ${nextCut}번 칸` : ''}`} style={{ flexDirection: 'row', gap: 2, height: 10 }}>
-                  {project.slots.map(s => <View key={s.number} style={{ flex: 1, borderRadius: 3, backgroundColor: isDone(s) ? C.accent : s.number === nextCut ? C.ink : C.surface2 }} />)}
+                {!!working && <Text style={{ fontSize: 13, color: C.muted, marginTop: -6 }}>{working}칸 그리는 중</Text>}
+                <View testID="보드 진행" accessible accessibilityLabel={`${total}칸 중 ${done}칸 완성${nextCut !== null ? `, 지금 ${nextCut}번 칸` : ''}`} style={{ height: 6, borderRadius: 3, backgroundColor: C.surface2, overflow: 'hidden' }}>
+                  <View style={{ width: `${Math.max(2, done / total * 100)}%`, height: '100%', borderRadius: 3, backgroundColor: C.accent }} />
                 </View>
-                {/* 범례는 완성과 그리는 중이 같이 있을 때만 설명할 것이 있다(45.2차 규칙 유지). 네 상태 표시는 시안 그대로. */}
-                {done > 0 && working > 0 && <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="check" size={IconSize.meta} /></View><Text style={{ fontSize: 11, color: C.muted }}>완성</Text></View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: C.accentLine }} /><Text style={{ fontSize: 11, color: C.muted }}>그리는 중</Text></View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ width: 11, height: 11, borderRadius: 3, borderWidth: 1.5, borderColor: C.edge, backgroundColor: C.accentSoft }} /><Text style={{ fontSize: 11, color: C.muted }}>지금</Text></View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ width: 11, height: 11, borderRadius: 3, borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.lineStrong }} /><Text style={{ fontSize: 11, color: C.muted }}>빈 칸</Text></View>
-                </View>}
               </View>
               {playButton}
             </View>;
@@ -1624,20 +1619,21 @@ function Studio() {
             const done = isDone(s), working = isWorking(s);
             const current = s.number === nextCut, empty = !s.finalImage;
             return <Pressable key={s.number} testID={`slot-${s.number}`} accessibilityRole="button" accessibilityLabel={`슬롯 ${s.number} ${done ? '완성' : working ? '작업 중' : '미착수'}`} accessibilityState={{ selected: current }} onPress={() => { setSlotNumber(s.number); setPainting(true); }} style={{ width: tileWidth, gap: 4 }}>
-              <View testID={`slot-face-${s.number}`} style={{ width: tileWidth, aspectRatio: 1, borderRadius: 16, backgroundColor: current ? C.accentSoft : C.paper, borderWidth: current ? 2 : 1.5, borderColor: current ? C.edge : empty ? C.lineStrong : C.cardLine, borderStyle: empty && !current ? 'dashed' : 'solid', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 4 }}>
+              <View testID={`slot-face-${s.number}`} style={{ width: tileWidth, aspectRatio: 1, borderRadius: 16, backgroundColor: current ? C.accentSoft : C.paper, borderWidth: current || empty ? 2 : 0, borderColor: current ? C.edge : C.lineStrong, borderStyle: empty && !current ? 'dashed' : 'solid', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 4 }}>
                 {s.finalImage
                   ? <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%', opacity: done ? 1 : .55 }} resizeMode="contain" />
                   // 명세 S01: 빈 칸은 '+' 로 분명히 알린다(지금 칸은 붓). 누르면 예전과 똑같이 그 칸이 열린다(동작은 그대로).
-                  : <ImtiIcon name={current ? 'brush' : 'plus'} size={IconSize.tool} color={current ? C.ink : C.muted} />}
-                {done && <View pointerEvents="none" testID="완성 표시" style={{ position: 'absolute', right: 5, bottom: 5, width: 20, height: 20, borderRadius: 10, backgroundColor: C.accent, borderWidth: 1.5, borderColor: C.paper, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="check" size={IconSize.meta} /></View>}
-                {working && <View pointerEvents="none" testID="그리는 중 표시" style={{ position: 'absolute', right: 6, bottom: 6, width: 14, height: 14, borderRadius: 7, borderWidth: 2.5, borderColor: C.accentLine, backgroundColor: C.paper }} />}
+                  : <Text style={{ fontSize: 14, fontWeight: '800', color: current ? C.ink : C.muted }}>{pad(s.number)}</Text>}
+                {/* 상태는 모서리 점 하나: 완성 = 초록 · 그리는 중 = 노랑(잉크 테두리). 손볼 곳은 왼쪽 위. */}
+                {done && <View pointerEvents="none" testID="완성 표시" style={{ position: 'absolute', right: 7, bottom: 7, width: 10, height: 10, borderRadius: 5, backgroundColor: C.success }} />}
+                {working && <View pointerEvents="none" testID="그리는 중 표시" style={{ position: 'absolute', right: 7, bottom: 7, width: 10, height: 10, borderRadius: 5, backgroundColor: C.accent, borderWidth: 1, borderColor: C.accentLine }} />}
                 {(s.status === 'FAIL' || s.status === 'WARNING') && <View pointerEvents="none" style={{ position: 'absolute', left: 6, top: 6 }}><StatusDot tone={s.status === 'FAIL' ? 'fail' : 'warn'} /></View>}
               </View>
               {reordering && !!s.finalImage && <View style={{ flexDirection: 'row', gap: 2 }}>
                 <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 앞으로'} disabled={s.number === 1} onPress={() => moveSlot(s.number, s.number - 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === 1 ? 'transparent' : C.surface2 }}><Glyph name="chevron-left" size={18} color={s.number === 1 ? C.lineStrong : C.ink} /></Pressable>
                 <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 뒤로'} disabled={s.number === project.slots.length} onPress={() => moveSlot(s.number, s.number + 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === project.slots.length ? 'transparent' : C.surface2 }}><Glyph name="chevron-right" size={18} color={s.number === project.slots.length ? C.lineStrong : C.ink} /></Pressable>
               </View>}
-              <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted, paddingHorizontal: 2 }}><Text style={{ fontWeight: '700', color: done || working ? C.ink : C.muted }}>{pad(s.number)}</Text>{captionText(s) ? ' ' + captionText(s) : ''}</Text>
+              {!empty && <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted, paddingHorizontal: 2 }}><Text style={{ fontWeight: '700', color: C.ink }}>{pad(s.number)}</Text>{captionText(s) ? ' ' + captionText(s) : ''}</Text>}
             </Pressable>;
           }); })()}</View>
         </>}
@@ -1648,8 +1644,8 @@ function Studio() {
         const next = nextUnfinished(project, project.lastSlot ?? 0);
         const done = doneCount(project), started = done > 0 || project.slots.some(isWorking);
         return <View testID="board-action-dock" style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: C.paper, ...Elev[2] }}>
-          {next !== null && <View style={{ flex: 2 }}><Action primary icon="pencil" title={started ? '이어서 그리기' : '첫 칸 그리기'} disabled={!!busy} onPress={() => drawFrom()} /></View>}
-          {(done > 0 || next === null) && <View style={{ flex: 1 }}><Action primary={next === null} icon="package-variant-closed" title="내보내기" disabled={!!busy} onPress={() => setScreen('export')} /></View>}
+          {next !== null && <View style={{ flex: 2 }}><Action primary title={started ? '이어서 그리기' : '첫 칸 그리기'} disabled={!!busy} onPress={() => drawFrom()} /></View>}
+          {(done > 0 || next === null) && <View style={{ flex: 1 }}><Action primary={next === null} title="내보내기" disabled={!!busy} onPress={() => setScreen('export')} /></View>}
         </View>;
       })()}
     </KeyboardAvoidingView>

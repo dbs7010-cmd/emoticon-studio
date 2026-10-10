@@ -584,8 +584,9 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.equal(tiles().length,32,'every cut is on one board at one size');
  const fitsThreeAcross=(cellWidth,label)=>{
   const pad=16,gap=8; // styles.page padding and the grid gap
-  assert.ok(cellWidth*3+gap*2<=390-pad*2+.01,label+' must fit three across a 390pt screen, got '+cellWidth);
-  assert.ok(cellWidth*4+gap*3>390-pad*2,label+' should not be so small that four would fit');
+  // 2026-10-08 토스식 개편(캔버스 U-Board): 폰은 4열 — 네 칸이 꼭 맞고 다섯 칸은 안 들어간다.
+  assert.ok(cellWidth*4+gap*3<=390-pad*2+.01,label+' must fit four across a 390pt screen, got '+cellWidth);
+  assert.ok(cellWidth*5+gap*4>390-pad*2,label+' should not be so small that five would fit');
  };
  fitsThreeAcross(styleOf(tiles()[0]).width,'slot tile');
  const tile=n=>tiles().find(t=>t.props.testID==='slot-'+n);
@@ -593,12 +594,12 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.equal(tile(2).props.accessibilityLabel,'슬롯 2 작업 중');
  assert.equal(tile(3).props.accessibilityLabel,'슬롯 3 미착수','an untouched cut is 미착수');
  assert.equal(tile(3).findAllByType('Image').length,0,'and shows no artwork');
- assert.ok(shown().some(t=>t==='0개 완성 · 2개 작업 중'),'the board counts declarations and work in progress, not saves');
+ assert.ok(tree.root.findAll(n=>n.props.testID==='보드 진행'&&n.props.accessibilityLabel)[0].props.accessibilityLabel.startsWith('32칸 중 0칸 완성')&&shown().some(t=>t==='2칸 그리는 중'),'the board counts declarations and work in progress, not saves');
  await act(async()=>tile(1).props.onPress());await init();
  scene.dirty=true;await message(scene);
  await press('저장');await saved();await init();
  assert.equal(tile(1).props.accessibilityLabel,'슬롯 1 완성');
- assert.ok(shown().some(t=>t.startsWith('1개 완성')),'and the count follows: '+shown().filter(t=>t.includes('개 완성')).join(' | '));
+ assert.ok(tree.root.findAll(n=>n.props.testID==='보드 진행'&&n.props.accessibilityLabel)[0].props.accessibilityLabel.startsWith('32칸 중 1칸 완성'),'and the count follows: '+tree.root.findAll(n=>n.props.testID==='보드 진행'&&n.props.accessibilityLabel)[0].props.accessibilityLabel);
  await press('그리기 닫기');await saved(false);
 
  // ── Unsaved work survives leaving the app, and a double tap saves once ──────────────────────
@@ -830,7 +831,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  const before=loadStore().store.projects.find(x=>x.id===p.id);
  await openSet('이전 프로젝트');
  assert.equal(tiles()[0].props.accessibilityLabel,'슬롯 1 완성','a store written before 완성 existed still reads as finished');
- assert.ok(shown().some(t=>t.startsWith('1개 완성')));
+ assert.ok((tree.root.findAll(n=>n.props.testID==='보드 진행'&&n.props.accessibilityLabel)[0]?.props.accessibilityLabel??'').includes('중 1칸 완성'));
  await press('세트 메뉴');await press('캐릭터 기준 · 세트 이름');
  assert.equal(tree.root.findAll(n=>n.type==='Image'&&n.props.accessibilityLabel==='캐릭터 기준 그림').length,1,'its reference picture is still there');
  assert.ok(shown().some(t=>t==='성격 · 성격 유지'),'and the notes it once asked for are kept, read-only');
@@ -1177,7 +1178,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
    assert.ok(!shown().some(t=>/칸이 아직 비어 있어요/.test(t)),label+': 격자가 이미 보여 주는 것을 문장으로 반복하지 않는다');
    assert.equal(tiles().length,32,label+': 칸 수는 언제나 32개다');
    // 45.43 S5: 다 찬 세트는 완성 카드 B 가 'N칸 완성!'으로 말한다(N = 이 세트의 칸 수).
-   assert.ok(shown().some(t=>count===32?t==='32칸 완성!':t.startsWith(count+'개 완성')),label+': 완성 개수를 정확히 말한다');
+   assert.ok(count===32?shown().some(t=>t==='32칸 완성!'):(tree.root.findAll(n=>n.props.testID==='보드 진행'&&n.props.accessibilityLabel)[0]?.props.accessibilityLabel??'').includes('중 '+count+'칸 완성'),label+': 완성 개수를 정확히 말한다');
    await press('뒤로');
   }
   // 검사에 쓴 상태를 되돌린다.

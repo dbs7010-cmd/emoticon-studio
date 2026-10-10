@@ -215,7 +215,8 @@ const homeSections = () => {
   await press('그리기 닫기');
 
   // ── 4. 보드: 범례는 두 상태가 같이 있을 때만 ─────────────────────────────────────────────────
-  const legend = () => texts().includes('그리는 중');   // 45.43 시안 문구(예전 '고치는 중')
+  // 2026-10-08 토스식: 네 상태 범례는 걷고, 그리는 칸이 있을 때만 요약 카드에 'N칸 그리는 중' 한 줄(노란 점을 설명).
+  const legend = () => texts().some(t => /^\d+칸 그리는 중$/.test(t));
   assert.equal(legend(), false, '완성만 있으면 범례가 설명할 것이 없다');
   const half = createProject('반쯤 세트', '콩이');
   half.slots = half.slots.map((s, i) => i === 0 ? { ...s, finalImage: drawn('a.png'), done: true }
