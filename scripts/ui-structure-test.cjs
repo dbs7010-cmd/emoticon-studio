@@ -102,7 +102,7 @@ const homeSections = () => {
       // 명세 H01: 작업이 없으면 창작 표면이 첫 화면. H02: 작업이 있으면 이어하기(최근 작업)가 맨 위.
       // 45.43(승인 시안 WB2-Home · 사용자 결정): 표현 가이드는 '이어서 만들기' 제목 옆 작은 링크다(하단 네 칸은 걷었다).
       const want = count
-        ? ['가이드', '카드', ...(on ? ['공지'] : []), '시작 줄']   // 2026-10-08 토스식: 이어 그리기 카드 → 공지 한 줄 → 제안까지 → 내 세트(+ 칸)
+        ? ['가이드', ...(on ? ['공지'] : []), '카드', '시작 줄']   // 2026-10-12 사용자 요청: 공지 배너가 맨 위 → 이어 그리기 카드 → 제안까지(작게) → 내 세트(+ 칸)
         : ['가이드', '창작', ...(on ? ['공지'] : [])];
       assert.deepEqual(homeSections(), want, '홈 순서(' + where + ')');
       assert.equal(byTestID('홈 알림').length, on ? 1 : 0, '공지가 꺼지면 자리도 없다(' + where + ')');
@@ -112,7 +112,7 @@ const homeSections = () => {
         const notice = byTestID('홈 알림')[0];
         assert.equal(notice.findAll(n => ['asset-slot-noticeArtwork', 'asset-art-noticeArtwork'].includes(n.props.testID)).length, 1, '공지에도 그림 자리는 남는다');
         assert.ok(notice.findAll(n => n.type === 'Pressable').length <= 1, '공지의 행동은 많아야 하나');
-        assert.ok((flat(typeof notice.props.style === 'function' ? notice.props.style({ pressed: false }) : notice.props.style).minHeight ?? 99) <= 64, '공지는 낮은 한 줄 배너');
+        assert.ok((flat(typeof notice.props.style === 'function' ? notice.props.style({ pressed: false }) : notice.props.style).minHeight ?? 99) <= 96, '공지는 맨 위 배너(그림 칸 + 두 줄 글자, 96 이하)');
       }
       const yellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
       // 45.39 홈(시안 H4): 노랑은 하나 — 세트가 있으면 카드 안 '이어 그리기', 없으면 창작 표면의 '새 세트 만들기'.

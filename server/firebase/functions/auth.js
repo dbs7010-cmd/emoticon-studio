@@ -120,7 +120,9 @@ module.exports = ({ db, ensureUser }) => {
     let t = null;
     await db.runTransaction(async tx => { const s = await tx.get(ref); if (s.exists) { t = s.data(); tx.delete(ref); } });
     if (!t || t.expiresAt < Date.now() || t.challenge !== sha256Hex(verifier)) throw new HttpsError('unauthenticated', '로그인을 마치지 못했어요. 다시 시도해 주세요.');
-    return { token: await getAuth().createCustomToken(t.uid, { provider: t.provider }) };
+    // 작가명도 함께 돌려준다(2026-10-12): 로그인 직후 registerUser 를 한 번 더 부르지 않아도 다음 화면(작가명/홈)을 고를 수 있다.
+    const [token, user] = await Promise.all([getAuth().createCustomToken(t.uid, { provider: t.provider }), db.doc(`users/${t.uid}`).get()]);
+    return { token, artistName: (user.exists && user.data().artistName) || null };
   });
 
   // 오래된 state·ticket 정리(앱이 중간에 닫힌 경우).

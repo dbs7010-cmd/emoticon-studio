@@ -76,7 +76,7 @@ const signIn = (cloud, provider, user) => { mock.user = user; return account.sig
   try {
     // 로그인
     const cloud = client('phone-A');
-    assert.equal(await signIn(cloud, 'kakao', '111'), 'kakao:111');
+    assert.deepEqual(await signIn(cloud, 'kakao', '111'), { uid: 'kakao:111', artistName: null }, '로그인 결과에 작가명(아직 없음)도 함께 온다');
     assert.equal((await account.register(cloud)).pro.active, false);
     mock.deny = true; assert.equal(await signIn(client('cancel'), 'naver', 'x'), null, '취소하면 null(오류 아님)'); mock.deny = false;
     ok('앱 코드: 시스템 브라우저 → 서버 중계 → 표+verifier → 로그인(kakao:111) · 새 회원 PRO 아님 · 취소는 조용히 null');

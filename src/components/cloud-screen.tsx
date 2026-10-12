@@ -82,7 +82,7 @@ export function CloudScreen(p: Props) {
 
   // 흰 카드 한 장 = 한 구역(토스식). 모달로 열 때는 예전처럼 구분선 목록.
   const section = (title: string, children: React.ReactNode) => <View style={p.inline
-    ? { gap: 12, padding: 20, borderRadius: 24, backgroundColor: C.paper }
+    ? { gap: 12, padding: 20, borderRadius: 24, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }
     : { gap: 10, paddingVertical: 14, borderBottomWidth: 1, borderColor: C.line }}>
     <Text style={{ fontSize: p.inline ? 17 : 16, fontWeight: '800', color: C.ink }}>{title}</Text>{children}</View>;
   const show = (part: 'contest' | 'account') => !p.part || p.part === part;
@@ -158,7 +158,7 @@ export function CloudScreen(p: Props) {
           </>)}
         </>}
   </>;
-  if (p.inline) return <View style={{ gap: 12 }}>{!p.cloud ? <View style={{ padding: 20, borderRadius: 24, backgroundColor: C.paper }}>{body}</View> : body}</View>;
+  if (p.inline) return <View style={{ gap: 12 }}>{!p.cloud ? <View style={{ padding: 20, borderRadius: 24, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }}>{body}</View> : body}</View>;
   return <Modal visible={p.visible} animationType="slide" onRequestClose={p.onClose}>
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 4 }}>

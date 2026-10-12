@@ -34,16 +34,28 @@ const ERRORS: Record<string, string> = {
   verify: '로그인을 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.',
 };
 
-// 반환: 로그인한 uid, 사용자가 닫거나 취소하면 null.
-export async function signInWithBrowser(cloud: Cloud, provider: Provider, opts: { base: string; open: OpenAuth; randomBytes: (n: number) => Uint8Array }): Promise<string | null> {
+// 반환: 로그인한 uid 와 작가명(없으면 null · 서버가 알려 주지 않으면 undefined — 옛 서버), 사용자가 닫거나 취소하면 null.
+export async function signInWithBrowser(cloud: Cloud, provider: Provider, opts: { base: string; open: OpenAuth; randomBytes: (n: number) => Uint8Array }): Promise<{ uid: string; artistName: string | null | undefined } | null> {
   const verifier = hex(opts.randomBytes(32));
   const r = await opts.open(startUrl(opts.base, provider, verifier), APP_RETURN);
   if (r.type !== 'success' || !r.url) return null;
   const p = params(r.url);
   if (p.error === 'cancelled') return null;
   if (p.error || !p.ticket) throw new Error(ERRORS[p.error] ?? ERRORS.verify);
-  const { token } = await cloud.call<{ token: string }>('redeemAuth', { ticket: p.ticket, verifier });
-  return cloud.signInWithToken(token);
+  const { token, artistName } = await cloud.call<{ token: string; artistName?: string | null }>('redeemAuth', { ticket: p.ticket, verifier });
+  return { uid: await cloud.signInWithToken(token), artistName };
+}
+// 미리 깨우기(2026-10-12, 실기기 '로그인 렉'): 서버 함수는 한동안 안 쓰면 잠들고, 처음 깨는 데 약 2초가 걸린다(실측 2.0~2.3초 → 깬 뒤 0.3초).
+// 로그인 한 번에 5단계를 지나 10초 가까이 기다리게 되므로, 화면이 열릴 때 그 단계들을 미리 한 번씩 두드려 깨운다.
+// 요청은 모두 '형식이 틀린' 빈 요청이라 서버는 아무것도 만들거나 바꾸지 않고 바로 거절한다. 실패해도 조용히 넘어간다.
+export const WARM_LOGIN = ['/auth/start', '/auth/callback/kakao', '/auth/callback/naver', '/auth/callback/google'];
+export const WARM_LOGIN_CALLS = ['redeemAuth', 'registerUser'];
+export const WARM_ARTIST_CALLS = ['checkArtistName', 'setArtistName'];
+export function warmUp(config: CloudConfig & { authBase?: string }, paths: string[], calls: string[], get: typeof fetch = fetch) {
+  const fn = `https://${config.functionsRegion ?? 'us-central1'}-${config.projectId}.cloudfunctions.net`;
+  const quiet = (r: Promise<unknown>) => { r.catch(() => {}); };
+  for (const path of paths) quiet(get(authBase(config) + path, { method: 'GET', cache: 'no-store', redirect: 'manual' }));
+  for (const name of calls) quiet(get(`${fn}/${name}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"data":{}}' }));
 }
 export const register = (cloud: Cloud) => cloud.call<ServerUser>('registerUser', {});
 // 작가명(2026-10-08): 한 번 정하면 바꿀 수 없다. 형식은 앱이 먼저 보고, 금지어·중복은 서버가 정한다.

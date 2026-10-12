@@ -154,6 +154,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     const effect = PART_EFFECTS[0];
     const part: PartMotion = { id: 'part-' + Date.now().toString(36), layerId, effect: effect.id, pivotX: .5, pivotY: .5, amount: effect.amount, angle: 0, speed: .5, delay: 0 };
     set({ parts: [...parts, part], play: base.play ?? 'together' });
+    setOpenPart(part.id); onFocusPart(layerId);
   };
   const editPart = (id: string, patch: Partial<PartMotion>) => set({ parts: parts.map(p => p.id === id ? { ...p, ...patch } : p) });
   const dropPart = (id: string) => { const left = parts.filter(p => p.id !== id); set({ parts: left.length ? left : undefined }); };
@@ -372,6 +373,16 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>단계 더하기</Text>
       </Pressable>}
     </> : view === 'parts' ? <>
+      {/* 2026-10-12: 무엇을 하는 화면인지 먼저 말한다 — ① 레이어 고르기 ② 회전·이동·크기 ③ 세기·속도. 부분을 하나라도 넣으면 한 줄로 줄인다. */}
+      <View testID="부분 움직임 안내" style={{ gap: 8, padding: 12, borderRadius: C.radius.md, backgroundColor: C.surface2 }}>
+        <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{parts.length ? '부분을 눌러 움직임을 고쳐요' : '그림의 한 부분만 따로 움직여요'}</Text>
+        {!parts.length && ([['1', '움직일 레이어를 아래에서 골라요'], ['2', '회전 · 이동 · 크기 중 하나를 골라요'], ['3', '세기와 속도를 맞추면 끝']] as const).map(([n, text]) =>
+          <View key={n} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>{n}</Text></View>
+            <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: C.ink }}>{text}</Text>
+          </View>)}
+        {drawLayers.length < 2 && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>팔·귀처럼 따로 움직일 곳은 그리기에서 레이어를 나눠 그리면 여기에 나와요.</Text>}
+      </View>
       {parts.map((part, index) => {
         const effect = PART_EFFECTS.find(e => e.id === part.effect)!;
         const dragging = dragFrom === index, open = openPart === part.id, detail = detailPart === part.id;
@@ -441,15 +452,21 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         </View>;
       })}
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+      <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink, paddingHorizontal: 2, paddingTop: 4 }}>{parts.length ? '다른 부분도 움직이기' : '움직일 레이어 고르기'}</Text>
+      <View style={{ gap: 6 }}>
         {drawLayers.map(l => <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={`${layerLabel(l.name)} 부분 움직임 추가`} onPress={() => addPart(l.id)}
-          style={{ minHeight: 48, flexDirection: 'row', gap: 4, paddingHorizontal: 12, borderRadius: 24, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center' }}>
-          <Glyph name="plus" size={16} color={C.ink} />
-          <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{layerLabel(l.name)}</Text>
+          style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', gap: 10, paddingHorizontal: 10, borderRadius: C.radius.md, borderWidth: 1, borderColor: C.line, alignItems: 'center', backgroundColor: pressed ? C.fill : C.paper })}>
+          <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: C.surface2, overflow: 'hidden' }}>
+            {thumbs[l.id] ? <Image source={{ uri: thumbs[l.id] }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : null}
+          </View>
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>{layerLabel(l.name)}</Text>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>움직이기</Text>
+          <Glyph name="plus" size={18} color={C.ink} />
         </Pressable>)}
       </View>
 
       {parts.length > 1 && <>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink, paddingHorizontal: 2, paddingTop: 4 }}>여러 부분은 어떻게 움직일까요</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Chip wide label="함께" on={(base.play ?? 'together') === 'together'} onPress={() => set({ play: 'together', parts: parts.map(p => ({ ...p, delay: 0 })) })} />
           <Chip wide label="차례로" on={base.play === 'sequence'} onPress={() => set({ play: 'sequence', parts: parts.map((p, i) => ({ ...p, delay: Number((i * (base.stagger ?? .15)).toFixed(2)) })) })} />
