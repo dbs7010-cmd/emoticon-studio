@@ -21,6 +21,9 @@ import { restoreBackup, writeBackup } from './src/services/backup';
 import { isFullBackup, restoreFullBackup, writeFullBackup } from './src/services/full-backup';
 import { CloudScreen } from './src/components/cloud-screen';
 import { TabBar, type HomeTab } from './src/components/tab-bar';
+import { NoticeCarousel, type NoticeSlide } from './src/components/notice-carousel';
+import { ChatSim } from './src/components/chat-sim';
+import { GUIDEBOOK } from './src/constants/guidebook';
 import { ArtistNameScreen, StartScreen } from './src/components/onboarding';
 import { appCloud, cloudConfig } from './src/services/cloud/firebase';
 import { artistNameFormat, authBase, checkArtistName, providerReady, register, setArtistName, signInWithBrowser, warmUp, WARM_ARTIST_CALLS, WARM_LOGIN, WARM_LOGIN_CALLS, type Provider } from './src/services/cloud/account';
@@ -194,7 +197,10 @@ function Studio() {
     catch { setContactFallback(true); }
   }
   // 홈 아래 두 화면(44차): 전체 작업(여러 세트 찾기·다시 열기)과 표현 가이드("무엇을 그릴까?"). 세트 안 칸 관리는 보드가 맡는다.
-  const [homeView, setHomeView] = useState<'home' | 'all' | 'guide'>('home');
+  const [homeView, setHomeView] = useState<'home' | 'all' | 'guide' | 'book'>('home');
+  const [bookOpen, setBookOpen] = useState<string | null>(null);
+  // 채팅에서 써 보기(2026-10-13): 보드에서 연다. 세트별 — 이 세트에서 그린 칸만 이모티콘 판에 나온다.
+  const [chatOpen, setChatOpen] = useState(false);
   const [guideCategory, setGuideCategory] = useState<string>(EXPRESSION_GUIDE.categories[0]);
   // 표현 가이드는 창작자의 내비게이션이다(45.17차): 감정을 고르면 그 감정의 여러 표현을 펼쳐 보고,
   // 예시 하나를 고른 다음 '참고하며 그리기' 또는 '밑그림으로 넣기'로 그리기 화면에 들어간다.
@@ -971,6 +977,38 @@ function Studio() {
               </View>;
             })}
           </View>
+        </> : !project && homeView === 'book' ? <>
+          {/* 이용 가이드북(2026-10-13, 홈 공지 슬라이드 ①): 장(章) 카드를 누르면 펼쳐진다. 규격 장은 카카오 공식 가이드 링크를 함께 준다. */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4, marginLeft: -8 }}>
+            <IconButton label="홈으로" icon="chevron-left" color={C.ink} onPress={() => { setBookOpen(null); setHomeView('home'); }} />
+            <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>이용 가이드북</Text>
+          </View>
+          <Text style={{ fontSize: 13, lineHeight: 20, color: C.muted, marginTop: -8 }}>앱 사용법부터 카카오 제안 규격, 승인에 가까워지는 팁까지</Text>
+          {GUIDEBOOK.map((ch, i) => { const open = bookOpen === ch.id;
+            return <View key={ch.id} testID={'가이드북 ' + ch.id} style={{ borderRadius: 20, borderWidth: 1, borderColor: open ? C.lineStrong : C.line, backgroundColor: C.paper, overflow: 'hidden' }}>
+              <Pressable accessibilityRole="button" accessibilityLabel={ch.title} accessibilityState={{ expanded: open }} onPress={() => setBookOpen(open ? null : ch.id)}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, backgroundColor: pressed ? C.fill : C.paper })}>
+                <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: open ? C.accent : C.surface2, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{i + 1}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{ch.title}</Text>
+                  <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{ch.summary}</Text>
+                </View>
+                <Glyph name={open ? 'chevron-up' : 'chevron-down'} size={20} color={C.muted} />
+              </Pressable>
+              {open && <View style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
+                {ch.items.map(it => <View key={it.title} style={{ gap: 2 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{it.title}</Text>
+                  <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{it.body}</Text>
+                </View>)}
+                {!!ch.source && <Pressable accessibilityRole="link" accessibilityLabel="카카오 이모티콘 스튜디오 공식 가이드 열기" onPress={() => Linking.openURL(ch.source!).catch(() => setNotice('링크를 열지 못했어요.'))}
+                  style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 12, borderRadius: 22, backgroundColor: pressed ? C.fillPressed : C.fill })}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>공식 가이드 열기</Text>
+                  <Glyph name="open-in-new" size={16} color={C.muted} />
+                </Pressable>}
+              </View>}
+            </View>; })}
         </> : !project && homeView === 'guide' ? <>
           {/* 표현 가이드(44차): "무엇을 그릴까?". 분류 → 표현 카드(그림 자리 · 이름 · 짧은 몸짓 힌트). 긴 설명·대화형·생성 없음.
               "어떻게 그릴까?"는 그리기 화면 › 참고 › 기본 레퍼런스가 맡는다. */}
@@ -1097,35 +1135,20 @@ function Studio() {
               style={({ pressed }) => ({ width: 64, height: 64, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.accentLine : C.accent })}>
               <ImtiIcon name="plus" size={IconSize.tool} />
             </Pressable>;
-            // 공지 한 줄: 열린 공모전이 있으면 공모전(누르면 공모전 탭), 아니면 켜 둔 알림(체험 안내 등). 둘 다 없으면 자리도 없다.
-            // 2026-10-12 사용자 요청: 공지는 맨 위 배너(왼쪽 노란 그림 칸 + 오른쪽 작은 머리말·굵은 제목). 없으면 자리도 없다.
-            const banner = { ...card, minHeight: 84, padding: 10, paddingRight: 14, flexDirection: 'row', alignItems: 'center', gap: 14 } as const;
-            const bannerArt = (child: React.ReactNode) => <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>{child}</View>;
-            const bannerText = (kicker: string, title: string) => <View style={{ flex: 1, gap: 2 }}>
-              <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{kicker}</Text>
-              <Text numberOfLines={2} style={{ fontSize: 16, lineHeight: 22, fontWeight: '800', color: C.ink }}>{title}</Text>
-            </View>;
-            const noticeLine = homeContest
-              ? <Pressable testID="홈 알림" accessibilityRole="button" accessibilityLabel={'공모전 ' + homeContest.title} onPress={() => setHomeTab('contest')}
-                  style={({ pressed }) => ({ ...banner, backgroundColor: pressed ? C.fill : C.paper })}>
-                  {bannerArt(<ImtiIcon name="contest" size={IconSize.tool} color={C.accentInk} />)}
-                  {bannerText(homeContest.dday ? `공모전 · ${homeContest.dday}` : '공모전', homeContest.title)}
-                  <ImtiIcon name="next" size={IconSize.row} color={C.faint} />
-                </Pressable>
-              : noticeOn ? (() => {
-                  const go = homeNotice.link || trialNotice;
-                  const body = <>
-                    {bannerArt(<AssetSlot name="noticeArtwork" size={44} />)}
-                    {bannerText('알림', homeNotice.title)}
-                    {!!go && <ImtiIcon name="next" size={IconSize.row} color={C.faint} />}
-                  </>;
-                  const row = banner;
-                  return go
-                    ? <Pressable testID="홈 알림" accessibilityRole="button" accessibilityLabel={homeNotice.title}
-                        onPress={() => { if (trialNotice) { setProSheet(true); return; } Linking.openURL(homeNotice.link!).catch(() => setNotice('링크를 열지 못했어요.')); }}
-                        style={({ pressed }) => ({ ...row, backgroundColor: pressed ? C.fill : C.paper })}>{body}</Pressable>
-                    : <View testID="홈 알림" style={row}>{body}</View>;
-                })() : null;
+            // 공지 슬라이드(2026-10-13 사용자 요청): 줄 폭을 꽉 채운 카드를 옆으로 넘긴다. 누르면 그 공지를 연다.
+            // ① 가이드북(늘 있음) ② 공모전 현황(서버가 있을 때 — 열린 공모전이 있으면 그 제목, 없으면 현황 안내) ③ 켜 둔 알림(체험 안내 등).
+            const art = (child: React.ReactNode, bg: string) => <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>{child}</View>;
+            const slides: NoticeSlide[] = [
+              { key: 'book', kicker: '가이드북', title: '앱 사용부터 승인 팁까지', label: '가이드북 열기', tone: C.accentSoft,
+                art: art(<ImtiIcon name="guide" size={IconSize.tab} color={C.accentInk} />, C.accent), onPress: () => setHomeView('book') },
+              ...(cloud ? [{ key: 'contest', kicker: homeContest ? (homeContest.dday ? `공모전 · ${homeContest.dday}` : '공모전') : '공모전 현황',
+                title: homeContest ? homeContest.title : '열리는 공모전을 여기서 알려 드려요', label: homeContest ? '공모전 ' + homeContest.title : '공모전 현황 보기', tone: T.infoSoft,
+                art: art(<ImtiIcon name="contest" size={IconSize.tab} color={C.ink} />, C.paper), onPress: () => setHomeTab('contest') }] : []),
+              ...(noticeOn ? [{ key: 'notice', testID: '홈 알림', kicker: '알림', title: homeNotice.title, label: homeNotice.title, tone: C.surface2,
+                art: <AssetSlot name="noticeArtwork" size={64} />,
+                onPress: () => { if (trialNotice) { setProSheet(true); return; } if (homeNotice.link) Linking.openURL(homeNotice.link).catch(() => setNotice('링크를 열지 못했어요.')); } }] : []),
+            ];
+            const noticeLine = <NoticeCarousel slides={slides} guessWidth={Math.min(windowWidth, CONTENT_MAX) - (screenWidth < 340 ? 24 : 32)} />;
             if (!sortedProjects.length) return <>
               {/* 빈 홈: 그림 · 제목 · 노란 행동 하나. */}
               <EmptyState testID="홈 창작 표면" flow
@@ -1632,6 +1655,15 @@ function Studio() {
               {playButton}
             </View>;
           })()}
+          {!reordering && project.slots.some(s => s.finalImage) && <Pressable testID="채팅에서 써 보기" accessibilityRole="button" accessibilityLabel="채팅에서 써 보기" onPress={() => setChatOpen(true)}
+            style={({ pressed }) => ({ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper })}>
+            <ImtiIcon name="chat" size={IconSize.tool} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>채팅에서 써 보기</Text>
+              <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>대화 속에 넣어 크기·표정을 확인해요</Text>
+            </View>
+            <ImtiIcon name="next" size={IconSize.row} color={C.faint} />
+          </Pressable>}
           {reordering && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 12, borderRadius: T.radius.md, backgroundColor: T.infoSoft }}>
             <Glyph name="swap-horizontal" size={18} color={T.info} />
             <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: T.info }}>순서 바꾸는 중</Text>
@@ -1871,6 +1903,8 @@ function Studio() {
         </ScrollView>
       </SafeAreaView>
     </Modal>}
+    {chatOpen && project && <ChatSim visible setName={project.projectName} onClose={() => setChatOpen(false)}
+      stickers={project.slots.filter(sl => sl.finalImage).map(sl => ({ number: sl.number, uri: imageUri((sl.motionImage ?? sl.finalImage)!.path) }))} />}
     {menu && project && <Dialog title={project.projectName} onClose={() => setMenu(false)}>
       <View style={{ borderRadius: T.radius.md, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
         {([

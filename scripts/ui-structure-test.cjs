@@ -112,7 +112,8 @@ const homeSections = () => {
         const notice = byTestID('홈 알림')[0];
         assert.equal(notice.findAll(n => ['asset-slot-noticeArtwork', 'asset-art-noticeArtwork'].includes(n.props.testID)).length, 1, '공지에도 그림 자리는 남는다');
         assert.ok(notice.findAll(n => n.type === 'Pressable').length <= 1, '공지의 행동은 많아야 하나');
-        assert.ok((flat(typeof notice.props.style === 'function' ? notice.props.style({ pressed: false }) : notice.props.style).minHeight ?? 99) <= 96, '공지는 맨 위 배너(그림 칸 + 두 줄 글자, 96 이하)');
+        assert.ok((flat(typeof notice.props.style === 'function' ? notice.props.style({ pressed: false }) : notice.props.style).minHeight ?? 99) <= 120, '공지는 맨 위 슬라이드 카드 한 장(120 이하)');
+        assert.equal(byTestID('홈 공지 슬라이드').length, 1, '알림은 공지 슬라이드 안에 있다(2026-10-13)');
       }
       const yellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
       // 45.39 홈(시안 H4): 노랑은 하나 — 세트가 있으면 카드 안 '이어 그리기', 없으면 창작 표면의 '새 세트 만들기'.

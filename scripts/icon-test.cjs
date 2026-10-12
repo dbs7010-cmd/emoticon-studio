@@ -10,7 +10,8 @@ const I = load('src/design/icons.tsx');
 
 (async () => {
   const names = Object.keys(I.ICON_PATHS);
-  assert.equal(names.length, 30, '아이콘은 핵심 11 + 시스템 12 + 탭·내 정보 7(2026-10-08): ' + names.length);
+  assert.equal(names.length, 32, '아이콘은 핵심 11 + 시스템 12 + 탭·내 정보 7(2026-10-08) + 채팅 2(2026-10-13): ' + names.length);
+  for (const k of ['chat', 'sticker']) assert.ok(names.includes(k), '채팅에서 써 보기 아이콘 ' + k);
   for (const k of ['home', 'contest', 'person', 'cloud', 'restore', 'info', 'guide']) assert.ok(names.includes(k), '탭·내 정보 아이콘 ' + k);
   for (const k of ['brush', 'eraser', 'fill', 'color', 'reference', 'layer', 'caption', 'motion', 'export', 'save', 'pro']) assert.ok(names.includes(k), '핵심 아이콘 ' + k);
   for (const k of ['back', 'next', 'close', 'plus', 'delete', 'eye', 'eyeOff', 'undo', 'redo', 'more', 'check', 'settings']) assert.ok(names.includes(k), '시스템 아이콘 ' + k);

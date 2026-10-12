@@ -1,5 +1,6 @@
 emoti 이모티 — Google Play 기본 스토어 등록정보 (한국어 ko-KR)
-기준: 2026-10-03 · 현재 배포본 = PRO 구매가 열리지 않은 비공개 테스트 버전 · 실제 구현과 대조함
+기준: 2026-10-13 개정 · vc4/vc5 부터 로그인 필수(카카오·네이버·구글) · 서버 연결 · PRO 구매는 여전히 닫힘 · 실제 구현과 대조함
+(이전 본 2026-10-03 은 git 이력에 있다. ★ 표시는 vc6 이후 빌드에 들어갈 기능 — 그 빌드를 올릴 때 함께 넣는다.)
 (이 파일의 [ ] 줄은 안내다. Console 에는 ── 사이의 본문만 붙여 넣는다.)
 
 [Console › 스토어 등록정보 › 앱 이름]  (9자 / 30자)
@@ -39,9 +40,16 @@ emoti 이모티는 내가 그린 캐릭터를 움직이는 이모티콘으로 �
 - 겹친 문구나 똑같은 그림처럼 손볼 곳을 미리 알려 줘요.
 - 대표 아이콘 같은 부가 이미지도 만들 수 있어요.
 
-■ 작품은 내 폰에
-- 그림은 폰 안에만 저장돼요. 계정이나 로그인이 없어요.
-- 세트를 백업 파일로 만들어 보관하고 되살릴 수 있어요.
+■ 채팅에서 써 보기 ★
+- 만든 이모티콘을 연습용 대화 속에 넣어 크기와 표정을 확인해요. 밝은 바탕·어두운 바탕 모두 볼 수 있어요(실제로 보내지지 않아요).
+
+■ 이용 가이드북 ★
+- 앱 사용법부터 이모티콘 제안 규격, 승인에 가까워지는 제작 팁까지 홈에서 바로 봐요.
+
+■ 작품은 내 폰에, 계정은 간단하게
+- 카카오 · 네이버 · 구글로 시작하고 작가명을 정해요. 이메일·전화번호는 받지 않아요.
+- 그림은 폰 안에 저장돼요. 세트를 백업 파일로 만들어 보관하고 되살릴 수 있어요.
+- PRO 는 세트를 클라우드에 백업하고 새 폰에서 되살릴 수 있어요.
 - 지운 세트는 30일 동안 휴지통에 남아요.
 
 ■ 무료로도 한 세트를 끝까지
@@ -67,7 +75,18 @@ emoticon755@gmail.com
 https://dbs7010-cmd.github.io/emoticon-studio/privacy/   ← 2026-10-04 현재 내용으로 교체 게시·본문 확인 완료
 ──
 
-[Console › 앱 콘텐츠 › 앱 액세스]  (PRO 체험 테스트 빌드, versionCode 2 기준 · 2026-10-04)
+[Console › 앱 콘텐츠 › 앱 액세스]  ★★ 2026-10-13 개정 — vc4 부터 로그인 필수라 아래 '개정본'으로 바꿔야 한다 ★★
+  선택: 'All or some functionality is restricted'(일부 또는 전체 기능이 제한됨) → 안내 추가.
+  심사용 계정: 운영자가 심사 전용 구글 계정을 하나 만들어, 그 아이디·비밀번호를 Console 칸에 직접 넣는다(채팅·저장소에 적지 않는다).
+  전제: Google Cloud › OAuth 동의 화면의 게시 상태가 '프로덕션'이어야 아무 구글 계정이나 로그인된다('테스트'면 등록한 사용자만).
+Instruction name: Sign in with Google (review account)
+──
+The app requires sign-in. On the first screen tap "Google로 시작하기" (Sign in with Google) and sign in with the Google account provided in this form. Then enter any artist name (2–12 Korean/English letters or digits, e.g. "review01") and tap "완료" (Done). After that, every feature is available.
+
+In this closed test build, in-app purchase is turned off and PRO features are free to try for every user, including reviewers (tap the "PRO 체험" badge at the top right of the home screen for details). Kakao and Naver sign-in are also offered but are not needed for review.
+──
+
+[이전 본 — vc2·vc3(로그인 없음) 기준, 지금은 쓰지 않음]
 ── 이 빌드는 로그인이 없고, 모든 사용자(심사자 포함)가 PRO 기능 전체를 결제 없이 쓴다. 유료 장벽이 없다.
    권장 선택: 'All functionality is available without special access'(이 선택에는 안내 칸이 없다).
    이미 'All or some functionality is restricted' 로 안내를 넣어 두었다면, 그 안내 내용을 아래 영어 문장으로 바꾼다.
