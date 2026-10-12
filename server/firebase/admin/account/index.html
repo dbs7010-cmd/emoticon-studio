@@ -81,7 +81,7 @@ import { getAuth, connectAuthEmulator, signInWithCustomToken, signOut, onAuthSta
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-functions.js';
 const local = ['127.0.0.1', 'localhost'].includes(location.hostname);
 const config = local ? { projectId: 'demo-emoti', apiKey: 'demo-key', authDomain: 'localhost', storageBucket: 'demo-emoti.appspot.com' }
-  : await (await fetch('../config.json')).json();
+  : await (await fetch('../config.json', { cache: 'no-store' })).json();
 const app = initializeApp(config), auth = getAuth(app), fn = getFunctions(app, config.functionsRegion || 'us-central1');
 if (local) { connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true }); connectFunctionsEmulator(fn, '127.0.0.1', 5001); }
 const call = (name, data) => httpsCallable(fn, name)(data).then(r => r.data);
