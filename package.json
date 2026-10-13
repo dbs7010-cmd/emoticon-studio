@@ -24,7 +24,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node scripts/test.cjs",
-    "test:ux": "node scripts/ux-test.cjs",
+    "test:ux": "node scripts/ux-test.cjs && node scripts/gesture-test.cjs",
     "test:painter": "node scripts/painter-test.cjs",
     "export:native": "expo export --platform android --platform ios",
     "start": "expo start",
