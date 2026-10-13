@@ -20,6 +20,8 @@ export type Cloud = {
   listWhereIn(path: string, field: string, values: string[]): Promise<{ id: string; data: Record<string, unknown> }[]>;
   signInWithToken(token: string): Promise<string>;
   signOut(): Promise<void>;
+  // 로그인 증명(Firebase ID 토큰). 구매 확인 서버(/receipt)가 "누가 샀는지"를 확인할 때 쓴다(2026-10-13). 로그인 전이면 null.
+  idToken(): Promise<string | null>;
   // 로그인 상태가 정해질 때(앱을 켜 기기에 남은 로그인을 되살린 뒤 포함)와 바뀔 때마다 부른다. 돌려준 함수로 그만 듣는다.
   onAuth(listener: (uid: string | null) => void): () => void;
 };
@@ -49,6 +51,7 @@ export function cloudFrom(app: FirebaseApp, parts: { auth: Auth; db?: Firestore;
     listWhereIn: async (path, field, values) => (await getDocs(query(collection(db, path), where(field, 'in', values)))).docs.map(d => ({ id: d.id, data: d.data() })),
     signInWithToken: async token => (await signInWithCustomToken(auth, token)).user.uid,
     signOut: () => signOut(auth),
+    idToken: async () => (auth.currentUser ? auth.currentUser.getIdToken() : null),
     onAuth: listener => onAuthStateChanged(auth, u => listener(u?.uid ?? null)),
   };
 }

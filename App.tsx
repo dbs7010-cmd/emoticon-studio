@@ -172,6 +172,8 @@ function Studio() {
   useEffect(() => { const config = cloudConfig(Constants.expoConfig?.extra); if (!cloud || !config) return;
     if (authUid === null) warmUp(config, WARM_LOGIN, [...WARM_LOGIN_CALLS, ...WARM_ARTIST_CALLS]);
     else if (authUid && artist === null) warmUp(config, [], WARM_ARTIST_CALLS); }, [cloud, authUid, artist]);
+  // 구매 확인 서버에 로그인 증명을 함께 보낸다(한 구매 = 한 계정). 서버 설정이 없는 빌드는 null.
+  const payOpts = { authToken: () => (cloud ? cloud.idToken() : Promise.resolve(null)) };
   const finishStart = () => { setStartOpen(false); if (store && !store.introDone) { try { commit(st => ({ ...st, introDone: true })); } catch { /* 다음 실행에 다시 보일 뿐 */ } } };
   const startLogin = (provider: Provider) => { setLoginError(''); setLoginBusy(true);
     loginWith(provider).then(() => finishStart()).catch(e => setLoginError(String((e as Error).message ?? e))).finally(() => setLoginBusy(false)); };
@@ -255,7 +257,7 @@ function Studio() {
   useEffect(() => {
     if (!store || rechecked.current) return;
     rechecked.current = true;
-    void refreshEntitlement(store.entitlement).then(result => {
+    void refreshEntitlement(store.entitlement, payOpts).then(result => {
       if (result.state !== 'updated') return;
       try { commit(st => ({ ...st, entitlement: result.entitlement })); } catch { /* 저장 실패는 배너가 말하고, 다음 실행에서 다시 묻는다 */ }
     }).catch(() => { /* 묻지 못한 것은 '아니다'라는 대답이 아니다 */ });
@@ -665,12 +667,12 @@ function Studio() {
   async function startPurchase() {
     if (purchasesClosed()) return;
     setPayment({ phase: 'buying' });
-    settlePayment(await purchase(), 'bought');
+    settlePayment(await purchase(payOpts), 'bought');
   }
   async function restorePro() {
     if (purchasesClosed()) return;
     setPayment({ phase: 'restoring' });
-    settlePayment(await restore(), 'restored');
+    settlePayment(await restore(payOpts), 'restored');
   }
   function settlePayment(outcome: PurchaseOutcome, success: 'bought' | 'restored') {
     if (outcome.state === 'purchased') {

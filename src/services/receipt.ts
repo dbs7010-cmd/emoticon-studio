@@ -33,6 +33,8 @@ export type ReceiptResult =
 
 export type ReceiptOptions = {
   endpoint?: string;
+  // 로그인 증명(2026-10-13). 서버는 이 토큰으로 구매를 그 계정에 묶는다 — 없으면 서버가 확인하지 않는다.
+  authToken?: string | null;
   fetchImpl?: typeof fetch;
   now?: Date;
   timeoutMs?: number;
@@ -71,7 +73,7 @@ export async function verifyReceipt(request: ReceiptRequest, options: ReceiptOpt
     try {
       response = await send(endpoint, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', ...(options.authToken ? { authorization: 'Bearer ' + options.authToken } : {}) },
         body: JSON.stringify(request),
         ...(controller ? { signal: controller.signal } : {}),
       });

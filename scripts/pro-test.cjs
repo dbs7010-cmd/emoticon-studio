@@ -104,6 +104,13 @@ assert.equal(adapter.storeModuleAvailable(), false, '이 빌드에는 결제 모
   assert.equal(ok.entitlement.verified, true, '그때만 verified 가 붙는다');
   assert.equal(ok.entitlement.source, 'store');
   assert.equal(pro.isPro(ok.entitlement, now), true, '그리고 그 이용권은 출시 빌드에서도 PRO 다');
+  // 2026-10-13: 로그인 증명을 함께 보낸다(서버가 구매를 그 계정에 묶는다). 없으면 머리글도 없다.
+  const sent = [];
+  const capture = async (url, init) => { sent.push(init.headers); return { ok: true, status: 200, json: async () => yes }; };
+  await receipt.verifyReceipt(ask, { endpoint: 'https://verify.example', fetchImpl: capture, now, authToken: 'id-token-abc' });
+  await receipt.verifyReceipt(ask, { endpoint: 'https://verify.example', fetchImpl: capture, now });
+  assert.equal(sent[0].authorization, 'Bearer id-token-abc', '로그인 증명을 Authorization 머리글로 보낸다');
+  assert.equal(sent[1].authorization, undefined, '로그인 증명이 없으면 머리글을 지어내지 않는다');
 
   const no = await receipt.verifyReceipt(ask, { endpoint: 'https://verify.example', fetchImpl: answer({ verified: false, plan: 'monthly', reason: '스토어가 모르는 구매' }), now });
   assert.equal(no.state, 'refused', '확인해 주지 않으면 거절이다');

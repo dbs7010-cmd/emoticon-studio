@@ -2,7 +2,7 @@
 //
 // 원칙
 //  - 앱이 보낸 '누구다·PRO 다'를 믿지 않는다. 카카오·네이버 로그인은 이 함수가 각 회사 서버에 토큰을 직접 확인하고,
-//    PRO 는 회원 문서에 **서버만** 쓴다(규칙이 앱 쓰기를 막음). 구매 검증은 아직 연결 전이라 실제 구매로 PRO 가 열리지 않는다.
+//    PRO 는 회원 문서에 **서버만** 쓴다(규칙이 앱 쓰기를 막음). 실제 구매는 purchase.js 가 Play 에 직접 확인한 것만 PRO 를 연다.
 //  - 비밀 값(카카오 앱 ID 대조값, 관리자 권한)은 환경변수·관리 SDK 에만 있다. 앱·저장소에 비밀 키를 두지 않는다.
 //  - 공모전은 세트 전체 묶음(ZIP)을 그대로 받고, 서버가 열어 구성(칸 수·번호·형식)·해시·크기를 확인한 뒤에만 '접수됨'.
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
@@ -344,5 +344,11 @@ exports.deleteMyAccount = onCall(async req => {
   await getAuth().deleteUser(uid).catch(() => {});
   return { deleted: { backupSets: sets.size, submissions: subs.size } };
 });
+
+// PRO 구매 확인(영수증 서버, 2026-10-13) — purchase.js. Hosting /receipt → verifyPurchase.
+const store = require('./purchase')({ db });
+exports.verifyPurchase = store.verifyPurchase;
+exports.syncVoidedPurchases = store.syncVoidedPurchases;
+exports.adminSyncVoided = onCall(async req => { adminOnly(req); return store._syncVoided(Number(req.data?.now) || Date.now()); });
 
 exports._test = { cleanupStale };

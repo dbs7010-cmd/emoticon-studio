@@ -302,6 +302,58 @@ async function login(c, provider, user, ret = 'app') {
       ok('보관 기간: 설정값(90/90/365일)으로 지울 대상만 센다 · 자동 삭제 꺼짐(기본) → 삭제 요청 거절 · 아무것도 지우지 않음 · 관리자만');
     }
 
+    // 5b) PRO 구매 확인(영수증 서버, 2026-10-13) — 가짜 Play Developer API ───────────────────────
+    {
+      // 앱(receipt.ts)과 같은 모양: POST /receipt { platform, productId, purchaseToken } + 로그인 토큰. Hosting 리라이트까지 함께 검사.
+      const receipt = async (c, body, token = true) => {
+        const r = await fetch(HOST + '/receipt', { method: 'POST', headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + await c.auth.currentUser.getIdToken() } : {}) }, body: JSON.stringify(body) });
+        return { status: r.status, body: r.status === 200 ? await r.json() : null };
+      };
+      const buy = (t, extra = {}) => ({ platform: 'android', productId: 'pro_lifetime', purchaseToken: t, ...extra });
+      mock.play.set('tok-real-0001', { purchaseState: 0, orderId: 'GPA.0000-1' });
+      mock.play.set('tok-pending-01', { purchaseState: 2, orderId: 'GPA.0000-2' });
+      mock.play.set('tok-test-0001', { purchaseState: 0, purchaseType: 0, orderId: 'GPA.0000-3' });
+      mock.play.set('tok-cancel-01', { purchaseState: 1, orderId: 'GPA.0000-4' });
+
+      assert.equal((await receipt(google, buy('tok-real-0001'), false)).body.verified, false, '로그인 토큰 없이 보낸 구매는 확인하지 않는다');
+      const forged = await receipt(google, buy('tok-made-up-123'));
+      assert.deepEqual([forged.body.verified, forged.body.plan], [false, 'lifetime'], 'Play 에 없는 토큰(지어낸 구매)은 거절');
+      assert.equal((await receipt(google, buy('tok-real-0001', { productId: 'pro_monthly' }))).body.verified, false, '모르는 상품 거절');
+      assert.equal((await receipt(google, buy('tok-pending-01'))).body.verified, false, '결제 대기 중은 아직 PRO 아님');
+      assert.equal((await receipt(google, buy('tok-cancel-01'))).body.verified, false, '취소된 구매 거절');
+      assert.equal((await adb.doc('users/google:G1').get()).data().pro.active, false, '거절된 요청은 PRO 를 건드리지 않는다');
+
+      const good = await receipt(google, buy('tok-real-0001'));
+      assert.deepEqual(good.body, { verified: true, plan: 'lifetime' }, '진짜 구매 → 확인');
+      const gp = (await adb.doc('users/google:G1').get()).data().pro;
+      assert.deepEqual([gp.active, gp.source, gp.verified, gp.until], [true, 'store', true, null], '서버가 회원 PRO 를 연다(출처 store, 기간 없음)');
+      assert.equal((await receipt(google, buy('tok-real-0001'))).body.verified, true, '같은 계정의 구매 복원은 다시 확인');
+      const stolen = await receipt(naver, buy('tok-real-0001'));
+      assert.equal(stolen.body.verified, false, '같은 구매 토큰을 다른 계정이 내면 거절(한 구매 = 한 계정)');
+      assert.match(stolen.body.reason, /다른 emoti 계정/);
+      assert.equal((await adb.doc('users/naver:NV-abc').get()).data().pro.active === true && (await adb.doc('users/naver:NV-abc').get()).data().pro.source === 'store', false, '훔친 토큰으로 PRO 가 열리지 않는다');
+      await denied(getDocs(collection(google.db, 'purchases')), /permission|denied/, '구매 기록은 앱이 못 읽는다');
+
+      const t = await receipt(kakao, buy('tok-test-0001'));
+      assert.deepEqual(t.body, { verified: true, plan: 'lifetime', sandbox: true }, '라이선스 테스터의 테스트 구매는 sandbox 로 표시(PURCHASE_ACCEPT_TEST=true)');
+      mock.playDown = true;
+      assert.equal((await receipt(kakao, buy('tok-test-0001'))).status, 503, 'Play 에 물어보지 못하면 거절이 아니라 연결 실패(앱은 기존 권한 유지)');
+      mock.playDown = false;
+      assert.ok(mock.requests.some(r => r.startsWith('/androidpublisher/v3/applications/com.emoticonstudio.app/purchases/products/pro_lifetime/tokens/')), '서버가 Play API 에 직접 물었다');
+
+      // 환불·취소(voided) → 그 구매로 열린 PRO 만 닫힌다. 다시 내도 거절.
+      mock.voided = [{ purchaseToken: 'tok-real-0001', voidedTimeMillis: String(Date.now()) }];
+      await denied(google.call('adminSyncVoided', {}), /permission-denied/, '환불 동기화는 관리자·예약 작업만');
+      const sync = await boss.call('adminSyncVoided', {});
+      assert.deepEqual([sync.seen, sync.closed], [1, 1]);
+      const after = (await adb.doc('users/google:G1').get()).data().pro;
+      assert.deepEqual([after.active, after.endedBy], [false, 'voided'], '환불된 구매의 PRO 를 닫는다');
+      assert.equal((await receipt(google, buy('tok-real-0001'))).body.verified, false, '환불된 구매는 다시 내도 거절');
+      assert.deepEqual(await boss.call('adminSyncVoided', {}), { seen: 1, closed: 0 }, '두 번 돌려도 같은 결과');
+      mock.voided = [];
+      ok('PRO 구매 확인: Hosting /receipt → 로그인 토큰 확인 → Play API 직접 조회 · 지어낸·모르는 상품·대기·취소 거절 · 확인되면 서버가 PRO(store) · 한 구매 = 한 계정 · 테스트 구매 sandbox · Play 장애는 503 · 환불되면 PRO 닫힘 · 구매 기록은 앱이 못 읽음');
+    }
+
     // 6) 탈퇴 ────────────────────────────────────────────────────────────────────────────────
     await denied(again.call('deleteMyAccount', {}), /failed-precondition/);
     const del = await again.call('deleteMyAccount', { confirm: 'DELETE' });

@@ -91,7 +91,8 @@ export type PurchaseOutcome =
   | { state: 'none' }
   | { state: 'failed'; problem: PaymentProblem };
 // 테스트가 서버 주소·네트워크·시각을 넣을 수 있는 자리. 앱은 빌드 설정의 주소를 쓴다.
-export type PaymentOptions = { endpoint?: string; fetchImpl?: typeof fetch; now?: Date };
+// authToken: 로그인 증명을 꺼내는 함수(2026-10-13) — 구매 확인 서버가 구매를 이 계정에 묶는다.
+export type PaymentOptions = { endpoint?: string; fetchImpl?: typeof fetch; now?: Date; authToken?: () => Promise<string | null> };
 
 // 사람이 읽는 말. 스토어 오류 코드는 여기서 끝나고 화면에 나가지 않는다. 늘 **다음에 할 일**을 함께 준다.
 export function problemText(problem: PaymentProblem | 'save'): { title: string; next: string; action?: 'restore' | 'retry' } {
@@ -114,9 +115,10 @@ export function problemText(problem: PaymentProblem | 'save'): { title: string; 
 // 스토어가 "샀다"고 해도 그것만으로는 PRO 가 열리지 않는다. 우리 서버가 스토어에 직접 물어보고
 // 확인해 준 것만 `verified` 를 받고, 그다음에야 구매를 확정(acknowledge)한다.
 async function confirm(productId: string, token: string, purchase: StorePurchase, options: PaymentOptions): Promise<PurchaseOutcome> {
+  const authToken = options.authToken ? await options.authToken().catch(() => null) : null;
   const verdict = await verifyReceipt(
     { platform: Platform.OS === 'ios' ? 'ios' : 'android', productId, purchaseToken: token },
-    { endpoint: options.endpoint ?? RECEIPT_ENDPOINT, fetchImpl: options.fetchImpl, now: options.now },
+    { endpoint: options.endpoint ?? RECEIPT_ENDPOINT, fetchImpl: options.fetchImpl, now: options.now, authToken },
   );
   if (verdict.state === 'verified') { await finishPurchase(purchase); return { state: 'purchased', entitlement: verdict.entitlement }; }
   if (verdict.state === 'not-configured') return { state: 'failed', problem: 'server-missing' };

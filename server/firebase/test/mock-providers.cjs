@@ -6,7 +6,8 @@ const IDS = { kakao: 'kakao-rest-key', naver: 'naver-client-id', google: 'google
 const SECRETS = { kakao: 'fake-kakao-secret', naver: 'fake-naver-secret', google: 'fake-google-secret' };
 module.exports = () => {
   const codes = new Map(), tokens = new Map();
-  const mock = { user: '111', deny: false, requests: [], IDS, SECRETS };
+  // 가짜 Google Play Developer API(2026-10-13 구매 확인): mock.play.set(토큰, { purchaseState, purchaseType?, orderId }) · mock.voided = [{ purchaseToken, voidedTimeMillis }]
+  const mock = { user: '111', deny: false, requests: [], IDS, SECRETS, play: new Map(), voided: [], playDown: false };
   const server = http.createServer(async (req, res) => {
     const u = new URL(req.url, 'http://127.0.0.1:7777');
     let body = ''; for await (const c of req) body += c;
@@ -52,6 +53,15 @@ module.exports = () => {
       const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
       const aud = mock.wrongAud ? 'someone-else' : IDS.google;
       return send(200, { access_token: 'g', id_token: `${b64({ alg: 'none' })}.${b64({ iss: 'https://accounts.google.com', aud, sub: 'G' + c.user, exp: Math.floor(Date.now() / 1000) + 3600 })}.x` });
+    }
+    const PLAY = '/androidpublisher/v3/applications/com.emoticonstudio.app/purchases/';
+    if (u.pathname.startsWith(PLAY)) {
+      if (req.headers.authorization !== 'Bearer fake-play-token') return send(401, { error: { code: 401 } });
+      if (mock.playDown) return send(500, { error: { code: 500 } });
+      if (u.pathname === PLAY + 'voidedpurchases') return send(200, { voidedPurchases: mock.voided });
+      const m = u.pathname.slice(PLAY.length).match(/^products\/([^/]+)\/tokens\/(.+)$/);
+      if (m && m[1] === 'pro_lifetime' && mock.play.has(decodeURIComponent(m[2]))) return send(200, { kind: 'androidpublisher#productPurchase', acknowledgementState: 0, ...mock.play.get(decodeURIComponent(m[2])) });
+      return send(404, { error: { code: 404, message: 'The purchase token was not found.' } });
     }
     send(404, {});
   });
