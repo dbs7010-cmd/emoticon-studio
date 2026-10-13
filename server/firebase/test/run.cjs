@@ -336,6 +336,7 @@ async function login(c, provider, user, ret = 'app') {
 
       const t = await receipt(kakao, buy('tok-test-0001'));
       assert.deepEqual(t.body, { verified: true, plan: 'lifetime', sandbox: true }, '라이선스 테스터의 테스트 구매는 sandbox 로 표시(PURCHASE_ACCEPT_TEST=true)');
+      assert.equal((await adb.collection('purchases').where('uid', '==', 'kakao:111').get()).size, 1, '구매 연결 기록이 생긴다');
       mock.playDown = true;
       assert.equal((await receipt(kakao, buy('tok-test-0001'))).status, 503, 'Play 에 물어보지 못하면 거절이 아니라 연결 실패(앱은 기존 권한 유지)');
       mock.playDown = false;
@@ -365,6 +366,7 @@ async function login(c, provider, user, ret = 'app') {
     assert.equal((await adb.doc('contests/c1/submissions/kakao:111').get()).exists, false);
     await assert.rejects(adminAuth().getUser('kakao:111'));
     assert.equal((await adb.doc('artistNames/몽이작가').get()).exists, false, '탈퇴하면 작가명 예약도 지운다');
+    assert.equal((await adb.collection('purchases').where('uid', '==', 'kakao:111').get()).size, 0, '탈퇴하면 구매 연결 기록도 지운다(Play 구매는 남아 새 계정에서 복원 가능)');
     ok('탈퇴: 백업 파일·목록·회원 문서·공모전 접수·로그인 계정 모두 삭제');
 
     for (const c of [kakao, naver, google, boss, again, a, webc]) await deleteApp(c.app);

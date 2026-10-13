@@ -340,6 +340,9 @@ exports.deleteMyAccount = onCall(async req => {
   for (const d of blobs.docs) await d.ref.delete();
   const name = (await db.doc(`users/${uid}`).get()).data()?.artistName;
   if (name) await db.doc(`artistNames/${artist.key(name)}`).delete();   // 탈퇴하면 작가명도 풀린다(개인 정보 삭제)
+  // 구매 연결 기록(purchases)도 지운다(2026-10-13). 구매 자체는 Google Play 계정에 남으므로, 새 계정에서 '구매 복원'하면 다시 확인된다.
+  const bought = await db.collection('purchases').where('uid', '==', uid).get();
+  for (const d of bought.docs) await d.ref.delete();
   await db.doc(`users/${uid}`).delete();
   await getAuth().deleteUser(uid).catch(() => {});
   return { deleted: { backupSets: sets.size, submissions: subs.size } };
