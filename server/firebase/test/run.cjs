@@ -175,6 +175,17 @@ async function login(c, provider, user, ret = 'app') {
     assert.ok(trial.until > Date.now() + 6.9 * 864e5);
     ok('체험 PRO: 관리자만 · 기간 필수(1~30일) · 로그인한 회원에게만 · 출처 trial/admin 만(구매 검증과 구분) · 일반 회원 자가 부여 거절');
 
+    // 회원 찾기(관리자 페이지 '회원 · 체험 PRO', 2026-10-13)
+    await denied(kakao.call('adminFindUser', { q: '' }), /permission-denied/, '일반 회원은 회원 목록을 못 본다');
+    const recent = (await boss.call('adminFindUser', { q: '' })).users;
+    assert.ok(recent.some(u => u.uid === 'kakao:111') && recent.length <= 20, '비우면 최근 로그인 회원(최대 20)');
+    const byName = (await boss.call('adminFindUser', { q: '몽이작가' })).users;
+    assert.deepEqual([byName.length, byName[0].uid, byName[0].artistName, byName[0].pro.active, byName[0].pro.source], [1, 'kakao:111', '몽이작가', true, 'trial'], '작가명으로 찾고 체험 PRO 상태가 보인다');
+    assert.ok(byName[0].pro.until > Date.now(), '체험 끝나는 시각');
+    assert.equal((await boss.call('adminFindUser', { q: 'naver:NV-abc' })).users[0].provider, 'naver', '회원 번호로 찾기');
+    assert.deepEqual((await boss.call('adminFindUser', { q: '없는작가명' })).users, [], '없으면 빈 목록');
+    ok('회원 찾기: 관리자만 · 최근 로그인 20명 · 작가명·회원 번호로 찾기 · PRO 상태(출처·끝나는 시각) 표시');
+
     // 4) PRO 원본 백업 · 복원 · 사용량 ───────────────────────────────────────────────────────
     await uploadBytes(ref(kakao.st, `backups/kakao:111/blobs/${bsha}`), blob);
     await until(async () => (await adb.doc('users/kakao:111').get()).data().backupBytes === blob.length, '사용량');

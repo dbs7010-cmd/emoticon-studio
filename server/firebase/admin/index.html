@@ -35,6 +35,11 @@ th{color:var(--muted);font-weight:600}
   <div class="row"><button class="primary" id="login">구글로 로그인</button><button id="logout" hidden>로그아웃</button><span id="msg"></span></div>
 
   <section id="app" hidden>
+    <h2>회원 · 체험 PRO</h2>
+    <p class="muted">작가명이나 회원 번호로 찾아요. 비우고 찾으면 최근 로그인 20명이 나와요. 체험 PRO 는 1~30일, 구매 PRO 는 여기서 바꾸지 않아요.</p>
+    <div class="row"><input id="userQ" placeholder="작가명 또는 회원 번호(kakao:… / naver:… / google:…)" style="max-width:420px"><button id="findUser">찾기</button><span id="userMsg"></span></div>
+    <table><thead><tr><th>회원 번호</th><th>로그인</th><th>작가명</th><th>PRO</th><th>최근 로그인</th><th>체험 PRO</th></tr></thead><tbody id="users"></tbody></table>
+
     <h2>공모전</h2>
     <div class="row"><select id="contestPick" style="max-width:360px"></select><button id="newContest">새 공모전</button></div>
     <div class="form" id="contestForm" style="margin-top:12px">
@@ -97,8 +102,39 @@ onAuthStateChanged(auth, async user => {
   const claims = (await user.getIdTokenResult(true)).claims;
   $('who').textContent = `${user.email || user.uid} — ${claims.admin ? '관리자' : '관리자 권한 없음'}`;
   $('app').hidden = !claims.admin;
-  if (claims.admin) await loadContests();
+  if (claims.admin) { await loadContests(); await findUsers(); }
 });
+
+// ── 회원 · 체험 PRO(2026-10-13) — 작가명은 회원이 쓴 글이라 HTML 이 아니라 글자로만 넣는다 ──
+const day = ms => ms ? new Date(ms).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' }) : '-';
+const proText = p => !p.active ? '없음' : p.source === 'store' ? '구매' + (p.sandbox ? '(테스트)' : '') : (p.source === 'trial' ? '체험' : '운영자') + (p.until ? ' ~' + day(p.until) : '');
+async function findUsers() {
+  say('userMsg', '찾는 중…');
+  try {
+    const { users } = await call('adminFindUser', { q: $('userQ').value });
+    const body = $('users'); body.replaceChildren();
+    for (const u of users) {
+      const tr = document.createElement('tr');
+      for (const t of [u.uid, u.provider, u.artistName || '(작가명 전)', proText(u.pro), day(u.lastSignInAt)]) { const td = document.createElement('td'); td.textContent = t; tr.append(td); }
+      const td = document.createElement('td');
+      if (u.pro.active && u.pro.source === 'store') td.textContent = '구매 — 변경 안 함';
+      else {
+        const days = document.createElement('input'); days.type = 'number'; days.min = 1; days.max = 30; days.value = 7; days.style.width = '64px';
+        const give = document.createElement('button'); give.textContent = '일 체험 주기';
+        give.onclick = async () => { try { await call('adminSetPro', { uid: u.uid, active: true, source: 'trial', days: Number(days.value) }); say('userMsg', '체험 PRO 를 줬어요.'); await findUsers(); } catch (e) { say('userMsg', e.message, true); } };
+        td.append(days, give);
+        if (u.pro.active) {
+          const end = document.createElement('button'); end.textContent = '끝내기';
+          end.onclick = async () => { try { await call('adminSetPro', { uid: u.uid, active: false, source: u.pro.source === 'admin' ? 'admin' : 'trial' }); say('userMsg', 'PRO 를 끝냈어요.'); await findUsers(); } catch (e) { say('userMsg', e.message, true); } };
+          td.append(end);
+        }
+      }
+      tr.append(td); body.append(tr);
+    }
+    say('userMsg', users.length ? `${users.length}명` : '찾은 회원이 없어요.');
+  } catch (e) { say('userMsg', e.message, true); }
+}
+$('findUser').onclick = findUsers;
 
 const toLocal = ms => ms ? new Date(ms - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
 async function loadContests() {

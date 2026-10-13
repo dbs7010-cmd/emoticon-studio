@@ -316,6 +316,23 @@ exports.adminSetPro = onCall(async req => {
   return { ok: true, until };
 });
 
+// 회원 찾기(관리자, 2026-10-13): 작가명·회원 번호로 찾거나, 비우면 최근 로그인 20명. 체험 PRO 를 줄 대상을 고르는 데만 쓴다.
+// 돌려주는 것은 관리에 필요한 것뿐(회원 번호·로그인 회사·작가명·PRO 상태·가입/최근 로그인 시각).
+exports.adminFindUser = onCall(async req => {
+  adminOnly(req);
+  const q = String(req.data?.q || '').trim().slice(0, 140);
+  const show = d => { const u = d.data() || {}; const p = u.pro || {};
+    return { uid: d.id, provider: u.provider || d.id.split(':')[0], artistName: u.artistName || null,
+      pro: { active: proActive(u), source: p.source || 'none', until: p.until == null ? null : toMillis(p.until), sandbox: !!p.sandbox },
+      createdAt: toMillis(u.createdAt) || null, lastSignInAt: toMillis(u.lastSignInAt) || null }; };
+  if (!q) return { users: (await db.collection('users').orderBy('lastSignInAt', 'desc').limit(20).get()).docs.map(show) };
+  if (/^(kakao|naver|google):/.test(q)) { const d = await db.doc(`users/${q}`).get(); return { users: d.exists ? [show(d)] : [] }; }
+  const n = await db.doc(`artistNames/${artist.key(q)}`).get();
+  if (!n.exists) return { users: [] };
+  const d = await db.doc(`users/${n.data().uid}`).get();
+  return { users: d.exists ? [show(d)] : [] };
+});
+
 // 보관 기간: 매일 '지울 대상'을 세어 ops/retention 에 남긴다(지우지 않음). 실제 삭제는 RETENTION_AUTO_DELETE=true + 관리자 실행 때만.
 exports.retentionReport = onSchedule('every 24 hours', async () => { await retention.run({ db, bucket, proActive, FieldValue }); });
 exports.adminRetention = onCall(async req => {
