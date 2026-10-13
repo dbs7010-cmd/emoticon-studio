@@ -1,6 +1,6 @@
 emoti 이모티 — Google Play 기본 스토어 등록정보 (한국어 ko-KR)
-기준: 2026-10-13 개정 · vc4/vc5 부터 로그인 필수(카카오·네이버·구글) · 서버 연결 · PRO 구매는 여전히 닫힘 · 실제 구현과 대조함
-(이전 본 2026-10-03 은 git 이력에 있다. ★ 표시는 vc6 이후 빌드에 들어갈 기능 — 그 빌드를 올릴 때 함께 넣는다.)
+기준: 2026-10-13 2차 개정 · vc7 부터 PRO 구매 열림(pro_lifetime, 한 번 구매) · 로그인 필수(카카오·네이버·구글) · 채팅에서 써 보기·가이드북은 vc6 부터 · 실제 구현과 대조함
+(이전 본은 git 이력에 있다.)
 (이 파일의 [ ] 줄은 안내다. Console 에는 ── 사이의 본문만 붙여 넣는다.)
 
 [Console › 스토어 등록정보 › 앱 이름]  (9자 / 30자)
@@ -40,10 +40,10 @@ emoti 이모티는 내가 그린 캐릭터를 움직이는 이모티콘으로 �
 - 겹친 문구나 똑같은 그림처럼 손볼 곳을 미리 알려 줘요.
 - 대표 아이콘 같은 부가 이미지도 만들 수 있어요.
 
-■ 채팅에서 써 보기 ★
+■ 채팅에서 써 보기
 - 만든 이모티콘을 연습용 대화 속에 넣어 크기와 표정을 확인해요. 밝은 바탕·어두운 바탕 모두 볼 수 있어요(실제로 보내지지 않아요).
 
-■ 이용 가이드북 ★
+■ 이용 가이드북
 - 앱 사용법부터 이모티콘 제안 규격, 승인에 가까워지는 제작 팁까지 홈에서 바로 봐요.
 
 ■ 작품은 내 폰에, 계정은 간단하게
@@ -55,12 +55,13 @@ emoti 이모티는 내가 그린 캐릭터를 움직이는 이모티콘으로 �
 ■ 무료로도 한 세트를 끝까지
 워터마크 없이 그리고, 움직임을 붙이고, 파일로 내보낼 수 있어요. 광고가 없어요.
 
-■ PRO (한 번 구매)
+■ PRO (한 번 구매로 계속)
 - 움직임 14종 더(쓱 · 빼꼼 · 쿵 · 사라지기 · 폴짝 · 끄덕 · 꾸벅 · 들썩 · 살랑 · 빙글 · 부르르 · 덜덜 · 쾅 · 쭈욱)
 - 원하는 부분만 따로 움직이기 · 두 모습 번갈아
 - 여러 칸에 같은 움직임을 한 번에 넣기
 - PRO 브러시 20종
-※ 비공개 테스트 버전에서는 PRO 기능을 무료로 체험할 수 있어요. 정식 출시 시 일부 기능은 별도 구매가 필요합니다.
+- 클라우드 백업: 세트를 올려 두고 새 폰에서 되살리기
+※ 구독이 아니라 한 번 구매예요. 앱을 다시 설치하거나 폰을 바꿔도 '구매 복원'으로 다시 켜져요.
 
 문의: emoticon755@gmail.com
 ──
@@ -83,7 +84,7 @@ Instruction name: Sign in with Google (review account)
 ──
 The app requires sign-in. On the first screen tap "Google로 시작하기" (Sign in with Google) and sign in with the Google account provided in this form. Then enter any artist name (2–12 Korean/English letters or digits, e.g. "review01") and tap "완료" (Done). After that, every feature is available.
 
-In this closed test build, in-app purchase is turned off and PRO features are free to try for every user, including reviewers (tap the "PRO 체험" badge at the top right of the home screen for details). Kakao and Naver sign-in are also offered but are not needed for review.
+Drawing, the free motion effects, the chat preview, the guidebook and exporting are available without payment. PRO features are unlocked by a one-time in-app purchase (product "pro_lifetime", tap "PRO 보기" at the top right of the home screen); purchases are verified on our server with Google Play. Kakao and Naver sign-in are also offered but are not needed for review.
 ──
 
 [이전 본 — vc2·vc3(로그인 없음) 기준, 지금은 쓰지 않음]
@@ -110,5 +111,6 @@ In-app purchase is turned off in this build. Features marked "PRO" are free to t
 [그래픽 업로드 위치]
 - 앱 아이콘(512×512): play-icon-512.png  → 스토어 등록정보 › 그래픽 › 앱 아이콘
 - 그래픽 이미지(1024×500): feature-graphic-1024x500.png → 스토어 등록정보 › 그래픽 › 그래픽 이미지
-- 휴대전화 스크린샷(1080×1920, 4장): phone-01.png ~ phone-04.png → 스토어 등록정보 › 휴대전화 스크린샷 (번호 순서대로)
+- 휴대전화 스크린샷(1080×1920, 5장): phone-01.png ~ phone-05.png → 스토어 등록정보 › 휴대전화 스크린샷 (번호 순서대로, 기존 4장은 지우고 교체)
+  ※ 2026-10-13: 다섯 장 모두 에뮬레이터 실제 화면(흰 홈·움직이기·부분 움직이기·채팅에서 써 보기·보드)으로 새로 만들었다. ① 움직임 ② 홈 ③ 부분 움직이기(PRO) ④ 채팅 ⑤ 보드
   ※ 2026-10-03: 네 장 모두 에뮬레이터에서 실행한 앱의 실제 캡처로 교체했다(DRAFT 없음). phone-01.png ~ phone-04.png 를 그대로 올린다.

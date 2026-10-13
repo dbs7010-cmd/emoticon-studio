@@ -46,11 +46,13 @@ fs.writeFileSync(path.join(out, 'feature-graphic-1024x500.html'), feature);
 // ── 휴대전화 1080×1920 네 장 ──
 // 대체 렌더 PNG(2배, 500×960 창)에서 폰 화면 영역: x 110~890, y 116~1804 (780×1688)
 const draftSrc = path.join(root, 'verification/round45_45/after/png');
+// 2026-10-13 개편(흰 홈·공지 슬라이드·부분 움직임 안내·채팅에서 써 보기) — 다섯 장. 이전 네 장 구성은 git 이력.
 const slides = [
   { n: 1, title: '내 그림이 움직이는<br>이모티콘으로', sub: '그린 칸에 움직임을 골라 바로 미리 봐요', draft: 'motion-base' },
-  { n: 2, title: '그리고, 고치고,<br>내 캐릭터 완성', sub: '브러시 · 레이어 · 문구로 한 칸씩', draft: 'draw-base' },
-  { n: 3, title: '간단한 움직임부터<br>부분 움직임까지', sub: '무료 움직임 6가지', pro: '움직임 14가지 · 부분 움직임', draft: 'motion-parts' },
-  { n: 4, title: '한 세트로 모아,<br>파일로 내보내기', sub: '보드에서 한눈에 보고 파일 묶음으로', draft: 'set-detail' },
+  { n: 2, title: '이어 그리기부터<br>제안 준비까지 한눈에', sub: '내 세트 · 제안까지 남은 일 · 가이드북', draft: 'draw-base' },
+  { n: 3, title: '팔 · 귀만 따로<br>움직여요', sub: '레이어를 골라 회전 · 이동 · 크기', pro: '부분 움직임', draft: 'motion-parts' },
+  { n: 4, title: '대화 속에서<br>미리 써 봐요', sub: '밝은 바탕 · 어두운 바탕 모두 확인', draft: 'set-detail' },
+  { n: 5, title: '한 세트로 모아,<br>파일로 내보내기', sub: '보드에서 한눈에 보고 파일 묶음으로', draft: 'set-detail' },
 ];
 for (const s of slides) {
   let shot;
