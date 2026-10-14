@@ -17,7 +17,7 @@ function bitmap(){const c=document.createElement('canvas');c.width=W;c.height=H;
 function copyOf(b){const c=bitmap();c.getContext('2d').drawImage(b,0,0);return c;}
 function meta(l){return {id:l.id,name:l.name,visible:l.visible,opacity:l.opacity,x:l.x,y:l.y,scale:l.scale,rotation:l.rotation};}
 function trace(what,extra){if(!probe)return;send(Object.assign({type:'trace',t:Math.round(performance.now()),what:what,has:!!selection,dx:selection?Math.round(selection.dx):null,dy:selection?Math.round(selection.dy):null},extra||{}));}
-function state(){send({type:'state',undo:history.length>0,redo:future.length>0,dirty,smoothing,captionPicked,picking,preset,brushOpacity,stabilizer,activeHidden:!!(activeDraw()&&!activeDraw().visible),activeLayerId,activeReferenceId,caption,motion,pivotPick,pivotRole,selection:selection&&{box:selection.box,dx:selection.dx,dy:selection.dy,scale:selection.scale,rot:selection.rot,flip:selection.flip},loop:Number(loopSeconds().toFixed(3)),clipped:motionClips(),playing,layers:layers.map(meta),references:references.map(l=>({...meta(l),path:l.path}))});}
+function state(){syncFrame();send({type:'state',frames:frames?frames.map(f=>({id:f.id,duration:f.duration})):null,frameIdx,onion,undo:history.length>0,redo:future.length>0,dirty,smoothing,captionPicked,picking,preset,brushOpacity,stabilizer,activeHidden:!!(activeDraw()&&!activeDraw().visible),activeLayerId,activeReferenceId,caption,motion,pivotPick,pivotRole,selection:selection&&{box:selection.box,dx:selection.dx,dy:selection.dy,scale:selection.scale,rot:selection.rot,flip:selection.flip},loop:Number(loopSeconds().toFixed(3)),clipped:motionClips(),playing,layers:layers.map(meta),references:references.map(l=>({...meta(l),path:l.path}))});}
 // The words live in the exported picture, not in a separate text tool: one system font, centred,
 // shrunk until it fits, with a light outline so it stays readable over the drawing.
 //
@@ -115,6 +115,30 @@ function composite(g,l,d){if(!l.visible||(d&&d.hidden))return;g.save();g.globalA
 // 그림을 고치지 않는다. 장마다 세 가지 '살짝 비튼 사본' 중 하나를 번갈아 보여 줘, 선이 다시 그려진 듯 떨린다.
 // 비트는 법: 가로 띠마다 x 를, 세로 띠마다 y 를 부드러운 물결(사인 둘의 합)만큼 민다. 장(k)마다 물결의 위상이 다르다.
 // 세기 1·2·3 = 최대 1·1.8·2.8px(360 기준). 사본은 그림·떨림이 바뀔 때 버린다(boilCache 비움).
+// ── 애니메이션(장) ─────────────────────────────────────────────────────────────────────────────
+// frames: [{id, duration(초), layers}] — 2장 이상일 때만 있다. 첫 장이 대표 그림(저장 미리보기·완성 판단)이다.
+// layers 는 지금 장(frameIdx)의 레이어 배열이고, state() 가 그 배열을 frames 에 되돌려 둔다.
+// 장을 바꾸면 되돌리기 기록을 비운다 — 다른 장의 기록이 지금 장에 덮어써지지 않게.
+var frames=null,frameIdx=0,onion=true;
+function syncFrame(){if(frames&&frames[frameIdx])frames[frameIdx].layers=layers;}
+function animOn(){return !!(frames&&frames.length>1);}
+function animTotal(){return frames.reduce((t,f)=>t+f.duration,0);}
+function frameAtTime(t){const L=animTotal(),u=((t%L)+L)%L;let acc=0;for(const f of frames){acc+=f.duration;if(u<acc-1e-9)return f;}return frames[frames.length-1];}
+function layersAt(t){return animOn()?frameAtTime(t).layers:layers;}
+// 내보내기 한 장의 길이: 장 시간들의 최대공약수(0.1초 단위). 그래야 장이 바뀌는 순간이 프레임 경계와 맞는다.
+function animStep(){const g=(a,b)=>b?g(b,a%b):a;let d=0;for(const f of frames)d=g(d,Math.max(1,Math.round(f.duration*10)));return Math.max(1,d)/10;}
+function transformMotion(){return !!(motion&&(motion.preset||(motion.steps&&motion.steps.length)||(motion.parts&&motion.parts.length)||motion.alternate||motion.boil));}
+function cloneLayers(src){return src.map(l=>{const b=bitmap();b.getContext('2d').drawImage(l.bitmap,0,0);return Object.assign({},l,{bitmap:b});});}
+function blankLayers(src){return src.map(l=>Object.assign({},l,{bitmap:bitmap()}));}
+function flatOf(list,size){const c=document.createElement('canvas');c.width=c.height=size||W;const g=c.getContext('2d');if(size)g.scale(size/W,size/H);list.forEach(l=>composite(g,l));return c;}
+// 앞 장 비춰 보기: 앞 장을 옅은 보라 한 색으로 깐다(지금 장 선과 헷갈리지 않게). 재생 중·첫 장에서는 그리지 않는다.
+function drawOnion(g){
+ if(!animOn()||!onion||frameIdx<1||playing)return;
+ const c=flatOf(frames[frameIdx-1].layers),cg=c.getContext('2d');
+ cg.globalCompositeOperation='source-in';cg.fillStyle='#5B57D9';cg.fillRect(0,0,W,H);
+ g.save();g.globalAlpha=.32;g.drawImage(c,0,0);g.restore();
+}
+function useFrame(i){syncFrame();frameIdx=Math.max(0,Math.min(frames.length-1,i));layers=frames[frameIdx].layers;if(!layers.some(l=>l.id===activeLayerId))activeLayerId=layers[0]?.id||'';activeDrawLayerId=activeLayerId;history=[];future=[];extentCache=null;boilCache.clear();}
 var boilCache=new Map(),BOIL_FPS=8;
 function boilSteps(L){return 3*Math.max(1,Math.round(L*BOIL_FPS/3));}
 function boilAt(t){if(!motion||!motion.boil)return null;const L=loopSeconds(),n=boilSteps(L),u=((t/L)%1+1)%1;return Math.floor(u*n)%3;}
@@ -129,7 +153,7 @@ function boiled(l,k){
  for(let x=0;x<W;x+=band)og.drawImage(mid,x,0,band,H,x,wave(x,ph[1],ph[0]),band,H);
  boilCache.set(key,{src:l.bitmap,out});return out;
 }
-function render(t){ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));layers.forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
+function render(t){ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));if(t===undefined)drawOnion(ctx);(t===undefined?layers:layersAt(t)).forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
@@ -377,6 +401,7 @@ function fillAt(spot){
 // Everything runs on one loop of LOOP seconds and every component completes a whole number of
 // cycles inside it, so the loop joins back to its own first frame with no seam.
 function loopSeconds(){
+ if(animOn())return Math.max(.2,animTotal());
  if(!motion)return 1;
  // V2 다중 동작: 한 바퀴 = 단계 길이 × 반복의 합(최대 3초 — 내보내기 24프레임 안에서 끊기지 않게).
  if(motion.steps&&motion.steps.length)return Math.max(.2,Math.min(3,stepTotal(motion.steps)));
@@ -629,15 +654,16 @@ function encodeWebp(frames,delayMs,loops,quality){
 // wantSheets: 공식 도구(WebPAnimator)에 넣을 360x360 PNG 프레임. 컷 하나당 최대 24장이라
 // 다리를 건너오는 양이 크다. 그래서 실제로 필요할 때(내보낼 때)만 만든다.
 function buildLoop(fps,wantSheets){
- boilCache.clear();
+ boilCache.clear();syncFrame();
  fps=Math.max(6,Math.min(24,fps||12));
  const L=loopSeconds();
+ if(animOn()&&!transformMotion())fps=Math.min(24,1/animStep());
  const count=Math.max(2,Math.min(MAX_FRAMES,Math.round(L*fps)));
  fps=count/L;
  const out=[];
  for(let i=0;i<count;i++){
   const frame=bitmap(),g=frame.getContext('2d'),t=L*i/count;
-  layers.forEach(l=>composite(g,l,motion?deltaFor(l,t):null));
+  layersAt(t).forEach(l=>composite(g,l,motion?deltaFor(l,t):null));
   drawCaption(g,motion&&motion.captionMoves?wholeDelta(t):null);
   out.push(frame);
  }
@@ -1236,7 +1262,9 @@ async function command(m){try{
  if(m.type==='init'){
    loading=true;const input=m.layers||[{...defaults('draw-1','그림 1'),data:m.drawing}];
    if(m.color)color=m.color;if(m.brush)applyBrush(m.brush);if(Number.isFinite(m.penWidth))penWidth=m.penWidth;if(Number.isFinite(m.eraserWidth))eraserWidth=m.eraserWidth;
-   layers=await Promise.all(input.map(l=>loadLayer(l)));references=await Promise.all((m.references||[]).map(l=>loadLayer(l)));activeLayerId=m.activeLayerId||'draw-1';if(!layers.some(l=>l.id===activeLayerId))activeLayerId=layers[0]?.id||'';activeDrawLayerId=activeLayerId;activeReferenceId=null;wet=null;wetLayer=null;picking=false;caption=m.caption||null;motion=m.motion||motion;history=[];future=[];dirty=false;loading=false;render();state();send({type:'initialized',id:m.id});
+   layers=await Promise.all(input.map(l=>loadLayer(l)));frames=null;frameIdx=0;
+   if(Array.isArray(m.frames)&&m.frames.length>1){frames=await Promise.all(m.frames.map(async f=>({id:f.id,duration:f.duration,layers:await Promise.all(f.layers.map(l=>loadLayer(l)))})));layers=frames[0].layers;}
+   references=await Promise.all((m.references||[]).map(l=>loadLayer(l)));activeLayerId=m.activeLayerId||'draw-1';if(!layers.some(l=>l.id===activeLayerId))activeLayerId=layers[0]?.id||'';activeDrawLayerId=activeLayerId;activeReferenceId=null;wet=null;wetLayer=null;picking=false;caption=m.caption||null;motion=m.motion||motion;history=[];future=[];dirty=false;loading=false;render();state();send({type:'initialized',id:m.id});
  }
  if(m.type==='tool'){if(selection&&m.tool!=='select')applySelection(false,'toolChange:'+m.tool);tool=m.tool;}
  if(m.type==='brush')brush=m.brush;
@@ -1355,7 +1383,18 @@ async function command(m){try{
  if(m.type==='play'){startPlaying();}
  if(m.type==='stop'){stopPlaying();render();state();}
  if(m.type==='frames'){const was=playing;stopPlaying();send({type:'frames',id:m.id,gif:buildLoop(m.fps,!!m.sheets)});if(was)startPlaying();else{render();state();}}
- if(m.type==='save'){dry();if(selection)applySelection(false,'save');saving=true;saveToken=m.token===undefined?null:m.token;const out=bitmap(),g=out.getContext('2d');layers.forEach(l=>composite(g,l));drawCaption(g);send({type:'save',token:saveToken,dirty,data:out.toDataURL('image/png'),metrics:metrics(out),activeLayerId,caption,motion,gif:(m.gif&&motion)?buildLoop(12,false):undefined,layers:layers.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')})),references:references.map(l=>({...meta(l),path:l.path}))});}
+ if(m.type==='save'){dry();if(selection)applySelection(false,'save');syncFrame();saving=true;saveToken=m.token===undefined?null:m.token;const first=animOn()?frames[0].layers:layers;const out=bitmap(),g=out.getContext('2d');first.forEach(l=>composite(g,l));drawCaption(g);send({type:'save',token:saveToken,dirty,data:out.toDataURL('image/png'),metrics:metrics(out),activeLayerId,caption,motion,gif:(m.gif&&(motion||animOn()))?buildLoop(12,false):undefined,layers:first.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')})),
+   frames:animOn()?frames.map((f,i)=>({id:f.id,duration:f.duration,layers:i===0?null:f.layers.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')}))})):undefined,references:references.map(l=>({...meta(l),path:l.path}))});}
+ // ── 장 명령 ──
+ if(m.type==='animStart'){if(animOn())return;if(selection)applySelection(false,'frame');const d=Number.isFinite(m.duration)?m.duration:.3;frames=[{id:'f1',duration:d,layers},{id:'f2',duration:d,layers:cloneLayers(layers)}];frameIdx=0;useFrame(1);dirty=true;stopPlaying();render();state();}
+ if(m.type==='frameAdd'&&animOn()){if(frames.length>=MAX_FRAMES)return;if(selection)applySelection(false,'frame');syncFrame();const src=frames[frameIdx];let n=frames.length+1;while(frames.some(f=>f.id==='f'+n))n++;frames.splice(frameIdx+1,0,{id:'f'+n,duration:src.duration,layers:m.blank?blankLayers(src.layers):cloneLayers(src.layers)});useFrame(frameIdx+1);dirty=true;stopPlaying();render();state();}
+ if(m.type==='frameSelect'&&animOn()){if(selection)applySelection(false,'frame');useFrame(m.index|0);stopPlaying();render();state();}
+ if(m.type==='frameDelete'&&animOn()){syncFrame();const i=Number.isFinite(m.index)?m.index:frameIdx;frames.splice(i,1);if(frames.length<2){layers=frames[0].layers;frames=null;frameIdx=0;history=[];future=[];}else useFrame(Math.min(i,frames.length-1));dirty=true;stopPlaying();render();state();}
+ if(m.type==='frameDuration'&&animOn()){const f=frames[Number.isFinite(m.index)?m.index:frameIdx];if(f){f.duration=Math.max(.1,Math.min(2,Math.round(m.duration*10)/10));dirty=true;state();}}
+ if(m.type==='frameMove'&&animOn()){syncFrame();const a=m.from|0,b=m.to|0;if(b<0||b>=frames.length||a===b)return;const cur=frames[frameIdx];const [x]=frames.splice(a,1);frames.splice(b,0,x);frameIdx=frames.indexOf(cur);dirty=true;render();state();}
+ if(m.type==='animOff'&&animOn()){syncFrame();layers=frames[0].layers;frames=null;frameIdx=0;history=[];future=[];dirty=true;stopPlaying();render();state();}
+ if(m.type==='onion'){onion=m.on!==false;render();state();}
+ if(m.type==='frameThumbs'&&animOn()){syncFrame();const size=m.size||64;send({type:'frameThumbs',thumbs:frames.map(f=>({id:f.id,data:flatOf(f.layers,size).toDataURL('image/png')}))});}
  // 번호가 다른 응답(먼저 보낸 저장의 뒤늦은 대답)은 흘려보낸다. 지금 저장의 대답만 상태를 바꾼다.
  if(m.type==='saved'){if(stale(m))return;saving=false;saveToken=null;dirty=false;state();}
  if(m.type==='saveFailed'){if(stale(m))return;saving=false;saveToken=null;state();}

@@ -1,5 +1,5 @@
 import { KAKAO_STATIC_SPEC as SPEC } from './constants/kakao-spec';
-import { MOTION_PRESETS } from './types';
+import { MOTION_PRESETS, type PainterWork, ANIM_FREE_FRAMES, ANIM_MAX_FRAMES } from './types';
 import { isProPreset, STEP_EXCLUDED, STEP_LIMITS } from './motion-math';
 import type { Check, LocalImage, Motion, Project, Slot, Store } from './types';
 
@@ -36,6 +36,8 @@ export function imagePaths(project: Project): Set<string> {
     add(slot.submitImage);
     slot.work?.layers.forEach(layer => add(layer.image));
     slot.work?.references.forEach(reference => add(reference.image));
+    // 애니메이션 장의 그림 파일. 빠뜨리면 정리할 때 '아무도 안 쓰는 파일'로 지워진다.
+    slot.work?.frames?.forEach(frame => frame.layers.forEach(layer => add(layer.image)));
   }
   return paths;
 }
@@ -81,7 +83,10 @@ export function previousDrawn(project: Project, exclude: number): Slot | undefin
 export const captionText = (slot: Slot): string => slot.work?.caption?.text.trim() ?? '';
 // A cut moves when it carries any movement at all. Absent motion is the still cut it always was.
 export const isAnimated = (slot: Slot): boolean =>
-  !!(slot.motion && (slot.motion.preset || slot.motion.parts?.length || slot.motion.alternate || slot.motion.steps?.length || slot.motion.boil));
+  !!(slot.motion && (slot.motion.preset || slot.motion.parts?.length || slot.motion.alternate || slot.motion.steps?.length || slot.motion.boil))
+  || (slot.work?.frames?.length ?? 0) > 1;
+// 애니메이션 장 수가 무료 범위를 넘는가(PRO 판단).
+export const usesProFrames = (work?: PainterWork): boolean => (work?.frames?.length ?? 0) > ANIM_FREE_FRAMES;
 export const setIsAnimated = (project: Project): boolean => project.slots.some(isAnimated);
 // Which movements are PRO. Derived from the motion itself so a saved effect can always be
 // replayed and re-exported, whatever the subscription says today.
@@ -183,6 +188,19 @@ export function parseStore(raw: string): Store {
         if (caption !== undefined && (typeof caption.text !== 'string' || !['top', 'bottom'].includes(caption.place) || typeof caption.color !== 'string')) throw new Error('문구 데이터가 손상되었습니다.');
         // 글씨체는 선택 항목이다(45.6차): 없으면 기본, 있으면 아는 값이어야 한다. 옛 저장본은 이 줄을 그냥 지나간다.
         if (caption?.style !== undefined && !['basic', 'serif', 'thick'].includes(caption.style)) throw new Error('문구 데이터가 손상되었습니다.');
+        if (s.work.frames !== undefined) {
+          const fr = s.work.frames;
+          if (!Array.isArray(fr) || fr.length < 2 || fr.length > ANIM_MAX_FRAMES) throw new Error('애니메이션 장 데이터가 손상되었습니다.');
+          if (new Set(fr.map(f => f.id)).size !== fr.length) throw new Error('애니메이션 장이 중복되었습니다.');
+          for (const f of fr) {
+            if (typeof f.id !== 'string' || !Number.isFinite(f.duration) || f.duration < .1 || f.duration > 2) throw new Error('애니메이션 장 시간이 손상되었습니다.');
+            if (!Array.isArray(f.layers) || f.layers.length < 1 || f.layers.length > 4) throw new Error('애니메이션 장 레이어가 손상되었습니다.');
+            for (const layer of f.layers) {
+              if (typeof layer.id !== 'string' || typeof layer.name !== 'string' || typeof layer.visible !== 'boolean' || ![layer.opacity, layer.x, layer.y, layer.scale, layer.rotation].every(Number.isFinite)) throw new Error('애니메이션 장 레이어가 손상되었습니다.');
+              validateImage(layer.image);
+            }
+          }
+        }
         const layers = [...s.work.layers, ...s.work.references];
         const ids = new Set(layers.map(l => l.id));
         if (ids.size !== layers.length || !ids.has(s.work.activeLayerId)) throw new Error('활성 레이어 데이터가 손상되었습니다.');

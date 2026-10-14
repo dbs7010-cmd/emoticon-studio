@@ -434,11 +434,12 @@ async function echoReferences(scene) {
   const engine = fs.readFileSync('src/painter/canvas-html.ts', 'utf8');
   const saveLine = engine.split('\n').find(l => l.indexOf("m.type==='save'") >= 0);
   assert.ok(saveLine, '엔진의 저장 줄');
-  const saveBody = saveLine.slice(saveLine.indexOf('const out=bitmap()'), saveLine.indexOf('layers:layers.map'));
-  assert.ok(/layers\.forEach\(l=>composite\(g,l\)\)/.test(saveBody), '저장 그림은 그림 레이어만 합친다');
+  const saveBody = saveLine.slice(saveLine.indexOf('const out=bitmap()'), saveLine.indexOf(',layers:'));
+  // 애니메이션(2026-10-15)이면 저장 그림은 첫 장(first)의 그림 레이어다.
+  assert.ok(/(layers|first)\.forEach\(l=>composite\(g,l\)\)/.test(saveBody), '저장 그림은 그림 레이어만 합친다');
   assert.ok(!/references\.forEach/.test(saveBody), '저장 그림에 참고(밑그림)를 합치지 않는다');
   const loop = engine.slice(engine.indexOf('function buildLoop'), engine.indexOf('const gif=encodeGif'));
-  assert.ok(/layers\.forEach\(l=>composite\(g,l,/.test(loop) && !/references\.forEach/.test(loop), '움직이는 파일도 그림 레이어만 담는다');
+  assert.ok(/layers(At\(t\))?\.forEach\(l=>composite\(g,l,/.test(loop) &&!/references\.forEach/.test(loop), '움직이는 파일도 그림 레이어만 담는다');
   // 작품 썸네일은 저장된 완성 그림을 쓴다. 저장 그림에 밑그림이 없으므로 썸네일에도 없다.
   const appSrc = fs.readFileSync('App.tsx', 'utf8');
   assert.ok(appSrc.indexOf('(cover.motionImage ?? cover.finalImage)!.path') >= 0, '작품 썸네일은 저장된 완성 그림을 쓴다(참고를 따로 얹지 않는다)');

@@ -133,5 +133,8 @@ export function savePainterWork(payload: PainterExport, references: LocalImage[]
     return { ...transform, image };
   });
   const caption = payload.caption?.text.trim() ? payload.caption : undefined;
-  return { finalImage: saveDrawing(payload.data, payload.metrics), work: { version: 1, activeLayerId: payload.activeLayerId, layers, references: refs, caption } };
+  // 애니메이션 장: 첫 장은 위에서 저장한 layers 를 그대로 가리키고(파일 중복 없음), 나머지 장은 레이어마다 파일로 남긴다.
+  const frames = payload.frames && payload.frames.length > 1 ? payload.frames.map(f => ({ id: f.id, duration: f.duration,
+    layers: f.layers === null ? layers : f.layers.map(({ data, ...transform }) => { const { metrics: _m, ...image } = saveDrawing(data, payload.metrics); return { ...transform, image }; }) })) : undefined;
+  return { finalImage: saveDrawing(payload.data, payload.metrics), work: { version: 1, activeLayerId: payload.activeLayerId, layers, references: refs, caption, ...(frames ? { frames } : {}) } };
 }

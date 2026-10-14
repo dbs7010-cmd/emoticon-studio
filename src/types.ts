@@ -14,13 +14,17 @@ export const CAPTION_STYLES: { key: CaptionStyle; title: string }[] = [
   { key: 'basic', title: '기본' }, { key: 'serif', title: '또박' }, { key: 'thick', title: '도톰' },
 ];
 export type Caption = { text: string; place: 'top' | 'bottom'; color: string; style?: CaptionStyle; dx?: number; dy?: number; scale?: number; rot?: number };
-export type PainterWork = { version: 1; activeLayerId: string; layers: WorkLayer[]; references: WorkLayer[]; caption?: Caption };
+// 애니메이션(2026-10-15): 장마다 그림 전체를 따로 그린다. 2장 이상일 때만 있고, 첫 장의 레이어는 layers 와 같다(대표 그림).
+// duration 은 그 장을 보여 주는 초(0.1~2). 무료 3장 · PRO 24장(카카오 규격 상한).
+export type AnimFrame = { id: string; duration: number; layers: WorkLayer[] };
+export const ANIM_FREE_FRAMES = 3, ANIM_MAX_FRAMES = 24;
+export type PainterWork = { version: 1; activeLayerId: string; layers: WorkLayer[]; references: WorkLayer[]; caption?: Caption; frames?: AnimFrame[] };
 export type MotionLoop = { count: number; fps: number; loop: number; delayMs: number; data: string; bytes: number; droppedColours: number; clipped: boolean;
   // 카카오가 받는 형식. 기기가 WebP 인코딩을 못 하면 null 이고, 그때는 GIF 만 남는다.
   webp?: string | null; webpBytes?: number;
   // 공식 도구에 넣을 360×360 PNG 프레임. 순서가 재생 순서다.
   sheets?: string[] };
-export type PainterExport = { data: string; metrics: Metrics; layers: (LayerTransform & { data: string })[]; references: (LayerTransform & { path: string })[]; activeLayerId: string; caption?: Caption; motion?: Motion | null; gif?: MotionLoop };
+export type PainterExport = { frames?: { id: string; duration: number; layers: (LayerTransform & { data: string })[] | null }[]; data: string; metrics: Metrics; layers: (LayerTransform & { data: string })[]; references: (LayerTransform & { path: string })[]; activeLayerId: string; caption?: Caption; motion?: Motion | null; gif?: MotionLoop };
 // Motion is stored beside the drawing, never baked into it: editing a cut keeps its movement,
 // and a cut with no motion is exactly the still cut it always was.
 // 45.34: 셋에서 여섯으로. 기존 셋의 id 는 그대로 둔다 — 저장된 칸이 읽히지 않으면 안 된다.

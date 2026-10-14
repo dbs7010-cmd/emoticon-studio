@@ -313,7 +313,7 @@ const heights = [568, 640, 720, 800, 900, 1000];
   assert.deepEqual(aidNames(), [1, 1, 1, 1, 1], '보조 셋과 되돌리기·다시 실행이 모두 있다');
   assert.equal(labelled('저장').length, 1, '윗줄에는 저장 하나');
   assert.equal(rowsIn(headOf()), 1, '412: 재기 전에는 한 줄');
-  assert.equal(headOf().findAll(n => n.props.accessibilityLabel === '되돌리기').length, 1, '412: 되돌리기는 모드 줄(참고 왼쪽)');
+  assert.equal(headOf().findAll(n => n.props.accessibilityLabel === '되돌리기').length, 0, '412: 되돌리기는 머리줄로(2026-10-15 탭 셋 — 모드 줄이 두 줄로 갈려 캔버스가 줄지 않게)');
   await measure(400, 140, 230);
   assert.equal(rowsIn(headOf()), 1, '412: 들어가면 한 줄을 지킨다');
   const tapBefore = ['참고', '레이어', '문구'].map(l => flat(labelled(l)[0].props.style).minHeight);

@@ -19,12 +19,15 @@ export const MotionBaker = forwardRef<Baker>(function MotionBaker(_, ref) {
   useImperativeHandle(ref, () => ({
     bake: async (work: PainterWork, motion: Motion, sheets = false) => {
       if (!ready.current) throw new Error('움직임 만들기가 준비 중입니다.');
-      const layers = await Promise.all(work.layers.map(async ({ image, ...rest }) => ({ ...rest, data: image ? await dataUrl(image) : undefined })));
+      const decode = (list: PainterWork['layers']) => Promise.all(list.map(async ({ image, ...rest }) => ({ ...rest, data: image ? await dataUrl(image) : undefined })));
+      const layers = await decode(work.layers);
+      // 애니메이션 장도 함께 보낸다(첫 장 = layers).
+      const frames = work.frames && work.frames.length > 1 ? await Promise.all(work.frames.map(async (f, i) => ({ id: f.id, duration: f.duration, layers: i === 0 ? layers : await decode(f.layers) }))) : undefined;
       const id = ++sequence.current;
       return new Promise<MotionLoop>((resolve, reject) => {
         const timer = setTimeout(() => { pending.current.delete(id); reject(new Error('움직임 만들기 시간 초과')); }, 60000);
         pending.current.set(id, { stage: 'init', sheets, resolve, reject, timer });
-        send({ type: 'init', id, layers, references: [], activeLayerId: work.activeLayerId, caption: work.caption ?? null, motion });
+        send({ type: 'init', id, layers, frames, references: [], activeLayerId: work.activeLayerId, caption: work.caption ?? null, motion });
       });
     },
   }));

@@ -16,7 +16,7 @@ import { ExtraComposer, placeInFrame, type Composer } from './src/components/ext
 import { Painter, CATALOG, type CopiedWork, type Tool } from './src/painter/painter';
 import { isProPreset } from './src/motion-math';
 import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC as SPEC, STAGES, WEBP_TOOL_RULE, WEBP_ANIMATOR_URL, REQUIRED_EXTRAS } from './src/constants/kakao-spec';
-import { TRASH_DAYS, inTrash, trashExpired, captionText, createProject, doneCount, usesPro, droppedImagePaths, setIssues, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
+import { TRASH_DAYS, inTrash, trashExpired, captionText, createProject, doneCount, usesPro, droppedImagePaths, setIssues, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated, DEFAULT_MOTION } from './src/project';
 import { cutFile, deleteLocalImages, exportUri, listExports, migrateExports, removeExports, imageUri, inspectStore, localFile, loadStore, readPickedFile, saveStore, type StoreReport } from './src/services/storage';
 import { restoreBackup, writeBackup } from './src/services/backup';
 import { isFullBackup, restoreFullBackup, writeFullBackup } from './src/services/full-backup';
@@ -743,11 +743,12 @@ function Studio() {
   async function bakeHandoff(target: Project): Promise<{ handoff: HandoffFrames[]; failed: number[] }> {
     const handoff: HandoffFrames[] = [], failed: number[] = [];
     // 칸마다 차례로 만든다. 진행 수를 그대로 보여 준다(45.38) — 예전에는 '만드는 중…' 한 줄뿐이라 멈춘 것처럼 보였다.
-    const targets = target.slots.filter(slot => slot.work && slot.motion && isAnimated(slot));
+    const targets = target.slots.filter(slot => slot.work && (slot.motion || slot.work.frames) && isAnimated(slot));
     for (const [index, slot] of targets.entries()) {
       setBusy(`움직이는 칸 프레임 만드는 중 · ${index + 1}/${targets.length}칸`);
       try {
-        const loop = await baker.current!.bake(slot.work!, slot.motion!, true);
+        // 장만 있고 효과가 없는 칸은 빈 움직임으로 굽는다(엔진이 이전 칸의 움직임을 이어 쓰지 않게 늘 무언가를 보낸다).
+        const loop = await baker.current!.bake(slot.work!, slot.motion ?? DEFAULT_MOTION, true);
         const frames = (loop.sheets ?? []).map(decodeDataUrl);
         if (frames.length) handoff.push({ number: slot.number, frames, delayMs: loop.delayMs });
         else failed.push(slot.number);
@@ -2045,7 +2046,8 @@ function Studio() {
         // and a failed encode never replaces a good loop with nothing.
         const motion = payload.motion ?? undefined;
         let motionImage = latest.motionImage, submitImage = latest.submitImage;
-        if (!motion) { motionImage = undefined; submitImage = undefined; }
+        // 움직임 효과가 없어도 애니메이션 장이 있으면 움직이는 칸이다(2026-10-15).
+        if (!motion && !work.frames) { motionImage = undefined; submitImage = undefined; }
         else if (payload.gif?.data) {
           try { motionImage = saveMotionLoop(payload.gif.data); } catch (e) { console.warn(e); setNotice('움직이는 파일을 만들지 못했어요. 그림은 저장했어요.'); }
           if (payload.gif.webp) { try { submitImage = saveSubmitLoop(payload.gif.webp); } catch (e) { console.warn(e); submitImage = undefined; setNotice('WebP를 만들지 못했어요. 그림과 움직임은 저장했어요.'); } }

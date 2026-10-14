@@ -61,6 +61,24 @@ assert.doesNotThrow(() => parseStore(withMotion(boilOnly)), '떨림만 있는 �
 assert.throws(() => parseStore(withMotion({ ...boilOnly, boil: 7 })), /떨림/, '떨림 세기 범위');
 { const p = base(); p.slots[0].motion = boilOnly; assert.equal(isAnimated(p.slots[0]), true, '떨림만 있어도 움직이는 칸'); }
 assert.equal(usesPro(boilOnly), false, '떨림은 무료');
+// 애니메이션 장(2026-10-15): 저장 검증 · 그림 파일 소유 · 움직이는 칸 · 무료 3장
+{
+  const { imagePaths, usesProFrames } = loader()('src/project.ts');
+  const layer = (id, path) => ({ id, name: id, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0, image: { path, width: 360, height: 360 } });
+  const withFrames = frames => { const p = base(); p.slots[0].work = { version: 1, activeLayerId: 'draw-1', layers: [layer('draw-1', 'a.png')], references: [], frames }; return p; };
+  const good = [{ id: 'f1', duration: .3, layers: [layer('draw-1', 'a.png')] }, { id: 'f2', duration: .2, layers: [layer('draw-1', 'b.png')] }];
+  const json = p => JSON.stringify({ version: 1, revision: 1, projects: [p] });
+  assert.doesNotThrow(() => parseStore(json(withFrames(good))), '옳은 장 목록은 저장된다');
+  assert.throws(() => parseStore(json(withFrames([good[0]]))), /장 데이터/, '장은 2장 이상');
+  assert.throws(() => parseStore(json(withFrames([good[0], { ...good[1], duration: 5 }]))), /장 시간/, '장 시간 범위');
+  assert.throws(() => parseStore(json(withFrames([good[0], { ...good[1], id: 'f1' }]))), /중복/, '장 id 중복');
+  assert.throws(() => parseStore(json(withFrames(Array.from({ length: 25 }, (_, i) => ({ ...good[1], id: 'f' + i }))))), /장 데이터/, '25장은 거부(24장 상한)');
+  const p = withFrames(good);
+  assert.ok(imagePaths(p).has('b.png'), '둘째 장 그림 파일도 이 세트의 것이다(정리 때 지우지 않는다)');
+  assert.equal(isAnimated(p.slots[0]), true, '움직임 효과 없이 장만 있어도 움직이는 칸');
+  assert.equal(usesProFrames(p.slots[0].work), false, '2장은 무료');
+  assert.equal(usesProFrames({ ...p.slots[0].work, frames: [...good, { ...good[1], id: 'f3' }, { ...good[1], id: 'f4' }] }), true, '4장부터 PRO');
+}
 
 // 4) PRO · 움직이는 칸
 assert.equal(usesPro(ok), true, '단계가 있으면 PRO 움직임');

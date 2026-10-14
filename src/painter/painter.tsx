@@ -7,7 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { canvasHtml } from './canvas-html';
 import { alphaOf, hsv, hsvOf, light, parseHex, toHex, typedHex, withAlpha } from './color';
-import { Action, Dialog, Elev, EmptyState, IconButton, ProTag, Range, Segmented, SheetHeader, T, TabBar, userMessage, Pop, Font, Card, Paper, Glyph, SaveToast } from '../components/ui';
+import { Action, Dialog, Elev, EmptyState, IconButton, ProTag, Range, Segmented, SheetHeader, T, TabBar, userMessage, Pop, Font, Card, Paper, Glyph, SaveToast, Clay } from '../components/ui';
 import { ASSET_SLOTS, BUILTIN_REFERENCES } from '../design/asset-slots';
 import { MotionPanel, Toggle, layerLabel } from './motion-panel';
 import { KAKAO_STATIC_SPEC } from '../constants/kakao-spec';
@@ -18,6 +18,7 @@ import { imageUri } from '../services/storage';
 import { CAPTION_STYLES } from '../types';
 import type { BrushSettings, Caption, CaptionStyle, LayerTransform, LocalImage, Motion, PainterExport, QA, SavedMotion, Slot } from '../types';
 
+import { AnimPanel, type AnimRecipe } from './anim-panel';
 type Scene = {
   undo: boolean;
   redo: boolean;
@@ -35,6 +36,9 @@ type Scene = {
   clipped?: boolean;
   playing?: boolean;
   picking?: boolean;
+  frames?: { id: string; duration: number }[] | null;   // 애니메이션 장(2장 이상일 때만)
+  frameIdx?: number;
+  onion?: boolean;
   layers: LayerTransform[];
   references: (LayerTransform & { path: string })[];
 };
@@ -528,7 +532,11 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const slowTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (markTimer.current) clearTimeout(markTimer.current); if (slowTimer.current) clearTimeout(slowTimer.current); }, []);
   const markSaved = () => { setSaveMark('done'); if (markTimer.current) clearTimeout(markTimer.current); markTimer.current = setTimeout(() => setSaveMark(null), 1200); };
-  const [tab, setTab] = useState<'draw' | 'motion'>('draw');
+  const [tab, setTab] = useState<'draw' | 'motion' | 'anim'>('draw');
+  // 애니메이션 탭: 장 썸네일 · 묶음을 고른 뒤 한 줄 안내 · 미리보기 재생 중인지
+  const [frameThumbs, setFrameThumbs] = useState<Record<string, string>>({});
+  const [animHint, setAnimHint] = useState<string | null>(null);
+  const [animPlaying, setAnimPlaying] = useState(false);
   const [proSheet, setProSheet] = useState(false);
   const pendingAction = useRef<SaveAction | null>(null), proHandled = useRef(false);
   const [captionOpen, setCaptionOpen] = useState(false), [captionDraft, setCaptionDraft] = useState(''), [captionPlace, setCaptionPlace] = useState<Caption['place']>('bottom');
@@ -611,7 +619,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     if (drawRail) { ease(); setDrawRail(false); return true; }
     if (refRail) { ease(); setRefRail(false); return true; }
     if (refWindow !== 'closed') { ease(); setRefWindow('closed'); return true; }
-    if (tab === 'motion') { switchTab('draw'); return true; }
+    if (tab !== 'draw') { switchTab('draw'); return true; }
     return false;                                            // 화면을 벗어나는 것은 아래 useEffect 가 맡는다
   };
   useEffect(() => {
@@ -656,13 +664,17 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         return savedRef ?? { ...transform('ref-' + image.path, `참고 ${i + 1}`), visible: planned, opacity: .3, image };
       });
       const decodedLayers = await Promise.all(layers.map(async l => ({ ...l, data: 'image' in l && l.image ? await dataUrl(l.image) : undefined })));
+      // 애니메이션 장(첫 장 = 위 레이어).
+      const savedFrames = slot.work?.frames && slot.work.frames.length > 1 ? slot.work.frames : null;
+      const decodedFrames = savedFrames ? await Promise.all(savedFrames.map(async (f, i) => ({ id: f.id, duration: f.duration,
+        layers: i === 0 ? decodedLayers : await Promise.all(f.layers.map(async l => ({ ...l, data: l.image ? await dataUrl(l.image) : undefined }))) }))) : undefined;
       const decodedRefs = await Promise.all(refs.map(async l => ({ ...l, path: l.image!.path, data: await dataUrl(l.image!) })));
       // The tool bar and the canvas must start on the same colour and the same widths. Sending
       // them with init is what keeps the set's last colour true on the next cut instead of only
       // looking selected.
       // 저장된 움직임도 함께 보낸다. 빠뜨리면 다시 연 칸의 캔버스에 움직임이 없고, 그 상태로 저장하는 순간
       // 저장 파일의 움직임과 움직이는 파일이 조용히 지워진다(재실행 뒤 '저장'만 눌러도).
-      if (!canceled) send({ type: 'init', layers: decodedLayers, references: decodedRefs, activeLayerId: slot.work?.activeLayerId, caption: slot.work?.caption ?? null, motion: slot.motion ?? null, color, penWidth, eraserWidth });
+      if (!canceled) send({ type: 'init', layers: decodedLayers, frames: decodedFrames, references: decodedRefs, activeLayerId: slot.work?.activeLayerId, caption: slot.work?.caption ?? null, motion: slot.motion ?? null, color, penWidth, eraserWidth });
     })().catch(e => Alert.alert('작업을 불러오지 못했어요', userMessage(e)));
     return () => { canceled = true; };
   }, [ready]);
@@ -810,7 +822,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 장을 지웠다 다시 추가해도 이미 쓰는 번호와 겹치지 않게, 비어 있는 가장 작은 번호를 쓴다(45.11차).
   function addDrawing() { let n = 1; while (scene.layers.some(l => l.id === 'draw-' + n)) n++; send({ type: 'addLayer', id: 'draw-' + n, name: `그림 ${n}` }); }
   // The canvas holds the movement; this only asks it to change and to play while the tab is open.
-  function switchTab(next: 'draw' | 'motion') {
+  function switchTab(next: 'draw' | 'motion' | 'anim') {
     // 고르던 것이 남아 있으면 **탭을 넘기기 전에 내려놓는다.** 그냥 넘기면 점선·손잡이가 움직이기
     // 화면에 그대로 남고, 미리보기와 만들어지는 파일에도 섞인다. 내려놓는 자리는 지금 보이는 그 자리다.
     // 되돌리기 한 번으로 이 내려놓기까지 되돌아간다(엔진이 applySelection 에서 checkpoint 를 남긴다).
@@ -818,8 +830,29 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     if (scene.captionPicked) send({ type: 'captionPick', on: false });
     ease();
     setTab(next); setPanel(null); setDrawRail(false); setRefRail(false);
-    send({ type: next === 'motion' ? 'play' : 'stop' });
+    // 움직이기는 들어가면 바로 재생한다. 애니메이션은 장을 고치는 곳이라 멈춘 채 열고, ▶ 로 미리 본다.
+    send({ type: next === 'motion' ? 'play' : 'stop' }); setAnimPlaying(false);
   }
+  // ── 애니메이션 ──
+  const animOn = (scene.frames?.length ?? 0) > 1;
+  function startAnim(r: AnimRecipe) {
+    send({ type: 'animStart', duration: r.durations[0] });
+    for (let i = 2; i < r.durations.length; i++) send({ type: 'frameAdd' });
+    r.durations.forEach((d, i) => send({ type: 'frameDuration', index: i, duration: d }));
+    send({ type: 'frameSelect', index: 1 });
+    setAnimHint(r.next);
+  }
+  function playAnim(on: boolean) { setAnimPlaying(on); send({ type: on ? 'play' : 'stop' }); }
+  function pickFrame(i: number) { setAnimPlaying(false); send({ type: 'frameSelect', index: i }); }
+  function deleteFrame(i: number) {
+    Alert.alert(`${i + 1}장을 지울까요?`, (scene.frames?.length ?? 0) <= 2 ? '1장만 남으면 애니메이션이 꺼지고 남은 장이 그림이 돼요.' : '이 장의 그림이 지워져요.', [
+      { text: '취소', style: 'cancel' }, { text: '지우기', style: 'destructive', onPress: () => { setAnimPlaying(false); send({ type: 'frameDelete', index: i }); } }]);
+  }
+  function animOff() {
+    Alert.alert('애니메이션을 끌까요?', '1장만 남기고 나머지 장은 지워져요.', [
+      { text: '취소', style: 'cancel' }, { text: '끄기', style: 'destructive', onPress: () => { setAnimPlaying(false); setAnimHint(null); send({ type: 'animOff' }); } }]);
+  }
+  useEffect(() => { if (initialized && animOn && (tab === 'anim' || tab === 'draw')) send({ type: 'frameThumbs', size: 64 }); }, [initialized, animOn, tab, scene.frameIdx, scene.frames?.length, scene.dirty, scene.undo]);
   // 움직임은 고르는 즉시 칸에 들어간다. 따로 '적용'하지 않고 칸과 함께 자동저장·완성으로 저장된다.
   // '움직임 없음'은 엔진 재생을 멈춘다. 그 뒤 효과를 다시 고르면 재생도 다시 켜야 한다 —
   // 탭을 오갈 때만 play 를 보내면 캔버스 미리보기가 멈춘 채 남는다(39차 실기기에서 발견).
@@ -876,7 +909,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     if (slowTimer.current) clearTimeout(slowTimer.current);
     slowTimer.current = setTimeout(() => setSlowSave(true), 1500);
     timeout.current = setTimeout(() => { send({ type: 'saveFailed', token }); setSaveMark(null); unlock(); Alert.alert('저장이 늦어지고 있어요', '작업은 화면에 그대로 있어요. 잠시 뒤 스스로 다시 저장하고, 닫기나 완성을 누르면 바로 다시 저장해요.'); }, 20000);
-    send({ type: 'save', gif: !!scene.motion, token });
+    send({ type: 'save', gif: !!scene.motion || (scene.frames?.length ?? 0) > 1, token });
   }
   saveRef.current = save;
   // Copying is always something the user asks for, and it is always a separate document:
@@ -1154,7 +1187,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 남는 자리가 작은 화면에서만 최소 높이만큼 캔버스 아래쪽에 겹친다.
   const motionHeight = Math.max(250, Math.min(Math.round(windowHeight * .55), Math.round(canvasArea - (canvasSide ?? canvasArea)) + BASE_H));
   // 패널 표면: 흰 표면 + 위쪽 24 둥글기 + 옅은 선 하나. 떠 있는 표면이지만 캔버스 위 그림자는 두지 않는다(그림이 흐려 보인다).
-  const raised = dockOpen || tab === 'motion';
+  const raised = dockOpen || tab !== 'draw';
   // 색을 고를 때는 도구 줄 자리까지 쓴다. 캔버스를 더 가리지 않고 색 선택 영역을 확보한다.
   const colorDock = tab === 'draw' && panel === 'color' && !scene.selection;
   // 더보기가 열린 동안 아래 판(움직임 판·브러시 줄·도구 줄)도 어둡게 덮고, 누르면 메뉴를 닫는다(2026-10-07).
@@ -1168,7 +1201,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [headW, setHeadW] = useState(0), [tabsW, setTabsW] = useState(0), [aidsW, setAidsW] = useState(0);
   // 되돌리기·다시 실행의 자리(45.37 사용자 요청): 참고·레이어·문구의 왼쪽 끝. 다만 380dp 미만에서는 모드 줄에 다 들지 않아,
   // 줄을 하나 더 쓰는 대신(작은 화면에서 캔버스·판 자리가 모자라진다) 윗줄 이름 옆에 선다. 윗줄은 저장 하나라 자리가 남는다.
-  const undoInModeRow = windowWidth >= 380;
+  // 2026-10-15: 탭이 셋(그리기·움직이기·애니메이션)이 되며 모드 줄이 좁아졌다. 되돌리기는 넓은 화면에서만 모드 줄에 두고, 보통 폰에서는 머리줄로 올린다 — 모드 줄이 두 줄로 갈라져 캔버스가 줄어들지 않게.
+  const undoInModeRow = windowWidth >= 440;
   // 캔버스 여백의 여러 손가락 톡. 움직임이 12dp 를 넘거나 350ms 를 넘으면 톡이 아니다(끌기·길게 누르기).
   // 45.39 실기기: 처음 만든 것은 두 번째 손가락의 위치를 **첫 손가락의 시작점**과 비교해, 두 손가락이 떨어져 닿기만 해도 '끌었다'로
   // 판정해 되돌리기가 한 번도 되지 않았다. 이제 손가락마다(identifier) 제 시작점과 비교한다. 톡의 시간 한도는 엔진과 비슷하게 500ms.
@@ -1320,13 +1354,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         style={{ borderBottomWidth: 1, borderColor: C.line, backgroundColor: C.paper, paddingHorizontal: 6 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {/* 그리기·움직이기: 회색 바탕의 두 칸 선택(공모전 탭과 같은 모양, 2026-10-08). 자리·순서는 그대로다. */}
-          <View onLayout={e => { const w = Math.ceil(e.nativeEvent.layout.width); if (w !== tabsW) setTabsW(w); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4, marginVertical: 2, marginLeft: 4, borderRadius: 12, backgroundColor: C.fill }}>
-          {([['draw', '그리기'], ['motion', '움직이기']] as const).map(([key, title]) =>
+          <View onLayout={e => { const w = Math.ceil(e.nativeEvent.layout.width); if (w !== tabsW) setTabsW(w); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4, marginVertical: 2, marginLeft: 4, borderRadius: 22, backgroundColor: C.paper, boxShadow: '4px 6px 14px rgba(120, 100, 70, 0.12)' }}>
+          {([['draw', '그리기'], ['motion', '움직이기'], ['anim', '애니메이션']] as const).map(([key, title]) =>
             <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: tab === key }}
               onPress={() => switchTab(key)}
               hitSlop={{ top: 4, bottom: 4 }}
-              style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: tab === key ? C.paper : 'transparent' }}>
-              <Text style={{ fontSize: 14, fontWeight: tab === key ? '800' : '600', color: tab === key ? C.ink : C.muted }}>{title}</Text>
+              style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: tab === key ? C.pointSoft : 'transparent' }}>
+              <Text style={{ fontSize: 14, fontWeight: tab === key ? '800' : '600', color: tab === key ? C.pointInk : C.muted }}>{title}</Text>
             </Pressable>)}
           </View>
           <View style={{ flex: 1 }} />
@@ -1392,11 +1426,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <BarSlider testID="속도 조절대" label="속도" value={scene.motion?.speed ?? .5} min={0} max={1} step={.05}
             onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: Math.round(n * 20) / 20 })} show={MOTION_WORDS} />
         </> : <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>효과를 고르면 여기서 세기·속도를 바꿔요</Text>)}
+        {tab === 'anim' && <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{animOn ? (animPlaying ? '미리 보는 중 — ■ 로 멈춰요' : `${(scene.frameIdx ?? 0) + 1}장 · 앞 장이 옅은 보라로 비쳐요`) : '묶음을 고르면 장이 만들어져요'}</Text>}
       </View>}
       {/* 캔버스 영역: 그리기 탭은 가운데, 움직이기 탭은 위(아래를 움직임 판이 쓴다).
           더보기 메뉴는 이 영역 안에 열리므로, 열린 동안만 아래 판(dock, zIndex 20)보다 위로 올린다 — 움직이기 탭에서
           판이 메뉴 아래쪽(그림 전체 크기·공유·검사)을 덮어 누를 수 없었다(2026-10-06 에뮬레이터). */}
-      <View testID="캔버스 영역" pointerEvents="box-none" style={{ flex: 1, padding: CANVAS_GAP, alignItems: 'center', justifyContent: tab === 'motion' ? 'flex-start' : 'center', backgroundColor: C.bg, zIndex: panel === 'more' ? 30 : 0 }}
+      <View testID="캔버스 영역" pointerEvents="box-none" style={{ flex: 1, padding: CANVAS_GAP, alignItems: 'center', justifyContent: tab !== 'draw' ? 'flex-start' : 'center', backgroundColor: C.bg, zIndex: panel === 'more' ? 30 : 0 }}
         onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; const side = Math.floor(Math.min(w, h) - CANVAS_GAP * 2); if (side > 0 && side !== canvasSide) setCanvasSide(side); if (h > 0 && Math.round(h) !== canvasArea) setCanvasArea(Math.round(h)); if (w > 0 && Math.round(w) !== canvasWide) setCanvasWide(Math.round(w)); }}>
         {/* 캔버스 바깥 여백의 손가락(45.39): 두 손가락 톡 = 되돌리기, 세 손가락 톡 = 다시 실행. 캔버스 안(엔진)과 같은 약속이다 —
             작은 화면에서 종이 안에만 두 손가락을 올리기 불편하다는 신고. 캔버스 뒤에 깔려 있어 캔버스 위 손가락은 엔진이 받는다. */}
@@ -1407,6 +1442,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             정사각 틀로 감싸 잘라 두면 WebView 가 틀만큼만 차지하고, 그리기 탭에서는 영역 가운데·움직이기 탭에서는 위에 선다. */}
         {/* 종이 경계: 얇은 선 + 옅은 그림자. 흰 종이와 작업면이 비슷한 밝기라 경계가 없으면 캔버스가 떠 보였다(45.37 실기기). */}
         <View ref={canvasRef} collapsable={false} style={canvasSide ? { width: canvasSide, height: canvasSide, overflow: 'hidden', backgroundColor: C.paper, borderRadius: 6, ...Paper.border, ...Paper.shadow } : { width: '100%', aspectRatio: 1, maxHeight: '100%', overflow: 'hidden' }}>
+        {tab === 'draw' && animOn && <View testID="장 알약" style={{ position: 'absolute', left: 8, top: 8, zIndex: 5, flexDirection: 'row', alignItems: 'center', height: 36, paddingLeft: 12, borderRadius: 18, ...Clay.small }}>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: C.pointInk }}>애니메이션</Text>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{` · ${(scene.frameIdx ?? 0) + 1} / ${scene.frames!.length}장`}</Text>
+          {([['앞 장', 'chevron-left', -1], ['다음 장', 'chevron-right', 1]] as const).map(([label, icon, by]) => { const to = (scene.frameIdx ?? 0) + by, off = to < 0 || to >= scene.frames!.length;
+            return <Pressable key={label} accessibilityRole="button" accessibilityLabel={label} disabled={off} onPress={() => pickFrame(to)} style={{ width: 34, height: 36, alignItems: 'center', justifyContent: 'center', opacity: off ? .3 : 1 }}><Glyph name={icon} size={18} color={C.ink} /></Pressable>; })}
+        </View>}
         <WebView ref={web} source={source} originWhitelist={['about:*']} javaScriptEnabled scrollEnabled={false} onShouldStartLoadWithRequest={r => r.url === 'about:blank'} onError={e => { unlock(); setInitialized(false); Alert.alert('그리기 화면을 열지 못했어요', userMessage(e.nativeEvent.description, '닫았다가 다시 열어 주세요.')); }} onMessage={event => {
           try {
             const m = JSON.parse(event.nativeEvent.data);
@@ -1414,6 +1455,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             if (m.type === 'ready') setReady(true);
             if (m.type === 'initialized') setInitialized(true);
             if (m.type === 'state') setScene(m);
+            if (m.type === 'frameThumbs') setFrameThumbs(Object.fromEntries((m.thumbs ?? []).map((t: { id: string; data: string }) => [t.id, t.data])));
             if (m.type === 'layerThumbs') setThumbs(Object.fromEntries((m.thumbs ?? []).map((t: { id: string; data: string }) => [t.id, t.data])));
             if (m.type === 'blocked' && m.reason === 'hidden') setHiddenWarning(m.name ?? '');
             if (m.type === 'selectionImage') { const waiting = keeping.current; keeping.current = null; waiting?.(m.data ?? null); if (!m.data) Alert.alert('보관하지 못했어요', '고른 부분을 읽지 못했어요. 다시 골라 주세요.'); }
@@ -1585,7 +1627,14 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       </View>
       </View>
 
-      {tab === 'motion' ? <View style={[dock, { height: motionHeight, flexShrink: 0 }]} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
+      {tab === 'anim' ? <View testID="애니메이션 판" style={[dock, { height: motionHeight, flexShrink: 0 }]} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
+        <AnimPanel frames={animOn ? scene.frames! : null} index={scene.frameIdx ?? 0} onion={scene.onion !== false} pro={pro} playing={animPlaying}
+          thumbs={frameThumbs} hint={animHint}
+          onStart={startAnim} onSelect={pickFrame} onAdd={() => { setAnimPlaying(false); send({ type: 'frameAdd' }); }} onDelete={deleteFrame}
+          onDuration={(i, d) => send({ type: 'frameDuration', index: i, duration: d })} onMove={(a, b) => send({ type: 'frameMove', from: a, to: b })}
+          onOnion={on => send({ type: 'onion', on })} onOff={animOff} onDraw={() => { setAnimHint(null); switchTab('draw'); }} onPlay={playAnim} onRequestPro={onRequestPro} />
+        {moreDim}
+      </View> : tab === 'motion' ? <View style={[dock, { height: motionHeight, flexShrink: 0 }]} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
         <MotionPanel motion={scene.motion ?? null} layers={scene.layers} clipped={!!scene.clipped} pro={pro} sample={sample} hasCaption={!!scene.caption?.text}
           pivotPick={scene.pivotPick ?? null} pivotRole={scene.pivotRole ?? 'pivot'}
           onPickPivot={(id, role) => send({ type: 'pivotPick', id, role: role ?? 'pivot' })}
