@@ -595,7 +595,8 @@ function Studio() {
     const preset = PRESETS.find(p => p.id === motion.preset)?.label;
     const parts = motion.parts?.length ? `부분 ${motion.parts.length}` : null;
     const pose = motion.alternate ? '두 모습' : null;
-    return [preset, parts, pose].filter(Boolean).join(' · ') || '움직임';
+    const boil = motion.boil ? '떨림' : null;
+    return [preset, parts, pose, boil].filter(Boolean).join(' · ') || '움직임';
   }
   function saveMotion(motion: Motion) {
     const kept = store?.savedMotions ?? [];

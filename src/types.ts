@@ -59,6 +59,8 @@ export type Motion = {
   alternate?: { poseB: string[]; interval: number }; // PRO: two poses taking turns
   captionMoves?: boolean;           // words stay still unless the user says otherwise
   steps?: MotionStep[];             // PRO V2: whole-picture effects in sequence (preset is ignored while steps exist)
+  // 손그림 떨림(2026-10-14, 무료): 선이 장마다 살짝 다시 그려진 듯 떨린다. 1 약 · 2 보통 · 3 강. 없으면 떨지 않는다(옛 작품 그대로).
+  boil?: 1 | 2 | 3;
 };
 // `slot` is set only by set-level checks, where a problem can be opened and fixed in one tap.
 export type Check = { label: string; status: Verdict; detail: string; slot?: number };

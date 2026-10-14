@@ -81,7 +81,7 @@ export function previousDrawn(project: Project, exclude: number): Slot | undefin
 export const captionText = (slot: Slot): string => slot.work?.caption?.text.trim() ?? '';
 // A cut moves when it carries any movement at all. Absent motion is the still cut it always was.
 export const isAnimated = (slot: Slot): boolean =>
-  !!(slot.motion && (slot.motion.preset || slot.motion.parts?.length || slot.motion.alternate || slot.motion.steps?.length));
+  !!(slot.motion && (slot.motion.preset || slot.motion.parts?.length || slot.motion.alternate || slot.motion.steps?.length || slot.motion.boil));
 export const setIsAnimated = (project: Project): boolean => project.slots.some(isAnimated);
 // Which movements are PRO. Derived from the motion itself so a saved effect can always be
 // replayed and re-exported, whatever the subscription says today.
@@ -167,6 +167,7 @@ export function parseStore(raw: string): Store {
             if (st.direction !== undefined && !['left', 'right', 'up', 'down'].includes(st.direction)) throw new Error('움직임 단계 방향이 손상되었습니다.');
           }
         }
+        if (m.boil !== undefined && ![1, 2, 3].includes(m.boil)) throw new Error('손그림 떨림 데이터가 손상되었습니다.');
         if (m.alternate !== undefined) {
           if (!Array.isArray(m.alternate.poseB) || m.alternate.poseB.some(id => typeof id !== 'string')) throw new Error('두 모습 데이터가 손상되었습니다.');
           if (!Number.isFinite(m.alternate.interval) || m.alternate.interval <= 0 || m.alternate.interval > 5) throw new Error('두 모습 간격이 범위를 벗어났습니다.');

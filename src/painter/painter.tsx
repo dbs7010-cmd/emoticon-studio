@@ -851,7 +851,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     const free = scene.motion ? { ...scene.motion, parts: undefined, alternate: undefined, play: undefined,
       preset: keepPreset ? scene.motion.preset : was?.preset, direction: keepPreset ? scene.motion.direction : was?.direction } : null;
     setProSheet(false);
-    send({ type: 'motion', motion: free && free.preset ? free : null });
+    send({ type: 'motion', motion: free && (free.preset || free.boil) ? free : null });
     // The canvas has the free motion now; this save is the answer to the question just asked,
     // so it must not be stopped by the state that is still on its way back.
     proHandled.current = true;
@@ -1203,7 +1203,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const railMode = !!stage && sideRail > sideBar;
   const railTrack = railTrackOf(canvasSide ?? 200);
   const showDrawAdjust = tab === 'draw' && !typing && !panel && !drawRail && !refRail && !scene.selection;
-  const motionMoving = !!(scene.motion?.preset || scene.motion?.parts?.length || scene.motion?.alternate);
+  const motionMoving = !!(scene.motion?.preset || scene.motion?.parts?.length || scene.motion?.alternate || scene.motion?.steps?.length || scene.motion?.boil);
   const undoPair = <>
     <Bar label="되돌리기" icon="undo-variant" narrow disabled={!initialized || !scene.undo || busy} onPress={() => send({ type: 'undo' })} />
     <Bar label="다시 실행" icon="redo-variant" narrow disabled={!initialized || !scene.redo || busy} onPress={() => send({ type: 'redo' })} />

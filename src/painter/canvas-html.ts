@@ -110,7 +110,25 @@ function selectDrawLayer(id){const target=layers.find(l=>l.id===id)||layers[0];i
 function snapshot(){return {layers:layers.map(l=>({...meta(l),pixels:l.bitmap.getContext('2d').getImageData(0,0,W,H)})),references:references.map(l=>({...l})),activeLayerId,activeDrawLayerId,activeReferenceId,caption:caption&&{...caption},motion:motion&&JSON.parse(JSON.stringify(motion)),selection:selection&&{...selection,bitmap:copyOf(selection.bitmap)}};}
 function restore(s){trace('restore:before');extentCache=null;layers=s.layers.map(l=>{const b=bitmap();b.getContext('2d').putImageData(l.pixels,0,0);return {...meta(l),bitmap:b};});references=s.references;activeLayerId=s.activeLayerId;activeDrawLayerId=s.activeDrawLayerId||layers[0]?.id||'';activeReferenceId=s.activeReferenceId||null;caption=s.caption||null;motion=s.motion||null;selection=s.selection||null;render();state();trace('restore:after');}
 function checkpoint(preserveFuture=false){history.push(snapshot());if(history.length>40)history.shift();if(!preserveFuture)future=[];dirty=true;}
-function composite(g,l,d){if(!l.visible||(d&&d.hidden))return;g.save();g.globalAlpha=l.opacity;if(d){g.translate(d.px+d.dx,d.py+d.dy);g.rotate(d.rot*Math.PI/180);g.scale(d.sx,d.sy);g.translate(-d.px,-d.py);if(d.part){const q=d.part;g.translate(q.px+q.dx,q.py+q.dy);g.rotate(q.rot*Math.PI/180);g.scale(q.sx,q.sy);g.translate(-q.px,-q.py);}}g.translate(W/2+l.x,H/2+l.y);g.rotate(l.rotation*Math.PI/180);g.scale(l.scale,l.scale);g.drawImage(l.bitmap,-W/2,-H/2);g.restore();}
+function composite(g,l,d){if(!l.visible||(d&&d.hidden))return;g.save();g.globalAlpha=l.opacity;if(d){g.translate(d.px+d.dx,d.py+d.dy);g.rotate(d.rot*Math.PI/180);g.scale(d.sx,d.sy);g.translate(-d.px,-d.py);if(d.part){const q=d.part;g.translate(q.px+q.dx,q.py+q.dy);g.rotate(q.rot*Math.PI/180);g.scale(q.sx,q.sy);g.translate(-q.px,-q.py);}}g.translate(W/2+l.x,H/2+l.y);g.rotate(l.rotation*Math.PI/180);g.scale(l.scale,l.scale);g.drawImage(d&&d.boilK!=null?boiled(l,d.boilK):l.bitmap,-W/2,-H/2);g.restore();}
+// ── 손그림 떨림(boil, 2026-10-14) ──────────────────────────────────────────────────────────────
+// 그림을 고치지 않는다. 장마다 세 가지 '살짝 비튼 사본' 중 하나를 번갈아 보여 줘, 선이 다시 그려진 듯 떨린다.
+// 비트는 법: 가로 띠마다 x 를, 세로 띠마다 y 를 부드러운 물결(사인 둘의 합)만큼 민다. 장(k)마다 물결의 위상이 다르다.
+// 세기 1·2·3 = 최대 1·1.8·2.8px(360 기준). 사본은 그림·떨림이 바뀔 때 버린다(boilCache 비움).
+var boilCache=new Map(),BOIL_FPS=8;
+function boilSteps(L){return 3*Math.max(1,Math.round(L*BOIL_FPS/3));}
+function boilAt(t){if(!motion||!motion.boil)return null;const L=loopSeconds(),n=boilSteps(L),u=((t/L)%1+1)%1;return Math.floor(u*n)%3;}
+function boiled(l,k){
+ const key=l.id+':'+k+':'+motion.boil;let c=boilCache.get(key);if(c&&c.src===l.bitmap)return c.out;
+ const amp=[0,1,1.8,2.8][motion.boil]*W/360,band=Math.max(2,Math.round(3*W/360));
+ const ph=[[0,1.7],[2.1,4.4],[4.2,.9]][k];
+ const wave=(v,a,b)=>amp*(.65*Math.sin(v/(W*.11)+a)+.35*Math.sin(v/(W*.047)+b));
+ const mid=bitmap(),mg=mid.getContext('2d');
+ for(let y=0;y<H;y+=band)mg.drawImage(l.bitmap,0,y,W,band,wave(y,ph[0],ph[1]),y,W,band);
+ const out=bitmap(),og=out.getContext('2d');
+ for(let x=0;x<W;x+=band)og.drawImage(mid,x,0,band,H,x,wave(x,ph[1],ph[0]),band,H);
+ boilCache.set(key,{src:l.bitmap,out});return out;
+}
 function render(t){ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));layers.forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
@@ -409,8 +427,9 @@ function deltaFor(l,t){
  if(!motion)return null;
  const base=wholeDelta(t);
  const part=(motion.parts||[]).find(p=>p.layerId===l.id&&!p.off);
- const d=part?partDelta(part,t,base):base;
+ const d=part?partDelta(part,t,base):Object.assign({},base);
  d.hidden=poseHides(l,t);
+ const k=boilAt(t);if(k!==null)d.boilK=k;
  return d;
 }
 // Does the movement push the drawing outside the picture at any point in the loop?
@@ -480,7 +499,7 @@ function inkBox(bitmap){
 // image stack. Colours are counted, not guessed: if a set uses more than the 255 a GIF allows,
 // the least used are merged into their nearest neighbour and that fact is reported.
 function now(){return (typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();}
-function startPlaying(){if(playing)return;playing=true;extentCache=null;playStart=now();const step=()=>{if(!playing)return;render((now()-playStart)/1000%loopSeconds());rafId=requestAnimationFrame(step);};rafId=requestAnimationFrame(step);state();}
+function startPlaying(){if(playing)return;playing=true;extentCache=null;boilCache.clear();playStart=now();const step=()=>{if(!playing)return;render((now()-playStart)/1000%loopSeconds());rafId=requestAnimationFrame(step);};rafId=requestAnimationFrame(step);state();}
 function stopPlaying(){if(!playing)return;playing=false;if(rafId)cancelAnimationFrame(rafId);rafId=null;}
 function quantize(frames){
  // Anything below this alpha becomes the transparent index, which is how a sticker keeps its
@@ -610,6 +629,7 @@ function encodeWebp(frames,delayMs,loops,quality){
 // wantSheets: 공식 도구(WebPAnimator)에 넣을 360x360 PNG 프레임. 컷 하나당 최대 24장이라
 // 다리를 건너오는 양이 크다. 그래서 실제로 필요할 때(내보낼 때)만 만든다.
 function buildLoop(fps,wantSheets){
+ boilCache.clear();
  fps=Math.max(6,Math.min(24,fps||12));
  const L=loopSeconds();
  const count=Math.max(2,Math.min(MAX_FRAMES,Math.round(L*fps)));
@@ -1331,7 +1351,7 @@ async function command(m){try{
  }
  if(m.type==='scaleAll'){if(scaleAll(Number(m.factor),!!m.withCaption))dirty=true;render(playing?(now()-playStart)/1000:undefined);state();send({type:'scaled',factor:Number(m.factor)});}
  if(m.type==='fitMotion'){const f=fitMotion();if(f>0&&f<1)dirty=true;render(playing?(now()-playStart)/1000:undefined);state();send({type:'fitted',factor:f});}
- if(m.type==='motion'){checkpoint();motion=m.motion||null;dirty=true;extentCache=null;if(!motion)stopPlaying();render(playing?(now()-playStart)/1000:undefined);state();}
+ if(m.type==='motion'){checkpoint();motion=m.motion||null;boilCache.clear();dirty=true;extentCache=null;if(!motion)stopPlaying();render(playing?(now()-playStart)/1000:undefined);state();}
  if(m.type==='play'){startPlaying();}
  if(m.type==='stop'){stopPlaying();render();state();}
  if(m.type==='frames'){const was=playing;stopPlaying();send({type:'frames',id:m.id,gif:buildLoop(m.fps,!!m.sheets)});if(was)startPlaying();else{render();state();}}

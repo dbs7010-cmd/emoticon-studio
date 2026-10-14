@@ -55,6 +55,12 @@ assert.throws(() => parseStore(withMotion({ ...ok, steps: [step('shake', 5)] }))
 assert.throws(() => parseStore(withMotion({ ...ok, steps: [step('shake', .8, 9)] })), /길이/, '반복 범위');
 const legacy = { version: 1, preset: 'bounce', speed: .5, strength: .5 };
 assert.deepEqual(parseStore(withMotion(legacy)).projects[0].slots[0].motion, legacy, '단계 없는 옛 움직임은 그대로 읽힌다');
+// 손그림 떨림(2026-10-14): 1·2·3 만 받는다. 떨림만 있어도 움직이는 칸이고, 무료다.
+const boilOnly = { version: 1, speed: .5, strength: .5, boil: 2 };
+assert.doesNotThrow(() => parseStore(withMotion(boilOnly)), '떨림만 있는 움직임은 저장된다');
+assert.throws(() => parseStore(withMotion({ ...boilOnly, boil: 7 })), /떨림/, '떨림 세기 범위');
+{ const p = base(); p.slots[0].motion = boilOnly; assert.equal(isAnimated(p.slots[0]), true, '떨림만 있어도 움직이는 칸'); }
+assert.equal(usesPro(boilOnly), false, '떨림은 무료');
 
 // 4) PRO · 움직이는 칸
 assert.equal(usesPro(ok), true, '단계가 있으면 PRO 움직임');

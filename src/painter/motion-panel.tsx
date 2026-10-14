@@ -63,8 +63,8 @@ const Row = ({ label, value, onChange, min, max, step, fmt, onActive }: { label:
 const Chip = ({ label, on, onPress, wide, a11y }: { label: string; on: boolean; onPress: () => void; wide?: boolean; a11y?: string }) =>
   <Pressable accessibilityRole="button" accessibilityLabel={a11y ?? label} accessibilityState={{ selected: on }} onPress={onPress}
     style={{ flex: wide ? 1 : undefined, minHeight: 48, paddingHorizontal: 14, borderRadius: 24, alignItems: 'center', justifyContent: 'center',
-      borderWidth: 1, borderColor: on ? C.accentBorder : C.line, backgroundColor: on ? C.accentSoft : C.paper }}>
-    <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{label}</Text>
+      borderWidth: on ? 0 : 1, borderColor: C.line, backgroundColor: on ? C.pointSoft : C.paper }}>
+    <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{label}</Text>
   </Pressable>;
 
 // 레이어의 기본 이름("그림 1")은 칸 이름("01번 그림")과 헷갈린다. 저장된 이름은 그대로 두고 화면에서만 레이어로 부른다.
@@ -191,11 +191,11 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   const moveStep = (from: number, to: number) => { if (to < 0 || to >= steps.length) return; const next = [...steps]; const [m] = next.splice(from, 1); next.splice(to, 0, m); setSteps(next); };
   const enterSteps = () => { if (pro) setView('steps'); else onRequestPro(); };
   const hasPro = parts.length > 0 || !!base.alternate || steps.length > 0;
-  const moving = !!base.preset || hasPro;
+  const moving = !!base.preset || hasPro || !!base.boil;
   // 무료 사용자에게는 PRO 화면 대신 PRO 안내가 열린다. 들어가서 만든 뒤에 막히는 일이 없다.
   const enterPro = () => { if (pro) setView('parts'); else onRequestPro(); };
   // '없음'은 전체 움직임만 뺀다. 부분 움직임이 있으면 그것은 남긴다.
-  const clearPreset = () => { if (hasPro) set({ preset: undefined }); else onChange(null); };
+  const clearPreset = () => { if (hasPro || base.boil) set({ preset: undefined }); else onChange(null); };
   // 효과 카드는 그리기 탭의 **즐겨찾기 칸과 같은 역할**이다 — 그림 견본 + 이름 중 하나를 고른다(45.36-R1 G6·G18).
   // 그래서 같은 규칙: 테두리 없음, 고른 칸만 옅은 노랑 면 + 짧은 노란 밑줄, 누르는 동안 회색.
   // 한 줄에 일곱을 욱여넣던 것을 네 칸 격자로 바꿨다 — 320dp 에서 흔들기·부르르가 화면 밖에 있어 고를 수 없었고,
@@ -252,8 +252,8 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       {([['all', '전체'], ...MOTION_GROUPS.map(g => [g.id, g.id])] as [MotionGroup | 'all', string][]).map(([id, label]) => {
         const on = group === id;
         return <Pressable key={id} accessibilityRole="button" accessibilityLabel={'움직임 묶음 ' + label} accessibilityState={{ selected: on }} onPress={() => setGroup(id)}
-          style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 20, backgroundColor: on ? C.ink : pressed ? C.fillPressed : C.fill })}>
-          <Text style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.paper : C.muted }}>{label}</Text>
+          style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 20, backgroundColor: on ? C.pointSoft : pressed ? C.fillPressed : C.fill })}>
+          <Text style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{label}</Text>
         </Pressable>;
       })}
     </ScrollView>
@@ -264,8 +264,8 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Pressable accessibilityRole="button" accessibilityLabel="PRO로 이 효과 쓰기" onPress={onRequestPro}
-          style={({ pressed }) => ({ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: C.ink, opacity: pressed ? .85 : 1 })}>
-          <Text style={{ fontSize: 14, fontWeight: '800', color: C.paper }}>PRO로 쓰기</Text>
+          style={({ pressed }) => ({ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: C.accent, opacity: pressed ? .85 : 1 })}>
+          <Text style={{ fontSize: 14, fontWeight: '800', color: C.accentInk }}>PRO로 쓰기</Text>
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="미리보기 끝내기" onPress={endTrial}
           style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper })}>
@@ -301,6 +301,18 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         {DIRECTIONS.map(d => <Chip key={d.id} wide label={d.label} on={(base.direction ?? 'left') === d.id} onPress={() => set({ direction: d.id })} />)}
       </View>
     </View>}
+    {/* 손그림 떨림(2026-10-14): 선이 장마다 살짝 다시 그려진 듯 떨린다. 위 효과와 함께 걸리고, 효과가 없어도 걸린다. 무료. */}
+    <View testID="손그림 떨림" style={{ gap: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, paddingHorizontal: 2 }}>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>손그림 떨림</Text>
+        <Text style={{ fontSize: 11, color: C.muted }}>선이 살아 있는 듯 떨려요</Text>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        {([[0, '끔'], [1, '약하게'], [2, '보통'], [3, '강하게']] as const).map(([lv, label]) =>
+          <Chip key={lv} wide label={label} a11y={'손그림 떨림 ' + label} on={(base.boil ?? 0) === lv}
+            onPress={() => { if (!lv && !base.preset && !hasPro) onChange(null); else set({ boil: lv ? lv : undefined }); }} />)}
+      </View>
+    </View>
     {/* 다시 쓰는 것끼리 한 묶음(45.2차): 직전 칸의 움직임과 보관해 둔 움직임. 새로 고르기 바로 다음 자리. */}
     <View style={{ gap: 6 }}>
     {!moving && !!previousMotion && (() => {
