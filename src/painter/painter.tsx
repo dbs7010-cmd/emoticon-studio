@@ -18,7 +18,7 @@ import { imageUri } from '../services/storage';
 import { CAPTION_STYLES } from '../types';
 import type { BrushSettings, Caption, CaptionStyle, LayerTransform, LocalImage, Motion, PainterExport, QA, SavedMotion, Slot } from '../types';
 
-import { AnimPanel, type AnimRecipe } from './anim-panel';
+import { AnimPanel } from './anim-panel';
 type Scene = {
   undo: boolean;
   redo: boolean;
@@ -90,6 +90,8 @@ type Props = {
   onCopyPrevious: () => Promise<CopiedWork | null>;
   onColorUsed: (color: string) => void;
   onClose: () => void;
+  // 애니메이션 탭의 "강좌에서 배워요": 저장하고 닫은 뒤 첫 화면 강좌 탭으로 간다.
+  onOpenLessons?: () => void;
   onNavigate: (number: number) => void;
   onAddReferences: () => Promise<LocalImage[]>;
   onImportDrawing: () => Promise<string | null>;
@@ -427,7 +429,7 @@ const swatches = [
 // 기본 레퍼런스 32칸은 아직 칸별 자료도 고르는 동작도 없다(자리표시뿐).
 // 명세 E05: 미완성 격자를 사용자 화면에 보이지 않는다. 자료는 그대로 두고 화면에서만 감춘다.
 const BUILTIN_READY: boolean = BUILTIN_REFERENCES.enabled && BUILTIN_REFERENCES.ready;
-export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, returnToReview, onReturnToReview, onSetReference, onCopyPrevious, onColorUsed, onClose, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
+export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, returnToReview, onReturnToReview, onSetReference, onCopyPrevious, onColorUsed, onClose, onOpenLessons, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<SaveAction>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
@@ -835,13 +837,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   }
   // ── 애니메이션 ──
   const animOn = (scene.frames?.length ?? 0) > 1;
-  function startAnim(r: AnimRecipe) {
-    send({ type: 'animStart', duration: r.durations[0] });
-    for (let i = 2; i < r.durations.length; i++) send({ type: 'frameAdd' });
-    r.durations.forEach((d, i) => send({ type: 'frameDuration', index: i, duration: d }));
-    send({ type: 'frameSelect', index: 1 });
-    setAnimHint(r.next);
-  }
+  function startAnim() { send({ type: 'animStart', duration: .3 }); setAnimHint('2장은 1장을 복사했어요. 바뀌는 부분만 고쳐 그려요'); }
   function playAnim(on: boolean) { setAnimPlaying(on); send({ type: on ? 'play' : 'stop' }); }
   function pickFrame(i: number) { setAnimPlaying(false); send({ type: 'frameSelect', index: i }); }
   function deleteFrame(i: number) {
@@ -1426,7 +1422,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <BarSlider testID="속도 조절대" label="속도" value={scene.motion?.speed ?? .5} min={0} max={1} step={.05}
             onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: Math.round(n * 20) / 20 })} show={MOTION_WORDS} />
         </> : <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>효과를 고르면 여기서 세기·속도를 바꿔요</Text>)}
-        {tab === 'anim' && <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{animOn ? (animPlaying ? '미리 보는 중 — ■ 로 멈춰요' : `${(scene.frameIdx ?? 0) + 1}장 · 앞 장이 옅은 보라로 비쳐요`) : '묶음을 고르면 장이 만들어져요'}</Text>}
+        {tab === 'anim' && <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{animOn ? (animPlaying ? '미리 보는 중 — ■ 로 멈춰요' : `${(scene.frameIdx ?? 0) + 1}장 · 앞 장이 옅은 보라로 비쳐요`) : '시작하면 지금 그림이 1장이 돼요'}</Text>}
       </View>}
       {/* 캔버스 영역: 그리기 탭은 가운데, 움직이기 탭은 위(아래를 움직임 판이 쓴다).
           더보기 메뉴는 이 영역 안에 열리므로, 열린 동안만 아래 판(dock, zIndex 20)보다 위로 올린다 — 움직이기 탭에서
@@ -1630,7 +1626,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       {tab === 'anim' ? <View testID="애니메이션 판" style={[dock, { height: motionHeight, flexShrink: 0 }]} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
         <AnimPanel frames={animOn ? scene.frames! : null} index={scene.frameIdx ?? 0} onion={scene.onion !== false} pro={pro} playing={animPlaying}
           thumbs={frameThumbs} hint={animHint}
-          onStart={startAnim} onSelect={pickFrame} onAdd={() => { setAnimPlaying(false); send({ type: 'frameAdd' }); }} onDelete={deleteFrame}
+          onStart={startAnim} onLessons={onOpenLessons ? () => { onOpenLessons(); save('close'); } : undefined} onSelect={pickFrame} onAdd={() => { setAnimPlaying(false); send({ type: 'frameAdd' }); }} onDelete={deleteFrame}
           onDuration={(i, d) => send({ type: 'frameDuration', index: i, duration: d })} onMove={(a, b) => send({ type: 'frameMove', from: a, to: b })}
           onOnion={on => send({ type: 'onion', on })} onOff={animOff} onDraw={() => { setAnimHint(null); switchTab('draw'); }} onPlay={playAnim} onRequestPro={onRequestPro} />
         {moreDim}

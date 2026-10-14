@@ -1,5 +1,5 @@
 // 애니메이션 탭(2026-10-15 · 시안 F2/F4, 사용자 확정): 그림 전체를 장마다 따로 그려 움직이게 한다.
-// - 장이 없으면: 자주 쓰는 묶음(장 수·시간이 미리 맞춰진 시작점)에서 고른다. 눈 깜빡·빈 장은 무료, 나머지 묶음은 PRO.
+// - 장이 없으면: 시작 버튼 하나와 강좌로 가는 길(초보용). 묶음 고르기는 두지 않는다(2026-10-15 사용자).
 // - 장이 있으면: 장 줄(썸네일·번호·시간) → 고른 장의 시간 · 순서 · 삭제 → '이 장 그리기'(그리기 탭으로) · 앞 장 비춰 보기.
 // - 무료는 3장까지, PRO 는 24장(카카오 규격 상한). 장을 바꾸면 되돌리기 기록은 새로 시작한다(엔진).
 import React from 'react';
@@ -9,21 +9,12 @@ import { ImtiIcon, IconSize } from '../design/icons';
 import { ANIM_FREE_FRAMES, ANIM_MAX_FRAMES } from '../types';
 
 const C = T;
-export type AnimRecipe = { id: string; title: string; hint: string; durations: number[]; free: boolean; next: string };
-export const ANIM_RECIPES: AnimRecipe[] = [
-  { id: 'blink', title: '눈 깜빡', hint: '2장 · 눈만 감은 모양으로', durations: [.8, .2], free: true, next: '2장에서 눈을 감은 모양으로 고쳐 그려요' },
-  { id: 'blank', title: '빈 장으로 시작', hint: '2장 · 시간은 직접', durations: [.3, .3], free: true, next: '2장을 고쳐 그리고, 필요하면 장을 더해요' },
-  { id: 'talk', title: '입 뻐끔', hint: '2장 · 입만 열고 닫기', durations: [.2, .2], free: false, next: '2장에서 입을 연 모양으로 고쳐 그려요' },
-  { id: 'aura', title: '기운 일렁', hint: '3장 · 테두리만 조금씩', durations: [.1, .1, .1], free: false, next: '장마다 기운 테두리만 조금씩 다르게 그려요' },
-  { id: 'sparkle', title: '반짝', hint: '2장 · 켜졌다 꺼졌다', durations: [.3, .3], free: false, next: '2장에서 반짝이를 지우거나 옮겨요' },
-  { id: 'turn', title: '고개 돌리기', hint: '3장 · 앞 → 옆 → 앞', durations: [.4, .2, .4], free: false, next: '2장은 살짝 돌린 얼굴, 3장은 다 돌린 얼굴' },
-];
 const DURATIONS = [.1, .2, .3, .5, .8, 1] as const;
 
 type Props = {
   frames: { id: string; duration: number }[] | null; index: number; onion: boolean; pro: boolean; playing: boolean;
   thumbs: Record<string, string>; hint: string | null;
-  onStart: (recipe: AnimRecipe) => void; onSelect: (i: number) => void; onAdd: () => void; onDelete: (i: number) => void;
+  onStart: () => void; onLessons?: () => void; onSelect: (i: number) => void; onAdd: () => void; onDelete: (i: number) => void;
   onDuration: (i: number, d: number) => void; onMove: (from: number, to: number) => void; onOnion: (on: boolean) => void;
   onOff: () => void; onDraw: () => void; onPlay: (on: boolean) => void; onRequestPro: () => void;
 };
@@ -35,21 +26,21 @@ export function AnimPanel(p: Props) {
     <View style={{ height: 22, paddingHorizontal: 9, borderRadius: 11, backgroundColor: C.accentSoft, justifyContent: 'center' }}><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>{`무료 ${ANIM_FREE_FRAMES}장까지`}</Text></View>
     <Text style={{ flex: 1, fontSize: 11, color: C.muted }}>{`PRO는 ${ANIM_MAX_FRAMES}장`}</Text>
   </View>;
-  if (!p.frames) return <ScrollView testID="애니메이션 시작" contentContainerStyle={{ padding: 16, gap: 12 }}>
+  // 장이 없을 때: 설명 한 줄 · 시작 버튼 하나 · 초보를 위한 강좌 길(2026-10-15 사용자: 묶음 고르기는 두지 않는다).
+  if (!p.frames) return <ScrollView testID="애니메이션 시작" contentContainerStyle={{ padding: 16, gap: 14 }}>
     {head}
-    <Text style={{ fontSize: 13, lineHeight: 19, color: C.muted, paddingHorizontal: 2 }}>장마다 그림을 조금씩 다르게 그려 움직이게 해요. 지금 그림이 1장이 되고, 2장은 1장을 복사해서 시작해요.</Text>
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-      {ANIM_RECIPES.map(r => { const locked = !r.free && !p.pro;
-        return <Pressable key={r.id} accessibilityRole="button" accessibilityLabel={'애니메이션 ' + r.title} accessibilityHint={locked ? 'PRO 묶음이에요' : r.hint}
-          onPress={() => locked ? p.onRequestPro() : p.onStart(r)}
-          style={({ pressed }) => ({ width: '48%', flexGrow: 1, minHeight: 76, padding: 12, gap: 4, borderRadius: 20, ...Clay.card, transform: pressed ? [{ scale: .97 }] : [] })}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={{ flex: 1, fontSize: 14, fontWeight: '800', color: C.ink }}>{r.title}</Text>
-            {locked && <ProTag />}
-          </View>
-          <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted }}>{r.hint}</Text>
-        </Pressable>; })}
-    </View>
+    <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink, paddingHorizontal: 2 }}>장마다 그림을 조금씩 다르게 그려서 움직이게 해요.</Text>
+    <Text style={{ fontSize: 13, lineHeight: 19, color: C.muted, paddingHorizontal: 2, marginTop: -8 }}>지금 그림이 1장이 되고, 2장은 1장을 복사해서 시작해요. 바뀌는 부분만 고쳐 그리면 돼요.</Text>
+    <Pressable testID="애니메이션 시작하기" accessibilityRole="button" accessibilityLabel="애니메이션 시작" onPress={p.onStart}
+      style={({ pressed }) => ({ minHeight: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: C.accent, ...(pressed ? Clay.buttonPressed : Clay.button) })}>
+      <Text style={{ fontSize: 16, fontWeight: '800', color: C.accentInk }}>애니메이션 시작</Text>
+    </Pressable>
+    {!!p.onLessons && <Pressable accessibilityRole="link" accessibilityLabel="처음이라면 강좌에서 배워요" onPress={p.onLessons}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingHorizontal: 14, borderRadius: 20, ...Clay.card, transform: pressed ? [{ scale: .98 }] : [] })}>
+      <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.pointSoft, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="guide" size={IconSize.row} color={C.point} /></View>
+      <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>처음이라면 강좌에서 배워요</Text>
+      <ImtiIcon name="next" size={IconSize.row} color={C.faint} />
+    </Pressable>}
   </ScrollView>;
 
   const cur = p.frames[p.index];

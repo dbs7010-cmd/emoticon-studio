@@ -144,6 +144,8 @@ function Studio() {
   // 2026-10-08 토스식 개편: 첫 화면은 아래 탭 세 갈래(홈 · 공모전 · 내 정보). 예전 '설정' 창은 '내 정보' 탭이 되었다 —
   // settings 는 그 탭이 열려 있는지의 별명이고, 다른 화면으로 가며 부르던 setSettings(false) 는 탭을 바꾸지 않는다.
   const [homeTab, setHomeTab] = useState<HomeTab>('home');
+  // 그리기 화면에서 '강좌에서 배워요'를 누르면 저장·닫기 뒤 강좌 탭으로 간다.
+  const lessonsNext = useRef(false);
   // 로그인 관문(2026-10-08 사용자 결정: 무료·유료 모두 로그인 + 작가명). 서버 설정이 있는 빌드에서만 닫는다 —
   // authUid: undefined = 기기에 남은 로그인을 되살리는 중, null = 로그인 전. artist: undefined = 모름(오프라인 등, 막지 않는다), null = 아직 안 정함.
   const [startOpen, setStartOpen] = useState(false);
@@ -2025,7 +2027,8 @@ function Studio() {
       onReturnToReview={returnToReview}
       onSetReference={useAsReference}
       onCopyPrevious={copyPreviousWork}
-      onClose={() => { setPainting(false); setSlotNumber(null); clearEntry(); if (returnToExport) { setScreen('export'); setReturnToExport(false); } }}
+      onOpenLessons={() => { lessonsNext.current = true; }}
+      onClose={() => { setPainting(false); setSlotNumber(null); clearEntry(); if (lessonsNext.current) { lessonsNext.current = false; setReturnToExport(false); setProjectId(null); setHomeView('home'); setHomeTab('class'); return; } if (returnToExport) { setScreen('export'); setReturnToExport(false); } }}
       // 옆 칸으로 넘어가면 이 칸에서 고른 예시는 따라가지 않는다. 칸에 깔아 둔 밑그림은 그 칸에 그대로 남는다.
       onNavigate={number => { clearEntry(); setSlotNumber(number); }}
       onImportDrawing={async () => { const picked = await pickImages(); return picked[0] ? await dataUrl(picked[0]) : null; }}
