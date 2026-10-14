@@ -10,7 +10,9 @@ const SVG_MOCK = Object.assign(
 exports.SVG_MOCK = SVG_MOCK;
 exports.loader = function (given = {}) {
   // 시스템 브라우저 로그인(expo-web-browser)·난수(expo-crypto)는 검사에서 대역 — 실제 동작은 APK·실기기에서.
-  const mocks = { 'react-native-svg': SVG_MOCK, 'expo-web-browser': { openAuthSessionAsync: async () => ({ type: 'cancel' }) }, 'expo-crypto': { getRandomBytes: n => new Uint8Array(require('node:crypto').randomBytes(n)) }, 'expo-screen-orientation': { OrientationLock: { DEFAULT: 0, PORTRAIT_UP: 3 }, lockAsync: async () => {} }, ...given };
+  const mocks = { 'react-native-svg': SVG_MOCK, 'expo-web-browser': { openAuthSessionAsync: async () => ({ type: 'cancel' }) }, 'expo-crypto': { getRandomBytes: n => new Uint8Array(require('node:crypto').randomBytes(n)) }, 'expo-screen-orientation': { OrientationLock: { DEFAULT: 0, PORTRAIT_UP: 3 }, lockAsync: async () => {} },
+    // 강좌 영상(expo-video)은 검사에서 대역 — 실제 재생은 APK 에서 본다.
+    'expo-video': { useVideoPlayer: () => ({ play() {}, pause() {}, loop: false, muted: false }), VideoView: 'VideoView' }, ...given };
   const cache = new Map();
   function load(filename) {
     filename = path.resolve(filename);
@@ -25,7 +27,7 @@ exports.loader = function (given = {}) {
       if (!resolved) throw new Error('Cannot resolve ' + base);
       // 그림·글꼴은 번들러가 하듯 '손잡이'로 돌려준다. 예전에는 TS 로 읽으려다 빈 객체가 되어
       // 어느 파일인지 알 수 없었다. 경로가 남아야 검토 렌더가 진짜 그림을 붙일 수 있다.
-      if (/\.(png|jpg|jpeg|gif|webp|svg|ttf|otf)$/i.test(resolved)) {
+      if (/\.(png|jpg|jpeg|gif|webp|svg|ttf|otf|mp4)$/i.test(resolved)) {
         if (!cache.has(resolved)) cache.set(resolved, { exports: { __asset: resolved } });
         return cache.get(resolved).exports;
       }

@@ -22,7 +22,13 @@ export const placeInFrame = (image: { width: number; height: number }, frame: { 
 const html = `<!doctype html><meta charset="utf-8"><body style="margin:0">
 <script>
 var send = function (m) { window.ReactNativeWebView.postMessage(JSON.stringify(m)); };
-var place = ${placeInFrame.toString()};
+// placeInFrame 과 같은 식을 글자로 둔다. 예전에는 placeInFrame.toString() 을 넣었는데, 출시 빌드(Hermes)는 함수 본문을
+// 바이트코드로만 갖고 있어 "function () { [bytecode] }" 가 들어가 아이콘·공유 이미지 만들기가 늘 실패했다(2026-10-15 에뮬레이터).
+var place = function (image, frame, place) {
+  var fit = Math.min(frame.width / image.width, frame.height / image.height);
+  var w = image.width * fit * place.scale, h = image.height * fit * place.scale;
+  return { x: (frame.width - w) / 2 + place.dx * frame.width, y: (frame.height - h) / 2 + place.dy * frame.height, w: w, h: h };
+};
 window.command = function (m) {
   if (m.type !== 'compose') return;
   var img = new Image();

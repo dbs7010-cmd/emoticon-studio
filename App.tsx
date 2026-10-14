@@ -25,6 +25,8 @@ import { TabBar, type HomeTab } from './src/components/tab-bar';
 import { NoticeCarousel, type NoticeSlide } from './src/components/notice-carousel';
 import { ChatSim } from './src/components/chat-sim';
 import { GUIDEBOOK } from './src/constants/guidebook';
+import { LESSONS, LESSON_GROUPS, type LessonAction } from './src/constants/lessons';
+import { LessonView } from './src/components/lesson-view';
 import { ArtistNameScreen, StartScreen } from './src/components/onboarding';
 import { appCloud, cloudConfig } from './src/services/cloud/firebase';
 import { artistNameFormat, authBase, checkArtistName, providerReady, register, setArtistName, signInWithBrowser, warmUp, WARM_ARTIST_CALLS, WARM_LOGIN, WARM_LOGIN_CALLS, type Provider } from './src/services/cloud/account';
@@ -202,7 +204,8 @@ function Studio() {
     catch { setContactFallback(true); }
   }
   // 홈 아래 두 화면(44차): 전체 작업(여러 세트 찾기·다시 열기)과 표현 가이드("무엇을 그릴까?"). 세트 안 칸 관리는 보드가 맡는다.
-  const [homeView, setHomeView] = useState<'home' | 'all' | 'guide' | 'book'>('home');
+  const [homeView, setHomeView] = useState<'home' | 'all' | 'guide' | 'book' | 'lesson'>('home');
+  const [lessonId, setLessonId] = useState<string | null>(null);
   const [bookOpen, setBookOpen] = useState<string | null>(null);
   // 채팅에서 써 보기(2026-10-13): 보드에서 연다. 세트별 — 이 세트에서 그린 칸만 이모티콘 판에 나온다.
   const [chatOpen, setChatOpen] = useState(false);
@@ -800,6 +803,19 @@ function Studio() {
   const pendingPurge = store?.projects.find(p => p.id === confirmPurgeId);
   // 홈은 프로젝트 관리 화면이 아니라 시작 화면이다(45.5차): 가장 최근 세트 하나만 두고, 나머지는 전체 작업에서 관리한다.
   const HOME_RECENT = 1;
+  // 강좌 끝의 '바로 해 보기'. 강좌가 가리키는 화면으로 바로 보낸다.
+  function runLessonAction(a: LessonAction) {
+    const latest = sortedProjects[0];
+    setHomeView('home');
+    if (a === 'newSet') { createNewProject(); return; }
+    if (a === 'guide') { setHomeView('guide'); return; }
+    if (a === 'book') { setHomeView('book'); return; }
+    if (a === 'contest') { setHomeTab('contest'); return; }
+    if (!latest) { createNewProject(); return; }
+    setProjectId(latest.id);
+    if (a === 'export') { setScreen('export'); return; }
+    setScreen('board'); setSlotNumber(nextUnfinished(latest, latest.lastSlot ?? 0) ?? latest.lastSlot ?? 1); setPainting(true);
+  }
   // 내 정보 탭의 줄들(예전 설정 창 내용 그대로 — 기능·이름을 바꾸지 않았다). 흰 카드 한 장에 담는다.
   const myRows = <View testID="내 정보 설정" style={{ gap: 4, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 28, ...Clay.card }}>
       <Text style={{ fontSize: 12, color: C.muted }}>{trial && !isPro(entitlement) ? 'PRO 체험 · 비공개 테스트' : entitlementLabel(entitlement)}</Text>
@@ -984,6 +1000,8 @@ function Studio() {
               </View>;
             })}
           </View>
+        </> : !project && homeView === 'lesson' && LESSONS.some(l => l.id === lessonId) ? <>
+          <LessonView key={lessonId!} lesson={LESSONS.find(l => l.id === lessonId)!} onBack={() => setHomeView('home')} onAction={runLessonAction} />
         </> : !project && homeView === 'book' ? <>
           {/* 이용 가이드북(2026-10-13, 홈 공지 슬라이드 ①): 장(章) 카드를 누르면 펼쳐진다. 규격 장은 카카오 공식 가이드 링크를 함께 준다. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4, marginLeft: -8 }}>
@@ -1290,26 +1308,24 @@ function Studio() {
                 </View>
               </View>
             </Rise>
-            <Rise delay={140} style={{ gap: 10 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 4 }}>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>무료 · 앱 사용법</Text>
-                <Pressable accessibilityRole="button" accessibilityLabel="가이드북 전체 보기" onPress={() => { setBookOpen(null); setHomeView('book'); }} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.point }}>전체</Text>
-                </Pressable>
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, flexGrow: 0 }} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingBottom: 14 }}>
-                {GUIDEBOOK.map((ch, i) => <Pressable key={ch.id} accessibilityRole="button" accessibilityLabel={'가이드북 ' + ch.title} onPress={() => { setBookOpen(ch.id); setHomeView('book'); }}
-                  style={({ pressed }) => ({ width: 150, gap: 6, transform: pressed ? [{ scale: .97 }] : [] })}>
-                  <View style={{ height: 96, borderRadius: 20, ...Clay.card, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 30, fontWeight: '800', color: i % 2 ? C.point : C.yellowInk }}>{String(i + 1).padStart(2, '0')}</Text>
-                  </View>
-                  <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '700', color: C.ink, paddingHorizontal: 2 }}>{ch.title}</Text>
-                  <View style={{ alignSelf: 'flex-start', height: 22, paddingHorizontal: 8, borderRadius: 11, backgroundColor: C.pointSoft, justifyContent: 'center', marginLeft: 2 }}>
-                    <Text style={{ fontSize: 11, fontWeight: '800', color: C.pointInk }}>무료</Text>
-                  </View>
-                </Pressable>)}
-              </ScrollView>
-            </Rise>
+            {LESSON_GROUPS.map((g, gi) => { const list = LESSONS.filter(l => l.group === g.id); if (!list.length) return null;
+              return <Rise key={g.id} delay={140 + gi * 50} style={{ gap: 10 }}>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink, paddingHorizontal: 4 }}>{g.title}</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, flexGrow: 0 }} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingBottom: 14 }}>
+                  {list.map((l, i) => <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={'강좌 ' + l.title} onPress={() => { setLessonId(l.id); setHomeView('lesson'); }}
+                    style={({ pressed }) => ({ width: 160, gap: 6, transform: pressed ? [{ scale: .97 }] : [] })}>
+                    <View style={{ height: 100, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', ...(l.cover ? Clay.card : i % 2 ? { ...Clay.card } : { ...Clay.yellow }) }}>
+                      {l.cover ? <Image source={l.cover} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                        : <Text style={{ fontSize: 30, fontWeight: '800', color: i % 2 ? C.point : C.yellowInk }}>{String(i + 1).padStart(2, '0')}</Text>}
+                      <View style={{ position: 'absolute', right: 8, bottom: 8, height: 20, paddingHorizontal: 6, borderRadius: 6, backgroundColor: 'rgba(25,31,40,0.72)', justifyContent: 'center' }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#FFFFFF' }}>{`${l.minutes}분`}</Text>
+                      </View>
+                    </View>
+                    <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '800', color: C.ink, paddingHorizontal: 2 }}>{l.title}</Text>
+                    <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted, paddingHorizontal: 2, marginTop: -4 }}>{l.summary}</Text>
+                  </Pressable>)}
+                </ScrollView>
+              </Rise>; })}
             <Rise delay={200}>
               <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드 열기" onPress={() => setHomeView('guide')}
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 24, ...Clay.card, transform: pressed ? [{ scale: .98 }] : [] })}>
