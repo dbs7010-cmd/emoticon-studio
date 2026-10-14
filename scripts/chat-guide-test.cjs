@@ -37,7 +37,7 @@ const stickersShown = () => tree.root.findAll(n => n.type === 'Image' && /번 �
   const pressed = [];
   const slide = (key, label) => ({ key, kicker: key, title: key + ' 제목', tone: '#fff', art: null, label, onPress: () => pressed.push(key) });
   await act(async () => { tree = create(React.createElement(NoticeCarousel, { guessWidth: 358, slides: [slide('book', '가이드북 열기'), slide('contest', '공모전 현황 보기')] })); });
-  assert.ok(texts().includes('1 / 2'), '몇 번째인지 보인다');
+  assert.ok(tree.root.findAll(n => n.props.accessibilityLabel === '공지 2장 중 1번째').length >= 1, '몇 번째인지 보인다(점 · 2026-10-14 시안 Z)');
   await act(async () => btn('공모전 현황 보기')[0].props.onPress());
   assert.deepEqual(pressed, ['contest']);
   const w = tree.root.findAll(n => n.type === 'Pressable')[0].props.style({ pressed: false }).width;

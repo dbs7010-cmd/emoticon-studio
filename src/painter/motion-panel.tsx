@@ -200,8 +200,8 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   // 그래서 같은 규칙: 테두리 없음, 고른 칸만 옅은 노랑 면 + 짧은 노란 밑줄, 누르는 동안 회색.
   // 한 줄에 일곱을 욱여넣던 것을 네 칸 격자로 바꿨다 — 320dp 에서 흔들기·부르르가 화면 밖에 있어 고를 수 없었고,
   // 기기에서는 칸이 36dp 로 줄어 손가락 자리(48dp)도 글자도 모자랐다.
-  const card = (on: boolean) => ({ pressed }: { pressed: boolean }) => ({ flex: 1, minHeight: 84, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: C.radius.md, backgroundColor: on ? C.accentSoft : pressed ? C.fillPressed : C.surface2, borderWidth: C.stroke, borderColor: on ? C.edge : 'transparent' } as const);   // 2026-10-08 토스식: 쉬는 칸은 회색 면
-  const mark = (_on: boolean) => null;   // 2026-10-08: 고른 칸은 옅은 노랑 면 + 잉크 테두리로 충분 — 밑줄은 걷었다
+  const card = (on: boolean) => ({ pressed }: { pressed: boolean }) => ({ flex: 1, minHeight: 84, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: C.radius.md, backgroundColor: on ? C.pointSoft : pressed ? C.fillPressed : C.surface2, borderWidth: C.stroke, borderColor: on ? C.point : 'transparent' } as const);   // 2026-10-08 토스식: 쉬는 칸은 회색 면
+  const mark = (_on: boolean) => null;   // 2026-10-08: 고른 칸은 옅은 보라 면 + 보라 테두리로(2026-10-14 시안 Z) 충분 — 밑줄은 걷었다
   // 다른 화면으로 가는 줄은 **목록 줄** 역할이다 — 브러시·레이어 목록처럼 카드 없이 얇은 구분선으로 가른다.
   const row = { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 4, borderBottomWidth: 1, borderColor: C.line } as const;
   // 45.39: 묶음으로 나눈 격자. 묶음 칩으로 좁혀 볼 수 있다(전체가 기본).
@@ -546,7 +546,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
 }
 
 export function Toggle({ on }: { on: boolean }) {
-  return <View style={{ width: 36, height: 22, borderRadius: 11, padding: 2, backgroundColor: on ? C.accent : C.lineStrong, justifyContent: 'center' }}>
+  return <View style={{ width: 36, height: 22, borderRadius: 11, padding: 2, backgroundColor: on ? C.point : C.lineStrong, justifyContent: 'center' }}>
     <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#FFF', alignSelf: on ? 'flex-end' : 'flex-start' }} />
   </View>;
 }

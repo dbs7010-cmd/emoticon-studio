@@ -26,7 +26,7 @@ const render = async el => { let t; await act(async () => { t = create(el); }); 
 
 (async () => {
   // ── 선택 · 비활성 규칙 ──
-  assert.deepEqual(U.selectedFace(true), { backgroundColor: T.accent, borderColor: T.edge }, '도구 선택 = 노란 면 + 잉크 가장자리');
+  assert.deepEqual(U.selectedFace(true), { backgroundColor: T.pointSoft, borderColor: T.point }, '도구 선택 = 옅은 보라 면 + 보라 가장자리(2026-10-14 시안 Z)');
   assert.equal(U.selectedFace(true, 'list').backgroundColor, T.accentSoft, '목록 선택 = 옅은 노랑 면');
   assert.equal(U.selectedFace(false).backgroundColor, 'transparent');
   assert.equal(U.inkFor(true), T.faint); assert.equal(U.inkFor(false), T.ink);
@@ -56,7 +56,7 @@ const render = async el => { let t; await act(async () => { t = create(el); }); 
   assert.ok(texts(t).includes('7번 칸 저장됨'));
   assert.ok(t.root.findAll(n => n.type === 'View' && flat(n.props.style).backgroundColor === T.success).length === 1, '초록은 체크 한 점에만');
   const nextBtn = t.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === '다음 칸')[0];
-  assert.equal(flat(nextBtn.props.style).backgroundColor, T.ink, '다음 칸 = 잉크 버튼'); await act(async () => nextBtn.props.onPress()); assert.equal(next, 1);
+  assert.equal(flat(nextBtn.props.style).backgroundColor, T.point, '다음 칸 = 보라 버튼(시안 Z: 다음 할 일은 보라)'); await act(async () => nextBtn.props.onPress()); assert.equal(next, 1);
   assert.ok(flat(nextBtn.props.style).minHeight + 2 * nextBtn.props.hitSlop >= T.tap, '누르는 자리 48 이상(보이는 크기 + 여유)');
   assert.ok(timings.length >= 2 && timings.every(c => c.useNativeDriver === true), '네이티브 구동');
   assert.ok(timings.every(c => c.duration === Motion.rise), '0.24초');
@@ -82,13 +82,14 @@ const render = async el => { let t; await act(async () => { t = create(el); }); 
   const done = t.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === '파일 묶음 만들기');
   assert.equal(done.length, 1); await act(async () => done[0].props.onPress()); assert.equal(go, 1);
 
-  // ── ProBadge: 보라 없음 · 잉크 테두리 · 반짝 아이콘 · 누르는 자리 48 ──
+  // ── ProBadge: 보라 없음 · 옅은 노랑 알약 · 반짝 아이콘 · 누르는 자리 48 ──
   let opened = 0;
   t = await render(React.createElement(U.ProBadge, { onPress: () => opened++ }));
   const badge = t.root.findAll(n => n.type === 'Pressable')[0];
   assert.equal(badge.props.accessibilityLabel, 'PRO 이용'); assert.ok(flat(badge.props.style).minHeight >= T.tap && flat(badge.props.style).minWidth >= T.tap);
-  const face = t.root.findAll(n => n.type === 'View' && flat(n.props.style).borderColor === T.edge)[0];
-  assert.equal(flat(face.props.style).backgroundColor, T.paper, '흰 바탕 · 잉크 테두리'); assert.deepEqual(icons(t), ['icon-pro']);
+  // 2026-10-14 시안 Z: 검정 테두리 없이 옅은 노랑 알약(산 뒤에는 노랑).
+  const face = t.root.findAll(n => n.type === 'View' && flat(n.props.style).backgroundColor === T.accentSoft)[0];
+  assert.ok(face && !flat(face.props.style).borderWidth, '옅은 노랑 알약 · 테두리 없음'); assert.deepEqual(icons(t), ['icon-pro']);
   assert.ok(!JSON.stringify(t.toJSON()).toUpperCase().includes('#5B47E0'), '보라 없음');
   await act(async () => badge.props.onPress()); assert.equal(opened, 1);
   t = await render(React.createElement(U.ProBadge, {}));

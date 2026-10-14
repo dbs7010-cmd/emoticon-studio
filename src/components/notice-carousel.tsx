@@ -1,32 +1,59 @@
-// 홈 맨 위 공지 슬라이드(2026-10-13 사용자 요청: "공지 프레임 꽉 차게, 옆으로 슬라이드, 누르면 볼 수 있게").
-// 카드 하나가 줄 폭을 꽉 채우고, 옆으로 넘기면 다음 공지가 온다. 오른쪽 아래 '1 / n' 으로 몇 번째인지 보인다.
-// 저절로 넘어가지 않는다 — 읽는 중에 바뀌지 않게(손으로만 넘김).
-import React, { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+// 홈 맨 위 공지 배너(2026-10-14 시안 Z-Home · 사용자 확정: "둥근 테두리 없이 앱 가로 규격에 꽉 차게, 이미지 칸").
+// 화면 폭을 꽉 채운 가로 배너(390×130 비율)를 옆으로 넘긴다. 혼자서도 4초마다 다음 장으로 넘어가고, 손을 대면 잠시 멈춘다.
+// 동작 줄이기(접근성)를 켠 기기에서는 저절로 넘기지 않는다. 왼쪽 아래 점(지금 장은 길쭉한 보라)으로 몇 번째인지 보인다.
+// 그림 파일(image)을 주면 배너 전체를 그 그림으로 덮는다 — 권장 1080×360, 왼쪽 아래 모서리(점 자리)는 비워 둔다.
+import React, { useEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, Image, Pressable, ScrollView, Text, View, type ImageSourcePropType } from 'react-native';
 import { T } from './ui';
 
-export type NoticeSlide = { key: string; kicker: string; title: string; tone: string; art: React.ReactNode; onPress: () => void; label: string; testID?: string };
+export type NoticeSlide = { key: string; kicker: string; title: string; tone: string; art: React.ReactNode; onPress: () => void; label: string; testID?: string; kickerColor?: string; image?: ImageSourcePropType };
 
-// guessWidth: 첫 그리기 전 예상 폭(화면 폭 - 여백). 실제 폭은 onLayout 으로 바로잡는다.
+export const NOTICE_RATIO = 130 / 390;
+const AUTO_MS = 4000;
+
+// guessWidth: 첫 그리기 전 예상 폭(화면 폭). 실제 폭은 onLayout 으로 바로잡는다.
 export function NoticeCarousel({ slides, guessWidth }: { slides: NoticeSlide[]; guessWidth: number }) {
   const [width, setWidth] = useState(guessWidth);
   const [index, setIndex] = useState(0);
+  const [still, setStill] = useState(false);
+  const scroller = useRef<ScrollView>(null);
+  const held = useRef(false);
+  useEffect(() => {
+    let live = true;
+    AccessibilityInfo?.isReduceMotionEnabled?.().then(on => { if (live) setStill(!!on); }).catch(() => {});
+    return () => { live = false; };
+  }, []);
+  useEffect(() => {
+    if (still || slides.length < 2) return;
+    const id = setInterval(() => {
+      if (held.current) return;
+      setIndex(i => { const n = (i + 1) % slides.length; scroller.current?.scrollTo?.({ x: n * width, animated: true }); return n; });
+    }, AUTO_MS);
+    // 검사 환경(node)에서 이 타이머 하나 때문에 프로그램이 끝나지 않는 일이 없게 한다. 기기에서는 unref 가 없어 그대로다.
+    (id as unknown as { unref?: () => void }).unref?.();
+    return () => clearInterval(id);
+  }, [still, slides.length, width]);
   if (!slides.length) return null;
-  return <View testID="홈 공지 슬라이드" onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ borderRadius: 24, overflow: 'hidden' }}>
-    <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} decelerationRate="fast"
-      onMomentumScrollEnd={e => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}>
+  const height = Math.round(width * NOTICE_RATIO);
+  return <View testID="홈 공지 슬라이드" onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height, overflow: 'hidden' }}>
+    <ScrollView ref={scroller} horizontal pagingEnabled showsHorizontalScrollIndicator={false} decelerationRate="fast"
+      onTouchStart={() => { held.current = true; }} onTouchEnd={() => { held.current = false; }}
+      onMomentumScrollEnd={e => { held.current = false; setIndex(Math.round(e.nativeEvent.contentOffset.x / width)); }}>
       {slides.map(s => <Pressable key={s.key} testID={s.testID} accessibilityRole="button" accessibilityLabel={s.label} onPress={s.onPress}
-        style={({ pressed }) => ({ width, minHeight: 112, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 20, paddingRight: 16, paddingVertical: 14, backgroundColor: s.tone, opacity: pressed ? .85 : 1 })}>
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '800', color: T.muted }}>{s.kicker}</Text>
-          <Text numberOfLines={2} style={{ fontSize: 18, lineHeight: 25, fontWeight: '800', color: T.ink, letterSpacing: -.3 }}>{s.title}</Text>
-        </View>
-        <View style={{ width: 76, height: 76, alignItems: 'center', justifyContent: 'center' }}>{s.art}</View>
+        style={({ pressed }) => ({ width, height, minHeight: 112, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 24, paddingRight: 20, paddingBottom: 6, backgroundColor: s.tone, opacity: pressed ? .9 : 1 })}>
+        {s.image ? <Image source={s.image} style={{ position: 'absolute', left: 0, top: 0, width, height }} resizeMode="cover" accessibilityIgnoresInvertColors /> : <>
+          <View pointerEvents="none" style={{ position: 'absolute', right: width * .02, top: height / 2 - height * .58, width: height * 1.16, height: height * 1.16, borderRadius: height, backgroundColor: 'rgba(255,255,255,0.45)' }} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '700', color: s.kickerColor ?? T.yellowInk }}>{s.kicker}</Text>
+            <Text numberOfLines={2} style={{ fontSize: 19, lineHeight: 26, fontWeight: '800', color: T.ink, letterSpacing: -.4 }}>{s.title}</Text>
+          </View>
+          <View style={{ width: 84, height: 84, alignItems: 'center', justifyContent: 'center' }}>{s.art}</View>
+        </>}
       </Pressable>)}
     </ScrollView>
-    {slides.length > 1 && <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
-      style={{ position: 'absolute', right: 12, bottom: 6, height: 20, paddingHorizontal: 8, borderRadius: 10, justifyContent: 'center', backgroundColor: 'rgba(31,29,26,.55)' }}>
-      <Text style={{ fontSize: 11, fontWeight: '700', color: '#FFFFFF' }}>{`${index + 1} / ${slides.length}`}</Text>
+    {slides.length > 1 && <View pointerEvents="none" accessible accessibilityLabel={`공지 ${slides.length}장 중 ${index + 1}번째`}
+      style={{ position: 'absolute', left: 24, bottom: 12, flexDirection: 'row', gap: 4 }}>
+      {slides.map((s, i) => <View key={s.key} style={{ width: i === index ? 16 : 6, height: 6, borderRadius: 3, backgroundColor: i === index ? T.point : 'rgba(25,31,40,0.28)' }} />)}
     </View>}
   </View>;
 }

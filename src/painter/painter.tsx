@@ -248,9 +248,9 @@ function BarSlider({ label, value, min, max, step = 1, onCommit, show, lead, dis
       onResponderRelease={settle} onResponderTerminate={settle}
       style={{ flex: 1, height: BAR_H, justifyContent: 'center' }}>
       <View pointerEvents="none" style={{ marginHorizontal: BAR_KNOB / 2, height: 6, borderRadius: 3, backgroundColor: T.surface2 }}>
-        <View style={{ width: pct(ratio), height: '100%', borderRadius: 3, backgroundColor: disabled ? T.lineStrong : T.accent }} />
+        <View style={{ width: pct(ratio), height: '100%', borderRadius: 3, backgroundColor: disabled ? T.lineStrong : T.point }} />
         <View style={{ position: 'absolute', left: pct(ratio), top: -(BAR_KNOB - 6) / 2, width: BAR_KNOB, height: BAR_KNOB, marginLeft: -BAR_KNOB / 2, borderRadius: BAR_KNOB / 2,
-          backgroundColor: live !== null ? T.accent : T.paper, borderWidth: T.stroke, borderColor: T.edge }} />
+          backgroundColor: T.paper, boxShadow: live !== null ? '0px 0px 0px 4px rgba(91, 87, 217, 0.22), 0px 2px 6px rgba(25, 31, 40, 0.22)' : '0px 2px 6px rgba(25, 31, 40, 0.22)' }} />
       </View>
     </View>
   </View>;
@@ -318,7 +318,7 @@ function VSlider({ label, value, min, max, step = 1, onCommit, bubble, disabled,
         {/* 홈: 얇고 부드러운 회색. 들여 둔 만큼 도로 늘려 기둥 전체를 지난다. */}
         <View style={{ position: 'absolute', left: RAIL_GROOVE_X, top: -RAIL_HANDLE_H / 2, bottom: -RAIL_HANDLE_H / 2, width: RAIL_GROOVE_W, borderRadius: RAIL_GROOVE_W / 2, backgroundColor: T.surface2 }} />
         {/* 아래에서 지금 값까지만 노랑이 찬다. */}
-        <View style={{ position: 'absolute', left: RAIL_GROOVE_X, width: RAIL_GROOVE_W, top: pct(1 - ratio), bottom: -RAIL_HANDLE_H / 2, borderRadius: RAIL_GROOVE_W / 2, backgroundColor: disabled ? T.lineStrong : T.accent }} />
+        <View style={{ position: 'absolute', left: RAIL_GROOVE_X, width: RAIL_GROOVE_W, top: pct(1 - ratio), bottom: -RAIL_HANDLE_H / 2, borderRadius: RAIL_GROOVE_W / 2, backgroundColor: disabled ? T.lineStrong : T.point }} />
         {/* 손잡이. 누르는 동안에도 크기는 그대로다 — 테두리 색만 짙어진다. */}
         <View testID={testID ? testID + ' 손잡이' : undefined}
           style={{ position: 'absolute', left: 0, bottom: pct(ratio), marginBottom: -RAIL_HANDLE_H / 2, width: RAIL_HANDLE_W, height: RAIL_HANDLE_H, borderRadius: RAIL_HANDLE_W / 2,
@@ -1286,7 +1286,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       disabled={busy || !initialized} onPress={() => save('manual')}
       hitSlop={{ top: 4, bottom: 4 }}
       style={({ pressed }) => ({ minHeight: 40, minWidth: 60, paddingHorizontal: 16, marginHorizontal: 4, borderRadius: 20,
-        alignItems: 'center', justifyContent: 'center', backgroundColor: busy || !initialized ? C.fill : pressed ? C.accentLine : C.accent,
+        alignItems: 'center', justifyContent: 'center', backgroundColor: busy || !initialized ? C.fill : C.accent,
+        ...(busy || !initialized ? {} : pressed ? { boxShadow: '0px 1px 0px #E6BB17, inset 0px 2px 0px rgba(255, 255, 255, 0.7)', transform: [{ translateY: 2 }] } : { boxShadow: '0px 4px 0px #E6BB17, inset 0px 2px 0px rgba(255, 255, 255, 0.7)' }),
         })}>
       <Text numberOfLines={1} style={{ color: busy || !initialized ? C.faint : C.accentInk, fontWeight: '800', fontSize: 15 }}>저장</Text>
     </Pressable>;
@@ -1829,9 +1830,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             return <Pressable key={key} testID={'도구 ' + title} accessibilityRole="button" accessibilityLabel={a11y} accessibilityState={{ selected: on }}
               onPress={() => selectTool(key)}
               style={({ pressed }) => ({ flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: C.radius.button,
-                backgroundColor: on ? C.accent : pressed ? C.fill : 'transparent' })}>
-              <Glyph name={icon} size={20} color={on ? C.ink : C.muted} />
-              <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{title}</Text>
+                backgroundColor: on ? C.pointSoft : pressed ? C.fill : 'transparent', boxShadow: on ? `inset 0px 0px 0px 2px ${C.point}` : undefined })}>
+              <Glyph name={icon} size={20} color={on ? C.point : C.muted} />
+              <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{title}</Text>
             </Pressable>; })}
           <Pressable testID="지금 색" accessibilityRole="button" accessibilityLabel="색" accessibilityValue={{ text: color.toUpperCase() }} accessibilityState={{ expanded: panel === 'color' }}
             accessibilityHint="누르면 색을 골라요"
@@ -1903,7 +1904,7 @@ function Bar({ label, icon, strong, narrow, active, disabled, onPress }: { label
   </Pressable>;
 }
 function Switch({ on }: { on: boolean }) {
-  return <View style={{ width: 36, height: 22, borderRadius: 11, padding: 2, backgroundColor: on ? T.accent : T.lineStrong, justifyContent: 'center' }}>
+  return <View style={{ width: 36, height: 22, borderRadius: 11, padding: 2, backgroundColor: on ? T.point : T.lineStrong, justifyContent: 'center' }}>
     <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#FFF', alignSelf: on ? 'flex-end' : 'flex-start' }} />
   </View>;
 }
@@ -1958,7 +1959,7 @@ function PoseStrip({ category, index, count, onIndex }: { category: string; inde
   const cells = [-1, 0, 1].map(offset => {
     const at = index + offset;
     return <View key={offset} style={{ width: cell, height: Math.round(cell * 4 / 3), borderRadius: 10, overflow: 'hidden', backgroundColor: T.surface2,
-      opacity: at < 0 || at > count - 1 ? 0 : offset === 0 ? 1 : .5, borderWidth: offset === 0 ? 2 : 0, borderColor: T.accent, alignItems: 'center', justifyContent: 'center' }}>
+      opacity: at < 0 || at > count - 1 ? 0 : offset === 0 ? 1 : .5, borderWidth: offset === 0 ? 2 : 0, borderColor: T.point, alignItems: 'center', justifyContent: 'center' }}>
       {pose ? <Image accessibilityIgnoresInvertColors source={pose} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
         : <Glyph name="human-handsup" size={20} color={T.lineStrong} />}
     </View>;
@@ -1990,7 +1991,7 @@ export const SIZE_TRAVEL = 180;
 // 참고 줄의 칸 하나: 그림(또는 아이콘) 위, 짧은 이름 아래.
 function RailTile({ label, caption, image, icon, selected, dashed, faded, onPress }: { label: string; caption: string; image?: string; icon?: IconName; selected?: boolean; dashed?: boolean; faded?: boolean; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!selected }} onPress={onPress} style={{ width: 64, alignItems: 'center', gap: 4 }}>
-    <View style={{ width: 56, height: 56, padding: 2, borderRadius: 14, borderWidth: selected ? 2 : dashed ? 1 : 0, borderStyle: dashed ? 'dashed' : 'solid', borderColor: selected ? T.accent : T.lineStrong, backgroundColor: dashed ? T.paper : T.surface2, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: 56, height: 56, padding: 2, borderRadius: 14, borderWidth: selected ? 2 : dashed ? 1 : 0, borderStyle: dashed ? 'dashed' : 'solid', borderColor: selected ? T.point : T.lineStrong, backgroundColor: dashed ? T.paper : T.surface2, alignItems: 'center', justifyContent: 'center' }}>
       {image ? <Image source={{ uri: image }} style={{ width: '100%', height: '100%', borderRadius: 10, opacity: faded ? .35 : 1 }} resizeMode="contain" />
         : icon ? <Glyph name={icon} size={22} color={T.muted} /> : null}
     </View>

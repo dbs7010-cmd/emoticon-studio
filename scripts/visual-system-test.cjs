@@ -66,11 +66,13 @@ async function ready() {
   // ── 1. 토큰: 명세 값 · 한 벌 ─────────────────────────────────────────────────────────────
   // 45.42 WHITE BASE(사용자 확정 2026-09-28): WHITE · INK · NEUTRAL · MAKER YELLOW. 값이 되돌아가지 않게 못 박는다.
   // 바탕과 패널이 모두 흰색이다 — 층은 옅은 중립 선 + 부드러운 그림자, 가라앉은 면(surface2)으로 읽힌다.
-  assert.equal(T.bg, '#FFFFFF'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.surface2, '#F6F5F2');
+  assert.equal(T.bg, '#FFFFFF'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.surface2, '#F7F5F1');
   assert.notEqual(T.cardLine, T.paper, '흰 카드는 바탕과 다른 선으로 층이 읽힌다');
   assert.notEqual(T.bg, T.surface2, '눌린 면은 앱 바탕과도 달라야 한다');
-  assert.equal(T.ink, '#1F1D1A'); assert.equal(T.muted, '#6B655E'); assert.equal(T.faint, '#948D84'); assert.equal(T.line, '#ECE9E3');
-  assert.equal(T.accent, '#F5E642'); assert.equal(T.accentSoft, '#FCF8CF');   // 2026-10-03 브랜드 레몬 assert.equal(T.danger, '#B42318');
+  // 2026-10-14 시안 Z(사용자 확정): 차가운 잉크 · 노랑 #FFE14D · 포인트 보라 #5B57D9(지금·고른 것·진행에만).
+  assert.equal(T.ink, '#191F28'); assert.equal(T.muted, '#4E5968'); assert.equal(T.faint, '#848E9A'); assert.equal(T.line, '#F0EDE8');
+  assert.equal(T.point, '#5B57D9'); assert.equal(T.pointSoft, '#EEEDFF');
+  assert.equal(T.accent, '#FFE14D'); assert.equal(T.accentSoft, '#FFF1BF');   // 2026-10-03 브랜드 레몬 assert.equal(T.danger, '#B42318');
   // 크림·갈색 잔재가 공통 토큰에 남지 않는다(초록은 성공 순간 전용 토큰에만).
   for (const k of ['bg', 'paper', 'surface2', 'warm', 'line', 'lineStrong', 'cardLine', 'paperLine', 'warmLine', 'fill', 'fillPressed']) {
     const [r, g, b] = [1, 3, 5].map(i => parseInt(T[k].substr(i, 2), 16));
@@ -80,10 +82,10 @@ async function ready() {
   // 스티커 문법: 2px 짙은 테두리 + 딱 떨어지는 그림자(노란 버튼·고른 것에만). PRO 는 보라 없이 잉크(배지 모양으로 구분).
   assert.equal(T.stroke, 2); assert.equal(T.edge, T.ink, '스티커 테두리는 본문 색');
   assert.equal(Pop.border.borderWidth, 2); assert.ok(/^3px 3px 0px /.test(Pop.shadow.boxShadow), '주요 표면 그림자는 흐림 없이 3px');
-  assert.equal(T.pro, T.ink, 'PRO 는 보라가 아니라 잉크'); assert.equal(T.proSoft, T.surface2);
+  assert.equal(T.pro, T.ink, 'PRO 는 보라가 아니라 잉크'); assert.equal(T.proSoft, T.accentSoft, 'PRO 옅은 면은 옅은 노랑(시안 Z)');
   for (const k of Object.keys(T)) if (typeof T[k] === 'string') assert.notEqual(T[k].toUpperCase(), '#5B47E0', 'PRO 보라가 남지 않는다: ' + k);
   // 상태 토큰 한 벌(45.42): 선택 = 노란 면 + 잉크 가장자리, 비활성 = 옅은 색(투명도 아님).
-  assert.deepEqual(S.selected, { backgroundColor: T.accent, borderColor: T.edge }); assert.equal(S.selectedSoft.backgroundColor, T.accentSoft);
+  assert.deepEqual(S.selected, { backgroundColor: T.pointSoft, borderColor: T.point }); assert.equal(S.selectedSoft.backgroundColor, T.accentSoft);
   assert.equal(S.pressed.backgroundColor, T.fill); assert.equal(S.disabledInk, T.faint); assert.equal(S.success.color, T.success);
   assert.ok(Object.values(Motion).every(ms => ms >= 100 && ms <= 300), '반응 시간은 0.1~0.3초');
   // 아이콘 부품(icons.tsx)은 순환 참조를 피하려 색을 따로 들고 있다 — 토큰과 같은 값이어야 한다.
@@ -114,7 +116,7 @@ async function ready() {
   assert.deepEqual([T.radius.xs, T.radius.sm, T.radius.md, T.radius.lg, T.radius.xl], [8, 12, 16, 20, 24], '모서리는 8·12·16·20·24 한 벌');
   // 명세 §2 는 쓰임새로 부른다: 카드16 · 버튼12 · 칩10.
   // 45.39: 스티커 표면은 조금 더 둥글다 — 카드20 · 버튼14 · 칩10.
-  assert.deepEqual([T.radius.card, T.radius.button, T.radius.chip], [20, 14, 10], '카드20·버튼14·칩10');
+  assert.deepEqual([T.radius.card, T.radius.button, T.radius.chip], [24, 18, 10], '카드24·버튼18·칩10(2026-10-14 시안 Z: 더 둥근 클레이)');
   // 45.39 글자 위계. 제목26 · 화면명22 · 섹션19(Jua) · 본문16 · 버튼15 · 보조13 · 도구12.
   assert.deepEqual([Type.screenTitle.fontSize, Type.screenName.fontSize, Type.sectionTitle.fontSize, Type.body.fontSize, Type.button.fontSize, Type.bodySecondary.fontSize, Type.caption.fontSize],
     [26, 22, 19, 16, 15, 13, 12], '글자 크기 한 벌');
@@ -169,7 +171,7 @@ async function ready() {
   assert.equal(byTestID('홈 창작 표면').length, 0, '작업이 있으면 소개용 큰 표면을 두지 않는다');
   assert.equal(byTestID('홈 알림').length, 0, '알림·공모전 없음 → 자리 없음');
   const primaryYellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
-  assert.deepEqual(primaryYellow, ['시각 세트 이어서 만들기', '새 세트 만들기'], '노랑은 큰 버튼 하나 + 내 세트 줄의 작은 + 칸: ' + JSON.stringify(primaryYellow));
+  assert.deepEqual(primaryYellow, ['시각 세트 이어서 만들기'], '노란 버튼은 지금 할 일 하나(시안 Z-Home): ' + JSON.stringify(primaryYellow));
   assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 카드가 있다');
   assert.ok(texts().includes('31칸 남음') && texts().includes('아이콘'), '제안까지는 두 마디 칸(32칸 · 31칸 남음 / 아이콘 · 만들기)');
   {
@@ -188,7 +190,7 @@ async function ready() {
     assert.ok(ids(badge).includes('icon-pro') && texts().includes('PRO 보기'), 'PRO 배지 = 반짝 아이콘 + 글자');
     assert.ok(ids(labelled('표현 가이드')[0]).includes('icon-guide'), '표현 가이드 = 선 아이콘');
     assert.equal(byTestID('아래 탭').length, 1, '아래 탭 막대');
-    assert.deepEqual(tree.root.findAll(n => n.props.accessibilityRole === 'tab' && n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['홈', '공모전', '내 정보']);
+    assert.deepEqual(tree.root.findAll(n => n.props.accessibilityRole === 'tab' && n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['홈', '강좌', '공모전', '내 정보']);
     const sizes = tree.root.findAll(n => n.type === 'Svg').map(n => n.props.width);
     assert.ok(sizes.length && sizes.every(s => [14, 18, 22, 24].includes(s)), '아이콘 크기 14/18/22/24: ' + [...new Set(sizes)]);
   }
@@ -248,17 +250,17 @@ async function ready() {
     assert.ok(has(1, '완성 표시') && !has(1, '그리는 중 표시'), '완성 칸 = 점 하나');
     assert.equal(flat(face(1).findAll(x => x.props.testID === '완성 표시')[0].props.style).backgroundColor, T.success, '완성 점은 초록(그리는 중 노랑과 구분)');
     assert.ok(has(2, '그리는 중 표시') && !has(2, '완성 표시'), '그리는 중 칸 = 노란 점');
-    assert.equal(flat(face(2).findAll(x => x.props.testID === '그리는 중 표시')[0].props.style).backgroundColor, T.accent);
+    assert.equal(flat(face(2).findAll(x => x.props.testID === '그리는 중 표시')[0].props.style).backgroundColor, T.dotWorking, '그리는 중 = 회색 점(시안 Z-Board)');
     const selected = tree.root.findAll(x => x.type === 'Pressable' && /^slot-\d+$/.test(x.props.testID ?? '') && x.props.accessibilityState?.selected);
     assert.equal(selected.length, 1, '지금 칸은 하나(접근성 selected)');
     const now = flat(face(selected[0].props.testID.slice(5)).props.style);
-    assert.equal(now.backgroundColor, T.accentSoft); assert.equal(now.borderColor, T.edge, '지금 칸 = 옅은 노랑 면 + 잉크 테두리');
+    assert.equal(now.backgroundColor, T.pointSoft); assert.equal(now.borderColor, T.point, '지금 칸 = 옅은 보라 면 + 보라 테두리(시안 Z-Board)');
     assert.equal(flat(face(20).props.style).borderStyle, 'dashed', '빈 칸 = 점선');
     const bar = byTestID('보드 진행').find(x => x.type === 'View');
     assert.ok(/칸 중 1칸 완성/.test(bar.props.accessibilityLabel), '막대는 읽을 수 있는 이름을 가진다');
   }
   const dock = byTestID('board-action-dock')[0];
-  assert.equal(flat(dock.props.style).borderTopLeftRadius, 24, '보드 아래 줄은 떠 있는 표면');
+  assert.equal(flat(dock.props.style).borderTopLeftRadius, 28, '보드 아래 줄은 떠 있는 표면');
 
   // ── 5. 그리기: 브러시 카드 셋 · 색·굵기 한 줄 · 도구 네 칸 (45.28차 승인 보드) ─────────────
   await act(async () => tree.root.findAll(n => n.props.testID === 'slot-3')[0].props.onPress());
@@ -268,8 +270,8 @@ async function ready() {
   const TOOLS = ['그리기 도구 펜', '지우개', '채우기', '선택'];
   // 45.39 디자인 D: 고른 도구는 노랑 채움 + 2px 짙은 테두리(스티커). 쉬는 도구는 테두리도 바탕도 없다.
   for (const label of TOOLS.slice(1)) assert.equal(seen(flat(labelled(label)[0].props.style)), 0, label + ' 쉬는 도구에 카드 테두리가 없다');
-  assert.equal(seen(flat(labelled(TOOLS[0])[0].props.style)), 0, '고른 도구도 테두리 없이 노랑 면만(2026-10-08 토스식)');
-  assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.accent, '고른 도구만 노랑 표면');
+  assert.equal(seen(flat(labelled(TOOLS[0])[0].props.style)), 0, '고른 도구도 테두리 없이 면 + 안쪽 선만');
+  assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.pointSoft, '고른 도구만 옅은 보라 표면(2026-10-14 시안 Z-Draw)');
   assert.equal(flat(labelled('지우개')[0].props.style).backgroundColor, 'transparent', '고르지 않은 도구는 투명');
   // 노랑은 '지금 그리는 도구' 하나만 쓴다. 색은 도구가 아니라 패널 입구라 테두리로 말한다.
   // 45.35 승인 시안: 색은 도구 줄 오른쪽 끝의 동그라미 하나다. 상태는 그 고리가 말한다.
@@ -281,11 +283,11 @@ async function ready() {
   await press('색');
   assert.notEqual(colorRing().backgroundColor, T.accent, '색 패널을 열어도 노랑이 되지 않는다');
   assert.ok(seen(colorRing()) > colorRest, '열린 패널은 더 굵은 고리로 말한다');
-  assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.accent, '색을 열어도 활성 도구(펜)는 그대로 노랑');
-  const yellowTools = TOOLS.filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accent);
-  assert.deepEqual(yellowTools, [TOOLS[0]], '도구 줄의 노랑은 한 곳뿐: ' + JSON.stringify(yellowTools));
+  assert.equal(flat(labelled(TOOLS[0])[0].props.style).backgroundColor, T.pointSoft, '색을 열어도 활성 도구(펜)는 그대로 보라');
+  const yellowTools = TOOLS.filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.pointSoft);
+  assert.deepEqual(yellowTools, [TOOLS[0]], '도구 줄의 선택 면은 한 곳뿐: ' + JSON.stringify(yellowTools));
   await press('지우개');
-  assert.deepEqual(TOOLS.filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.accent), ['지우개'], '지우개로 바꾸면 노랑도 하나만 따라 옮긴다');
+  assert.deepEqual(TOOLS.filter(l => flat(labelled(l)[0].props.style).backgroundColor === T.pointSoft), ['지우개'], '지우개로 바꾸면 선택 면도 하나만 따라 옮긴다');
   await press(TOOLS[0]);
   const undoBg = flat(labelled('되돌리기')[0].props.style).backgroundColor;
   assert.ok(!undoBg || undoBg === 'transparent', '되돌리기는 도구처럼 보이지 않는 조용한 아이콘(바탕이 없다): ' + undoBg);

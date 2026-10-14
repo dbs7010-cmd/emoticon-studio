@@ -295,7 +295,7 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
     assert.ok((styleOf(labelled(name)[0]).minHeight ?? 0) >= 44, name + ': 손가락 자리 유지');
   }
   await press('지우개');
-  assert.equal(styleOf(labelled('지우개')[0]).backgroundColor, T.accent, '고른 빠른 도구는 노랑 채움으로 바로 구분된다(45.39 디자인 D)');
+  assert.equal(styleOf(labelled('지우개')[0]).backgroundColor, T.pointSoft, '고른 빠른 도구는 옅은 보라 면으로 바로 구분된다(2026-10-14 시안 Z)');
   assert.equal(styleOf(labelled('채우기')[0]).backgroundColor, 'transparent', '고르지 않은 것은 조용하다');
   await press('브러시 전체');
 

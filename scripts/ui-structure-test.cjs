@@ -103,7 +103,7 @@ const homeSections = () => {
       // 45.43(승인 시안 WB2-Home · 사용자 결정): 표현 가이드는 '이어서 만들기' 제목 옆 작은 링크다(하단 네 칸은 걷었다).
       const want = count
         ? ['가이드', ...(on ? ['공지'] : []), '카드', '시작 줄']   // 2026-10-12 사용자 요청: 공지 배너가 맨 위 → 이어 그리기 카드 → 제안까지(작게) → 내 세트(+ 칸)
-        : ['가이드', '창작', ...(on ? ['공지'] : [])];
+        : ['가이드', ...(on ? ['공지'] : []), '창작'];   // 2026-10-14 시안 Z: 공지 배너는 언제나 맨 위
       assert.deepEqual(homeSections(), want, '홈 순서(' + where + ')');
       assert.equal(byTestID('홈 알림').length, on ? 1 : 0, '공지가 꺼지면 자리도 없다(' + where + ')');
       assert.equal(tree.root.findAll(n => n.type === 'Pressable' && /^세트 \d+$/.test(n.props.accessibilityLabel ?? '')).length, cards, '홈에는 가장 최근 세트 하나만(' + where + ')');
@@ -118,8 +118,9 @@ const homeSections = () => {
       const yellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
       // 45.39 홈(시안 H4): 노랑은 하나 — 세트가 있으면 카드 안 '이어 그리기', 없으면 창작 표면의 '새 세트 만들기'.
       // 2026-10-08 토스식: 큰 노랑은 지금 할 일 하나. 세트가 있으면 내 세트 줄의 작은 + 칸도 노랑이다(캔버스 T-Home).
-      assert.equal(yellow.length, count ? 2 : 1, '홈의 노랑(' + where + '): ' + JSON.stringify(yellow));
-      assert.ok(count ? /^세트 [0-9]+ 이어서 만들기$/.test(yellow[0]) && yellow[1] === '새 세트 만들기' : yellow[0] === '새 세트 만들기', '노랑은 지금 할 일(' + where + '): ' + yellow[0]);
+      // 2026-10-14 시안 Z-Home: 노란 버튼은 지금 할 일 하나뿐(세트가 있으면 대표 카드의 '이어 그리기'). 새 세트 칸은 옅은 노랑 카드 안 작은 노란 원.
+      assert.equal(yellow.length, 1, '홈의 노랑(' + where + '): ' + JSON.stringify(yellow));
+      assert.ok(count ? /^세트 [0-9]+ 이어서 만들기$/.test(yellow[0]) : yellow[0] === '새 세트 만들기', '노랑은 지금 할 일(' + where + '): ' + yellow[0]);
       if (count) assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 남은 일 카드(' + where + ')');
       // 45.42 빈 홈 = EmptyState(그림 · 제목 · 노란 행동 하나 · 그리기 › 움직이기 › 내보내기 흐름) + 내 그림으로 시작 한 줄.
       if (!count) {

@@ -4,7 +4,8 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Action, Glyph, T } from './ui';
+import { Action, Clay, Glyph, T } from './ui';
+import { ImtiIcon, IconSize } from '../design/icons';
 import type { Cloud } from '../services/cloud/firebase';
 import { deleteAccount, providerReady, register, signOutAll, type Provider, type ServerUser } from '../services/cloud/account';
 import { backupSet, listSets, restoreSet, type CloudSet } from '../services/cloud/backup';
@@ -80,9 +81,9 @@ export function CloudScreen(p: Props) {
     } finally { setProgress(null); }
   });
 
-  // 흰 카드 한 장 = 한 구역(토스식). 모달로 열 때는 예전처럼 구분선 목록.
+  // 흰 클레이 카드 한 장 = 한 구역(2026-10-14 시안 Z). 모달로 열 때는 예전처럼 구분선 목록.
   const section = (title: string, children: React.ReactNode) => <View style={p.inline
-    ? { gap: 12, padding: 20, borderRadius: 24, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }
+    ? { gap: 12, padding: 20, borderRadius: 28, ...Clay.card }
     : { gap: 10, paddingVertical: 14, borderBottomWidth: 1, borderColor: C.line }}>
     <Text style={{ fontSize: p.inline ? 17 : 16, fontWeight: '800', color: C.ink }}>{title}</Text>{children}</View>;
   const show = (part: 'contest' | 'account') => !p.part || p.part === part;
@@ -96,14 +97,25 @@ export function CloudScreen(p: Props) {
         </View> : <>
           {show('account') && section('계정', uid ? <>
             {/* 작가명(바꿀 수 없음)이 이름이고, 어느 회사로 로그인했는지는 그 아래 작게. */}
-            {!!user?.artistName && <Text testID="내 작가명" style={{ fontSize: 20, fontWeight: '800', color: C.ink }}>{user.artistName}</Text>}
-            <Text style={{ fontSize: user?.artistName ? 13 : 14, color: user?.artistName ? C.muted : C.ink }}>{`${({ kakao: '카카오', naver: '네이버', google: '구글' } as Record<string, string>)[uid.split(':')[0]] ?? '구글'} 로그인`}</Text>
+            {/* 시안 Z-My: 노란 얼굴 칸 · 작가명 · 로그인 회사 · PRO 알약(보라). */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <View style={{ width: 64, height: 64, borderRadius: 24, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="person" size={IconSize.tab} /></View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                {!!user?.artistName && <Text testID="내 작가명" numberOfLines={1} style={{ fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{user.artistName}</Text>}
+                <Text style={{ fontSize: user?.artistName ? 13 : 14, color: user?.artistName ? C.muted : C.ink }}>{`${({ kakao: '카카오', naver: '네이버', google: '구글' } as Record<string, string>)[uid.split(':')[0]] ?? '구글'} 로그인`}</Text>
+              </View>
+              {!!user?.pro.active && <View style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: C.pointSoft, justifyContent: 'center' }}>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: C.pointInk }}>{user.pro.source === 'trial' ? 'PRO 체험' : 'PRO'}</Text>
+              </View>}
+            </View>
             {muted(user ? (user.pro.active ? `PRO(${user.pro.source === 'trial' ? '체험' : user.pro.source === 'store' && user.pro.verified ? '구매 확인됨' : '관리자 부여'}) · 클라우드 백업 ${(user.backupBytes / 1048576).toFixed(1)}MB 사용` : '무료 회원 — 개인 클라우드 백업은 PRO 전용이에요. 공모전은 참가할 수 있어요.') : '회원 정보를 불러오는 중…')}
-            <Action icon="logout" title="로그아웃" onPress={() => void signOutAll(p.cloud!).then(refresh)} />
-            <Action danger icon="account-remove-outline" title="탈퇴(서버 데이터 삭제)" onPress={() => Alert.alert('탈퇴', '서버에 있는 클라우드 백업·회원 정보·공모전 접수가 지워져요. 이 기기 안 작품은 그대로예요.', [
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}><Action compact icon="logout" title="로그아웃" onPress={() => void signOutAll(p.cloud!).then(refresh)} /></View>
+            <View style={{ flex: 1 }}><Action compact danger icon="account-remove-outline" title="탈퇴(서버 데이터 삭제)" onPress={() => Alert.alert('탈퇴', '서버에 있는 클라우드 백업·회원 정보·공모전 접수가 지워져요. 이 기기 안 작품은 그대로예요.', [
               { text: '취소', style: 'cancel' },
               { text: '탈퇴', style: 'destructive', onPress: () => void p.task('탈퇴하는 중…', async () => { await deleteAccount(p.cloud!); await signOutAll(p.cloud!); await refresh(); }) },
-            ])} />
+            ])} /></View>
+            </View>
           </> : <>
             {PROVIDERS.map(x => <Action key={x.id} title={providerReady(p.extra, x.id) ? x.label : `${x.label} · 준비 중`} disabled={!providerReady(p.extra, x.id)}
               onPress={() => void p.task('로그인하는 중…', async () => { await p.login(x.id); await refresh(); })} />)}
@@ -127,8 +139,9 @@ export function CloudScreen(p: Props) {
           {show('contest') && section('공모전', <>
             {(contests ?? []).length === 0 && muted(contests ? '지금 열린 공모전이 없어요.' : '불러오는 중…')}
             {(contests ?? []).map(c => { const e = entryOf(c.id); return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={'공모전 ' + c.title} onPress={() => { setPicked(c); setEntrySet(null); setAgree(false); }}
-              style={{ padding: 12, borderRadius: 14, borderWidth: 1, borderColor: picked?.id === c.id ? C.accentBorder : C.line, backgroundColor: C.paper, gap: 4 }}>
-              <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{c.title}</Text>
+              style={({ pressed }) => ({ padding: 14, borderRadius: 20, backgroundColor: picked?.id === c.id ? C.pointSoft : C.fill, borderWidth: picked?.id === c.id ? 2 : 0, borderColor: C.point, gap: 4, transform: pressed ? [{ scale: .98 }] : [] })}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: C.pointInk }}>{c.status === 'open' ? '접수 중' : c.status === 'announced' ? '결과 발표' : '접수 마감'}</Text>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{c.title}</Text>
               <Text style={{ fontSize: 12, color: C.muted }}>{`${c.status === 'open' ? '접수 중' : c.status === 'announced' ? '결과 발표' : '접수 마감'} · ${c.requirements.kind === 'still' ? '멈춰 있는' : '움직이는'} ${c.requirements.cuts}칸 세트${e ? ` · 내 접수: ${STATUS[e.status] ?? e.status}${e.receiptNo ? ' ' + e.receiptNo : ''}` : ''}`}</Text>
             </Pressable>; })}
             {picked && <View testID="공모전 자세히" style={{ gap: 8 }}>
@@ -139,10 +152,10 @@ export function CloudScreen(p: Props) {
                 <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>낼 세트</Text>
                 {live.map(project => <Pressable key={project.id} accessibilityRole="radio" accessibilityLabel={'낼 세트 ' + project.projectName} accessibilityState={{ checked: entrySet === project.id }} onPress={() => setEntrySet(project.id)}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}>
-                  <Glyph name={entrySet === project.id ? 'radiobox-marked' : 'radiobox-blank'} size={20} color={C.ink} /><Text style={{ fontSize: 14, color: C.ink }}>{project.projectName}</Text>
+                  <Glyph name={entrySet === project.id ? 'radiobox-marked' : 'radiobox-blank'} size={20} color={entrySet === project.id ? C.point : C.muted} /><Text style={{ fontSize: 14, color: C.ink }}>{project.projectName}</Text>
                 </Pressable>)}
                 <Pressable accessibilityRole="checkbox" accessibilityLabel="참가 조건에 동의" accessibilityState={{ checked: agree }} onPress={() => setAgree(!agree)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}>
-                  <Glyph name={agree ? 'checkbox-marked-outline' : 'checkbox-blank-outline'} size={20} color={C.ink} /><Text style={{ flex: 1, fontSize: 13, color: C.ink }}>위 참가 조건을 읽었고 동의해요(세트 전체가 제출돼요)</Text>
+                  <Glyph name={agree ? 'checkbox-marked-outline' : 'checkbox-blank-outline'} size={20} color={agree ? C.point : C.muted} /><Text style={{ flex: 1, fontSize: 13, color: C.ink }}>위 참가 조건을 읽었고 동의해요(세트 전체가 제출돼요)</Text>
                 </Pressable>
                 {progress !== null && <Text testID="제출 진행" style={{ fontSize: 13, color: C.ink }}>{`올리는 중 ${Math.round(progress * 100)}%`}</Text>}
                 <Action primary title="세트 전체 제출" disabled={!entrySet || !agree || progress !== null} onPress={() => { const project = live.find(x => x.id === entrySet); if (project) void doSubmit(picked, project); }} />
@@ -158,7 +171,7 @@ export function CloudScreen(p: Props) {
           </>)}
         </>}
   </>;
-  if (p.inline) return <View style={{ gap: 12 }}>{!p.cloud ? <View style={{ padding: 20, borderRadius: 24, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }}>{body}</View> : body}</View>;
+  if (p.inline) return <View style={{ gap: 12 }}>{!p.cloud ? <View style={{ padding: 20, borderRadius: 28, ...Clay.card }}>{body}</View> : body}</View>;
   return <Modal visible={p.visible} animationType="slide" onRequestClose={p.onClose}>
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 4 }}>
