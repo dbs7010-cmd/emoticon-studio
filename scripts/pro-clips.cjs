@@ -1,5 +1,5 @@
 // PRO 안내 화면의 비교 그림 세 장(2026-10-15)을 **앱의 실제 움직임 엔진**으로 만든다.
-// 같은 그림(몸 레이어 + 팔 레이어) 하나에 ① 무료 통통 ② PRO 부분(손 흔들기, 축은 앱의 추정값) ③ PRO 단계(등장→인사) 를 걸어 GIF 로 굽는다.
+// 같은 그림(대표 캐릭터 콘: 몸 레이어 + 팔 레이어) 하나에 ① 무료 통통 ② PRO 부분(손 흔들기, 축은 앱의 추정값) ③ PRO 단계(등장→인사) 를 걸어 GIF 로 굽는다.
 // 실행: PLAYWRIGHT_MODULE_PATH=playwright-core CHROME_PATH=<chrome.exe> node scripts/pro-clips.cjs
 const fs = require('node:fs');
 const path = require('node:path');
@@ -18,28 +18,12 @@ const OUT = path.join(__dirname, '..', 'assets', 'pro');
     await page.setContent(canvasHtml.replace('<script>', '<script>window.messages=[];window.ReactNativeWebView={postMessage:m=>window.messages.push(JSON.parse(m))};</script><script>'));
     const cmd = m => page.evaluate(m => window.command(m), m);
     const last = type => page.evaluate(t => window.messages.filter(m => m.type === t).at(-1), type);
-    const stroke = async pts => { await page.mouse.move(...pts[0]); await page.mouse.down(); for (const p of pts.slice(1)) await page.mouse.move(...p, { steps: 4 }); await page.mouse.up(); };
-    const arc = (cx, cy, rx, ry, a0, a1, n = 28) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return [cx + rx * Math.cos(a), cy + ry * Math.sin(a)]; });
-
-    await cmd({ type: 'init', layers: [{ id: 'draw-1', name: '몸' }, { id: 'draw-2', name: '팔' }], activeLayerId: 'draw-1' });
-    await cmd({ type: 'color', color: '#191F28' });
-    await cmd({ type: 'width', tool: 'pen', width: 9 });
-    // 몸: 둥근 머리 · 몸통 · 다리 · 왼팔(내린 팔)
-    await stroke(arc(190, 140, 62, 56, 0, Math.PI * 2, 40));
-    await stroke([[150, 190], [146, 250], [150, 300]]);
-    await stroke([[230, 190], [234, 250], [230, 300]]);
-    await stroke(arc(190, 300, 40, 14, 0, Math.PI, 16));
-    await stroke([[176, 312], [174, 336]]); await stroke([[206, 312], [208, 336]]);
-    await stroke([[148, 210], [124, 262]]);
-    await cmd({ type: 'width', tool: 'pen', width: 12 });
-    await stroke([[168, 132], [168, 136]]); await stroke([[212, 132], [212, 136]]);   // 눈
-    await cmd({ type: 'width', tool: 'pen', width: 7 });
-    await stroke(arc(190, 150, 16, 12, .15 * Math.PI, .85 * Math.PI, 12));           // 입
-    // 팔 레이어: 몸 오른쪽에서 위로 든 팔과 손
-    await cmd({ type: 'width', tool: 'pen', width: 9 });
-    await cmd({ type: 'select', id: 'draw-2' });
-    await stroke([[234, 214], [262, 190], [282, 160]]);
-    await stroke(arc(288, 146, 15, 15, 0, Math.PI * 2, 18));
+    // 2026-10-16: 대표 캐릭터 콘(손 흔들기)을 레이어 둘로 넣는다 — 몸(+왼손) / 오른팔. 원본: scripts/mascot-render.cjs
+    const png = name => 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, '..', 'assets', 'mascot', 'corn-' + name + '.png')).toString('base64');
+    await cmd({ type: 'init', layers: [{ id: 'draw-1', name: '몸', data: png('wave-body') }, { id: 'draw-2', name: '팔', data: png('wave-arm') }], activeLayerId: 'draw-1' });
+    await page.waitForTimeout(300);
+    // 통통·쓱이 칸 밖으로 나가지 않게 그림 전체를 조금 줄인다(앱의 '칸 안에 맞추기'와 같은 명령).
+    await cmd({ type: 'scaleAll', factor: .82 });
 
     await cmd({ type: 'partGuess', id: 'arm', layerId: 'draw-2' });
     const guess = await last('partGuess');
