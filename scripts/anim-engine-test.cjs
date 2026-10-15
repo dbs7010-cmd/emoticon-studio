@@ -99,6 +99,19 @@ const { canvasHtml } = loader()('src/painter/canvas-html.ts');
     // 8. 끄기: 첫 장만 남는다
     await cmd({ type: 'animStart' }); await cmd({ type: 'animOff' });
     st = await last('state'); assert.equal(st.frames, null);
+    // 9. 부분 움직임 중심점 추정(2026-10-15): 오른쪽에 그린 팔 → 왼쪽 변(몸 쪽), 위에 그린 귀 → 아래 변
+    await cmd({ type: 'init', layers: [{ id: 'draw-1', name: '몸' }, { id: 'draw-2', name: '팔' }], activeLayerId: 'draw-2' });
+    await cmd({ type: 'width', tool: 'pen', width: 10 });
+    await line(250, 150, 330, 150);                     // 화면 오른쪽 가로 막대(팔)
+    await cmd({ type: 'partGuess', id: 'p1', layerId: 'draw-2' });
+    const arm = await last('partGuess');
+    assert.ok(arm.found && arm.x < arm.box[2] - .05 && Math.abs(arm.x - arm.box[0]) < .02, '팔: 몸 쪽(왼쪽) 끝이 축 ' + JSON.stringify(arm));
+    await cmd({ type: 'clear' }); await line(160, 30, 200, 30);   // 위쪽 귀
+    await cmd({ type: 'partGuess', id: 'p2', layerId: 'draw-2' });
+    const ear = await last('partGuess');
+    assert.ok(ear.found && Math.abs(ear.y - ear.box[3]) < .02, '귀: 아래(귀뿌리)가 축 ' + JSON.stringify(ear));
+    await cmd({ type: 'partGuess', id: 'p3', layerId: 'draw-1' });
+    assert.equal((await last('partGuess')).found, false, '빈 레이어는 추정하지 않는다(가운데 그대로)');
     assert.deepEqual(errors, [], '페이지 오류 없음: ' + errors.join(' | '));
     console.log('PASS: anim engine — 시작 2장(복제)·장마다 따로 그림·대표 그림은 첫 장·앞 장 비춰 보기·추가/시간/순서/삭제·한 바퀴=시간 합·굽기(장 경계 4장, 효과 있으면 ≤24)·저장/다시 열기·한 장 남으면 해제·끄기');
   } finally { await browser.close(); }

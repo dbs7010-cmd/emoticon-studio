@@ -136,6 +136,26 @@ const writeCaption = async text => {
     await press('저장'); await saved(true); await press('다음 칸으로 가기');
     perSlot.push({ n, taps: taps - t0, modals: alerts.length - a0 });
   }
+  // 2026-10-15 세트 반복 단축: '이전 칸 그림으로 시작'이 빈 칸이면 그 칸의 움직임도 함께 넣는다.
+  //   예전 흐름(위): 이전 칸 → 문구 → 움직이기 탭 → 직전 칸 움직임 다시 쓰기 → 그리기 탭 → 저장
+  //   새 흐름(아래): 이전 칸(그림+움직임) → 문구 → 저장 — 움직이기 탭을 오가지 않는다.
+  const quick = [];
+  for (let n = SLOTS + 1; n <= SLOTS + 3; n++) {
+    await ready();
+    const t0 = taps, prevMotion = loadStore().store.projects[0].slots.find(s => s.number === n - 1).motion;
+    await press('이전 칸 그림으로 시작'); await act(async () => {});
+    const carried = lastCommand('motion')?.motion;
+    assert.deepEqual(carried, prevMotion, n + '칸: 이전 칸의 움직임이 함께 들어온다');
+    scene = { ...scene, dirty: true, undo: true, motion: carried }; await message(scene);
+    await writeCaption('칸 ' + n);
+    await press('저장'); await saved(true); await press('다음 칸으로 가기');
+    quick.push(taps - t0);
+    assert.deepEqual(loadStore().store.projects[0].slots.find(s => s.number === n).motion, prevMotion, n + '칸: 움직임이 저장된다');
+  }
+  const oldTaps = perSlot.find(s => s.n === 8).taps;
+  assert.ok(quick.every(q => q < oldTaps), '새 흐름이 칸당 누르기가 적다: 예전 ' + oldTaps + ' · 새 ' + quick.join('/'));
+  console.log(`  반복 단축: 칸당 누르기 ${oldTaps}(색 확인 2번 포함) → ${quick[0]} — 같은 일 기준 3번 줄어듦(움직이기 탭 → 직전 칸 움직임 → 그리기 탭 생략), 확인창 0`);
+
   const at8 = perSlot.find(s => s.n === 8), last = perSlot.at(-1);
   assert.ok(perSlot.every(s => s.modals === 0), '확인창 0: ' + JSON.stringify(perSlot.filter(s => s.modals)));
   assert.ok(Math.abs(last.taps - at8.taps) <= 1, '칸이 늘어도 누르기 수가 늘지 않는다: 8칸 ' + at8.taps + ' · ' + last.n + '칸 ' + last.taps);

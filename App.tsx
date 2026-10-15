@@ -440,7 +440,7 @@ function Studio() {
     const source = previousDrawn(latest, slotNumber);
     if (!source?.work) return null;
     const layers = await Promise.all(source.work.layers.map(async ({ image, ...rest }) => ({ ...rest, data: image ? await dataUrl(image) : undefined })));
-    return { layers, caption: source.work.caption };
+    return { layers, caption: source.work.caption, motion: source.motion ?? null };
   }
 
   // 겹치지 않는 기본 이름. 예전부터 쓰던 규칙 그대로다.

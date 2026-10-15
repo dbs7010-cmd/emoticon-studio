@@ -87,3 +87,18 @@ const p = base(); p.slots[0].motion = { version: 1, speed: .5, strength: .5, ste
 assert.equal(isAnimated(p.slots[0]), true, '단계만 있어도 움직이는 칸');
 
 console.log('PASS: motion steps (V2) — engine and RN formulas identical, no jumps at step boundaries or loop seam (all usable pairs), store accepts valid steps and rejects peek/vanish/too many/out of range, legacy motion unchanged, steps are PRO and animate the cut');
+
+// 바로 쓰는 조합(2026-10-15): 서로 다른 셋 · 한 바퀴 3초 안 · 저장 검사 통과 · 빼꼼/사라지기 없음 · 무료가 아님(PRO)
+{
+  const { MOTION_COMBOS, PART_STARTERS } = loader()('src/painter/motion-recipes.ts');
+  assert.equal(MOTION_COMBOS.length, 3, '조합은 셋');
+  assert.equal(new Set(MOTION_COMBOS.map(c => c.steps.map(s => s.preset).join('>'))).size, 3, '조합끼리 겹치지 않는다');
+  for (const c of MOTION_COMBOS) {
+    const steps = c.steps.map((s, i) => ({ id: c.id + i, ...s }));
+    assert.ok(stepTotal(steps) <= STEP_LIMITS.maxTotal + 1e-9, c.label + ' 한 바퀴 ' + stepTotal(steps));
+    assert.doesNotThrow(() => parseStore(withMotion({ version: 1, speed: .5, strength: .5, steps })), c.label + ' 저장 가능');
+    assert.equal(usesPro({ version: 1, speed: .5, strength: .5, steps }), true, c.label + ' 은 PRO');
+  }
+  assert.deepEqual(PART_STARTERS.map(s => s.id), ['wave', 'ear', 'bob'], '부분 출발점 셋(손·귀·통통)');
+  console.log('PASS: motion combos — 등장→인사 · 놀람→떨기 · 폴짝→신남(서로 다름, ≤3초, 저장 가능, PRO) · 부분 출발점 3');
+}

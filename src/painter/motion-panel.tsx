@@ -6,6 +6,8 @@ import { ASSET_SLOTS } from '../design/asset-slots';
 import { usesPro } from '../project';
 import { isProPreset, loopScale, presetDelta, STEP_EXCLUDED, STEP_LIMITS, stepTotal, type MotionDirection } from '../motion-math';
 import type { LayerTransform, Motion, MotionStep, PartMotion, SavedMotion, MotionPreset } from '../types';
+import { MOTION_COMBOS, PART_STARTERS } from './motion-recipes';
+export { MOTION_COMBOS, PART_STARTERS };
 
 const C = T;
 // Everyday words for what the movement does. The effect ids stay in English in the data.
@@ -137,13 +139,17 @@ type Props = {
   onForgetMotion: (id: string) => void;
   onRequestPro: () => void;
   thumbs: Record<string, string>;
+  // 부분을 더하면 그 레이어 그림에서 중심점을 추정해 달라고 캔버스에 묻는다(몸 쪽 끝). 없으면 가운데 그대로.
+  onGuessPivot?: (partId: string, layerId: string) => void;
+  // 레이어가 하나뿐일 때 '움직일 부분을 레이어로 나누러 가기' — 그리기 탭 선택 도구로 간다.
+  onSplitLayer?: () => void;
 };
 
 
 // 움직이기 화면. 결과(캔버스와 효과 견본)가 먼저이고 설정은 고른 다음에 나온다.
 // 무료 효과는 누르는 즉시 칸에 들어간다. PRO(부분 움직임·두 모습)는 **들어가기 전에** PRO 라고 알리고,
 // 무료 사용자는 입구에서 PRO 안내로 간다 — 만들고 난 뒤 저장할 때 막지 않는다.
-export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, previousMotion, pivotPick, pivotRole, onPickPivot, onFocusPart, onFit, onDuplicateForPose, onEditPose, savedMotions, onSaveMotion, onUseMotion, onForgetMotion, onChange, onRequestPro, thumbs }: Props) {
+export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, previousMotion, pivotPick, pivotRole, onPickPivot, onFocusPart, onFit, onDuplicateForPose, onEditPose, savedMotions, onSaveMotion, onUseMotion, onForgetMotion, onChange, onGuessPivot, onSplitLayer, onRequestPro, thumbs }: Props) {
   const [view, setView] = React.useState<'basic' | 'parts' | 'pose' | 'shelf' | 'steps'>('basic');
   const base: Motion = motion ?? { version: 1, speed: .5, strength: .5, captionMoves: false };
   const set = (patch: Partial<Motion>) => onChange({ ...base, ...patch });
@@ -154,7 +160,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     const effect = PART_EFFECTS[0];
     const part: PartMotion = { id: 'part-' + Date.now().toString(36), layerId, effect: effect.id, pivotX: .5, pivotY: .5, amount: effect.amount, angle: 0, speed: .5, delay: 0 };
     set({ parts: [...parts, part], play: base.play ?? 'together' });
-    setOpenPart(part.id); onFocusPart(layerId);
+    setOpenPart(part.id); onFocusPart(layerId); onGuessPivot?.(part.id, layerId);
   };
   const editPart = (id: string, patch: Partial<PartMotion>) => set({ parts: parts.map(p => p.id === id ? { ...p, ...patch } : p) });
   const dropPart = (id: string) => { const left = parts.filter(p => p.id !== id); set({ parts: left.length ? left : undefined }); };
@@ -208,19 +214,28 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   const [group, setGroup] = React.useState<MotionGroup | 'all'>('all');
   // PRO 효과 미리보기(무료 사용자). 누르면 **내 그림에 입혀 보여 주고** 그 자리에서 PRO 를 권한다.
   // 저장은 하지 않는다 — 저장·닫기를 누르면 PRO 안내가 먼저 뜨고, '무료로 저장'은 미리보기 전 효과로 되돌린다.
-  const [trialFrom, setTrialFrom] = React.useState<{ preset?: MotionPreset; direction?: MotionDirection } | null>(null);
-  const trying = !pro && isProPreset(base.preset) && !!trialFrom;
+  const [trialFrom, setTrialFrom] = React.useState<{ preset?: MotionPreset; direction?: MotionDirection; steps?: MotionStep[] } | null>(null);
+  const [trialCombo, setTrialCombo] = React.useState<string | null>(null);
+  const trying = !pro && !!trialFrom && (isProPreset(base.preset) || (base.steps?.length ?? 0) > 0);
+  // 조합 고르기: PRO 는 바로 넣고 단계 화면에서 고친다. 무료는 **내 그림으로 미리 보기**(저장하면 PRO 안내 · '원래대로'면 전 움직임으로).
+  const pickCombo = (c: typeof MOTION_COMBOS[number]) => {
+    const steps = c.steps.map((st, i) => ({ id: 'step-' + c.id + '-' + i + '-' + Date.now().toString(36), ...st }));
+    if (!pro) { if (!trialFrom) setTrialFrom({ preset: base.preset, direction: base.direction, steps: base.steps }); setTrialCombo(c.label); set({ steps }); return; }
+    setTrialFrom(null); setTrialCombo(null); set({ steps }); setView('steps');
+  };
   const pick = (id: MotionPreset) => {
     if (!pro && isProPreset(id)) {
-      if (!trialFrom) setTrialFrom({ preset: base.preset, direction: base.direction });
-      set({ preset: id });
+      if (!trialFrom) setTrialFrom({ preset: base.preset, direction: base.direction, steps: base.steps });
+      setTrialCombo(null); set({ preset: id, steps: undefined });
       return;
     }
-    setTrialFrom(null);
+    setTrialFrom(null); setTrialCombo(null);
     // 단계가 있을 때 효과 하나를 고르면 단계 대신 그 효과로 바꾼다(되돌리기로 단계가 돌아온다).
     set({ preset: id, steps: undefined });
   };
-  const endTrial = () => { const from = trialFrom; setTrialFrom(null); if (!from) return; if (!from.preset && !hasPro) onChange(null); else set({ preset: from.preset, direction: from.direction }); };
+  const endTrial = () => { const from = trialFrom; setTrialFrom(null); setTrialCombo(null); if (!from) return;
+    const restParts = parts.length > 0 || !!base.alternate || !!base.boil;
+    if (!from.preset && !from.steps?.length && !restParts) onChange(null); else set({ preset: from.preset, direction: from.direction, steps: from.steps }); };
   const sections = MOTION_GROUPS.filter(g => group === 'all' || g.id === group).map(g => {
     const items = PRESETS.filter(p => p.group === g.id);
     const rows: typeof items[] = []; for (let i = 0; i < items.length; i += 4) rows.push(items.slice(i, i + 4));
@@ -260,7 +275,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     {trying && <View testID="PRO 미리보기 안내" style={{ gap: 8, padding: 12, borderRadius: C.radius.md, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <ProTag />
-        <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>{PRESETS.find(p => p.id === base.preset)?.label} — 내 그림으로 미리 보는 중이에요</Text>
+        <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>{trialCombo ?? PRESETS.find(p => p.id === base.preset)?.label} — 내 그림으로 미리 보는 중이에요(저장하면 PRO 안내가 떠요)</Text>
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Pressable accessibilityRole="button" accessibilityLabel="PRO로 이 효과 쓰기" onPress={onRequestPro}
@@ -301,6 +316,22 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         {DIRECTIONS.map(d => <Chip key={d.id} wide label={d.label} on={(base.direction ?? 'left') === d.id} onPress={() => set({ direction: d.id })} />)}
       </View>
     </View>}
+    {/* 바로 쓰는 조합(2026-10-15) — 단계로 잇기의 시작점. 무료 사용자도 내 그림으로 미리 볼 수 있다. */}
+    <View testID="동작 조합" style={{ gap: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, paddingHorizontal: 2 }}>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>조합</Text>
+        <Text style={{ fontSize: 11, color: C.muted }}>두 움직임을 이어서 · 고른 뒤 고쳐요</Text>
+        {!pro && <ProTag />}
+      </View>
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        {MOTION_COMBOS.map(c => { const on = !!base.steps?.length && base.steps.length === c.steps.length && base.steps.every((st, i) => st.preset === c.steps[i].preset);
+          return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={'조합 ' + c.label} accessibilityHint={pro ? c.hint : 'PRO 조합이에요. 누르면 내 그림으로 미리 볼 수 있어요'} accessibilityState={{ selected: on }} onPress={() => pickCombo(c)}
+            style={({ pressed }) => ({ flex: 1, minHeight: 64, padding: 8, gap: 2, borderRadius: C.radius.md, justifyContent: 'center', backgroundColor: on ? C.pointSoft : pressed ? C.fillPressed : C.surface2, borderWidth: C.stroke, borderColor: on ? C.point : 'transparent' })}>
+            <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '800', color: on ? C.pointInk : C.ink }}>{c.label}</Text>
+            <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted }}>{c.hint}</Text>
+          </Pressable>; })}
+      </View>
+    </View>
     {/* 손그림 떨림(2026-10-14): 선이 장마다 살짝 다시 그려진 듯 떨린다. 위 효과와 함께 걸리고, 효과가 없어도 걸린다. 무료. */}
     <View testID="손그림 떨림" style={{ gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, paddingHorizontal: 2 }}>
@@ -393,7 +424,12 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
             <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>{n}</Text></View>
             <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: C.ink }}>{text}</Text>
           </View>)}
-        {drawLayers.length < 2 && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>팔·귀처럼 따로 움직일 곳은 그리기에서 레이어를 나눠 그리면 여기에 나와요.</Text>}
+        {drawLayers.length < 2 && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>팔·귀처럼 따로 움직일 곳은 레이어로 나뉘어 있어야 해요. 이미 한 장에 그렸다면 선택으로 감싸서 '새 레이어로 분리'를 누르면 돼요.</Text>}
+        {drawLayers.length < 2 && !!onSplitLayer && <Pressable testID="레이어로 나누러 가기" accessibilityRole="button" accessibilityLabel="움직일 부분을 레이어로 나누러 가기" onPress={onSplitLayer}
+          style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderRadius: 22, alignSelf: 'flex-start', backgroundColor: pressed ? C.fillPressed : C.pointSoft })}>
+          <Glyph name="selection-drag" size={18} color={C.pointInk} />
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.pointInk }}>움직일 부분 나누러 가기</Text>
+        </Pressable>}
       </View>
       {parts.map((part, index) => {
         const effect = PART_EFFECTS.find(e => e.id === part.effect)!;
@@ -434,9 +470,18 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
             </Pressable>
           </View>
           {open && <>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: C.muted, paddingHorizontal: 2 }}>바로 쓰기</Text>
+            <View testID="부분 출발점" style={{ flexDirection: 'row', gap: 6 }}>
+              {PART_STARTERS.map(st => { const on = part.effect === st.effect && Math.abs(part.amount - st.amount) < 1e-6 && Math.abs(part.speed - st.speed) < 1e-6;
+                return <Chip key={st.id} wide label={st.label} a11y={`${name} ${st.label} — ${st.hint}`} on={on} onPress={() => editPart(part.id, { effect: st.effect, amount: st.amount, speed: st.speed, angle: st.angle, fromX: undefined, fromY: undefined, toX: undefined, toY: undefined })} />; })}
+            </View>
             <View style={{ flexDirection: 'row', gap: 6 }}>
               {PART_EFFECTS.map(e => <Chip key={e.id} wide label={e.label} on={part.effect === e.id} onPress={() => editPart(part.id, { effect: e.id, amount: e.amount })} />)}
             </View>
+            {part.effect !== 'move' && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ flex: 1, fontSize: 12, lineHeight: 17, color: C.muted }}>{pivotPick === part.id && pivotRole === 'pivot' ? '캔버스에서 돌아갈 축(어깨·귀뿌리)을 눌러요' : `중심점(축)은 몸 쪽 끝으로 잡았어요 · 다르면 옮겨요`}</Text>
+              <Chip label={pivotPick === part.id && pivotRole === 'pivot' ? '그만' : '중심점 옮기기'} a11y={`${name} 중심점 옮기기`} on={pivotPick === part.id && pivotRole === 'pivot'} onPress={() => onPickPivot(pivotPick === part.id ? null : part.id)} />
+            </View>}
             <Row label={effect.label} value={part.amount} min={effect.min} max={effect.max} fmt={effect.id === 'rotate' ? n => Math.round(n) + '°' : undefined} onActive={setHolding} onChange={amount => editPart(part.id, { amount: Number(amount.toFixed(3)) })} />
             <Row label="속도" value={part.speed} min={0} max={1} onActive={setHolding} onChange={speed => editPart(part.id, { speed: Math.round(speed * 20) / 20 })} />
             <Pressable accessibilityRole="button" accessibilityLabel={`${name} 세부 조절`} accessibilityState={{ expanded: detail }} onPress={() => setDetailPart(detail ? null : part.id)}
@@ -458,7 +503,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
                   ? <Row label="방향" value={part.angle} min={0} max={350} step={10} fmt={n => Math.round(n) + '°'} onActive={setHolding} onChange={angle => editPart(part.id, { angle: Math.round(angle / 10) * 10 })} />
                   : <Chip wide label="위치 지우기" on={false} onPress={() => editPart(part.id, { fromX: undefined, fromY: undefined, toX: undefined, toY: undefined })} />}
               </>}
-              <Chip wide label={pivotPick === part.id && pivotRole === 'pivot' ? '캔버스를 누르세요' : '중심점 옮기기'} on={pivotPick === part.id && pivotRole === 'pivot'} onPress={() => onPickPivot(pivotPick === part.id ? null : part.id)} />
+              {part.effect === 'move' && <Chip wide label={pivotPick === part.id && pivotRole === 'pivot' ? '캔버스를 누르세요' : '중심점 옮기기'} on={pivotPick === part.id && pivotRole === 'pivot'} onPress={() => onPickPivot(pivotPick === part.id ? null : part.id)} />}
             </>}
           </>}
         </View>;

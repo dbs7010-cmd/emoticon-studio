@@ -163,6 +163,33 @@ const closePainter = async () => { await press('그리기 닫기'); await answer
     assert.ok(slotOf(n).motionImage?.path, label + ': 움직이는 파일도 남는다');
   }
 
+  // ── 2026-10-15 조합 미리보기(무료): 내 그림으로 돌고, 저장하면 PRO 안내 → 'PRO 효과 빼고 저장'이면 조합 전 효과로 ──
+  {
+    await restart();
+    await openSlot(1);
+    await press('움직이기');
+    const before = slotOf(1).motion;
+    await press('조합 등장 → 인사');
+    const tried = lastCommand('motion').motion;
+    assert.deepEqual(tried.steps.map(s => s.preset), ['slide', 'bow'], '무료: 조합을 내 그림에 바로 입혀 본다');
+    await echoMotion();
+    assert.equal(labelled('미리보기 끝내기').length, 1, '무료: 미리보기 중이라고 말한다');
+    await press('그리기 닫기');
+    assert.equal(labelled('PRO 효과 빼고 저장').length, 1, '무료: 조합이 든 채 저장하면 PRO 안내가 먼저 뜬다');
+    await press('PRO 효과 빼고 저장');
+    const reverted = lastCommand('motion').motion;
+    assert.equal(reverted.steps, before?.steps, '무료로 저장하면 조합(단계)은 빠지고 저장돼 있던 것으로');
+    assert.equal(reverted.preset, before?.preset, '효과도 저장돼 있던 것 그대로');
+    await echoMotion(); await answerSave(true);
+    assert.ok(!(slotOf(1).motion?.steps?.length), '저장 결과에 PRO 단계가 없다');
+    // 미리보기 끝내기: 저장하지 않고 원래대로
+    await restart(); await openSlot(1); await press('움직이기');
+    await press('조합 놀람 → 떨기'); await echoMotion();
+    await press('미리보기 끝내기');
+    assert.ok(!(lastCommand('motion').motion?.steps?.length), '원래대로: 단계가 빠진다');
+    await echoMotion(); await closePainter();
+  }
+
   // ── 움직임 없음: 움직임만 빠지고 그림·문구는 그대로 ──────────────────────────────────────
   await restart();
   await openSlot(3);
@@ -215,8 +242,9 @@ const closePainter = async () => { await press('그리기 닫기'); await answer
   // 세부 조절(중심점·방향)은 펼쳐야 보인다 — 한 화면에 전부 늘어놓지 않는다.
   assert.equal(labelled('중심점 옮기기').length, 0, '중심점은 처음부터 보이지 않는다');
   await press('레이어 1 움직이기');
+  // 2026-10-15: 회전·크기의 중심점은 펼친 부분 카드에 바로 보인다(몸 쪽 끝으로 추정 · 고칠 수 있음). 세부 조절에는 이동 효과일 때만.
+  assert.equal(labelled('레이어 1 중심점 옮기기').length, 1, '부분을 펼치면 중심점 옮기기가 바로 보인다');
   await press('레이어 1 세부 조절');
-  assert.equal(labelled('중심점 옮기기').length, 1, '세부 조절을 펼치면 중심점이 나온다');
   // 끌어서 순서 바꾸기. 순서는 '차례로' 재생할 때 누가 먼저 움직이는지를 정한다.
   const handles = tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && /순서 바꾸기$/.test(n.props.accessibilityLabel ?? ''));
   assert.equal(handles.length, 2, '부분마다 끌기 손잡이가 있다');

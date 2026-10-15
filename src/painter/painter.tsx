@@ -42,7 +42,7 @@ type Scene = {
   layers: LayerTransform[];
   references: (LayerTransform & { path: string })[];
 };
-export type CopiedWork = { layers: (LayerTransform & { data?: string })[]; caption?: Caption };
+export type CopiedWork = { layers: (LayerTransform & { data?: string })[]; caption?: Caption; motion?: Motion | null };
 type Props = {
   slot: Slot;
   slotCount: number;
@@ -539,6 +539,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [frameThumbs, setFrameThumbs] = useState<Record<string, string>>({});
   const [animHint, setAnimHint] = useState<string | null>(null);
   const [animPlaying, setAnimPlaying] = useState(false);
+  // 이전 칸에서 가져온 것을 한 번 알린다(그림만 / 그림 + 움직임 / PRO 움직임이라 그림만).
+  const [copiedNote, setCopiedNote] = useState<string | null>(null);
+  useEffect(() => { if (!copiedNote) return; const t = setTimeout(() => setCopiedNote(null), 4500); return () => clearTimeout(t); }, [copiedNote]);
   const [proSheet, setProSheet] = useState(false);
   const pendingAction = useRef<SaveAction | null>(null), proHandled = useRef(false);
   const [captionOpen, setCaptionOpen] = useState(false), [captionDraft, setCaptionDraft] = useState(''), [captionPlace, setCaptionPlace] = useState<Caption['place']>('bottom');
@@ -872,15 +875,19 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 45.39: PRO 효과(무료 6 밖의 전체 움직임)도 PRO 부분이다. 이미 저장된 PRO 효과는 그대로면 다시 묻지 않는다.
   const proPart = (m?: Motion | null) => JSON.stringify(m ? { parts: m.parts ?? null, alternate: m.alternate ?? null, play: m.play ?? null, stagger: m.stagger ?? null,
     preset: isProPreset(m.preset) ? m.preset : null, direction: isProPreset(m.preset) && m.preset === 'slide' ? m.direction ?? 'left' : null } : null);
-  const proIsNew = usesPro(scene.motion ?? undefined) && !pro && proPart(scene.motion) !== proPart(slot.motion);
+  // 단계(조합)는 **더하거나 바꿀 때만** PRO 를 묻는다 — 저장돼 있던 PRO 단계를 무료 효과로 갈아 끼우는 것은 막지 않는다.
+  const stepsKey = (m?: Motion | null) => JSON.stringify((m?.steps ?? []).map(st => [st.preset, st.duration, st.repeat]));
+  const proIsNew = usesPro(scene.motion ?? undefined) && !pro && (proPart(scene.motion) !== proPart(slot.motion) || (!!scene.motion?.steps?.length && stepsKey(scene.motion) !== stepsKey(slot.motion)));
   function saveWithoutPro() {
     // PRO 효과를 미리 보던 중이면 그 전(저장돼 있던) 효과로 돌아간다. 이미 저장된 PRO 효과는 그대로 둔다.
     const was = slot.motion;
     const keepPreset = !isProPreset(scene.motion?.preset) || scene.motion?.preset === was?.preset;
     const free = scene.motion ? { ...scene.motion, parts: undefined, alternate: undefined, play: undefined,
-      preset: keepPreset ? scene.motion.preset : was?.preset, direction: keepPreset ? scene.motion.direction : was?.direction } : null;
+      preset: keepPreset ? scene.motion.preset : was?.preset, direction: keepPreset ? scene.motion.direction : was?.direction,
+      // 단계(조합)도 PRO 다. 저장돼 있던 것과 같으면 그대로, 미리 보던 것이면 저장돼 있던 단계로 되돌린다.
+      steps: JSON.stringify(scene.motion.steps ?? null) === JSON.stringify(was?.steps ?? null) ? scene.motion.steps : was?.steps } : null;
     setProSheet(false);
-    send({ type: 'motion', motion: free && (free.preset || free.boil) ? free : null });
+    send({ type: 'motion', motion: free && (free.preset || free.boil || free.steps?.length) ? free : null });
     // The canvas has the free motion now; this save is the answer to the question just asked,
     // so it must not be stopped by the state that is still on its way back.
     proHandled.current = true;
@@ -918,6 +925,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         const copied = await onCopyPrevious();
         if (!copied) { Alert.alert('복사할 그림이 없어요', '다른 칸에 저장된 그림이 아직 없어요.'); return; }
         send({ type: 'copyWork', layers: copied.layers, caption: copied.caption ?? null });
+        // 2026-10-15 세트 반복 단축: 이 칸에 아직 움직임이 없으면 **가져온 칸의 움직임도 함께** 넣는다(덮어쓰지 않는다).
+        // 따로 움직이기 탭에 가서 '직전 칸 움직임 다시 쓰기'를 누르던 단계가 없어진다. 되돌리기 한 번이면 움직임만 빠진다.
+        const m = copied.motion;
+        if (m && !scene.motion && !slot.motion) {
+          if (usesPro(m) && !pro) setCopiedNote('그림을 가져왔어요 · 이전 칸 움직임은 PRO라 빼고 가져왔어요');
+          else { send({ type: 'motion', motion: m }); setCopiedNote('그림과 움직임을 함께 가져왔어요 · 되돌리기로 움직임만 뺄 수 있어요'); }
+        } else setCopiedNote('이전 칸 그림을 가져왔어요');
       } catch (e) { Alert.alert('이전 그림을 복사하지 못했어요', userMessage(e)); }
       finally { unlock(); }
     };
@@ -1273,13 +1287,14 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 참고 줄은 제외한다 — 참고는 캔버스 위에서 옮기고 키우는 중이라 손가락이 캔버스로 가야 한다.
   const panelCovering = tab === 'draw' && ((!!panel && panel !== 'more' && panel !== 'brush') || drawRail);
   // 캔버스 위에는 한 번에 한 가지만 말한다(45.2차). 위에서부터 급한 순서로 하나를 고른다.
-  const canvasMessage: 'saving' | 'saved' | 'hidden' | 'eyedrop' | 'previous' | 'guide' | 'zoomHint' | null =
+  const canvasMessage: 'saving' | 'saved' | 'hidden' | 'eyedrop' | 'previous' | 'guide' | 'zoomHint' | 'copied' | null =
     // 방금 누른 저장의 결과는 두 탭 모두에서 보인다 — 움직이기 탭에서 저장해도 '다음 칸'으로 이어 갈 수 있어야 한다.
     savedNote && !slowSave ? 'saved'
     : tab !== 'draw' ? null
     // 저장이 길어지는 동안에는 이것이 가장 급한 소식이다 — 지금 획이 캔버스에 닿지 않는 이유다.
     : slowSave ? 'saving'
     : hiddenWarning ? 'hidden'
+    : copiedNote ? 'copied'
     // 끌어서 집는 동안에는 안내 대신 집히는 색을 보여 준다 — 같은 자리에 둘이 겹치지 않게(45.4 실기기).
     : (scene.picking && !dropping) ? 'eyedrop'
     // 가이드에서 고른 표현이 이전 칸 제안보다 앞이다 — 방금 사용자가 고른 이 칸의 할 일이라서. 닫으면 그 아래가 보인다.
@@ -1460,6 +1475,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               const parts = (scene.motion.parts ?? []).map(p => p.id === m.id ? { ...p, ...patch } : p);
               setMotion({ ...scene.motion, parts });
             }
+            if (m.type === 'partGuess' && m.found && scene.motion?.parts?.some(pt => pt.id === m.id && pt.pivotX === .5 && pt.pivotY === .5))
+              setMotion({ ...scene.motion, parts: scene.motion.parts!.map(pt => pt.id === m.id ? { ...pt, pivotX: Number(m.x.toFixed(4)), pivotY: Number(m.y.toFixed(4)) } : pt) });
             if (m.type === 'zoom' && Number.isFinite(m.zoom)) setZoom(m.zoom);
             if (m.type === 'fitted') { if (m.factor === 0) Alert.alert('칸 안에 다 들어가지 않아요', '그림을 줄여도 움직이는 동안 칸 밖으로 나가요. 세기를 줄여 주세요.'); else if (m.factor > 0 && m.factor < 1) setSizeOpen(false); }
             // 이미 고른 글씨를 한 번 더 누르면 내용 고치기.
@@ -1556,6 +1573,11 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <IconButton label="표현 힌트 닫기" icon="close" size={16} color={C.muted} onPress={() => { setGuideHintOpen(false); onGuideHintDone?.(); }} />
         </View>}
         {/* 빈 칸: 이전 칸 그림에서 이어 그릴 수 있게 한 번 제안한다. 누를 때만 복사하고, 비어 있는 칸이라 잃을 것이 없다. */}
+        {canvasMessage === 'copied' && <View testID="가져옴 안내" pointerEvents="none" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, alignItems: 'center' }}>
+          <View style={{ paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', borderRadius: 20, ...Clay.small }}>
+            <Text numberOfLines={2} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{copiedNote}</Text>
+          </View>
+        </View>}
         {canvasMessage === 'previous' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 6, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
           <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: C.surface2, overflow: 'hidden' }}>
             <Image accessibilityLabel="이전 칸 그림" source={{ uri: imageUri(previousImage!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
@@ -1639,7 +1661,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           savedMotions={savedMotions} onSaveMotion={() => scene.motion && onSaveMotion(scene.motion)}
           onUseMotion={saved => setMotion(saved.motion)} onForgetMotion={onForgetMotion}
           onChange={setMotion} onRequestPro={onRequestPro}
-          thumbs={thumbs} previousMotion={previousMotion ?? null} onFocusPart={layerId => send({ type: 'focusPart', layerId })} onFit={() => send({ type: 'fitMotion' })} />
+          thumbs={thumbs} previousMotion={previousMotion ?? null} onFocusPart={layerId => send({ type: 'focusPart', layerId })} onFit={() => send({ type: 'fitMotion' })}
+          onGuessPivot={(partId, layerId) => send({ type: 'partGuess', id: partId, layerId })}
+          onSplitLayer={() => { switchTab('draw'); selectTool('select'); Alert.alert('움직일 부분 나누기', '움직일 부분(팔·귀 등)을 손가락으로 감싸고, 아래에서 「새 레이어로 분리」를 눌러요. 그다음 움직이기 › 부분만 움직이기에서 그 레이어를 고르면 돼요.'); }} />
         {moreDim}
       </View> : <View style={dock} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
         {scene.selection ? <View style={{ maxHeight: panelRoom(0.5) }}>

@@ -1335,6 +1335,19 @@ async function command(m){try{
   }
  }
  if(m.type==='focusPart'){focusLayerId=m.layerId||null;render();}
+ // 부분 움직임 중심점 추정(2026-10-15): 그 레이어 그림을 감싼 상자에서 **캔버스 가운데(몸 쪽)에 가장 가까운 변의 가운데**.
+ // 오른쪽에 붙은 팔 → 왼쪽 변(어깨), 머리 위 귀 → 아래 변(귀뿌리). 추정일 뿐이라 화면에서 '중심점 옮기기'로 고친다.
+ if(m.type==='partGuess'){
+  const l=layers.find(x=>x.id===m.layerId);const hull=l&&inkHull(l.bitmap);
+  if(!l||!hull||!hull.length){send({type:'partGuess',id:m.id,found:false});return;}
+  const r=l.rotation*Math.PI/180,pt=([x,y])=>{const ox=(x-W/2)*l.scale,oy=(y-H/2)*l.scale;return [W/2+l.x+ox*Math.cos(r)-oy*Math.sin(r),H/2+l.y+ox*Math.sin(r)+oy*Math.cos(r)];};
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of hull.map(pt)){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]);y1=Math.max(y1,q[1]);}
+  const cx=(x0+x1)/2,cy=(y0+y1)/2,edges=[[x0,cy],[x1,cy],[cx,y0],[cx,y1]];
+  const best=edges.reduce((b,e)=>Math.hypot(e[0]-W/2,e[1]-H/2)<Math.hypot(b[0]-W/2,b[1]-H/2)?e:b);
+  // 레이어가 캔버스를 거의 다 덮으면(몸 전체 등) 가운데로 둔다.
+  const whole=(x1-x0)>W*.8&&(y1-y0)>H*.8;
+  send({type:'partGuess',id:m.id,found:true,x:whole?.5:Math.max(0,Math.min(1,best[0]/W)),y:whole?.5:Math.max(0,Math.min(1,best[1]/H)),box:[x0/W,y0/H,x1/W,y1/H]});
+ }
  if(m.type==='layerThumbs'){
   const size=m.size||72;
   send({type:'layerThumbs',thumbs:layers.map(function(l){
