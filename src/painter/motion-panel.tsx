@@ -280,7 +280,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         <Text style={{ fontSize: 13, fontWeight: parts.length ? '800' : '600', color: parts.length ? C.pointInk : C.muted }}>부분{parts.length ? ' ' + parts.length : ''}</Text>
         {!pro && <ProTag />}
       </Pressable>
-      {([['all', '전체'], ...MOTION_GROUPS.map(g => [g.id, g.id]), ['combo', '조합']] as [MotionGroup | 'all' | 'combo', string][]).map(([id, label]) => {
+      {([['combo', '조합'], ['all', '전체'], ...MOTION_GROUPS.map(g => [g.id, g.id])] as [MotionGroup | 'all' | 'combo', string][]).map(([id, label]) => {
         const on = group === id;
         return <Pressable key={id} accessibilityRole="button" accessibilityLabel={'움직임 묶음 ' + label} accessibilityState={{ selected: on }} onPress={() => setGroup(id)}
           style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 20, backgroundColor: on ? C.pointSoft : pressed ? C.fillPressed : C.fill })}>

@@ -1223,7 +1223,7 @@ function Studio() {
                     <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginRight: -6 }}><ImtiIcon name="more" size={IconSize.row} color={C.muted} /></Pressable>
                   </View>
                   <View testID="홈 작품 미리보기" style={{ alignItems: 'center', justifyContent: 'center' }}>
-                    <HopStage size={heroSize}>
+                    <HopStage size={heroSize} glow={C.paper}>
                       {hero ? <Image source={{ uri: imageUri((hero.motionImage ?? hero.finalImage)!.path) }} style={{ width: heroSize, height: heroSize }} resizeMode="contain" />
                         : <AssetSlot name="homeHeroArtwork" size={heroSize} />}
                     </HopStage>

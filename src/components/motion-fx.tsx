@@ -36,8 +36,8 @@ export function Rise({ delay = 0, children, style, testID }: { delay?: number; c
   return <Animated.View testID={testID} style={[style, { opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>{children}</Animated.View>;
 }
 
-// 대표 캐릭터 무대: 뒤 빛(옅은 노란 동그라미가 숨 쉰다) · 반짝이 둘 · 바닥 그림자 · 통통 튀는 그림.
-export function HopStage({ size, children }: { size: number; children: React.ReactNode }) {
+// 대표 캐릭터 무대: 뒤 동그라미(기본 옅은 노랑, 홈 이어 그리기 카드는 흰색 — 2026-10-16, 숨 쉰다) · 반짝이 둘 · 바닥 그림자 · 통통 튀는 그림.
+export function HopStage({ size, children, glow: glowColor = '#FFF7CF' }: { size: number; children: React.ReactNode; glow?: string }) {
   const still = useStill();
   const t = useRef(new Animated.Value(0)).current, b = useRef(new Animated.Value(0)).current, s = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -61,7 +61,7 @@ export function HopStage({ size, children }: { size: number; children: React.Rea
     <View style={{ position: 'absolute', top: 6 * k, left: 0, height: 2 * k, width: 14 * k, borderRadius: k, backgroundColor: T.point }} />
   </Animated.View>;
   return <View style={{ width: size * 1.6, height: size * 1.25, alignItems: 'center', justifyContent: 'center' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-    <Animated.View style={{ position: 'absolute', width: size * 1.3, height: size * 1.3, borderRadius: size, backgroundColor: '#FFF7CF', transform: [{ scale: still ? 1 : glow }] }} />
+    <Animated.View style={{ position: 'absolute', width: size * 1.3, height: size * 1.3, borderRadius: size, backgroundColor: glowColor, transform: [{ scale: still ? 1 : glow }] }} />
     {star(size * .18, size * .1, .05, 1)}
     {star(size * 1.3, size * .32, .5, .8)}
     <Animated.View style={{ position: 'absolute', bottom: size * .08, width: size * .7, height: 10, borderRadius: 5, backgroundColor: 'rgba(163,151,96,0.22)', transform: [{ scaleX: still ? 1 : shade }] }} />
