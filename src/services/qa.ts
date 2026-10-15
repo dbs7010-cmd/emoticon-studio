@@ -7,6 +7,12 @@ import { localFile } from './storage';
 // small fingerprints, never image bytes. Failed reads are retryable on the next check.
 const finalHashes = new Map<string, Promise<string | null>>();
 export const finalsKey = (project: Project): string => JSON.stringify(project.slots.map(s => [s.number, s.finalImage?.path]));
+// 움직이는 칸은 같은 그림이어도 움직임·장이 다르면 다른 파일이 된다(2026-10-15: 그림 복사 + 다른 움직임 칸을 '같은 그림'으로 잘못 알렸다).
+function movingKey(slot: Project['slots'][number]): string {
+  if (!slot.motion && !slot.work?.frames?.length) return '';
+  return '|' + JSON.stringify(slot.motion ?? null) + '|' + (slot.work?.frames ?? []).map(f => f.duration + ':' + f.layers.map(l => l.image?.path ?? '').join(',')).join(';');
+}
+
 export async function identicalFinalsAsync(project: Project): Promise<number[][]> {
   const groups = new Map<string, number[]>();
   await Promise.all(project.slots.map(async slot => {
@@ -26,6 +32,7 @@ export async function identicalFinalsAsync(project: Project): Promise<number[][]
     let key: string | null;
     try { key = await hash; } catch (error) { finalHashes.delete(path); throw error; }
     if (key === null) { finalHashes.delete(path); return; }
+    key += movingKey(slot);
     groups.set(key, [...(groups.get(key) ?? []), slot.number]);
   }));
   return [...groups.values()].filter(g => g.length > 1).map(g => g.sort((a, b) => a - b)).sort((a, b) => a[0] - b[0]);
@@ -40,7 +47,7 @@ export function identicalFinals(project: Project): number[][] {
     const file = localFile(slot.finalImage.path);
     if (!file.exists) continue;
     const bytes = file.bytesSync();
-    const key = `${bytes.length}:${crc32(bytes)}`;
+    const key = `${bytes.length}:${crc32(bytes)}` + movingKey(slot);
     groups.set(key, [...(groups.get(key) ?? []), slot.number]);
   }
   return [...groups.values()].filter(group => group.length > 1);

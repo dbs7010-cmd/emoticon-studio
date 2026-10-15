@@ -12,6 +12,8 @@ export type AssetSlotSpec = {
   source: ImageSourcePropType | null;
   // 전·후 두 장이 필요한 자리(PRO 비교)만 쓴다. 나머지 자리는 source 한 장이면 된다.
   sourceAfter?: ImageSourcePropType | null;
+  // PRO 비교의 셋째 장(단계로 잇기). 2026-10-15: 같은 그림에 무료 통통 / PRO 부분 / PRO 단계를 건 세 장.
+  sourceSteps?: ImageSourcePropType | null;
 };
 
 export type ExpressionGuideCard = {
@@ -74,10 +76,11 @@ export const ASSET_SLOTS = {
   // PRO 화면 위쪽 비교(App.tsx proSheet). 16:9 따뜻한 표면(폭 화면-32, 최대 높이 214, 안쪽 여백 14)은 앱이 그리고,
   // 그 안에 1:1 그림 두 장(86×86, 왼쪽 '전체 움직임' · 오른쪽 '부분 움직임')과 화살표·부분 표시·라벨이 들어간다.
   // 두 장은 **같은 그림**이다 — 바뀌는 것은 캐릭터가 아니라 무엇이 움직이느냐이기 때문이다.
-  proFeatureArtwork: { aspectRatio: 1, display: '86×86 같은 그림 두 장(전체 움직임·부분 움직임) — 16:9 표면 안, 가운데 화살표·부분 표시·아래 라벨은 앱이 그림', sourceSize: '258(@3x) · 172 · 86 × 2 / 마스터 1024 × 2', safeArea: '가운데 84%, 두 장이 같은 캐릭터·같은 크기·같은 바닥선', background: 'transparent',
+  proFeatureArtwork: { aspectRatio: 1, display: '86×86 같은 그림 세 장(전체 움직임·부분 움직임·이어 움직임) — 아래 라벨은 앱이 그림', sourceSize: '360 GIF × 3 (scripts/pro-clips.cjs 가 앱 엔진으로 굽는다)', safeArea: '칸 안 — 굽는 스크립트가 잘림 없음을 검사한다', background: 'transparent',
     // 두 쪽은 **같은 그림**이다. 달라지는 것은 캐릭터가 아니라 '무엇이 움직이는가'이고, 그 차이는 앱이 그리는 부분 표시와 라벨이 말한다.
     // 이미 있는 표현 가이드 그림(손 흔들기)을 쓴다 — 손만 따로 움직이는 예가 부분 움직임과 그대로 맞는다.
-    source: require('../../assets/expression-guides/greeting-hello-wave.png'), sourceAfter: require('../../assets/expression-guides/greeting-hello-wave.png') },
+    // 2026-10-15: 정지 그림 두 장 → **앱 엔진으로 구운 움직이는 GIF 세 장**(같은 그림 · 같은 크기). 구매 전에 무엇이 달라지는지 실제 움직임으로 본다.
+    source: require('../../assets/pro/basic.gif'), sourceAfter: require('../../assets/pro/part.gif'), sourceSteps: require('../../assets/pro/steps.gif') },
 } satisfies Record<string, AssetSlotSpec>;
 
 export type AssetSlotName = keyof typeof ASSET_SLOTS;

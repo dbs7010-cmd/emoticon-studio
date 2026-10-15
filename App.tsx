@@ -1921,22 +1921,20 @@ function Studio() {
           <View testID="PRO 전후" accessibilityLabel="움직임 전후 미리보기" style={{ gap: 12, padding: 14, borderRadius: 24, backgroundColor: C.surface2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <ProTag />
-              <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>원하는 부분만 움직이기</Text>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>같은 그림, 움직임만 달라져요</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ flex: 1, aspectRatio: 1, maxHeight: 150, borderRadius: 16, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <Image accessibilityIgnoresInvertColors source={ASSET_SLOTS.proFeatureArtwork.source ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
-                <View style={{ flexDirection: 'row', gap: 3 }}><Text style={{ fontSize: 11, color: C.muted }}>무료 ·</Text><Text style={{ fontSize: 11, fontWeight: '700', color: C.muted }}>전체 움직임</Text></View>
-              </View>
-              <ImtiIcon name="next" size={IconSize.row} color={C.muted} />
-              <View style={{ flex: 1, aspectRatio: 1, maxHeight: 150, borderRadius: 16, backgroundColor: C.paper, borderWidth: 1.5, borderColor: C.edge, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <View style={{ width: 86, height: 86 }}>
-                  <Image accessibilityIgnoresInvertColors source={ASSET_SLOTS.proFeatureArtwork.sourceAfter ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
-                  <View pointerEvents="none" style={{ position: 'absolute', left: 5, top: 18, width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.edge }} />
-                </View>
-                <View style={{ flexDirection: 'row', gap: 3 }}><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>PRO ·</Text><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>부분 움직임</Text></View>
-              </View>
+            {/* 2026-10-15: 같은 그림에 무료 통통 · PRO 손 흔들기(부분) · PRO 등장→인사(단계)를 건 세 장. 앱 엔진으로 구운 실제 움직임이다(scripts/pro-clips.cjs). */}
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              {([[ASSET_SLOTS.proFeatureArtwork.source, '무료 ·', '전체 움직임', '통통', false],
+                 [ASSET_SLOTS.proFeatureArtwork.sourceAfter, 'PRO ·', '부분 움직임', '손만 흔들기', true],
+                 [ASSET_SLOTS.proFeatureArtwork.sourceSteps, 'PRO ·', '이어 움직임', '등장 → 인사', true]] as const).map(([src, tier, label, hint, pro]) =>
+                <View key={label} accessibilityLabel={`${tier} ${label} · ${hint}`} style={{ flex: 1, paddingVertical: 8, borderRadius: 16, backgroundColor: pro ? C.paper : C.surface2, borderWidth: pro ? 1.5 : 0, borderColor: C.edge, alignItems: 'center', gap: 4 }}>
+                  <Image accessibilityIgnoresInvertColors source={src ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
+                  <View style={{ flexDirection: 'row', gap: 3 }}><Text style={{ fontSize: 11, fontWeight: pro ? '800' : '400', color: pro ? C.ink : C.muted }}>{tier}</Text><Text style={{ fontSize: 11, fontWeight: pro ? '800' : '700', color: pro ? C.ink : C.muted }}>{label}</Text></View>
+                  <Text style={{ fontSize: 11, color: C.muted }}>{hint}</Text>
+                </View>)}
             </View>
+            <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>PRO 움직임과 조합은 구매 전에 내 그림으로 미리 볼 수 있어요(저장은 PRO).</Text>
             {/* PRO 움직임 칩: 실제 PRO 효과 이름(PRESETS 에서 PRO 인 것)을 앞에서 다섯, 나머지는 +N. */}
             <View testID="PRO 움직임 칩" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {proMotions.slice(0, 5).map(m => <View key={m.id} style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: C.surface2, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{m.label}</Text></View>)}

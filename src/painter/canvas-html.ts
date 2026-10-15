@@ -477,8 +477,9 @@ function motionClips(){
   for(const u of us){
    const part=(motion.parts||[]).some(pp=>pp.layerId===l.id&&!pp.off);
    if(rest===null&&!part)continue;
-   if(rest&&(u<rest||u>=exit)&&!part)continue;
-   if(motion.steps&&motion.steps.length&&!part&&stepEntering(motion.steps,L*u))continue;
+   // 부분 레이어도 전체 효과(등장)를 함께 받으므로 들어오는 동안은 보지 않는다(2026-10-15: 부분+쓱 등장에서 잘못 경고했다).
+   if(rest&&(u<rest||u>=exit))continue;
+   if(motion.steps&&motion.steps.length&&stepEntering(motion.steps,L*u))continue;
    const d=deltaFor(l,L*u);
    if(!d||d.hidden)continue;
    // 레이어 자체 변환(위치·크기·회전)을 먼저 건다(2026-10-05: 예전에는 빠져 있어, 레이어를 옮기거나 줄여도 잘림 판단이 바뀌지 않았다).

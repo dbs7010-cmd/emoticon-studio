@@ -211,7 +211,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   // 다른 화면으로 가는 줄은 **목록 줄** 역할이다 — 브러시·레이어 목록처럼 카드 없이 얇은 구분선으로 가른다.
   const row = { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 4, borderBottomWidth: 1, borderColor: C.line } as const;
   // 45.39: 묶음으로 나눈 격자. 묶음 칩으로 좁혀 볼 수 있다(전체가 기본).
-  const [group, setGroup] = React.useState<MotionGroup | 'all'>('all');
+  const [group, setGroup] = React.useState<MotionGroup | 'all' | 'combo'>('all');
   // PRO 효과 미리보기(무료 사용자). 누르면 **내 그림에 입혀 보여 주고** 그 자리에서 PRO 를 권한다.
   // 저장은 하지 않는다 — 저장·닫기를 누르면 PRO 안내가 먼저 뜨고, '무료로 저장'은 미리보기 전 효과로 되돌린다.
   const [trialFrom, setTrialFrom] = React.useState<{ preset?: MotionPreset; direction?: MotionDirection; steps?: MotionStep[] } | null>(null);
@@ -236,6 +236,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   const endTrial = () => { const from = trialFrom; setTrialFrom(null); setTrialCombo(null); if (!from) return;
     const restParts = parts.length > 0 || !!base.alternate || !!base.boil;
     if (!from.preset && !from.steps?.length && !restParts) onChange(null); else set({ preset: from.preset, direction: from.direction, steps: from.steps }); };
+  // '조합' 묶음(2026-10-15 작업 기록: 조합이 효과 17개 아래라 다섯 번 넘겨야 닿았다)은 효과 격자를 숨기고 조합 줄만 바로 보인다.
   const sections = MOTION_GROUPS.filter(g => group === 'all' || g.id === group).map(g => {
     const items = PRESETS.filter(p => p.group === g.id);
     const rows: typeof items[] = []; for (let i = 0; i < items.length; i += 4) rows.push(items.slice(i, i + 4));
@@ -264,7 +265,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: !base.preset ? '800' : '600', color: C.ink }}>{hasPro ? '전체 없음' : '없음'}</Text>
       </Pressable>
       <View style={{ width: 1, height: 22, backgroundColor: C.line }} />
-      {([['all', '전체'], ...MOTION_GROUPS.map(g => [g.id, g.id])] as [MotionGroup | 'all', string][]).map(([id, label]) => {
+      {([['all', '전체'], ...MOTION_GROUPS.map(g => [g.id, g.id]), ['combo', '조합']] as [MotionGroup | 'all' | 'combo', string][]).map(([id, label]) => {
         const on = group === id;
         return <Pressable key={id} accessibilityRole="button" accessibilityLabel={'움직임 묶음 ' + label} accessibilityState={{ selected: on }} onPress={() => setGroup(id)}
           style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 20, backgroundColor: on ? C.pointSoft : pressed ? C.fillPressed : C.fill })}>

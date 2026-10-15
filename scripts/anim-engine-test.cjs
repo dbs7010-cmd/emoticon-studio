@@ -112,6 +112,15 @@ const { canvasHtml } = loader()('src/painter/canvas-html.ts');
     assert.ok(ear.found && Math.abs(ear.y - ear.box[3]) < .02, '귀: 아래(귀뿌리)가 축 ' + JSON.stringify(ear));
     await cmd({ type: 'partGuess', id: 'p3', layerId: 'draw-1' });
     assert.equal((await last('partGuess')).found, false, '빈 레이어는 추정하지 않는다(가운데 그대로)');
+    // 10. 부분 + 쓱 등장: 들어오는 동안 밖에 있는 것은 잘림이 아니다(부분 레이어도 전체 효과를 함께 받는다).
+    //     고치기 전에는 부분 레이어만 들어오는 구간을 빼지 않아 '칸 밖' 경고가 떴다(2026-10-15 기기 작업 기록에서 발견).
+    await cmd({ type: 'clear' }); await line(330, 300, 360, 330);   // 오른쪽 아래 작은 손
+    await cmd({ type: 'partGuess', id: 'p9', layerId: 'draw-2' }); const hand = await last('partGuess');
+    await cmd({ type: 'motion', motion: { version: 1, speed: .5, strength: .5, preset: 'slide',
+      parts: [{ id: 'p9', layerId: 'draw-2', effect: 'rotate', amount: 25, angle: 0, speed: .65, delay: 0, pivotX: hand.x, pivotY: hand.y }] } });
+    await cmd({ type: 'frames', id: 3, fps: 12 });
+    assert.equal((await last('frames')).gif.clipped, false, '부분 + 쓱 등장: 들어오는 구간은 잘림 경고 대상이 아니다');
+    await cmd({ type: 'motion', motion: null });
     assert.deepEqual(errors, [], '페이지 오류 없음: ' + errors.join(' | '));
     console.log('PASS: anim engine — 시작 2장(복제)·장마다 따로 그림·대표 그림은 첫 장·앞 장 비춰 보기·추가/시간/순서/삭제·한 바퀴=시간 합·굽기(장 경계 4장, 효과 있으면 ≤24)·저장/다시 열기·한 장 남으면 해제·끄기');
   } finally { await browser.close(); }

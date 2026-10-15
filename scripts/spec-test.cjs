@@ -96,6 +96,9 @@ assert.equal(inspectImage(project.slots[0].finalImage).status, 'PASS', 'and that
 const { identicalFinals } = load('src/services/qa.ts');
 project.slots[1].finalImage = shipped;
 assert.deepEqual(identicalFinals(project), [[1, 2]], 'identical exports are reported as a pair');
+project.slots[1].motion = { version: 1, preset: 'bounce', speed: .5, strength: .5 };
+assert.deepEqual(identicalFinals(project), [], 'same still picture but a different motion is not a duplicate');
+delete project.slots[1].motion;
 project.slots[1].finalImage = finalAsset();
 assert.deepEqual(identicalFinals(project), [], 'different drawings are not');
 

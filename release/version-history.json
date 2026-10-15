@@ -22,6 +22,56 @@
       "uploaded": "2026-10-07",
       "source": "사용자 보고(업로드·심사 제출). Console 경고 1개: 가독화 파일 없음(R8 미사용 — 비차단), 지원 기기 변동 0",
       "review": "승인(2026-10-07, 사용자 보고) · 테스터 안내문 작성(사용자)"
+    },
+    {
+      "versionCode": 4,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc4-closedtest-connected-870907a.aab",
+      "commit": "870907a",
+      "sha256": "8e50fc3a744a8efd4eb29709523b4b2635da7d796e479f682eafc31eb881f9eb",
+      "uploaded": "2026-10-12",
+      "source": "사용자 보고(업로드·심사 제출). 2026-10-15 기록 보강(빌드 신원 파일 기준)"
+    },
+    {
+      "versionCode": 5,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc5-closedtest-connected-5501976.aab",
+      "commit": "5501976",
+      "sha256": "ed40409e220305d33c3eb7d902f6d11d98ce4125597fe0c6c38ade53454170b0",
+      "uploaded": "2026-10-13",
+      "source": "사용자 보고(업로드·심사 제출). 2026-10-15 기록 보강"
+    },
+    {
+      "versionCode": 6,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc6-closedtest-connected-22d1252.aab",
+      "commit": "22d1252",
+      "sha256": "515d582467aaf0fe5320ce9bf545987240e21165cceeb7031a702874be537151",
+      "uploaded": "2026-10-13",
+      "source": "사용자 보고(업로드). 테스터 유지 빌드(원장 §44). 2026-10-15 기록 보강"
+    },
+    {
+      "versionCode": 7,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc7-paid-85bacc8.aab",
+      "commit": "85bacc8",
+      "sha256": "73092fafc05720a2a28659b9d9e5926b9a00c2cc4e976284a518a7b80f2e6a09",
+      "uploaded": "2026-10-13",
+      "source": "사용자 보고(업로드 · 나중을 위해 저장, 검토 제출은 한국 개발자 정보 입력 대기). 2026-10-15 기록 보강"
+    },
+    {
+      "versionCode": 8,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc8-closedtest-connected-6c2803b.aab",
+      "commit": "6c2803b",
+      "sha256": "bf04bda82ce316201d46694e151c4cfc5223d44d18adc6ec6c213d5d5968020f",
+      "uploaded": "2026-10-15",
+      "source": "사용자 보고(Console 업로드 · 나중을 위해 저장, 검토 제출은 한국 개발자 정보 입력 대기)"
     }
   ]
 }
