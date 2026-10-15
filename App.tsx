@@ -178,7 +178,8 @@ function Studio() {
     if (authUid === null) warmUp(config, WARM_LOGIN, [...WARM_LOGIN_CALLS, ...WARM_ARTIST_CALLS]);
     else if (authUid && artist === null) warmUp(config, [], WARM_ARTIST_CALLS); }, [cloud, authUid, artist]);
   // 구매 확인 서버에 로그인 증명을 함께 보낸다(한 구매 = 한 계정). 서버 설정이 없는 빌드는 null.
-  const payOpts = { authToken: () => (cloud ? cloud.idToken() : Promise.resolve(null)) };
+  // 서버 연결 빌드에서만 로그인 증명을 함께 보낸다. 증명이 아직 없으면 확인을 미룬다(pro.ts confirm).
+  const payOpts = cloud ? { authToken: () => cloud.idToken() } : {};
   const finishStart = () => { setStartOpen(false); if (store && !store.introDone) { try { commit(st => ({ ...st, introDone: true })); } catch { /* 다음 실행에 다시 보일 뿐 */ } } };
   const startLogin = (provider: Provider) => { setLoginError(''); setLoginBusy(true);
     loginWith(provider).then(() => finishStart()).catch(e => setLoginError(String((e as Error).message ?? e))).finally(() => setLoginBusy(false)); };
@@ -687,7 +688,7 @@ function Studio() {
       catch { setPayment({ phase: 'failed', problem: 'save' }); }
       return;
     }
-    if (outcome.state === 'failed') { setPayment({ phase: 'failed', problem: outcome.problem }); return; }
+    if (outcome.state === 'failed') { setPayment({ phase: 'failed', problem: outcome.problem, reason: outcome.reason }); return; }
     setPayment({ phase: outcome.state });
   }
   // Applying one movement to several cuts. Each cut is rebuilt for real — a cut the board calls
@@ -1705,10 +1706,13 @@ function Studio() {
           })()}
         </> : <>
           {(() => {
-            const done = doneCount(project);
+            // 2026-10-15: 홈·내보내기와 같은 기준으로 센다 — 멈춰 있는 세트 32칸, 움직이는 세트 24칸(카카오 제안 기준).
+            // 칸은 늘 32개라, 움직이는 세트는 24칸만 채우면 되고 남는 칸은 비워 둬도 된다.
+            const total = (setIsAnimated(project) ? STAGES.animated : STAGES.still).proposal.emoticons;
+            const finishedCount = doneCount(project);
+            const done = Math.min(finishedCount, total);
             const working = project.slots.filter(isWorking).length;
             const drawnCount = project.slots.filter(s => s.finalImage).length;
-            const total = project.slots.length;
             const nextCut = nextUnfinished(project, project.lastSlot ?? 0);
             const playButton = drawnCount >= 2 && <Pressable accessibilityRole="button" accessibilityLabel={playing ? '전체 재생 멈추기' : '전체 재생'} onPress={() => { setPlayIndex(0); setPlaying(!playing); }}
               style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: playing ? C.pointSoft : C.accent, alignItems: 'center', justifyContent: 'center', ...(playing ? {} : pressed ? Clay.buttonPressed : Clay.button) })}>
@@ -1716,7 +1720,8 @@ function Studio() {
             </Pressable>;
             // 45.43 S5: 전부 완성하면 완성 카드 B(흰 카드 · 노란 체크 · 작품 격자 · 노란 행동 하나)가 머리를 맡는다.
             // 행동 글자는 시안의 '파일 묶음 만들기' 대신 '내보내기' — 이 버튼은 묶음을 바로 만들지 않고 내보내기 화면을 연다(거기서 파일 묶음 만들기).
-            if (done === total) return <><CompleteCard total={total} subtitle={`${project.projectName} · 파일 묶음을 만들 수 있어요`} actionLabel="내보내기" actionIcon="tray-arrow-up" onAction={() => setScreen('export')}>
+            // 기준을 채우면 완성 카드. 카드의 숫자는 실제로 완성한 칸 수(움직이는 세트를 32칸 다 채웠으면 32).
+            if (done === total) return <><CompleteCard total={finishedCount} subtitle={`${project.projectName} · 파일 묶음을 만들 수 있어요`} actionLabel="내보내기" actionIcon="tray-arrow-up" onAction={() => setScreen('export')}>
               {/* 시안처럼 여덟 칸씩 두 줄(앞 16칸). 전체는 아래 격자에 있다. */}
               <View testID="완성 작품 격자" style={{ gap: 6 }}>
                 {[0, 1].map(row => <View key={row} style={{ flexDirection: 'row', gap: 6 }}>
@@ -1734,7 +1739,7 @@ function Studio() {
               <View style={{ flex: 1, gap: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <Text style={{ fontSize: 26, lineHeight: 32, color: C.ink, fontWeight: '800', letterSpacing: -.4 }}>{done}<Text style={{ fontSize: 17, fontWeight: '500', color: C.yellowInk }}>{` / ${total}칸`}</Text></Text>
-                  <View style={{ height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{setIsAnimated(project) ? '움직이는 세트' : '멈춰 있는 세트'}</Text></View>
+                  <View style={{ height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{setIsAnimated(project) ? '움직이는 세트 · 24칸 기준' : '멈춰 있는 세트 · 32칸 기준'}</Text></View>
                 </View>
                 {!!working && <Text style={{ fontSize: 13, color: C.yellowInk, marginTop: -6 }}>{working}칸 그리는 중</Text>}
                 <FillBar testID="보드 진행" label={`${total}칸 중 ${done}칸 완성${nextCut !== null ? `, 지금 ${nextCut}번 칸` : ''}`} ratio={done / total} />
@@ -1797,9 +1802,11 @@ function Studio() {
       {project && screen === 'board' && !canonOpen && doneCount(project) < project.slots.length && (() => {
         const next = nextUnfinished(project, project.lastSlot ?? 0);
         const done = doneCount(project), started = done > 0 || project.slots.some(isWorking);
+        // 움직이는 세트가 24칸 기준을 채우면 완성 카드가 '내보내기'를 맡는다 — 같은 버튼을 두 번 두지 않는다(2026-10-15).
+        const met = done >= (setIsAnimated(project) ? STAGES.animated : STAGES.still).proposal.emoticons;
         return <View testID="board-action-dock" style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: C.paper, boxShadow: '0px -8px 24px rgba(120, 100, 70, 0.10)' }}>
           {next !== null && <View style={{ flex: 2 }}><Action primary title={started ? '이어서 그리기' : '첫 칸 그리기'} disabled={!!busy} onPress={() => drawFrom()} /></View>}
-          {(done > 0 || next === null) && <View style={{ flex: 1 }}><Action primary={next === null} title="내보내기" disabled={!!busy} onPress={() => setScreen('export')} /></View>}
+          {!met && (done > 0 || next === null) && <View style={{ flex: 1 }}><Action primary={next === null} title="내보내기" disabled={!!busy} onPress={() => setScreen('export')} /></View>}
         </View>;
       })()}
     </KeyboardAvoidingView>
@@ -2083,7 +2090,7 @@ function Studio() {
 
 // 결제 상태. 팝업을 띄우지 않고 PRO 화면 안에 카드 한 장으로 놓는다 — 기능 목록과 같은 모양(둥근 아이콘 + 굵은 한 줄 + 설명).
 // 스토어 오류 코드는 보여 주지 않는다. 할 일이 있으면 글자 버튼 하나만 둔다.
-type Payment = { phase: 'idle' | 'loading' | 'ready' | 'unavailable' | 'buying' | 'restoring' | 'bought' | 'restored' | 'cancelled' | 'pending' | 'none' | 'failed'; problem?: PaymentProblem | 'save' };
+type Payment = { phase: 'idle' | 'loading' | 'ready' | 'unavailable' | 'buying' | 'restoring' | 'bought' | 'restored' | 'cancelled' | 'pending' | 'none' | 'failed'; problem?: PaymentProblem | 'save'; reason?: string };
 type PaymentView = { tone: 'plain' | 'good' | 'warn'; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; title: string; next?: string; action?: 'restore' | 'retry' };
 function paymentView(payment: Payment): PaymentView | null {
   switch (payment.phase) {
@@ -2095,7 +2102,8 @@ function paymentView(payment: Payment): PaymentView | null {
     case 'cancelled': return { tone: 'plain', icon: 'close-circle-outline', title: '결제를 취소했어요', next: '결제는 진행되지 않았어요. 언제든 다시 시작할 수 있어요.' };
     case 'pending': return { tone: 'plain', icon: 'timer-sand', title: '결제를 처리하는 중이에요', next: '스토어에서 결제가 끝나면 구매 복원을 눌러 주세요.', action: 'restore' };
     case 'none': return { tone: 'plain', icon: 'magnify', title: '복원할 구매가 없어요', next: '지금 Play 스토어 계정에서 구매한 PRO를 찾지 못했어요. 다른 계정으로 구매했다면 그 계정으로 바꿔 주세요.' };
-    case 'unavailable': case 'failed': { const t = problemText(payment.problem ?? 'unknown'); return { tone: 'warn', icon: 'alert-circle-outline', title: t.title, next: t.next, action: t.action }; }
+    // 서버가 거절 이유를 알려 주면(예: 다른 emoti 계정에 연결된 구매) 그 문장을 그대로 보인다.
+    case 'unavailable': case 'failed': { const t = problemText(payment.problem ?? 'unknown'); return { tone: 'warn', icon: 'alert-circle-outline', title: t.title, next: payment.problem === 'refused' && payment.reason ? payment.reason : t.next, action: t.action }; }
     default: return null;
   }
 }

@@ -146,6 +146,14 @@ type Props = {
 };
 
 
+// 움직임 한 줄 이름(2026-10-15): 단계가 있으면 preset 은 쓰이지 않으므로 단계(조합 이름 또는 효과 → 효과)를 적는다.
+export function motionName(m: Motion): string {
+  const steps = m.steps ?? [];
+  const combo = steps.length ? MOTION_COMBOS.find(c => c.steps.length === steps.length && c.steps.every((st, i) => st.preset === steps[i].preset)) : undefined;
+  const lead = steps.length ? (combo ? combo.label : steps.map(st => PRESETS.find(p => p.id === st.preset)?.label ?? st.preset).join(' → ')) : PRESETS.find(p => p.id === m.preset)?.label;
+  return [lead, m.parts?.length ? '부분 ' + m.parts.length : null, m.alternate ? '두 모습' : null, m.boil ? '떨림' : null].filter(Boolean).join(' · ');
+}
+
 // 움직이기 화면. 결과(캔버스와 효과 견본)가 먼저이고 설정은 고른 다음에 나온다.
 // 무료 효과는 누르는 즉시 칸에 들어간다. PRO(부분 움직임·두 모습)는 **들어가기 전에** PRO 라고 알리고,
 // 무료 사용자는 입구에서 PRO 안내로 간다 — 만들고 난 뒤 저장할 때 막지 않는다.
@@ -265,6 +273,13 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: !base.preset ? '800' : '600', color: C.ink }}>{hasPro ? '전체 없음' : '없음'}</Text>
       </Pressable>
       <View style={{ width: 1, height: 22, backgroundColor: C.line }} />
+      {/* 부분 움직임 바로 가기(2026-10-15): 입구가 패널 맨 아래라 스크롤 7번이 들었다. 캔버스·조절 줄은 그대로 두고 이 칩 하나만 더한다(사용자 허용). */}
+      <Pressable accessibilityRole="button" accessibilityLabel="부분 움직임 바로 가기" accessibilityHint={pro ? '손·귀처럼 고른 레이어만 움직여요' : 'PRO 기능이에요. 누르면 PRO 안내가 떠요'} onPress={enterPro}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, borderRadius: 20, backgroundColor: parts.length ? C.pointSoft : pressed ? C.fillPressed : C.fill })}>
+        <Glyph name="hand-back-right-outline" size={16} color={parts.length ? C.pointInk : C.muted} />
+        <Text style={{ fontSize: 13, fontWeight: parts.length ? '800' : '600', color: parts.length ? C.pointInk : C.muted }}>부분{parts.length ? ' ' + parts.length : ''}</Text>
+        {!pro && <ProTag />}
+      </Pressable>
       {([['all', '전체'], ...MOTION_GROUPS.map(g => [g.id, g.id]), ['combo', '조합']] as [MotionGroup | 'all' | 'combo', string][]).map(([id, label]) => {
         const on = group === id;
         return <Pressable key={id} accessibilityRole="button" accessibilityLabel={'움직임 묶음 ' + label} accessibilityState={{ selected: on }} onPress={() => setGroup(id)}
@@ -349,7 +364,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     <View style={{ gap: 6 }}>
     {!moving && !!previousMotion && (() => {
       const locked = usesPro(previousMotion) && !pro;
-      const name = [PRESETS.find(p => p.id === previousMotion.preset)?.label, previousMotion.parts?.length ? `부분 ${previousMotion.parts.length}` : null].filter(Boolean).join(' · ');
+      const name = motionName(previousMotion);
       // 따뜻한 제안 한 줄: 24칸을 만드는 동안 가장 자주 누르는 행동.
       return <Pressable accessibilityRole="button" accessibilityLabel="직전 칸 움직임 다시 쓰기" onPress={() => locked ? onRequestPro() : onChange(previousMotion)} style={{ ...row, paddingHorizontal: 12, borderRadius: 14, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
         <Glyph name="history" size={20} color={C.ink} />

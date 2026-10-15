@@ -127,6 +127,8 @@ const writeCaption = async text => {
     assert.equal(labelled('직전 칸 움직임 다시 쓰기').length, 1, n + '칸: 직전 칸 움직임 행');
     if (n % 2 === 0) { await press('직전 칸 움직임 다시 쓰기'); scene = { ...scene, motion: lastCommand('motion').motion }; await message(scene); }
     else { await press('통통'); scene = { ...scene, motion: lastCommand('motion').motion }; await message(scene); }
+    // 같은 범위 비교용(2026-10-15 정정): 이전 칸 → 문구 → 움직임 다시 쓰기 → 저장 → 다음 칸. 그리기 탭 복귀·색 확인은 뺀다(새 흐름에 없는 일).
+    const sameScope = taps - t0 + 2;
     await press('그리기');
     // 최근 색: 칸 1에서 고른 색이 맨 앞.
     await press('색');
@@ -134,7 +136,7 @@ const writeCaption = async text => {
     assert.equal(recent[0], '최근 색 #E94F4F', n + '칸: 최근 색 맨 앞 유지 ' + recent.join(','));
     if (labelled('팔레트 닫기').length) await press('팔레트 닫기');
     await press('저장'); await saved(true); await press('다음 칸으로 가기');
-    perSlot.push({ n, taps: taps - t0, modals: alerts.length - a0 });
+    perSlot.push({ n, taps: taps - t0, sameScope, modals: alerts.length - a0 });
   }
   // 2026-10-15 세트 반복 단축: '이전 칸 그림으로 시작'이 빈 칸이면 그 칸의 움직임도 함께 넣는다.
   //   예전 흐름(위): 이전 칸 → 문구 → 움직이기 탭 → 직전 칸 움직임 다시 쓰기 → 그리기 탭 → 저장
@@ -152,9 +154,10 @@ const writeCaption = async text => {
     quick.push(taps - t0);
     assert.deepEqual(loadStore().store.projects[0].slots.find(s => s.number === n).motion, prevMotion, n + '칸: 움직임이 저장된다');
   }
-  const oldTaps = perSlot.find(s => s.n === 8).taps;
+  const oldTaps = perSlot.find(s => s.n === 8).sameScope;
   assert.ok(quick.every(q => q < oldTaps), '새 흐름이 칸당 누르기가 적다: 예전 ' + oldTaps + ' · 새 ' + quick.join('/'));
-  console.log(`  반복 단축: 칸당 누르기 ${oldTaps}(색 확인 2번 포함) → ${quick[0]} — 같은 일 기준 3번 줄어듦(움직이기 탭 → 직전 칸 움직임 → 그리기 탭 생략), 확인창 0`);
+  // 같은 범위(이전 칸 → 문구 → 직전 움직임 → 저장 → 다음 칸)에서 잰다. 스크롤·설정 변경은 두 흐름 모두 0.
+  console.log(`  반복 단축(같은 범위): 칸당 탭 ${oldTaps} → ${quick[0]} (움직이기 탭 · 직전 칸 움직임 다시 쓰기 생략), 스크롤 0 → 0, 설정 변경 0 → 0, 확인창 0`);
 
   const at8 = perSlot.find(s => s.n === 8), last = perSlot.at(-1);
   assert.ok(perSlot.every(s => s.modals === 0), '확인창 0: ' + JSON.stringify(perSlot.filter(s => s.modals)));

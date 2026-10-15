@@ -73,7 +73,9 @@ const render = async el => { let t; await act(async () => { t = create(el); }); 
     const t24 = await render(React.createElement(U.CompleteCard, { total: 24, actionLabel: '내보내기', onAction: () => {} }));
     assert.ok(texts(t24).includes('24칸 완성!') && !texts(t24).includes('32칸 완성!'), '완성 카드 칸 수 = 넘겨준 실제 칸 수');
   }
-  assert.ok(/<CompleteCard total=\{total\}/.test(require('node:fs').readFileSync('App.tsx', 'utf8')) && /const total = project\.slots\.length;/.test(require('node:fs').readFileSync('App.tsx', 'utf8')), '보드는 세트의 실제 칸 수를 넘긴다');
+  // 2026-10-15: 보드 기준 = 세트 종류(멈춤 32 · 움직임 24, 홈·내보내기와 같음). 완성 카드 숫자 = 실제로 완성한 칸 수.
+  { const app = require('node:fs').readFileSync('App.tsx', 'utf8');
+    assert.ok(/<CompleteCard total=\{finishedCount\}/.test(app) && /const total = \(setIsAnimated\(project\) \? STAGES\.animated : STAGES\.still\)\.proposal\.emoticons;/.test(app), '보드는 세트 종류 기준을 쓰고, 완성 카드는 실제 완성 수를 넘긴다'); }
   assert.equal(flat(t.root.findAll(n => n.type === 'View' && n.props.testID === '완성 카드')[0].props.style).backgroundColor, T.paper, '흰 카드');
   const check = flat(t.root.findAll(n => n.props.testID === '완성 체크')[0].props.style);
   assert.equal(check.backgroundColor, T.accent); assert.equal(check.transform[0].scale.__getValue(), 1, '튀어 올라 제 크기');

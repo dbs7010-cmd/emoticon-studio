@@ -44,6 +44,7 @@ const real = loader(mocks)('src/services/images.ts');
 const { createProject, isAnimated, doneCount } = load('src/project.ts');
 const { loadStore, saveStore } = load('src/services/storage.ts');
 const App = load('App.tsx').default;
+const { motionName } = load('src/painter/motion-panel.tsx');
 
 const png = Buffer.alloc(33); Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(png); png.writeUInt32BE(360, 16); png.writeUInt32BE(360, 20);
 const pngData = 'data:image/png;base64,' + png.toString('base64');
@@ -190,6 +191,11 @@ const closePainter = async () => { await press('그리기 닫기'); await answer
     await echoMotion(); await closePainter();
   }
 
+  // 직전 칸 움직임 이름표(2026-10-15): 단계가 있으면 효과 이름 대신 조합·단계를 적는다.
+  assert.equal(motionName({ version: 1, speed: .5, strength: .5, preset: 'bounce', steps: [{ id: 'a', preset: 'slide', duration: .6, repeat: 1 }, { id: 'b', preset: 'bow', duration: .9, repeat: 1 }], parts: [{ id: 'p' }] }), '등장 → 인사 · 부분 1');
+  assert.equal(motionName({ version: 1, speed: .5, strength: .5, steps: [{ id: 'a', preset: 'pop', duration: .6, repeat: 1 }, { id: 'b', preset: 'shake', duration: .6, repeat: 1 }] }), '뿅 → 흔들기');
+  assert.equal(motionName({ version: 1, speed: .5, strength: .5, preset: 'bounce' }), '통통');
+
   // ── 움직임 없음: 움직임만 빠지고 그림·문구는 그대로 ──────────────────────────────────────
   await restart();
   await openSlot(3);
@@ -302,6 +308,12 @@ const closePainter = async () => { await press('그리기 닫기'); await answer
   await press('부분만 움직이기');
   assert.equal(labelled('PRO 닫기').length, 1, '무료: 부분 움직임 입구는 PRO 안내로 간다');
   assert.equal(motionCommands(), before, '무료: 안내를 여는 것만으로 움직임이 바뀌지 않는다');
+  await press('PRO 닫기');
+  // 2026-10-15: 위쪽 칩 줄의 '부분' 바로 가기도 같은 입구다(무료는 PRO 안내).
+  before = motionCommands();
+  await press('부분 움직임 바로 가기');
+  assert.equal(labelled('PRO 닫기').length, 1, '무료: 부분 바로 가기도 PRO 안내로 간다');
+  assert.equal(motionCommands(), before);
   await press('PRO 닫기');
   before = motionCommands();
   await press('단계로 잇기');

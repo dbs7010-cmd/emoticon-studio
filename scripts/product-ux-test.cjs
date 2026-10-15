@@ -320,7 +320,7 @@ const saved = async (dirty = true) => {
   assert.equal(ranges('속도').length, 0, '효과를 고르기 전에는 설정표가 먼저 나오지 않는다');
   assert.equal(locks(), 0, '움직이기: 자물쇠 0');
   // 45.39: PRO 효과 열넷은 카드마다 작게 PRO 라고 보인다(누르면 내 그림으로 미리보기). 자물쇠는 없다.
-  assert.equal(proMarks(), 3 + 14, '움직이기 기본 화면: PRO 표시는 PRO 효과 열넷 + 조합 줄 · 단계로 잇기 · 부분 움직임(2026-10-15)');
+  assert.equal(proMarks(), 4 + 14, '움직이기 기본 화면: PRO 표시는 PRO 효과 열넷 + 부분 바로 가기 칩 · 조합 줄 · 단계로 잇기 · 부분 움직임(2026-10-15)');
   await press('통통');
   scene = { ...scene, motion: lastCommand('motion').motion }; await message(scene);
   assert.equal(ranges('속도').length, 1, '고르면 속도가 나온다');

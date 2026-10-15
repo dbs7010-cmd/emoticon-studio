@@ -83,13 +83,14 @@ export function entitlementLabel(entitlement: Entitlement | undefined, now = new
 }
 
 // ── 구매·복원·재확인 ─────────────────────────────────────────────────────────────────────────
-export type PaymentProblem = StoreProblem | 'server-missing' | 'server-unreachable' | 'refused' | 'store-account';
+export type PaymentProblem = StoreProblem | 'server-missing' | 'server-unreachable' | 'refused' | 'store-account' | 'signed-out';
 export type PurchaseOutcome =
   | { state: 'purchased'; entitlement: Entitlement }
   | { state: 'cancelled' }
   | { state: 'pending' }
   | { state: 'none' }
-  | { state: 'failed'; problem: PaymentProblem };
+  // reason: 서버가 거절하며 알려 준 문장(예: 다른 emoti 계정에 연결된 구매). 화면이 그대로 보여 준다(2026-10-15).
+  | { state: 'failed'; problem: PaymentProblem; reason?: string };
 // 테스트가 서버 주소·네트워크·시각을 넣을 수 있는 자리. 앱은 빌드 설정의 주소를 쓴다.
 // authToken: 로그인 증명을 꺼내는 함수(2026-10-13) — 구매 확인 서버가 구매를 이 계정에 묶는다.
 export type PaymentOptions = { endpoint?: string; fetchImpl?: typeof fetch; now?: Date; authToken?: () => Promise<string | null> };
@@ -106,6 +107,7 @@ export function problemText(problem: PaymentProblem | 'save'): { title: string; 
     case 'server-missing': return { title: '구매 확인을 아직 할 수 없어요', next: '결제가 됐다면 확인되지 않은 결제는 스토어가 3일 안에 자동으로 환불해요. 앱을 업데이트한 뒤 구매 복원을 눌러 주세요.' };
     case 'store-account': return { title: 'Play 스토어 계정이 필요해요', next: '기기의 Play 스토어에 로그인한 뒤 다시 시도해 주세요. 무료 기능은 그대로 쓸 수 있어요.' };
     case 'server-unreachable': return { title: '결제 확인을 마치지 못했어요', next: '인터넷 연결을 확인하고 구매 복원을 눌러 주세요. 확인되기 전에는 결제가 확정되지 않아요.', action: 'restore' };
+    case 'signed-out': return { title: '로그인한 뒤 확인할 수 있어요', next: '구매는 로그인한 emoti 계정에 연결돼요. 로그인한 뒤 구매 복원을 눌러 주세요. 다시 결제되지 않아요.', action: 'restore' };
     case 'refused': return { title: '이 구매를 확인하지 못했어요', next: 'Play 스토어의 구매 내역을 확인해 주세요. 결제가 됐는데 계속 안 되면 문의해 주세요.' };
     case 'save': return { title: '구매는 확인했지만 저장하지 못했어요', next: '구매 복원을 누르면 다시 켜져요. 추가 결제는 없어요.', action: 'restore' };
     default: return { title: '결제를 마치지 못했어요', next: '잠시 뒤 다시 시도해 주세요. 결제가 됐다면 구매 복원으로 켤 수 있어요.', action: 'restore' };
@@ -116,6 +118,9 @@ export function problemText(problem: PaymentProblem | 'save'): { title: string; 
 // 확인해 준 것만 `verified` 를 받고, 그다음에야 구매를 확정(acknowledge)한다.
 async function confirm(productId: string, token: string, purchase: StorePurchase, options: PaymentOptions): Promise<PurchaseOutcome> {
   const authToken = options.authToken ? await options.authToken().catch(() => null) : null;
+  // 2026-10-15: 로그인 증명이 아직 없으면(앱을 막 열어 로그인을 되살리는 중 등) 서버에 묻지 않는다.
+  // 물었다면 서버는 '로그인한 뒤'라며 거절하고, 앱을 열 때 다시 확인하는 흐름이 그 거절을 '구매 없음'으로 읽어 PRO 를 꺼 버렸다.
+  if (options.authToken && !authToken) return { state: 'failed', problem: 'signed-out' };
   const verdict = await verifyReceipt(
     { platform: Platform.OS === 'ios' ? 'ios' : 'android', productId, purchaseToken: token },
     { endpoint: options.endpoint ?? RECEIPT_ENDPOINT, fetchImpl: options.fetchImpl, now: options.now, authToken },
@@ -123,7 +128,7 @@ async function confirm(productId: string, token: string, purchase: StorePurchase
   if (verdict.state === 'verified') { await finishPurchase(purchase); return { state: 'purchased', entitlement: verdict.entitlement }; }
   if (verdict.state === 'not-configured') return { state: 'failed', problem: 'server-missing' };
   if (verdict.state === 'unreachable') return { state: 'failed', problem: 'server-unreachable' };
-  return { state: 'failed', problem: 'refused' };
+  return { state: 'failed', problem: 'refused', reason: verdict.reason };
 }
 export async function purchase(options: PaymentOptions = {}): Promise<PurchaseOutcome> {
   if (purchasesClosed()) return { state: 'failed', problem: 'purchases-closed' };

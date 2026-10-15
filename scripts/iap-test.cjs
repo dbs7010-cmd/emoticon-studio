@@ -132,7 +132,7 @@ function fakeServer(reply = body => body.productId === 'pro_lifetime'
   const serverCase = async (srvOpts, expected) => {
     st = fakeStore(); adapter.useStoreModuleForTests(st.module);
     const result = await pro.purchase(srvOpts);
-    assert.deepEqual(result, { state: 'failed', problem: expected });
+    assert.deepEqual({ state: result.state, problem: result.problem }, { state: 'failed', problem: expected });
     assert.equal(st.finished.length, 0, expected + ': 확인 전에는 확정하지 않는다');
   };
   await serverCase({ fetchImpl: fakeServer().fetch }, 'server-missing');
@@ -181,9 +181,17 @@ function fakeServer(reply = body => body.productId === 'pro_lifetime'
   assert.deepEqual(await pro.refreshEntitlement(live, { fetchImpl: fakeServer().fetch }), { state: 'unchanged' }, '서버 주소가 없으면 유지');
   refreshed = await pro.refreshEntitlement(live, opts(fakeServer(() => ({ verified: false, plan: 'lifetime', reason: '환불됨' }))));
   assert.equal(pro.isPro(refreshed.entitlement), false, '서버가 거절하면 끝낸다');
+  // 2026-10-15: 로그인 증명이 아직 없으면 서버에 묻지 않는다 — 앱을 막 열어 로그인을 되살리는 동안 PRO 가 꺼지지 않는다.
+  st = fakeStore({ owned: [bought('pro_lifetime')] }); adapter.useStoreModuleForTests(st.module);
+  const noLogin = { ...opts(fakeServer(() => ({ verified: false, plan: 'lifetime', reason: '로그인한 뒤 구매 복원을 눌러 주세요.' }))), authToken: async () => null };
+  assert.deepEqual(await pro.refreshEntitlement(live, noLogin), { state: 'unchanged' }, '로그인 전이면 저장된 PRO 유지');
+  assert.deepEqual(await pro.restore(noLogin), { state: 'failed', problem: 'signed-out' }, '로그인 전 복원은 로그인 안내');
+  // 다른 emoti 계정에 묶인 구매: 서버가 준 이유를 그대로 돌려준다(화면이 보여 준다).
+  const taken = await pro.restore({ ...opts(fakeServer(() => ({ verified: false, plan: 'lifetime', reason: '이 구매는 다른 emoti 계정에 연결되어 있어요. 처음 산 계정으로 로그인해 주세요.' }))), authToken: async () => 'id' });
+  assert.equal(taken.problem, 'refused'); assert.ok(/다른 emoti 계정/.test(taken.reason || ''), '거절 이유가 화면까지 간다');
 
   // 사람에게 보이는 말: 모든 문제에 제목과 다음 행동, 오류 코드·모듈 이름 없음
-  for (const problem of ['store-missing', 'network', 'store-unavailable', 'not-found', 'already-owned', 'server-missing', 'server-unreachable', 'refused', 'store-account', 'unknown', 'save']) {
+  for (const problem of ['store-missing', 'network', 'store-unavailable', 'not-found', 'already-owned', 'server-missing', 'server-unreachable', 'refused', 'store-account', 'signed-out', 'unknown', 'save']) {
     const t = pro.problemText(problem);
     assert.ok(t.title && t.next, problem + ': 제목과 다음 행동');
     assert.ok(!/[a-z]+-[a-z]+|expo|iap|Expo Go|code/i.test(t.title + t.next), problem + ': 코드·모듈 이름 노출 없음');
