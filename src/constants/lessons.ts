@@ -26,7 +26,7 @@ export const LESSONS: Lesson[] = [
     id: 'first-set', group: 'app', title: '첫 세트 · 첫 칸 그리기', summary: '세트를 만들고 첫 칸을 완성해요', minutes: 2,
     cover: require('../../assets/lessons/first-set/cover.png'),
     steps: [
-      { title: '세트 만들기', video: require('../../assets/lessons/first-set/step1.mp4'), body: '홈의 노란 + 를 누르고 만들기를 누르면 세트가 생기고 01번 칸이 바로 열려요. 세트 하나가 카카오에 한 번 제안하는 묶음이에요.' },
+      { title: '세트 만들기', video: require('../../assets/lessons/first-set/step1.mp4'), body: '홈의 새 세트 만들기(또는 내 세트의 노란 +)를 누르고 만들기를 누르면 세트가 생기고 01번 칸이 바로 열려요. 세트 하나가 카카오에 한 번 제안하는 묶음이에요.' },
       { title: '그리기', video: require('../../assets/lessons/first-set/step2.mp4'), body: '위 굵기 막대로 선 굵기를 정하고 펜으로 그려요. 콘처럼 몸 → 새싹 잎 → 손 → 아래 잎 → 얼굴 순서로 큰 모양부터 그리면 쉬워요. 두 손가락으로 톡 치면 되돌리기예요.' },
       { title: '저장하고 보드로', video: require('../../assets/lessons/first-set/step3.mp4'), body: '노란 저장을 누르고 뒤로 가면 보드에 01번이 올라가 있어요. 보라 테두리 칸이 다음 차례예요.' },
       { title: '다음 칸은 이어서', video: require('../../assets/lessons/first-set/step4.mp4'), body: '02번을 누르면 「이전 칸 그림으로 시작」이 떠요. 누르면 같은 캐릭터에서 이어 그릴 수 있어요.' },
@@ -50,10 +50,10 @@ export const LESSONS: Lesson[] = [
     id: 'motion', group: 'app', title: '움직이기 · 손그림 떨림', summary: '효과를 고르면 바로 움직여요', minutes: 3,
     cover: require('../../assets/lessons/motion/cover.png'),
     steps: [
-      { title: '효과 고르기', video: require('../../assets/lessons/motion/step1.mp4'), body: '위의 움직이기를 누르고 효과(통통·둥실·까딱…)를 고르면 바로 움직여요. 묶음 칩으로 등장·동작·강조를 나눠 볼 수 있어요.' },
+      { title: '효과 고르기', video: require('../../assets/lessons/motion/step1.mp4'), body: '위의 움직이기를 누르고 효과(뿅·통통·둥실…)를 고르면 바로 움직여요. 묶음 칩으로 등장·동작·강조·조합을 나눠 볼 수 있어요.' },
       { title: '세기 · 속도', video: require('../../assets/lessons/motion/step2.mp4'), body: '캔버스 위 막대로 세기와 속도를 맞춰요. 점선 상자를 넘으면 칸 밖으로 잘린다는 뜻이에요.' },
-      { title: '손그림 떨림', video: require('../../assets/lessons/motion/step3.mp4'), body: '효과 아래 손그림 떨림을 켜면 선이 살아 있는 듯 떨려요. 효과와 함께 써도 되고, 떨림만 써도 돼요.' },
-      { title: '부분만 움직이기', video: require('../../assets/lessons/motion/step4.mp4'), body: '부분만 움직이기에서 레이어를 고르면 그 부분만 따로 흔들려요(PRO). 회전·이동·크기와 세기를 정해요.' },
+      { title: '손그림 떨림', video: require('../../assets/lessons/motion/step3.mp4'), body: '아래로 내려 손그림 떨림을 약하게·보통·강하게 중에서 골라요. 선이 살아 있는 듯 떨려요. 효과와 함께 써도 되고, 떨림만 써도 돼요.' },
+      { title: '부분만 움직이기', video: require('../../assets/lessons/motion/step4.mp4'), body: '위의 부분 칩을 누르고 하트를 그린 레이어 2를 고르면 그 부분만 따로 움직여요(PRO). 손 흔들기·통통 튀기 같은 바로 쓰기로 시작하고, 회전·이동·크기와 세기를 고쳐요.' },
     ],
     points: ['효과는 고르는 즉시 칸에 들어가요', '점선 밖은 잘려요 — 세기를 줄여요', '떨림은 무료, 어떤 효과와도 함께'],
     tryIt: { label: '이어서 그리기', action: 'continue' },
