@@ -2138,6 +2138,7 @@ function IntroChip({ icon, label, on, small }: { icon?: React.ComponentProps<typ
 const CORN_ART: Record<string, ImageSourcePropType> = {
   wave: require('./assets/mascot/corn-wave.png'), cheer: require('./assets/mascot/corn-cheer.png'), nod: require('./assets/mascot/corn-nod.png'),
   heart: require('./assets/mascot/corn-heart.png'), shy: require('./assets/mascot/corn-shy.png'),
+  goguma: require('./assets/mascot/goguma-wave.png'), kong: require('./assets/mascot/kong-cheer.png'),
 };
 function IntroCanvas({ id, size, lift }: { id: string; size: number; lift?: Animated.Value }) {
   const art = CORN_ART[id] ?? guideFigure(id);
@@ -2182,7 +2183,7 @@ function IntroArt({ step }: { step: number }) {
     </>}
     {step === 2 && <>
       <View style={{ width: canvas, flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-        {['wave', 'nod', 'heart', 'shy'].map(id => <IntroCanvas key={id} id={id} size={tile} />)}
+        {['wave', 'goguma', 'kong', 'heart'].map(id => <IntroCanvas key={id} id={id} size={tile} />)}
       </View>
       <View style={{ gap }}>
         <IntroChip small={compact} icon="check" label="자동 저장" />

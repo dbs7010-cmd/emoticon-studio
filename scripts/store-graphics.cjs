@@ -21,6 +21,8 @@ const FONT = `@font-face{font-family:Jua;src:url('${url(path.join(root, 'assets/
 body{margin:0;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:${INK}}`;
 
 // 캐릭터: 대표 캐릭터 콘(2026-10-16, assets/mascot · scripts/mascot-render.cjs)
+// 친구(고구마 · 완두콩)는 양옆 칸에.
+const friend = name => `<img src="${url(path.join(root, 'assets/mascot', name + '.png'))}" width="130" height="130">`;
 const face = (eyes = 'dot') => `<img src="${url(path.join(root, 'assets/mascot', eyes === 'dot' ? 'corn-base.png' : 'corn-cheer.png'))}" width="130" height="130">`;
 // 움직임 표시(정지 그림이라 움직임을 짧은 선으로만 보인다)
 const motionLines = `<svg width="60" height="40" viewBox="0 0 60 40" style="position:absolute;left:-30px;top:30px"><path d="M8 8h22M4 20h26M8 32h22" stroke="${INK}" stroke-width="4" stroke-linecap="round"/></svg>`;
@@ -39,7 +41,7 @@ const feature = `<!doctype html><meta charset="utf-8"><style>${FONT}
 <div class="t"><div class="brand"><b>emoti</b><span>이모티</span></div>
 <div class="msg">내 그림을<br>움직이는 이모티콘으로</div>
 <div class="chips"><span>그리기</span><span>움직이기</span><span>파일 묶음</span></div></div>
-<div class="cards"><div class="card" style="height:190px">${face()}</div><div class="card" style="height:230px">${motionLines}${face('smile')}</div><div class="card" style="height:190px">${face()}</div></div>
+<div class="cards"><div class="card" style="height:190px">${friend('goguma-wave')}</div><div class="card" style="height:230px">${motionLines}${face('smile')}</div><div class="card" style="height:190px">${friend('kong-cheer')}</div></div>
 </div>`;
 fs.writeFileSync(path.join(out, 'feature-graphic-1024x500.html'), feature);
 

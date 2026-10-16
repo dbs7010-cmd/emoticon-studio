@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
 const ROOT = path.join(__dirname, '..', '..');
-const corn = name => 'data:image/png;base64,' + fs.readFileSync(path.join(ROOT, 'assets', 'mascot', `corn-${name}.png`)).toString('base64');
+const corn = name => 'data:image/png;base64,' + fs.readFileSync(path.join(ROOT, 'assets', 'mascot', /^(goguma|kong)-/.test(name) ? `${name}.png` : `corn-${name}.png`)).toString('base64');
 const img = (name, size, extra = '') => `<img src="${corn(name)}" width="${size}" height="${size}" style="display:block${extra}">`;
 const tile = (name, size, mark = '') => `<div style="width:${size}px;height:${size}px;border-radius:${Math.round(size * .16)}px;background:#F7F8FA;display:flex;align-items:center;justify-content:center;${mark}">${img(name, Math.round(size * .86))}</div>`;
 
@@ -32,8 +32,8 @@ const ART = {
 };
 
 // 강좌 썸네일 16:9(960×540, 2026-10-16 유튜브식 목록). 콘 + 친구 둘이 번갈아 나온다 — 같은 캐릭터가 이어지지 않게.
-// 친구는 캔버스 K7 에서 고른 짝: FRIENDS=goguma,kong (A) 또는 gamja,tomato (B).
-const [F1, F2] = (process.env.FRIENDS || 'goguma,kong').split(',');
+// 친구: A 고구마 + 완두콩(캔버스 K7, 2026-10-16 확정).
+const [F1, F2] = ['goguma', 'kong'];   // 2026-10-16 A 확정
 const GROUP_BG = { app: '#FFE98A', draw: '#E4E1FF', artist: '#D8F0C8' };
 const THUMBS = [
   ['first-set', 'app', '첫 세트\n첫 칸 그리기', 'wave'],

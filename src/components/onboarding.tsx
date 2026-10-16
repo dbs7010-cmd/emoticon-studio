@@ -27,7 +27,7 @@ function Logo({ id }: { id: Provider }) {
   </Svg>;
 }
 
-// 움직이는 칸 셋 + 빈 칸 하나(2026-10-16: 대표 캐릭터 콘의 세 표정 — 손 흔들기 · 신나 · 하트). 각자 다른 움직임으로 '톡 누르면 움직인다'를 보여 준다.
+// 움직이는 칸 셋 + 빈 칸 하나(2026-10-16: 콘 · 친구 고구마 · 친구 완두콩 — 같은 캐릭터가 이어지지 않게). 각자 다른 움직임으로 '톡 누르면 움직인다'를 보여 준다.
 function useLoop(ms: number) {
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => { const a = Animated.loop(Animated.sequence([
@@ -35,7 +35,7 @@ function useLoop(ms: number) {
     Animated.timing(v, { toValue: 0, duration: ms / 2, useNativeDriver: true })])); a.start(); return () => a.stop(); }, [v, ms]);
   return v;
 }
-const CORN = { wave: require('../../assets/mascot/corn-wave.png'), cheer: require('../../assets/mascot/corn-cheer.png'), heart: require('../../assets/mascot/corn-heart.png') };
+const CORN = { wave: require('../../assets/mascot/corn-wave.png'), goguma: require('../../assets/mascot/goguma-cheer.png'), kong: require('../../assets/mascot/kong-wave.png') };
 const Corn = ({ s, pose }: { s: number; pose: keyof typeof CORN }) => <Image accessibilityIgnoresInvertColors source={CORN[pose]} style={{ width: s, height: s }} resizeMode="contain" />;
 function MovingSet({ size }: { size: number }) {
   const a = useLoop(900), b = useLoop(1300), c = useLoop(1800);
@@ -45,8 +45,8 @@ function MovingSet({ size }: { size: number }) {
   return <View accessible accessibilityLabel="움직이는 이모티콘 예시" style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#FFFBE0', padding: 28 }}>
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
       <View style={box}><Animated.View style={{ transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [0, -art * .14] }) }] }}><Corn s={art} pose="wave" /></Animated.View></View>
-      <View style={box}><Animated.View style={{ transform: [{ rotate: b.interpolate({ inputRange: [0, 1], outputRange: ['-8deg', '8deg'] }) }] }}><Corn s={art} pose="cheer" /></Animated.View></View>
-      <View style={box}><Animated.View style={{ transform: [{ translateY: c.interpolate({ inputRange: [0, 1], outputRange: [-art * .05, art * .05] }) }] }}><Corn s={art} pose="heart" /></Animated.View></View>
+      <View style={box}><Animated.View style={{ transform: [{ rotate: b.interpolate({ inputRange: [0, 1], outputRange: ['-8deg', '8deg'] }) }] }}><Corn s={art} pose="goguma" /></Animated.View></View>
+      <View style={box}><Animated.View style={{ transform: [{ translateY: c.interpolate({ inputRange: [0, 1], outputRange: [-art * .05, art * .05] }) }] }}><Corn s={art} pose="kong" /></Animated.View></View>
       <View style={{ ...box, backgroundColor: 'transparent', borderWidth: 2, borderStyle: 'dashed', borderColor: C.lineStrong }}><ImtiIcon name="plus" size={IconSize.tool} color={C.faint} /></View>
     </View>
     <View style={{ position: 'absolute', right: -6, top: -10, height: 32, paddingHorizontal: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 6, ...Clay.small, justifyContent: 'center' }}>

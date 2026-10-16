@@ -50,7 +50,8 @@ const POSES = {
   'wave-body': svg(sprout + armL + body + faces.happy + blush + skirt),
   'wave-arm': svg(armWave),
 };
-// 콘의 친구 후보(2026-10-16, 캔버스 K7): 같은 선·눈·고양이 입·동그란 손, 색만 다르다. 몸이 콘보다 아래(y 58)에서 팔이 나온다.
+// 콘의 친구(2026-10-16, 캔버스 K7): **A 고구마 + 완두콩 확정**(앱에 씀 → assets/mascot/<이름>-<동작>.png).
+// B 감자 + 토마토는 쓰지 않지만 저장만 해 둔다(→ docs/design/mascot-b/, 앱 묶음에 들어가지 않음).: 같은 선·눈·고양이 입·동그란 손, 색만 다르다. 몸이 콘보다 아래(y 58)에서 팔이 나온다.
 const fface = { smile: `<ellipse cx="41" cy="50" rx="3.4" ry="4.4" fill="${INK}"/><circle cx="42.4" cy="48" r="1.4" fill="#fff"/><ellipse cx="55" cy="50" rx="3.4" ry="4.4" fill="${INK}"/><circle cx="56.4" cy="48" r="1.4" fill="#fff"/><path d="M43 58 q2.5 3 5 0 q2.5 3 5 0" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`,
   happy: `<path d="M37 50 q4-5 8 0 M51 50 q4-5 8 0" fill="none" ${sw} stroke-linecap="round"/><path d="M44 56 q4 6 8 0 Z" fill="${MOUTH}" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>` };
 const fblush = `<ellipse cx="34" cy="57" rx="3.8" ry="2.3" fill="${BLUSH}"/><ellipse cx="62" cy="57" rx="3.8" ry="2.3" fill="${BLUSH}"/>`;
@@ -78,15 +79,18 @@ if (require.main === module) (async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
   try {
     const page = await browser.newPage();
+    const saved = path.join(__dirname, '..', 'docs', 'design', 'mascot-b');
+    fs.mkdirSync(saved, { recursive: true });
     for (const [name, text] of Object.entries(POSES)) {
-      fs.writeFileSync(path.join(out, `corn-${name}.svg`), text);
+      const friend = /^(goguma|kong|gamja|tomato)-/.test(name), dir = /^(gamja|tomato)-/.test(name) ? saved : out, file = friend ? name : `corn-${name}`;
+      fs.writeFileSync(path.join(dir, `${file}.svg`), text);
       const png = await page.evaluate(async src => {
         const i = new Image(); i.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src); await i.decode();
         const c = document.createElement('canvas'); c.width = c.height = 512; c.getContext('2d').drawImage(i, 0, 0, 512, 512);
         return c.toDataURL('image/png');
       }, text);
       const bytes = Buffer.from(png.split(',')[1], 'base64');
-      fs.writeFileSync(path.join(out, `corn-${name}.png`), bytes);
+      fs.writeFileSync(path.join(dir, `${file}.png`), bytes);
       console.log(name, (bytes.length / 1024).toFixed(0) + 'KB');
     }
   } finally { await browser.close(); }
