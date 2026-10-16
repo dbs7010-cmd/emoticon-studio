@@ -2,6 +2,8 @@
 // 강좌 한 편 = 단계 여러 개. 단계 = 짧은 모션 영상(소리 없음 · 반복) 또는 사진 + 제목 + 설명 2~3줄.
 // 끝에 '핵심 정리' 세 줄과 '바로 해 보기' 하나. 작가 강좌도 같은 틀로 올린다(⑩ 강좌 만드는 법).
 // 영상·사진은 앱 안에 들어 있다(인터넷 없이 본다). 유튜브 전체 영상(배경음악·자막)은 youtube 에 링크만 둔다.
+// 2026-10-16: 예시 캐릭터는 대표 캐릭터 콘(옥수수). 영상은 에뮬레이터에서 콘을 실제로 그리고 움직여 찍었다(scripts/lessons/corn-strokes.cjs).
+// 콘에 없는 부위(귀·꼬리·엄지)는 억지로 바꾸지 않고, 콘의 새싹 잎·손·따로 그린 소품(하트)으로 같은 기능을 보인다.
 // 규격·수치는 kakao-spec.ts 에서 가져온다 — 여기서 새로 지어내지 않는다. '승인 팁'은 emoti 가 권하는 습관이지 카카오 심사 기준이 아니다.
 import { KAKAO_ANIMATED_SPEC, STAGES } from './kakao-spec';
 
@@ -25,7 +27,7 @@ export const LESSONS: Lesson[] = [
     cover: require('../../assets/lessons/first-set/cover.png'),
     steps: [
       { title: '세트 만들기', video: require('../../assets/lessons/first-set/step1.mp4'), body: '홈의 노란 + 를 누르고 만들기를 누르면 세트가 생기고 01번 칸이 바로 열려요. 세트 하나가 카카오에 한 번 제안하는 묶음이에요.' },
-      { title: '그리기', video: require('../../assets/lessons/first-set/step2.mp4'), body: '위 굵기 막대로 선 굵기를 정하고 펜으로 그려요. 두 손가락으로 톡 치면 되돌리기, 세 손가락이면 다시 실행이에요.' },
+      { title: '그리기', video: require('../../assets/lessons/first-set/step2.mp4'), body: '위 굵기 막대로 선 굵기를 정하고 펜으로 그려요. 콘처럼 몸 → 새싹 잎 → 손 → 아래 잎 → 얼굴 순서로 큰 모양부터 그리면 쉬워요. 두 손가락으로 톡 치면 되돌리기예요.' },
       { title: '저장하고 보드로', video: require('../../assets/lessons/first-set/step3.mp4'), body: '노란 저장을 누르고 뒤로 가면 보드에 01번이 올라가 있어요. 보라 테두리 칸이 다음 차례예요.' },
       { title: '다음 칸은 이어서', video: require('../../assets/lessons/first-set/step4.mp4'), body: '02번을 누르면 「이전 칸 그림으로 시작」이 떠요. 누르면 같은 캐릭터에서 이어 그릴 수 있어요.' },
     ],
@@ -36,10 +38,10 @@ export const LESSONS: Lesson[] = [
     id: 'brush-layer', group: 'app', title: '브러시 · 레이어 · 색', summary: '선 고르기와 레이어로 나눠 그리기', minutes: 3,
     cover: require('../../assets/lessons/brush-layer/cover.png'),
     steps: [
-      { title: '선 종류', video: require('../../assets/lessons/brush-layer/step1.mp4'), body: '아래 줄에서 기본 펜·연필·마커를 골라요. 연필은 거칠게, 마커는 넓고 옅게 칠해져요. 같은 칸을 한 번 더 누르면 세부 설정이 열려요.' },
-      { title: '색 고르기', video: require('../../assets/lessons/brush-layer/step2.mp4'), body: '오른쪽 아래 동그라미를 누르면 색 판이 열려요. 쓴 색은 옆 견본에 남아서 다음에 바로 고를 수 있어요.' },
-      { title: '레이어 나누기', video: require('../../assets/lessons/brush-layer/step3.mp4'), body: '위의 레이어에서 + 로 장을 더하고 그 장에 그려요. 팔·소품을 따로 그려 두면 나중에 그 부분만 움직일 수 있어요.' },
-      { title: '선택해서 옮기기', image: require('../../assets/lessons/brush-layer/step4.png'), body: '선택으로 감싸면 크게·작게·회전·반전을 고를 수 있어요. 적용을 눌러야 그림에 남아요.' },
+      { title: '선 종류', video: require('../../assets/lessons/brush-layer/step1.mp4'), body: '아래 줄에서 기본 펜·연필·마커를 골라요. 연필로 옥수수 알갱이를, 마커로 볼터치를 그렸어요. 같은 칸을 한 번 더 누르면 진하기·선 보정 같은 세부 설정이 열려요.' },
+      { title: '색 고르기', video: require('../../assets/lessons/brush-layer/step2.mp4'), body: '오른쪽 아래 동그라미를 누르면 색 판이 열려요. 색을 고르고 채우기로 선 안쪽을 누르면 한 번에 칠해져요(몸은 노랑, 잎은 초록). 쓴 색은 최근 색에 남아요.' },
+      { title: '레이어 나누기', video: require('../../assets/lessons/brush-layer/step3.mp4'), body: '위의 레이어에서 + 로 레이어를 더하고 그 레이어에 그려요. 하트 같은 소품이나 손을 따로 그려 두면 나중에 그 부분만 움직일 수 있어요.' },
+      { title: '선택해서 옮기기', image: require('../../assets/lessons/brush-layer/step4.png'), body: '선택으로 하트를 감싸면 크게·작게·회전·반전을 고를 수 있어요. 끌어서 옮기고, 적용을 눌러야 그림에 남아요.' },
     ],
     points: ['같은 도구를 한 번 더 누르면 설정', '레이어로 나누면 움직이기가 쉬워요', '선택은 적용해야 그림에 남아요'],
     tryIt: { label: '이어서 그리기', action: 'continue' },
@@ -61,8 +63,8 @@ export const LESSONS: Lesson[] = [
     cover: require('../../assets/lessons/animation/cover.png'),
     steps: [
       { title: '애니메이션 시작', video: require('../../assets/lessons/animation/step1.mp4'), body: '애니메이션 탭에서 시작을 누르면 지금 그림이 1장, 그 복사가 2장이 돼요.' },
-      { title: '바뀌는 곳만 고치기', video: require('../../assets/lessons/animation/step2.mp4'), body: '그리기로 가면 2장이 열려 있어요. 지우개로 바뀌는 곳을 지우고 다시 그려요. 앞 장이 옅은 보라로 비쳐서 따라 그리기 쉬워요.' },
-      { title: '장마다 시간', video: require('../../assets/lessons/animation/step3.mp4'), body: '애니메이션 탭에서 장을 고르고 보여 주는 시간을 정해요. 윙크처럼 순간인 장은 짧게(0.1~0.2초), 멈춘 장은 길게.' },
+      { title: '바뀌는 곳만 고치기', video: require('../../assets/lessons/animation/step2.mp4'), body: '그리기로 가면 2장이 열려 있어요. 콘의 한쪽 눈만 지우고 윙크(⌒)로 다시 그렸어요. 앞 장이 옅은 보라로 비쳐서 같은 자리에 그리기 쉬워요.' },
+      { title: '장마다 시간', video: require('../../assets/lessons/animation/step3.mp4'), body: '애니메이션 탭에서 장을 고르고 보여 주는 시간을 정해요. 윙크처럼 순간인 장은 짧게(0.1~0.2초), 눈 뜬 장은 길게(0.5~0.8초) 두면 깜빡이는 리듬이 생겨요.' },
       { title: '재생으로 확인', video: require('../../assets/lessons/animation/step4.mp4'), body: '▶ 로 미리 봐요. 움직이기 효과(통통 등)와 함께 돌아요. 장 추가는 지금 장을 복사해서 이어 붙여요. 무료 3장 · PRO 24장.' },
     ],
     points: ['복사한 뒤 바뀌는 곳만 고쳐요', '짧은 장이 움직임의 리듬을 만들어요', `카카오는 한 칸 ${KAKAO_ANIMATED_SPEC.maxFrames}장까지`],
@@ -93,8 +95,8 @@ export const LESSONS: Lesson[] = [
     id: 'character', group: 'draw', title: '캐릭터 정하기', summary: '24칸 내내 같은 캐릭터로', minutes: 3,
     cover: require('../../assets/lessons/character/step1.png'),
     steps: [
-      { title: '한 장으로 정리', image: require('../../assets/lessons/character/step1.png'), body: '정면 · 웃는 얼굴 · 전신이 보이는 한 장을 먼저 그려요. 이 그림이 세트 전체의 기준이에요.' },
-      { title: '바꾸지 않을 것', image: require('../../assets/lessons/character/step2.png'), body: '얼굴 비율·눈 모양·몸 길이처럼 끝까지 지킬 특징을 정해요. 표정과 자세가 바뀌어도 같은 캐릭터로 보여요.' },
+      { title: '한 장으로 정리', image: require('../../assets/lessons/character/step1.png'), body: '정면 · 웃는 얼굴 · 전신이 보이는 한 장을 먼저 그려요. emoti 의 콘도 이 한 장에서 시작했어요. 이 그림이 세트 전체의 기준이에요.' },
+      { title: '바꾸지 않을 것', image: require('../../assets/lessons/character/step2.png'), body: '몸 길이·새싹 잎·눈 모양·손 크기처럼 끝까지 지킬 특징을 정해요. 콘은 표정과 손 위치만 바뀌고 나머지는 그대로라 같은 캐릭터로 보여요.' },
       { title: '작게 봐도 알아보게', image: require('../../assets/lessons/character/step3.png'), body: '이모티콘은 채팅에서 작게 보여요. 아이콘 크기(78)로 줄여도 알아볼 만큼 선은 굵고 단순하게 그려요.' },
     ],
     points: ['기준 그림 한 장부터', '지킬 특징을 적어 두기', '작게 봐도 알아보게 단순하게'],
@@ -106,7 +108,7 @@ export const LESSONS: Lesson[] = [
     steps: [
       { title: '자주 쓰는 말부터', image: require('../../assets/lessons/expressions/step1.png'), body: '안녕 · 고마워 · 미안 · 좋아 · 응 · 아니 · 화남 · 슬픔처럼 대화에서 자주 쓰는 마음을 먼저 채워요.' },
       { title: '표현 가이드 쓰기', body: '홈 위의 책 아이콘(표현 가이드)에서 마음을 고르면 표정·자세 예시를 밑그림으로 깔 수 있어요.' },
-      { title: '같은 말, 다른 몸짓', image: require('../../assets/lessons/expressions/step3.png'), body: '같은 고마워도 엄지척·큰절·꾸벅·수줍게처럼 몸짓을 바꾸면 칸마다 다르게 읽혀요.' },
+      { title: '같은 말, 다른 몸짓', image: require('../../assets/lessons/expressions/step3.png'), body: '같은 고마워도 꾸벅·하트·수줍게·두 손 번쩍처럼 몸짓과 소품을 바꾸면 칸마다 다르게 읽혀요.' },
     ],
     points: ['대화에서 자주 쓰는 마음 먼저', '표현 가이드를 밑그림으로', '얼굴 + 몸짓 + 소품'],
     tryIt: { label: '표현 가이드 열기', action: 'guide' },
@@ -114,7 +116,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'set-plan', group: 'draw', title: '승인에 가까운 세트 구성', summary: 'emoti 가 권하는 제작 습관', minutes: 3,
     steps: [
-      { title: '겹치지 않게', image: require('../../assets/lessons/set-plan/step1.png'), body: '같은 표정·같은 말이 두 칸에 있지 않은지 보드에서 한눈에 확인해요.' },
+      { title: '겹치지 않게', image: require('../../assets/lessons/set-plan/step1.png'), body: '같은 표정·같은 말이 두 칸에 있지 않은지 보드에서 한눈에 확인해요(그림의 빨간 점선 두 칸처럼).' },
       { title: '움직임은 의미 있게', body: '움직임은 마음을 더 크게 보이게 할 때 써요. 모든 칸을 같은 효과로 채우지 않아요.' },
       { title: '마지막 장이 대표', body: '움직이는 칸은 마지막 장이 미리보기로 쓰여요. 가장 대표하는 모습이 마지막에 오게 해요.' },
     ],

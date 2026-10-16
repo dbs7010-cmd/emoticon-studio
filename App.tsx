@@ -1819,7 +1819,8 @@ function Studio() {
     </Dialog>}
     {managed && !pendingDelete && <Dialog title="세트 관리" onClose={() => setManageId(null)}>
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{managed.projectName}</Text>
-      <Text style={styles.muted}>{doneCount(managed)} / {managed.slots.length} 완성</Text>
+      {/* 2026-10-16: 홈·세트 화면과 같은 기준(멈춤 32 · 움직임 24) */}
+      <Text style={styles.muted}>{Math.min(doneCount(managed), (setIsAnimated(managed) ? STAGES.animated : STAGES.still).proposal.emoticons)} / {(setIsAnimated(managed) ? STAGES.animated : STAGES.still).proposal.emoticons}칸 완성</Text>
       <Field label="세트 이름" value={managedName} onChangeText={setManagedName} multiline={false} />
       <Action primary title="이름 바꾸기" disabled={!managedName.trim() || managedName.trim() === managed.projectName} onPress={() => renameProject(managed.id, managedName)} />
       <Action icon="content-copy" title="세트 복제" onPress={() => duplicateProject(managed.id)} />
@@ -2135,8 +2136,13 @@ function IntroChip({ icon, label, on, small }: { icon?: React.ComponentProps<typ
     <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: C.ink }}>{label}</Text>
   </View>;
 }
+// 2026-10-16: 사용 안내 그림은 대표 캐릭터 콘(assets/mascot). 표현 가이드 그림(다른 캐릭터들)은 안내에 쓰지 않는다.
+const CORN_ART: Record<string, ImageSourcePropType> = {
+  wave: require('./assets/mascot/corn-wave.png'), cheer: require('./assets/mascot/corn-cheer.png'), nod: require('./assets/mascot/corn-nod.png'),
+  heart: require('./assets/mascot/corn-heart.png'), shy: require('./assets/mascot/corn-shy.png'),
+};
 function IntroCanvas({ id, size, lift }: { id: string; size: number; lift?: Animated.Value }) {
-  const art = guideFigure(id);
+  const art = CORN_ART[id] ?? guideFigure(id);
   return <View style={{ width: size, height: size, borderRadius: 10, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
     {!!art && <Animated.Image accessibilityIgnoresInvertColors source={art} resizeMode="contain" style={{ width: size * .8, height: size * .8, transform: lift ? [{ translateY: lift }] : [] }} />}
   </View>;
@@ -2163,7 +2169,7 @@ function IntroArt({ step }: { step: number }) {
   return <View testID="사용 안내 그림" accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
     style={{ height: compact ? 84 : 136, borderRadius: 16, backgroundColor: C.surface2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 12 }}>
     {step === 0 && <>
-      <IntroCanvas id="greeting-hello-wave" size={canvas} />
+      <IntroCanvas id="wave" size={canvas} />
       <View style={{ gap }}>
         <IntroChip small={compact} icon="pencil-outline" label="펜" on />
         <IntroChip small={compact} icon="eraser" label="지우개" />
@@ -2171,14 +2177,14 @@ function IntroArt({ step }: { step: number }) {
       </View>
     </>}
     {step === 1 && <>
-      <IntroCanvas id="greeting-excited-cheer" size={canvas} lift={lift} />
+      <IntroCanvas id="cheer" size={canvas} lift={lift} />
       <View style={{ gap }}>
         {shown.map((p, i) => <IntroChip small={compact} key={p.id} label={p.label} on={i === 0} />)}
       </View>
     </>}
     {step === 2 && <>
       <View style={{ width: canvas, flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-        {['greeting-hello-wave', 'greeting-like-thumb', 'greeting-excited-jump', 'greeting-like-content'].map(id => <IntroCanvas key={id} id={id} size={tile} />)}
+        {['wave', 'nod', 'heart', 'shy'].map(id => <IntroCanvas key={id} id={id} size={tile} />)}
       </View>
       <View style={{ gap }}>
         <IntroChip small={compact} icon="check" label="자동 저장" />

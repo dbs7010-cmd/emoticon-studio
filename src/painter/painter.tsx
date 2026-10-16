@@ -1317,6 +1317,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const hasDrawing = !!slot.finalImage || !!slot.work || scene.dirty || scene.undo;
   const sample = !hasDrawing ? undefined
     : !scene.dirty && slot.finalImage ? imageUri(slot.finalImage.path)
+    // 레이어가 여럿이면 지금 레이어 하나(예: 하트 소품)만 견본에 뜨므로, 저장된 전체 그림을 먼저 쓴다(2026-10-16 강좌 녹화에서 발견).
+    : scene.layers.length > 1 && slot.finalImage ? imageUri(slot.finalImage.path)
     : thumbs[scene.activeLayerId] ?? (slot.finalImage ? imageUri(slot.finalImage.path) : undefined);
   type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
   const brushIcon: IconName = effectiveBrush.preset ? 'brush-variant' : brush === 'pen' ? 'fountain-pen-tip' : brush === 'brush' ? 'brush' : 'pencil';

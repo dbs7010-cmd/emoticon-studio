@@ -20,8 +20,8 @@ const LEMON = '#F5E642', LEMON_SOFT = '#FAF2A0', INK = '#2A2320';
 const FONT = `@font-face{font-family:Jua;src:url('${url(path.join(root, 'assets/fonts/Jua-Regular.ttf'))}')}
 body{margin:0;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:${INK}}`;
 
-// 캐릭터(디자인 캔버스 후보의 흰 캐릭터 — 앱 안 기본 캐릭터와 같은 모양)
-const face = (eyes = 'dot') => `<svg width="120" height="120" viewBox="0 0 100 100"><path d="M28 98c-1-20 4-34 22-34s23 14 22 34z" fill="#fff" stroke="${INK}" stroke-width="4.5" stroke-linejoin="round"/><circle cx="50" cy="42" r="30" fill="#fff" stroke="${INK}" stroke-width="4.5"/>${eyes === 'dot' ? `<circle cx="39" cy="40" r="3.6" fill="${INK}"/><circle cx="61" cy="40" r="3.6" fill="${INK}"/><path d="M40 52q10 9 20 0" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>` : `<path d="M34 41q5-5 10 0M56 41q5-5 10 0" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"/><path d="M41 53q9 7 18 0" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>`}<ellipse cx="31" cy="50" rx="5" ry="3" fill="#FFB4A2"/><ellipse cx="69" cy="50" rx="5" ry="3" fill="#FFB4A2"/></svg>`;
+// 캐릭터: 대표 캐릭터 콘(2026-10-16, assets/mascot · scripts/mascot-render.cjs)
+const face = (eyes = 'dot') => `<img src="${url(path.join(root, 'assets/mascot', eyes === 'dot' ? 'corn-base.png' : 'corn-cheer.png'))}" width="130" height="130">`;
 // 움직임 표시(정지 그림이라 움직임을 짧은 선으로만 보인다)
 const motionLines = `<svg width="60" height="40" viewBox="0 0 60 40" style="position:absolute;left:-30px;top:30px"><path d="M8 8h22M4 20h26M8 32h22" stroke="${INK}" stroke-width="4" stroke-linecap="round"/></svg>`;
 

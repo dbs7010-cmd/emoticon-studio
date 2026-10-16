@@ -18,6 +18,11 @@ const faces = {
   happy: `<path d="M37 45 q4-5 8 0 M51 45 q4-5 8 0" fill="none" ${sw} stroke-linecap="round"/><path d="M44 51 q4 6 8 0 Z" fill="${MOUTH}" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>`,
   calm: `<path d="M37 45 q4 4 8 0 M51 45 q4 4 8 0" fill="none" ${sw} stroke-linecap="round"/><path d="M45 52 q3 3 6 0" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/>`,
   cheer: `<path d="M37 45 q4-5 8 0 M51 45 q4-5 8 0" fill="none" ${sw} stroke-linecap="round"/><path d="M42 51 q6 8 12 0 Z" fill="${MOUTH}" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>`,
+  // 강좌용 표정(2026-10-16): 슬픔 · 화남 · 수줍음 · 아니
+  sad: `<path d="M37 43 q4 4 8 1 M51 44 q4 3 8-1" fill="none" ${sw} stroke-linecap="round"/><path d="M44 55 q4-4 8 0" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/><path d="M38 49 q-2 4 0 6 q2-2 0-6 Z" fill="#A9D2FF" stroke="${INK}" stroke-width="1.6"/>`,
+  angry: `<path d="M36 39 l9 4 M60 39 l-9 4" fill="none" ${sw} stroke-linecap="round"/><circle cx="41" cy="46" r="2.6" fill="${INK}"/><circle cx="55" cy="46" r="2.6" fill="${INK}"/><path d="M43 55 l2.5-2 2.5 2 2.5-2 2.5 2" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  shy: `<path d="M37 45 q4-5 8 0 M51 45 q4-5 8 0" fill="none" ${sw} stroke-linecap="round"/><path d="M46 53 q2 2 4 0" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/>`,
+  flat: `<ellipse cx="41" cy="45" rx="3.2" ry="4" fill="${INK}"/><ellipse cx="55" cy="45" rx="3.2" ry="4" fill="${INK}"/><path d="M44 54 h8" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/>`,
 };
 const armL = line('M30 52 Q23 56 21 63') + hand(20, 66);
 const armR = line('M66 52 Q73 56 75 63') + hand(76, 66);
@@ -33,6 +38,14 @@ const POSES = {
   bow: svg(sprout + body + faces.calm + blush + line('M31 60 Q38 66 44 66 M65 60 Q58 66 52 66') + hand(45, 66) + hand(51, 66) + skirt),
   // 신나: 내보내기 완료 · PRO 시작
   cheer: svg(sprout + line('M31 48 Q23 42 20 32 M65 48 Q73 42 76 32') + hand(19, 28) + hand(77, 28) + body + faces.cheer + blush + skirt),
+  // 강좌용 동작(2026-10-16)
+  sad: svg(sprout + body + faces.sad + line('M30 54 Q25 62 25 70 M66 54 Q71 62 71 70') + hand(25, 72) + hand(71, 72) + skirt),
+  angry: svg(sprout + armL + armR + body + faces.angry + `<path d="M74 14 l4 -4 M78 20 l6 -2 M70 10 l0 -6" fill="none" stroke="#E5484D" stroke-width="2.6" stroke-linecap="round"/>` + skirt),
+  shy: svg(sprout + body + faces.shy + `<ellipse cx="35" cy="52" rx="5" ry="3" fill="${BLUSH}"/><ellipse cx="61" cy="52" rx="5" ry="3" fill="${BLUSH}"/>` + line('M30 60 Q30 56 31 52 M66 60 Q66 56 65 52') + hand(32, 50) + hand(64, 50) + skirt),
+  no: svg(sprout + body + faces.flat + blush + line('M30 54 Q40 64 52 68 M66 54 Q56 64 44 68') + hand(52, 68) + hand(44, 68) + skirt),
+  nod: svg(`<g transform="rotate(-12 48 88)">` + sprout + armL + armR + body + faces.happy + blush + `</g>` + `<path d="M14 30 q-4 8 0 16 M8 26 q-6 12 0 24" fill="none" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>` + skirt),
+  heart: svg(`<path d="M48 -1 c-6-8-18-2-12 8 l12 10 12-10 c6-10-6-16-12-8 Z" fill="#FF8A9E" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>` + line('M31 46 Q24 30 34 14 M65 46 Q72 30 62 14') + hand(35, 12) + hand(61, 12) + body + faces.happy + blush + skirt),
+  sorry: svg(`<g transform="rotate(10 48 88)">` + sprout + body + faces.sad + blush + line('M31 60 Q38 66 44 66 M65 60 Q58 66 52 66') + hand(45, 66) + hand(51, 66) + `</g>` + skirt),
   // 손 흔들기를 레이어 둘로: 몸(+왼손) / 오른팔(어깨에서 손끝까지)
   'wave-body': svg(sprout + armL + body + faces.happy + blush + skirt),
   'wave-arm': svg(armWave),
