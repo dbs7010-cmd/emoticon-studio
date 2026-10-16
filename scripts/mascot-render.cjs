@@ -50,6 +50,25 @@ const POSES = {
   'wave-body': svg(sprout + armL + body + faces.happy + blush + skirt),
   'wave-arm': svg(armWave),
 };
+// 콘의 친구 후보(2026-10-16, 캔버스 K7): 같은 선·눈·고양이 입·동그란 손, 색만 다르다. 몸이 콘보다 아래(y 58)에서 팔이 나온다.
+const fface = { smile: `<ellipse cx="41" cy="50" rx="3.4" ry="4.4" fill="${INK}"/><circle cx="42.4" cy="48" r="1.4" fill="#fff"/><ellipse cx="55" cy="50" rx="3.4" ry="4.4" fill="${INK}"/><circle cx="56.4" cy="48" r="1.4" fill="#fff"/><path d="M43 58 q2.5 3 5 0 q2.5 3 5 0" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  happy: `<path d="M37 50 q4-5 8 0 M51 50 q4-5 8 0" fill="none" ${sw} stroke-linecap="round"/><path d="M44 56 q4 6 8 0 Z" fill="${MOUTH}" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>` };
+const fblush = `<ellipse cx="34" cy="57" rx="3.8" ry="2.3" fill="${BLUSH}"/><ellipse cx="62" cy="57" rx="3.8" ry="2.3" fill="${BLUSH}"/>`;
+const farms = (c, pose) => pose === 'cheer' ? line('M27 54 Q20 46 18 38 M69 54 Q76 46 78 38') + `<circle cx="17" cy="34" r="4.4" fill="${c}" ${sw}/><circle cx="79" cy="34" r="4.4" fill="${c}" ${sw}/>`
+  : line('M27 58 Q20 62 18 69') + `<circle cx="17" cy="72" r="4.4" fill="${c}" ${sw}/>` + (pose === 'wave' ? line('M69 56 Q77 50 80 41') + `<circle cx="81" cy="37" r="4.4" fill="${c}" ${sw}/>` : line('M69 58 Q76 62 78 69') + `<circle cx="79" cy="72" r="4.4" fill="${c}" ${sw}/>`);
+const ffeet = c => `<ellipse cx="40" cy="88" rx="6" ry="3.6" fill="${c}" ${sw}/><ellipse cx="56" cy="88" rx="6" ry="3.6" fill="${c}" ${sw}/>`;
+const FRIENDS = {
+  goguma: { color: '#B79BF0', back: `<path d="M48 18 Q42 6 34 8 Q37 16 48 19 Z M48 18 Q55 5 63 8 Q59 16 48 19 Z" fill="${LEAF}" ${sw} stroke-linejoin="round"/>`, feet: false,
+    body: `<path d="M48 17 C64 17 74 34 73 56 C72 76 60 86 48 86 C36 86 24 76 23 56 C22 34 32 17 48 17 Z" fill="#B79BF0" ${sw}/><path d="M33 34 q2 1 3 0 M60 30 q2 1 3 0 M64 70 q2 1 3 0 M30 72 q2 1 3 0" fill="none" stroke="#8462D8" stroke-width="2" stroke-linecap="round"/>`, front: `<path d="M48 86 q1 5 -3 8" fill="none" ${sw} stroke-linecap="round"/>` },
+  kong: { color: '#9BD86E', back: `<path d="M48 27 q-4-8 2-12 q5-3 6 2 q1 4-3 4" fill="none" ${sw} stroke-linecap="round"/><path d="M30 34 Q22 22 30 14 Q38 22 36 32 Z M66 34 Q74 22 66 14 Q58 22 60 32 Z" fill="${LEAF2}" ${sw} stroke-linejoin="round"/>`, feet: true,
+    body: `<circle cx="48" cy="56" r="30" fill="#9BD86E" ${sw}/><path d="M30 40 q4-6 10-8" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>`, front: '' },
+  gamja: { color: '#E7C48C', back: `<path d="M50 20 Q48 10 54 8 Q58 14 51 21 Z" fill="${LEAF}" ${sw} stroke-linejoin="round"/>`, feet: true,
+    body: `<path d="M48 20 C62 19 74 28 75 46 C77 62 72 80 52 84 C34 87 21 78 21 58 C20 38 30 21 48 20 Z" fill="#E7C48C" ${sw}/><g fill="#B98B4E"><circle cx="34" cy="38" r="1.6"/><circle cx="64" cy="36" r="1.6"/><circle cx="66" cy="70" r="1.6"/><circle cx="31" cy="70" r="1.6"/></g>`, front: '' },
+  tomato: { color: '#FF7A6B', back: '', feet: true,
+    body: `<path d="M48 24 C68 24 78 38 78 56 C78 74 64 86 48 86 C32 86 18 74 18 56 C18 38 28 24 48 24 Z" fill="#FF7A6B" ${sw}/><path d="M48 29 L36 22 L42 31 L30 34 L44 35 L48 40 L52 35 L66 34 L54 31 L60 22 Z" fill="${LEAF}" ${sw} stroke-linejoin="round"/><path d="M48 29 L48 18" fill="none" ${sw} stroke-linecap="round"/><path d="M30 44 q3-6 9-8" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>`, front: '' },
+};
+for (const [name, f] of Object.entries(FRIENDS)) for (const pose of ['base', 'wave', 'cheer'])
+  POSES[`${name}-${pose}`] = svg(f.back + farms(f.color, pose) + (f.feet ? ffeet(f.color) : '') + f.body + (pose === 'base' ? fface.smile : fface.happy) + fblush + f.front);
 module.exports = { POSES };
 
 if (require.main === module) (async () => {

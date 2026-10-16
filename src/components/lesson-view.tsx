@@ -1,59 +1,55 @@
-// 강좌 보기(2026-10-15). 단계를 한 장씩 넘겨 본다 — 영상은 한 번에 하나만 돈다(소리 없음 · 반복).
-// 마지막 장은 '핵심 정리' 세 줄 + '바로 해 보기' 하나(+ 유튜브 전체 영상 링크가 있으면 그 줄).
+// 강좌 보기(2026-10-15 · 2026-10-16 유튜브식으로 다시). 맨 위 영상(지금 단계) → 제목·한 줄 정보 → 지금 단계 설명 → 단계 목록(챕터).
+// 영상은 한 번에 하나만 돈다(소리 없음 · 반복). 단계 목록을 누르면 그 단계로 간다. 마지막 '정리'도 목록의 한 줄이다.
 import React, { useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Linking, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { T, Clay, Glyph } from './ui';
 import type { Lesson, LessonAction } from '../constants/lessons';
 
 const C = T;
-function StepVideo({ source, size }: { source: number; size: number }) {
+function StepVideo({ source, width, height }: { source: number; width: number; height: number }) {
   const player = useVideoPlayer(source, p => { p.loop = true; p.muted = true; p.play(); });
-  return <VideoView testID="강좌 영상" player={player} nativeControls={false} contentFit="contain" style={{ width: size, height: Math.round(size * 4 / 3), backgroundColor: C.surface2 }} />;
-}
-
-// 사진은 제 비율대로(세로로 긴 화면 캡처도 잘리지 않게). 너무 길면 화면 높이의 60% 에서 멈춘다.
-function StepImage({ source, size }: { source: number; size: number }) {
-  const { height } = useWindowDimensions();
-  const r = Image.resolveAssetSource?.(source);
-  const ratio = r && r.width ? r.height / r.width : 1;
-  return <Image source={source} style={{ width: size, height: Math.min(Math.round(size * ratio), Math.round(height * .6)) }} resizeMode="contain" />;
+  return <VideoView testID="강좌 영상" player={player} nativeControls={false} contentFit="contain" style={{ width, height, backgroundColor: C.surface2 }} />;
 }
 
 export function LessonView({ lesson, onBack, onAction }: { lesson: Lesson; onBack: () => void; onAction: (a: LessonAction) => void }) {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const [at, setAt] = useState(0);
-  const total = lesson.steps.length + 1;   // 마지막 장 = 정리
+  const total = lesson.steps.length + 1;   // 마지막 = 정리
   const step = lesson.steps[at];
-  // 강좌 영상은 3:4(가로 1080 · 세로 1440 을 줄인 것). 화면이 낮아도 다음 버튼이 보이게 폭을 줄인다.
-  const media = Math.min(width - 32, 360);
+  // 플레이어: 화면 폭 가득(좌우 여백 16 을 넘어 붙인다). 높이는 화면의 50% 까지 — 아래 설명과 단계 목록이 함께 보이게.
+  const playerW = width, playerH = Math.min(Math.round(width * 4 / 3), Math.round(height * .5));
+  const mediaW = Math.min(playerW, Math.round(playerH * 3 / 4));
+  const image = step?.image ?? (!step ? lesson.thumb : undefined);
   return <View testID="강좌 보기" style={{ gap: 14 }}>
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginLeft: -8 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, marginLeft: -8 }}>
       <Pressable accessibilityRole="button" accessibilityLabel="강좌 목록으로" onPress={onBack} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={24} color={C.ink} /></Pressable>
-      <View style={{ flex: 1 }}>
-        <Text numberOfLines={1} style={{ fontSize: 18, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{lesson.title}</Text>
-        <Text style={{ fontSize: 12, color: C.muted }}>{`${lesson.minutes}분 · ${lesson.steps.length}단계`}</Text>
-      </View>
+      <Text numberOfLines={1} style={{ flex: 1, fontSize: 15, fontWeight: '700', color: C.muted }}>강좌</Text>
     </View>
-    {/* 진행: 지금 단계는 길쭉한 보라 */}
-    <View accessible accessibilityLabel={`${total}장 중 ${at + 1}번째`} style={{ flexDirection: 'row', gap: 4 }}>
-      {Array.from({ length: total }, (_, i) => <View key={i} style={{ flex: i === at ? 3 : 1, height: 6, borderRadius: 3, backgroundColor: i <= at ? C.point : C.fillPressed }} />)}
+    {/* 플레이어 */}
+    <View testID="강좌 플레이어" style={{ marginHorizontal: -16, width: playerW, height: step?.video ? playerH : undefined, alignItems: 'center', justifyContent: 'center', backgroundColor: C.surface2 }}>
+      {step?.video ? <StepVideo key={lesson.id + at} source={step.video} width={mediaW} height={playerH} />
+        : image ? <Image accessibilityIgnoresInvertColors source={image} style={{ width: playerW, height: (() => { const r = Image.resolveAssetSource?.(image); return Math.min(r && r.width ? Math.round(playerW * r.height / r.width) : Math.round(playerW * 9 / 16), playerH); })() }} resizeMode="contain" />
+        : <View style={{ width: playerW, height: Math.round(playerW * 9 / 16), alignItems: 'center', justifyContent: 'center', backgroundColor: C.accentSoft }}>
+            <Text style={{ fontSize: 44, fontWeight: '800', color: C.yellowInk }}>{String(at + 1).padStart(2, '0')}</Text>
+          </View>}
     </View>
-    {step ? <View style={{ gap: 12 }}>
-      <View style={{ alignItems: 'center', borderRadius: 24, overflow: 'hidden', ...Clay.card }}>
-        {step.video ? <StepVideo key={lesson.id + at} source={step.video} size={media} />
-          : step.image ? <StepImage source={step.image} size={media} />
-          : <View style={{ width: media, height: media * .6, alignItems: 'center', justifyContent: 'center', backgroundColor: C.accentSoft }}>
-              <Text style={{ fontSize: 44, fontWeight: '800', color: C.yellowInk }}>{String(at + 1).padStart(2, '0')}</Text>
-            </View>}
-      </View>
-      <View style={{ gap: 4, paddingHorizontal: 2 }}>
-        <Text style={{ fontSize: 13, fontWeight: '800', color: C.pointInk }}>{`${at + 1}단계`}</Text>
-        <Text accessibilityRole="header" style={{ fontSize: 20, lineHeight: 27, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{step.title}</Text>
-        <Text style={{ fontSize: 15, lineHeight: 23, color: C.ink }}>{step.body}</Text>
-      </View>
+    {/* 제목 · 한 줄 정보 */}
+    <View style={{ gap: 4 }}>
+      <Text accessibilityRole="header" style={{ fontSize: 20, lineHeight: 27, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{lesson.title}</Text>
+      <Text style={{ fontSize: 13, color: C.muted }}>{`${lesson.minutes}분 · ${lesson.steps.length}단계 · ${lesson.summary}`}</Text>
+    </View>
+    {/* 지금 단계 설명 */}
+    {step ? <View style={{ gap: 6, padding: 16, borderRadius: 20, backgroundColor: C.surface2 }}>
+      <Text style={{ fontSize: 13, fontWeight: '800', color: C.pointInk }}>{`${at + 1}. ${step.title}`}</Text>
+      <Text style={{ fontSize: 15, lineHeight: 23, color: C.ink }}>{step.body}</Text>
+      {at < total - 1 && <Pressable accessibilityRole="button" accessibilityLabel="다음 단계" onPress={() => setAt(at + 1)}
+        style={{ alignSelf: 'flex-end', minHeight: 44, paddingHorizontal: 18, borderRadius: 22, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.pointSoft }}>
+        <Text style={{ fontSize: 14, fontWeight: '800', color: C.pointInk }}>{at === total - 2 ? '정리 보기' : '다음 단계'}</Text>
+        <Glyph name="chevron-right" size={18} color={C.pointInk} />
+      </Pressable>}
     </View> : <View testID="강좌 정리" style={{ gap: 12 }}>
-      <View style={{ borderRadius: 28, padding: 20, gap: 10, ...Clay.yellow }}>
+      <View style={{ borderRadius: 24, padding: 18, gap: 10, ...Clay.yellow }}>
         <Text style={{ fontSize: 13, fontWeight: '800', color: C.yellowInk }}>핵심 정리</Text>
         {lesson.points.map((p, i) => <View key={i} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
           <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.paper, alignItems: 'center', justifyContent: 'center', marginTop: 1 }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{i + 1}</Text></View>
@@ -69,15 +65,18 @@ export function LessonView({ lesson, onBack, onAction }: { lesson: Lesson; onBac
         <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>유튜브에서 전체 영상 보기</Text>
       </Pressable>}
     </View>}
-    <View style={{ flexDirection: 'row', gap: 8 }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="이전 단계" disabled={at === 0} onPress={() => setAt(at - 1)}
-        style={{ flex: 1, minHeight: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', backgroundColor: C.fill, opacity: at === 0 ? .4 : 1 }}>
-        <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>이전</Text>
-      </Pressable>
-      {at < total - 1 && <Pressable accessibilityRole="button" accessibilityLabel="다음 단계" onPress={() => setAt(at + 1)}
-        style={{ flex: 2, minHeight: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', backgroundColor: C.pointSoft }}>
-        <Text style={{ fontSize: 15, fontWeight: '800', color: C.pointInk }}>{at === total - 2 ? '정리 보기' : '다음 단계'}</Text>
-      </Pressable>}
+    {/* 단계 목록(챕터): 누르면 그 단계로 */}
+    <View testID="강좌 단계 목록" accessible={false} style={{ gap: 2 }}>
+      <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink, marginBottom: 4 }}>목차</Text>
+      {[...lesson.steps.map(s => s.title), '정리'].map((title, i) => { const on = i === at;
+        return <Pressable key={i} accessibilityRole="button" accessibilityLabel={`${i + 1}단계 ${title}`} accessibilityState={{ selected: on }} onPress={() => setAt(i)}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, paddingHorizontal: 12, borderRadius: 14, backgroundColor: on ? C.pointSoft : 'transparent' }}>
+          <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? C.point : i < at ? C.fillPressed : C.fill }}>
+            {i < at ? <Glyph name="check" size={16} color={C.ink} /> : <Text style={{ fontSize: 13, fontWeight: '800', color: on ? '#FFFFFF' : C.ink }}>{i + 1}</Text>}
+          </View>
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 15, fontWeight: on ? '800' : '500', color: on ? C.pointInk : C.ink }}>{title}</Text>
+          {i < lesson.steps.length && !!lesson.steps[i].video && <Glyph name="play-circle-outline" size={18} color={on ? C.pointInk : C.faint} />}
+        </Pressable>; })}
     </View>
   </View>;
 }

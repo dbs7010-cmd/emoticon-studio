@@ -11,12 +11,13 @@ export type LessonStep = { title: string; body: string; video?: number; image?: 
 export type LessonAction = 'newSet' | 'continue' | 'guide' | 'export' | 'contest' | 'book';
 export type Lesson = {
   id: string; group: 'app' | 'draw' | 'artist'; title: string; summary: string; minutes: number;
-  cover?: number; steps: LessonStep[]; points: [string, string, string]; tryIt?: { label: string; action: LessonAction }; youtube?: string;
+  // thumb: 목록의 16:9 썸네일(960×540, scripts/lessons/corn-art.cjs). cover 는 예전 4:3 표지(지금은 쓰지 않음).
+  thumb: number; cover?: number; steps: LessonStep[]; points: [string, string, string]; tryIt?: { label: string; action: LessonAction }; youtube?: string;
 };
-export const LESSON_GROUPS: { id: Lesson['group']; title: string }[] = [
-  { id: 'app', title: '무료 · 앱 사용법' },
-  { id: 'draw', title: '무료 · 이모티콘 그리기 기초' },
-  { id: 'artist', title: '작가용' },
+export const LESSON_GROUPS: { id: Lesson['group']; title: string; short: string; free: boolean }[] = [
+  { id: 'app', title: '무료 · 앱 사용법', short: '앱 사용법', free: true },
+  { id: 'draw', title: '무료 · 이모티콘 그리기 기초', short: '그리기 기초', free: true },
+  { id: 'artist', title: '작가용', short: '작가용', free: true },
 ];
 
 const cuts = STAGES.animated.proposal.emoticons;
@@ -24,6 +25,7 @@ const cuts = STAGES.animated.proposal.emoticons;
 export const LESSONS: Lesson[] = [
   {
     id: 'first-set', group: 'app', title: '첫 세트 · 첫 칸 그리기', summary: '세트를 만들고 첫 칸을 완성해요', minutes: 2,
+    thumb: require('../../assets/lessons/thumbs/first-set.png'),
     cover: require('../../assets/lessons/first-set/cover.png'),
     steps: [
       { title: '세트 만들기', video: require('../../assets/lessons/first-set/step1.mp4'), body: '홈의 새 세트 만들기(또는 내 세트의 노란 +)를 누르고 만들기를 누르면 세트가 생기고 01번 칸이 바로 열려요. 세트 하나가 카카오에 한 번 제안하는 묶음이에요.' },
@@ -36,6 +38,7 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: 'brush-layer', group: 'app', title: '브러시 · 레이어 · 색', summary: '선 고르기와 레이어로 나눠 그리기', minutes: 3,
+    thumb: require('../../assets/lessons/thumbs/brush-layer.png'),
     cover: require('../../assets/lessons/brush-layer/cover.png'),
     steps: [
       { title: '선 종류', video: require('../../assets/lessons/brush-layer/step1.mp4'), body: '아래 줄에서 기본 펜·연필·마커를 골라요. 연필로 옥수수 알갱이를, 마커로 볼터치를 그렸어요. 같은 칸을 한 번 더 누르면 진하기·선 보정 같은 세부 설정이 열려요.' },
@@ -48,6 +51,7 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: 'motion', group: 'app', title: '움직이기 · 손그림 떨림', summary: '효과를 고르면 바로 움직여요', minutes: 3,
+    thumb: require('../../assets/lessons/thumbs/motion.png'),
     cover: require('../../assets/lessons/motion/cover.png'),
     steps: [
       { title: '효과 고르기', video: require('../../assets/lessons/motion/step1.mp4'), body: '위의 움직이기를 누르고 효과(뿅·통통·둥실…)를 고르면 바로 움직여요. 묶음 칩으로 등장·동작·강조·조합을 나눠 볼 수 있어요.' },
@@ -60,6 +64,7 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: 'animation', group: 'app', title: '애니메이션 · 장마다 그리기', summary: '그림을 장마다 바꿔 진짜 움직임을', minutes: 4,
+    thumb: require('../../assets/lessons/thumbs/animation.png'),
     cover: require('../../assets/lessons/animation/cover.png'),
     steps: [
       { title: '애니메이션 시작', video: require('../../assets/lessons/animation/step1.mp4'), body: '애니메이션 탭에서 시작을 누르면 지금 그림이 1장, 그 복사가 2장이 돼요.' },
@@ -72,6 +77,7 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: 'export', group: 'app', title: '내보내기 · 카카오 제안 파일', summary: '손볼 곳을 고치고 파일 묶음 만들기', minutes: 3,
+    thumb: require('../../assets/lessons/thumbs/export.png'),
     steps: [
       { title: '내보내기 열기', video: require('../../assets/lessons/export/step1.mp4'), body: '보드 아래 내보내기를 누르면 칸 격자와 손볼 곳, 파일 묶음 만들기가 보여요. 빈 칸은 묶음에서 빠져요.' },
       { title: '제출 준비 보기', video: require('../../assets/lessons/export/step2.mp4'), body: '제출 준비를 펼치면 제안에 필요한 것(이모티콘 수·움직이는 WebP·아이콘)이 몇 개 더 필요한지 보여요.' },
@@ -83,6 +89,7 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: 'contest', group: 'app', title: '공모전 내기', summary: '세트 하나로 접수해요', minutes: 2,
+    thumb: require('../../assets/lessons/thumbs/contest.png'),
     steps: [
       { title: '공모전 보기', body: '아래 탭 공모전에서 열린 공모전의 마감·조건·발표 날을 봐요.' },
       { title: '세트 고르기', body: '조건을 채운 세트를 고르고, 참가 조건과 권리 안내를 읽은 뒤 동의해요.' },
@@ -93,6 +100,7 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: 'character', group: 'draw', title: '캐릭터 정하기', summary: '24칸 내내 같은 캐릭터로', minutes: 3,
+    thumb: require('../../assets/lessons/thumbs/character.png'),
     cover: require('../../assets/lessons/character/step1.png'),
     steps: [
       { title: '한 장으로 정리', image: require('../../assets/lessons/character/step1.png'), body: '정면 · 웃는 얼굴 · 전신이 보이는 한 장을 먼저 그려요. emoti 의 콘도 이 한 장에서 시작했어요. 이 그림이 세트 전체의 기준이에요.' },
@@ -104,6 +112,7 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: 'expressions', group: 'draw', title: '표정 24가지 만드는 법', summary: '자주 쓰는 마음부터 채우기', minutes: 4,
+    thumb: require('../../assets/lessons/thumbs/expressions.png'),
     cover: require('../../assets/lessons/expressions/step3.png'),
     steps: [
       { title: '자주 쓰는 말부터', image: require('../../assets/lessons/expressions/step1.png'), body: '안녕 · 고마워 · 미안 · 좋아 · 응 · 아니 · 화남 · 슬픔처럼 대화에서 자주 쓰는 마음을 먼저 채워요.' },
@@ -115,6 +124,7 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: 'set-plan', group: 'draw', title: '승인에 가까운 세트 구성', summary: 'emoti 가 권하는 제작 습관', minutes: 3,
+    thumb: require('../../assets/lessons/thumbs/set-plan.png'),
     steps: [
       { title: '겹치지 않게', image: require('../../assets/lessons/set-plan/step1.png'), body: '같은 표정·같은 말이 두 칸에 있지 않은지 보드에서 한눈에 확인해요(그림의 빨간 점선 두 칸처럼).' },
       { title: '움직임은 의미 있게', body: '움직임은 마음을 더 크게 보이게 할 때 써요. 모든 칸을 같은 효과로 채우지 않아요.' },
@@ -125,6 +135,7 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: 'make-lesson', group: 'artist', title: '강좌 만드는 법', summary: '작가 강좌를 올릴 때 이 틀 그대로', minutes: 3,
+    thumb: require('../../assets/lessons/thumbs/make-lesson.png'),
     steps: [
       { title: '한 편 = 한 가지', body: '강좌 한 편에는 배울 것 하나만 담아요. 단계는 3~5개, 단계마다 20~40초 영상 하나.' },
       { title: '단계 = 영상 + 두 줄', image: require('../../assets/lessons/make-lesson/step2.png'), body: '영상은 손이 하는 일을 보여 주고, 글 두 줄은 왜 그렇게 하는지 말해요. 같은 말을 반복하지 않아요.' },

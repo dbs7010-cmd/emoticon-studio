@@ -206,6 +206,7 @@ function Studio() {
   }
   // 홈 아래 두 화면(44차): 전체 작업(여러 세트 찾기·다시 열기)과 표현 가이드("무엇을 그릴까?"). 세트 안 칸 관리는 보드가 맡는다.
   const [homeView, setHomeView] = useState<'home' | 'all' | 'guide' | 'book' | 'lesson'>('home');
+  const [lessonGroup, setLessonGroup] = useState<string>('all');
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [bookOpen, setBookOpen] = useState<string | null>(null);
   // 채팅에서 써 보기(2026-10-13): 보드에서 연다. 세트별 — 이 세트에서 그린 칸만 이모티콘 판에 나온다.
@@ -1291,42 +1292,39 @@ function Studio() {
               <Text accessibilityRole="header" style={{ fontSize: 26, lineHeight: 34, fontWeight: '800', color: C.ink, letterSpacing: -.6 }}>강좌</Text>
               <Text style={{ fontSize: 14, color: C.muted }}>작가에게 배우는 이모티콘 만들기</Text>
             </Rise>
-            <Rise delay={80}>
-              <View testID="작가 강좌 준비 중" accessible accessibilityLabel="작가 강좌 준비 중. 공모전 선정 작가의 강좌가 곧 열려요"
-                style={{ borderRadius: 28, overflow: 'hidden', ...Clay.yellow }}>
-                <View style={{ height: 168, alignItems: 'center', justifyContent: 'center' }}>
-                  <HopStage size={92}><AssetSlot name="homeHeroArtwork" size={92} /></HopStage>
-                  <View style={{ position: 'absolute', left: 14, top: 14, height: 24, paddingHorizontal: 10, borderRadius: 12, backgroundColor: C.paper, justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>작가 강좌</Text>
-                  </View>
-                  <View style={{ position: 'absolute', right: 14, top: 14, height: 24, paddingHorizontal: 10, borderRadius: 12, backgroundColor: C.pointSoft, justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 11, fontWeight: '800', color: C.pointInk }}>준비 중</Text>
-                  </View>
-                </View>
-                <View style={{ paddingHorizontal: 18, paddingBottom: 18, gap: 2 }}>
-                  <Text style={{ fontSize: 17, lineHeight: 24, fontWeight: '800', color: C.ink, letterSpacing: -.3 }}>작가에게 배우는 강좌가 곧 열려요</Text>
-                  <Text style={{ fontSize: 13, lineHeight: 19, color: C.muted }}>공모전 선정 작가와 함께 준비하고 있어요</Text>
-                </View>
-              </View>
-            </Rise>
-            {LESSON_GROUPS.map((g, gi) => { const list = LESSONS.filter(l => l.group === g.id); if (!list.length) return null;
-              return <Rise key={g.id} delay={140 + gi * 50} style={{ gap: 10 }}>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink, paddingHorizontal: 4 }}>{g.title}</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, flexGrow: 0 }} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingBottom: 14 }}>
-                  {list.map((l, i) => <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={'강좌 ' + l.title} onPress={() => { setLessonId(l.id); setHomeView('lesson'); }}
-                    style={({ pressed }) => ({ width: 160, gap: 6, transform: pressed ? [{ scale: .97 }] : [] })}>
-                    <View style={{ height: 100, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', ...(l.cover ? Clay.card : i % 2 ? { ...Clay.card } : { ...Clay.yellow }) }}>
-                      {l.cover ? <Image source={l.cover} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                        : <Text style={{ fontSize: 30, fontWeight: '800', color: i % 2 ? C.point : C.yellowInk }}>{String(i + 1).padStart(2, '0')}</Text>}
-                      <View style={{ position: 'absolute', right: 8, bottom: 8, height: 20, paddingHorizontal: 6, borderRadius: 6, backgroundColor: 'rgba(25,31,40,0.72)', justifyContent: 'center' }}>
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#FFFFFF' }}>{`${l.minutes}분`}</Text>
-                      </View>
+            {/* 2026-10-16 사용자: 유튜브처럼 단순하게 — 위에 묶음 칩, 아래 한 줄에 하나씩 16:9 썸네일 + 제목 + 한 줄 정보. */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
+              {([['all', '전체'], ...LESSON_GROUPS.map(g => [g.id, g.short])] as [string, string][]).map(([id, label]) => { const on = lessonGroup === id;
+                return <Pressable key={id} accessibilityRole="button" accessibilityLabel={'강좌 묶음 ' + label} accessibilityState={{ selected: on }} onPress={() => setLessonGroup(id)}
+                  style={{ height: 36, paddingHorizontal: 14, borderRadius: 18, justifyContent: 'center', backgroundColor: on ? C.ink : C.fill }}>
+                  <Text style={{ fontSize: 14, fontWeight: on ? '800' : '600', color: on ? C.paper : C.ink }}>{label}</Text>
+                </Pressable>; })}
+            </ScrollView>
+            <View testID="강좌 목록" style={{ gap: 22 }}>
+              {LESSONS.filter(l => lessonGroup === 'all' || l.group === lessonGroup).map(l => { const g = LESSON_GROUPS.find(x => x.id === l.group)!;
+                return <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={'강좌 ' + l.title} onPress={() => { setLessonId(l.id); setHomeView('lesson'); }}
+                  style={({ pressed }) => ({ gap: 10, opacity: pressed ? .85 : 1 })}>
+                  <View style={{ aspectRatio: 16 / 9, borderRadius: 16, overflow: 'hidden', backgroundColor: C.surface2 }}>
+                    <Image accessibilityIgnoresInvertColors source={l.thumb} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    <View style={{ position: 'absolute', right: 8, bottom: 8, height: 22, paddingHorizontal: 7, borderRadius: 6, backgroundColor: 'rgba(25,31,40,0.78)', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#FFFFFF' }}>{`${l.minutes}분`}</Text>
                     </View>
-                    <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '800', color: C.ink, paddingHorizontal: 2 }}>{l.title}</Text>
-                    <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted, paddingHorizontal: 2, marginTop: -4 }}>{l.summary}</Text>
-                  </Pressable>)}
-                </ScrollView>
-              </Rise>; })}
+                  </View>
+                  <View style={{ paddingHorizontal: 2, gap: 2 }}>
+                    <Text numberOfLines={2} style={{ fontSize: 16, lineHeight: 22, fontWeight: '800', color: C.ink }}>{l.title}</Text>
+                    <Text numberOfLines={1} style={{ fontSize: 13, color: C.muted }}>{`${g.free ? '무료 · ' : ''}${g.short} · ${l.steps.length}단계 · ${l.summary}`}</Text>
+                  </View>
+                </Pressable>; })}
+            </View>
+            {/* 작가 강좌(유료)는 아직 없다 — 큰 자리 대신 한 줄로 알린다. */}
+            <View testID="작가 강좌 준비 중" accessible accessibilityLabel="작가 강좌 준비 중. 공모전 선정 작가의 강좌가 곧 열려요"
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 24, backgroundColor: C.pointSoft }}>
+              <Glyph name="school-outline" size={22} color={C.pointInk} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>작가에게 배우는 강좌가 곧 열려요</Text>
+                <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>공모전 선정 작가와 함께 준비하고 있어요</Text>
+              </View>
+            </View>
             <Rise delay={200}>
               <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드 열기" onPress={() => setHomeView('guide')}
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 24, ...Clay.card, transform: pressed ? [{ scale: .98 }] : [] })}>
