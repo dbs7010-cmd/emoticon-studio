@@ -82,6 +82,16 @@
       "sha256": "dc7a3618ee651b1d45248aeccd5a086e12f9c63740bee12e47c024bf23fb8cf8",
       "uploaded": "2026-10-19",
       "source": "사용자 보고(비공개 테스트 Alpha 트랙 업로드). 한국 개발자 정보(통신판매업 2026-서울노원-1462) 입력 후"
+    },
+    {
+      "versionCode": 10,
+      "versionName": "1.0.0",
+      "track": "internal",
+      "file": "emoti-1.0.0-vc10-paid-8aa499e.aab",
+      "commit": "8aa499e",
+      "sha256": "3d668a060185e8b4b6732486d8b740fb417e492eebe71d4007e7b82e08e7719c",
+      "uploaded": "2026-10-19",
+      "source": "사용자 보고(내부 테스트 트랙, 2026-10-19 21:35 내부 테스터에게 제공됨). 결제 열림·PRO 체험 꺼짐 — 결제 확인용"
     }
   ]
 }
