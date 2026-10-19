@@ -298,7 +298,7 @@ function Studio() {
       current.current = result.store; setStore(result.store); setLoadError(''); setReport(result.report);
       if (result.recovered) setNotice('저장 파일 하나가 손상돼 다른 사본으로 열었어요. 손상된 파일도 지우지 않았어요.');
       // 예전 빌드가 앱 폴더 바로 아래 둔 내보낸 사본을 exports/ 로 옮긴다(지우지 않는다, 실패해도 다음 실행에 다시).
-      migrateExports();
+      migrateExports().catch(() => {});
     } catch (e) {
       // Nothing is written or removed on this path: the files stay exactly as they are found.
       const found = (e as { report?: StoreReport }).report ?? safely(inspectStore);

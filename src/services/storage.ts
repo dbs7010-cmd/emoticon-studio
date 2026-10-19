@@ -44,7 +44,7 @@ export function exportUri(name: string) {
   return legacy.exists && EXPORT_PREFIX.test(name) ? legacy.uri : file.uri;
 }
 // 예전 위치의 사본을 exports/ 로 옮긴다. 지우지 않는다 — 같은 이름이 이미 있으면 그대로 둔다. 실패해도 앱 사용은 막지 않는다.
-export function migrateExports(): { moved: number; kept: number } {
+export async function migrateExports(): Promise<{ moved: number; kept: number }> {
   let moved = 0, kept = 0;
   try {
     ensureExports();
@@ -52,7 +52,7 @@ export function migrateExports(): { moved: number; kept: number } {
       if (!(item instanceof File) || !EXPORT_PREFIX.test(item.name) || !EXPORT_NAME.test(item.name)) continue;
       const target = new File(exportsDir(), item.name);
       if (target.exists) { kept++; continue; }
-      try { item.move(target); moved++; } catch { kept++; }
+      try { await item.move(target); moved++; } catch { kept++; }
     }
   } catch { /* 목록을 못 읽으면 다음 실행에 다시 한다 */ }
   return { moved, kept };

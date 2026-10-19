@@ -16,7 +16,8 @@ export async function pickImages(multiple = false): Promise<LocalImage[]> {
     const rendered = await context.renderAsync();
     const png = await rendered.saveAsync({ format: SaveFormat.PNG });
     const destination = newImageFile();
-    new File(png.uri).copy(destination);
+    // SDK 57: copy 는 Promise — 기다리지 않으면 다음 읽기가 빈 자리를 본다(ENOENT, 2026-10-19).
+    await new File(png.uri).copy(destination);
     images.push({ path: destination.name, width: png.width, height: png.height });
     context.release(); rendered.release();
   }
@@ -60,9 +61,9 @@ export async function importBundledImage(module: ImageSourcePropType): Promise<L
     context.release(); rendered.release();
     return saved;
   });
-  return stage(3, '앱에 저장하지 못했어요', () => {
+  return stage(3, '앱에 저장하지 못했어요', async () => {
     const destination = newImageFile();
-    new File(png.uri).copy(destination);
+    await new File(png.uri).copy(destination);
     return { path: destination.name, width: png.width, height: png.height };
   });
 }

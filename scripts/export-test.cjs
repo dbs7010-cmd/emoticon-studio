@@ -237,12 +237,13 @@ files.set('document/emoticon-studio/cut-예전-01-20261001-101010.gif', new Uint
 files.set('document/emoticon-studio/store-a.json', '{}');
 const originalImage = 'document/emoticon-studio/image-final-1.png';
 assert.equal(exportUri('set-예전-묶음-20261001-101010.zip'), 'document/emoticon-studio/set-예전-묶음-20261001-101010.zip', '옮기기 전에는 예전 자리를 그대로 준다(다시 공유 가능)');
-const moved = migrateExports();
+(async () => {
+const moved = await migrateExports();
 assert.equal(moved.moved, 2, '예전 사본 두 개를 옮겼다');
 assert.ok(files.has('document/emoticon-studio/exports/set-예전-묶음-20261001-101010.zip') && !files.has('document/emoticon-studio/set-예전-묶음-20261001-101010.zip'), '옮겼고(내용 그대로) 원래 자리에는 없다');
 assert.deepEqual([...files.get('document/emoticon-studio/exports/set-예전-묶음-20261001-101010.zip')], [7, 7]);
 assert.ok(files.has('document/emoticon-studio/store-a.json') && files.has(originalImage), '저장본·그림 원본은 옮기지 않는다');
-assert.equal(migrateExports().moved, 0, '두 번째 실행은 할 일이 없다');
+assert.equal((await migrateExports()).moved, 0, '두 번째 실행은 할 일이 없다');
 const listed = listExports();
 assert.ok(listed.length >= 5 && listed.every(x => /^(set|cut)-/.test(x.name)), '목록은 사본만: ' + listed.map(x => x.name).join(','));
 assert.ok(!listed.some(x => x.name.startsWith('image-') || x.name.startsWith('store-')));
@@ -256,3 +257,4 @@ const empty = createProject('빈 세트', '콩이');
 assert.throws(() => exportSet(empty), /저장된 그림이 없습니다/, 'exporting nothing is refused, not silently empty');
 
 console.log('PASS: zip structure parses, crc32 agrees with zlib, slot ordering, 부가 이미지와 공식 도구용 프레임 폴더·안내 쪽지, 제출 형식(WebP)이 묶음에 들어가고 못 만든 컷은 GIF 로 남는 것, reference/canon/working layers excluded, safe file naming, empty set refused. File system mocked.');
+})().catch(e => { console.error(e); process.exit(1); });
