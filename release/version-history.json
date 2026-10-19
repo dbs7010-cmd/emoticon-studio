@@ -72,6 +72,16 @@
       "sha256": "bf04bda82ce316201d46694e151c4cfc5223d44d18adc6ec6c213d5d5968020f",
       "uploaded": "2026-10-15",
       "source": "사용자 보고(Console 업로드 · 나중을 위해 저장, 검토 제출은 한국 개발자 정보 입력 대기)"
+    },
+    {
+      "versionCode": 9,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc9-closedtest-connected-a5c3ef4.aab",
+      "commit": "a5c3ef4",
+      "sha256": "dc7a3618ee651b1d45248aeccd5a086e12f9c63740bee12e47c024bf23fb8cf8",
+      "uploaded": "2026-10-19",
+      "source": "사용자 보고(비공개 테스트 Alpha 트랙 업로드). 한국 개발자 정보(통신판매업 2026-서울노원-1462) 입력 후"
     }
   ]
 }
