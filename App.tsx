@@ -49,7 +49,7 @@ const proBrushes = CATALOG.filter(b => b.pro);
 const proMotions = PRESETS.filter(p => isProPreset(p.id));
 const proFeatures = [
   [`PRO 움직임 ${proMotions.length}종`, proMotions.map(p => p.label).join(' · '), 'motion'],
-  ['부분만 움직이기 · 두 모습 번갈아', '손, 귀, 꼬리처럼 원하는 곳만 따로, 차례로', 'layer'],
+  ['부분만 움직이기 · 두 모습 번갈아', '손·새싹 잎·소품처럼 원하는 곳만 따로, 차례로', 'layer'],
   ['여러 칸에 같은 움직임 한 번에', '보관한 움직임을 고른 칸 전부에', 'check'],
   [`PRO 브러시 ${proBrushes.length}종`, proBrushes.map(b => b.title).join(' · '), 'brush'],
 ] as const;
