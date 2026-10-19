@@ -1169,10 +1169,10 @@ function Studio() {
             // 공지 배너(사용자 확정): 둥근 모서리 없이 화면 가로에 꽉 차게. 그림 파일이 생기면 slide.image 로 덮는다.
             const art = (child: React.ReactNode) => <View style={{ width: 72, height: 72, borderRadius: 26, ...Clay.card, alignItems: 'center', justifyContent: 'center' }}>{child}</View>;
             const slides: NoticeSlide[] = [
-              { key: 'book', kicker: '가이드북', title: '앱 사용부터\n승인 팁까지', label: '가이드북 열기', tone: T.bannerYellow, kickerColor: T.yellowInk,
+              { key: 'book', kicker: '가이드북', title: '앱 사용부터\n승인 팁까지', label: '가이드북 열기', tone: T.bannerYellow, kickerColor: T.yellowInk, backdrop: require('./assets/notices/book.png'),
                 art: art(<ImtiIcon name="guide" size={IconSize.tab} color={C.ink} />), onPress: () => setHomeView('book') },
               ...(cloud ? [{ key: 'contest', kicker: homeContest ? (homeContest.dday ? `공모전 · ${homeContest.dday}` : '공모전') : '공모전 현황', kickerColor: T.pointInk,
-                title: homeContest ? homeContest.title : '열리는 공모전을\n여기서 알려 드려요', label: homeContest ? '공모전 ' + homeContest.title : '공모전 현황 보기', tone: T.bannerViolet,
+                title: homeContest ? homeContest.title : '열리는 공모전을\n여기서 알려 드려요', label: homeContest ? '공모전 ' + homeContest.title : '공모전 현황 보기', tone: T.bannerViolet, backdrop: require('./assets/notices/contest.png'),
                 art: art(<ImtiIcon name="contest" size={IconSize.tab} color={C.point} />), onPress: () => setHomeTab('contest') }] : []),
               ...(noticeOn ? [{ key: 'notice', testID: '홈 알림', kicker: '알림', title: homeNotice.title, label: homeNotice.title, tone: T.accentSoft,
                 art: <AssetSlot name="noticeArtwork" size={72} />,

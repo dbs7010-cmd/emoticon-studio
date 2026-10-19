@@ -31,31 +31,7 @@ const ART = {
   'animation/cover.png': [480, 360, cover('nod', '<svg width="70" height="70" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="7" height="12" rx="2" stroke="#191F28" stroke-width="2"/><rect x="14" y="6" width="7" height="12" rx="2" stroke="#191F28" stroke-width="2"/></svg>')],
 };
 
-// 강좌 썸네일 16:9(960×540, 2026-10-16 유튜브식 목록). 콘 + 친구 둘이 번갈아 나온다 — 같은 캐릭터가 이어지지 않게.
-// 친구: A 고구마 + 완두콩(캔버스 K7, 2026-10-16 확정).
-const [F1, F2] = ['goguma', 'kong'];   // 2026-10-16 A 확정
-const GROUP_BG = { app: '#FFE98A', draw: '#E4E1FF', artist: '#D8F0C8' };
-const THUMBS = [
-  ['first-set', 'app', '첫 세트\n첫 칸 그리기', 'wave'],
-  ['brush-layer', 'app', '브러시\n레이어 · 색', F1 + '-wave'],
-  ['motion', 'app', '톡 누르면\n움직여요', F2 + '-cheer'],
-  ['animation', 'app', '장마다 그려\n애니메이션', 'nod'],
-  ['export', 'app', '카카오 제안\n파일 만들기', F1 + '-cheer'],
-  ['contest', 'app', '공모전\n내기', F2 + '-wave'],
-  ['character', 'draw', '내 캐릭터\n정하기', 'base'],
-  ['expressions', 'draw', '표정\n24가지', F1 + '-base'],
-  ['set-plan', 'draw', '승인에 가까운\n세트 구성', F2 + '-base'],
-  ['make-lesson', 'artist', '강좌\n만드는 법', 'cheer'],
-];
-for (const [id, group, title, pose] of THUMBS) ART[`thumbs/${id}.png`] = [960, 540,
-  `<div style="position:relative;width:100%;height:100%;background:${GROUP_BG[group]};overflow:hidden;font-family:'Malgun Gothic',sans-serif">
-    <div style="position:absolute;right:-60px;top:-60px;width:360px;height:360px;border-radius:180px;background:rgba(255,255,255,.45)"></div>
-    <div style="position:absolute;left:56px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;gap:18px;width:520px">
-      <div style="align-self:flex-start;height:44px;padding:0 20px;border-radius:22px;background:#191F28;color:#fff;font-size:24px;font-weight:800;display:flex;align-items:center">${group === 'artist' ? '작가용' : '무료 강좌'}</div>
-      <div style="font-size:76px;line-height:92px;font-weight:900;color:#191F28;letter-spacing:-3px;white-space:pre-line">${title}</div>
-    </div>
-    <div style="position:absolute;right:48px;top:50%;margin-top:-190px;width:380px;height:380px;border-radius:190px;background:#FFFFFF;display:flex;align-items:center;justify-content:center">${img(pose, 340)}</div>
-  </div>`];
+// 강좌 썸네일 16:9(960×540)는 2026-10-20부터 scripts/lessons/topic-art.cjs 가 강좌 주제별 장면으로 만든다.
 
 (async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
