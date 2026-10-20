@@ -14,7 +14,7 @@
     },
     "android": {
       "package": "com.emoticonstudio.app",
-      "versionCode": 12,
+      "versionCode": 13,
       "adaptiveIcon": {
         "backgroundColor": "#F7F4EE",
         "foregroundImage": "./assets/android-icon-foreground.png",

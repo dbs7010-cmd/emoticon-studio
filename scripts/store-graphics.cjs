@@ -1,84 +1,76 @@
-﻿// Google Play 기본 스토어 등록 그림 만들기(emoti 이모티).
-//   · 그래픽 이미지 1024×500 — 디자인 캔버스의 피처 그래픽 후보(Feature-A) 구도를 그대로 쓰고 이름·색·문구만 바꾼다.
-//   · 휴대전화 스크린샷 1080×1920 네 장 — 위에 핵심 문구 하나, 아래에 앱 화면 한 장(합성·없는 UI 추가 없음).
-// 앱 화면은 --captures 폴더의 capture-01.png ~ capture-04.png 를 쓴다.
-//   · 실기기 캡처: 폰에서 찍은 화면 그대로(상태바 포함 가능). → 결과는 업로드용(phone-0N.png).
-//   · --draft: 대체 렌더(verification/round45_45/after/png 의 화면)를 잘라 쓴다. 실기기 캡처가 아니므로
-//     결과 파일 이름에 -DRAFT 가 붙고 그림 오른쪽 위에 'DRAFT · 대체 렌더' 표시가 들어간다(업로드 금지).
-// 사용: node scripts/store-graphics.cjs <나갈 폴더> [--draft | --captures <폴더>]
-//   → <나갈 폴더>/*.html 을 만든다. PNG 는 Edge 헤드리스로 찍고 scripts/store-finalize.cjs 로 RGB 로 굳힌다.
+// Google Play 스토어 등록 그림(emoti 이모티) — 2026-10-20 다시(사용자: 예전 노란 단색판이 밋밋함).
+//   · 그래픽 이미지 1024×500 · 휴대전화 스크린샷 1080×1920 다섯 장.
+//   · 구성(강좌 썸네일 scripts/lessons/topic-art.cjs 와 같은 말투): 진한 바탕 + 방사 줄무늬 · 굵은 외곽선 제목(Jua)
+//     · 기울인 휴대폰 속 실제 앱 화면(합성·없는 UI 추가 없음) · 짚어 주는 빨간 동그라미 · 흰 테두리 스티커 캐릭터.
+// 앱 화면은 --captures 폴더의 capture-01.png ~ capture-05.png(검수 빌드 에뮬레이터 캡처 1080×2400).
+// 사용: PLAYWRIGHT_MODULE_PATH=playwright-core CHROME_PATH=<chrome.exe> node scripts/store-graphics.cjs <나갈 폴더> --captures <폴더>
+//   → <나갈 폴더>/feature-graphic-1024x500.png · phone-0N.png. 업로드 전 scripts/store-finalize.cjs 로 RGB 로 굳힌다.
 const fs = require('fs');
 const path = require('path');
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
 const root = path.resolve(__dirname, '..');
-const out = path.resolve(process.argv[2] || 'verification/round45_45/store');
-const draft = process.argv.includes('--draft');
+const out = path.resolve(process.argv[2] || 'verification/store');
 const capIdx = process.argv.indexOf('--captures');
-const capDir = capIdx > 0 ? path.resolve(process.argv[capIdx + 1]) : null;
+if (capIdx < 0) throw new Error('--captures <폴더> 가 필요해요(실제 앱 캡처만 쓴다)');
+const capDir = path.resolve(process.argv[capIdx + 1]);
 fs.mkdirSync(out, { recursive: true });
-const url = p => 'file:///' + p.replace(/\\/g, '/');
-const LEMON = '#F5E642', LEMON_SOFT = '#FAF2A0', INK = '#2A2320';
-const FONT = `@font-face{font-family:Jua;src:url('${url(path.join(root, 'assets/fonts/Jua-Regular.ttf'))}')}
-body{margin:0;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:${INK}}`;
 
-// 캐릭터: 대표 캐릭터 콘(2026-10-16, assets/mascot · scripts/mascot-render.cjs)
-// 친구(고구마 · 완두콩)는 양옆 칸에.
-const friend = name => `<img src="${url(path.join(root, 'assets/mascot', name + '.png'))}" width="130" height="130">`;
-const face = (eyes = 'dot') => `<img src="${url(path.join(root, 'assets/mascot', eyes === 'dot' ? 'corn-base.png' : 'corn-cheer.png'))}" width="130" height="130">`;
-// 움직임 표시(정지 그림이라 움직임을 짧은 선으로만 보인다)
-const motionLines = `<svg width="60" height="40" viewBox="0 0 60 40" style="position:absolute;left:-30px;top:30px"><path d="M8 8h22M4 20h26M8 32h22" stroke="${INK}" stroke-width="4" stroke-linecap="round"/></svg>`;
+const INK = '#191F28', RED = '#FF4D5E', HI = '#FFE14D';
+const data = f => 'data:image/png;base64,' + fs.readFileSync(f).toString('base64');
+const capture = n => { const f = path.join(capDir, `capture-0${n}.png`); if (!fs.existsSync(f)) throw new Error('캡처가 없어요: ' + f); return data(f); };
+const mascot = n => data(path.join(root, 'assets/mascot', (/^(goguma|kong)-/.test(n) ? n : 'corn-' + n) + '.png'));
+const FONT = '@font-face{font-family:Jua;src:url(data:font/ttf;base64,' + fs.readFileSync(path.join(root, 'assets/fonts/Jua-Regular.ttf')).toString('base64') + ')}';
 
-// ── 그래픽 이미지 1024×500(Feature-A 구도: 왼쪽 글자 · 오른쪽 스티커 카드 셋 · 오른쪽 위 둥근 밝은 원) ──
-const feature = `<!doctype html><meta charset="utf-8"><style>${FONT}
-.c{width:1024px;height:500px;box-sizing:border-box;background:${LEMON};position:relative;overflow:hidden;display:flex;align-items:center;padding:0 56px;gap:32px}
-.blob{position:absolute;right:-60px;top:-80px;width:420px;height:420px;border-radius:210px;background:${LEMON_SOFT}}
-.t{position:relative;flex:1;display:flex;flex-direction:column;gap:16px;min-width:0}
-.brand{display:flex;align-items:baseline;gap:12px}.brand b{font-family:Jua;font-weight:400;font-size:84px;line-height:1}.brand span{font-family:Jua;font-size:34px;color:#5A5040}
-.msg{font-size:31px;line-height:1.35;font-weight:800;letter-spacing:-.5px}
-.chips{display:flex;gap:10px;margin-top:4px}.chips span{height:42px;padding:0 18px;border-radius:21px;background:#fff;border:3px solid ${INK};display:flex;align-items:center;font-size:18px;font-weight:800;white-space:nowrap}
-.cards{position:relative;display:flex;gap:16px;align-items:flex-end}
-.card{width:150px;border-radius:26px;background:#fff;border:4px solid ${INK};box-shadow:6px 6px 0 ${INK};display:flex;align-items:center;justify-content:center;position:relative}
-</style><div class="c"><div class="blob"></div>
-<div class="t"><div class="brand"><b>emoti</b><span>이모티</span></div>
-<div class="msg">내 그림을<br>움직이는 이모티콘으로</div>
-<div class="chips"><span>그리기</span><span>움직이기</span><span>파일 묶음</span></div></div>
-<div class="cards"><div class="card" style="height:190px">${friend('goguma-wave')}</div><div class="card" style="height:230px">${motionLines}${face('smile')}</div><div class="card" style="height:190px">${friend('kong-cheer')}</div></div>
+const backdrop = (c, ray, at = '50% 62%') => `background-color:${c};background-image:repeating-conic-gradient(from 0deg at ${at},${ray} 0deg 7deg,transparent 7deg 14deg)`;
+// 휴대폰: 실제 화면(1080 폭)을 cropTop 부터. ring = 화면 좌표(px)의 [x, y, w, h].
+const phone = (img, { x, y, w, rot, cropTop = 0, ring, bezel = 0.03 }) => {
+  const k = (w * (1 - bezel * 2)) / 1080;
+  const r = ring ? `<div style="position:absolute;left:${ring[0] * k}px;top:${(ring[1] - cropTop) * k}px;width:${ring[2] * k}px;height:${ring[3] * k}px;border:${Math.round(w * .02)}px solid ${RED};border-radius:999px;box-sizing:border-box"></div>` : '';
+  return `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${Math.round(w * 2.1)}px;border-radius:${w * .12}px;background:${INK};padding:${w * bezel}px;box-sizing:border-box;transform:rotate(${rot}deg);box-shadow:${w * .05}px ${w * .06}px 0 rgba(25,31,40,.22)"><div style="width:100%;height:100%;border-radius:${w * .095}px;overflow:hidden;background:#fff;position:relative"><img src="${img}" style="position:absolute;left:0;top:${-cropTop * k}px;width:100%">${r}</div></div>`;
+};
+const sticker = (n, s, x, y, rot, edge = 9) => `<img src="${mascot(n)}" width="${s}" style="position:absolute;left:${x}px;top:${y}px;transform:rotate(${rot}deg);filter:drop-shadow(${edge}px 0 0 #fff) drop-shadow(-${edge}px 0 0 #fff) drop-shadow(0 ${edge}px 0 #fff) drop-shadow(0 -${edge}px 0 #fff) drop-shadow(${edge}px ${edge * 1.8}px 0 rgba(25,31,40,.22))">`;
+const outlined = (size, style) => `font-family:Jua;font-size:${size}px;line-height:${Math.round(size * 1.1)}px;color:#fff;-webkit-text-stroke:${Math.round(size * .14)}px ${INK};paint-order:stroke fill;text-shadow:0 ${Math.round(size * .09)}px 0 ${INK};${style}`;
+const hi = t => `<span style="color:${HI}">${t}</span>`;
+const tag = (text, x, y, rot, size = 40) => `<div style="position:absolute;left:${x}px;top:${y}px;height:${size * 1.9}px;padding:0 ${size * .75}px;border-radius:${size}px;background:${RED};color:#fff;font:900 ${size}px 'Malgun Gothic';display:flex;align-items:center;border:${size * .15}px solid ${INK};transform:rotate(${rot}deg)">${text}</div>`;
+
+// ── 휴대전화 1080×1920 다섯 장 ──
+const screen = (bg, titleHtml, sub, body) => `<div style="position:relative;width:1080px;height:1920px;overflow:hidden;${bg}">
+  <div style="position:absolute;left:0;right:0;top:120px;text-align:center;${outlined(146, '')}">${titleHtml}</div>
+  <div style="position:absolute;left:50%;top:480px;transform:translateX(-50%);height:84px;padding:0 36px;border-radius:24px;background:${INK};color:#fff;font:800 40px 'Malgun Gothic';display:flex;align-items:center;white-space:nowrap">${sub}</div>
+  ${body}</div>`;
+const PHONES = {
+  1: screen(backdrop('#3D8BFF', 'rgba(255,255,255,.13)'), `내 그림이<br>${hi('톡! 움직여요')}`, '그린 칸에 움직임을 고르면 바로 미리 보기',
+    phone(capture(1), { x: 250, y: 640, w: 600, rot: -5, cropTop: 200, ring: [36, 1730, 240, 210] }) + sticker('cheer', 330, 40, 1420, -8) + sticker('kong-wave', 260, 800, 1560, 8)),
+  2: screen(backdrop('#FFB51E', 'rgba(255,255,255,.2)'), `이어 그리기부터<br>${hi('제안 준비')}까지`, '내 세트 · 남은 일 · 가이드북을 한 화면에',
+    phone(capture(2), { x: 250, y: 640, w: 600, rot: 5, cropTop: 0, ring: [660, 1240, 380, 170] }) + sticker('wave', 320, 30, 1450, -8) + sticker('goguma-cheer', 250, 810, 1590, 8)),
+  3: screen(backdrop('#8B7BFF', 'rgba(255,255,255,.13)'), `원하는 부분만<br>${hi('따로')} 움직여요`, '손 흔들기 · 통통 튀기 · 조합까지',
+    phone(capture(3), { x: 250, y: 640, w: 600, rot: 5, cropTop: 200, ring: [700, 560, 260, 220] }) + tag('PRO', 70, 640, -6) + sticker('heart', 320, 730, 1450, 8) + sticker('goguma-wave', 250, 40, 1580, -8)),
+  4: screen(backdrop('#FF7A59', 'rgba(255,255,255,.16)'), `무료 강좌로<br>${hi('차근차근')}`, '콘과 친구들이 알려 주는 10편',
+    phone(capture(4), { x: 250, y: 640, w: 600, rot: -5, cropTop: 0 }) + tag('무료 10편', 700, 650, 6) + sticker('nod', 300, 30, 1470, -8) + sticker('kong-cheer', 250, 820, 1600, 8)),
+  5: screen(backdrop('#22B573', 'rgba(255,255,255,.16)'), `한 세트로 모아<br>${hi('파일')}로 내보내기`, '보드에서 한눈에 · 파일 묶음 한 번에',
+    phone(capture(5), { x: 250, y: 640, w: 600, rot: 5, cropTop: 200, ring: [720, 2160, 320, 130] }) + sticker('heart', 300, 30, 1460, -8) + sticker('goguma-wave', 240, 830, 1300, 8)),
+};
+
+// ── 그래픽 이미지 1024×500: 왼쪽 이름 + 한 줄, 오른쪽 기울인 휴대폰(움직이기 화면) + 콘 · 친구 ──
+const FEATURE = `<div style="position:relative;width:1024px;height:500px;overflow:hidden;${backdrop('#FFB51E', 'rgba(255,255,255,.22)', '74% 50%')}">
+  <div style="position:absolute;left:56px;top:62px;${outlined(150, 'letter-spacing:-2px')}">emoti</div>
+  <div style="position:absolute;left:60px;top:250px;${outlined(64, '')}">내 그림이 ${hi('톡!')}<br>움직이는 이모티콘</div>
+  ${phone(capture(1), { x: 660, y: 40, w: 230, rot: 8, cropTop: 300 })}
+  ${sticker('cheer', 190, 520, 270, -8, 6)}${sticker('kong-wave', 150, 870, 330, 8, 6)}
 </div>`;
-fs.writeFileSync(path.join(out, 'feature-graphic-1024x500.html'), feature);
 
-// ── 휴대전화 1080×1920 네 장 ──
-// 대체 렌더 PNG(2배, 500×960 창)에서 폰 화면 영역: x 110~890, y 116~1804 (780×1688)
-const draftSrc = path.join(root, 'verification/round45_45/after/png');
-// 2026-10-13 개편(흰 홈·공지 슬라이드·부분 움직임 안내·채팅에서 써 보기) — 다섯 장. 이전 네 장 구성은 git 이력.
-const slides = [
-  { n: 1, title: '내 그림이 움직이는<br>이모티콘으로', sub: '그린 칸에 움직임을 골라 바로 미리 봐요', draft: 'motion-base' },
-  { n: 2, title: '이어 그리기부터<br>제안 준비까지 한눈에', sub: '내 세트 · 제안까지 남은 일 · 가이드북', draft: 'draw-base' },
-  { n: 3, title: '원하는 부분만<br>따로 움직여요', sub: '손 흔들기 · 조합(등장→인사)도 바로', pro: '부분 움직임', draft: 'motion-parts' },
-  { n: 4, title: '무료 강좌로<br>처음부터 차근차근', sub: '콘과 친구들이 알려 주는 10편', draft: 'set-detail' },
-  { n: 5, title: '한 세트로 모아,<br>파일로 내보내기', sub: '보드에서 한눈에 보고 파일 묶음으로', draft: 'set-detail' },
-];
-for (const s of slides) {
-  let shot;
-  if (draft) shot = `<div class="scr"><img src="${url(path.join(draftSrc, s.draft + '.png'))}" style="position:absolute;width:${1000 * 660 / 780}px;left:${-110 * 660 / 780}px;top:${-116 * 660 / 780}px"></div>`;
-  else {
-    const f = path.join(capDir, `capture-0${s.n}.png`);
-    if (!fs.existsSync(f)) throw new Error('캡처가 없어요: ' + f);
-    shot = `<div class="scr"><img src="${url(f)}" style="width:100%;height:100%;object-fit:cover;object-position:top"></div>`;
-  }
-  const html = `<!doctype html><meta charset="utf-8"><style>${FONT}
-.c{width:1080px;height:1920px;box-sizing:border-box;background:${s.n % 2 ? LEMON : '#FFFFFF'};position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding-top:120px}
-.h{font-family:Jua;font-weight:400;font-size:84px;line-height:1.18;text-align:center;letter-spacing:-1px}
-.s{margin-top:28px;font-size:36px;font-weight:700;color:#4A4236;display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center;padding:0 60px}
-.pro{display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 20px;border-radius:14px;border:3px solid ${INK};background:#fff;font-size:30px;font-weight:800}
-.pro i{font-style:normal;background:${INK};color:#fff;border-radius:8px;padding:2px 10px;font-size:24px}
-.ph{margin-top:64px;width:700px;height:1428px;border-radius:56px;background:${INK};padding:20px;box-sizing:border-box;box-shadow:0 30px 60px rgba(31,29,26,.18)}
-.scr{position:relative;width:660px;height:1388px;border-radius:38px;overflow:hidden;background:#fff}
-.mark{position:absolute;right:24px;top:24px;background:#D2574F;color:#fff;font:800 26px sans-serif;padding:8px 16px;border-radius:10px}
-</style><div class="c">
-<div class="h">${s.title}</div>
-<div class="s"><span>${s.sub}</span>${s.pro ? `<span class="pro"><i>PRO</i>${s.pro}</span>` : ''}</div>
-<div class="ph">${shot}</div>
-${draft ? '<div class="mark">DRAFT · 대체 렌더(실기기 캡처 아님)</div>' : ''}
-</div>`;
-  fs.writeFileSync(path.join(out, `phone-0${s.n}${draft ? '-DRAFT' : ''}.html`), html);
-}
-console.log(out);
+(async () => {
+  const browser = await chromium.launch({ headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
+  try {
+    const page = await browser.newPage();
+    const render = async (w, h, body, file) => {
+      await page.setViewportSize({ width: w, height: h });
+      await page.setContent(`<!doctype html><html><head><style>${FONT}body{margin:0}</style></head><body><div id="a" style="width:${w}px;height:${h}px">${body}</div></body></html>`);
+      await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode())); });
+      await page.locator('#a').screenshot({ path: path.join(out, file) });
+      console.log(path.join(out, file));
+    };
+    await render(1024, 500, FEATURE, 'feature-graphic-1024x500.png');
+    for (const [n, body] of Object.entries(PHONES)) await render(1080, 1920, body, `phone-0${n}.png`);
+  } finally { await browser.close(); }
+})().catch(e => { console.error(e); process.exit(1); });
