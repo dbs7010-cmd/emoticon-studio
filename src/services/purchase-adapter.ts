@@ -24,7 +24,8 @@ export const isOurProduct = (productId: string): boolean =>
 // What went wrong, in words the screen can turn into a next step. Raw store codes stay in here.
 export type StoreProblem = 'purchases-closed' | 'store-missing' | 'network' | 'store-unavailable' | 'not-found' | 'already-owned' | 'unknown';
 
-export type StoreProduct = { id: string; plan: PlanId; title: string; localizedPrice: string };
+// 할인(2026-10-20): Play Console 의 일회성 상품 할인 offer 가 있으면 localizedPrice 는 할인가, regularPrice 는 정가, offerToken 은 결제에 넘긴다.
+export type StoreProduct = { id: string; plan: PlanId; title: string; localizedPrice: string; regularPrice?: string; offerToken?: string; discountPercent?: number };
 // Only the fields this app relies on. `purchaseToken` is the Android purchase token (Play) and the
 // signed transaction (JWS) on iOS.
 export type StorePurchase = { productId: string; purchaseToken?: string | null; purchaseState?: string; transactionDate?: number; isSuspendedAndroid?: boolean | null; platform?: string };
@@ -100,7 +101,11 @@ export async function listProducts(): Promise<ProductsResult> {
     const products = found.flatMap((p: any): StoreProduct[] => {
       const id = String(p?.id ?? p?.productId ?? '');
       if (id !== PRODUCT_IDS.lifetime) return [];
-      return [{ id, plan: 'lifetime', title: String(p.title ?? ''), localizedPrice: String(p.displayPrice ?? '') }];
+      const regular = String(p.displayPrice ?? '');
+      // 할인 offer: offer token 이 있고 정가보다 싼 것(퍼센트 또는 금액 할인)만. 없으면 정가 그대로.
+      const offer = (Array.isArray(p.discountOffers) ? p.discountOffers : []).find((o: any) => o?.offerTokenAndroid && o?.displayPrice && (Number(o.percentageDiscountAndroid) > 0 || Number(o.discountAmountMicrosAndroid) > 0));
+      if (!offer) return [{ id, plan: 'lifetime', title: String(p.title ?? ''), localizedPrice: regular }];
+      return [{ id, plan: 'lifetime', title: String(p.title ?? ''), localizedPrice: String(offer.displayPrice), regularPrice: regular, offerToken: String(offer.offerTokenAndroid), ...(Number(offer.percentageDiscountAndroid) > 0 ? { discountPercent: Number(offer.percentageDiscountAndroid) } : {}) }];
     });
     if (!products.length) return { state: 'unavailable', problem: 'not-found' };
     return { state: 'ok', products };
@@ -120,10 +125,13 @@ export async function buy(options: { timeoutMs?: number } = {}): Promise<Purchas
   try {
     await connect(iap);
     // 일회성 상품은 스토어에 등록되어 있어야 살 수 있다. 목록에 없으면 그 사실대로 알린다.
+    let offerToken: string | undefined;
     if (Platform.OS === 'android') {
       const listed = await listProducts();
       if (listed.state !== 'ok') return listed;
-      if (!listed.products.some(p => p.id === sku)) return { state: 'unavailable', problem: 'not-found' };
+      const product = listed.products.find(p => p.id === sku);
+      if (!product) return { state: 'unavailable', problem: 'not-found' };
+      offerToken = product.offerToken;   // 화면에 보인 할인가로 결제한다(없으면 정가)
     }
     return await new Promise<PurchaseResult>(resolve => {
       let settled = false;
@@ -143,7 +151,7 @@ export async function buy(options: { timeoutMs?: number } = {}): Promise<Purchas
       }));
       iap.requestPurchase({
         type: 'in-app',
-        request: { apple: { sku }, google: { skus: [sku] } },
+        request: { apple: { sku }, google: { skus: [sku], ...(offerToken ? { offerToken } : {}) } },
       }).catch((error: unknown) => {
         const problem = problemOf(error);
         finish(problem === 'cancelled' ? { state: 'cancelled' } : problem === 'pending' ? { state: 'pending' } : { state: 'unavailable', problem });

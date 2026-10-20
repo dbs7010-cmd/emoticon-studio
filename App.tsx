@@ -244,7 +244,7 @@ function Studio() {
   // 결제 한 번의 상태. 화면은 이 값 하나로 무엇을 보여 줄지 정한다(가격 불러오기 → 결제 → 결과).
   const [payment, setPayment] = useState<Payment>({ phase: 'idle' });
   // 일회성 PRO 하나의 스토어 가격. 없으면 화면은 후보 가격을 '미확정'이라고 적는다.
-  const [prices, setPrices] = useState<{ lifetime?: string } | null>(null);
+  const [prices, setPrices] = useState<{ lifetime?: string; regular?: string; percent?: number } | null>(null);
   const resetPayment = () => setPayment({ phase: 'idle' });
   const entitlement = store?.entitlement;
   // 내부 검수 빌드에서만 검수용 해제가 함께 인정된다. 출시 구성에서는 reviewUnlocked() 가 늘 거짓이라
@@ -276,7 +276,8 @@ function Studio() {
     setPayment({ phase: 'loading' });
     const result = await storePrices();
     if (result.state === 'ok') {
-      setPrices({ lifetime: result.products.find(p => p.plan === 'lifetime')?.localizedPrice });
+      const lifetime = result.products.find(p => p.plan === 'lifetime');
+      setPrices({ lifetime: lifetime?.localizedPrice, regular: lifetime?.regularPrice, percent: lifetime?.discountPercent });
       setPayment(now => now.phase === 'loading' ? { phase: 'ready' } : now);
     } else {
       setPrices(null);
@@ -1965,11 +1966,15 @@ function Studio() {
           {/* 파는 것은 하나다: 한 번 구매하면 계속 쓰는 PRO. 값은 **스토어가 말해 주는 것만** 적는다.
               불러오지 못하면 값을 지어내지 않고, 지금 살 수 없다는 것과 다음에 할 일을 적는다. */}
           {purchasesClosed() ? <Text testID={trial ? 'PRO 체험 안내' : '구매 비활성 안내'} style={{ color: C.ink, fontSize: 15, lineHeight: 23 }}>{trial ? PRO_TRIAL_NOTE : PURCHASES_CLOSED_NOTE}</Text> : <>
-          <View accessibilityRole="summary" accessibilityLabel={prices?.lifetime ? 'PRO 가격 ' + prices.lifetime : 'PRO 가격을 불러오지 못했어요'}
+          <View accessibilityRole="summary" accessibilityLabel={prices?.lifetime ? 'PRO 가격 ' + prices.lifetime + (prices.regular ? ', 할인 중, 정가 ' + prices.regular : '') : 'PRO 가격을 불러오지 못했어요'}
             style={{ borderWidth: 1, borderColor: prices?.lifetime ? C.accentBorder : C.line, borderRadius: 16, padding: 14, gap: 2, backgroundColor: prices?.lifetime ? C.accentSoft : C.surface2 }}>
             <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{PLANS[0].label}</Text>
             {prices?.lifetime
-              ? <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink }}>{prices.lifetime}</Text>
+              ? <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                  {!!prices.percent && <Text testID="PRO 할인율" style={{ fontSize: 22, fontWeight: '900', color: C.danger }}>{`${prices.percent}%`}</Text>}
+                  <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink }}>{prices.lifetime}</Text>
+                  {!!prices.regular && <Text testID="PRO 정가" accessibilityLabel={'정가 ' + prices.regular} style={{ fontSize: 14, color: C.muted, textDecorationLine: 'line-through' }}>{prices.regular}</Text>}
+                </View>
               : <Text style={{ fontSize: 15, fontWeight: '700', color: C.muted }}>{payment.phase === 'loading' ? '가격을 불러오는 중…' : '가격을 불러오지 못했어요'}</Text>}
             {!prices?.lifetime && payment.phase !== 'loading' && <Text style={{ fontSize: 11, color: C.muted, lineHeight: 16 }}>지금은 구매할 수 없어요. 잠시 뒤 다시 시도해 주세요. 무료 기능은 그대로 쓸 수 있어요.</Text>}
             <Text style={{ fontSize: 11, color: C.muted }}>구독이 아니라 한 번만 결제해요. 정기 결제나 해지가 없어요.</Text>

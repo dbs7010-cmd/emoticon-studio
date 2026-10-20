@@ -69,6 +69,17 @@ function fakeServer(reply = body => body.productId === 'pro_lifetime'
   assert.equal(listed.state, 'ok');
   assert.deepEqual(listed.products.map(p => [p.id, p.plan, p.localizedPrice]), [['pro_lifetime', 'lifetime', '₩14,900']], '상품 조회: 일회성 상품 하나와 스토어 가격');
   assert.equal(st.module.fetchProducts.length >= 0 && true, true);
+  // 2026-10-20 할인: Console 의 일회성 상품 할인 offer 가 있으면 할인가 · 정가 · offer token 을 읽고, 결제에 그 token 을 넘긴다.
+  st = fakeStore({ products: [{ ...item('pro_lifetime', '₩19,900'), discountOffers: [
+    { id: 'base', displayPrice: '₩19,900', offerTokenAndroid: 'tok-base', currency: 'KRW', price: 19900, type: 'one-time' },
+    { id: 'launch', displayPrice: '₩16,900', offerTokenAndroid: 'tok-launch', percentageDiscountAndroid: 15, currency: 'KRW', price: 16900, type: 'one-time' }] }] }); adapter.useStoreModuleForTests(st.module);
+  listed = await adapter.listProducts();
+  assert.deepEqual(listed.products.map(p => [p.localizedPrice, p.regularPrice, p.offerToken, p.discountPercent]), [['₩16,900', '₩19,900', 'tok-launch', 15]], '할인 offer: 할인가 · 정가 · token · 할인율(정가 offer 는 할인으로 치지 않음)');
+  assert.equal((await adapter.buy({ timeoutMs: 2000 })).state, 'purchased');
+  assert.equal(st.requests.at(-1).request.google.offerToken, 'tok-launch', '할인가로 결제: offer token 을 넘긴다');
+  st = fakeStore(); adapter.useStoreModuleForTests(st.module);
+  assert.equal((await adapter.buy({ timeoutMs: 2000 })).state, 'purchased');
+  assert.ok(!('offerToken' in st.requests.at(-1).request.google), '할인이 없으면 offer token 없이 정가로');
   st = fakeStore({ fetchError: { code: 'network-error', message: 'x' } }); adapter.useStoreModuleForTests(st.module);
   assert.deepEqual(await adapter.listProducts(), { state: 'unavailable', problem: 'network' }, '상품 조회 실패: 네트워크');
   st = fakeStore({ products: [] }); adapter.useStoreModuleForTests(st.module);
