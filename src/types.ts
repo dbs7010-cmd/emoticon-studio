@@ -2,7 +2,8 @@ export type Status = 'EMPTY' | 'PLANNED' | 'DRAWING' | 'REVIEW' | 'PASS' | 'WARN
 export type Verdict = 'PASS' | 'WARNING' | 'FAIL';
 export type Metrics = { coverage: number; centerX: number; centerY: number; width: number; height: number; color: number[]; transparent: boolean };
 export type LocalImage = { path: string; width: number; height: number; metrics?: Metrics };
-export type LayerTransform = { id: string; name: string; visible: boolean; opacity: number; x: number; y: number; scale: number; rotation: number };
+// imported: 앱 밖 그림(사진·다른 앱 그림·예시 그림)을 '그림 가져오기'로 들인 레이어(2026-10-21). 공모전·체험단 제출은 앱에서 직접 그린 칸만 받는다.
+export type LayerTransform = { id: string; name: string; visible: boolean; opacity: number; x: number; y: number; scale: number; rotation: number; imported?: boolean };
 export type WorkLayer = LayerTransform & { image?: LocalImage };
 // Editable text that is drawn into the exported image. Absent means no words at all, the default.
 // dx·dy·scale·rot 은 사용자가 손가락으로 옮기고 키우고 돌린 값이다. 없으면 예전처럼 위/아래

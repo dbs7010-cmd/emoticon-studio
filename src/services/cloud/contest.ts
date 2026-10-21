@@ -26,6 +26,16 @@ export function contestPackage(project: Project, handoff: HandoffFrames[] = []):
   return { bytes, sha256: sha256Hex(bytes), cuts: cutNames.length, animated, kind: animated ? 'moving' : 'still' };
 }
 
+// 앱에서 직접 그린 칸만(2026-10-21 대표 결정): '그림 가져오기'로 들인 레이어가 보이는 칸 번호. 숨긴 레이어는 그림에 안 들어가 묻지 않는다.
+// 서버는 레이어를 모르므로 이 점검은 앱 안에서만 한다 — 심사 때 한 번 더 본다.
+export function importedCuts(project: Project): string[] {
+  return project.slots.flatMap((slot, i) => {
+    if (!slot.finalImage) return [];
+    const layers = [...(slot.work?.layers ?? []), ...(slot.work?.frames ?? []).flatMap(f => f.layers)];
+    return layers.some(l => l.imported && l.visible) ? [String(i + 1).padStart(2, '0')] : [];
+  });
+}
+
 // 앱 쪽 사전 점검: 서버와 같은 규칙으로 미리 알려 준다(서버가 다시 확인한다).
 export function precheck(pkg: ContestPackage, c: ContestInfo): string | null {
   if (pkg.cuts !== c.requirements.cuts) return `이 공모전은 ${c.requirements.cuts}칸 세트를 받아요(지금 ${pkg.cuts}칸).`;

@@ -15,7 +15,7 @@ let saveToken=null;
 function send(m){window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify(m));}
 function bitmap(){const c=document.createElement('canvas');c.width=W;c.height=H;return c;}
 function copyOf(b){const c=bitmap();c.getContext('2d').drawImage(b,0,0);return c;}
-function meta(l){return {id:l.id,name:l.name,visible:l.visible,opacity:l.opacity,x:l.x,y:l.y,scale:l.scale,rotation:l.rotation};}
+function meta(l){return Object.assign({id:l.id,name:l.name,visible:l.visible,opacity:l.opacity,x:l.x,y:l.y,scale:l.scale,rotation:l.rotation},l.imported?{imported:true}:{});}
 function trace(what,extra){if(!probe)return;send(Object.assign({type:'trace',t:Math.round(performance.now()),what:what,has:!!selection,dx:selection?Math.round(selection.dx):null,dy:selection?Math.round(selection.dy):null},extra||{}));}
 function state(){syncFrame();send({type:'state',frames:frames?frames.map(f=>({id:f.id,duration:f.duration})):null,frameIdx,onion,undo:history.length>0,redo:future.length>0,dirty,smoothing,captionPicked,picking,preset,brushOpacity,stabilizer,activeHidden:!!(activeDraw()&&!activeDraw().visible),activeLayerId,activeReferenceId,caption,motion,pivotPick,pivotRole,selection:selection&&{box:selection.box,dx:selection.dx,dy:selection.dy,scale:selection.scale,rot:selection.rot,flip:selection.flip},loop:Number(loopSeconds().toFixed(3)),clipped:motionClips(),playing,layers:layers.map(meta),references:references.map(l=>({...meta(l),path:l.path}))});}
 // The words live in the exported picture, not in a separate text tool: one system font, centred,
@@ -1306,14 +1306,14 @@ async function command(m){try{
    if(!src){}
    else if(layers.length>=4){send({type:'error',message:'그림은 4장까지예요. 한 장을 지우고 다시 해 주세요.'});}
    else{checkpoint();const id=nextLayerId();
-    const copy={...defaults(id,layerName(id)),bitmap:copyOf(src.bitmap)};
+    const copy={...defaults(id,layerName(id)),...(src.imported?{imported:true}:{}),bitmap:copyOf(src.bitmap)};
     layers.push(copy);selectDrawLayer(id);dirty=true;render();
     send({type:'duplicated',id});state();}
  }
  if(m.type==='importDrawing'){
    if(layers.length>=4){send({type:'error',message:'그림은 4장까지예요.'});}
    else{checkpoint();const id=nextLayerId();
-    const added=await loadLayer({...defaults(id,layerName(id)),data:m.data});
+    const added=await loadLayer({...defaults(id,layerName(id)),data:m.data,imported:true});   // 밖에서 가져온 그림 표시(공모전·체험단 제출 점검)
     layers.push(added);selectDrawLayer(id);dirty=true;render();state();}
  }
  if(m.type==='addLayer'){if(layers.length<4){checkpoint();

@@ -9,7 +9,7 @@ import { ImtiIcon, IconSize } from '../design/icons';
 import type { Cloud } from '../services/cloud/firebase';
 import { deleteAccount, providerReady, register, signOutAll, type Provider, type ServerUser } from '../services/cloud/account';
 import { backupSet, listSets, restoreSet, type CloudSet } from '../services/cloud/backup';
-import { contestPackage, newSubmissionKey, openContests, precheck, status as submissionStatus, submit, type ContestInfo } from '../services/cloud/contest';
+import { contestPackage, newSubmissionKey, openContests, importedCuts, precheck, status as submissionStatus, submit, type ContestInfo } from '../services/cloud/contest';
 import type { HandoffFrames } from '../services/export';
 import type { ContestEntry, Project, Store } from '../types';
 
@@ -64,6 +64,8 @@ export function CloudScreen(p: Props) {
   const entryOf = (contestId: string) => (p.store.contestEntries ?? []).find(e => e.contestId === contestId);
   const saveEntry = (e: ContestEntry) => p.commit(s => ({ ...s, contestEntries: [...(s.contestEntries ?? []).filter(x => x.contestId !== e.contestId), e] }));
   const doSubmit = (c: ContestInfo, project: Project) => p.task('세트 전체를 묶는 중…', async () => {
+    const outside = importedCuts(project);
+    if (outside.length) throw new Error(`앱에서 직접 그린 칸만 낼 수 있어요. ${outside.join(', ')}번 칸에 가져온 그림이 있어요 — 그 레이어를 지우거나 숨긴 뒤 다시 저장해 주세요.`);
     const { handoff, failed } = await p.bakeHandoff(project);
     if (failed.length) throw new Error(`${failed.join(', ')}번 칸의 움직임 프레임을 만들지 못했어요. 그 칸을 다시 저장한 뒤 내 주세요.`);
     const pkg = contestPackage(project, handoff);
