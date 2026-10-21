@@ -1,0 +1,136 @@
+{
+  "mode": "--five",
+  "startedAt": "2026-09-12T20:50:30.556Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "F1-draw-new",
+      "covers": "",
+      "note": "새 디자인의 그리기 화면 · 색 동그라미가 늘어서 있지 않아야 한다",
+      "shot": "F1-draw-new.png"
+    },
+    {
+      "id": "F2-palette",
+      "covers": "",
+      "note": "팔레트 — 작은 사각 격자와 최근 줄",
+      "shot": "F2-palette.png"
+    },
+    {
+      "id": "F3-custom",
+      "covers": "",
+      "note": "직접 선택 — 색상 줄·채도명도 면·HEX",
+      "shot": "F3-custom.png"
+    },
+    {
+      "id": "F4-picked",
+      "covers": "",
+      "note": "고른 색이 테두리와 체크로 표시된다",
+      "shot": "F4-picked.png"
+    },
+    {
+      "id": "F5-closed",
+      "covers": "",
+      "note": "닫으면 간결한 줄로 돌아온다",
+      "shot": "F5-closed.png"
+    },
+    {
+      "id": "F6-caption",
+      "covers": "",
+      "note": "문구 넣기 창",
+      "shot": "F6-caption.png"
+    },
+    {
+      "id": "F7-caption-typed",
+      "covers": "",
+      "note": "실패 — element (\"~문구 적용\") still not existing after 6000ms",
+      "shot": "F7-caption-typed.png"
+    },
+    {
+      "id": "F8-caption-pick",
+      "covers": "",
+      "note": "실패 — element (\"~문구 고르기\") still not existing after 6000ms",
+      "shot": "F8-caption-pick.png"
+    },
+    {
+      "id": "F9-caption-move",
+      "covers": "",
+      "note": "실패 — element (\"~문구 크게\") still not existing after 5000ms",
+      "shot": "F9-caption-move.png"
+    },
+    {
+      "id": "F10-motion",
+      "covers": "",
+      "note": "실패 — element (\"~움직이기\") still not existing after 8000ms",
+      "shot": "F10-motion.png"
+    }
+  ],
+  "skipped": [
+    {
+      "id": "F11-motion-applied",
+      "covers": "",
+      "reason": "앞 단계(F10-motion) 실패로 실행하지 못함"
+    },
+    {
+      "id": "F12-save",
+      "covers": "",
+      "reason": "앞 단계(F10-motion) 실패로 실행하지 못함"
+    },
+    {
+      "id": "F13-restart",
+      "covers": "",
+      "reason": "앞 단계(F10-motion) 실패로 실행하지 못함"
+    },
+    {
+      "id": "F14-settings",
+      "covers": "",
+      "reason": "앞 단계(F10-motion) 실패로 실행하지 못함"
+    },
+    {
+      "id": "F15-review-on",
+      "covers": "",
+      "reason": "앞 단계(F10-motion) 실패로 실행하지 못함"
+    },
+    {
+      "id": "F16-board",
+      "covers": "",
+      "reason": "앞 단계(F10-motion) 실패로 실행하지 못함"
+    },
+    {
+      "id": "F17-export",
+      "covers": "",
+      "reason": "앞 단계(F10-motion) 실패로 실행하지 못함"
+    },
+    {
+      "id": "F18-menu",
+      "covers": "",
+      "reason": "앞 단계(F10-motion) 실패로 실행하지 못함"
+    }
+  ],
+  "notes": [
+    "F7-caption-typed 실패: element (\"~문구 적용\") still not existing after 6000ms",
+    "F8-caption-pick 실패: element (\"~문구 고르기\") still not existing after 6000ms",
+    "F9-caption-move 실패: element (\"~문구 크게\") still not existing after 5000ms",
+    "F10-motion 실패(이후 중단): element (\"~움직이기\") still not existing after 8000ms"
+  ],
+  "crashes": [],
+  "closedBecause": "done",
+  "finishedAt": "2026-09-12T20:52:36.805Z"
+}

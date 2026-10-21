@@ -1,0 +1,175 @@
+{
+  "startedAt": "2026-09-14T20:46:24.569Z",
+  "steps": [
+    {
+      "name": "00-install",
+      "status": "ok",
+      "ms": 11840,
+      "detail": "Success"
+    },
+    {
+      "name": "01-installed-build",
+      "status": "ok",
+      "ms": 416,
+      "detail": "versionCode=1 minSdk=24 targetSdk=36\r\n    versionName=1.0.0\r\n    lastUpdateTime=2026-09-15 05:46:36"
+    },
+    {
+      "name": "02-startup-background",
+      "status": "ok",
+      "ms": 29305,
+      "detail": {
+        "samples": [
+          0.002,
+          0.041,
+          0.041,
+          0.041,
+          0.041,
+          0.041,
+          0.003,
+          0.041,
+          0.041,
+          0.041,
+          0.041,
+          0.041,
+          0.001,
+          0.041,
+          0.041,
+          0.041,
+          0.041,
+          0.041,
+          0.04,
+          0.041,
+          0.041,
+          0.041
+        ],
+        "worst": 0.041
+      }
+    },
+    {
+      "name": "03-home",
+      "status": "ok",
+      "ms": 6915,
+      "detail": null
+    },
+    {
+      "name": "04-new-set-canvas",
+      "status": "ok",
+      "ms": 33097,
+      "detail": null
+    },
+    {
+      "name": "05-draw-stroke",
+      "status": "ok",
+      "ms": 3805,
+      "detail": null
+    },
+    {
+      "name": "06-brush-retap-sheet",
+      "status": "ok",
+      "ms": 17738,
+      "detail": null
+    },
+    {
+      "name": "07-canvas-size-drag",
+      "status": "ok",
+      "ms": 6526,
+      "detail": null
+    },
+    {
+      "name": "08-color-and-recent",
+      "status": "ok",
+      "ms": 13578,
+      "detail": [
+        "최근 색 #54A9E8"
+      ]
+    },
+    {
+      "name": "09-eraser-same-control",
+      "status": "ok",
+      "ms": 21047,
+      "detail": null
+    },
+    {
+      "name": "10-undo-redo",
+      "status": "ok",
+      "ms": 6605,
+      "detail": null
+    },
+    {
+      "name": "11-reference-layers",
+      "status": "ok",
+      "ms": 13645,
+      "detail": null
+    },
+    {
+      "name": "12-caption-direct",
+      "status": "ok",
+      "ms": 15994,
+      "detail": null
+    },
+    {
+      "name": "13-motion-quick",
+      "status": "ok",
+      "ms": 43322,
+      "detail": {
+        "canvasChangeBetweenFrames": {
+          "통통": 0.0117,
+          "흔들기": 0.0143,
+          "두근거리기": 0.012,
+          "움직임 없음": 0
+        }
+      }
+    },
+    {
+      "name": "13b-back-to-draw",
+      "status": "ok",
+      "ms": 4725,
+      "detail": null
+    },
+    {
+      "name": "14-complete-next",
+      "status": "ok",
+      "ms": 9078,
+      "detail": null
+    },
+    {
+      "name": "15-previous-start-and-motion-panel",
+      "status": "ok",
+      "ms": 22623,
+      "detail": {
+        "canvasChangeBetweenFrames": 0
+      }
+    },
+    {
+      "name": "16-board",
+      "status": "ok",
+      "ms": 11078,
+      "detail": null
+    },
+    {
+      "name": "17-export",
+      "status": "ok",
+      "ms": 20382,
+      "detail": {
+        "swipes": 1
+      }
+    },
+    {
+      "name": "18-logcat-errors",
+      "status": "ok",
+      "ms": 472,
+      "detail": 0
+    }
+  ],
+  "device": {
+    "model": "SM-S928N",
+    "android": "16",
+    "size": "Physical size: 1080x2340",
+    "density": "Physical density: 450"
+  },
+  "apk": {
+    "path": "verification\\apk-keep\\app-39th-qa2-motionfix-debugsigned-arm64-e498dc36e01d.apk",
+    "sha256": "e498dc36e01d74fadf1dece9f95eb57f3bdec7807a20a6f62f16b9fc9c58798f"
+  },
+  "finishedAt": "2026-09-14T20:51:30.387Z"
+}

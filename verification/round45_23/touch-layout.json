@@ -1,0 +1,236 @@
+[
+  {
+    "id": "draw-color",
+    "name": "스포이드",
+    "why": "45.24: 이름 집기 → 색 추출",
+    "boxW": 48,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-color",
+    "name": "내 팔레트에 저장",
+    "why": "45.24: 이름 담기 → 색 저장",
+    "boxW": 48,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-base",
+    "name": "지우개",
+    "why": "45.24: 이름을 다시 붙였다",
+    "boxW": 46,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 1,
+      "bottom": 0,
+      "left": 1
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-base",
+    "name": "채우기",
+    "why": "45.24: 이름을 다시 붙였다",
+    "boxW": 46,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 1,
+      "bottom": 0,
+      "left": 1
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-base",
+    "name": "선택",
+    "why": "45.24: 같은 줄 이웃",
+    "boxW": 46,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 1,
+      "bottom": 0,
+      "left": 1
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-color",
+    "name": "색 #54A9E8",
+    "why": "45.24: 견본이 스크롤 안으로 들어갔다",
+    "boxW": 36,
+    "boxH": 36,
+    "slop": {
+      "top": 6,
+      "right": 6,
+      "bottom": 6,
+      "left": 6
+    },
+    "tapW": 48,
+    "tapH": 48,
+    "clipW": 48,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-color",
+    "name": "팔레트",
+    "why": "45.24: 탭이 스크롤 밖으로 고정됐다",
+    "boxW": 176,
+    "boxH": 40,
+    "slop": {
+      "top": 4,
+      "right": 0,
+      "bottom": 4,
+      "left": 0
+    },
+    "tapW": 176,
+    "tapH": 48,
+    "clipW": 176,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "draw-color",
+    "name": "색",
+    "why": "45.24: 판 높이가 낮아졌다",
+    "boxW": 92.8,
+    "boxH": 48,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 92.8,
+    "tapH": 48,
+    "clipW": 92.8,
+    "clipH": 48,
+    "overlaps": []
+  },
+  {
+    "id": "home-empty",
+    "name": "안녕 표현 보기",
+    "why": "45.24: 이름 한 줄이 들어갔다",
+    "boxW": 114,
+    "boxH": 114,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 114,
+    "tapH": 114,
+    "clipW": 114,
+    "clipH": 114,
+    "overlaps": []
+  },
+  {
+    "id": "home-empty",
+    "name": "신나 표현 보기",
+    "why": "45.24: 이름 한 줄이 들어갔다",
+    "boxW": 114,
+    "boxH": 114,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 114,
+    "tapH": 114,
+    "clipW": 114,
+    "clipH": 114,
+    "overlaps": []
+  },
+  {
+    "id": "home-empty",
+    "name": "잘 자 표현 보기",
+    "why": "45.24: 이름 한 줄이 들어갔다",
+    "boxW": 114,
+    "boxH": 114,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 114,
+    "tapH": 114,
+    "clipW": 114,
+    "clipH": 114,
+    "overlaps": []
+  },
+  {
+    "id": "pro",
+    "name": "월간 고르기",
+    "why": "45.24: 비교 그림이 바뀐 화면",
+    "boxW": 175,
+    "boxH": 94,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 175,
+    "tapH": 94,
+    "clipW": 175,
+    "clipH": 94,
+    "overlaps": []
+  },
+  {
+    "id": "pro",
+    "name": "연간 고르기",
+    "why": "45.24: 비교 그림이 바뀐 화면",
+    "boxW": 175,
+    "boxH": 94,
+    "slop": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "tapW": 175,
+    "tapH": 94,
+    "clipW": 175,
+    "clipH": 94,
+    "overlaps": []
+  }
+]

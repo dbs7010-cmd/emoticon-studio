@@ -1,0 +1,19 @@
+{
+  "before": {
+    "yellowFills": 3,
+    "primaryActions": 1,
+    "textNodes": 43,
+    "textNodesCollapsed": 0,
+    "cards": 5,
+    "sectionLabels": 5
+  },
+  "after": {
+    "yellowFills": 0,
+    "primaryActions": 1,
+    "textNodes": 41,
+    "textNodesCollapsed": 5,
+    "cards": 6,
+    "sectionLabels": 3,
+    "textNodesVisibleByDefault": 36
+  }
+}

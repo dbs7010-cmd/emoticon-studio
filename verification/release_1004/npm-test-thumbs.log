@@ -1,0 +1,16 @@
+FAIL node scripts/ui-structure-test.cjs
+AssertionError [ERR_ASSERTION]: 공지에도 그림 자리는 남는다
+
+0 !== 1
+
+    at C:\Dev\emoticon-studio\scripts\ui-structure-test.cjs:113:16 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+FAIL node scripts/asset-contract-test.cjs
+AssertionError [ERR_ASSERTION]: 자리의 source 를 넣으면 그 화면이 그 그림을 그린다
++ actual - expected
+
++ [
++   'noticeArtwork'
++ ]
+- []

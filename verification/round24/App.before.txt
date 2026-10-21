@@ -1,0 +1,1091 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, AppState, BackHandler, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View, Image, useWindowDimensions } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Sharing from 'expo-sharing';
+import { Action, Dialog, Field, Range, styles, T } from './src/components/ui';
+import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
+import { MotionBaker, type Baker } from './src/components/motion-baker';
+import { ExtraComposer, placeInFrame, type Composer } from './src/components/extra-composer';
+import { Painter, type CopiedWork } from './src/painter/painter';
+import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC as SPEC, STAGES, WEBP_TOOL_RULE, WEBP_ANIMATOR_URL, REQUIRED_EXTRAS } from './src/constants/kakao-spec';
+import { captionText, createProject, doneCount, usesPro, droppedImagePaths, duplicateCaptions, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated } from './src/project';
+import { deleteLocalImages, exportUri, imageUri, inspectStore, loadStore, saveStore, type StoreReport } from './src/services/storage';
+import { exportSet, decodeDataUrl, type HandoffFrames } from './src/services/export';
+import { dataUrl, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
+import { identicalFinals, inspectImage } from './src/services/qa';
+import { MISSING_MODULE, PLANS, REVIEW_BUILD_NOTE, entitlementLabel, expiredButRemembered, internalReviewBuild, isPro, purchase, restore, reviewUnlocked, storeModuleAvailable } from './src/services/pro';
+import { PRESETS } from './src/painter/motion-panel';
+import type { Check, LocalImage, Motion, Project, SavedMotion, Slot, Store, QA, PainterWork } from './src/types';
+
+const colors: Record<string, string> = { PASS: '#55B989', WARNING: '#E7A93C', FAIL: '#E35C62', EMPTY: '#A5A097', DRAWING: '#67A9E8', REVIEW: '#A786DF', PLANNED: '#75C79C' };
+const C = T;
+const MASCOT = {
+  paper: require('./assets/art/mascot-paper.png'),
+  ink: require('./assets/art/mascot-ink.png'),
+  eraser: require('./assets/art/mascot-eraser.png'),
+};
+// A rough, hand-drawn mark: friendly, and never better drawn than the user's own work.
+function Doodle() {
+  return <View style={{ width: 96, height: 64, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: 70, height: 46, borderRadius: 16, borderWidth: 2, borderColor: '#D8D1C6', transform: [{ rotate: '-3deg' }] }} />
+    <View style={{ position: 'absolute', left: 26, top: 24, width: 7, height: 7, borderRadius: 4, backgroundColor: C.ink }} />
+    <View style={{ position: 'absolute', left: 46, top: 24, width: 7, height: 7, borderRadius: 4, backgroundColor: C.ink }} />
+    <View style={{ position: 'absolute', left: 33, top: 38, width: 18, height: 2, borderRadius: 2, backgroundColor: C.ink, transform: [{ rotate: '4deg' }] }} />
+    <View style={{ position: 'absolute', right: 6, top: 6, width: 10, height: 2, borderRadius: 2, backgroundColor: C.yellow, transform: [{ rotate: '40deg' }] }} />
+    <View style={{ position: 'absolute', right: 10, top: 2, width: 2, height: 10, borderRadius: 2, backgroundColor: C.yellow, transform: [{ rotate: '40deg' }] }} />
+  </View>;
+}
+function mergeImages(existing: LocalImage[], added: LocalImage[]) { return [...existing, ...added.filter(image => !existing.some(current => current.path === image.path))]; }
+export default function App() { return <SafeAreaProvider><Studio /></SafeAreaProvider>; }
+function Studio() {
+  const [store, setStore] = useState<Store | null>(null), current = useRef<Store | null>(null);
+  const [loadError, setLoadError] = useState(''), [saveError, setSaveError] = useState(''), [notice, setNotice] = useState('');
+  // What the files on this device actually looked like. Kept so a failure can be read here
+  // instead of guessed at, and so nothing has to be deleted to find out.
+  const [report, setReport] = useState<StoreReport | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null), [slotNumber, setSlotNumber] = useState<number | null>(null), [canonOpen, setCanonOpen] = useState(false), [painting, setPainting] = useState(false);
+  const [busy, setBusy] = useState('');
+  const [menu, setMenu] = useState(false);
+  const [manageId, setManageId] = useState<string | null>(null), [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [screen, setScreen] = useState<'board' | 'export' | 'batch' | 'extras'>('board');
+  const [batchSource, setBatchSource] = useState<number | null>(null), [batchPicked, setBatchPicked] = useState<number[]>([]);
+  const [batchSaved, setBatchSaved] = useState<string | null>(null), [batchReplace, setBatchReplace] = useState(true);
+  // 적용하기 전에 한 칸을 실제로 만들어 보는 미리보기. 파일로 쓰지 않고 데이터 그대로 들고 있다가
+  // 화면을 떠날 때 버린다 — 확인하기 전에는 저장된 작품이 한 글자도 바뀌지 않는다.
+  const [batchPreview, setBatchPreview] = useState<{ number: number; data: string; loop: number; bytes: number } | null>(null);
+  const [previewing, setPreviewing] = useState(false);
+  const [plan, setPlan] = useState<'monthly' | 'yearly'>('monthly');
+  const [stage, setStage] = useState<'proposal' | 'release'>('proposal');
+  // 부가 이미지 만들기. 고른 컷을 프레임 안에서 옮기고 키우기만 한다 — 원본 컷은 건드리지 않는다.
+  const [extraKind, setExtraKind] = useState<'icon' | 'share' | 'cover'>('icon');
+  const [extraSlot, setExtraSlot] = useState<number | null>(null);
+  const [place, setPlace] = useState({ scale: 1, dx: 0, dy: 0 });
+  const composer = useRef<Composer>(null);
+  const [settings, setSettings] = useState(false);
+  const [playing, setPlaying] = useState(false), [playIndex, setPlayIndex] = useState(0);
+  const [batchResults, setBatchResults] = useState<{ number: number; ok: boolean; reason?: string }[]>([]);
+  // Where a fix came from, so finishing one returns to the export run instead of dropping the user.
+  const [returnToExport, setReturnToExport] = useState(false), [reordering, setReordering] = useState(false);
+  const [lastExport, setLastExport] = useState<{ path: string; count: number } | null>(null);
+  // 마지막으로 내보낸 묶음에 실제로 들어간 프레임. 만들기 전에는 장수를 알 수 없으므로 추측해 적지 않는다.
+  const [handoffCuts, setHandoffCuts] = useState<{ number: number; count: number; delayMs: number }[]>([]);
+  const [proSheet, setProSheet] = useState(false), [proBusy, setProBusy] = useState('');
+  const entitlement = store?.entitlement;
+  // 내부 검수 빌드에서만 검수용 해제가 함께 인정된다. 출시 구성에서는 reviewUnlocked() 가 늘 거짓이라
+  // 저장소에 값이 남아 있어도 효력이 없다 — 검수하며 만든 작품은 남고, 권한만 따라오지 않는다.
+  const pro = isPro(entitlement) || reviewUnlocked(store ?? undefined);
+  const { width: screenWidth } = useWindowDimensions();
+  // 폰 3열 / 태블릿 4~6열. 칸 자체가 커지는 것이 아니라 한 화면에 더 들어간다.
+  const columns = screenWidth >= 900 ? 6 : screenWidth >= 600 ? 4 : 3;
+  const tileWidth = (screenWidth - T.gap.lg * 2 - T.gap.sm * (columns - 1)) / columns;
+  const projectCardWidth = (screenWidth - T.gap.lg * 2 - T.gap.md) / 2;
+  const analyzer = useRef<Analyzer>(null), baker = useRef<Baker>(null);
+  function load() {
+    try {
+      const result = loadStore();
+      current.current = result.store; setStore(result.store); setLoadError(''); setReport(result.report);
+      if (result.recovered) setNotice('저장 사본 하나가 손상되어 다른 사본으로 열었습니다. 손상된 파일은 지우지 않았습니다.');
+    } catch (e) {
+      // Nothing is written or removed on this path: the files stay exactly as they are found.
+      const found = (e as { report?: StoreReport }).report ?? safely(inspectStore);
+      setLoadError(String(e)); setReport(found ?? null);
+      if (found) console.error('[emoticon-studio] 저장 파일을 읽지 못했습니다', JSON.stringify(found, null, 2));
+    }
+  }
+  function safely<T>(read: () => T): T | null { try { return read(); } catch { return null; } }
+  // Hands the file over exactly as it is on disk. Reading only: the damaged original stays put,
+  // and a copy of it is what makes the cause findable off the device.
+  function shareSnapshot(name: string) {
+    void task('저장 파일 꺼내는 중…', async () => {
+      if (!await Sharing.isAvailableAsync()) throw new Error('이 기기에서는 파일을 내보낼 수 없어요.');
+      await Sharing.shareAsync(exportUri(name), { mimeType: 'application/json', UTI: 'public.json' });
+    });
+  }
+  useEffect(load, []);
+  function commit(transform: (s: Store) => Store) {
+    if (!current.current) throw new Error('저장소가 준비되지 않았습니다.');
+    const previous = current.current;
+    const next = { ...transform(previous), revision: previous.revision + 1 };
+    current.current = next; setStore(next);
+    // Persist first. Only once the snapshot is on disk may the files it no longer references go.
+    // On failure keep the edit in memory: the retry banner exists to write exactly this state,
+    // and the last good snapshot on disk still points at assets nothing has deleted.
+    try { saveStore(next); setSaveError(''); } catch (e) { setSaveError(String(e)); throw e; }
+    deleteLocalImages(droppedImagePaths(previous, next));
+  }
+  function changeProject(id: string, transform: (p: Project) => Project) { commit(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...transform(p), updatedAt: new Date().toISOString() } : p) })); }
+  function updateProject(transform: (p: Project) => Project) { if (projectId) { try { changeProject(projectId, transform); } catch { /* Keep unsaved state with persistent retry banner. */ } } }
+  const project = store?.projects.find(p => p.id === projectId), slot = project?.slots.find(s => s.number === slotNumber);
+  function back() { if (busy) return; if (slotNumber !== null) setSlotNumber(null); else if (canonOpen) setCanonOpen(false); else if (screen !== 'board') setScreen('board'); else setProjectId(null); }
+  useEffect(() => { const sub = BackHandler.addEventListener('hardwareBackPress', () => { if (painting) return false; if (projectId) { back(); return true; } return false; }); return () => sub.remove(); }, [projectId, slotNumber, canonOpen, busy, painting, screen]);
+  async function task(label: string, work: () => Promise<void>) { if (busy) return; setBusy(label); try { await work(); } catch (e) { Alert.alert('작업 실패', String(e)); } finally { setBusy(''); } }
+  async function analyzed(image: LocalImage): Promise<LocalImage> { if (image.metrics) return image; try { return { ...image, metrics: await analyzer.current!.analyze(image) }; } catch { setNotice('일부 픽셀 분석을 수행하지 못했습니다. 해당 검사는 WARNING으로 표시합니다.'); return image; } }
+  // Re-reads the saved files and replaces every verdict. No earlier PASS survives this.
+  async function recheckAll() {
+    if (!project) return;
+    const id = project.id;
+    await task('이미지 검수 중…', async () => {
+      const checked = new Map<number, Slot>();
+      for (const s of project.slots) {
+        const finalImage = s.finalImage ? await analyzed(s.finalImage) : undefined;
+        const qa = inspectImage(s.motionImage ?? finalImage, s.motion ? KAKAO_ANIMATED_SPEC : SPEC);
+        checked.set(s.number, { ...s, finalImage, qa, status: finalImage ? qa.status : s.status });
+      }
+      changeProject(id, p => ({ ...p, slots: p.slots.map(s => checked.get(s.number) ?? s) }));
+      setNotice('저장된 그림을 다시 검사했어요.');
+    });
+  }
+  // Autosave preserves work; `complete` is the user saying this cut is finished. Re-editing a
+  // finished cut puts it back to 작업 중 and throws the old verdict away, so nothing carries a
+  // check that was run against a different picture.
+  function saveFinal(finalImage: LocalImage, work?: PainterWork, dialogue?: string, complete = false, motion?: Motion, motionImage?: LocalImage, submitImage?: LocalImage) {
+    if (!project || !slot) return;
+    let qa: QA;
+    try { qa = inspectImage(motionImage ?? finalImage, motion ? KAKAO_ANIMATED_SPEC : SPEC); }
+    catch { qa = { status: 'WARNING', checkedAt: new Date().toISOString(), checks: [{ label: '자동 검사', status: 'WARNING', detail: '검사를 마치지 못했어요. 다시 저장해 주세요.' }], consistency: [], notes: [] }; }
+    // A blank canvas is never a finished cut, whatever the button said.
+    const done = complete && (finalImage.metrics?.coverage ?? 0) > 0;
+    const id = project.id, number = slot.number;
+    try {
+      changeProject(id, p => ({ ...p, lastSlot: number, slots: p.slots.map(s => s.number === number ? { ...s, finalImage, work, dialogue: dialogue ?? s.dialogue, qa, done, status: qa.status, motion, motionImage, submitImage } : s) }));
+    } catch (e) {
+      // The drawing stays in memory and the retry banner will write it. The completion claim does
+      // not stand, though: a count must never report something the disk never accepted.
+      if (done && current.current) {
+        const held = current.current;
+        const corrected = { ...held, projects: held.projects.map(p => p.id === id ? { ...p, slots: p.slots.map(s => s.number === number ? { ...s, done: false } : s) } : p) };
+        current.current = corrected; setStore(corrected);
+        setNotice('저장하지 못해서 완성으로 표시하지 않았어요. 위의 다시 저장을 눌러 주세요.');
+      }
+      throw e;
+    }
+    return qa;
+  }
+  // "완성 · 다음" lands on a cut that is still open, and hands over an empty canvas: copying the
+  // last drawing is a separate, explicit action inside the painter.
+  function completeAndNext() {
+    const latest = current.current?.projects.find(p => p.id === projectId);
+    if (!latest || slotNumber === null) return;
+    const next = nextUnfinished(latest, slotNumber);
+    if (next === null) {
+      setPainting(false); setSlotNumber(null);
+      if (returnToExport) { setScreen('export'); setReturnToExport(false); }
+      else { setScreen('board'); setNotice('모든 칸을 완성했어요. 전체를 훑어보고 내보내기로 넘어가세요.'); }
+      return;
+    }
+    setSlotNumber(next);
+  }
+  // The set reference is a snapshot: it points at the PNG as it was when chosen, so later edits
+  // to that cut create a new file and leave this one alone.
+  function useAsReference() {
+    const latest = current.current?.projects.find(p => p.id === projectId)?.slots.find(s => s.number === slotNumber);
+    if (!latest?.finalImage || !((latest.finalImage.metrics?.coverage ?? 0) > 0)) { setNotice('먼저 이 칸에 그림을 그려 주세요. 빈 그림은 기준으로 삼을 수 없어요.'); return; }
+    updateProject(p => ({ ...p, canon: { ...p.canon, image: latest.finalImage } }));
+    setNotice('이 그림을 세트의 기준 그림으로 삼았어요. 이 칸을 나중에 고쳐도 기준 그림은 그대로예요.');
+  }
+  async function copyPreviousWork(): Promise<CopiedWork | null> {
+    const latest = current.current?.projects.find(p => p.id === projectId);
+    if (!latest || slotNumber === null) return null;
+    const source = previousDrawn(latest, slotNumber);
+    if (!source?.work) return null;
+    const layers = await Promise.all(source.work.layers.map(async ({ image, ...rest }) => ({ ...rest, data: image ? await dataUrl(image) : undefined })));
+    return { layers, caption: source.work.caption };
+  }
+  // Offering the last finished cut as a reference is a suggestion; adopting it is the user's tap.
+  function adoptPrevious() {
+    const latest = current.current?.projects.find(p => p.id === projectId);
+    const source = latest && slotNumber !== null ? previousDrawn(latest, slotNumber) : undefined;
+    if (!source?.finalImage) return;
+    updateProject(p => ({ ...p, canon: { ...p.canon, image: source.finalImage } }));
+    setNotice('직전 그림을 세트의 기준 그림으로 삼았어요.');
+  }
+  function createNewProject() {
+    const taken = new Set((current.current?.projects ?? []).map(p => p.projectName));
+    let name = '새 이모티콘 세트';
+    for (let n = 2; taken.has(name); n++) name = `새 이모티콘 세트 ${n}`;
+    const p = createProject(name, '');
+    // Nothing is asked for first: the new set opens on its own empty canvas.
+    try { commit(s => ({ ...s, projects: [...s.projects, p] })); setProjectId(p.id); setScreen('board'); setSlotNumber(1); setPainting(true); }
+    catch (e) { Alert.alert('저장 실패', String(e)); }
+  }
+  const [pendingImport, setPendingImport] = useState<string | null>(null);
+  function startFromImage() {
+    void task('그림을 여는 중…', async () => {
+      const picked = await pickImages();
+      if (!picked[0]) return;
+      const data = await dataUrl(picked[0]);
+      const taken = new Set((current.current?.projects ?? []).map(p => p.projectName));
+      let name = '새 이모티콘 세트';
+      for (let n = 2; taken.has(name); n++) name = `새 이모티콘 세트 ${n}`;
+      const p = createProject(name, '');
+      commit(s => ({ ...s, projects: [...s.projects, p] }));
+      setPendingImport(data); setProjectId(p.id); setScreen('board'); setSlotNumber(1); setPainting(true);
+    });
+  }
+  function drawFrom(number?: number) {
+    if (!project) return;
+    const target = number ?? nextUnfinished(project, project.lastSlot ?? 0) ?? project.lastSlot ?? 1;
+    setScreen('board'); setSlotNumber(target); setPainting(true);
+  }
+  function deleteProject(id: string) {
+    const target = current.current?.projects.find(p => p.id === id);
+    if (!target) return;
+    try { commit(s => ({ ...s, projects: s.projects.filter(p => p.id !== id) })); }
+    catch (e) { Alert.alert('삭제 실패', String(e)); return; }
+    if (id === projectId) { setProjectId(null); setSlotNumber(null); setCanonOpen(false); }
+    setConfirmDeleteId(null); setManageId(null);
+    setNotice(`${target.projectName} 세트를 삭제했어요.`);
+  }
+  // A movement someone liked is kept at the store level, so it can be opened again from any cut of
+  // any set. The name is made from the settings themselves: nobody has to invent one mid-drawing.
+  function motionName(motion: Motion) {
+    const preset = PRESETS.find(p => p.id === motion.preset)?.label;
+    const parts = motion.parts?.length ? `부분 ${motion.parts.length}` : null;
+    const pose = motion.alternate ? '두 모습' : null;
+    return [preset, parts, pose].filter(Boolean).join(' · ') || '움직임';
+  }
+  function saveMotion(motion: Motion) {
+    const kept = store?.savedMotions ?? [];
+    const body = JSON.stringify(motion);
+    if (kept.some(s => JSON.stringify(s.motion) === body)) { setNotice('같은 움직임이 이미 보관되어 있어요.'); return; }
+    const base = motionName(motion);
+    const same = kept.filter(s => s.name === base || s.name.startsWith(base + ' (')).length;
+    const saved: SavedMotion = { id: 'm-' + Date.now().toString(36), name: same ? `${base} (${same + 1})` : base, motion };
+    try { commit(s => ({ ...s, savedMotions: [saved, ...(s.savedMotions ?? [])].slice(0, 12) })); setNotice(`${saved.name} 움직임을 보관했어요.`); }
+    catch (e) { setNotice('움직임을 보관하지 못했어요. ' + String(e).replace(/^Error:s*/, '')); }
+  }
+  const EXTRA_FRAMES = { icon: { width: 78, height: 78 }, share: { width: 600, height: 166 } } as const;
+  async function makeExtra() {
+    if (!project || extraSlot === null) return;
+    const slot = project.slots.find(s => s.number === extraSlot);
+    if (!slot?.finalImage) { setNotice('그림이 있는 칸을 골라 주세요.'); return; }
+    if (extraKind === 'cover') {
+      // 대표 이미지는 새로 만드는 그림이 아니라 고르는 것이다 — 가이드가 그렇게 정했다.
+      changeProject(project.id, p => ({ ...p, extras: { ...p.extras, coverSlot: extraSlot } }));
+      setNotice(`${pad(extraSlot)}번을 대표 이미지로 정했어요.`);
+      return;
+    }
+    const frame = EXTRA_FRAMES[extraKind];
+    await task('부가 이미지를 만드는 중…', async () => {
+      const source = await dataUrl(slot.finalImage!);
+      const data = await composer.current!.compose(source, frame, place, null);
+      const image = saveCutout(data);
+      changeProject(project.id, p => ({ ...p, extras: { ...p.extras, [extraKind]: image } }));
+      setNotice(`${extraKind === 'icon' ? '아이콘' : '공유'} 이미지를 만들었어요. 원본 ${pad(extraSlot)}번은 그대로예요.`);
+    });
+  }
+  function keepCutout(data: string) {
+    const image = saveCutout(data);
+    const kept = store?.cutouts ?? [];
+    const name = `보관한 그림 ${kept.length + 1}`;
+    try {
+      commit(s => ({ ...s, cutouts: [{ id: 'cut-' + Date.now().toString(36), name, image }, ...(s.cutouts ?? [])].slice(0, 40) }));
+      return name;
+    } catch (e) { setNotice('그림을 보관하지 못했어요. ' + String(e).replace(/^Error:\s*/, '')); return null; }
+  }
+  function forgetCutout(id: string) {
+    try { commit(s => ({ ...s, cutouts: (s.cutouts ?? []).filter(c => c.id !== id) })); }
+    catch (e) { setNotice('보관을 지우지 못했어요. ' + String(e).replace(/^Error:\s*/, '')); }
+  }
+  function forgetMotion(id: string) {
+    try { commit(s => ({ ...s, savedMotions: (s.savedMotions ?? []).filter(saved => saved.id !== id) })); }
+    catch (e) { setNotice('보관을 지우지 못했어요. ' + String(e).replace(/^Error:s*/, '')); }
+  }
+  function rememberColor(color: string) {
+    try { commit(s => ({ ...s, palette: [color, ...(s.palette ?? []).filter(c => c !== color)].slice(0, 8) })); } catch { /* colour history is a convenience, never a blocker */ }
+  }
+  // Deterministic set-level checks over the saved files themselves. Everything here works offline,
+  // and nothing here is a judgement about the artwork: those belong to the person drawing it.
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const setChecks: Check[] = !project || screen !== 'export' ? [] : [
+    ...(() => {
+      const missing = project.slots.filter(s => !isDone(s)).length;
+      return missing ? [{ label: '남은 칸', status: (missing === SPEC.count ? 'FAIL' : 'WARNING') as Check['status'], detail: `${missing}칸이 아직 완성되지 않았어요.` }] : [];
+    })(),
+    ...project.slots.filter(s => s.finalImage && (s.finalImage.width !== SPEC.width || s.finalImage.height !== SPEC.height))
+      .map(s => ({ label: `${pad(s.number)}번 크기`, status: 'FAIL' as const, detail: `${SPEC.width}×${SPEC.height}가 아니에요. 이 칸을 다시 저장하면 맞춰져요.`, slot: s.number })),
+    ...project.slots.filter(s => s.finalImage && s.finalImage.metrics && !s.finalImage.metrics.transparent)
+      .map(s => ({ label: `${pad(s.number)}번 배경`, status: 'FAIL' as const, detail: '배경이 투명하지 않아요.', slot: s.number })),
+    ...identicalFinals(project).map(group => ({ label: '같은 그림', status: 'WARNING' as const, detail: `${group.map(pad).join(', ')}번 파일이 완전히 같아요. 그대로 둘지 직접 판단해 주세요.`, slot: group[1] })),
+    ...duplicateCaptions(project.slots).map(group => ({ label: '겹친 문구', status: 'WARNING' as const, detail: `${group.map(pad).join(', ')}번 문구가 같아요.`, slot: group[1] })),
+    ...project.slots.filter(s => s.qa?.status === 'FAIL').map(s => ({ label: `${pad(s.number)}번 검사`, status: 'FAIL' as const, detail: '자동 검사에서 문제가 나왔어요.', slot: s.number })),
+  ];
+  // A purchase only ever lands here, and only when the store said it happened.
+  async function startPurchase(plan: 'monthly' | 'yearly') {
+    setProBusy('스토어와 연결하는 중…');
+    const outcome = await purchase(plan);
+    setProBusy('');
+    if (outcome.state === 'cancelled') { setNotice('결제를 취소했어요. 작업은 그대로예요.'); return; }
+    if (outcome.state === 'unavailable') { setNotice(outcome.reason); return; }
+    try { commit(st => ({ ...st, entitlement: outcome.entitlement })); setProSheet(false); setNotice('PRO를 시작했어요.'); }
+    catch (e) { setNotice('이용권을 저장하지 못했어요. 다시 저장을 눌러 주세요. ' + String(e)); }
+  }
+  async function restorePro() {
+    setProBusy('구매 내역을 확인하는 중…');
+    const outcome = await restore();
+    setProBusy('');
+    if (outcome.state !== 'purchased') { setNotice(outcome.state === 'unavailable' ? outcome.reason : '복원할 구매가 없어요.'); return; }
+    try { commit(st => ({ ...st, entitlement: outcome.entitlement })); setProSheet(false); setNotice('PRO를 복원했어요.'); }
+    catch (e) { setNotice('이용권을 저장하지 못했어요. ' + String(e)); }
+  }
+  // Applying one movement to several cuts. Each cut is rebuilt for real — a cut the board calls
+  // moving must ship a moving file — and each one reports for itself, so a failure in the middle
+  // never looks like a success and never touches the cuts that did work.
+  async function applyMotionToMany(motion: Motion, numbers: number[], replace = true) {
+    if (!project || !numbers.length) return;
+    const id = project.id;
+    setBatchResults([]);
+    await task(`${numbers.length}칸에 적용하는 중…`, async () => {
+      const done: number[] = [], failed: { number: number; reason: string }[] = [];
+      for (const number of numbers) {
+        const slot = current.current?.projects.find(p => p.id === id)?.slots.find(s => s.number === number);
+        if (!slot?.work) { failed.push({ number, reason: '아직 그림이 없어요' }); continue; }
+        if (!replace && slot.motion) { failed.push({ number, reason: '이미 있는 움직임을 그대로 두었어요' }); continue; }
+        try {
+          const loop = await baker.current!.bake(slot.work, motion);
+          const motionImage = saveMotionLoop(loop.data);
+          // 제출 형식도 이 자리에서 다시 만든다. 새 움직임만 넣고 WebP 를 그대로 두면 묶음에는
+          // 예전 움직임의 WebP 가 실려 나간다 — 화면은 새 움직임을 보여 주면서.
+          let submitImage: LocalImage | undefined;
+          if (loop.webp) { try { submitImage = saveSubmitLoop(loop.webp); } catch { submitImage = undefined; } }
+          const qa = inspectImage(motionImage, KAKAO_ANIMATED_SPEC);
+          changeProject(id, p => ({ ...p, slots: p.slots.map(s => s.number === number ? { ...s, motion, motionImage, submitImage, qa, status: qa.status } : s) }));
+          done.push(number);
+        } catch (e) { failed.push({ number, reason: String(e).replace(/^Error:\s*/, '') }); }
+      }
+      setBatchResults([...done.map(number => ({ number, ok: true as const })), ...failed.map(f => ({ number: f.number, ok: false as const, reason: f.reason }))]);
+      setNotice(failed.length ? `${done.length}칸에 적용했고 ${failed.length}칸은 실패했어요. 실패한 칸만 다시 시도할 수 있어요.` : `${done.length}칸에 같은 움직임을 적용했어요.`);
+    });
+  }
+  async function previewOnOne(motion: Motion, number: number) {
+    const slot = current.current?.projects.find(p => p.id === projectId)?.slots.find(s => s.number === number);
+    if (!slot?.work) { setNotice(`${pad(number)}번은 아직 그림이 없어 미리 만들어 볼 수 없어요.`); return; }
+    setPreviewing(true);
+    try {
+      const loop = await baker.current!.bake(slot.work, motion);
+      setBatchPreview({ number, data: loop.data, loop: loop.loop, bytes: loop.bytes });
+    } catch (e) { setNotice('미리보기를 만들지 못했어요. ' + String(e).replace(/^Error:\s*/, '')); }
+    finally { setPreviewing(false); }
+  }
+  // Stepping through the finished cuts. A moving cut plays its own loop; a still one holds.
+  useEffect(() => {
+    if (!playing || !project) return;
+    const made = project.slots.filter(s => s.finalImage);
+    if (made.length < 2) { setPlaying(false); return; }
+    const timer = setInterval(() => setPlayIndex(i => (i + 1) % made.length), 900);
+    return () => clearInterval(timer);
+  }, [playing, project?.id, project?.slots.filter(s => s.finalImage).length]);
+  function moveSlot(from: number, to: number) { updateProject(p => reorderSlots(p, from, to)); }
+  function fixSlot(number: number) { setReturnToExport(true); setScreen('board'); setSlotNumber(number); setPainting(true); }
+  // 공식 도구(WebPAnimator)에 넣을 PNG 프레임을 **지금** 만든다. 저장할 때마다 만들어 두면
+  // 자동저장이 매번 24장을 다리 너머로 보내고 파일로 쓰게 되고, 그림이나 움직임을 고친 뒤에도
+  // 옛 프레임이 남아 지금 작품과 다른 것이 묶음에 섞인다. 여기서 만들면 둘 다 생기지 않는다.
+  // 한 칸을 만들지 못해도 나머지는 그대로 내보내고, 만들지 못한 칸을 이름으로 알려 준다.
+  async function bakeHandoff(target: Project): Promise<{ handoff: HandoffFrames[]; failed: number[] }> {
+    const handoff: HandoffFrames[] = [], failed: number[] = [];
+    for (const slot of target.slots) {
+      if (!slot.work || !slot.motion || !isAnimated(slot)) continue;
+      try {
+        const loop = await baker.current!.bake(slot.work, slot.motion, true);
+        const frames = (loop.sheets ?? []).map(decodeDataUrl);
+        if (frames.length) handoff.push({ number: slot.number, frames, delayMs: loop.delayMs });
+        else failed.push(slot.number);
+      } catch { failed.push(slot.number); }
+    }
+    return { handoff, failed };
+  }
+  function exportProject() {
+    if (!project) return;
+    // 이 앱이 만드는 것은 작업 파일이다(공식 도구에 넣기 전 단계). 버튼 이름도 '작업 파일 만들기'다.
+    // '제출용 파일 만드는 중'이라고 쓰면 앱이 제출물을 만들어 준다는 말이 되어, 지켜 온 원칙과 어긋난다.
+    void task('작업 파일 만드는 중…', async () => {
+      const { handoff, failed } = await bakeHandoff(project);
+      const result = exportSet(project, handoff);
+      setLastExport({ path: result.path, count: result.count });
+      setHandoffCuts(handoff.map(cut => ({ number: cut.number, count: cut.frames.length, delayMs: cut.delayMs })));
+      const short = failed.length ? ` ${failed.map(pad).join(', ')}번은 공식 도구용 프레임을 만들지 못해 넣지 않았어요.` : '';
+      const made = (result.missing ? `${result.count}칸으로 작업 파일을 만들었어요. ${result.missing}칸은 아직 그림이 없어요.` : `${result.count}칸 전체로 작업 파일을 만들었어요.`) + short;
+      if (!await Sharing.isAvailableAsync()) { setNotice(`${made} 저장 위치: ${result.path}`); return; }
+      await Sharing.shareAsync(exportUri(result.path), { mimeType: 'application/zip', UTI: 'public.zip' });
+      // A share sheet that opened is not a file that arrived. Say only what we know.
+      setNotice(`${made} 공유 창에서 저장할 곳을 골라 주세요. 취소했다면 '다시 공유'로 언제든 다시 보낼 수 있어요.`);
+    });
+  }
+  function shareAgain() {
+    if (!lastExport) return;
+    void task('다시 공유하는 중…', async () => {
+      if (!await Sharing.isAvailableAsync()) { setNotice(`저장 위치: ${lastExport.path}`); return; }
+      await Sharing.shareAsync(exportUri(lastExport.path), { mimeType: 'application/zip', UTI: 'public.zip' });
+    });
+  }
+  const managed = store?.projects.find(p => p.id === manageId);
+  const pendingDelete = store?.projects.find(p => p.id === confirmDeleteId);
+  return <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}><StatusBar style="dark" /><ImageAnalyzer ref={analyzer} /><MotionBaker ref={baker} /><ExtraComposer ref={composer} />
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 8, minHeight: 58, borderBottomWidth: 1, borderColor: C.line }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="뒤로" disabled={!!busy} onPress={back} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24, color: C.ink }}>‹</Text></Pressable>
+        {/* 머리글자 상자는 보여 줄 글자가 있을 때만 그린다. '＋ 새 세트'로 만든 세트는 캐릭터 이름이
+            비어 있어서, 예전에는 빈 분홍 네모만 떠 깨진 그림처럼 보였다(Galaxy S23 실기기에서 확인). */}
+        {!canonOpen && (project.canon.image
+          ? <Image source={{ uri: imageUri(project.canon.image.path) }} style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: '#FFF' }} resizeMode="contain" />
+          : !!project.characterName.trim() && <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontWeight: '900' }}>{project.characterName.trim().slice(0, 1)}</Text></View>)}
+        <View style={{ flex: 1 }}><Text numberOfLines={1} style={{ fontSize: 16, color: C.ink, fontWeight: '900' }}>{canonOpen ? '기준 그림' : screen === 'export' ? '제출 준비' : screen === 'batch' ? '움직임 일괄 적용' : screen === 'extras' ? '부가 이미지' : project.projectName}</Text>{!canonOpen && <Text style={{ fontSize: 10, color: C.muted }}>{screen === 'export' ? `카카오 · ${(setIsAnimated(project) ? KAKAO_ANIMATED_SPEC : SPEC).profileLabel}` : screen === 'board' ? (setIsAnimated(project) ? KAKAO_ANIMATED_SPEC : SPEC).profileLabel : ''}</Text>}</View>
+        <Pressable accessibilityRole="button" accessibilityLabel="프로젝트 메뉴" disabled={!!busy} onPress={() => setMenu(true)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24, color: C.ink }}>⋯</Text></Pressable>
+      </View>}
+      {!!busy && <Text style={{ paddingHorizontal: 14, paddingVertical: 4, color: C.muted }}>{busy}</Text>}
+      {!!saveError && <View style={{ padding: 12, backgroundColor: '#FFE7E3' }}><Text selectable>{saveError}</Text><Action title="다시 저장" onPress={() => { try { commit(s => s); } catch {} }} /></View>}
+      <ScrollView pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.page}>
+        {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="알림 닫기" onPress={() => setNotice('')} style={{ padding: 8, borderRadius: 12, backgroundColor: '#FFF8CC' }}><Text>{notice} ×</Text></Pressable>}
+        {loadError ? <>
+          <Text style={styles.subtitle}>저장 파일을 열지 못했어요</Text>
+          <Text selectable style={styles.muted}>{loadError}</Text>
+          <Text style={{ fontSize: 12, color: C.muted, lineHeight: 18 }}>파일은 그대로 두었어요. 앱을 지우거나 저장 데이터를 삭제하지 마세요. 아래 내용을 그대로 보내주시면 원인을 찾을 수 있어요.</Text>
+          <Action title="다시 불러오기" onPress={load} />
+          {!!report && <View testID="저장 진단" style={styles.card}>
+            <Text style={styles.label}>저장 위치</Text>
+            <Text selectable style={{ fontSize: 11, color: C.ink }}>{report.directory}</Text>
+            {report.snapshots.map(file => <View key={file.name} style={{ gap: 2, borderTopWidth: 1, borderColor: C.line, paddingTop: 8 }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{file.name} · {file.exists ? `${file.bytes ?? '?'}자` : '파일 없음'}</Text>
+              <Text style={{ fontSize: 11, color: colors[file.stage === 'ok' ? 'PASS' : file.exists ? 'FAIL' : 'EMPTY'] }}>
+                {file.stage === 'ok' ? `읽기 성공 · revision ${file.revision}` : file.stage === 'read' ? (file.exists ? '파일을 여는 중 실패' : '아직 만들어지지 않음') : file.stage === 'json' ? 'JSON 구문에서 실패' : '저장 형식 검사에서 실패'}
+              </Text>
+              {!!file.error && <Text selectable style={{ fontSize: 11, color: C.muted }}>{file.error}</Text>}
+              {!!file.exists && <Text selectable style={{ fontSize: 10, color: C.muted }}>처음 {file.head}</Text>}
+              {!!file.exists && <Text selectable style={{ fontSize: 10, color: C.muted }}>끝 {file.tail}</Text>}
+              {!!file.exists && <Action title={`${file.name} 파일 내보내기`} disabled={!!busy} onPress={() => shareSnapshot(file.name)} />}
+            </View>)}
+          </View>}
+        </> : !store ? <Text>불러오는 중…</Text> : !project ? <>
+          <View style={{ marginBottom: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Image accessibilityIgnoresInvertColors source={MASCOT.paper} style={{ width: 30, height: 34 }} resizeMode="contain" />
+              <Text style={styles.title}>내 작업실</Text>
+            </View>
+
+            {/* 둘을 한 줄에 둔다. 설정을 PRO 아래(top:48)에 두면 이 머리글의 높이를 넘어서고,
+                뒤에 그려지는 세트 카드가 그 위를 덮어 눌리지 않는다(Galaxy S23 실기기에서 확인). */}
+            <View style={{ position: 'absolute', right: 0, top: 0, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Pressable accessibilityRole="button" accessibilityLabel="PRO 보기" onPress={() => setProSheet(true)} style={{ minHeight: 48, paddingHorizontal: 12, borderRadius: 24, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: pro ? C.ink : C.muted }}>{pro ? 'PRO' : 'PRO 보기'}</Text></Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel="설정" onPress={() => setSettings(true)} style={{ minHeight: 48, width: 48, alignItems: 'center', justifyContent: 'center' }}>
+                <MaterialCommunityIcons name="cog-outline" size={22} color={C.muted} />
+              </Pressable>
+            </View>
+
+          </View>
+          {!store.projects.length && <View style={{ alignItems: 'center', paddingVertical: 12, gap: 10 }}>
+            <Image accessibilityIgnoresInvertColors accessibilityLabel="종이 캐릭터" source={MASCOT.paper} style={{ width: 92, height: 102 }} resizeMode="contain" />
+            <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>아직 세트가 없어요</Text>
+            <Text style={{ fontSize: 12, color: C.muted, textAlign: 'center', lineHeight: 18 }}>새 세트를 누르면 바로 빈 캔버스가 열려요.{'\n'}먼저 정할 것도, 적을 것도 없어요.</Text>
+          </View>}
+          {/* 시안 A1: 세트는 격자 타일이 아니라 한 줄씩 쌓인 카드다. 카드 하나에 이름·유형·수정일·
+              그려 둔 컷·진행·이어서 만들기가 함께 보인다. */}
+          <View style={{ gap: 10 }}>
+            {store.projects.map(p => {
+              const made = p.slots.filter(s => s.finalImage).slice(0, 6);
+              const done = doneCount(p);
+              const working = p.slots.filter(isWorking).length;
+              const moving = setIsAnimated(p);
+              const when = new Date(p.updatedAt);
+              const stamp = Number.isFinite(when.getTime()) ? `수정일 ${when.getFullYear()}. ${when.getMonth() + 1}. ${when.getDate()}.` : '';
+              return <Pressable accessibilityRole="button" accessibilityLabel={p.projectName} key={p.id} onPress={() => { setProjectId(p.id); setScreen('board'); }}
+                style={{ backgroundColor: C.paper, borderRadius: T.radius.lg, borderWidth: 1, borderColor: C.line, padding: 12, gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text numberOfLines={1} style={{ fontSize: 15, color: C.ink, fontWeight: '900' }}>{p.projectName}</Text>
+                  <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, backgroundColor: moving ? C.accentSoft : '#E9E9EC' }}><Text style={{ fontSize: 10, fontWeight: '800', color: moving ? '#8A4B3C' : C.muted }}>{moving ? '움직이는 이모티콘' : '멈춰있는 이모티콘'}</Text></View>
+                  <View style={{ flex: 1 }} />
+                  <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={6} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, color: '#6B6B70' }}>⋯</Text></Pressable>
+                </View>
+                {!!stamp && <Text style={{ fontSize: 11, color: C.muted }}>{stamp}</Text>}
+                <View style={{ flexDirection: 'row', gap: 6, minHeight: 52 }}>
+                  {made.length ? made.map(s => <View key={s.number} style={{ width: 52, height: 52, borderRadius: 10, backgroundColor: '#F3EFE8', overflow: 'hidden' }}><Image source={{ uri: imageUri((s.motionImage ?? s.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /></View>)
+                    : <View style={{ flex: 1, height: 52, borderRadius: 10, backgroundColor: '#F3EFE8', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 11, color: C.muted }}>첫 그림을 기다리는 중</Text></View>}
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ flex: 1, fontSize: 12, color: C.ink, fontWeight: '700' }}>{done}개 완성{working ? ` · ${working}개 작업 중` : ''}</Text>
+                  <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 이어서 만들기`} onPress={() => { setProjectId(p.id); setScreen('board'); setSlotNumber(nextUnfinished(p, p.lastSlot ?? 0) ?? p.lastSlot ?? 1); setPainting(true); }}
+                    style={{ minHeight: 48, paddingHorizontal: 16, borderRadius: 24, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>{done || working ? '이어서 만들기' : '그리기 시작'}</Text>
+                  </Pressable>
+                </View>
+              </Pressable>;
+            })}
+          </View>
+          <Action primary title="＋ 새 세트" onPress={createNewProject} />
+          <Action title="내 그림 가져오기" disabled={!!busy} onPress={startFromImage} />
+        </> : canonOpen ? <>
+          {(() => {
+            const pickReference = () => task('이미지 저장 중…', async () => { const images = await pickImages(); if (!images[0]) return; updateProject(p => ({ ...p, canon: { ...p.canon, image: images[0] } })); });
+            const memo = ([['personality', '성격'], ['speech', '말투'], ['locked', '꼭 유지할 특징'], ['variable', '바꿔도 되는 특징']] as const).filter(([key]) => project.canon[key].trim());
+            return <>
+              <Text style={[styles.muted, { fontSize: 13 }]}>모든 칸에서 꺼내 볼 수 있는 그림 한 장이에요. 내보내는 그림에는 절대 합쳐지지 않아요.</Text>
+              <View style={{ flexDirection: 'row', gap: T.gap.md, alignItems: 'center' }}>
+                <View style={{ width: 116, height: 116, borderRadius: T.radius.lg, backgroundColor: project.canon.image ? '#F0ECE5' : '#FFFCF8', borderWidth: 1, borderStyle: project.canon.image ? 'solid' : 'dashed', borderColor: project.canon.image ? C.line : '#D3CCC1', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  {project.canon.image ? <Image accessibilityLabel="기준 그림" source={{ uri: imageUri(project.canon.image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Doodle />}
+                </View>
+                <View style={{ flex: 1, gap: T.gap.sm }}>
+                  <Action title={project.canon.image ? '다른 그림으로 바꾸기' : '그림 고르기'} disabled={!!busy} onPress={pickReference} />
+                  {!!project.canon.image && <Action title="기준 그림 내리기" onPress={() => updateProject(p => ({ ...p, canon: { ...p.canon, image: undefined } }))} />}
+                </View>
+              </View>
+              <Text style={{ fontSize: 12, color: C.muted, lineHeight: 18 }}>마음에 드는 칸을 그린 뒤 그리기 화면의 ⋯ 에서 '이 그림을 기준 그림으로'를 눌러도 돼요. 그때 저장된 그림이 그대로 보관돼서, 나중에 그 칸을 고쳐도 기준 그림은 바뀌지 않아요.</Text>
+              <View style={{ borderTopWidth: 1, borderColor: C.line, paddingTop: T.gap.md }}>
+                <Field label="세트 이름" value={project.projectName} onChangeText={projectName => updateProject(p => ({ ...p, projectName }))} multiline={false} />
+              </View>
+              {(!!memo.length || !!project.characterName.trim()) && <View style={styles.card}>
+                <Text style={styles.subtitle}>예전에 적어둔 메모</Text>
+                <Text style={{ fontSize: 11, color: C.muted }}>지금은 아무것도 묻지 않아요. 예전에 저장한 내용은 지우지 않고 그대로 보관해 둡니다.</Text>
+                {!!project.characterName.trim() && <Text style={{ fontSize: 13, color: C.ink }}>캐릭터 이름 · {project.characterName}</Text>}
+                {memo.map(([key, label]) => <Text key={key} style={{ fontSize: 13, color: C.ink }}>{label} · {project.canon[key]}</Text>)}
+              </View>}
+            </>;
+          })()}
+        </> : screen === 'batch' ? <>
+          {(() => {
+            const source = project.slots.find(s => s.number === batchSource);
+            const kept = (store?.savedMotions ?? []).find(m => m.id === batchSaved);
+            // 시안 B4는 보관해 둔 움직임 중에서 고른다. 보관한 것이 없을 때를 위해 칸에서 가져오는
+            // 길도 남겨 둔다 — 그것이 지금까지 유일한 길이었다.
+            const motion = kept?.motion ?? source?.motion;
+            const candidates = project.slots.filter(s => s.work && s.number !== batchSource);
+            const failedNumbers = batchResults.filter(r => !r.ok).map(r => r.number);
+            return <>
+              <View style={styles.card}>
+                <Text style={styles.subtitle}>{kept ? `${kept.name} 움직임을 적용해요` : batchSource ? `${String(batchSource).padStart(2, '0')}번의 움직임을 옮겨요` : '어떤 움직임을 적용할지 먼저 고르세요'}</Text>
+                <Text style={{ fontSize: 12, color: C.muted, lineHeight: 18 }}>{motion ? '고른 칸에 같은 움직임이 적용되고, 각 칸의 파일이 새로 만들어져요. 그림은 그대로예요.' : '보관한 움직임을 고르거나, 움직임이 있는 칸을 기준으로 골라야 옮길 수 있어요.'}</Text>
+                {!!motion && usesPro(motion) && !pro && <Text style={{ fontSize: 12, color: colors.FAIL }}>부분 움직임은 PRO에서 옮길 수 있어요.</Text>}
+              </View>
+
+              {!!(store?.savedMotions ?? []).length && <>
+                <Text style={styles.label}>보관한 움직임</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {(store?.savedMotions ?? []).map(saved => <Pressable key={saved.id} accessibilityRole="button" accessibilityLabel={`${saved.name} 적용하기`} accessibilityState={{ selected: batchSaved === saved.id }}
+                    onPress={() => { setBatchSaved(batchSaved === saved.id ? null : saved.id); setBatchResults([]); setBatchPreview(null); }}
+                    style={{ minHeight: 48, paddingHorizontal: 14, borderRadius: 24, borderWidth: batchSaved === saved.id ? 2 : 1, borderColor: batchSaved === saved.id ? C.accent : C.line, backgroundColor: batchSaved === saved.id ? C.accentSoft : '#FFF', alignItems: 'center', justifyContent: 'center' }}>
+                    <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{saved.name}</Text>
+                  </Pressable>)}
+                </View>
+              </>}
+
+              <Text style={styles.label}>기준 칸</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+                {project.slots.filter(isAnimated).map(s => <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={`${s.number}번을 기준으로`} accessibilityState={{ selected: batchSource === s.number }}
+                  onPress={() => { setBatchSource(s.number); setBatchPicked([]); setBatchResults([]); setBatchPreview(null); }}
+                  style={{ width: 64, gap: 3 }}>
+                  <View style={{ width: 64, height: 64, borderRadius: T.radius.sm, borderWidth: batchSource === s.number ? 2 : 1, borderColor: batchSource === s.number ? C.accent : C.line, overflow: 'hidden', backgroundColor: C.paper }}>
+                    {s.finalImage ? <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : null}
+                  </View>
+                  <Text style={{ fontSize: 10, color: C.muted, textAlign: 'center' }}>{String(s.number).padStart(2, '0')}</Text>
+                </Pressable>)}
+              </ScrollView>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.label, { flex: 1 }]}>적용할 칸 {batchPicked.length}개</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel="전체 선택" onPress={() => setBatchPicked(batchPicked.length === candidates.length ? [] : candidates.map(s => s.number))} style={{ minHeight: 48, paddingHorizontal: 12, justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{batchPicked.length === candidates.length ? '전체 해제' : '전체 선택'}</Text>
+                </Pressable>
+              </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {candidates.map(s => {
+                  const picked = batchPicked.includes(s.number);
+                  const result = batchResults.find(r => r.number === s.number);
+                  return <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={`${s.number}번 고르기`} accessibilityState={{ selected: picked }}
+                    onPress={() => { setBatchPicked(picked ? batchPicked.filter(n => n !== s.number) : [...batchPicked, s.number]); setBatchPreview(null); }}
+                    style={{ width: tileWidth, gap: 3 }}>
+                    <View style={{ width: tileWidth, aspectRatio: 1, borderRadius: T.radius.md, borderWidth: picked ? 2 : 1, borderColor: picked ? C.accent : C.line, overflow: 'hidden', backgroundColor: C.paper }}>
+                      {s.finalImage ? <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : null}
+                      {!!result && <View style={{ position: 'absolute', right: 4, bottom: 4, width: 12, height: 12, borderRadius: 6, backgroundColor: result.ok ? colors.PASS : colors.FAIL, borderWidth: 1.5, borderColor: '#FFF' }} />}
+                    </View>
+                    <Text numberOfLines={1} style={{ fontSize: 9, color: C.muted }}>{String(s.number).padStart(2, '0')}{isAnimated(s) ? ' · 움직임 있음' : ''}</Text>
+                  </Pressable>;
+                })}
+              </View>
+              <View style={{ gap: 6 }}>
+                {([[true, '기존 설정 바꾸기', '고른 그림의 기존 움직임이 새 움직임으로 바뀌어요.'], [false, '기존 설정 유지', '이미 움직임이 있는 칸은 건드리지 않고 넘어가요.']] as const).map(([value, label, hint]) =>
+                  <Pressable key={label} accessibilityRole="radio" accessibilityLabel={label} accessibilityState={{ checked: batchReplace === value }} onPress={() => { setBatchReplace(value); setBatchPreview(null); }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 }}>
+                    <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: batchReplace === value ? C.accent : C.line, alignItems: 'center', justifyContent: 'center' }}>
+                      {batchReplace === value && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: C.accent }} />}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{label}</Text>
+                      <Text style={{ fontSize: 11, color: C.muted }}>{hint}</Text>
+                    </View>
+                  </Pressable>)}
+              </View>
+
+              {!!batchPicked.length && !!motion && <>
+                <Text style={styles.label}>적용 미리보기</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, alignItems: 'center', paddingVertical: 2 }}>
+                  {batchPicked.slice(0, 8).map(n => {
+                    const target = project.slots[n - 1];
+                    return <View key={n} style={{ alignItems: 'center', gap: 3 }}>
+                      <View style={{ width: 64, height: 64, borderRadius: T.radius.sm, borderWidth: 1, borderColor: C.line, overflow: 'hidden', backgroundColor: C.paper }}>
+                        {target?.finalImage ? <Image source={{ uri: imageUri((target.motionImage ?? target.finalImage).path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : null}
+                      </View>
+                      <Text style={{ fontSize: 9, color: isAnimated(target) && !batchReplace ? colors.WARNING : C.muted }}>{pad(n)}{isAnimated(target) ? (batchReplace ? ' · 바뀜' : ' · 그대로') : ' · 새로'}</Text>
+                    </View>;
+                  })}
+                  {batchPicked.length > 8 && <Text style={{ fontSize: 11, color: C.muted }}>외 {batchPicked.length - 8}칸</Text>}
+                </ScrollView>
+                <Text style={{ fontSize: 11, color: C.muted }}>선택한 그림에만 적용해요. 그림 자체는 바뀌지 않고 움직임만 새로 만들어져요.</Text>
+
+                {(() => {
+                  // 적용하면 어떻게 되는지 한 칸으로 실제 만들어 본다. 저장된 것은 건드리지 않는다.
+                  const willChange = batchPicked.filter(n => batchReplace || !isAnimated(project.slots[n - 1]));
+                  const target = batchPreview?.number ?? willChange[0];
+                  if (!target) return <Text style={{ fontSize: 12, color: colors.WARNING }}>고른 칸이 모두 '그대로'라서 만들어질 것이 없어요.</Text>;
+                  return <View style={styles.card}>
+                    <Text style={styles.label}>적용하면 이렇게 움직여요</Text>
+                    {batchPreview
+                      ? <View style={{ alignItems: 'center', gap: 6 }}>
+                          <View style={{ width: 160, height: 160, borderRadius: T.radius.md, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper, overflow: 'hidden' }}>
+                            <Image accessibilityLabel="적용 전 미리보기" source={{ uri: batchPreview.data }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                          </View>
+                          <Text style={{ fontSize: 11, color: C.muted }}>{pad(batchPreview.number)}번으로 만들어 본 결과 · {batchPreview.loop.toFixed(1)}초 반복 · {Math.round(batchPreview.bytes / 1024)}KB</Text>
+                          <Text style={{ fontSize: 11, color: C.muted }}>아직 저장하지 않았어요. 적용을 눌러야 각 칸의 파일이 새로 만들어져요.</Text>
+                        </View>
+                      : <Text style={{ fontSize: 12, color: C.muted, lineHeight: 18 }}>{pad(target)}번 그림에 이 설정을 넣어 실제로 한 번 만들어 볼 수 있어요. 만들어 보는 동안에도 저장된 그림은 그대로예요.</Text>}
+                    <Action title={batchPreview ? '다시 만들어 보기' : '미리 만들어 보기'} disabled={!!busy || previewing || (usesPro(motion) && !pro)}
+                      onPress={() => void previewOnOne(motion, target)} />
+                    {previewing && <Text style={{ fontSize: 12, color: C.muted }}>만들어 보는 중…</Text>}
+                  </View>;
+                })()}
+              </>}
+
+              {!!batchResults.length && <View style={styles.card}>
+                <Text style={styles.label}>결과</Text>
+                {batchResults.map(r => <Text key={r.number} style={{ fontSize: 12, color: r.ok ? C.ink : colors.FAIL }}>{String(r.number).padStart(2, '0')} · {r.ok ? '적용됨' : r.reason}</Text>)}
+                {!!failedNumbers.length && <Action title={`실패한 ${failedNumbers.length}칸 다시 시도`} disabled={!!busy || !motion} onPress={() => motion && void applyMotionToMany(motion, failedNumbers, batchReplace)} />}
+              </View>}
+
+              <Action primary title={`${batchPicked.length}칸에 적용`} disabled={!!busy || !motion || !batchPicked.length || (usesPro(motion) && !pro)}
+                onPress={() => motion && void applyMotionToMany(motion, batchPicked, batchReplace)} />
+              {!!motion && usesPro(motion) && !pro && <Action title="PRO 알아보기" onPress={() => setProSheet(true)} />}
+            </>;
+          })()}
+        </> : screen === 'extras' ? <>
+          {(() => {
+            const drawn = project.slots.filter(s => s.finalImage);
+            const slot = project.slots.find(s => s.number === extraSlot);
+            const frame = extraKind === 'icon' ? { width: 78, height: 78 } : extraKind === 'share' ? { width: 600, height: 166 } : { width: 360, height: 360 };
+            const spec = REQUIRED_EXTRAS.find(e => e.id === extraKind)!;
+            // 화면의 미리보기와 저장되는 파일이 같은 식을 쓴다(placeInFrame).
+            const previewWidth = Math.min(screenWidth - T.gap.lg * 2, 320);
+            const previewHeight = previewWidth * frame.height / frame.width;
+            const box = slot?.finalImage ? placeInFrame(slot.finalImage, { width: previewWidth, height: previewHeight }, place) : null;
+            return <>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {REQUIRED_EXTRAS.map(e => <Pressable key={e.id} accessibilityRole="button" accessibilityLabel={e.label} accessibilityState={{ selected: extraKind === e.id }}
+                  onPress={() => { setExtraKind(e.id); setPlace({ scale: 1, dx: 0, dy: 0 }); }}
+                  style={{ flex: 1, minHeight: T.tap, borderRadius: 24, borderWidth: extraKind === e.id ? 2 : 1, borderColor: extraKind === e.id ? C.accent : C.line, backgroundColor: extraKind === e.id ? C.accentSoft : '#FFF', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: extraKind === e.id ? '900' : '700', color: C.ink }}>{e.label}</Text>
+                </Pressable>)}
+              </View>
+              <Text style={{ fontSize: 12, color: C.muted }}>{spec.spec} · {spec.stage}에 필요해요</Text>
+
+              <Text style={styles.label}>어느 그림으로 만들까요</Text>
+              {drawn.length
+                ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+                    {drawn.map(s => <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={`${s.number}번으로 만들기`} accessibilityState={{ selected: extraSlot === s.number }}
+                      onPress={() => { setExtraSlot(s.number); setPlace({ scale: 1, dx: 0, dy: 0 }); }}
+                      style={{ width: 64, gap: 3 }}>
+                      <View style={{ width: 64, height: 64, borderRadius: T.radius.sm, borderWidth: extraSlot === s.number ? 2 : 1, borderColor: extraSlot === s.number ? C.accent : C.line, overflow: 'hidden', backgroundColor: C.paper }}>
+                        <Image source={{ uri: imageUri(s.finalImage!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                      </View>
+                      <Text style={{ fontSize: 10, color: C.muted, textAlign: 'center' }}>{pad(s.number)}</Text>
+                    </Pressable>)}
+                  </ScrollView>
+                : <Text style={{ fontSize: 12, color: C.muted }}>먼저 칸을 하나라도 그려 주세요.</Text>}
+
+              {!!slot?.finalImage && <>
+                <Text style={styles.label}>미리보기 · {frame.width}×{frame.height}</Text>
+                <View style={{ alignItems: 'center' }}>
+                  <View style={{ width: previewWidth, height: previewHeight, borderRadius: T.radius.sm, borderWidth: 1, borderColor: C.line, backgroundColor: '#FFF', overflow: 'hidden' }}>
+                    {!!box && <Image accessibilityLabel="부가 이미지 미리보기" source={{ uri: imageUri(slot.finalImage.path) }}
+                      style={{ position: 'absolute', left: box.x, top: box.y, width: box.w, height: box.h }} resizeMode="stretch" />}
+                  </View>
+                </View>
+                {extraKind !== 'cover' && <>
+                  <Range label="크기" value={place.scale} min={.3} max={2} display={place.scale.toFixed(2) + '배'} onChange={scale => setPlace({ ...place, scale: Number(scale.toFixed(2)) })} />
+                  <Range label="가로" value={place.dx} min={-.5} max={.5} display={Math.round(place.dx * 100) + '%'} onChange={dx => setPlace({ ...place, dx: Number(dx.toFixed(3)) })} />
+                  <Range label="세로" value={place.dy} min={-.5} max={.5} display={Math.round(place.dy * 100) + '%'} onChange={dy => setPlace({ ...place, dy: Number(dy.toFixed(3)) })} />
+                  <Text style={{ fontSize: 11, color: C.muted }}>비율은 그대로 두고 위치와 크기만 바꿔요. 원본 {pad(slot.number)}번 그림은 바뀌지 않아요.</Text>
+                </>}
+                {extraKind === 'cover' && <Text style={{ fontSize: 11, color: C.muted }}>대표 이미지는 새로 그리는 것이 아니라 이모티콘 중 하나를 고르는 거예요.</Text>}
+                <Action primary title={extraKind === 'cover' ? '이 그림을 대표로' : '이 모양으로 만들기'} disabled={!!busy} onPress={() => void makeExtra()} />
+              </>}
+
+              <Text style={styles.label}>지금까지 만든 것</Text>
+              <View style={styles.card}>
+                <Text style={{ fontSize: 13, color: project.extras?.icon ? C.ink : C.muted }}>아이콘 이미지 · {project.extras?.icon ? `${project.extras.icon.width}×${project.extras.icon.height} 만들어 뒀어요` : '아직 없어요'}</Text>
+                <Text style={{ fontSize: 13, color: project.extras?.share ? C.ink : C.muted }}>공유 이미지 · {project.extras?.share ? `${project.extras.share.width}×${project.extras.share.height} 만들어 뒀어요` : '아직 없어요'}</Text>
+                <Text style={{ fontSize: 13, color: project.extras?.coverSlot ? C.ink : C.muted }}>대표 이미지 · {project.extras?.coverSlot ? `${pad(project.extras.coverSlot)}번` : '아직 안 골랐어요'}</Text>
+              </View>
+            </>;
+          })()}
+        </> : screen === 'export' ? <>
+          {(() => {
+            const moving = setIsAnimated(project);
+            const profile = moving ? KAKAO_ANIMATED_SPEC : SPEC;
+            const movingCuts = project.slots.filter(isAnimated).length;
+            const submitReady = project.slots.filter(s => s.submitImage).length;
+            const submitOver = project.slots.filter(s => s.submitImage && (s.submitImage.width !== KAKAO_ANIMATED_SPEC.width || s.submitImage.height !== KAKAO_ANIMATED_SPEC.height)).length;
+            const drawn = project.slots.filter(s => s.finalImage);
+            const measured = drawn.filter(s => s.finalImage!.metrics);
+            const sized = drawn.filter(s => s.finalImage!.width === SPEC.width && s.finalImage!.height === SPEC.height);
+            const clear = measured.filter(s => s.finalImage!.metrics!.transparent);
+            const facts: [string, string][] = [
+              ['완성한 칸', `${doneCount(project)} / ${profile.count}`],
+              ['저장된 그림', `${drawn.length}개`],
+              [`작업 크기 ${SPEC.width}×${SPEC.height}`, `${sized.length} / ${drawn.length}`],
+              ['투명 배경', measured.length === drawn.length ? `${clear.length} / ${drawn.length}` : `${clear.length} / ${measured.length} · 나머지는 아직 확인 못 했어요`],
+              ['파일 형식', moving ? `움직임 ${movingCuts}칸 중 ${submitReady}칸 WebP · 나머지 PNG` : 'PNG'],
+              ['용량 상한', `${Math.round(profile.maxBytes / 1024)}KB`],
+            ];
+            const problems = setChecks.filter(c => c.status !== 'PASS');
+            return <>
+              <View style={styles.card}>
+                <Text style={styles.subtitle}>{profile.profileLabel}</Text>
+                <Text style={{ fontSize: 12, color: C.muted, lineHeight: 18 }}>{profile.note}</Text>
+                <Text style={{ fontSize: 11, color: C.muted }}>공식 가이드 확인일 {profile.checkedAt}. 제출 파일 형식은 {profile.format}이에요.</Text>
+                {moving && movingCuts > submitReady && <Text style={{ fontSize: 12, color: colors.WARNING }}>움직이는 {movingCuts}칸 중 {movingCuts - submitReady}칸은 WebP를 만들지 못해 GIF로 들어가요. 그 칸을 다시 저장하면 다시 시도해요.</Text>}
+                {!!submitOver && <Text style={{ fontSize: 12, color: colors.FAIL }}>{submitOver}칸의 WebP 크기가 {KAKAO_ANIMATED_SPEC.width}×{KAKAO_ANIMATED_SPEC.height}가 아니에요.</Text>}
+              </View>
+              {/* 공식 가이드는 제안과 출시의 요구가 다르다. 출시 기준을 제안에 들이대지 않는다. */}
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {([['proposal', '제안'], ['release', '출시']] as const).map(([key, label]) =>
+                  <Pressable key={key} accessibilityRole="button" accessibilityLabel={label + ' 기준으로 보기'} accessibilityState={{ selected: stage === key }} onPress={() => setStage(key)}
+                    style={{ flex: 1, minHeight: T.tap, borderRadius: 24, borderWidth: stage === key ? 2 : 1, borderColor: stage === key ? C.accent : C.line, backgroundColor: stage === key ? C.accentSoft : '#FFF', alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 13, fontWeight: stage === key ? '900' : '700', color: C.ink }}>{label}</Text>
+                  </Pressable>)}
+              </View>
+              <Text style={{ fontSize: 12, color: C.ink }}>{(moving ? STAGES.animated : STAGES.still)[stage].text}</Text>
+              {/* 가이드가 제작 도구를 정해 두었다. 우리가 만든 WebP 가 규격을 맞춰도 이 문장이 우선이다. */}
+              {moving && (() => {
+                // 프레임은 내보내는 순간 지금 그림·움직임에서 만든다. 그래서 만들기 전에는 장수를 모른다.
+                // 모르는 숫자를 적어 두는 대신, 내보낸 뒤에 실제로 들어간 장수를 보여 준다.
+                const framed = handoffCuts;
+                return <View style={{ padding: 10, borderRadius: T.radius.md, backgroundColor: '#FFF8CC', gap: 6 }}>
+                  <Text style={{ fontSize: 12, color: T.accentInk, lineHeight: 18 }}>{WEBP_TOOL_RULE}</Text>
+                  <Text style={{ fontSize: 11, color: T.accentInk }}>이 앱은 변환을 대신하지 않아요. 묶음 안 <Text style={{ fontWeight: '900' }}>webp-animator</Text> 폴더의 컷 폴더를 열어 PNG를 순서대로 등록하면 돼요.</Text>
+                  {framed.length
+                    ? framed.slice(0, 6).map(cut => <Text key={cut.number} style={{ fontSize: 11, color: T.accentInk }}>{pad(cut.number)}번 · {cut.count}장 · 한 장당 {cut.delayMs}ms · 반복 {KAKAO_ANIMATED_SPEC.loops}회</Text>)
+                    : <Text style={{ fontSize: 11, color: T.accentInk }}>움직이는 {movingCuts}칸의 프레임은 '작업 파일 만들기'를 누를 때 지금 그림에서 만들어 넣어요.</Text>}
+                  {framed.length > 6 && <Text style={{ fontSize: 11, color: T.accentInk }}>외 {framed.length - 6}칸</Text>}
+                  <Pressable accessibilityRole="button" accessibilityLabel="WebPAnimator 열기" onPress={() => { Linking.openURL(WEBP_ANIMATOR_URL).catch(e => Alert.alert('링크 오류', String(e))); }} style={{ minHeight: T.tap, justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>WebPAnimator 열기</Text>
+                  </Pressable>
+                </View>;
+              })()}
+              <Text style={styles.label}>파일에서 확인</Text>
+              <View style={styles.card}>
+                {/* 시안 B5의 체크 행. 초록 체크는 앱이 파일을 열어 실제로 확인한 것에만 붙는다. */}
+                {([['파일 열기', drawn.length > 0 && measured.length === drawn.length, `${measured.length} / ${drawn.length}칸을 열어 읽었어요`],
+                   ['투명 배경', measured.length > 0 && clear.length === measured.length, `${clear.length} / ${measured.length}칸이 투명했어요`],
+                   ['작업 크기', drawn.length > 0 && sized.length === drawn.length, `${sized.length} / ${drawn.length}칸이 ${SPEC.width}×${SPEC.height}예요`]] as const).map(([label, ok, detail]) =>
+                  <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40 }}>
+                    <MaterialCommunityIcons name={ok ? 'check-circle' : 'alert-circle-outline'} size={18} color={ok ? colors.PASS : colors.WARNING} />
+                    <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>{label}</Text>
+                    <Text style={{ fontSize: 11, color: C.muted }}>{detail}</Text>
+                  </View>)}
+                {facts.map(([label, value]) => <View key={label} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}><Text style={{ fontSize: 13, color: C.muted }}>{label}</Text><Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{value}</Text></View>)}
+              </View>
+              {(() => {
+                const need = (moving ? STAGES.animated : STAGES.still)[stage];
+                const shortBy = need.emoticons - doneCount(project);
+                const movingShort = moving && 'animatedMin' in need ? Math.max(0, need.animatedMin - project.slots.filter(s => s.submitImage).length) : 0;
+                return <View style={styles.card}>
+                  <Text style={styles.label}>{stage === 'proposal' ? '제안까지' : '출시까지'}</Text>
+                  <Text style={{ fontSize: 13, color: shortBy > 0 ? colors.WARNING : C.ink }}>{shortBy > 0 ? `이모티콘 ${shortBy}개가 더 필요해요` : `이모티콘 ${need.emoticons}개를 채웠어요`}</Text>
+                  {moving && <Text style={{ fontSize: 13, color: movingShort > 0 ? colors.WARNING : C.ink }}>{movingShort > 0 ? `움직이는 WebP가 ${movingShort}개 더 필요해요` : '움직이는 WebP 개수를 채웠어요'}</Text>}
+                  <Text style={{ fontSize: 13, color: project.extras?.icon ? C.ink : colors.WARNING }}>아이콘 이미지(78×78) · {project.extras?.icon ? '만들어 뒀어요' : '아직 없어요'}</Text>
+                  {need.share && <Text style={{ fontSize: 13, color: project.extras?.share ? C.ink : colors.WARNING }}>공유 이미지(600×166) · {project.extras?.share ? '만들어 뒀어요' : '아직 없어요'}</Text>}
+                  {need.share && <Text style={{ fontSize: 13, color: project.extras?.coverSlot ? C.ink : colors.WARNING }}>대표 이미지 · {project.extras?.coverSlot ? `${pad(project.extras.coverSlot)}번` : '아직 안 골랐어요'}</Text>}
+                  <Pressable accessibilityRole="button" accessibilityLabel="부가 이미지 만들기" onPress={() => setScreen('extras')} style={{ minHeight: T.tap, justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>부가 이미지 만들기 ›</Text>
+                  </Pressable>
+                </View>;
+              })()}
+              <Text style={styles.label}>{problems.length ? `손볼 곳 ${problems.length}개` : '손볼 곳'}</Text>
+              <View style={styles.card}>
+                {problems.length ? problems.map((c, i) => <Pressable key={c.label + i} accessibilityRole="button" accessibilityLabel={`${c.label} 고치기`} disabled={!c.slot} onPress={() => c.slot && fixSlot(c.slot)} style={{ minHeight: T.tap, justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 13, lineHeight: 19, color: c.status === 'FAIL' ? colors.FAIL : C.ink }}>{c.label} · {c.detail}{c.slot ? ' →' : ''}</Text>
+                </Pressable>) : <Text style={styles.muted}>기계로 확인할 수 있는 문제는 보이지 않아요.</Text>}
+              </View>
+              {/* 시안 B5의 미리보기. 투명 배경은 흰 바탕에서는 멀쩡해 보여도 어두운 대화방에서 테두리가
+                  드러나는 일이 있어서, 두 바탕을 나란히 보여 주는 것이 확인 수단이다. */}
+              {!!drawn.length && <>
+                <Text style={styles.label}>미리보기</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {([['밝은 배경', '#FFFFFF'], ['어두운 배경', '#2B2B2E']] as const).map(([label, background]) => {
+                    const shown = drawn.find(s => isDone(s)) ?? drawn[0];
+                    return <View key={label} style={{ flex: 1, gap: 4 }}>
+                      <View style={{ width: '100%', aspectRatio: 1, borderRadius: T.radius.md, borderWidth: 1, borderColor: C.line, backgroundColor: background, overflow: 'hidden' }}>
+                        <Image accessibilityLabel={`${label} 미리보기`} source={{ uri: imageUri((shown.motionImage ?? shown.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                      </View>
+                      <Text style={{ fontSize: 11, color: C.muted, textAlign: 'center' }}>{label}</Text>
+                    </View>;
+                  })}
+                </View>
+                <Text style={{ fontSize: 11, color: C.muted }}>{pad(((drawn.find(s => isDone(s)) ?? drawn[0]).number))}번 그림이에요. 어두운 쪽에서 흰 테두리나 네모가 보이면 배경이 투명하지 않은 거예요.</Text>
+              </>}
+              <Text style={styles.label}>직접 확인</Text>
+              <View style={styles.card}>
+                {['캐릭터가 칸마다 같은 인물로 보이는지', '표현이 지나치게 겹치지 않는지', '작게 줄여도 알아볼 수 있는지', '남의 그림·글꼴·상표가 섞이지 않았는지'].map(line => <Text key={line} style={{ fontSize: 13, lineHeight: 19, color: C.ink }}>· {line}</Text>)}
+                {/* 시안 B5의 체크 상자. 앱이 판단한 것이 아니라 사람이 봤다는 표시이고, 그렇게만 쓴다. */}
+                <Pressable accessibilityRole="checkbox" accessibilityLabel="표현과 문구 확인" accessibilityState={{ checked: !!project.selfChecked }}
+                  onPress={() => updateProject(p => ({ ...p, selfChecked: !p.selfChecked }))}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
+                  <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: project.selfChecked ? C.accent : C.line, backgroundColor: project.selfChecked ? C.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                    {project.selfChecked && <MaterialCommunityIcons name="check" size={14} color="#FFF" />}
+                  </View>
+                  <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>표현과 문구 확인</Text>
+                </Pressable>
+                <Text style={{ fontSize: 11, color: C.muted }}>이건 사람이 판단할 일이라 점수나 승인 확률을 만들지 않아요. 표시는 기억만 하고, 다른 검사를 대신하지 않아요.</Text>
+              </View>
+              <Pressable accessibilityRole="button" accessibilityLabel="저장된 그림 다시 검사" disabled={!!busy || !drawn.length} onPress={() => void recheckAll()} style={{ minHeight: T.tap, justifyContent: 'center', opacity: !!busy || !drawn.length ? .4 : 1 }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>저장된 그림 다시 검사</Text>
+              </Pressable>
+              <Action primary title="작업 파일 만들기" disabled={!!busy || !drawn.length} onPress={exportProject} />
+              {!!lastExport && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: T.radius.md, backgroundColor: '#F4F4F5' }}>
+                <Image accessibilityIgnoresInvertColors source={MASCOT.ink} style={{ width: 34, height: 42 }} resizeMode="contain" />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>작업 파일을 만들었어요</Text>
+                  <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted }}>{lastExport.path}</Text>
+                </View>
+              </View>}
+              {!!lastExport && <Pressable accessibilityRole="button" accessibilityLabel="다시 공유" disabled={!!busy} onPress={shareAgain} style={{ minHeight: T.tap, justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>다시 공유</Text></Pressable>}
+              <Text style={{ fontSize: 12, color: C.muted, lineHeight: 18 }}>{moving
+                ? <>움직이는 칸은 <Text style={{ fontWeight: '900' }}>{profile.format}</Text>으로, 나머지는 PNG로 묶여요. 제안에는 움직이는 것이 {KAKAO_ANIMATED_SPEC.proposalAnimatedMin}개만 있어도 돼요.</>
+                : <>멈춰있는 이모티콘은 PNG로 묶여요.</>} 실제 기기에서 열어 본 적은 아직 없어요.</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="공식 가이드 보기" onPress={() => { Linking.openURL(SPEC.officialUrl).catch(e => Alert.alert('링크 오류', String(e))); }} style={{ minHeight: T.tap, justifyContent: 'center' }}>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>공식 가이드 보기</Text>
+              </Pressable>
+            </>;
+          })()}
+        </> : <>
+          {(() => {
+            const done = doneCount(project);
+            const working = project.slots.filter(isWorking).length;
+            return <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: T.gap.md }}>
+                {!!project.canon.image && <Pressable accessibilityRole="button" accessibilityLabel="세트 참고" onPress={() => setCanonOpen(true)} style={{ width: 52, height: 52, borderRadius: T.radius.md, backgroundColor: '#F0ECE5', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}><Image source={{ uri: imageUri(project.canon.image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /></Pressable>}
+                <View style={{ flex: 1, gap: 5 }}>
+                  <View style={{ height: 6, borderRadius: 3, backgroundColor: '#E9E9EC', overflow: 'hidden' }}><View style={{ width: `${Math.max(2, done / SPEC.count * 100)}%`, height: '100%', backgroundColor: C.accent }} /></View>
+                  {/* 시안 B3의 문장. 몇 칸 남았는지가 아니라 지금 무엇이 있는지를 말한다. */}
+                  <Text style={{ fontSize: 12, color: C.ink, fontWeight: '700' }}>{done}개 완성{working ? ` · ${working}개 작업 중` : ''}</Text>
+                </View>
+                <Pressable accessibilityRole="button" accessibilityLabel={done ? '이어서 그리기' : '첫 칸 그리기'} onPress={() => drawFrom()} style={{ minHeight: 48, paddingHorizontal: 16, borderRadius: 24, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>{done ? '이어서 그리기' : '첫 칸 그리기'}</Text></Pressable>
+              </View>
+              {/* 시안 B3: 순서 변경과 전체 재생은 칸 위에, 제출 준비는 화면 아래 하나뿐인 큰 버튼이다. */}
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Pressable accessibilityRole="button" accessibilityLabel={reordering ? '순서 바꾸기 끝' : '순서 바꾸기'} onPress={() => setReordering(!reordering)} style={{ flex: 1, minHeight: 48, borderRadius: 24, borderWidth: 1, borderColor: reordering ? C.accent : C.line, backgroundColor: reordering ? C.accentSoft : 'transparent', alignItems: 'center', justifyContent: 'center' }}><Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{reordering ? '순서 바꾸기 끝' : '☰ 순서 변경'}</Text></Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel={playing ? '전체 재생 멈추기' : '전체 재생'} onPress={() => { setPlayIndex(0); setPlaying(!playing); }} style={{ flex: 1, minHeight: 48, borderRadius: 24, borderWidth: 1, borderColor: playing ? C.accent : C.line, backgroundColor: playing ? C.accentSoft : 'transparent', alignItems: 'center', justifyContent: 'center' }}><Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{playing ? '재생 멈춤' : '▶ 전체 재생'}</Text></Pressable>
+              </View>
+            </>;
+          })()}
+          {playing && (() => {
+            const made = project.slots.filter(s => s.finalImage);
+            const shown = made[playIndex % Math.max(1, made.length)];
+            if (!shown) return null;
+            return <View style={{ alignItems: 'center', gap: 6 }}>
+              <View style={{ width: 200, height: 200, borderRadius: T.radius.md, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
+                <Image accessibilityLabel="전체 재생 화면" source={{ uri: imageUri((shown.motionImage ?? shown.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+              </View>
+              <Text style={{ fontSize: 11, color: C.muted }}>{String(shown.number).padStart(2, '0')} · {playIndex + 1} / {made.length}</Text>
+            </View>;
+          })()}
+          <Pressable accessibilityRole="button" accessibilityLabel="제출 준비" disabled={!!busy} onPress={() => setScreen('export')}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 56, borderRadius: T.radius.md,
+              backgroundColor: pressed ? C.accentLine : C.accent, opacity: busy ? .5 : 1 })}>
+            <MaterialCommunityIcons name="package-variant-closed" size={19} color={C.accentInk} />
+            <Text style={{ fontSize: 16, fontWeight: '800', color: C.accentInk }}>제출 준비</Text>
+          </Pressable>
+          {(() => { const left = project.slots.filter(s => !s.finalImage).length; return left ? <Text style={{ fontSize: 12, color: C.muted }}>{left}칸이 아직 비어 있어요.</Text> : null; })()}
+          <View testID="slot-grid" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{project.slots.map(s => {
+            const done = isDone(s), working = isWorking(s);
+            const firstEmpty = project.slots.find(x => !x.finalImage)?.number;
+            return <Pressable key={s.number} testID={`slot-${s.number}`} accessibilityRole="button" accessibilityLabel={`슬롯 ${s.number} ${done ? '완성' : working ? '작업 중' : '미착수'}`} onPress={() => { setSlotNumber(s.number); setPainting(true); }} style={{ width: tileWidth, gap: 3 }}>
+              <View style={{ width: tileWidth, aspectRatio: 1, borderRadius: T.radius.md, backgroundColor: s.finalImage ? C.paper : '#F3EFE8', borderWidth: project.lastSlot === s.number ? 2 : 1, borderColor: project.lastSlot === s.number ? C.accent : done ? '#D9D1C6' : C.line, borderStyle: s.finalImage ? 'solid' : 'dashed', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 3 }}>
+                {s.finalImage
+                  ? <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%', opacity: done ? 1 : .65 }} resizeMode="contain" />
+                  : s.number === firstEmpty
+                    ? <View style={{ alignItems: 'center', gap: 2 }}><MaterialCommunityIcons name="plus" size={20} color={C.ink} /><Text style={{ fontSize: 11, color: C.ink, fontWeight: '800' }}>그림 추가</Text></View>
+                    : <Text style={{ fontSize: 13, color: '#CFC8BE', fontWeight: '700' }}>{String(s.number).padStart(2, '0')}</Text>}
+                {(s.status === 'FAIL' || s.status === 'WARNING') && <View style={{ position: 'absolute', right: 5, bottom: 5, width: 9, height: 9, borderRadius: 5, borderWidth: 1.5, borderColor: '#FFF', backgroundColor: colors[s.status] }} />}
+              </View>
+              {reordering && !!s.finalImage && <View style={{ flexDirection: 'row', gap: 2 }}>
+                <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 앞으로'} disabled={s.number === 1} onPress={() => moveSlot(s.number, s.number - 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: s.number === 1 ? 'transparent' : '#EFEFF1' }}><Text style={{ fontSize: 14, color: s.number === 1 ? '#D6D0C6' : C.ink }}>‹</Text></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 뒤로'} disabled={s.number === project.slots.length} onPress={() => moveSlot(s.number, s.number + 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: s.number === project.slots.length ? 'transparent' : '#EFEFF1' }}><Text style={{ fontSize: 14, color: s.number === project.slots.length ? '#D6D0C6' : C.ink }}>›</Text></Pressable>
+              </View>}
+              {/* 시안 B3: 칸 아래에 상태 배지. 번호와 문구는 그 아래 한 줄로 남긴다. */}
+              {(done || working) && <View style={{ alignSelf: 'center', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, backgroundColor: done ? C.mint : C.blue }}>
+                <Text style={{ fontSize: 10, fontWeight: '800', color: '#20242C' }}>{done ? '완성' : '작업 중'}</Text>
+              </View>}
+              <Text numberOfLines={1} style={{ fontSize: 9, color: done ? C.muted : '#A6A6AB' }}><Text style={{ fontWeight: '900', color: done ? C.ink : '#A6A6AB' }}>{String(s.number).padStart(2, '0')}</Text>{captionText(s) ? ' ' + captionText(s) : ''}</Text>
+            </Pressable>;
+          })}</View>
+          {/* 시안 B3의 PRO 줄과, 화면 아래 하나뿐인 큰 버튼. */}
+          <Pressable accessibilityRole="button" accessibilityLabel="움직임 일괄 적용" onPress={() => { setBatchSource(project.slots.find(isAnimated)?.number ?? null); setBatchPicked([]); setBatchResults([]); setBatchPreview(null); setScreen('batch'); }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingHorizontal: 12, borderRadius: T.radius.md, borderWidth: 1, borderColor: C.line, backgroundColor: '#FFFDF8' }}>
+            <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, backgroundColor: '#EFEFF1', borderWidth: 1, borderColor: C.ink }}><Text style={{ fontSize: 10, fontWeight: '900', color: C.ink }}>PRO</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>움직임 일괄 적용</Text>
+              <Text style={{ fontSize: 11, color: C.muted }}>여러 그림에 같은 움직임을 한 번에 적용해요</Text>
+            </View>
+            <Text style={{ fontSize: 18, color: C.muted }}>›</Text>
+          </Pressable>
+          {/* 아래에 있던 같은 버튼은 뺐다. 머리글에 고정된 것과 둘이면 같은 일에 두 자리를 쓴다. */}
+        </>}
+      </ScrollView>
+    </KeyboardAvoidingView>
+
+    {managed && !pendingDelete && <Dialog title="세트 관리" onClose={() => setManageId(null)}>
+      <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{managed.projectName}</Text>
+      <Text style={styles.muted}>{managed.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>
+      <Action title="세트 열기" onPress={() => { const id = managed.id; setManageId(null); setProjectId(id); setScreen('board'); }} />
+      <Action title="세트 삭제" onPress={() => setConfirmDeleteId(managed.id)} />
+    </Dialog>}
+    {pendingDelete && <Dialog title="세트 삭제" onClose={() => setConfirmDeleteId(null)}>
+      <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{pendingDelete.projectName}</Text>
+      <Text style={styles.muted}>{pendingDelete.slots.filter(s => s.finalImage).length} / {SPEC.count} 완성</Text>
+      <Text style={styles.muted}>이 세트의 그림, 참고 이미지, 원캐릭터가 함께 지워집니다. 삭제하면 되돌릴 수 없어요.</Text>
+      <Action title="이 세트 삭제" onPress={() => deleteProject(pendingDelete.id)} />
+      <Action title="취소" onPress={() => setConfirmDeleteId(null)} />
+    </Dialog>}
+    {/* 시안 B6은 이 화면을 한 장으로 쓴다: 무엇이 열리는지 먼저 보이고, 값은 그 다음이다.
+        결제 모듈 경고와 구매 복원은 시안에 없지만 지우지 않는다 — 둘 다 잘못됐을 때 빠져나오는 길이다. */}
+    {/* 시안 A1의 톱니. 새 항목을 만들지 않고 이미 있는 것만 모았다. */}
+    {settings && <Dialog title="설정" onClose={() => setSettings(false)}>
+      <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>
+      {/* 검수용 빌드는 스스로 그렇다고 말한다. 숨기면 검수 결과를 출시 상태로 착각하게 된다.
+          이 블록은 출시 구성에서는 아예 그려지지 않는다(internalReviewBuild() 가 거짓). */}
+      {internalReviewBuild() && <View style={{ gap: 8, padding: 12, borderRadius: T.radius.md, backgroundColor: C.accentSoft }}>
+        <Text style={{ fontSize: 12, fontWeight: '900', color: C.accentInk }}>내부 검수용 빌드</Text>
+        <Text style={{ fontSize: 11, color: C.accentInk, lineHeight: 16 }}>{REVIEW_BUILD_NOTE}</Text>
+        <Pressable accessibilityRole="switch" accessibilityLabel="검수용 PRO 켜기" accessibilityState={{ checked: !!store?.reviewUnlock }}
+          onPress={() => { try { commit(st => ({ ...st, reviewUnlock: !st.reviewUnlock })); } catch { /* 저장 실패는 위 배너가 말한다 */ } }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
+          <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: store?.reviewUnlock ? C.accentLine : '#D8D8DC' }}>
+            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.reviewUnlock ? 18 : 0 }} />
+          </View>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>검수용 PRO {store?.reviewUnlock ? '켜짐' : '꺼짐'}</Text>
+        </Pressable>
+      </View>}
+      <View style={{ gap: 4 }}>
+        <Text style={styles.label}>화면 표시</Text>
+        <Pressable accessibilityRole="switch" accessibilityLabel="캔버스 종이 질감" accessibilityState={{ checked: store?.paperTexture !== false }}
+          onPress={() => { try { commit(st => ({ ...st, paperTexture: st.paperTexture === false })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>캔버스 종이 질감</Text>
+            <Text style={{ fontSize: 11, color: C.muted }}>그리는 화면에만 표시돼요. 저장·내보내기 파일에는 들어가지 않아요.</Text>
+          </View>
+          <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: store?.paperTexture !== false ? C.accent : '#D8D8DC' }}>
+            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.paperTexture !== false ? 18 : 0 }} />
+          </View>
+        </Pressable>
+      </View>
+      <Action title="PRO 이용" onPress={() => { setSettings(false); setProSheet(true); }} />
+      <Action title="카카오 규격 안내" onPress={() => { setSettings(false); Alert.alert('카카오 규격', SPEC.note, [{ text: '닫기' }, { text: '공식 안내', onPress: () => { Linking.openURL(SPEC.officialUrl).catch(e => Alert.alert('링크 오류', String(e))); } }]); }} />
+      <Action title="저장 상태 보기" onPress={() => { setSettings(false); setReport(inspectStore()); }} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 4 }}>
+        <Image accessibilityIgnoresInvertColors source={MASCOT.eraser} style={{ width: 30, height: 40 }} resizeMode="contain" />
+        <Text style={{ flex: 1, fontSize: 11, color: C.muted, lineHeight: 16 }}>작은 아이디어가 좋은 이모티콘이 돼요. 계속 그려 주세요.</Text>
+      </View>
+    </Dialog>}
+    {proSheet && <Modal animationType="slide" onRequestClose={() => { setProSheet(false); setProBusy(''); }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 4, borderBottomWidth: 1, borderColor: C.line }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="PRO 닫기" onPress={() => { setProSheet(false); setProBusy(''); }} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24, color: C.ink }}>‹</Text></Pressable>
+          <Text style={{ flex: 1, fontSize: 16, fontWeight: '900', color: C.ink }}>더 섬세하게 움직이기</Text>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: T.gap.lg, gap: T.gap.md, paddingBottom: 32 }}>
+          <Text style={{ fontSize: 20, fontWeight: '900', color: C.ink, lineHeight: 29 }}>작은 움직임이 더 특별한 이모티콘이 돼요.</Text>
+          {([['원하는 부분만 움직이기', '손, 귀, 꼬리처럼 원하는 곳만', 'content-cut'],
+             ['여러 동작 조합 · 두 모습 교대', '더 다양한 표현이 가능해요', 'layers-triple-outline'],
+             ['움직임 저장 · 일괄 적용', '내 움직임을 저장하고, 여러 그림에 한 번에', 'folder-multiple-outline']] as const).map(([title, hint, icon]) =>
+            <View key={title} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+              <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' }}><MaterialCommunityIcons name={icon} size={19} color="#C2512F" /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{title}</Text>
+                <Text style={{ fontSize: 12, color: C.muted }}>{hint}</Text>
+              </View>
+            </View>)}
+          <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>
+          {expiredButRemembered(entitlement) && <Text style={{ fontSize: 12, color: C.ink }}>기간이 끝나도 이미 만든 움직임은 계속 재생되고 같은 설정으로 다시 내보낼 수 있어요.</Text>}
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {PLANS.map(p => <Pressable key={p.id} accessibilityRole="radio" accessibilityLabel={`${p.label} 고르기`} accessibilityState={{ checked: plan === p.id }} onPress={() => setPlan(p.id)}
+              style={{ flex: 1, borderWidth: plan === p.id ? 2 : 1, borderColor: plan === p.id ? C.accent : C.line, borderRadius: T.radius.md, padding: 12, gap: 2, backgroundColor: plan === p.id ? C.accentSoft : '#FFF' }}>
+              <Text style={{ fontSize: 13, fontWeight: '900', color: C.ink }}>{p.label}</Text>
+              <Text style={{ fontSize: 15, fontWeight: '900', color: C.ink }}>{p.proposedPrice}</Text>
+              <Text style={{ fontSize: 10, color: C.muted }}>출시 제안가 · 미확정</Text>
+            </Pressable>)}
+          </View>
+          <Text style={{ fontSize: 11, color: C.muted }}>위 금액은 저희가 생각하는 가격이고 스토어에 등록된 가격이 아니에요. 실제 결제 화면에는 스토어가 알려주는 금액이 표시돼요.</Text>
+          {!!proBusy && <Text style={{ fontSize: 12, color: C.muted }}>{proBusy}</Text>}
+          <Action primary title="PRO 시작하기" disabled={!!proBusy} onPress={() => void startPurchase(plan)} />
+          <Action title="무료로 계속하기" onPress={() => { setProSheet(false); setProBusy(''); }} />
+          <Text style={{ fontSize: 11, color: C.muted, textAlign: 'center' }}>무료도 워터마크 없이 제작·출력할 수 있어요.</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="구매 복원" disabled={!!proBusy} onPress={() => void restorePro()} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>구매 복원</Text></Pressable>
+          {!storeModuleAvailable() && <Text style={{ fontSize: 10, color: C.muted, lineHeight: 15 }}>{MISSING_MODULE}</Text>}
+          <Text style={{ fontSize: 10, color: C.muted, lineHeight: 16 }}>해지해도 남은 기간까지는 이용할 수 있어요. 기간이 끝나면 새 PRO 효과를 만들 때만 다시 필요해요. 작품과 저장한 파일은 지우지 않아요.</Text>
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>}
+    {menu && project && <Dialog title={project.projectName} onClose={() => setMenu(false)}>
+      <View style={{ borderRadius: T.radius.md, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
+        {([['기준 그림 · 세트 이름', () => { setSlotNumber(null); setCanonOpen(true); }],
+           ['카카오 규격 안내', () => Alert.alert('카카오 규격', SPEC.note, [{ text: '닫기' }, { text: '공식 안내', onPress: () => { Linking.openURL(SPEC.officialUrl).catch(e => Alert.alert('링크 오류', String(e))); } }])],
+           ['다른 세트 열기', () => { setProjectId(null); setSlotNumber(null); setCanonOpen(false); setScreen('board'); }]] as const).map(([label, run], i) =>
+          <Pressable key={label} accessibilityRole="button" accessibilityLabel={label} onPress={() => { setMenu(false); run(); }} style={{ minHeight: 52, justifyContent: 'center', paddingHorizontal: T.gap.lg, borderTopWidth: i ? 1 : 0, borderColor: C.line }}><Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{label}</Text></Pressable>)}
+      </View>
+    </Dialog>}
+    {painting && project && slot && <Painter key={project.id + '/' + slot.number} slot={slot} slotCount={project.slots.length} setName={project.projectName} canon={project.canon.image} canonName={project.characterName} canonLocked={project.canon.locked} palette={store?.palette ?? []} onColorUsed={rememberColor}
+      completeTitle={nextUnfinished(project, slot.number) === null ? '완성 · 전체 보기' : '완성 · 다음'}
+      hasPrevious={!!previousDrawn(project, slot.number)}
+      previousImage={previousDrawn(project, slot.number)?.finalImage}
+      onAdoptPrevious={adoptPrevious}
+      firstOfSet={!project.slots.some(s => s.finalImage)}
+      pro={pro}
+      proLabel={entitlementLabel(entitlement)}
+      onRequestPro={() => setProSheet(true)}
+      paperTexture={store?.paperTexture !== false}
+      savedMotions={store?.savedMotions ?? []}
+      onSaveMotion={saveMotion}
+      onForgetMotion={forgetMotion}
+      onComplete={completeAndNext}
+      onSetReference={useAsReference}
+      onCopyPrevious={copyPreviousWork}
+      onClose={() => { setPainting(false); setSlotNumber(null); if (returnToExport) { setScreen('export'); setReturnToExport(false); } }}
+      onNavigate={number => setSlotNumber(number)}
+      onImportDrawing={async () => { const picked = await pickImages(); return picked[0] ? await dataUrl(picked[0]) : null; }}
+      cutouts={(store?.cutouts ?? []).map(c => ({ id: c.id, name: c.name, path: c.image.path }))}
+      onKeepCutout={async data => keepCutout(data)}
+      onUseCutout={async id => { const found = (current.current?.cutouts ?? []).find(c => c.id === id); return found ? await dataUrl(found.image) : null; }}
+      onForgetCutout={forgetCutout}
+      initialImport={pendingImport}
+      onInitialImportUsed={() => setPendingImport(null)}
+      onAddReferences={async () => { const added = await pickImages(true); if (added.length) changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => ({ ...s, referenceImages: mergeImages(s.referenceImages, added) })) })); return added; }}
+      onRemoveReference={path => { changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => ({ ...s, referenceImages: s.referenceImages.filter(image => image.path !== path), work: s.work ? { ...s.work, references: s.work.references.filter(reference => reference.image?.path !== path), activeLayerId: s.work.activeLayerId.startsWith('ref-') && s.work.references.some(reference => reference.id === s.work!.activeLayerId && reference.image?.path === path) ? 'draw-1' : s.work.activeLayerId } : undefined })) })); }}
+      onSave={(payload, dialogue, complete) => {
+        const latest = current.current!.projects.find(p => p.id === project.id)!.slots.find(s => s.number === slot.number)!;
+        const { finalImage, work } = savePainterWork(payload, latest.referenceImages);
+        // The moving file is only rebuilt when the painter sent one, so a still cut stays still
+        // and a failed encode never replaces a good loop with nothing.
+        const motion = payload.motion ?? undefined;
+        let motionImage = latest.motionImage, submitImage = latest.submitImage;
+        if (!motion) { motionImage = undefined; submitImage = undefined; }
+        else if (payload.gif?.data) {
+          try { motionImage = saveMotionLoop(payload.gif.data); } catch (e) { setNotice('움직이는 파일을 만들지 못했어요. 그림은 저장했어요. ' + String(e)); }
+          if (payload.gif.webp) { try { submitImage = saveSubmitLoop(payload.gif.webp); } catch (e) { submitImage = undefined; setNotice('제출 형식(WebP)을 만들지 못했어요. 작업 파일은 저장했어요. ' + String(e).replace(/^Error:\s*/, '')); } }
+          else submitImage = undefined;
+        }
+        // 공식 도구에 넘길 PNG 프레임은 여기서 만들지 않는다. 내보낼 때 지금 그림·움직임에서 새로 만든다.
+        return saveFinal(finalImage, work, dialogue, complete, motion, motionImage, submitImage);
+      }}
+      onShare={async () => { const latest = current.current!.projects.find(p => p.id === project.id)!.slots.find(s => s.number === slot.number)!; if (!latest.finalImage || !await Sharing.isAvailableAsync()) throw new Error('공유할 이미지가 없거나 공유 기능을 사용할 수 없습니다.'); await Sharing.shareAsync(imageUri(latest.finalImage.path), { mimeType: 'image/png', UTI: 'public.png' }); }} />}
+  </SafeAreaView>;
+}

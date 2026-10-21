@@ -1,0 +1,562 @@
+[
+  {
+    "id": "F01",
+    "name": "기본 펜",
+    "tier": "free",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.001890432098765432,
+      "mean": 0.1382203159041395,
+      "max": 232
+    }
+  },
+  {
+    "id": "F02",
+    "name": "자연 잉크",
+    "tier": "free",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.04448302469135802,
+      "mean": 3.843326857903657,
+      "max": 233
+    }
+  },
+  {
+    "id": "F03",
+    "name": "테이퍼 펜",
+    "tier": "free",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.054197530864197534,
+      "mean": 7.524680797627732,
+      "max": 233
+    }
+  },
+  {
+    "id": "F04",
+    "name": "붓펜",
+    "tier": "free",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.057908950617283954,
+      "mean": 4.012417060033985,
+      "max": 231.09019607843138
+    }
+  },
+  {
+    "id": "F05",
+    "name": "연필",
+    "tier": "free",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.26883487654320987,
+      "mean": 4.541621429435892,
+      "max": 81.02352941176474
+    }
+  },
+  {
+    "id": "F06",
+    "name": "색연필",
+    "tier": "free",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.27785493827160496,
+      "mean": 7.4772790183978435,
+      "max": 198.8078431372549
+    }
+  },
+  {
+    "id": "F07",
+    "name": "불투명 채색붓",
+    "tier": "free",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "F08",
+    "name": "마커",
+    "tier": "free",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "F09",
+    "name": "에어브러시",
+    "tier": "free",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "F10",
+    "name": "납작 펜",
+    "tier": "free",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "P01",
+    "name": "거친 잉크",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.04794753086419753,
+      "mean": 3.375301833696472,
+      "max": 233
+    }
+  },
+  {
+    "id": "P02",
+    "name": "드라이 잉크",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.07773148148148148,
+      "mean": 4.768154835390961,
+      "max": 214.15686274509804
+    }
+  },
+  {
+    "id": "P03",
+    "name": "붓결 잉크",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "P04",
+    "name": "볼펜",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.08633487654320987,
+      "mean": 0.4377595315904071,
+      "max": 21.28235294117647
+    }
+  },
+  {
+    "id": "P05",
+    "name": "크레용",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.25905864197530865,
+      "mean": 8.336933490681648,
+      "max": 217.72549019607843
+    }
+  },
+  {
+    "id": "P06",
+    "name": "분필",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.20629629629629628,
+      "mean": 14.737131172840193,
+      "max": 222.6313725490196
+    }
+  },
+  {
+    "id": "P07",
+    "name": "소프트 파스텔",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.41964506172839505,
+      "mean": 10.662718470103854,
+      "max": 151.89803921568628
+    }
+  },
+  {
+    "id": "P08",
+    "name": "목탄",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.42834876543209877,
+      "mean": 11.602042695472493,
+      "max": 142.83137254901962
+    }
+  },
+  {
+    "id": "P09",
+    "name": "연필 옆면",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.5252006172839506,
+      "mean": 13.961228304284028,
+      "max": 156.71764705882353
+    }
+  },
+  {
+    "id": "P10",
+    "name": "입자 음영",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.5011882716049383,
+      "mean": 11.217278201403198,
+      "max": 123.96862745098039
+    }
+  },
+  {
+    "id": "P11",
+    "name": "점묘",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.21979938271604937,
+      "mean": 34.28764279230103,
+      "max": 233
+    }
+  },
+  {
+    "id": "P12",
+    "name": "스프레이",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.2615972222222222,
+      "mean": 31.14362669450544,
+      "max": 229.34509803921569
+    }
+  },
+  {
+    "id": "P13",
+    "name": "드라이 평붓",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.2399537037037037,
+      "mean": 3.788202130234685,
+      "max": 169.95294117647057
+    }
+  },
+  {
+    "id": "P14",
+    "name": "워시",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "P15",
+    "name": "가장자리 수채",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "P16",
+    "name": "오일 파스텔",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.24540123456790122,
+      "mean": 7.304974310095274,
+      "max": 220.20784313725488
+    }
+  },
+  {
+    "id": "P17",
+    "name": "테두리 펜",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "P18",
+    "name": "점선 펜",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.0011959876543209877,
+      "mean": 0.19158372670055676,
+      "max": 232
+    }
+  },
+  {
+    "id": "P19",
+    "name": "평행선 펜",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "P20",
+    "name": "발광 펜",
+    "tier": "pro",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "L01",
+    "name": "예전 마커",
+    "tier": "legacy",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "L02",
+    "name": "예전 붓펜",
+    "tier": "legacy",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.009691358024691357,
+      "mean": 0.716301833696443,
+      "max": 225.56470588235294
+    }
+  },
+  {
+    "id": "L03",
+    "name": "부드러운 펜",
+    "tier": "legacy",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    }
+  },
+  {
+    "id": "L04",
+    "name": "예전 붓",
+    "tier": "legacy",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.00023919753086419754,
+      "mean": 0.005403019849915275,
+      "max": 59.13725490196077
+    }
+  },
+  {
+    "id": "L05",
+    "name": "예전 연필",
+    "tier": "legacy",
+    "sameBytes": true,
+    "keep": {
+      "changed": 0,
+      "mean": 0,
+      "max": 0
+    },
+    "change": {
+      "changed": 0.006072530864197531,
+      "mean": 0.06203525175502297,
+      "max": 55.921568627450995
+    }
+  }
+]

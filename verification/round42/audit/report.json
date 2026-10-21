@@ -1,0 +1,226 @@
+{
+  "startedAt": "2026-09-15T08:52:55.805Z",
+  "steps": [
+    {
+      "name": "01-cold-launch-home",
+      "status": "ok",
+      "ms": 9297,
+      "detail": {
+        "launchToShotMs": 7179,
+        "brand": true,
+        "sets": 2
+      }
+    },
+    {
+      "name": "02-home-scroll",
+      "status": "ok",
+      "ms": 3918,
+      "detail": null
+    },
+    {
+      "name": "03-new-set-painter",
+      "status": "ok",
+      "ms": 19112,
+      "detail": {
+        "canvas": [
+          0,
+          591,
+          1080,
+          1671
+        ],
+        "slot": "01 / 32"
+      }
+    },
+    {
+      "name": "04-draw-strokes",
+      "status": "ok",
+      "ms": 6271,
+      "detail": {
+        "undoEnabled": true
+      }
+    },
+    {
+      "name": "05-brush-sheet",
+      "status": "ok",
+      "ms": 23453,
+      "detail": null
+    },
+    {
+      "name": "06-size-hold",
+      "status": "ok",
+      "ms": 7294,
+      "detail": null
+    },
+    {
+      "name": "07-color",
+      "status": "ok",
+      "ms": 13344,
+      "detail": {
+        "panelClosedAfterPick": true
+      }
+    },
+    {
+      "name": "08-eraser",
+      "status": "ok",
+      "ms": 11723,
+      "detail": {
+        "eraserSelected": true,
+        "eraserSize": true
+      }
+    },
+    {
+      "name": "09-undo-redo",
+      "status": "ok",
+      "ms": 16166,
+      "detail": null
+    },
+    {
+      "name": "10-caption-keyboard",
+      "status": "ok",
+      "ms": 13320,
+      "detail": {
+        "editBtn": true
+      }
+    },
+    {
+      "name": "11-caption-move-resize",
+      "status": "ok",
+      "ms": 12058,
+      "detail": {
+        "handleBefore": [
+          693,
+          1616
+        ],
+        "afterMove": [
+          543,
+          1236
+        ],
+        "movedPx": 409,
+        "afterResize": [
+          682,
+          1314
+        ]
+      }
+    },
+    {
+      "name": "12-caption-deselect-edit",
+      "status": "ok",
+      "ms": 5649,
+      "detail": {
+        "deselected": false,
+        "strayStroke": "see screenshot"
+      }
+    },
+    {
+      "name": "13-reference",
+      "status": "ok",
+      "ms": 18154,
+      "detail": null
+    },
+    {
+      "name": "14-layers",
+      "status": "ok",
+      "ms": 18808,
+      "detail": null
+    },
+    {
+      "name": "15-complete-next-double-tap",
+      "status": "ok",
+      "ms": 15973,
+      "detail": {
+        "before": "01 / 32",
+        "after": "02 / 32",
+        "offer": true
+      }
+    },
+    {
+      "name": "16-slot2-previous-start",
+      "status": "ok",
+      "ms": 8017,
+      "detail": null
+    },
+    {
+      "name": "17-motion-none-to-effect",
+      "status": "ok",
+      "ms": 42080,
+      "detail": {
+        "bounce": 0.0885,
+        "none": 0,
+        "shake": 0.0662,
+        "pulse": 0.0743,
+        "bounce2": 0.0744
+      }
+    },
+    {
+      "name": "18-complete-to-slot3-prev-motion",
+      "status": "ok",
+      "ms": 27749,
+      "detail": {
+        "slot": "03 / 32",
+        "reusedMotionDelta": 0.0546
+      }
+    },
+    {
+      "name": "19-back-to-previous-slot",
+      "status": "ok",
+      "ms": 14961,
+      "detail": {
+        "slot": "02 / 32"
+      }
+    },
+    {
+      "name": "20-board",
+      "status": "ok",
+      "ms": 10235,
+      "detail": {
+        "tiles": [
+          "슬롯 1 완성",
+          "슬롯 2 완성",
+          "슬롯 3 작업 중",
+          "슬롯 4 미착수"
+        ]
+      }
+    },
+    {
+      "name": "21-reedit-completed",
+      "status": "ok",
+      "ms": 20731,
+      "detail": {
+        "before": "슬롯 1 완성",
+        "after": "슬롯 1 작업 중"
+      }
+    },
+    {
+      "name": "22-export",
+      "status": "ok",
+      "ms": 12888,
+      "detail": {
+        "bundle": true,
+        "details": true
+      }
+    },
+    {
+      "name": "23-back-home",
+      "status": "ok",
+      "ms": 13797,
+      "detail": {
+        "home": false
+      }
+    },
+    {
+      "name": "24-kill-relaunch-restore",
+      "status": "fail",
+      "ms": 3629,
+      "error": "세트 카드 없음"
+    },
+    {
+      "name": "25-logcat",
+      "status": "ok",
+      "ms": 1235,
+      "detail": {
+        "lines": 0
+      }
+    }
+  ],
+  "finishedAt": "2026-09-15T08:58:46.356Z"
+}

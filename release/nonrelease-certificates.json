@@ -1,0 +1,11 @@
+{
+  "note": "이 지문으로 서명된 AAB 는 Play 에 올리면 안 된다(release-check 가 FAIL). 값은 인증서 공개 지문이며 비밀이 아니다.",
+  "debug": "fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c",
+  "dryRun": [
+    {
+      "sha256": "761141881af40e1622e5d0c6411451aa7814868d753614aaeedaa4f0c5b1a7f8",
+      "subject": "CN=DRY RUN NOT FOR PLAY",
+      "purpose": "round 36 bundleRelease dry run; key kept outside the repo in the session scratchpad, 30-day validity, never registered with Play"
+    }
+  ]
+}

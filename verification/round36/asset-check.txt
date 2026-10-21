@@ -1,0 +1,37 @@
+
+> emoticon-studio@1.0.0 assets:check
+> node scripts/asset-check.cjs
+
+FAIL P0 app_icon
+       · 파일 없음: assets/brand/app-icon.png
+FAIL P0 adaptive_foreground
+       · 파일 없음: assets/brand/adaptive-foreground.png
+FAIL P0 adaptive_background
+       · 파일 없음: assets/brand/adaptive-background.png
+FAIL P0 adaptive_monochrome
+       · 파일 없음: assets/brand/adaptive-monochrome.png
+FAIL P0 splash_icon
+       · 파일 없음: assets/brand/splash-icon.png
+FAIL P0 play_icon
+       · 파일 없음: assets/store/play-icon-512.png
+FAIL P0 feature_graphic
+       · 파일 없음: assets/store/feature-graphic.png
+FAIL P0 phone_screenshots
+       · assets/store/screenshots/phone-01.png… 0장 — 2장 이상 필요해요
+WARN P2 brush_preset_previews
+       · 파일 없음: assets/brush/preset-ink.png
+       · 파일 없음: assets/brush/preset-soft.png
+       · 파일 없음: assets/brush/preset-grain.png
+       · 파일 없음: assets/brush/preset-marker.png
+FAIL P0 app_config
+       · expo.icon → ./assets/icon.png 는 Expo 템플릿 이미지예요
+       · android.adaptiveIcon.foregroundImage → ./assets/android-icon-foreground.png 는 Expo 템플릿 이미지예요
+       · android.adaptiveIcon.backgroundImage → ./assets/android-icon-background.png 는 Expo 템플릿 이미지예요
+       · android.adaptiveIcon.monochromeImage → ./assets/android-icon-monochrome.png 는 Expo 템플릿 이미지예요
+       · expo-splash-screen 이 설치되지 않았어요 — npx expo install expo-splash-screen
+       · 스플래시가 설정에 연결되지 않았어요(assets/brand/splash-icon.png 를 넣으면 app.config.js 가 연결)
+FAIL P0 native_resources
+       · android/ 에 템플릿으로 만든 리소스 30개가 남아 있어요 — 에셋을 넣은 뒤 npx expo prebuild --platform android --clean
+
+출시 에셋 검사: FAIL 10 · WARN 1 · PASS 0
+exit=1

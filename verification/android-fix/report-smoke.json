@@ -1,0 +1,68 @@
+{
+  "mode": "--fix",
+  "startedAt": "2026-09-13T08:57:01.715Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "W1-select-lift",
+      "covers": "",
+      "note": "선택 들어올림",
+      "shot": "W1-select-lift.png"
+    },
+    {
+      "id": "W2-select-move",
+      "covers": "",
+      "note": "선택 안을 끌었다 — 분기 기록 확인",
+      "shot": "W2-select-move.png"
+    },
+    {
+      "id": "W3-after",
+      "covers": "",
+      "note": "끈 뒤 상태",
+      "shot": "W3-after.png"
+    },
+    {
+      "id": "W4-caption-keyboard",
+      "covers": "",
+      "note": "키보드가 열린 문구 패널 — 입력칸과 적용이 보여야 한다",
+      "shot": "W4-caption-keyboard.png"
+    },
+    {
+      "id": "W5-board",
+      "covers": "",
+      "note": "세트 화면 — 제출 준비가 상단에 크게",
+      "shot": "W5-board.png"
+    },
+    {
+      "id": "W6-more-again",
+      "covers": "",
+      "note": "실패 — element (\"~새 이모티콘 세트 이어서 만들기\") still not existing after 10000ms",
+      "shot": "W6-more-again.png"
+    }
+  ],
+  "skipped": [],
+  "notes": [
+    "W6-more-again 실패: element (\"~새 이모티콘 세트 이어서 만들기\") still not existing after 10000ms"
+  ],
+  "crashes": [],
+  "closedBecause": "done",
+  "finishedAt": "2026-09-13T08:58:58.659Z"
+}

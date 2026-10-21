@@ -1,0 +1,12 @@
+1) 준비                          장=draw-1,draw-2,draw-3 | 부분움직임=part-A→draw-2,part-B→draw-3
+2) draw-2 삭제                   장=draw-1,draw-3 | 부분움직임=part-B→draw-3
+3) 같은 번호로 새 장 추가               장=draw-1,draw-3,draw-2 | 부분움직임=part-B→draw-3
+   새 장 그림픽셀=0 (0 이어야 빈 장)
+4) 되돌리기(추가 취소)                 장=draw-1,draw-3 | 부분움직임=part-B→draw-3
+5) 되돌리기(삭제 취소)                 장=draw-1,draw-2,draw-3 | 부분움직임=part-A→draw-2,part-B→draw-3
+   되살아난 draw-2 그림픽셀=1658
+6) 다시 실행(삭제)                   장=draw-1,draw-3 | 부분움직임=part-B→draw-3
+7) 다시 실행(추가)                   장=draw-1,draw-3,draw-2 | 부분움직임=part-B→draw-3
+   새 장 그림픽셀=0
+8) 저장 → 다시 열기                  장=draw-1,draw-3,draw-2 | 부분움직임=part-B→draw-3
+   다시 연 draw-2 그림픽셀=0

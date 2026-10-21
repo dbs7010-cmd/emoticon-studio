@@ -1,0 +1,28 @@
+CONFIG   FAIL
+   PASS    internal_review_off — 내부 검수 스위치 꺼짐
+   FAIL    receipt_endpoint [EXTERNAL] — 영수증 확인 서버 주소가 없어요 — 서버 배포 후 EMOTICON_RECEIPT_ENDPOINT 로 빌드
+   PASS    application_id — android.package = com.emoticonstudio.app
+   PASS    version_code — android.versionCode = 1 · 올린 적 있는 최대 0
+   PASS    version_name — version = 1.0.0
+   PASS    native_version_sync — android/ 의 버전이 설정과 같아요
+SIGNING  FAIL
+   PASS    release_signing_structure — release → 업로드 키, AAB 디버그 서명 차단
+   FAIL    signing_inputs [EXTERNAL] — 업로드 키 설정이 없어요: EMOTICON_UPLOAD_STORE_FILE, EMOTICON_UPLOAD_STORE_PASSWORD, EMOTICON_UPLOAD_KEY_ALIAS, EMOTICON_UPLOAD_KEY_PASSWORD (값은 ~/.gradle/gradle.properties 또는 환경변수)
+   PASS    no_project_properties_secret — 프로젝트 gradle.properties 에 서명 값 없음
+   PASS    no_secrets_in_repo — 저장소(추적·미추적)에 키 파일·비밀번호 값 없음
+   FAIL    signing_certificate — 검증용 임시 키로 서명됐어요 — Play 에 올리면 안 돼요 (761141881af40e1622e5d0c6411451aa7814868d753614aaeedaa4f0c5b1a7f8)
+ARTIFACT FAIL
+   PASS    app_bundle — Android App Bundle(BundleConfig.pb · base 모듈)
+   PASS    application_id_in_bundle — 매니페스트 패키지 com.emoticonstudio.app
+   PASS    billing_permission — com.android.vending.BILLING 권한
+   PASS    release_js_bundle — index.android.bundle 2114808 bytes
+   PASS    expo_iap_native — expo-iap 네이티브 모듈(dex 에 expo/modules/iap)
+   PASS    bundle_internal_review_off — 묶인 app.config internalReview = false
+   FAIL    bundle_receipt_endpoint [EXTERNAL] — 묶인 app.config 에 영수증 서버 주소가 없어요
+ASSETS   BLOCKED
+   BLOCKED brand_assets — npm run assets:check FAIL: app_icon, adaptive_foreground, adaptive_background, adaptive_monochrome, splash_icon, play_icon, feature_graphic, phone_screenshots, app_config, native_resources
+
+빌드 식별 기록: verification/round36/build-identity.json
+
+출시 검사 종료 코드 1 (0 통과 · 1 설정/서명/산출물 실패 · 2 에셋만 BLOCKED)
+exit=1
