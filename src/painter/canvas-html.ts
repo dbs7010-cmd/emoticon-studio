@@ -678,6 +678,25 @@ function buildLoop(fps,wantSheets){
  return {count,fps:Number(fps.toFixed(2)),loop:Number(L.toFixed(3)),delayMs,data:gif.data,bytes:gif.bytes,droppedColours:gif.droppedColours,clipped:motionClips(),
   webp:webp?webp.data:null,webpBytes:webp?webp.bytes:0,sheets:sheets};
 }
+
+// LINE 움직이는 스티커용 프레임(2026-10-27). 카카오 경로(buildLoop)는 그대로 두고 따로 만든다.
+// spec: {w,h,count} — 한 바퀴를 count 장으로 고르게 나눠 W×H 로 그린 뒤 w×h 칸 가운데에 비율대로 줄여 넣는다(투명 바탕).
+// count 가 0 이면 한 바퀴 길이로 정한다(초당 약 12장, 5~20장). still=true 면 첫 장 하나만(탭 그림용).
+function buildLineFrames(spec){
+ boilCache.clear();syncFrame();
+ const L=loopSeconds(),count=spec.still?1:spec.count>0?Math.max(1,Math.min(20,spec.count|0)):Math.max(5,Math.min(20,Math.round(L*12)));
+ const k=Math.min(spec.w/W,spec.h/H),dw=W*k,dh=H*k,ox=(spec.w-dw)/2,oy=(spec.h-dh)/2;
+ const out=[];
+ for(let i=0;i<count;i++){
+  const frame=bitmap(),g=frame.getContext('2d'),t=L*i/count;
+  layersAt(t).forEach(l=>composite(g,l,motion?deltaFor(l,t):null));
+  drawCaption(g,motion&&motion.captionMoves?wholeDelta(t):null);
+  const c=document.createElement('canvas');c.width=spec.w;c.height=spec.h;const cg=c.getContext('2d');
+  cg.imageSmoothingEnabled=true;cg.imageSmoothingQuality='high';cg.drawImage(frame,ox,oy,dw,dh);
+  out.push(c.toDataURL('image/png'));
+ }
+ return {loop:Number(L.toFixed(3)),count,sheets:out};
+}
 function encodeGif(frames,delayHundredths){
  const {palette,dropped}=quantize(frames);
  const bytes=[];
@@ -1396,6 +1415,7 @@ async function command(m){try{
  if(m.type==='motion'){checkpoint();motion=m.motion||null;boilCache.clear();dirty=true;extentCache=null;if(!motion)stopPlaying();render(playing?(now()-playStart)/1000:undefined);state();}
  if(m.type==='play'){startPlaying();}
  if(m.type==='stop'){stopPlaying();render();state();}
+ if(m.type==='lineFrames'){const was=playing;stopPlaying();send({type:'lineFrames',id:m.id,line:buildLineFrames(m.spec)});if(was)startPlaying();else{render();state();}}
  if(m.type==='frames'){const was=playing;stopPlaying();send({type:'frames',id:m.id,gif:buildLoop(m.fps,!!m.sheets)});if(was)startPlaying();else{render();state();}}
  if(m.type==='save'){dry();if(selection)applySelection(false,'save');syncFrame();saving=true;saveToken=m.token===undefined?null:m.token;const first=animOn()?frames[0].layers:layers;const out=bitmap(),g=out.getContext('2d');first.forEach(l=>composite(g,l));drawCaption(g);send({type:'save',token:saveToken,dirty,data:out.toDataURL('image/png'),metrics:metrics(out),activeLayerId,caption,motion,gif:(m.gif&&(motion||animOn()))?buildLoop(12,false):undefined,layers:first.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')})),
    frames:animOn()?frames.map((f,i)=>({id:f.id,duration:f.duration,layers:i===0?null:f.layers.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')}))})):undefined,references:references.map(l=>({...meta(l),path:l.path}))});}

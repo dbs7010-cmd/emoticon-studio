@@ -17,7 +17,7 @@ import { Painter, CATALOG, type CopiedWork, type Tool } from './src/painter/pain
 import { isProPreset } from './src/motion-math';
 import { KAKAO_ANIMATED_SPEC, KAKAO_STATIC_SPEC as SPEC, STAGES, WEBP_TOOL_RULE, WEBP_ANIMATOR_URL, REQUIRED_EXTRAS } from './src/constants/kakao-spec';
 import { TRASH_DAYS, inTrash, trashExpired, captionText, createProject, doneCount, usesPro, droppedImagePaths, setIssues, isAnimated, isDone, isWorking, nextUnfinished, previousDrawn, reorderSlots, setIsAnimated, DEFAULT_MOTION } from './src/project';
-import { cutFile, deleteLocalImages, exportUri, listExports, migrateExports, removeExports, imageUri, inspectStore, localFile, loadStore, readPickedFile, saveStore, type StoreReport } from './src/services/storage';
+import { cutFile, deleteLocalImages, exportFile, exportUri, listExports, migrateExports, removeExports, imageUri, inspectStore, localFile, loadStore, readPickedFile, saveStore, type StoreReport } from './src/services/storage';
 import { restoreBackup, writeBackup } from './src/services/backup';
 import { isFullBackup, restoreFullBackup, writeFullBackup } from './src/services/full-backup';
 import { CloudScreen } from './src/components/cloud-screen';
@@ -36,6 +36,7 @@ import { getRandomBytes, digestStringAsync, CryptoDigestAlgorithm } from 'expo-c
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { Dimensions } from 'react-native';
+import { assembleApng, inspectPng, LINE_SPEC, LINE_STICKER, lineCuts, lineName, lineProblems, linePlan, lineZip, shrinkSteps, type LineFile } from './src/services/line-export';
 import { exportSet, decodeDataUrl, fileStamp, safeName, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinalsAsync, finalsKey, inspectImage } from './src/services/qa';
@@ -788,6 +789,55 @@ function Studio() {
       await Sharing.shareAsync(exportUri(result.path), { mimeType: 'application/zip', UTI: 'public.zip' });
       // A share sheet that opened is not a file that arrived. Say only what we know.
       setNotice(`${made} 공유 창에서 저장할 곳을 골라 주세요.`);
+    });
+  }
+  // LINE 움직이는 스티커 파일 묶음(2026-10-27, 글로벌 통합안 EM-G07). 카카오 묶음과 따로 만든다 — 카카오 경로는 그대로.
+  // 움직이는 칸 8/16/24개 · 칸마다 270×270 APNG(1MB 넘으면 장 수를 줄여 다시) · 메인 240×240 APNG · 탭 96×74 PNG.
+  // 규격에 하나라도 걸리면 묶지 않고 어느 칸이 왜 걸렸는지 말한다. LINE 등록·심사는 사용자가 직접 한다.
+  function exportLine() {
+    if (!project) return;
+    const pick = lineCuts(project);
+    if (!pick.size) { setNotice(`LINE 움직이는 스티커는 움직이는 칸이 8개 이상 필요해요(지금 ${pick.moving}개).`); return; }
+    void task('LINE 파일 만드는 중…', async () => {
+      type Cut = typeof pick.cuts[number];
+      const files: LineFile[] = [];
+      const motionOf = (slot: Cut) => slot.motion ?? DEFAULT_MOTION;
+      const apng = async (slot: Cut, w: number, h: number, kind: 'sticker' | 'main', name: string): Promise<LineFile> => {
+        let made = await baker.current!.line(slot.work!, motionOf(slot), { w, h, count: 0 });
+        let plan = linePlan(made.loop, made.count), data: Uint8Array = new Uint8Array(0), problems: string[] = [];
+        if (!plan) return { name, data, kind, problems: [`한 바퀴가 4초를 넘어요(${made.loop.toFixed(1)}초) — 움직임 속도를 빠르게 해 주세요`] };
+        for (const count of shrinkSteps(plan.frames)) {
+          if (count !== made.count) { made = await baker.current!.line(slot.work!, motionOf(slot), { w, h, count }); plan = linePlan(made.loop, made.count)!; }
+          data = assembleApng(made.sheets.map(decodeDataUrl), plan.delayMs, plan.plays);
+          problems = lineProblems(inspectPng(data), kind);
+          if (data.length <= LINE_SPEC.maxBytes) break;
+        }
+        return { name, data, kind, problems };
+      };
+      for (const [i, slot] of pick.cuts.entries()) {
+        setBusy(`LINE 파일 만드는 중 · ${i + 1}/${pick.cuts.length}칸`);
+        try { files.push(await apng(slot, LINE_STICKER.w, LINE_STICKER.h, 'sticker', lineName(i))); }
+        catch (e) { files.push({ name: lineName(i), data: new Uint8Array(0), kind: 'sticker', problems: ['만들지 못했어요 · ' + userMessage(e)] }); }
+      }
+      setBusy('LINE 메인·탭 그림 만드는 중…');
+      const first = pick.cuts[0];
+      files.push(await apng(first, LINE_SPEC.main.w, LINE_SPEC.main.h, 'main', 'main.png'));
+      const tab = await baker.current!.line(first.work!, motionOf(first), { w: LINE_SPEC.tab.w, h: LINE_SPEC.tab.h, count: 1, still: true });
+      const tabData = decodeDataUrl(tab.sheets[0]);
+      files.push({ name: 'tab.png', data: tabData, kind: 'tab', problems: lineProblems(inspectPng(tabData), 'tab') });
+      const bad = files.filter(f => f.problems.length);
+      if (bad.length) {
+        const where = bad.map(f => f.kind === 'sticker' ? `${pad(pick.cuts[Number(f.name.slice(0, 2)) - 1].number)}번 칸(${f.problems.join(', ')})` : `${f.name}(${f.problems.join(', ')})`);
+        setNotice('LINE 규격에 맞지 않는 칸이 있어 묶지 않았어요. ' + where.join(' · '));
+        return;
+      }
+      const file = exportFile(`${safeName(project.projectName)}-LINE-${pick.size}-${fileStamp(new Date())}.zip`);
+      file.write(lineZip(files));
+      const skipped = pick.moving - pick.size!;
+      const made = `LINE 움직이는 스티커 ${pick.size}개 · 메인 · 탭 파일을 묶었어요.` + (skipped ? ` 움직이는 칸 ${skipped}개는 ${pick.size}개 세트에 들어가지 않았어요.` : '') + (pick.stills.length ? ' 멈춘 칸은 빠져요.' : '');
+      if (!await Sharing.isAvailableAsync()) { setNotice(`${made} 이 기기에서는 공유 창을 열 수 없어요.`); return; }
+      await Sharing.shareAsync(exportUri(file.name), { mimeType: 'application/zip', UTI: 'public.zip' });
+      setNotice(`${made} LINE Creators Market 에 직접 올려 주세요(심사는 LINE 이 해요).`);
     });
   }
   function shareAgain() {
@@ -1622,6 +1672,8 @@ function Studio() {
               {/* 4. 지금 할 일. 이 화면의 노란 버튼은 이것 하나다. */}
               <Action primary title="파일 묶음 만들기" disabled={!!busy || !drawn.length} onPress={exportProject} />
               {!!drawn.length && drawn.length < project.slots.length && <Text style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>{`지금 있는 ${drawn.length}칸으로 만들어요 · 빈 칸은 빠져요`}</Text>}
+              {/* LINE 움직이는 스티커(2026-10-27): 카카오 묶음과 따로. 움직이는 칸 8개 이상일 때 만들 수 있다. */}
+              <Action title="LINE 움직이는 스티커 파일 만들기" disabled={!!busy || !drawn.length} onPress={exportLine} />
               {!!lastExport && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, borderRadius: 16, backgroundColor: T.successSoft }}>
                 <Glyph name="check-circle" size={20} color={colors.PASS} />
                 <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>{lastExport.count}칸을 묶었어요</Text>
