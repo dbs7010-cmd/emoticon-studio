@@ -54,7 +54,7 @@ export const ASSET_SLOTS = {
   // 40차 최종 배치(App.tsx): 창작 표면 오른쪽 위 right 14 · top 16, 화면폭 < 380dp 이면 96, 아니면 112. 아래 12% 는 행동 줄과 겹칠 수 있어 비운다.
   homeHeroArtwork: { aspectRatio: 1, display: '96×96 (폭 < 380dp) / 112×112 (그 외) — 표면 오른쪽 위', sourceSize: '336(@3x) · 224 · 112 / 마스터 1024', safeArea: '주 피사체는 칸의 오른쪽 79% × 위쪽 89% 안(왼쪽 21%·아래 11% 비움 — 제목·행동 줄 침범 방지)', background: 'transparent', 
     // 2026-10-07: 코드로 그린 임시 자리표시(노랑 원 + 흰 스티커 얼굴) 대신 지금 앱의 선 그림 캐릭터(표현 가이드 표시용 그림)를 쓴다.
-    // 2026-10-16 대표 캐릭터 콘(옥수수) — 손 흔들기. 원본: scripts/mascot-render.cjs
+    // 2026-10-16 대표 캐릭터 콘(옥수수) — 손 흔들기. 원본: scripts/mascot-cutout.cjs(Codex 그림에서 오림)
     source: require('../../assets/mascot/corn-wave.png') },
   // 공식 알림 카드 왼쪽 작은 그림.
   noticeArtwork: { aspectRatio: 1, display: '44×44', sourceSize: '132(@3x) · 88 · 44 / 마스터 512', safeArea: '가운데 76%', background: 'transparent', 

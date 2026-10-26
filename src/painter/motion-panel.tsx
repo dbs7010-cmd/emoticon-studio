@@ -105,11 +105,16 @@ export function MotionSample({ preset, uri, fallback, size = 44, active, directi
   }, [preset]);
   const inputRange = frames.map((_, i) => i / SAMPLE_POINTS);
   const at = (pick: (f: typeof frames[number]) => number) => clock.interpolate({ inputRange, outputRange: frames.map(pick) });
-  const origin = `${(frames[0].px / size) * 100}% ${(frames[0].py / size) * 100}%`;
+  // 축(발끝 등)은 transformOrigin 대신 '축으로 옮김 → 돌리고 늘림 → 되돌림'으로 건다. 2026-10-26: 안드로이드에서 transformOrigin 이
+  // 가운데가 아니고 회전만 바뀌는 효과(살랑)의 견본이 통째로 사라졌다. 그림은 칸의 86% 로 가운데 놓이므로 축도 그 비율로 옮긴다.
+  const art = size * .86, ox = (frames[0].px / size - .5) * art, oy = (frames[0].py / size - .5) * art;
+  const deg = (r: number) => (Math.abs(r) < 1e-6 ? 0 : r).toFixed(3) + 'deg';
   return <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
     <Animated.Image accessibilityIgnoresInvertColors source={uri ? { uri } : fallback ?? undefined} resizeMode="contain"
-      style={{ width: size * .86, height: size * .86, opacity: active ? 1 : .85, transformOrigin: origin,
-        transform: [{ translateX: at(f => f.dx) }, { translateY: at(f => f.dy) }, { rotate: clock.interpolate({ inputRange, outputRange: frames.map(f => f.rot + 'deg') }) }, { scaleX: at(f => f.sx) }, { scaleY: at(f => f.sy) }] }} />
+      style={{ width: art, height: art, opacity: active ? 1 : .85,
+        transform: [{ translateX: at(f => f.dx) }, { translateY: at(f => f.dy) }, { translateX: ox }, { translateY: oy },
+          { rotate: clock.interpolate({ inputRange, outputRange: frames.map(f => deg(f.rot)) }) }, { scaleX: at(f => f.sx) }, { scaleY: at(f => f.sy) },
+          { translateX: -ox }, { translateY: -oy }] }} />
   </View>;
 }
 

@@ -1,4 +1,4 @@
-// 강좌 그림(그리기 기초 · 세트 구성)을 대표 캐릭터 콘으로 만든다(2026-10-16). 콘 그림은 assets/mascot/corn-*.png(scripts/mascot-render.cjs).
+// 강좌 그림(그리기 기초 · 세트 구성)을 대표 캐릭터 콘으로 만든다(2026-10-16). 콘 그림은 assets/mascot/corn-*.png(scripts/mascot-cutout.cjs — Codex 원본에서 오림).
 // 크기는 예전 그림과 같게 둔다(강좌 화면 비율이 그대로). 글자는 넣지 않는다 — 설명은 강좌 본문이 한다.
 // 실행: PLAYWRIGHT_MODULE_PATH=playwright-core CHROME_PATH=<chrome.exe> node scripts/lessons/corn-art.cjs
 const fs = require('node:fs');
@@ -19,11 +19,11 @@ const ART = {
   // ③ 작게 봐도 알아보게: 큰 그림 · 아이콘 크기(78) · 채팅 속 작은 크기(36)
   'character/step3.png': [760, 520, `<div style="display:flex;align-items:flex-end;justify-content:center;gap:56px;height:100%;padding-bottom:70px;box-sizing:border-box">${img('base', 400)}${img('base', 78)}${img('base', 36)}</div>`],
   // 표정 24가지 ① 자주 쓰는 마음 여덟: 안녕 · 고마워 · 미안 · 좋아 / 응 · 아니 · 화남 · 슬픔
-  'expressions/step1.png': [720, 720, `<div style="display:grid;grid-template-columns:repeat(4,160px);gap:16px;justify-content:center;align-content:center;height:100%">${['wave', 'bow', 'sorry', 'cheer', 'nod', 'no', 'angry', 'sad'].map(n => tile(n, 160)).join('')}</div>`],
+  'expressions/step1.png': [720, 720, `<div style="display:grid;grid-template-columns:repeat(4,160px);gap:16px;justify-content:center;align-content:center;height:100%">${['wave', 'bow', 'sorry', 'cheer', 'nod', 'shy', 'sleep', 'cheer-small'].map(n => tile(n, 160)).join('')}</div>`],
   // ③ 같은 고마워, 다른 몸짓: 꾸벅 · 하트 · 수줍게 · 두 손 번쩍
   'expressions/step3.png': [720, 720, `<div style="display:grid;grid-template-columns:repeat(2,320px);gap:24px;justify-content:center;align-content:center;height:100%">${['bow', 'heart', 'shy', 'cheer'].map(n => tile(n, 320)).join('')}</div>`],
   // 승인에 가까운 세트 ① 겹치지 않게: 보드에서 같은 칸 둘(빨간 점선)
-  'set-plan/step1.png': [720, 720, `<div style="display:grid;grid-template-columns:repeat(3,200px);gap:20px;justify-content:center;align-content:center;height:100%">${['wave', 'bow', 'cheer', 'sad', 'nod', 'angry', 'shy', 'cheer', 'no'].map((n, i) => tile(n, 200, i === 2 || i === 7 ? 'outline:5px dashed #E5484D;outline-offset:4px' : '')).join('')}</div>`],
+  'set-plan/step1.png': [720, 720, `<div style="display:grid;grid-template-columns:repeat(3,200px);gap:20px;justify-content:center;align-content:center;height:100%">${['wave', 'bow', 'cheer', 'sleep', 'nod', 'sorry', 'shy', 'cheer', 'cheer-small'].map((n, i) => tile(n, 200, i === 2 || i === 7 ? 'outline:5px dashed #E5484D;outline-offset:4px' : '')).join('')}</div>`],
   // 강좌 표지 4장(480×360): 노란 바탕 + 콘 한 장 + 그 강좌를 뜻하는 작은 표시
   'first-set/cover.png': [480, 360, cover('wave', '<svg width="70" height="70" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#191F28" stroke-width="2.6" stroke-linecap="round"/></svg>')],
   'brush-layer/cover.png': [480, 360, cover('base', '<svg width="70" height="70" viewBox="0 0 24 24" fill="none"><path d="M4 20l4-1 11-11-3-3L5 16z" stroke="#191F28" stroke-width="2" stroke-linejoin="round"/></svg>')],

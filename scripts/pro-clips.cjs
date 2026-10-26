@@ -18,7 +18,7 @@ const OUT = path.join(__dirname, '..', 'assets', 'pro');
     await page.setContent(canvasHtml.replace('<script>', '<script>window.messages=[];window.ReactNativeWebView={postMessage:m=>window.messages.push(JSON.parse(m))};</script><script>'));
     const cmd = m => page.evaluate(m => window.command(m), m);
     const last = type => page.evaluate(t => window.messages.filter(m => m.type === t).at(-1), type);
-    // 2026-10-16: 대표 캐릭터 콘(손 흔들기)을 레이어 둘로 넣는다 — 몸(+왼손) / 오른팔. 원본: scripts/mascot-render.cjs
+    // 2026-10-16: 대표 캐릭터 콘(손 흔들기)을 레이어 둘로 넣는다 — 몸(+왼손) / 오른팔. 원본: scripts/mascot-cutout.cjs(Codex 그림에서 오림)
     const png = name => 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, '..', 'assets', 'mascot', 'corn-' + name + '.png')).toString('base64');
     await cmd({ type: 'init', layers: [{ id: 'draw-1', name: '몸', data: png('wave-body') }, { id: 'draw-2', name: '팔', data: png('wave-arm') }], activeLayerId: 'draw-1' });
     await page.waitForTimeout(300);
