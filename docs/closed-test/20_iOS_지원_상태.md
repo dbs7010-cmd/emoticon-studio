@@ -8,7 +8,7 @@
 | 번들 ID | DONE | app.json `ios.bundleIdentifier = com.emoticonstudio.app` |
 | 같은 서버 사용 | DONE(설계) | 로그인 중계·백업·공모전이 플랫폼 구분 없이 같은 Firebase 함수·규칙. 앱은 Firebase JS SDK 라 네이티브 Firebase 설정 파일(GoogleService-Info.plist)이 필요 없다 |
 | 카카오·네이버·구글 로그인 | DONE(설계) | 회사 SDK 없이 시스템 인증 창(iOS `ASWebAuthenticationSession`, expo-web-browser)으로 같은 `/auth/start` 를 연다 — iOS 용 앱 키·URL 스킴 등록 불필요 |
-| **Apple 로그인** | **BLOCKED(필수, 미구현)** | App Store 심사 지침 4.8: 다른 회사 로그인을 쓰는 앱은 이름·이메일만 받고·이메일 숨기기 가능·광고 추적 없는 동등한 로그인을 함께 제공해야 한다 → 사실상 **Sign in with Apple**. 로그인 필수 정책이라 반드시 필요 |
+| **Apple 로그인** | **DONE(코드, 2026-10-27 · 실기기 미검증 — 30번 문서)** | App Store 심사 지침 4.8: 다른 회사 로그인을 쓰는 앱은 이름·이메일만 받고·이메일 숨기기 가능·광고 추적 없는 동등한 로그인을 함께 제공해야 한다 → 사실상 **Sign in with Apple**. 로그인 필수 정책이라 반드시 필요 |
 | 그리기(WebView)·저장·공유 | NEXT(미검증) | 코드에 Android 전용 분기는 키보드 처리·레이아웃 애니메이션 정도. 파일 공유 UTI(`public.zip`)는 들어 있음 |
 | 클라우드 자동 백업 제외 규칙 | NEXT | Android 전용 플러그인(withBackupRules). iOS 는 `exports/` 를 iCloud 백업 제외로 따로 표시해야 함 |
 | 결제(expo-iap) | BLOCKED(정책상 닫힘) | iOS 상품 등록·영수증 검증 서버 없음 — Android 와 같이 닫아 둔 채 출시 가능 |

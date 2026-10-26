@@ -10,7 +10,9 @@ const SVG_MOCK = Object.assign(
 exports.SVG_MOCK = SVG_MOCK;
 exports.loader = function (given = {}) {
   // 시스템 브라우저 로그인(expo-web-browser)·난수(expo-crypto)는 검사에서 대역 — 실제 동작은 APK·실기기에서.
-  const mocks = { 'react-native-svg': SVG_MOCK, 'expo-web-browser': { openAuthSessionAsync: async () => ({ type: 'cancel' }) }, 'expo-crypto': { getRandomBytes: n => new Uint8Array(require('node:crypto').randomBytes(n)) }, 'expo-screen-orientation': { OrientationLock: { DEFAULT: 0, PORTRAIT_UP: 3 }, lockAsync: async () => {} },
+  const mocks = { 'react-native-svg': SVG_MOCK, 'expo-web-browser': { openAuthSessionAsync: async () => ({ type: 'cancel' }) }, 'expo-crypto': { getRandomBytes: n => new Uint8Array(require('node:crypto').randomBytes(n)), CryptoDigestAlgorithm: { SHA256: 'SHA-256' }, digestStringAsync: async (_a, s) => require('node:crypto').createHash('sha256').update(s).digest('hex') },
+    // Apple 로그인(iOS 전용): 검사 환경은 Android 처럼 '쓸 수 없음'
+    'expo-apple-authentication': { isAvailableAsync: async () => false, signInAsync: async () => { throw Object.assign(new Error('cancel'), { code: 'ERR_REQUEST_CANCELED' }); }, AppleAuthenticationButton: () => null, AppleAuthenticationButtonType: { CONTINUE: 1 }, AppleAuthenticationButtonStyle: { BLACK: 2 } }, 'expo-screen-orientation': { OrientationLock: { DEFAULT: 0, PORTRAIT_UP: 3 }, lockAsync: async () => {} },
     // 강좌 영상(expo-video)은 검사에서 대역 — 실제 재생은 APK 에서 본다.
     'expo-video': { useVideoPlayer: () => ({ play() {}, pause() {}, loop: false, muted: false }), VideoView: 'VideoView' }, ...given };
   const cache = new Map();

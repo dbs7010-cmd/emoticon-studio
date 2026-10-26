@@ -52,6 +52,9 @@ exports.authCallbackKakao = broker.authCallbackKakao;
 exports.authCallbackNaver = broker.authCallbackNaver;
 exports.authCallbackGoogle = broker.authCallbackGoogle;
 exports.redeemAuth = broker.redeemAuth;
+// Apple 로그인(iOS): 앱이 받은 identityToken 을 서버가 Apple 공개키로 확인한다(apple.js).
+const apple = require('./apple')({ db, ensureUser });
+exports.exchangeApple = apple.exchangeApple;
 
 // PRO 가 지금 유효한가(서버 기록만). until 이 있으면 그 시각까지(체험은 항상 기간이 있다).
 const proActive = u => !!(u && u.pro && u.pro.active === true && (u.pro.until == null || toMillis(u.pro.until) > Date.now()));
@@ -345,7 +348,7 @@ exports.adminCleanupNow = onCall(async req => { adminOnly(req); return { expired
 
 // ── 탈퇴 ───────────────────────────────────────────────────────────────────────────────────
 // 본인 데이터 전부: 개인 백업 파일·목록, 회원 문서, 공모전 접수 문서와 파일, 로그인 계정.
-exports.deleteMyAccount = onCall(async req => {
+exports.deleteMyAccount = onCall({ secrets: [apple.APPLE_KEY] }, async req => {
   const uid = signedIn(req);
   need(req.data?.confirm === 'DELETE', 'failed-precondition', '탈퇴 확인이 필요해요.');
   await bucket().deleteFiles({ prefix: `backups/${uid}/` });
@@ -360,6 +363,8 @@ exports.deleteMyAccount = onCall(async req => {
   // 구매 연결 기록(purchases)도 지운다(2026-10-13). 구매 자체는 Google Play 계정에 남으므로, 새 계정에서 '구매 복원'하면 다시 확인된다.
   const bought = await db.collection('purchases').where('uid', '==', uid).get();
   for (const d of bought.docs) await d.ref.delete();
+  // Apple 로그인 계정은 Apple 토큰도 철회한다(App Store 지침 5.1.1(v)). 실패해도 탈퇴는 계속(기록만).
+  await apple.revokeApple(uid).catch(e => console.error('apple revoke', e.message));
   await db.doc(`users/${uid}`).delete();
   await getAuth().deleteUser(uid).catch(() => {});
   return { deleted: { backupSets: sets.size, submissions: subs.size } };

@@ -9,6 +9,7 @@ import { T, Font, Clay } from './ui';
 import { HopStage } from './motion-fx';
 import { ImtiIcon, IconSize } from '../design/icons';
 import type { Provider } from '../services/cloud/account';
+import * as AppleAuthentication from 'expo-apple-authentication';
 
 const C = T;
 const LOGIN: { id: Provider; label: string; bg: string; ink: string; line?: string }[] = [
@@ -56,9 +57,10 @@ function MovingSet({ size }: { size: number }) {
   </View>;
 }
 
-export function StartScreen({ providers, onLogin, onStart, busy, error }: {
+export function StartScreen({ providers, apple, onLogin, onStart, busy, error }: {
   providers: Record<Provider, boolean> | null;   // null = 서버 설정 없는 빌드(로그인 없이 '시작하기')
-  onLogin: (p: Provider) => void; onStart: () => void; busy?: boolean; error?: string;
+  apple?: boolean;   // iOS 에서 Apple 로그인을 쓸 수 있을 때(2026-10-27, App Store 지침 4.8)
+  onLogin: (p: Provider | 'apple') => void; onStart: () => void; busy?: boolean; error?: string;
 }) {
   const { width, height } = useWindowDimensions();
   const art = Math.min(272, width - 96, height * .34);
@@ -71,6 +73,10 @@ export function StartScreen({ providers, onLogin, onStart, busy, error }: {
     <View style={{ flex: 1, minHeight: art + 40, alignItems: 'center', justifyContent: 'center' }}><MovingSet size={art} /></View>
     <View style={{ gap: 8 }}>
       {!!error && <Text accessibilityLiveRegion="polite" style={{ fontSize: 13, lineHeight: 19, color: C.danger, textAlign: 'center' }}>{error}</Text>}
+      {/* Apple 버튼은 Apple 이 준 모양 그대로, 다른 로그인과 같은 크기로 맨 위에(iOS 에서만) */}
+      {!!providers && apple && <AppleAuthentication.AppleAuthenticationButton buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+        buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK} cornerRadius={16} style={{ height: 56, width: '100%', opacity: busy ? .6 : 1 }}
+        onPress={() => { if (!busy) onLogin('apple'); }} />}
       {providers ? LOGIN.map(x => { const ready = providers[x.id];
         return <Pressable key={x.id} accessibilityRole="button" accessibilityLabel={ready ? x.label : x.label + ' · 준비 중'} accessibilityState={{ disabled: !ready || !!busy }} disabled={!ready || !!busy} onPress={() => onLogin(x.id)}
           style={({ pressed }) => ({ height: 56, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,

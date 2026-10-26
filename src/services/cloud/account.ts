@@ -45,6 +45,19 @@ export async function signInWithBrowser(cloud: Cloud, provider: Provider, opts: 
   const { token, artistName } = await cloud.call<{ token: string; artistName?: string | null }>('redeemAuth', { ticket: p.ticket, verifier });
   return { uid: await cloud.signInWithToken(token), artistName };
 }
+// Apple 로그인(iOS 전용, 2026-10-27 — App Store 심사 지침 4.8). Apple 화면은 시스템이 띄우고, 받은 identityToken 을
+// 서버(exchangeApple)가 Apple 공개키로 확인한 뒤 같은 Firebase 로그인 토큰을 준다. nonce: Apple 에는 sha256(raw), 서버에는 raw.
+// 이메일·이름은 요청하지 않는다(다른 회사 로그인과 같이 식별자만). 취소하면 null.
+export type AppleSignIn = (hashedNonce: string) => Promise<{ identityToken: string | null; authorizationCode: string | null }>;
+export async function signInWithApple(cloud: Cloud, opts: { signIn: AppleSignIn; randomBytes: (n: number) => Uint8Array; sha256: (s: string) => Promise<string> }): Promise<{ uid: string; artistName: string | null | undefined } | null> {
+  const raw = hex(opts.randomBytes(32));
+  let cred;
+  try { cred = await opts.signIn(await opts.sha256(raw)); }
+  catch (e) { if ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED') return null; throw new Error('Apple 로그인을 열지 못했어요. 다시 시도해 주세요.'); }
+  if (!cred.identityToken) throw new Error(ERRORS.verify);
+  const { token, artistName } = await cloud.call<{ token: string; artistName?: string | null }>('exchangeApple', { identityToken: cred.identityToken, nonce: raw, authorizationCode: cred.authorizationCode ?? '' });
+  return { uid: await cloud.signInWithToken(token), artistName };
+}
 // 미리 깨우기(2026-10-12, 실기기 '로그인 렉'): 서버 함수는 한동안 안 쓰면 잠들고, 처음 깨는 데 약 2초가 걸린다(실측 2.0~2.3초 → 깬 뒤 0.3초).
 // 로그인 한 번에 5단계를 지나 10초 가까이 기다리게 되므로, 화면이 열릴 때 그 단계들을 미리 한 번씩 두드려 깨운다.
 // 요청은 모두 '형식이 틀린' 빈 요청이라 서버는 아무것도 만들거나 바꾸지 않고 바로 거절한다. 실패해도 조용히 넘어간다.

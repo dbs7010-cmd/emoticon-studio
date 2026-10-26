@@ -29,10 +29,11 @@ import { LESSONS, LESSON_GROUPS, type LessonAction } from './src/constants/lesso
 import { LessonView } from './src/components/lesson-view';
 import { ArtistNameScreen, StartScreen } from './src/components/onboarding';
 import { appCloud, cloudConfig } from './src/services/cloud/firebase';
-import { artistNameFormat, authBase, checkArtistName, providerReady, register, setArtistName, signInWithBrowser, warmUp, WARM_ARTIST_CALLS, WARM_LOGIN, WARM_LOGIN_CALLS, type Provider } from './src/services/cloud/account';
+import { artistNameFormat, authBase, checkArtistName, providerReady, register, setArtistName, signInWithApple, signInWithBrowser, warmUp, WARM_ARTIST_CALLS, WARM_LOGIN, WARM_LOGIN_CALLS, type Provider } from './src/services/cloud/account';
 import { openContests } from './src/services/cloud/contest';
 import * as WebBrowser from 'expo-web-browser';
-import { getRandomBytes } from 'expo-crypto';
+import { getRandomBytes, digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { Dimensions } from 'react-native';
 import { exportSet, decodeDataUrl, fileStamp, safeName, type HandoffFrames, exportFormatSummary } from './src/services/export';
@@ -170,6 +171,13 @@ function Studio() {
   const loginWith = async (provider: Provider) => { const config = cloudConfig(Constants.expoConfig?.extra); if (!cloud || !config) return;
     const r = await signInWithBrowser(cloud, provider, { base: authBase(config), open: (url, ret) => WebBrowser.openAuthSessionAsync(url, ret), randomBytes: getRandomBytes });
     if (r && r.artistName !== undefined) setArtist(r.artistName); };   // 옛 서버(작가명을 안 줌)면 registerUser 결과를 기다린다
+  // Apple 로그인(iOS 전용, 2026-10-27): 시스템 Apple 창 → 서버 exchangeApple. 이메일·이름 범위는 요청하지 않는다.
+  const loginApple = async () => { if (!cloud) return;
+    const r = await signInWithApple(cloud, { randomBytes: getRandomBytes, sha256: s => digestStringAsync(CryptoDigestAlgorithm.SHA256, s),
+      signIn: nonce => AppleAuthentication.signInAsync({ nonce, requestedScopes: [] }) });
+    if (r && r.artistName !== undefined) setArtist(r.artistName); };
+  const [appleReady, setAppleReady] = useState(false);
+  useEffect(() => { if (Platform.OS === 'ios' && cloud) AppleAuthentication.isAvailableAsync().then(setAppleReady).catch(() => setAppleReady(false)); }, [cloud]);
   useEffect(() => { if (!cloud) return;
     return cloud.onAuth(uid => { setAuthUid(uid); setArtist(undefined);
       if (uid) register(cloud).then(u => setArtist(u.artistName ?? null)).catch(() => setArtist(undefined)); }); }, [cloud]);
@@ -181,8 +189,8 @@ function Studio() {
   // 서버 연결 빌드에서만 로그인 증명을 함께 보낸다. 증명이 아직 없으면 확인을 미룬다(pro.ts confirm).
   const payOpts = cloud ? { authToken: () => cloud.idToken() } : {};
   const finishStart = () => { setStartOpen(false); if (store && !store.introDone) { try { commit(st => ({ ...st, introDone: true })); } catch { /* 다음 실행에 다시 보일 뿐 */ } } };
-  const startLogin = (provider: Provider) => { setLoginError(''); setLoginBusy(true);
-    loginWith(provider).then(() => finishStart()).catch(e => setLoginError(String((e as Error).message ?? e))).finally(() => setLoginBusy(false)); };
+  const startLogin = (provider: Provider | 'apple') => { setLoginError(''); setLoginBusy(true);
+    (provider === 'apple' ? loginApple() : loginWith(provider)).then(() => finishStart()).catch(e => setLoginError(String((e as Error).message ?? e))).finally(() => setLoginBusy(false)); };
   // 홈 공지 줄의 공모전: 서버가 있을 때만, 접수 중인 것 하나. 실패하면 조용히 없음(홈을 막지 않는다).
   useEffect(() => { if (!cloud) return; let alive = true;
     openContests(cloud).then(list => { const c = list.find(x => x.status === 'open'); if (!alive) return;
@@ -922,7 +930,7 @@ function Studio() {
   if (store && !loadError && cloud && authUid === undefined) return <SafeAreaView style={{ flex: 1, backgroundColor: C.paper, alignItems: 'center', justifyContent: 'center' }}><StatusBar style="dark" /><Text style={{ fontSize: 13, color: C.muted }}>불러오는 중…</Text></SafeAreaView>;
   if (store && !loadError && ((cloud && authUid === null) || (!cloud && startOpen))) return <SafeAreaView style={{ flex: 1, backgroundColor: C.paper }}><StatusBar style="dark" />
     <StartScreen providers={cloud ? { kakao: providerReady(Constants.expoConfig?.extra, 'kakao'), naver: providerReady(Constants.expoConfig?.extra, 'naver'), google: providerReady(Constants.expoConfig?.extra, 'google') } : null}
-      onLogin={startLogin} onStart={finishStart} busy={loginBusy} error={loginError} /></SafeAreaView>;
+      apple={appleReady} onLogin={startLogin} onStart={finishStart} busy={loginBusy} error={loginError} /></SafeAreaView>;
   if (store && !loadError && cloud && authUid && artist === null) return <SafeAreaView style={{ flex: 1, backgroundColor: C.paper }}><StatusBar style="dark" />
     <ArtistNameScreen formatError={artistNameFormat} check={name => checkArtistName(cloud, name)}
       save={async name => { const r = await setArtistName(cloud, name); setArtist(r.artistName); }} /></SafeAreaView>;
