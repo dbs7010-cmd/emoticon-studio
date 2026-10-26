@@ -18,9 +18,10 @@ const OUT = path.join(__dirname, '..', 'assets', 'pro');
     await page.setContent(canvasHtml.replace('<script>', '<script>window.messages=[];window.ReactNativeWebView={postMessage:m=>window.messages.push(JSON.parse(m))};</script><script>'));
     const cmd = m => page.evaluate(m => window.command(m), m);
     const last = type => page.evaluate(t => window.messages.filter(m => m.type === t).at(-1), type);
-    // 2026-10-16: 대표 캐릭터 콘(손 흔들기)을 레이어 둘로 넣는다 — 몸(+왼손) / 오른팔. 원본: scripts/mascot-cutout.cjs(Codex 그림에서 오림)
+    // 대표 캐릭터 콘(손 흔들기)을 레이어 둘로 넣는다 — 몸 / 흔드는 손. 원본: Codex 단독 그림(2026-10-27, docs/design/mascot-v2-src/solo/wave-registration.json).
+    // Codex 정합: 손을 먼저(아래), 몸을 나중(위)에 — 손목 이음새가 몸 뒤로 숨는다.
     const png = name => 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, '..', 'assets', 'mascot', 'corn-' + name + '.png')).toString('base64');
-    await cmd({ type: 'init', layers: [{ id: 'draw-1', name: '몸', data: png('wave-body') }, { id: 'draw-2', name: '팔', data: png('wave-arm') }], activeLayerId: 'draw-1' });
+    await cmd({ type: 'init', layers: [{ id: 'draw-2', name: '팔', data: png('wave-arm') }, { id: 'draw-1', name: '몸', data: png('wave-body') }], activeLayerId: 'draw-1' });
     await page.waitForTimeout(300);
     // 통통·쓱이 칸 밖으로 나가지 않게 그림 전체를 조금 줄인다(앱의 '칸 안에 맞추기'와 같은 명령).
     await cmd({ type: 'scaleAll', factor: .82 });

@@ -1,7 +1,7 @@
 // 대표 캐릭터를 HQ/Codex 원본 그림(docs/design/mascot-v2-src/)에서 그대로 오려 낸다(2026-10-27, 대표: "코덱스가 만든 캐릭터를 써라 — 다시 그린 건 미세하게 다르다").
 // 다시 그리지 않는다: 크림색 종이 바탕만 지우고(가장자리에서 이어진 밝은 바탕을 채움 지우기) 캐릭터 픽셀은 그대로 둔다.
 // 겹쳐 그려진 세 친구 큰 그림(kon-friends-v2 위쪽)은 서로 가려 있어 오리지 않는다 — 떨어져 있는 그림만 쓴다.
-// 결과: assets/mascot/<이름>.png (1024 정사각, 투명, 캐릭터는 가운데 · 바닥 정렬). 같은 파일을 쓰는 앱 자리·강좌·PRO GIF 가 같이 바뀐다.
+// 결과: assets/mascot/<이름>.png (원본 시트에서 떨어져 있는 7장만) (1024 정사각, 투명, 캐릭터는 가운데 · 바닥 정렬). 같은 파일을 쓰는 앱 자리·강좌·PRO GIF 가 같이 바뀐다.
 // 실행: node scripts/mascot-cutout.cjs
 const fs = require('node:fs');
 const path = require('node:path');
@@ -19,12 +19,9 @@ const CUTS = {
   'goguma-shy': ['kon-friends-v2', [50, 855, 400, 1185], [230, 1050]],
   'kong-sleep': ['kon-friends-v2', [815, 925, 1210, 1190], [1000, 1080]],
 };
-// 같은 그림을 여러 이름으로(앱 자리·강좌가 쓰는 이름). 원본에 없는 동작은 가장 가까운 원본 그림을 쓴다.
-const ALIAS = {
-  'corn-base': 'corn-wave', 'corn-bow': 'corn-shy', 'corn-heart': 'corn-cheer',
-  'goguma-base': 'goguma-shy', 'goguma-wave': 'goguma-shy', 'goguma-cheer': 'goguma-shy',
-  'kong-base': 'kong-sleep', 'kong-wave': 'kong-sleep', 'kong-cheer': 'kong-sleep',
-};
+// 2026-10-27: 나머지 16장(corn-base·bow·sad·angry·no·heart·sorry·nod·wave-body·wave-arm, goguma-base·wave·cheer, kong-base·wave·cheer)은
+// Codex 가 단독 그림으로 따로 그려 줬다(docs/design/mascot-v2-src/solo/ → assets/mascot/ 그대로 복사). 여기서는 만들지 않는다.
+const ALIAS = {};
 const isPaper = (r, g, b) => r > 228 && g > 214 && b > 180 && r - b < 70;   // 크림 종이 + 발밑 옅은 그림자
 
 function cut(img, [x0, y0, x1, y1], [sx, sy]) {
@@ -81,28 +78,3 @@ for (const [name, [file, box, seed]] of Object.entries(CUTS)) {
 }
 for (const [name, from] of Object.entries(ALIAS)) { fs.copyFileSync(path.join(OUT, from + '.png'), path.join(OUT, name + '.png')); console.log(name, '←', from); }
 
-// PRO 비교 '부분 움직임'용: 손 흔들기 그림을 손(+반짝 선) / 몸 두 레이어로 나눈다(같은 1024 자리 그대로).
-// 손 영역은 위 corn-wave 결과 기준: 몸 왼쪽 바깥 x<285·y<600, 손목 아래 x<250·y<665.
-const wave = read(path.join(OUT, 'corn-wave.png'));
-const inArm = (x, y) => (x < 285 && y < 600) || (x < 250 && y < 665);
-const split = pick => { const o = { w: wave.w, h: wave.h, d: Buffer.from(wave.d) }; for (let y = 0; y < o.h; y++) for (let x = 0; x < o.w; x++) if (inArm(x, y) !== pick) o.d[(y * o.w + x) * 4 + 3] = 0; return o; };
-write(path.join(OUT, 'corn-wave-arm.png'), split(true)); write(path.join(OUT, 'corn-wave-body.png'), split(false));
-console.log('corn-wave-arm / corn-wave-body ← corn-wave 나눔');
-// 끄덕 · 미안: 원본 그림을 발끝 축으로 기울인 것(표정은 원본 그대로)
-function rotate(src, deg, cx = 512, cy = 970) {
-  const o = { w: src.w, h: src.h, d: Buffer.alloc(src.d.length) }, a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
-  for (let y = 0; y < o.h; y++) for (let x = 0; x < o.w; x++) {
-    const fx = c * (x - cx) + s * (y - cy) + cx, fy = -s * (x - cx) + c * (y - cy) + cy, x0 = Math.floor(fx), y0 = Math.floor(fy);
-    if (x0 < 0 || y0 < 0 || x0 >= src.w - 1 || y0 >= src.h - 1) continue;
-    const tx = fx - x0, ty = fy - y0, o4 = (y * o.w + x) * 4;
-    let a4 = 0; const acc = [0, 0, 0];
-    for (const [dx, dy, wgt] of [[0, 0, (1 - tx) * (1 - ty)], [1, 0, tx * (1 - ty)], [0, 1, (1 - tx) * ty], [1, 1, tx * ty]]) {
-      const p = ((y0 + dy) * src.w + x0 + dx) * 4, al = src.d[p + 3] * wgt; a4 += al; for (let k = 0; k < 3; k++) acc[k] += src.d[p + k] * al; }
-    if (a4 > 0) { for (let k = 0; k < 3; k++) o.d[o4 + k] = Math.round(acc[k] / a4); o.d[o4 + 3] = Math.round(a4); }
-  }
-  return o;
-}
-const fit = img => place({ w: img.w, h: img.h, d: img.d });
-write(path.join(OUT, 'corn-nod.png'), fit(rotate(wave, -10)));
-write(path.join(OUT, 'corn-sorry.png'), fit(rotate(read(path.join(OUT, 'corn-shy.png')), 9)));
-console.log('corn-nod ← corn-wave 기울임 · corn-sorry ← corn-shy 기울임');

@@ -1,0 +1,322 @@
+[
+  {
+    "name": "corn-base.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      161,
+      62,
+      862,
+      962
+    ],
+    "bytes": 609102,
+    "sha256": "06827f2c26713c7cfc4e1400c1e4a0b13d3dacadd01c84c3a8ea93e7c967ab2c"
+  },
+  {
+    "name": "corn-bow.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      189,
+      62,
+      834,
+      962
+    ],
+    "bytes": 594628,
+    "sha256": "f304e833fce84a5a5308be6506bf38d93564d3fa13284ea704931e83cfc3c3a8"
+  },
+  {
+    "name": "corn-sad.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      192,
+      62,
+      832,
+      962
+    ],
+    "bytes": 638043,
+    "sha256": "9b048fc37c62b959eaeb21ed11e07ef16b61672903fd6f8da8e4f49d3e4ed068"
+  },
+  {
+    "name": "corn-angry.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      157,
+      62,
+      867,
+      960
+    ],
+    "bytes": 633721,
+    "sha256": "337c7a27b1cd978f1c9cf426f6fffadbe0ec7177977991b7a57542062053daf9"
+  },
+  {
+    "name": "corn-no.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      190,
+      62,
+      835,
+      960
+    ],
+    "bytes": 642463,
+    "sha256": "bdf182f814874a6dd756c0eba135214cabccd3936058e9650aa4099fea2ed0be"
+  },
+  {
+    "name": "corn-heart.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      143,
+      63,
+      880,
+      962
+    ],
+    "bytes": 660726,
+    "sha256": "cc8039d8dca1a4e4034bec5cd3b25e3e818070929209879c47d6b1055495aa01"
+  },
+  {
+    "name": "corn-sorry.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      195,
+      63,
+      829,
+      962
+    ],
+    "bytes": 602490,
+    "sha256": "5bd32985232d1cee7b42952987a3c59e951f2d22541c805d3c68f4ce2d394a1a"
+  },
+  {
+    "name": "corn-nod.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      189,
+      62,
+      835,
+      962
+    ],
+    "bytes": 597466,
+    "sha256": "576ca4ac20d6d08fe4d8141b7ed260d4f9157522e707025c6c63d2566c6a46fa"
+  },
+  {
+    "name": "corn-wave-body.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      261,
+      107,
+      854,
+      946
+    ],
+    "bytes": 495487,
+    "sha256": "6cf3266d8edd7690a090bdd12ab65cc83ded377edb183b9e45d65da621715d5e"
+  },
+  {
+    "name": "corn-wave-arm.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      135,
+      485,
+      305,
+      652
+    ],
+    "bytes": 44210,
+    "sha256": "d05287d1391b82a7e553547058b26d76f47ee32f43814e1dcf707d9512db2ee2"
+  },
+  {
+    "name": "goguma-base.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      118,
+      63,
+      907,
+      962
+    ],
+    "bytes": 756555,
+    "sha256": "d713e9ba18dd9a6ddbd9058f8d08aadee5a7fe104d21b9fb5409a2e4a75106e0"
+  },
+  {
+    "name": "goguma-wave.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      112,
+      62,
+      912,
+      962
+    ],
+    "bytes": 723125,
+    "sha256": "4bbe191e2ffe4adc1af667ccbea12c39d0582b9ed561059b23dc9921c7daa550"
+  },
+  {
+    "name": "goguma-cheer.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      73,
+      62,
+      951,
+      962
+    ],
+    "bytes": 803084,
+    "sha256": "7673218beb4422ef1833d45406541155e9f3c2c0d8ae3379c107bb7a2f97327c"
+  },
+  {
+    "name": "kong-base.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      158,
+      62,
+      866,
+      962
+    ],
+    "bytes": 727635,
+    "sha256": "92605d8f5cc2ec513ad2d71090d959fb4d82f22bc73fa54dd225eb87e68f6960"
+  },
+  {
+    "name": "kong-wave.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      134,
+      62,
+      891,
+      962
+    ],
+    "bytes": 640522,
+    "sha256": "a65250339d4223f40cf5a154546272e2f19a49ce7d5c343271744c10f22ae6ab"
+  },
+  {
+    "name": "kong-cheer.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ],
+    "visibleBBox": [
+      147,
+      62,
+      876,
+      962
+    ],
+    "bytes": 638171,
+    "sha256": "7a70512be34310800237e6bdf32f45d3bb14de0a65f9dff6f006980344c7ae36"
+  }
+]
