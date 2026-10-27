@@ -21,11 +21,17 @@ export function rewardedUnit(extra: Extra, os: string = Platform.OS): string | n
 let ready: Promise<boolean> | null = null;
 function prepare(): Promise<boolean> {
   ready ??= (async () => {
+    // 동의 창은 필요한 지역(EEA 등)에서만 뜬다. AdMob 에 동의 메시지가 없거나 동의 확인이 실패해도(2026-10-27 에뮬레이터:
+    // "no form(s) configured") 광고를 아예 끄지 않는다 — 이미 알고 있는 동의 상태(getConsentInfo)를 따르고, 모르면 요청해 본다.
+    // 동의가 필요한데 거절한 사용자(canRequestAds=false)에게는 광고를 부르지 않는다.
+    let canRequest = true;
+    try { canRequest = (await AdsConsent.gatherConsent()).canRequestAds !== false; }
+    catch { try { canRequest = (await AdsConsent.getConsentInfo()).canRequestAds !== false; } catch { canRequest = true; } }
+    if (!canRequest) return false;
     try {
-      const consent = await AdsConsent.gatherConsent();
       await mobileAds().setRequestConfiguration({ maxAdContentRating: MaxAdContentRating.PG });
       await mobileAds().initialize();
-      return consent.canRequestAds !== false;
+      return true;
     } catch { ready = null; return false; }
   })();
   return ready;

@@ -4,11 +4,11 @@
 const assert = require('node:assert/strict');
 const { loader } = require('./load-ts.cjs');
 
-let script = 'reward', consentOk = true, created = 0;
+let script = 'reward', consentOk = true, consentThrows = false, created = 0;
 const fake = {
   __esModule: true,
   default: () => ({ initialize: async () => [], setRequestConfiguration: async () => {} }),
-  AdsConsent: { gatherConsent: async () => ({ canRequestAds: consentOk }) },
+  AdsConsent: { gatherConsent: async () => { if (consentThrows) throw new Error('no form(s) configured'); return { canRequestAds: consentOk }; }, getConsentInfo: async () => ({ canRequestAds: consentOk }) },
   MaxAdContentRating: { PG: 'PG' },
   TestIds: { REWARDED: 'ca-app-pub-3940256099942544/5224354917' },
   AdEventType: { CLOSED: 'closed', ERROR: 'error' },
@@ -42,7 +42,10 @@ const ads = load('src/services/ads.ts');
   assert.equal(ads.rewardedUnit({}, 'android'), null, '단위 없음 → 광고 없음');
   assert.equal(ads.rewardedUnit({ ads: { rewarded: 'ca-app-pub-1~2' } }, 'android'), null, '앱 ID 를 단위로 잘못 넣으면 광고 없음');
 
-  script = 'reward'; assert.equal(await ads.showRewarded(unit, 500), 'rewarded', '끝까지 봄');
+  // 동의 메시지가 AdMob 에 없어 동의 확인이 실패해도(에뮬레이터 실측) 광고는 부른다 — 첫 호출이 준비(prepare)를 정한다.
+  consentThrows = true;
+  script = 'reward'; assert.equal(await ads.showRewarded(unit, 500), 'rewarded', '끝까지 봄(동의 확인 실패여도 광고)');
+  consentThrows = false;
   script = 'skip'; assert.equal(await ads.showRewarded(unit, 500), 'closed', '보지 않고 닫음');
   script = 'fail'; assert.equal(await ads.showRewarded(unit, 500), 'unavailable', '불러오기 실패 → 막지 않음');
   script = 'never'; assert.equal(await ads.showRewarded(unit, 60), 'unavailable', '시간 초과 → 막지 않음');
