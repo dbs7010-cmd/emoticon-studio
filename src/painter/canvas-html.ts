@@ -693,9 +693,13 @@ function buildLineFrames(spec){
   drawCaption(g,motion&&motion.captionMoves?wholeDelta(t):null);
   const c=document.createElement('canvas');c.width=spec.w;c.height=spec.h;const cg=c.getContext('2d');
   cg.imageSmoothingEnabled=true;cg.imageSmoothingQuality='high';cg.drawImage(frame,ox,oy,dw,dh);
-  out.push(c.toDataURL('image/png'));
+  let seen=0;const px=cg.getImageData(0,0,spec.w,spec.h).data;for(let k=3;k<px.length;k+=16)if(px[k]>16)seen++;
+  out.push({url:c.toDataURL('image/png'),seen});
  }
- return {loop:Number(L.toFixed(3)),count,sheets:out};
+ // LINE 은 첫 장을 스토어·목록의 멈춘 그림으로 쓴다. 뿅·쓱처럼 비어서 시작하는 효과도 그림이 가장 잘 보이는 장부터 시작하게 돌린다(순서·반복은 그대로).
+ let best=0;out.forEach((o,i)=>{if(o.seen>out[best].seen)best=i;});
+ const turned=out.slice(best).concat(out.slice(0,best));
+ return {loop:Number(L.toFixed(3)),count,sheets:turned.map(o=>o.url)};
 }
 function encodeGif(frames,delayHundredths){
  const {palette,dropped}=quantize(frames);

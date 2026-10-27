@@ -30,6 +30,12 @@ const OUT = process.argv[2] ? path.resolve(process.argv[2]) : null;
     let id = 0;
     const line = async (motion, spec) => { await cmd({ type: 'motion', motion }); await cmd({ type: 'lineFrames', id: ++id, spec }); return (await last('lineFrames')).line; };
     const files = [];
+    // 비어서 시작하는 효과(뿅): LINE 은 첫 장을 멈춘 그림으로 쓴다 → 첫 장에 그림이 보여야 한다(2026-10-28 에뮬레이터에서 발견).
+    {
+      const pop = await line({ version: 1, preset: 'pop', speed: .5, strength: .5 }, { w: L.LINE_STICKER.w, h: L.LINE_STICKER.h, count: 0 });
+      const cover = await page.evaluate(async url => { const img = new Image(); img.src = url; await img.decode(); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 16) n++; return n / (c.width * c.height); }, pop.sheets[0]);
+      assert.ok(cover > .1, '뿅도 첫 장에 그림이 보인다(덮인 비율 ' + cover.toFixed(2) + ')');
+    }
     const motions = { bounce: .5, hop: .5, tilt: .5, float: .5, nod: .5, bow: .5, dance: .5, sway: .5 };
     for (const [i, preset] of Object.keys(motions).entries()) {
       const made = await line({ version: 1, preset, speed: .5, strength: .5 }, { w: L.LINE_STICKER.w, h: L.LINE_STICKER.h, count: 0 });
