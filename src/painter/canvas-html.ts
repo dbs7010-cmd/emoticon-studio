@@ -6,7 +6,7 @@ export const canvasHtml = `<!doctype html><html lang="ko"><head><meta name="view
 *{box-sizing:border-box}body{margin:0;background:#F4F4F5;font-family:system-ui;overflow:hidden}#viewport{height:100vh;overflow:auto;touch-action:none;overscroll-behavior:none}#surface{position:relative;background-color:#FFFFFF;margin:auto}#surface.paper{background-color:#FFFFFF;background-image:radial-gradient(#00000006 1px,transparent 1px);background-size:9px 9px}canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 </style></head><body><div id="viewport"><div id="surface"><canvas id="drawing" width="${SPEC.width}" height="${SPEC.height}"></canvas></div></div><script>
 (function(){
-const canvas=document.getElementById('drawing'),surface=document.getElementById('surface'),viewport=document.getElementById('viewport'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+const canvas=document.getElementById('drawing'),surface=document.getElementById('surface'),viewport=document.getElementById('viewport'),ctx=canvas.getContext('2d');   // 화면용 — 픽셀을 읽지 않는다. willReadFrequently 는 GPU 그리기를 꺼서 뺐다(2026-10-28)
 const W=canvas.width,H=canvas.height;
 let tool='pen',brush='pen',color='#242424',penWidth=5,eraserWidth=20,zoom=1,active=false,last=null,pointer=null,history=[],future=[],dirty=false,loading=false,saving=false,layers=[],references=[],activeLayerId='draw-1',activeDrawLayerId='draw-1',activeReferenceId=null,strokePending=false,pendingFill=null,steady=null,caption=null,selection=null,marquee=null,dragging=null,grabbing=null,focusLayerId=null,pivotPick=null,pivotRole='pivot',motion=null,playing=false,playStart=0,rafId=null,smoothing=true,captionPicked=false,captionDrag=null,captionHandle=null,captionDismiss=false,probe=false;
 const touches=new Map();let multi=null,suppressDraw=false;
@@ -153,7 +153,10 @@ function boiled(l,k){
  for(let x=0;x<W;x+=band)og.drawImage(mid,x,0,band,H,x,wave(x,ph[1],ph[0]),band,H);
  boilCache.set(key,{src:l.bitmap,out});return out;
 }
-function render(t){ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));if(t===undefined)drawOnion(ctx);(t===undefined?layers:layersAt(t)).forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
+let renderCount=0;
+// 측정용(scripts/draw-latency-bench.cjs): 선 끝·손가락 자리와 다시 그린 횟수만 읽는다. 동작은 바꾸지 않는다.
+window.__bench={tip:()=>({steady,lastRaw}),renders:()=>renderCount};
+function render(t){renderCount++;ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));if(t===undefined)drawOnion(ctx);(t===undefined?layers:layersAt(t)).forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
@@ -276,7 +279,17 @@ const PRESETS={
  outline:{alpha:1,width:2.8,cap:'round',outline:.9}
 };
 // 선 보정 강도. light 는 예전 값 그대로다(무료 '선 보정' 켜짐과 같다).
-const STAB={light:.55,medium:.3,strong:.16};
+// 선 보정(1€ 필터, 2026-10-28). 예전에는 입력마다 같은 비율로 따라가서 '강'은 선이 손가락보다 0.08초 늦고
+// 멈춘 뒤 0.3초 넘게 끌려왔다(대표 영상). 이제 느리게 그을 때는 떨림을 잡고(min) 빠를수록 바로 따라간다(beta·캔버스px/초).
+// 시간 기준이라 입력이 60Hz 든 240Hz 든 같은 느낌이다. 측정: scripts/draw-latency-bench.cjs.
+const STAB={light:{min:2,beta:.04},medium:{min:1,beta:.03},strong:{min:.5,beta:.025}};
+let euro=null;
+const stamp=e=>Number.isFinite(e&&e.timeStamp)&&e.timeStamp>0?e.timeStamp:(typeof performance!=='undefined'?performance.now():Date.now());
+function stabilize(raw,ts){const S=STAB[stabilizer]||STAB.light,dt=Math.max(1,Math.min(100,ts-euro.t))/1000;euro.t=ts;
+ const al=fc=>1/(1+1/(2*Math.PI*fc*dt)),ad=al(.5);
+ euro.dx+=ad*((raw.x-euro.x)/dt-euro.dx);euro.dy+=ad*((raw.y-euro.y)/dt-euro.dy);euro.x=raw.x;euro.y=raw.y;
+ const a=al(S.min+S.beta*Math.hypot(euro.dx,euro.dy));
+ return {x:steady.x+(raw.x-steady.x)*a,y:steady.y+(raw.y-steady.y)*a};}
 let preset=null,brushOpacity=1,stabilizer='light',strokeLen=0,lastRaw=null,lastPressure=null;
 const PENCIL_ALPHA=.55;
 function applyBrush(m){preset=m.preset&&PRESETS[m.preset]?m.preset:null;const o=Number(m.opacity);brushOpacity=Number.isFinite(o)?Math.max(.05,Math.min(1,o)):1;stabilizer=STAB[m.stabilizer]?m.stabilizer:'light';if(typeof m.smoothing==='boolean')smoothing=m.smoothing;}
@@ -1003,10 +1016,10 @@ canvas.addEventListener('pointerdown',e=>{
    if(inside){dragging={from:p0,dx:selection.dx,dy:selection.dy};return;}
    applySelection(false,'pointerdown-outside');}
   marquee={x0:p0.x,y0:p0.y,x1:p0.x,y1:p0.y};render();return;}
- checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;
+ checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;euro={t:stamp(e),x:last.x,y:last.y,dx:0,dy:0};
  strokeTool=tool;                      // 이 획은 끝까지 이 도구로 그린다
  const P0=activePreset();lastPressure=penPressure(e);strokeLen=0;lastRaw=last;strokePath=[];
- strokeSeed=(Date.now()^Math.round(last.x*7919)^Math.round(last.y*104729))>>>0;resetRand();strokeSpeed=0;lastMoveAt=Date.now();
+ strokeSeed=(Date.now()^Math.round(last.x*7919)^Math.round(last.y*104729))>>>0;resetRand();strokeSpeed=0;lastMoveAt=stamp(e);
  dabAng=null;tapDot=null;ribbonLen=0;
  const soft=(strokeTool!=='eraser'&&!P0&&brush==='pencil')?PENCIL_ALPHA:1;
  wetAlpha=strokeTool==='eraser'?1:computeBrushAlpha(inkAlpha()*brushOpacity*(P0?P0.alpha:1)*soft,lastPressure,P0);wet=(P0||wetAlpha<1)?bitmap():null;wetLayer=wet?l.id:null;
@@ -1049,14 +1062,17 @@ canvas.addEventListener('pointermove',e=>{
   }
   if(dragging){selection.dx=dragging.dx+(p1.x-dragging.from.x);selection.dy=dragging.dy+(p1.y-dragging.from.y);dirty=true;render();return;}
   if(marquee){marquee.x1=p1.x;marquee.y1=p1.y;render();return;}}
- if(!active||e.pointerId!==pointer)return;e.preventDefault();const l=activeDraw(),raw=point(e);if(!l)return;
- lastPressure=penPressure(e);lastRaw=raw;
- if(smoothing){const k=STAB[stabilizer]||.55;steady={x:steady.x+(raw.x-steady.x)*k,y:steady.y+(raw.y-steady.y)*k};}else{steady=raw;}const p=steady;
- // 손가락에는 압력이 없다. 대신 속도를 재서 굵기 반응에 쓴다(급격히 튀지 않게 이어 붙인다).
- {const now=Date.now(),dt=Math.max(8,now-lastMoveAt),v=Math.hypot(p.x-last.x,p.y-last.y)/dt*16;
-  strokeSpeed=strokeSpeed*.7+v*.3;lastMoveAt=now;}
- inkSegment(l,last,p);
- dirty=true;last=p;render();
+ if(!active||e.pointerId!==pointer)return;e.preventDefault();const l=activeDraw();if(!l)return;
+ // 휴대폰은 화면을 한 번 그릴 동안 모은 터치(120~240Hz)를 함께 준다. 모두 이어야 빠른 획이 각지지 않는다(2026-10-28).
+ const evs=(e.getCoalescedEvents&&e.getCoalescedEvents())||[];
+ for(const ce of evs.length?evs:[e]){const raw=point(ce);
+  lastPressure=penPressure(ce);lastRaw=raw;
+  if(smoothing&&euro){steady=stabilize(raw,stamp(ce));}else{steady=raw;}const p=steady;
+  // 손가락에는 압력이 없다. 대신 속도를 재서 굵기 반응에 쓴다(급격히 튀지 않게 이어 붙인다). 입력이 잦아도 같은 반응이 되게 시간으로 섞는다.
+  {const now=stamp(ce),dt=Math.max(2,Math.min(100,now-lastMoveAt)),v=Math.hypot(p.x-last.x,p.y-last.y)/dt*16,w=1-Math.pow(.7,dt/16);
+   strokeSpeed=strokeSpeed*(1-w)+v*w;lastMoveAt=now;}
+  inkSegment(l,last,p);last=p;}
+ dirty=true;render();
 });
 // 한 구간을 그린다. 무료 펜/붓/연필은 예전 그대로(3px 간격 선분 + 연필 입자), PRO 프리셋만 분기를 탄다.
 function inkSegment(l,fromP,toP){
@@ -1258,10 +1274,10 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
  if(pendingFill){const spot=pendingFill;pendingFill=null;pointer=null;fillAt(spot);state();return;}
  if(tool==='select'){pointer=null;if(grabbing){grabbing=null;state();return;}if(dragging){dragging=null;state();return;}if(marquee){liftSelection();}return;}
  if(active){
-  // 중·강 보정은 손가락보다 선이 늦게 따라온다. 손을 뗄 때 남은 거리를 이어 그려 선 끝을 잃지 않는다(약·끔은 예전 그대로).
+  // 보정을 켜면 선이 손가락보다 조금 늦게 따라온다. 손을 뗄 때 남은 거리를 이어 그려 선 끝을 잃지 않는다(1€ 보정부터 약도 포함, 2026-10-28).
   // 보정이 셀수록 선이 손가락보다 뒤처진다. 남은 거리를 **한 번에 직선으로 잇지 않고** 몇 걸음에 나눠
   // 따라붙인다 — 한 번에 이으면 획 끝에 곧은 꼬리(혹)가 남는다(45.32).
-  if(smoothing&&stabilizer!=='light'&&lastRaw&&steady&&Math.hypot(lastRaw.x-steady.x,lastRaw.y-steady.y)>.5){
+  if(smoothing&&lastRaw&&steady&&Math.hypot(lastRaw.x-steady.x,lastRaw.y-steady.y)>.5){
    const l=layers.find(x=>x.id===wetLayer)||activeDraw();
    if(l){let from=steady;for(let i=1;i<=4;i++){const t=i/4,to={x:steady.x+(lastRaw.x-steady.x)*t,y:steady.y+(lastRaw.y-steady.y)*t};inkSegment(l,from,to);from=to;}last=lastRaw;}}
   // 움직이지 않고 뗀 손가락: 방향이 없으므로 둥근 점 하나를 찍는다.
@@ -1269,7 +1285,8 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
    if(P1&&l){const g=(wet||l.bitmap).getContext('2d');style(g);
     dabAt(g,tapDot.x,tapDot.y,g.lineWidth/2*((P1.dab&&P1.dab.r)||1),(P1.dab&&P1.dab.hard)||.9,(P1.dab&&P1.dab.op)||1,1,0);}
    tapDot=null;}
-  dry();
+  // 불투명한 색은 wet 을 쓰지 않아 dry() 가 다시 그리지 않는다 — 손을 뗄 때 이은 선 끝이 다음 동작까지 화면에 안 보였다(2026-10-28).
+  if(wet)dry();else render();
  }
  if(strokePending){future=[];strokePending=false;}active=false;pointer=null;steady=null;strokeTool=null;state();
 }
