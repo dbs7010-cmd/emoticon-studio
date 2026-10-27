@@ -9,13 +9,14 @@ import { T, Font, Clay } from './ui';
 import { HopStage } from './motion-fx';
 import { ImtiIcon, IconSize } from '../design/icons';
 import type { Provider } from '../services/cloud/account';
+import { t } from '../i18n/index';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
 const C = T;
 const LOGIN: { id: Provider; label: string; bg: string; ink: string; line?: string }[] = [
-  { id: 'kakao', label: '카카오로 시작하기', bg: '#FEE500', ink: 'rgba(0,0,0,0.85)' },   // 각 회사 로그인 버튼 안내의 색
-  { id: 'naver', label: '네이버로 시작하기', bg: '#03C75A', ink: '#FFFFFF' },
-  { id: 'google', label: 'Google로 시작하기', bg: '#F2F4F6', ink: '#191F28' },   // 2026-10-14 시안 Z-Start: 흰 바탕 위 옅은 회색 면
+  { id: 'kakao', label: t('start.kakao'), bg: '#FEE500', ink: 'rgba(0,0,0,0.85)' },   // 각 회사 로그인 버튼 안내의 색
+  { id: 'naver', label: t('start.naver'), bg: '#03C75A', ink: '#FFFFFF' },
+  { id: 'google', label: t('start.google'), bg: '#F2F4F6', ink: '#191F28' },   // 2026-10-14 시안 Z-Start: 흰 바탕 위 옅은 회색 면
 ];
 function Logo({ id }: { id: Provider }) {
   if (id === 'kakao') return <Svg width={20} height={20} viewBox="0 0 24 24"><Path d="M12 4C7 4 3 7.1 3 11c0 2.5 1.7 4.7 4.2 5.9l-.9 3.3 3.8-2.5c.6.1 1.2.1 1.9.1 5 0 9-3.1 9-6.9S17 4 12 4z" fill="#191919" /></Svg>;
@@ -67,8 +68,8 @@ export function StartScreen({ providers, apple, onLogin, onStart, busy, error }:
   return <ScrollView testID="첫 실행" contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingBottom: 24, backgroundColor: C.paper }}>
     <View style={{ gap: 14, paddingTop: height < 700 ? 28 : 64 }}>
       <Text accessibilityRole="header" accessibilityLabel="emoti 이모티" style={{ fontSize: 20, fontFamily: Font.display, color: C.ink }}>emoti</Text>
-      <Text style={{ fontSize: 32, lineHeight: 43, fontWeight: '800', color: C.ink, letterSpacing: -1 }}>{'그리고, 톡 누르면\n'}<Text style={{ backgroundColor: '#FFF0A0' }}>움직이는 이모티콘</Text></Text>
-      <Text style={{ fontSize: 16, lineHeight: 24, color: C.muted }}>내 그림에 움직임을 고르기만 하면 돼요.</Text>
+      <Text style={{ fontSize: 32, lineHeight: 43, fontWeight: '800', color: C.ink, letterSpacing: -1 }}>{t('start.title1')}<Text style={{ backgroundColor: '#FFF0A0' }}>{t('start.title2')}</Text></Text>
+      <Text style={{ fontSize: 16, lineHeight: 24, color: C.muted }}>{t('start.body')}</Text>
     </View>
     <View style={{ flex: 1, minHeight: art + 40, alignItems: 'center', justifyContent: 'center' }}><MovingSet size={art} /></View>
     <View style={{ gap: 8 }}>
@@ -78,16 +79,16 @@ export function StartScreen({ providers, apple, onLogin, onStart, busy, error }:
         buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK} cornerRadius={16} style={{ height: 56, width: '100%', opacity: busy ? .6 : 1 }}
         onPress={() => { if (!busy) onLogin('apple'); }} />}
       {providers ? LOGIN.map(x => { const ready = providers[x.id];
-        return <Pressable key={x.id} accessibilityRole="button" accessibilityLabel={ready ? x.label : x.label + ' · 준비 중'} accessibilityState={{ disabled: !ready || !!busy }} disabled={!ready || !!busy} onPress={() => onLogin(x.id)}
+        return <Pressable key={x.id} accessibilityRole="button" accessibilityLabel={ready ? x.label : x.label + t('start.soon')} accessibilityState={{ disabled: !ready || !!busy }} disabled={!ready || !!busy} onPress={() => onLogin(x.id)}
           style={({ pressed }) => ({ height: 56, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
             backgroundColor: x.bg, borderWidth: x.line ? 1 : 0, borderColor: x.line, opacity: !ready ? .45 : pressed || busy ? .8 : 1 })}>
-          <Logo id={x.id} /><Text style={{ fontSize: 16, fontWeight: '700', color: x.ink }}>{ready ? x.label : x.label + ' · 준비 중'}</Text>
+          <Logo id={x.id} /><Text style={{ fontSize: 16, fontWeight: '700', color: x.ink }}>{ready ? x.label : x.label + t('start.soon')}</Text>
         </Pressable>; })
-        : <Pressable accessibilityRole="button" accessibilityLabel="시작하기" onPress={onStart}
+        : <Pressable accessibilityRole="button" accessibilityLabel={t('start.go')} onPress={onStart}
             style={({ pressed }) => ({ height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: C.accent, ...(pressed ? Clay.buttonPressed : Clay.button) })}>
-            <Text style={{ fontSize: 17, fontWeight: '800', color: C.accentInk }}>시작하기</Text>
+            <Text style={{ fontSize: 17, fontWeight: '800', color: C.accentInk }}>{t('start.go')}</Text>
           </Pressable>}
-      {!!providers && <Text style={{ marginTop: 4, fontSize: 12, lineHeight: 18, color: C.muted, textAlign: 'center' }}>시작하면 이용약관과 개인정보처리방침에 동의하게 돼요</Text>}
+      {!!providers && <Text style={{ marginTop: 4, fontSize: 12, lineHeight: 18, color: C.muted, textAlign: 'center' }}>{t('start.terms')}</Text>}
     </View>
   </ScrollView>;
 }
@@ -107,9 +108,9 @@ export function ArtistNameScreen({ check, save, formatError, onBack }: {
     if (!n) { setState({ kind: 'idle' }); return; }
     const bad = formatError(n); if (bad) { setState({ kind: 'bad', text: bad }); return; }
     setState({ kind: 'checking' });
-    const t = setTimeout(() => { check(n).then(r => { if (my === seq.current) setState(r.ok ? { kind: 'ok', text: '쓸 수 있는 작가명이에요' } : { kind: 'bad', text: r.reason ?? '쓸 수 없는 작가명이에요' }); })
-      .catch(() => { if (my === seq.current) setState({ kind: 'bad', text: '확인하지 못했어요. 인터넷 연결을 확인해 주세요.' }); }); }, 400);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => { check(n).then(r => { if (my === seq.current) setState(r.ok ? { kind: 'ok', text: t('artist.ok') } : { kind: 'bad', text: r.reason ?? t('artist.no') }); })
+      .catch(() => { if (my === seq.current) setState({ kind: 'bad', text: t('artist.offline') }); }); }, 400);
+    return () => clearTimeout(timer);
   }, [name]);
   const done = async () => { setSaving(true);
     try { await save(name.trim()); } catch (e) { setState({ kind: 'bad', text: String((e as Error).message ?? e) }); } finally { setSaving(false); } };
@@ -120,17 +121,17 @@ export function ArtistNameScreen({ check, save, formatError, onBack }: {
     </View>
     <View style={{ gap: 10, paddingTop: 12 }}>
       <View style={{ alignSelf: 'flex-start', marginLeft: -20, marginBottom: 6 }}><HopStage size={64}><View style={{ width: 84, height: 84, borderRadius: 28, ...Clay.yellow, alignItems: 'center', justifyContent: 'center' }}><Corn s={64} pose="wave" /></View></HopStage></View>
-      <Text accessibilityRole="header" style={{ fontSize: 28, lineHeight: 37, fontWeight: '800', color: C.ink, letterSpacing: -.9 }}>작가명을 입력해주세요</Text>
-      <Text style={{ fontSize: 15, lineHeight: 23, color: C.muted }}>한글·영문·숫자 2~12자 · 정한 뒤에는 바꿀 수 없어요</Text>
+      <Text accessibilityRole="header" style={{ fontSize: 28, lineHeight: 37, fontWeight: '800', color: C.ink, letterSpacing: -.9 }}>{t('artist.title')}</Text>
+      <Text style={{ fontSize: 15, lineHeight: 23, color: C.muted }}>{t('artist.rule')}</Text>
     </View>
     <View style={{ marginTop: 26, gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, height: 60, borderRadius: 20, paddingHorizontal: 18, backgroundColor: C.paper,
         boxShadow: `inset 0px 0px 0px 2px ${state.kind === 'bad' ? C.danger : name ? C.point : C.lineStrong}, 6px 8px 18px rgba(120, 100, 70, 0.10)` }}>
-        <TextInput accessibilityLabel="작가명" value={name} onChangeText={t => setName(t.replace(/\s/g, '').slice(0, 12))} autoFocus autoCorrect={false} autoCapitalize="none" maxLength={12}
-          placeholder="예: 몽이작가" placeholderTextColor={C.faint} style={{ flex: 1, padding: 0, fontSize: 20, fontWeight: '800', color: C.ink }} />
+        <TextInput accessibilityLabel={t('artist.field')} value={name} onChangeText={v => setName(v.replace(/\s/g, '').slice(0, 12))} autoFocus autoCorrect={false} autoCapitalize="none" maxLength={12}
+          placeholder={t('artist.example')} placeholderTextColor={C.faint} style={{ flex: 1, padding: 0, fontSize: 20, fontWeight: '800', color: C.ink }} />
         <Text style={{ fontSize: 13, color: C.muted }}>{`${name.length}/12`}</Text>
       </View>
-      {state.kind !== 'idle' && <Text testID="작가명 확인" accessibilityLiveRegion="polite" style={{ marginHorizontal: 4, fontSize: 13, fontWeight: '700', color: tone }}>{state.kind === 'checking' ? '확인하는 중…' : state.text}</Text>}
+      {state.kind !== 'idle' && <Text testID="작가명 확인" accessibilityLiveRegion="polite" style={{ marginHorizontal: 4, fontSize: 13, fontWeight: '700', color: tone }}>{state.kind === 'checking' ? t('artist.checking') : state.text}</Text>}
     </View>
     <View style={{ flex: 1 }} />
     <Pressable accessibilityRole="button" accessibilityLabel="완료" accessibilityState={{ disabled: state.kind !== 'ok' || saving }} disabled={state.kind !== 'ok' || saving} onPress={() => void done()}

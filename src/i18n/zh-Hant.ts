@@ -1,0 +1,25 @@
+// 繁體中文(台灣) — Claude 初稿(母語校對前)。在商店開放繁體中文前須校對。
+import type { Key } from './ko';
+export const zhHant: Partial<Record<Key, string>> = {
+  'tab.home': '首頁', 'tab.class': '課程', 'tab.contest': '比賽', 'tab.my': '我的',
+  'start.title1': '畫下來,輕點一下就\n', 'start.title2': '會動的貼圖',
+  'start.body': '只要替你的畫選個動作就好。',
+  'start.kakao': '使用 Kakao 開始', 'start.naver': '使用 NAVER 開始', 'start.google': '使用 Google 開始', 'start.soon': ' · 準備中',
+  'start.go': '開始', 'start.terms': '開始即表示同意使用條款與隱私權政策',
+  'artist.title': '請輸入作者名稱', 'artist.rule': '文字・英數字 2~12 字 · 設定後無法更改',
+  'artist.field': '作者名稱', 'artist.example': '例: 小夢作家', 'artist.checking': '確認中…',
+  'artist.ok': '可以使用這個名稱', 'artist.no': '無法使用這個名稱', 'artist.offline': '無法確認,請檢查網路連線。',
+  'home.subtitle': '我的小小工作室', 'home.notice': '第一次使用?從指南開始',
+  'home.mySets': '我的套組 ', 'home.recentAll': '最近作業 · 全部 {n}',
+  'home.continue': '繼續畫', 'home.startDrawing': '開始畫',
+  'home.kindMoving': '動態', 'home.kindStill': '靜態', 'home.cuts': '{kind} · {done} / {total} 格',
+  'home.newSet': '新增套組', 'home.newSetSub': '從空白畫布開始',
+  'home.ownTitle': '已經有畫好的圖嗎?', 'home.ownSub': '匯入你的圖繼續製作',
+  'export.make': '打包檔案', 'export.line': '製作 LINE 動態貼圖檔案',
+  'export.adHint': '免費版製作前看一次廣告 · PRO 無廣告',
+  'export.adClosed': '看完廣告就會打包檔案。PRO 不需看廣告。',
+  'export.adLoading': '正在載入廣告…',
+  'line.needMoving': 'LINE 動態貼圖需要 8 格以上的動態格(目前 {n} 格)。',
+  'line.making': '正在製作 LINE 檔案…', 'line.progress': '正在製作 LINE 檔案 · {i}/{n}', 'line.mainTab': '正在製作 LINE 主要・標籤圖片…',
+  'line.done': '已打包 LINE 動態貼圖 {n} 張 · 主要圖片 · 標籤圖片。', 'line.upload': '請自行上傳至 LINE Creators Market(審核由 LINE 進行)。',
+};

@@ -4,6 +4,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Constants from 'expo-constants';
 import { rewardedUnit, showRewarded } from './src/services/ads';
+import { t } from './src/i18n/index';
 import { purchasesClosed, PURCHASES_CLOSED_NOTE } from './src/services/purchase-config';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
@@ -780,9 +781,9 @@ function Studio() {
   // 광고를 못 불러오면 막지 않는다. 끝까지 보지 않고 닫으면 이번엔 만들지 않는다.
   async function adGate(): Promise<boolean> {
     if (pro || !adUnit) return true;
-    setBusy('광고 불러오는 중…');
+    setBusy(t('export.adLoading'));
     const outcome = await showRewarded(adUnit);
-    if (outcome === 'closed') { setNotice('광고를 끝까지 보면 파일 묶음을 만들어요. PRO 는 광고 없이 바로 만들어요.'); return false; }
+    if (outcome === 'closed') { setNotice(t('export.adClosed')); return false; }
     return true;
   }
   function exportProject() {
@@ -810,8 +811,8 @@ function Studio() {
   function exportLine() {
     if (!project) return;
     const pick = lineCuts(project);
-    if (!pick.size) { setNotice(`LINE 움직이는 스티커는 움직이는 칸이 8개 이상 필요해요(지금 ${pick.moving}개).`); return; }
-    void task('LINE 파일 만드는 중…', async () => {
+    if (!pick.size) { setNotice(t('line.needMoving', { n: pick.moving })); return; }
+    void task(t('line.making'), async () => {
       if (!await adGate()) return;
       type Cut = typeof pick.cuts[number];
       const files: LineFile[] = [];
@@ -829,11 +830,11 @@ function Studio() {
         return { name, data, kind, problems };
       };
       for (const [i, slot] of pick.cuts.entries()) {
-        setBusy(`LINE 파일 만드는 중 · ${i + 1}/${pick.cuts.length}칸`);
+        setBusy(t('line.progress', { i: i + 1, n: pick.cuts.length }));
         try { files.push(await apng(slot, LINE_STICKER.w, LINE_STICKER.h, 'sticker', lineName(i))); }
         catch (e) { files.push({ name: lineName(i), data: new Uint8Array(0), kind: 'sticker', problems: ['만들지 못했어요 · ' + userMessage(e)] }); }
       }
-      setBusy('LINE 메인·탭 그림 만드는 중…');
+      setBusy(t('line.mainTab'));
       const first = pick.cuts[0];
       files.push(await apng(first, LINE_SPEC.main.w, LINE_SPEC.main.h, 'main', 'main.png'));
       const tab = await baker.current!.line(first.work!, motionOf(first), { w: LINE_SPEC.tab.w, h: LINE_SPEC.tab.h, count: 1, still: true });
@@ -848,10 +849,10 @@ function Studio() {
       const file = exportFile(`${safeName(project.projectName)}-LINE-${pick.size}-${fileStamp(new Date())}.zip`);
       file.write(lineZip(files));
       const skipped = pick.moving - pick.size!;
-      const made = `LINE 움직이는 스티커 ${pick.size}개 · 메인 · 탭 파일을 묶었어요.` + (skipped ? ` 움직이는 칸 ${skipped}개는 ${pick.size}개 세트에 들어가지 않았어요.` : '') + (pick.stills.length ? ' 멈춘 칸은 빠져요.' : '');
+      const made = t('line.done', { n: pick.size! }) + (skipped ? ` 움직이는 칸 ${skipped}개는 ${pick.size}개 세트에 들어가지 않았어요.` : '') + (pick.stills.length ? ' 멈춘 칸은 빠져요.' : '');
       if (!await Sharing.isAvailableAsync()) { setNotice(`${made} 이 기기에서는 공유 창을 열 수 없어요.`); return; }
       await Sharing.shareAsync(exportUri(file.name), { mimeType: 'application/zip', UTI: 'public.zip' });
-      setNotice(`${made} LINE Creators Market 에 직접 올려 주세요(심사는 LINE 이 해요).`);
+      setNotice(`${made} ${t('line.upload')}`);
     });
   }
   function shareAgain() {
@@ -1218,7 +1219,7 @@ function Studio() {
             <View testID="홈 브랜드" accessible accessibilityRole="header" accessibilityLabel="emoti 이모티" style={{ flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
               <Text numberOfLines={1} style={{ fontSize: 24, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>emoti</Text>
               {/* 2026-10-27 큰 표지형 시안: 로고 옆 작은 부제(본문 글꼴). */}
-              <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 13, fontWeight: '600', color: C.muted }}>나의 작은 작업실</Text>
+              <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 13, fontWeight: '600', color: C.muted }}>{t('home.subtitle')}</Text>
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드" onPress={() => setHomeView('guide')}
               style={({ pressed }) => ({ width: T.tap, height: T.tap, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : 'transparent' })}>
@@ -1278,7 +1279,7 @@ function Studio() {
             const cover = (q: Project, i: number) => {
               const pic = coverOf(q), m = setMeta(q), first = i === 0;
               const next = nextUnfinished(q, q.lastSlot ?? 0);
-              const kind = setIsAnimated(q) ? '움직이는' : '멈춰있는';
+              const kind = setIsAnimated(q) ? t('home.kindMoving') : t('home.kindStill');
               return <View key={q.id} style={{ width: tileW, gap: 8 }}>
                 <Pressable accessibilityRole="button" accessibilityLabel={q.projectName} onPress={() => { setProjectId(q.id); setScreen('board'); }}
                   style={({ pressed }) => ({ aspectRatio: 1, minHeight: 120, borderRadius: 28, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', ...Clay.card, backgroundColor: tints[i % tints.length], transform: pressed ? [{ scale: .975 }] : [] })}>
@@ -1286,7 +1287,7 @@ function Studio() {
                     : <ImtiIcon name="brush" size={IconSize.tab} color={C.faint} />}
                   {first && <Pressable accessibilityRole="button" accessibilityLabel={`${q.projectName} 이어서 만들기`} onPress={() => { setProjectId(q.id); setScreen('board'); setSlotNumber(next ?? q.lastSlot ?? 1); setPainting(true); }}
                     style={({ pressed }) => ({ position: 'absolute', left: 8, bottom: 8, maxWidth: tileW - 16, height: compact ? 34 : 40, paddingHorizontal: compact ? 10 : 14, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.accent, ...(pressed ? Clay.buttonPressed : Clay.button) })}>
-                    <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: compact ? 12 : 13, fontWeight: '800', color: C.accentInk }}>{m.done || pic ? '이어서 그리기' : '그리기 시작'}</Text>
+                    <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: compact ? 12 : 13, fontWeight: '800', color: C.accentInk }}>{m.done || pic ? t('home.continue') : t('home.startDrawing')}</Text>
                     <Glyph name="arrow-right" size={14} color={C.accentInk} />
                   </Pressable>}
                   <Pressable accessibilityRole="button" accessibilityLabel={`${q.projectName} 관리`} onPress={() => setManageId(q.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
@@ -1296,7 +1297,7 @@ function Studio() {
                 </Pressable>
                 <View style={{ paddingHorizontal: 4, gap: 2 }}>
                   <Text numberOfLines={1} accessibilityLabel={q.projectName} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{q.projectName}</Text>
-                  <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{`${kind} · ${m.done} / ${q.slots.length}칸`}</Text>
+                  <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{t('home.cuts', { kind, done: m.done, total: q.slots.length })}</Text>
                 </View>
               </View>;
             };
@@ -1306,22 +1307,22 @@ function Studio() {
                 <ImtiIcon name="plus" size={IconSize.tab} color={C.muted} />
               </Pressable>
               <View style={{ paddingHorizontal: 4, gap: 2 }}>
-                <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>새 세트 만들기</Text>
-                <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>빈 캔버스에서 시작</Text>
+                <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{t('home.newSet')}</Text>
+                <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{t('home.newSetSub')}</Text>
               </View>
             </View>;
             return <>
               {noticeLine}
-              <Rise delay={120}><Pressable testID="홈 공지 줄" accessibilityRole="button" accessibilityLabel="처음이라면 가이드북에서 시작해요" onPress={() => setHomeView('book')}
+              <Rise delay={120}><Pressable testID="홈 공지 줄" accessibilityRole="button" accessibilityLabel={t('home.notice')} onPress={() => setHomeView('book')}
                 style={({ pressed }) => ({ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4, opacity: pressed ? .7 : 1 })}>
                 <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: .8, color: C.point }}>NOTICE</Text>
-                <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: C.ink }}>처음이라면? 가이드북에서 시작해요</Text>
+                <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: C.ink }}>{t('home.notice')}</Text>
               </Pressable></Rise>
               <Rise delay={180} style={{ gap: 14 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 4 }}>
-                  <Text style={{ fontSize: 20, fontWeight: '800', color: C.ink }}>내 세트 <Text style={{ fontSize: 15, fontWeight: '600', color: C.muted }}>{sortedProjects.length}</Text></Text>
+                  <Text style={{ fontSize: 20, fontWeight: '800', color: C.ink }}>{t('home.mySets')}<Text style={{ fontSize: 15, fontWeight: '600', color: C.muted }}>{sortedProjects.length}</Text></Text>
                   <Pressable accessibilityRole="button" accessibilityLabel="전체 작업 보기" onPress={() => setHomeView('all')} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: C.point }}>{`최근 작업순 · 전체 ${sortedProjects.length}`}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: C.point }}>{t('home.recentAll', { n: sortedProjects.length })}</Text>
                   </Pressable>
                 </View>
                 <View testID="홈 작품 서가" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
@@ -1333,8 +1334,8 @@ function Studio() {
                 style={({ pressed }) => ({ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: C.line, opacity: pressed ? .7 : 1 })}>
                 <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: C.pointSoft, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="reference" size={IconSize.row} disabled={!!busy} /></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>이미 그린 그림이 있나요?</Text>
-                  <Text style={{ fontSize: 12, color: C.muted }}>내 그림을 가져와 이어서 만들어요</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{t('home.ownTitle')}</Text>
+                  <Text style={{ fontSize: 12, color: C.muted }}>{t('home.ownSub')}</Text>
                 </View>
               </Pressable></Rise>
             </>;
@@ -1665,11 +1666,11 @@ function Studio() {
               </View>}
 
               {/* 4. 지금 할 일. 이 화면의 노란 버튼은 이것 하나다. */}
-              <Action primary title="파일 묶음 만들기" disabled={!!busy || !drawn.length} onPress={exportProject} />
+              <Action primary title={t('export.make')} disabled={!!busy || !drawn.length} onPress={exportProject} />
               {!!drawn.length && drawn.length < project.slots.length && <Text style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>{`지금 있는 ${drawn.length}칸으로 만들어요 · 빈 칸은 빠져요`}</Text>}
-              {!pro && !!adUnit && <Text testID="광고 안내" style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>무료는 만들기 전에 광고 한 번 · PRO 는 광고 없이 바로</Text>}
+              {!pro && !!adUnit && <Text testID="광고 안내" style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>{t('export.adHint')}</Text>}
               {/* LINE 움직이는 스티커(2026-10-27): 카카오 묶음과 따로. 움직이는 칸 8개 이상일 때 만들 수 있다. */}
-              <Action title="LINE 움직이는 스티커 파일 만들기" disabled={!!busy || !drawn.length} onPress={exportLine} />
+              <Action title={t('export.line')} disabled={!!busy || !drawn.length} onPress={exportLine} />
               {!!lastExport && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, borderRadius: 16, backgroundColor: T.successSoft }}>
                 <Glyph name="check-circle" size={20} color={colors.PASS} />
                 <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>{lastExport.count}칸을 묶었어요</Text>

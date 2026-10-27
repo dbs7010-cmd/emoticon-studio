@@ -4,14 +4,15 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ImtiIcon, IconSize, type IconName } from '../design/icons';
+import { t } from '../i18n/index';
 import { T, Clay } from './ui';
 
 export type HomeTab = 'home' | 'class' | 'contest' | 'my';
 const TABS: { key: HomeTab; label: string; icon: IconName }[] = [
-  { key: 'home', label: '홈', icon: 'home' },
-  { key: 'class', label: '강좌', icon: 'guide' },
-  { key: 'contest', label: '공모전', icon: 'contest' },
-  { key: 'my', label: '내 정보', icon: 'person' },
+  { key: 'home', label: t('tab.home'), icon: 'home' },
+  { key: 'class', label: t('tab.class'), icon: 'guide' },
+  { key: 'contest', label: t('tab.contest'), icon: 'contest' },
+  { key: 'my', label: t('tab.my'), icon: 'person' },
 ];
 export function TabBar({ value, onChange, bottomInset = 0 }: { value: HomeTab; onChange: (tab: HomeTab) => void; bottomInset?: number }) {
   return <View style={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 14 + bottomInset, backgroundColor: T.bg }}>
