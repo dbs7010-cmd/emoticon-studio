@@ -80,6 +80,7 @@ module.exports = () => {
   plugins.push('./plugins/withReleasePermissions');
   plugins.push('./plugins/withReleaseOptimization');   // R8 코드 줄이기·난독화(Play 발견 항목, 2026-10-10)
   plugins.push('./plugins/withBackupRules');
+  plugins.push('./plugins/withDensityConfigChange');   // 화면 크기 설정 바뀜에 다시 만들지 않음(사진 고르기 실패 방지)
   // 제목 글꼴(45.39 확정 디자인 D): Jua(SIL OFL 1.1, assets/fonts/Jua-OFL.txt). 빌드 때 APK 에 넣는다 — 실행 중 내려받지 않는다.
   // 본문은 기기 기본 한글 글꼴을 그대로 쓴다(한글 본문 글꼴은 굵기마다 수 MB 라 넣지 않는다).
   plugins.push(['expo-font', {
