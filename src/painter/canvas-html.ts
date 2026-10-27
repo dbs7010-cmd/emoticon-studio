@@ -132,8 +132,8 @@ function snapLayer(l,prev){
 function snapshot(){return {layers:layers.map(l=>snapLayer(l,history[history.length-1])),references:references.map(l=>({...l})),activeLayerId,activeDrawLayerId,activeReferenceId,caption:caption&&{...caption},motion:motion&&JSON.parse(JSON.stringify(motion)),selection:selection&&{...selection,bitmap:copyOf(selection.bitmap)}};}
 function restore(s){trace('restore:before');extentCache=null;layers=s.layers.map(l=>{let b;if(l.copy)b=copyOf(l.copy);else{b=bitmap();b.getContext('2d').putImageData(l.pixels,0,0);}return {...meta(l),bitmap:b};});references=s.references;activeLayerId=s.activeLayerId;activeDrawLayerId=s.activeDrawLayerId||layers[0]?.id||'';activeReferenceId=s.activeReferenceId||null;caption=s.caption||null;motion=s.motion||null;selection=s.selection||null;render();state();trace('restore:after');}
 function checkpoint(preserveFuture=false){history.push(snapshot());if(history.length>40)history.shift();if(!preserveFuture)future=[];trimHistory();dirty=true;}
-// 고해상도 기록은 서로 다른 사본 수로 묶는다(1080 사본 하나 ≈ 4.7MB). 넘치면 가장 오래된 단계부터 버린다.
-const MAX_COPIES=36;
+// 고해상도 기록은 서로 다른 사본 수로 묶는다(1080 사본 하나 ≈ 4.7MB, 24개 ≈ 113MB). 넘치면 가장 오래된 단계부터 버린다.
+const MAX_COPIES=24;
 function trimHistory(){if(RES===1)return;const count=()=>{const seen=new Set();for(const st of history.concat(future))for(const l of st.layers)if(l.copy)seen.add(l.copy);return seen.size;};
  while(history.length>1&&count()>MAX_COPIES)history.shift();}
 function composite(g,l,d){if(!l.visible||(d&&d.hidden))return;g.save();g.globalAlpha=l.opacity;if(d){g.translate(d.px+d.dx,d.py+d.dy);g.rotate(d.rot*Math.PI/180);g.scale(d.sx,d.sy);g.translate(-d.px,-d.py);if(d.part){const q=d.part;g.translate(q.px+q.dx,q.py+q.dy);g.rotate(q.rot*Math.PI/180);g.scale(q.sx,q.sy);g.translate(-q.px,-q.py);}}g.translate(W/2+l.x,H/2+l.y);g.rotate(l.rotation*Math.PI/180);g.scale(l.scale,l.scale);g.drawImage(d&&d.boilK!=null?boiled(l,d.boilK):l.bitmap,-W/2,-H/2,W,H);g.restore();}
@@ -181,7 +181,16 @@ function boiled(l,k){
 }
 let renderCount=0;
 // 측정용(scripts/draw-latency-bench.cjs): 선 끝·손가락 자리와 다시 그린 횟수만 읽는다. 동작은 바꾸지 않는다.
-window.__bench={tip:()=>({steady,lastRaw}),renders:()=>renderCount};
+window.__bench={tip:()=>({steady,lastRaw}),renders:()=>renderCount,
+ // 고해상도 검사(scripts/hires-engine-test.cjs)가 장 픽셀·사본 수를 읽는 창. 읽기만 한다.
+ hires:()=>{const px=i=>{const b=layers[i].bitmap;return {b,d:b.getContext('2d').getImageData(0,0,b.width,b.height).data,w:b.width};};
+  const at=(i,x,y)=>{const {d,w}=px(i),k=(Math.floor(y*RES)*w+Math.floor(x*RES))*4;return [d[k],d[k+1],d[k+2],d[k+3]];};
+  return {res:RES,canvas:[canvas.width,canvas.height],layer:[layers[0].bitmap.width,layers[0].bitmap.height],
+   alphaAt:(i,x,y)=>at(i,x,y)[3],rgbaAt:at,
+   edgeProfile:(i,x,y)=>{const {d,w}=px(i),cx=Math.floor(x*RES);let solid=0;for(let yy=Math.floor((y-20)*RES);yy<(y+20)*RES;yy++)if(d[(yy*w+cx)*4+3]>128)solid++;return {solid};},
+   sum:i=>{const {d}=px(i);let h=2166136261;for(let k=3;k<d.length;k+=4){h^=d[k]+(k&1023);h=Math.imul(h,16777619);}return h>>>0;},
+   copies:()=>{const seen=new Set();for(const st of history.concat(future))for(const l of st.layers)if(l.copy)seen.add(l.copy);return {unique:seen.size,steps:history.length};},
+   fillGap:(i,x,y)=>{const {d,w}=px(i),cx=Math.floor(x*RES);let gap=0;for(let yy=Math.floor(y*RES);yy>0;yy--){const k=(yy*w+cx)*4;if(d[k]<120&&d[k+3]>200)break;if(d[k+3]<250)gap++;}return gap;}};}};
 function render(t){renderCount++;ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));if(t===undefined)drawOnion(ctx);(t===undefined?layers:layersAt(t)).forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}

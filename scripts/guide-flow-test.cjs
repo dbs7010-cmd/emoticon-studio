@@ -434,7 +434,7 @@ async function echoReferences(scene) {
   const engine = fs.readFileSync('src/painter/canvas-html.ts', 'utf8');
   const saveLine = engine.split('\n').find(l => l.indexOf("m.type==='save'") >= 0);
   assert.ok(saveLine, '엔진의 저장 줄');
-  const saveBody = saveLine.slice(saveLine.indexOf('const out=bitmap()'), saveLine.indexOf(',layers:'));
+  const saveBody = saveLine.slice(saveLine.indexOf('const out=docCanvas()'), saveLine.indexOf(',layers:'));
   // 애니메이션(2026-10-15)이면 저장 그림은 첫 장(first)의 그림 레이어다.
   assert.ok(/(layers|first)\.forEach\(l=>composite\(g,l\)\)/.test(saveBody), '저장 그림은 그림 레이어만 합친다');
   assert.ok(!/references\.forEach/.test(saveBody), '저장 그림에 참고(밑그림)를 합치지 않는다');
