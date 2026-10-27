@@ -14,6 +14,7 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { getAuth } = require('firebase-admin/auth');
 const { FieldValue } = require('firebase-admin/firestore');
 const crypto = require('node:crypto');
+const apple = require('./apple-receipt');
 
 const PACKAGE = 'com.emoticonstudio.app';
 const PRODUCTS = { pro_lifetime: 'lifetime' };   // 지금 파는 것은 한 번 구매 PRO 하나
@@ -50,9 +51,17 @@ module.exports = ({ db }) => {
     catch { return answer(res, false, { reason: '로그인한 뒤 구매 복원을 눌러 주세요.' }); }
     // 2) 무엇을: 형식만 맞는지 본다.
     const { platform, productId, purchaseToken } = req.body || {};
-    if (platform !== 'android') return answer(res, false, { reason: '이 기기의 구매는 아직 확인할 수 없어요.' });
+    if (platform !== 'android' && platform !== 'ios') return answer(res, false, { reason: '이 기기의 구매는 아직 확인할 수 없어요.' });
     if (!PRODUCTS[productId]) return answer(res, false, { reason: '알 수 없는 상품이에요.' });
-    if (typeof purchaseToken !== 'string' || purchaseToken.length < 10 || purchaseToken.length > 4096) return answer(res, false, { reason: '구매 정보가 올바르지 않아요.' });
+    if (typeof purchaseToken !== 'string' || purchaseToken.length < 10 || purchaseToken.length > 16384) return answer(res, false, { reason: '구매 정보가 올바르지 않아요.' });
+    // iOS(2026-10-28): Apple 이 서명한 거래(JWS)를 서버가 인증서 사슬·서명으로 확인한다(apple-receipt.js). 한 구매 = 원거래 ID.
+    if (platform === 'ios') {
+      let t;
+      try { t = apple.verifyTransaction(purchaseToken); } catch (e) { console.error('apple verify', e.message); return answer(res, false, { reason: 'App Store 구매를 확인하지 못했어요.' }); }
+      if (t.productId !== productId) return answer(res, false, { reason: '이 구매는 요청한 상품이 아니에요.' });
+      if (t.revoked) return answer(res, false, { reason: '취소되었거나 환불된 구매예요.' });
+      return bind(res, uid, 'ios:' + t.originalTransactionId, productId, t.sandbox, t.transactionId);
+    }
     // 3) Play 에 직접 묻는다. 물어보지 못하면 '아니다'가 아니라 연결 실패(5xx) — 앱은 기존 권한을 건드리지 않는다.
     let p;
     try { p = await play(`/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`); }
@@ -65,21 +74,25 @@ module.exports = ({ db }) => {
     if (g.purchaseState !== 0) return answer(res, false, { reason: '취소되었거나 환불된 구매예요.' });
     const sandbox = g.purchaseType === 0;   // 0 = 라이선스 테스터의 테스트 구매
     if (sandbox && !conf().acceptTest) return answer(res, false, { reason: '테스트 구매는 이 서버에서 받지 않아요.', sandbox: true });
-    // 4) 한 구매 = 한 계정. 트랜잭션으로 묶고 PRO 를 연다.
-    const key = sha256(purchaseToken), ref = db.doc(`purchases/${key}`), userRef = db.doc(`users/${uid}`);
+    return bind(res, uid, purchaseToken, productId, sandbox, g.orderId || null);
+  });
+
+  // 4) 한 구매 = 한 계정. 트랜잭션으로 묶고 PRO 를 연다. Android 는 구매 토큰, iOS 는 'ios:'+원거래 ID 를 해시해 열쇠로 쓴다.
+  async function bind(res, uid, identity, productId, sandbox, orderId) {
+    const key = sha256(identity), ref = db.doc(`purchases/${key}`), userRef = db.doc(`users/${uid}`);
     let taken = false;
     await db.runTransaction(async tx => {
       const [s, u] = await Promise.all([tx.get(ref), tx.get(userRef)]);
       if (s.exists && s.data().uid !== uid) { taken = true; return; }
       if (s.exists && s.data().state === 'voided') { taken = 'voided'; return; }
-      tx.set(ref, { uid, productId, orderId: g.orderId || null, sandbox, state: 'active', checkedAt: FieldValue.serverTimestamp(), ...(s.exists ? {} : { createdAt: FieldValue.serverTimestamp() }) }, { merge: true });
+      tx.set(ref, { uid, productId, orderId, sandbox, state: 'active', checkedAt: FieldValue.serverTimestamp(), ...(s.exists ? {} : { createdAt: FieldValue.serverTimestamp() }) }, { merge: true });
       const pro = { active: true, source: 'store', verified: true, productId, purchase: key, since: (u.exists && u.data().pro && u.data().pro.source === 'store' && u.data().pro.since) || Date.now(), until: null, ...(sandbox ? { sandbox: true } : {}) };
       tx.set(userRef, { pro }, { merge: true });
     });
     if (taken === 'voided') return answer(res, false, { reason: '환불된 구매예요.' });
     if (taken) return answer(res, false, { reason: '이 구매는 다른 emoti 계정에 연결되어 있어요. 처음 산 계정으로 로그인해 주세요.' });
     return answer(res, true, sandbox ? { sandbox: true } : {});
-  });
+  }
 
   // 환불·취소된 구매(최근 30일, 하루 한 번). 그 구매로 열린 PRO 만 닫는다 — 체험·관리자 PRO 와 작품은 건드리지 않는다.
   async function syncVoided(now = Date.now()) {

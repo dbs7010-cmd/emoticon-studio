@@ -19,6 +19,8 @@ const base = require('./app.json');
 const { httpsUrl, email } = require('./release/config-values.cjs');
 const publicContact = require('./release/public-contact.json');
 const publicAds = require('./release/public-ads.json');
+// iOS 빌드(EAS)는 AdMob iOS 앱 ID 가 있어야 한다 — 없으면 광고 SDK 가 iOS 앱 시작 때 멈춘다. 빈 앱을 내보내지 않게 여기서 멈춘다.
+if (process.env.EAS_BUILD_PLATFORM === 'ios' && !/^ca-app-pub-d+~d+$/.test(publicAds.iosAppId || '')) throw new Error('release/public-ads.json 에 iosAppId(AdMob iOS 앱 ID)가 필요해요');
 const pick = (envValue, fileValue, valid) => envValue !== undefined ? (valid(envValue) ? envValue : undefined) : (valid(fileValue) ? fileValue : undefined);
 
 const internalReview = process.env.EMOTICON_INTERNAL_REVIEW === '1';
@@ -72,6 +74,8 @@ module.exports = () => {
     }]);
   }
   // 출시 서명: prebuild 때마다 app/build.gradle 의 release 서명을 업로드 키로 바꾸고 AAB 디버그 서명을 막는다(docs/RELEASE_SIGNING.md).
+  // AdMob iOS 앱 ID(있을 때만) — app.json 의 광고 플러그인 설정에 덧붙인다.
+  if (publicAds.iosAppId) { const i = plugins.findIndex(p => Array.isArray(p) && p[0] === 'react-native-google-mobile-ads'); if (i >= 0) plugins[i] = [plugins[i][0], { ...plugins[i][1], iosAppId: publicAds.iosAppId }]; }
   plugins.push('./plugins/withReleaseSigning');
   plugins.push('./plugins/withReleasePermissions');
   plugins.push('./plugins/withReleaseOptimization');   // R8 코드 줄이기·난독화(Play 발견 항목, 2026-10-10)
