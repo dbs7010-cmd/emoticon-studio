@@ -64,6 +64,20 @@
           "delayAppMeasurementInit": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "internalReview": false,
+      "proTrial": false,
+      "ads": {
+        "rewarded": "ca-app-pub-7942033735159248/7188345901"
+      },
+      "privacyPolicyUrl": "https://dbs7010-cmd.github.io/emoticon-studio/privacy/",
+      "supportEmail": "emoticon755@gmail.com",
+      "login": {},
+      "eas": {
+        "projectId": "a4193f92-def9-45b1-be97-ea939f971512"
+      }
+    },
+    "owner": "usunge"
   }
 }
