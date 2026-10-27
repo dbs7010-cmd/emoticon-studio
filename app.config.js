@@ -20,7 +20,7 @@ const { httpsUrl, email } = require('./release/config-values.cjs');
 const publicContact = require('./release/public-contact.json');
 const publicAds = require('./release/public-ads.json');
 // iOS 빌드(EAS)는 AdMob iOS 앱 ID 가 있어야 한다 — 없으면 광고 SDK 가 iOS 앱 시작 때 멈춘다. 빈 앱을 내보내지 않게 여기서 멈춘다.
-if (process.env.EAS_BUILD_PLATFORM === 'ios' && !/^ca-app-pub-d+~d+$/.test(publicAds.iosAppId || '')) throw new Error('release/public-ads.json 에 iosAppId(AdMob iOS 앱 ID)가 필요해요');
+if (process.env.EAS_BUILD_PLATFORM === 'ios' && !/^ca-app-pub-\d+~\d+$/.test(publicAds.iosAppId || '')) throw new Error('release/public-ads.json 에 iosAppId(AdMob iOS 앱 ID)가 필요해요');
 const pick = (envValue, fileValue, valid) => envValue !== undefined ? (valid(envValue) ? envValue : undefined) : (valid(fileValue) ? fileValue : undefined);
 
 const internalReview = process.env.EMOTICON_INTERNAL_REVIEW === '1';
