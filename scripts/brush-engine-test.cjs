@@ -3,17 +3,22 @@
 // 실행: PLAYWRIGHT_MODULE_PATH=playwright-core CHROME_PATH=<chrome.exe> node scripts/brush-engine-test.cjs
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
 const { loader } = require('./load-ts.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
 const { canvasHtml } = loader()('src/painter/canvas-html.ts');
 
-// 브러시 작업 이전 엔진(stash 'pre-r27-color snapshot'). 무료 펜/붓/연필이 픽셀 하나까지 같은지 비교하는 기준이다.
-// 그 사이 바뀐 것은 색 처리뿐이고, 불투명 색에서는 같은 결과를 내야 한다.
+// 이전 엔진과 견준다. 예전에는 픽셀 하나까지 같아야 했지만, 2026-10-28 그리기 엔진 업그레이드는 일부러 선을 바꾼다 —
+// 이제는 같은 자리·굵기의 선(다른 픽셀이 선 넓이의 20% 이하)인지 본다.
 function previousEngine() {
-  const ref = process.env.BRUSH_BASELINE_REF || 'stash@{0}';
+  // 기준: vc23(9d9086d) — 그리기 엔진 업그레이드(2026-10-28) 직전. 바꾸려면 BRUSH_BASELINE_REF.
+  const ref = process.env.BRUSH_BASELINE_REF || '9d9086d';
   const source = execFileSync('git', ['show', ref + ':src/painter/canvas-html.ts'], { encoding: 'utf8' });
-  const body = source.replace(/^import[^\n]*\n/m, '').replace('export const canvasHtml =', 'return');
-  return new Function('SPEC', body)({ width: 360, height: 360 });
+  // 옛 파일을 같은 폴더에 잠깐 두고 같은 로더로 읽는다(그 시절 import 가 그대로 풀린다).
+  const tmp = path.join(__dirname, '..', 'src', 'painter', '.baseline-canvas-html.ts');
+  fs.writeFileSync(tmp, source);
+  try { return loader({})('src/painter/.baseline-canvas-html.ts').canvasHtml; } finally { fs.unlinkSync(tmp); }
 }
 
 (async () => {
@@ -147,11 +152,14 @@ function previousEngine() {
       const run = async (X, withBrushCmd) => {
         await X.cmd({ type: 'init' }); await X.cmd({ type: 'width', tool: 'pen', width: 14 }); await X.cmd({ type: 'color', color: '#242424' }); await X.cmd({ type: 'brush', brush });
         if (withBrushCmd) await X.cmd({ type: 'brushSettings', preset: null, opacity: 1, stabilizer: 'light', smoothing: true });
-        await X.seed(); await X.drag(noisy, 1);
+        // 보통 그리는 부드러운 곡선(떨림 시험은 C 에서 따로 한다).
+        await X.seed(); await X.drag(Array.from({ length: 41 }, (_, i) => [60 + i * 6.75, 160 + 50 * Math.sin(i / 40 * Math.PI * 2)]), 2);
         return (await X.saved()).layers[0].data;
       };
       const now = await run(E, true), before = await run(O, false);
-      assert.equal(await E.diff(now, before), 0, '무료 ' + brush + ' 는 이전 엔진과 같은 픽셀');
+      // 업그레이드(1€ 보정·곡선 잇기·손 뗄 때 끝 잇기)로 픽셀은 조금 달라진다. 같은 자리에 같은 굵기·진하기의 선인지만 본다.
+      const changed = await E.diff(now, before), area = (await E.analyse(before)).count;
+      assert.ok(changed <= area * .2, '무료 ' + brush + ' 는 이전 엔진과 거의 같은 선(다른 픽셀 ' + changed + ' / 선 ' + area + ')');
     }
     // 지우개도 그대로.
     await E.cmd({ type: 'init' }); await O.cmd({ type: 'init' });

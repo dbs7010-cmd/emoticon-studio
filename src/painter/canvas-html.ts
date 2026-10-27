@@ -18,6 +18,14 @@ function send(m){window.ReactNativeWebView&&window.ReactNativeWebView.postMessag
 // 그래서 선·브러시 코드는 그대로 360 단위로 그리고, 결과는 3배 촘촘하다. 내보내기(카카오 360·LINE)는 이 장을 줄여 만든다.
 // init 이 res 를 주지 않으면 1(예전 그대로) — 검사 대역(가짜 캔버스)도 이 길을 탄다.
 let RES=1;
+// 스포이드: 누른 자리 둘레(문서 2px)에서 가장 진한 픽셀의 색. 손가락은 선 한가운데를 정확히 누르기 어렵고,
+// 가장자리의 반투명 픽셀은 색이 한 끗 틀어진다(#3366AA → #3265AA).
+function pickAt(g,sx,sy){const r=2*RES,x0=Math.max(0,sx*RES+(RES>>1)-r),y0=Math.max(0,sy*RES+(RES>>1)-r),w=Math.min(W*RES-x0,2*r+1),h=Math.min(H*RES-y0,2*r+1),d=g.getImageData(x0,y0,w,h).data;
+ let best=0;for(let k=4;k<d.length;k+=4)if(d[k+3]>d[best+3])best=k;const px=[d[best],d[best+1],d[best+2],d[best+3]];
+ // GPU 캔버스는 겹쳐 그린 자리에서 색이 1 정도 반올림된다. 이 그림에 쓴 색과 2 이내면 그 색 그대로 돌려준다 — 같은 색을 다시 집으면 같은 값.
+ for(const c of usedColors){const p=rgba(c);if(Math.abs(p[0]-px[0])<=2&&Math.abs(p[1]-px[1])<=2&&Math.abs(p[2]-px[2])<=2)return [p[0],p[1],p[2],px[3]];}
+ return px;}
+const usedColors=new Set();
 function bitmap(){const c=document.createElement('canvas');c.width=W*RES;c.height=H*RES;
  // 되돌리기 기록이 바뀌지 않은 장을 다시 복사하지 않도록, 그리려고 맥락을 꺼낼 때마다 번호를 올린다.
  if(RES!==1){const get=c.getContext.bind(c);c.__rev=0;c.getContext=function(t,o){c.__rev++;return get(t,o);};get('2d').setTransform(RES,0,0,RES,0,0);}
@@ -319,6 +327,20 @@ const PRESETS={
 // 시간 기준이라 입력이 60Hz 든 240Hz 든 같은 느낌이다. 측정: scripts/draw-latency-bench.cjs.
 const STAB={light:{min:2,beta:.04},medium:{min:1,beta:.03},strong:{min:.5,beta:.025}};
 let euro=null;
+// 곡선 잇기(2026-10-28). 점과 점을 곧은 선분으로 이으면 빠르게 그은 곡선이 다각형처럼 각진다.
+// 이웃한 두 선분의 가운데를 잇고 그 사이 점을 조절점으로 삼아 2차 곡선으로 그린다(손글씨·드로잉 앱의 표준 방식).
+// 곧은 획은 그대로 곧고, 선 끝은 손을 뗄 때 마저 잇는다(curveFlush).
+let curveMid=null,curveCtl=null;
+function curveTo(l,p){
+ if(!curveMid){const m={x:(last.x+p.x)/2,y:(last.y+p.y)/2};inkSegment(l,last,m);curveMid=m;curveCtl=p;return;}
+ const a=curveMid,c=curveCtl,m={x:(c.x+p.x)/2,y:(c.y+p.y)/2};
+ const P=activePreset(),len=Math.hypot(c.x-a.x,c.y-a.y)+Math.hypot(m.x-c.x,m.y-c.y);
+ // 획 전체를 다시 긋는 브러시는 부르는 횟수가 곧 비용이라 조금 성기게 나눈다.
+ const n=Math.max(1,Math.min(P&&(P.repath||P.outline||P.ribbon)?6:16,Math.ceil(len/1.5)));
+ let from=a;
+ for(let i=1;i<=n;i++){const t=i/n,u=1-t,to={x:u*u*a.x+2*u*t*c.x+t*t*m.x,y:u*u*a.y+2*u*t*c.y+t*t*m.y};inkSegment(l,from,to);from=to;}
+ curveMid=m;curveCtl=p;}
+function curveFlush(l){if(l&&curveMid&&curveCtl&&Math.hypot(curveCtl.x-curveMid.x,curveCtl.y-curveMid.y)>.01)inkSegment(l,curveMid,curveCtl);curveMid=null;curveCtl=null;}
 const stamp=e=>Number.isFinite(e&&e.timeStamp)&&e.timeStamp>0?e.timeStamp:(typeof performance!=='undefined'?performance.now():Date.now());
 function stabilize(raw,ts){const S=STAB[stabilizer]||STAB.light,dt=Math.max(1,Math.min(100,ts-euro.t))/1000;euro.t=ts;
  const al=fc=>1/(1+1/(2*Math.PI*fc*dt)),ad=al(.5);
@@ -392,7 +414,7 @@ function firstTwo(){return points().slice(0,2);}
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function middle(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
 function canvasUnits(px){const r=canvas.getBoundingClientRect();return px*W/Math.max(1,r.width);}
-function cancelStrokeForGesture(){captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;strokeTool=null;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
+function cancelStrokeForGesture(){curveMid=null;curveCtl=null;captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;strokeTool=null;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
 function beginMulti(){
  const ps=firstTwo();if(ps.length<2)return;const [a,b]=ps,mid=middle(a,b),ref=activeReference();
  if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,ids:[a.id,b.id],distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,didCheckpoint:false,capScale:caption?.scale||1,capRot:caption?.rot||0,angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};}
@@ -410,7 +432,7 @@ function applyMulti(){
  const next=Math.max(1,Math.min(4,multi.zoom*(d/multi.distance)));zoom=next;size();const ratio=next/multi.zoom;viewport.scrollLeft=(multi.scrollLeft+multi.mid.x)*ratio-mid.x;viewport.scrollTop=(multi.scrollTop+multi.mid.y)*ratio-mid.y;send({type:'zoom',zoom});
 }
 function rgba(hex){let v=String(hex||'').replace('#','');if(v.length===3)v=v.split('').map(c=>c+c).join('');const n=parseInt(v.slice(0,6),16)||0,a=v.length>=8?parseInt(v.slice(6,8),16):255;return [n>>16&255,n>>8&255,n&255,Number.isFinite(a)?a:255];}
-function fillAt(spot){
+function fillAt(spot){usedColors.add(solid(color));
  const l=activeDraw();if(!l||!l.visible)return;
  // 픽셀 격자(고해상도면 1080)에서 칠한다 — 선 사이 좁은 틈까지 촘촘히 찬다.
  const PW=l.bitmap.width,PH=l.bitmap.height,P=PW/W,seed=local(spot,l),sx=Math.round(seed.x*P),sy=Math.round(seed.y*P);
@@ -1020,7 +1042,7 @@ canvas.addEventListener('pointerdown',e=>{
  }
  if(active)return;
  // 스포이드: 보이는 그림(참고·그림·문구)에서 한 점의 색을 읽는다. 선택 점선 같은 화면 표시는 섞지 않는다. 숨긴 그림을 골라 두었어도 막지 않는다.
- if(picking){e.preventDefault();const p0=point(e),sx=Math.max(0,Math.min(W-1,Math.floor(p0.x))),sy=Math.max(0,Math.min(H-1,Math.floor(p0.y)));const out=bitmap(),pg=out.getContext('2d',{willReadFrequently:true});references.forEach(r=>composite(pg,r));layers.forEach(x=>composite(pg,x));drawCaption(pg);const px=pg.getImageData(sx*RES+(RES>>1),sy*RES+(RES>>1),1,1).data;picking=false;send({type:'picked',color:px[3]<8?null:'#'+[px[0],px[1],px[2]].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase(),x:sx,y:sy});state();return;}
+ if(picking){e.preventDefault();const p0=point(e),sx=Math.max(0,Math.min(W-1,Math.floor(p0.x))),sy=Math.max(0,Math.min(H-1,Math.floor(p0.y)));const out=bitmap(),pg=out.getContext('2d',{willReadFrequently:true});references.forEach(r=>composite(pg,r));layers.forEach(x=>composite(pg,x));drawCaption(pg);const px=pickAt(pg,sx,sy);picking=false;send({type:'picked',color:px[3]<8?null:'#'+[px[0],px[1],px[2]].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase(),x:sx,y:sy});state();return;}
  // 문구는 캔버스 위의 물건이다: 글자를 누르면 고르고 그대로 끌어 옮긴다. 고른 뒤 손잡이를 끌면 크기,
  // 글자 밖을 누르면 선택이 끝나고 그 손가락은 그림을 그리지 않는다. 움직이기 미리보기 중·중심점 고르기 중에는 건드리지 않는다.
  if(caption&&caption.text.trim()&&!playing&&!pivotPick){const p0=point(e);
@@ -1052,7 +1074,7 @@ canvas.addEventListener('pointerdown',e=>{
    if(inside){dragging={from:p0,dx:selection.dx,dy:selection.dy};return;}
    applySelection(false,'pointerdown-outside');}
   marquee={x0:p0.x,y0:p0.y,x1:p0.x,y1:p0.y};render();return;}
- checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;euro={t:stamp(e),x:last.x,y:last.y,dx:0,dy:0};
+ usedColors.add(solid(color));checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;curveMid=null;curveCtl=null;euro={t:stamp(e),x:last.x,y:last.y,dx:0,dy:0};
  strokeTool=tool;                      // 이 획은 끝까지 이 도구로 그린다
  const P0=activePreset();lastPressure=penPressure(e);strokeLen=0;lastRaw=last;strokePath=[];
  strokeSeed=(Date.now()^Math.round(last.x*7919)^Math.round(last.y*104729))>>>0;resetRand();strokeSpeed=0;lastMoveAt=stamp(e);
@@ -1107,7 +1129,8 @@ canvas.addEventListener('pointermove',e=>{
   // 손가락에는 압력이 없다. 대신 속도를 재서 굵기 반응에 쓴다(급격히 튀지 않게 이어 붙인다). 입력이 잦아도 같은 반응이 되게 시간으로 섞는다.
   {const now=stamp(ce),dt=Math.max(2,Math.min(100,now-lastMoveAt)),v=Math.hypot(p.x-last.x,p.y-last.y)/dt*16,w=1-Math.pow(.7,dt/16);
    strokeSpeed=strokeSpeed*(1-w)+v*w;lastMoveAt=now;}
-  inkSegment(l,last,p);last=p;}
+  // 보정 끔은 손이 지난 자리 그대로(곡선 잇기도 하지 않는다).
+  if(smoothing)curveTo(l,p);else inkSegment(l,last,p);last=p;}
  dirty=true;render();
 });
 // 한 구간을 그린다. 무료 펜/붓/연필은 예전 그대로(3px 간격 선분 + 연필 입자), PRO 프리셋만 분기를 탄다.
@@ -1313,6 +1336,7 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
   // 보정을 켜면 선이 손가락보다 조금 늦게 따라온다. 손을 뗄 때 남은 거리를 이어 그려 선 끝을 잃지 않는다(1€ 보정부터 약도 포함, 2026-10-28).
   // 보정이 셀수록 선이 손가락보다 뒤처진다. 남은 거리를 **한 번에 직선으로 잇지 않고** 몇 걸음에 나눠
   // 따라붙인다 — 한 번에 이으면 획 끝에 곧은 꼬리(혹)가 남는다(45.32).
+  curveFlush(layers.find(x=>x.id===wetLayer)||activeDraw());
   if(smoothing&&lastRaw&&steady&&Math.hypot(lastRaw.x-steady.x,lastRaw.y-steady.y)>.5){
    const l=layers.find(x=>x.id===wetLayer)||activeDraw();
    if(l){let from=steady;for(let i=1;i<=4;i++){const t=i/4,to={x:steady.x+(lastRaw.x-steady.x)*t,y:steady.y+(lastRaw.y-steady.y)*t};inkSegment(l,from,to);from=to;}last=lastRaw;}}
@@ -1353,7 +1377,7 @@ async function command(m){try{
   const cx=vr.left+m.vx*vr.width,cy=vr.top+m.vy*vr.height;
   const sx=Math.max(0,Math.min(W-1,Math.floor((cx-r.left)*W/r.width))),sy=Math.max(0,Math.min(H-1,Math.floor((cy-r.top)*H/r.height)));
   const out=bitmap(),pg=out.getContext('2d',{willReadFrequently:true});references.forEach(l=>composite(pg,l));layers.forEach(l=>composite(pg,l));drawCaption(pg);
-  const px=pg.getImageData(sx*RES+(RES>>1),sy*RES+(RES>>1),1,1).data;
+  const px=pickAt(pg,sx,sy);
   send({type:'sampled',color:px[3]<8?null:'#'+[px[0],px[1],px[2]].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase()});return;}
  if(m.type==='brushSettings'){applyBrush(m);state();}
  if(m.type==='width'){if(m.tool==='eraser')eraserWidth=m.width;else penWidth=m.width;}
