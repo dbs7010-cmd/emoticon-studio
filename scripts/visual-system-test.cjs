@@ -172,19 +172,15 @@ async function ready() {
   assert.equal(byTestID('홈 알림').length, 0, '알림·공모전 없음 → 자리 없음');
   const primaryYellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
   assert.deepEqual(primaryYellow, ['시각 세트 이어서 만들기'], '노란 버튼은 지금 할 일 하나(시안 Z-Home): ' + JSON.stringify(primaryYellow));
-  assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 카드가 있다');
-  assert.ok(texts().includes('31칸 남음') && texts().includes('아이콘'), '제안까지는 두 마디 칸(32칸 · 31칸 남음 / 아이콘 · 만들기)');
+  // 2026-10-27 큰 표지형(사용자 승인): 큰 대표 카드·제안까지 줄 대신 2열 작품 서가. 표지 안의 '이어서 그리기'가 지금 할 일.
+  assert.equal(byTestID('홈 작품 서가').length, 1, '작품 서가가 있다');
   {
     const ids = n => n.findAll(x => x.type === 'Svg').map(x => x.props.testID);
     const card = labelled('시각 세트')[0];
-    assert.equal(card.findAll(n => n.type === 'View' && n.props.testID === '홈 진행')[0].props.accessibilityLabel, '32칸 중 1칸 완성', '제안 기준 칸 수와 완성 수');
-    assert.ok(!card.findAll(n => typeof n.props.testID === 'string' && /^slot-/.test(n.props.testID)).length, '홈 카드에는 32칸 격자가 없다');
-    assert.ok(texts().includes('이어 그리기'), '큰 버튼 글자');
+    assert.ok(!card.findAll(n => typeof n.props.testID === 'string' && /^slot-/.test(n.props.testID)).length, '홈 표지에는 32칸 격자가 없다');
+    assert.ok(texts().includes('이어서 그리기'), '표지 안 버튼 글자');
     const fresh = flat(labelled('새 세트 만들기')[0].props.style);
     assert.ok((fresh.height ?? fresh.minHeight) >= T.tap, '새로 만들기 누르는 자리');
-    const rows = byTestID('제안까지 남은 일')[0];
-    assert.ok(['icon-brush', 'icon-reference'].every(i => ids(rows).includes(i)), '제안까지 칸마다 아이콘');
-    assert.ok(ids(rows).every(i => i !== 'icon-pro'), '제안 목록에 PRO 표시 없음');
     assert.ok(ids(labelled('내 그림으로 시작')[0]).includes('icon-reference'));
     const badge = labelled('PRO 보기')[0];
     assert.ok(ids(badge).includes('icon-pro') && texts().includes('PRO 보기'), 'PRO 배지 = 반짝 아이콘 + 글자');
@@ -202,7 +198,7 @@ async function ready() {
     await act(async () => tree.unmount()); await act(async () => { tree = create(React.createElement(App)); });
     const setButtons = () => tree.root.findAll(n => n.type === 'Pressable' && /^많은 세트 \d+$/.test(n.props.accessibilityLabel ?? '')).map(n => n.props.accessibilityLabel);
     // 45.5: 홈은 시작 화면이다 — 가장 최근 세트 하나만, 나머지는 전체 작업에서.
-    assert.deepEqual(setButtons(), ['많은 세트 12'], '세트가 12개여도 홈에는 가장 최근 하나만');
+    assert.deepEqual(setButtons(), ['많은 세트 12', '많은 세트 11', '많은 세트 10'], '세트가 12개여도 홈 서가에는 최근 3개만(2026-10-27 큰 표지형)');
     await press('전체 작업 보기');
     assert.equal(setButtons().length, 12, '전체 작업에서 모든 세트를 찾는다');
     assert.equal(byTestID('홈 창작 표면').length, 0, '전체 작업은 홈과 다른 화면');

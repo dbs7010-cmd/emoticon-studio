@@ -94,7 +94,7 @@ const homeSections = () => {
 (async () => {
   // ── 1. 홈: 세트 수와 공지 상태가 순서를 바꾸지 않는다 ────────────────────────────────────────
   let revision = 1;
-  for (const [count, cards] of [[0, 0], [1, 1], [4, 1], [10, 1]]) {
+  for (const [count, cards] of [[0, 0], [1, 1], [4, 3], [10, 3]]) {   // 2026-10-27 큰 표지형: 최근 세트 3개까지 2열 표지
     for (const on of [false, true]) {
       const where = `세트 ${count} · 공지 ${on ? '켜짐' : '꺼짐'}`;
       setStore(makeProjects(count), revision++);
@@ -106,7 +106,7 @@ const homeSections = () => {
         : ['가이드', ...(on ? ['공지'] : []), '창작'];   // 2026-10-14 시안 Z: 공지 배너는 언제나 맨 위
       assert.deepEqual(homeSections(), want, '홈 순서(' + where + ')');
       assert.equal(byTestID('홈 알림').length, on ? 1 : 0, '공지가 꺼지면 자리도 없다(' + where + ')');
-      assert.equal(tree.root.findAll(n => n.type === 'Pressable' && /^세트 \d+$/.test(n.props.accessibilityLabel ?? '')).length, cards, '홈에는 가장 최근 세트 하나만(' + where + ')');
+      assert.equal(tree.root.findAll(n => n.type === 'Pressable' && /^세트 \d+$/.test(n.props.accessibilityLabel ?? '')).length, cards, '홈 서가는 최근 세트 3개까지(' + where + ')');
       assert.equal(labelled('전체 작업 보기').length, count ? 1 : 0, '세트가 있으면 내 세트 줄에 전체 보기(' + where + ')');
       if (on) {
         const notice = byTestID('홈 알림')[0];
@@ -121,7 +121,8 @@ const homeSections = () => {
       // 2026-10-14 시안 Z-Home: 노란 버튼은 지금 할 일 하나뿐(세트가 있으면 대표 카드의 '이어 그리기'). 새 세트 칸은 옅은 노랑 카드 안 작은 노란 원.
       assert.equal(yellow.length, 1, '홈의 노랑(' + where + '): ' + JSON.stringify(yellow));
       assert.ok(count ? /^세트 [0-9]+ 이어서 만들기$/.test(yellow[0]) : yellow[0] === '새 세트 만들기', '노랑은 지금 할 일(' + where + '): ' + yellow[0]);
-      if (count) assert.equal(byTestID('제안까지 남은 일').length, 1, '제안까지 남은 일 카드(' + where + ')');
+      // 2026-10-27 큰 표지형(사용자 승인): 큰 대표 카드·제안까지 줄을 걷고 2열 작품 서가 + 공지 줄.
+      if (count) { assert.equal(byTestID('제안까지 남은 일').length, 0, '제안까지 줄 없음(' + where + ')'); assert.equal(byTestID('홈 작품 서가').length, 1, '작품 서가(' + where + ')'); assert.equal(byTestID('홈 공지 줄').length, 1, '작은 공지 줄(' + where + ')'); }
       // 45.42 빈 홈 = EmptyState(그림 · 제목 · 노란 행동 하나 · 그리기 › 움직이기 › 내보내기 흐름) + 내 그림으로 시작 한 줄.
       if (!count) {
         const empty = tree.root.findAll(n => n.type === 'View' && n.props.testID === '홈 창작 표면')[0];
@@ -268,6 +269,6 @@ const homeSections = () => {
   assert.equal(labelled('제안 기준으로 보기').length, 0, '다 채워도 제출 준비는 접혀 있다');
 
   await act(async () => tree.unmount());
-  console.log('PASS: ui structure — 홈(세트 0·1·4·10 × 공지 꺼짐/켜짐) 순서 고정·공지 꺼지면 자리 0·최근 하나+전체 보기·노랑은 지금 할 일 하나·제안까지 남은 일, 그리기 캔버스 알림 한 번에 하나·패널 한 번에 하나·굵기는 행동 줄·선택 도구엔 없음·배율은 따로, 움직이기 효과→재사용→PRO 한 줄, 보드 범례는 두 상태일 때만, 내보내기 요약→격자→손볼 곳→만들기→제출 준비(접힘)→부가 이미지→자세히. Native/WebView mocked.');
+  console.log('PASS: ui structure — 홈(세트 0·1·4·10 × 공지 꺼짐/켜짐) 순서 고정·공지 꺼지면 자리 0·큰 표지 서가(최근 3개)+전체 보기·노랑은 지금 할 일 하나·공지 줄, 그리기 캔버스 알림 한 번에 하나·패널 한 번에 하나·굵기는 행동 줄·선택 도구엔 없음·배율은 따로, 움직이기 효과→재사용→PRO 한 줄, 보드 범례는 두 상태일 때만, 내보내기 요약→격자→손볼 곳→만들기→제출 준비(접힘)→부가 이미지→자세히. Native/WebView mocked.');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

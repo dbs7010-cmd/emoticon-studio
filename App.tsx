@@ -1202,7 +1202,7 @@ function Studio() {
           {homeTab === 'home' && <>
           <Rise delay={20} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: T.tap }}>
             <View testID="홈 브랜드" accessible accessibilityRole="header" accessibilityLabel="emoti 이모티" style={{ flex: 1 }}>
-              <Text numberOfLines={1} style={{ fontSize: 24, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>emoti</Text>
+              <Text numberOfLines={1} style={{ fontSize: 24, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>emoti<Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 13, fontFamily: undefined, fontWeight: '600', color: C.muted }}>{'  나의 작은 작업실'}</Text></Text>
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드" onPress={() => setHomeView('guide')}
               style={({ pressed }) => ({ width: T.tap, height: T.tap, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : 'transparent' })}>
@@ -1247,101 +1247,77 @@ function Studio() {
                 actionLabel="새 세트 만들기" onAction={createNewProject} /></Rise>
               <Rise delay={240} style={{ flexDirection: 'row', gap: 10 }}>{ownPicture}</Rise>
             </>;
-            const p = sortedProjects[0];
-            const drawn = p.slots.filter(s => s.finalImage);
-            const done = doneCount(p);
-            const moving = setIsAnimated(p);
-            const next = nextUnfinished(p, p.lastSlot ?? 0);
-            const openCut = (n: number | null) => { setProjectId(p.id); setScreen('board'); setSlotNumber(n ?? p.lastSlot ?? 1); setPainting(true); };
-            // 제안까지: 카카오 제안 기준(STAGES.proposal)과 이 세트의 저장된 사실로만 센다. 그림을 판단하지 않는다.
-            const need = (moving ? STAGES.animated : STAGES.still).proposal;
-            const left = Math.max(0, need.emoticons - done);
-            const movingNeed = moving && 'animatedMin' in need ? need.animatedMin : 0;
-            const movingHave = p.slots.filter(sl => sl.submitImage).length;
-            const tiles: { key: string; icon: ImtiName; ok: boolean; title: string; detail: string; run?: () => void }[] = [
-              { key: 'cuts', icon: 'brush', ok: !left, title: `${need.emoticons}칸`, detail: left ? `${left}칸 남음` : '완료', run: left ? () => openCut(next) : undefined },
-              ...(moving ? [{ key: 'moving', icon: 'motion' as const, ok: movingHave >= movingNeed, title: '움직임', detail: movingHave >= movingNeed ? '완료' : `${movingNeed - movingHave}개 더` }] : []),
-              { key: 'icon', icon: 'reference', ok: !!p.extras?.icon, title: '아이콘', detail: p.extras?.icon ? '완료' : '만들기',
-                run: !p.extras?.icon && drawn.length ? () => { setProjectId(p.id); setScreen('extras'); } : undefined },
-            ];
-            const shown = Math.min(done, need.emoticons);
-            const thumbs = sortedProjects.slice(1, 3);
-            // 대표 그림: 가장 최근에 그린 칸(움직임이 있으면 움직이는 그림). 없으면 기본 그림.
-            const hero = [...drawn].sort((a, b) => (b.number === p.lastSlot ? 1 : 0) - (a.number === p.lastSlot ? 1 : 0))[0];
-            const heroSize = screenWidth < 360 ? 92 : 112;
+            // 2026-10-27 승인 시안 '큰 표지형'(Codex 전달 · docs/design/APPROVED_VISUAL_20261027.md): 공지 배너 → 작은 공지 줄 →
+            // 내 세트 2열 큰 표지(최근 3개 + 새 세트 칸) → 내 그림 가져오기 한 줄. 큰 대표 카드·제안까지 줄·소개 문구는 두지 않는다.
+            // 노랑은 지금 할 일 하나 — 가장 최근 세트 표지 안의 '이어서 그리기'. 누름은 0.975배로 짧게(motion-spec).
+            const recent = sortedProjects.slice(0, 3);
+            const tints = [C.accentSoft, C.pointSoft, T.surface2];
+            const coverOf = (q: Project) => {
+              const made = q.slots.filter(s => s.finalImage);
+              return made.find(s => s.number === q.lastSlot) ?? made.at(-1);
+            };
+            const cover = (q: Project, i: number) => {
+              const pic = coverOf(q), m = setMeta(q), first = i === 0;
+              const next = nextUnfinished(q, q.lastSlot ?? 0);
+              const kind = setIsAnimated(q) ? '움직이는' : '멈춰있는';
+              return <View key={q.id} style={{ flexBasis: '46%', flexGrow: 1, maxWidth: '50%', gap: 8 }}>
+                <Pressable accessibilityRole="button" accessibilityLabel={q.projectName} onPress={() => { setProjectId(q.id); setScreen('board'); }}
+                  style={({ pressed }) => ({ aspectRatio: 1, minHeight: 120, borderRadius: 28, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', ...Clay.card, backgroundColor: tints[i % tints.length], transform: pressed ? [{ scale: .975 }] : [] })}>
+                  {pic ? <Image testID="홈 표지 그림" source={{ uri: imageUri((pic.motionImage ?? pic.finalImage)!.path) }} style={{ width: '78%', height: '78%' }} resizeMode="contain" />
+                    : <ImtiIcon name="brush" size={IconSize.tab} color={C.faint} />}
+                  {first && <Pressable accessibilityRole="button" accessibilityLabel={`${q.projectName} 이어서 만들기`} onPress={() => { setProjectId(q.id); setScreen('board'); setSlotNumber(next ?? q.lastSlot ?? 1); setPainting(true); }}
+                    style={({ pressed }) => ({ position: 'absolute', left: 10, bottom: 10, height: 40, paddingHorizontal: 14, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.accent, ...(pressed ? Clay.buttonPressed : Clay.button) })}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>{m.done || pic ? '이어서 그리기' : '그리기 시작'}</Text>
+                    <Glyph name="arrow-right" size={14} color={C.accentInk} />
+                  </Pressable>}
+                  <Pressable accessibilityRole="button" accessibilityLabel={`${q.projectName} 관리`} onPress={() => setManageId(q.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    style={{ position: 'absolute', top: 6, right: 6, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.7)' }}>
+                    <ImtiIcon name="more" size={IconSize.meta} color={C.muted} />
+                  </Pressable>
+                </Pressable>
+                <View style={{ paddingHorizontal: 4, gap: 2 }}>
+                  <Text numberOfLines={1} accessibilityLabel={q.projectName} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{q.projectName}</Text>
+                  <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{`${kind} · ${m.done} / ${q.slots.length}칸`}</Text>
+                </View>
+              </View>;
+            };
+            const newTile = <View key="new" style={{ flexBasis: '46%', flexGrow: 1, maxWidth: '50%', gap: 8 }}>
+              <Pressable accessibilityRole="button" accessibilityLabel="새 세트 만들기" onPress={createNewProject}
+                style={({ pressed }) => ({ aspectRatio: 1, minHeight: 120, borderRadius: 28, borderWidth: 2, borderStyle: 'dashed', borderColor: C.line, alignItems: 'center', justifyContent: 'center', backgroundColor: C.paper, transform: pressed ? [{ scale: .975 }] : [] })}>
+                <ImtiIcon name="plus" size={IconSize.tab} color={C.muted} />
+              </Pressable>
+              <View style={{ paddingHorizontal: 4, gap: 2 }}>
+                <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>새 세트 만들기</Text>
+                <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>빈 캔버스에서 시작</Text>
+              </View>
+            </View>;
             return <>
               {noticeLine}
-              <Rise delay={160} style={{ gap: 10 }}>
-                <Text numberOfLines={1} style={{ marginHorizontal: 4, fontSize: 14, color: C.muted }}>{artist ? `${artist} 작가님, 이어서 그려요` : '이어서 그려요'}</Text>
-                <Pressable accessibilityRole="button" accessibilityLabel={p.projectName} onPress={() => { setProjectId(p.id); setScreen('board'); }}
-                  style={({ pressed }) => ({ borderRadius: 32, paddingTop: 18, paddingHorizontal: 18, paddingBottom: 16, gap: 4, ...Clay.yellow,
-                    boxShadow: '12px 14px 28px rgba(170, 130, 50, 0.20), -8px -8px 18px rgba(255, 255, 255, 0.95), inset 3px 3px 0px rgba(255, 255, 255, 0.75), inset -4px -6px 10px rgba(220, 170, 40, 0.18)',
-                    transform: pressed ? [{ scale: .98 }] : [] })}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text numberOfLines={1} style={{ flex: 1, fontSize: 22, lineHeight: 30, fontWeight: '800', color: C.ink, letterSpacing: -.6 }}>{p.projectName}</Text>
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{shown}<Text style={{ fontWeight: '500', color: T.yellowInk }}>{` / ${need.emoticons}칸`}</Text></Text>
-                    <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginRight: -6 }}><ImtiIcon name="more" size={IconSize.row} color={C.muted} /></Pressable>
-                  </View>
-                  <View testID="홈 작품 미리보기" style={{ alignItems: 'center', justifyContent: 'center' }}>
-                    <HopStage size={heroSize} glow={C.paper}>
-                      {hero ? <Image source={{ uri: imageUri((hero.motionImage ?? hero.finalImage)!.path) }} style={{ width: heroSize, height: heroSize }} resizeMode="contain" />
-                        : <AssetSlot name="homeHeroArtwork" size={heroSize} />}
-                    </HopStage>
-                    {!!hero && <View style={{ position: 'absolute', left: 0, bottom: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.75)', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{`${pad(hero.number)}번 칸${hero.motionImage ? ' · 움직임' : ''}`}</Text>
-                    </View>}
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 }}>
-                    <View style={{ flex: 1 }}>
-                      <FillBar testID="홈 진행" label={`${need.emoticons}칸 중 ${shown}칸 완성`} ratio={done / need.emoticons} />
-                    </View>
-                    <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 이어서 만들기`} onPress={() => openCut(next)}
-                      style={({ pressed }) => ({ height: 50, paddingHorizontal: 22, borderRadius: 25, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: C.accent, ...(pressed ? Clay.buttonPressed : Clay.button) })}>
-                      <Shine width={130} />
-                      <Text style={{ fontSize: 15, fontWeight: '800', color: C.accentInk }}>{done || drawn.length ? '이어 그리기' : '그리기 시작'}</Text>
-                    </Pressable>
-                  </View>
-                </Pressable>
-              </Rise>
-              {/* 제안까지(2026-10-12 사용자 요청 '너무 크다'): 카드 없이 작은 칸 한 줄. 끝난 칸은 보라 체크. */}
-              <Rise delay={220}><View testID="제안까지 남은 일" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                {tiles.map(t => {
-                  const face = <>
-                    <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: t.ok ? C.pointSoft : C.fill }}>
-                      <ImtiIcon name={t.ok ? 'check' : t.icon} size={IconSize.meta} color={t.ok ? C.point : C.ink} />
-                    </View>
-                    <View style={{ flexShrink: 1 }}>
-                      <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{t.title}</Text>
-                      <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted }}>{t.detail}</Text>
-                    </View>
-                  </>;
-                  const box = { flex: 1, minHeight: 48, borderRadius: 18, paddingHorizontal: 8, flexDirection: 'row', alignItems: 'center', gap: 6, ...Clay.small } as const;
-                  return t.run
-                    ? <Pressable key={t.key} accessibilityRole="button" accessibilityLabel={`${t.title} ${t.detail}`} onPress={t.run} style={({ pressed }) => ({ ...box, transform: pressed ? [{ scale: .97 }] : [] })}>{face}</Pressable>
-                    : <View key={t.key} accessible accessibilityLabel={(t.ok ? '완료 · ' : '') + `${t.title} ${t.detail}`} style={box}>{face}</View>;
-                })}
-                <Pressable accessibilityRole="button" accessibilityLabel="이 세트 내보내기" onPress={() => { setProjectId(p.id); setScreen('export'); }}
-                  style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 18, alignItems: 'center', justifyContent: 'center', ...Clay.small, transform: pressed ? [{ scale: .97 }] : [] })}>
-                  <ImtiIcon name="export" size={IconSize.row} color={C.ink} />
-                </Pressable>
-              </View></Rise>
-              <Rise delay={280} style={{ gap: 12 }}>
+              <Rise delay={120}><Pressable testID="홈 공지 줄" accessibilityRole="button" accessibilityLabel="처음이라면 가이드북에서 시작해요" onPress={() => setHomeView('book')}
+                style={({ pressed }) => ({ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4, opacity: pressed ? .7 : 1 })}>
+                <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: .8, color: C.point }}>NOTICE</Text>
+                <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: C.ink }}>처음이라면? 가이드북에서 시작해요</Text>
+              </Pressable></Rise>
+              <Rise delay={180} style={{ gap: 14 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 4 }}>
-                  <Text style={{ fontSize: 17, fontWeight: '800', color: C.ink }}>내 세트</Text>
+                  <Text style={{ fontSize: 20, fontWeight: '800', color: C.ink }}>내 세트 <Text style={{ fontSize: 15, fontWeight: '600', color: C.muted }}>{sortedProjects.length}</Text></Text>
                   <Pressable accessibilityRole="button" accessibilityLabel="전체 작업 보기" onPress={() => setHomeView('all')} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: C.point }}>{`전체 ${sortedProjects.length}`}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: C.point }}>{`최근 작업순 · 전체 ${sortedProjects.length}`}</Text>
                   </Pressable>
                 </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -gutter, flexGrow: 0 }} contentContainerStyle={{ gap: 10, paddingHorizontal: gutter, paddingTop: 2, paddingBottom: 14 }}>
-                  {newSet}
-                  {thumbs.map(t => { const cover = t.slots.find(s => s.finalImage), m = setMeta(t);
-                    return setCard(t.id, '세트 ' + t.projectName, () => { setProjectId(t.id); setScreen('board'); },
-                      cover ? <Image source={{ uri: imageUri((cover.motionImage ?? cover.finalImage)!.path) }} style={{ width: '78%', height: '78%' }} resizeMode="contain" />
-                        : <ImtiIcon name="brush" size={IconSize.tab} color={C.faint} />,
-                      t.projectName, `${m.done}칸 완성`, C.paper); })}
-                  {ownPicture}
-                </ScrollView>
+                <View testID="홈 작품 서가" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
+                  {recent.map(cover)}
+                  {newTile}
+                </View>
               </Rise>
+              <Rise delay={240}><Pressable accessibilityRole="button" accessibilityLabel="내 그림으로 시작" accessibilityState={{ disabled: !!busy }} disabled={!!busy} onPress={startFromImage}
+                style={({ pressed }) => ({ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: C.line, opacity: pressed ? .7 : 1 })}>
+                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: C.pointSoft, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="reference" size={IconSize.row} disabled={!!busy} /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>이미 그린 그림이 있나요?</Text>
+                  <Text style={{ fontSize: 12, color: C.muted }}>내 그림을 가져와 이어서 만들어요</Text>
+                </View>
+              </Pressable></Rise>
             </>;
           })()}
           </>}
