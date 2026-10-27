@@ -130,7 +130,7 @@ function previousEngine() {
     const midS = await E.analyse(mid.layers[0].data);
     assert.ok(midS.count > 0 && midS.max <= 144, '손을 떼기 전 저장에도 마커 획이 들어간다(' + JSON.stringify({ count: midS.count, max: midS.max }) + ')');
 
-    // ── E. 필압 자리: 지금은 반응이 없어야 한다(손가락·펜 결과 동일), 비정상 값에도 그린다 ─────
+    // ── E. S펜 필압(2026-10-28 연결): 세게 누르면 굵고 약하면 가늘다. 보통 힘(0.5)은 정한 굵기, 비정상 값은 필압 없이 그린다 ─────
     const penStroke = async pressure => {
       await fresh({ preset: 'ink', opacity: 1, stabilizer: 'light', smoothing: false });
       await E.page.evaluate(p => {
@@ -141,10 +141,11 @@ function previousEngine() {
       return (await E.saved()).layers[0].data;
     };
     // 브라우저는 NaN 필압 이벤트를 만들지 않는다. 범위 밖 값(1.5)으로 비정상 입력을 대신한다.
-    const p20 = await penStroke(.2), p100 = await penStroke(1), pBad = await penStroke(1.5), p0 = await penStroke(0);
-    assert.equal(await E.diff(p20, p100), 0, '필압 0.2 와 1.0 이 지금은 같은 선(반응 미연결)');
-    assert.equal(await E.diff(pBad, p100), 0, '범위 밖 필압(1.5)도 기본값으로 그린다');
-    assert.equal(await E.diff(p0, p100), 0, '필압 0 도 기본값으로 그린다');
+    const p20 = await penStroke(.2), p50 = await penStroke(.5), p100 = await penStroke(1), pBad = await penStroke(1.5), p0 = await penStroke(0);
+    const w20 = (await E.analyse(p20)).count, w50 = (await E.analyse(p50)).count, w100 = (await E.analyse(p100)).count;
+    assert.ok(w20 < w50 && w50 < w100, '필압이 굵기를 바꾼다(0.2 ' + w20 + ' < 0.5 ' + w50 + ' < 1.0 ' + w100 + ')');
+    assert.equal(await E.diff(pBad, p50), 0, '범위 밖 필압(1.5)은 필압 없이 정한 굵기로 그린다');
+    assert.equal(await E.diff(p0, p50), 0, '필압 0 도 정한 굵기로 그린다');
 
     // ── F. 회귀: 무료 펜/붓/연필(보정 약·기본 진하기)은 이전 엔진과 픽셀이 같다 ──────────────
     const O = await open(previousEngine());

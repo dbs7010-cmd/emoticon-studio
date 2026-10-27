@@ -203,7 +203,7 @@ function render(t){renderCount++;ctx.clearRect(0,0,W,H);references.forEach(l=>co
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
-function style(g){const T=liveTool();g.globalCompositeOperation=T==='eraser'?'destination-out':'source-over';g.globalAlpha=T==='eraser'?1:(brush==='pencil'&&wet)?1:brush==='brush'?0.85:brush==='pencil'?0.55:1;g.lineWidth=T==='eraser'?eraserWidth:(brush==='brush'?penWidth*1.4:penWidth);g.strokeStyle=solid(color);g.fillStyle=solid(color);g.lineCap='round';g.lineJoin='round';const P=activePreset();if(P){g.globalAlpha=1;g.lineWidth=computeBrushWidth(penWidth*P.width,lastPressure,P)*(P.taper?Math.min(1,.3+.7*strokeLen/P.taper):1);g.lineCap=P.cap||'round';
+function style(g){const T=liveTool();g.globalCompositeOperation=T==='eraser'?'destination-out':'source-over';g.globalAlpha=T==='eraser'?1:(brush==='pencil'&&wet)?1:brush==='brush'?0.85:brush==='pencil'?0.55:1;g.lineWidth=T==='eraser'?eraserWidth:(brush==='brush'?penWidth*1.4:penWidth)*pressureScale(lastPressure,null);g.strokeStyle=solid(color);g.fillStyle=solid(color);g.lineCap='round';g.lineJoin='round';const P=activePreset();if(P){g.globalAlpha=1;g.lineWidth=computeBrushWidth(penWidth*P.width,lastPressure,P)*(P.taper?Math.min(1,.3+.7*strokeLen/P.taper):1);g.lineCap=P.cap||'round';
   // 점선 펜만 점 간격을 건다. 프리셋이 없는 기본 펜·붓·연필은 이 줄을 지나지 않는다 — 예전 획이 한 픽셀도 바뀌지 않게.
   if(P.dash){g.setLineDash([Math.max(.6,g.lineWidth*.22),Math.max(1,g.lineWidth*P.dash)]);g.lineDashOffset=-strokeLen;}else g.setLineDash([]);}}
 // 색 투명도. 획은 **불투명하게 따로 그린 뒤(wet) 손을 뗄 때 한 번에 투명도를 걸어 얹는다.** 짧은 선분마다
@@ -349,12 +349,16 @@ function stabilize(raw,ts){const S=STAB[stabilizer]||STAB.light,dt=Math.max(1,Ma
  return {x:steady.x+(raw.x-steady.x)*a,y:steady.y+(raw.y-steady.y)*a};}
 let preset=null,brushOpacity=1,stabilizer='light',strokeLen=0,lastRaw=null,lastPressure=null;
 const PENCIL_ALPHA=.55;
-function applyBrush(m){preset=m.preset&&PRESETS[m.preset]?m.preset:null;const o=Number(m.opacity);brushOpacity=Number.isFinite(o)?Math.max(.05,Math.min(1,o)):1;stabilizer=STAB[m.stabilizer]?m.stabilizer:'light';if(typeof m.smoothing==='boolean')smoothing=m.smoothing;}
+function applyBrush(m){preset=m.preset&&PRESETS[m.preset]?m.preset:null;const o=Number(m.opacity);brushOpacity=Number.isFinite(o)?Math.max(.05,Math.min(1,o)):1;stabilizer=STAB[m.stabilizer]?m.stabilizer:'light';if(typeof m.smoothing==='boolean')smoothing=m.smoothing;if(typeof m.pressure==='boolean')pressureOn=m.pressure;}
 // 필압 자리. 스타일러스(pointerType 'pen')의 0~1 값만 받는다. 지금 프리셋에는 pressure 반응이 없어 항상 기본값을 돌려준다 —
 // 손가락·마우스의 체감은 바뀌지 않는다. 0·undefined·범위 밖 값은 없는 것으로 본다.
 function validPressure(p){return Number.isFinite(p)&&p>0&&p<=1?p:null;}
 function penPressure(e){return e&&e.pointerType==='pen'?validPressure(e.pressure):null;}
-function computeBrushWidth(base,pressure,settings){const p=validPressure(pressure);if(p===null||!settings||!settings.pressure)return base;return base*Math.max(.25,Math.min(1.5,.5+p));}
+// S펜 필압(2026-10-28): 스타일러스일 때만 굵기가 누르는 힘을 따른다(보통 힘 ≈ 정한 굵기, 0.25~1.5배). 손가락·마우스는 그대로.
+// 획 전체를 다시 긋는 브러시(테두리·평행선)는 굵기가 획 전체에서 같아야 해 제외한다. pressure:false 로 끌 수 있다.
+let pressureOn=true;
+function pressureScale(pressure,settings){const p=validPressure(pressure);if(p===null||!pressureOn||(settings&&(settings.outline||settings.repath)))return 1;return Math.max(.25,Math.min(1.5,.5+p));}
+function computeBrushWidth(base,pressure,settings){return base*pressureScale(pressure,settings);}
 function computeBrushAlpha(base,pressure,settings){const p=validPressure(pressure);if(p===null||!settings||!settings.pressure)return base;return base*Math.max(.1,Math.min(1,p*1.25));}
 function activePreset(){return liveTool()!=='eraser'&&preset?PRESETS[preset]:null;}
 function solid(hex){const p=rgba(hex);return '#'+[p[0],p[1],p[2]].map(n=>n.toString(16).padStart(2,'0')).join('');}
@@ -1124,7 +1128,7 @@ canvas.addEventListener('pointermove',e=>{
  // 휴대폰은 화면을 한 번 그릴 동안 모은 터치(120~240Hz)를 함께 준다. 모두 이어야 빠른 획이 각지지 않는다(2026-10-28).
  const evs=(e.getCoalescedEvents&&e.getCoalescedEvents())||[];
  for(const ce of evs.length?evs:[e]){const raw=point(ce);
-  lastPressure=penPressure(ce);lastRaw=raw;
+  {const pr=penPressure(ce);lastPressure=pr===null?null:lastPressure===null?pr:lastPressure*.6+pr*.4;}lastRaw=raw;
   if(smoothing&&euro){steady=stabilize(raw,stamp(ce));}else{steady=raw;}const p=steady;
   // 손가락에는 압력이 없다. 대신 속도를 재서 굵기 반응에 쓴다(급격히 튀지 않게 이어 붙인다). 입력이 잦아도 같은 반응이 되게 시간으로 섞는다.
   {const now=stamp(ce),dt=Math.max(2,Math.min(100,now-lastMoveAt)),v=Math.hypot(p.x-last.x,p.y-last.y)/dt*16,w=1-Math.pow(.7,dt/16);
