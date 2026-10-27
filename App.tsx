@@ -3,6 +3,7 @@ import { Alert, Animated, AppState, BackHandler, KeyboardAvoidingView, Linking, 
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Constants from 'expo-constants';
+import { rewardedUnit, showRewarded } from './src/services/ads';
 import { purchasesClosed, PURCHASES_CLOSED_NOTE } from './src/services/purchase-config';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
@@ -262,6 +263,8 @@ function Studio() {
   // 정식 빌드로 업데이트하면 사라지고 실제 구매(isPro)만 남는다. 구매 기록과 섞이지 않는다.
   const trial = proTrial();
   const pro = isPro(entitlement) || reviewUnlocked(store ?? undefined) || trial;
+  // 이 빌드의 보상형 광고 단위(없으면 광고 없음). src/services/ads.ts
+  const adUnit = rewardedUnit(Constants.expoConfig?.extra as Parameters<typeof rewardedUnit>[0]);
   // 첫 실행 안내: 저장소를 읽은 뒤 한 번만 판단한다. 세트가 하나라도 있으면(기존 사용자·백업 복원) 띄우지 않는다.
   useEffect(() => {
     if (!store || introOffered.current) return;
@@ -773,11 +776,21 @@ function Studio() {
     }
     return { handoff, failed };
   }
+  // 보상형 광고(2026-10-27): 무료 사용자가 파일 묶음을 만들기 전에 한 번. PRO·광고 단위 없는 빌드는 바로 통과.
+  // 광고를 못 불러오면 막지 않는다. 끝까지 보지 않고 닫으면 이번엔 만들지 않는다.
+  async function adGate(): Promise<boolean> {
+    if (pro || !adUnit) return true;
+    setBusy('광고 불러오는 중…');
+    const outcome = await showRewarded(adUnit);
+    if (outcome === 'closed') { setNotice('광고를 끝까지 보면 파일 묶음을 만들어요. PRO 는 광고 없이 바로 만들어요.'); return false; }
+    return true;
+  }
   function exportProject() {
     if (!project) return;
     // 화면·약속 문구는 모두 '파일 묶음'이다(38차). 움직이는 칸은 카카오 WebPAnimator 에서 마무리하므로
     // 앱이 '제출 파일'을 만들어 준다고 말하지 않는다 — PRO 화면의 무료 약속과 같은 말을 쓴다.
     void task('파일 묶음 만드는 중…', async () => {
+      if (!await adGate()) return;
       const { handoff, failed } = await bakeHandoff(project);
       setBusy('파일 묶음 정리하는 중…');
       const result = exportSet(project, handoff);
@@ -799,6 +812,7 @@ function Studio() {
     const pick = lineCuts(project);
     if (!pick.size) { setNotice(`LINE 움직이는 스티커는 움직이는 칸이 8개 이상 필요해요(지금 ${pick.moving}개).`); return; }
     void task('LINE 파일 만드는 중…', async () => {
+      if (!await adGate()) return;
       type Cut = typeof pick.cuts[number];
       const files: LineFile[] = [];
       const motionOf = (slot: Cut) => slot.motion ?? DEFAULT_MOTION;
@@ -1653,6 +1667,7 @@ function Studio() {
               {/* 4. 지금 할 일. 이 화면의 노란 버튼은 이것 하나다. */}
               <Action primary title="파일 묶음 만들기" disabled={!!busy || !drawn.length} onPress={exportProject} />
               {!!drawn.length && drawn.length < project.slots.length && <Text style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>{`지금 있는 ${drawn.length}칸으로 만들어요 · 빈 칸은 빠져요`}</Text>}
+              {!pro && !!adUnit && <Text testID="광고 안내" style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>무료는 만들기 전에 광고 한 번 · PRO 는 광고 없이 바로</Text>}
               {/* LINE 움직이는 스티커(2026-10-27): 카카오 묶음과 따로. 움직이는 칸 8개 이상일 때 만들 수 있다. */}
               <Action title="LINE 움직이는 스티커 파일 만들기" disabled={!!busy || !drawn.length} onPress={exportLine} />
               {!!lastExport && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, borderRadius: 16, backgroundColor: T.successSoft }}>

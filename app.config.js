@@ -18,6 +18,7 @@
 const base = require('./app.json');
 const { httpsUrl, email } = require('./release/config-values.cjs');
 const publicContact = require('./release/public-contact.json');
+const publicAds = require('./release/public-ads.json');
 const pick = (envValue, fileValue, valid) => envValue !== undefined ? (valid(envValue) ? envValue : undefined) : (valid(fileValue) ? fileValue : undefined);
 
 const internalReview = process.env.EMOTICON_INTERNAL_REVIEW === '1';
@@ -103,6 +104,8 @@ module.exports = () => {
     // 비공개 테스트 PRO 체험(구매 닫힘 빌드 전용). 저장되지 않는 빌드 값이다.
     proTrial,
     receiptEndpoint,
+    // 보상형 광고(2026-10-27): 무료 사용자의 파일 묶음 만들기 전에 한 번. EMOTICON_ADS=off 면 광고 없음. 공개 ID(release/public-ads.json).
+    ...(process.env.EMOTICON_ADS === 'off' ? {} : { ads: { rewarded: publicAds.rewardedAndroid } }),
     // 공개 연락처: 환경변수가 있으면 그 값(형식이 틀리면 비움), 없으면 release/public-contact.json(저장소에 둔 공개 값).
     privacyPolicyUrl: pick(process.env.EMOTICON_PRIVACY_URL, publicContact.privacyPolicyUrl, httpsUrl),
     supportEmail: pick(process.env.EMOTICON_SUPPORT_EMAIL, publicContact.supportEmail, email),
