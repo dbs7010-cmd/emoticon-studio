@@ -45,6 +45,28 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
     const edge = await page.evaluate(() => window.__bench.hires().edgeProfile(0, 180, 180));
     assert.ok(edge.solid >= 12 && edge.solid <= 24, '굵기 6(문서) = 고해상도 약 18픽셀 (' + edge.solid + ')');
 
+    // 1-2) 선 끝 미리 보이기: 손을 떼기 전 화면에는 손가락 자리까지 선이 보이지만 장에는 아직 없다. 손을 떼면 장에 들어간다.
+    {
+      await cmd({ type: 'brushSettings', preset: null, opacity: 1, stabilizer: 'light', smoothing: true });
+      const tip = await page.evaluate(async () => {
+        const c = document.getElementById('drawing'), r = c.getBoundingClientRect();
+        const ev = (t, x, y) => c.dispatchEvent(new PointerEvent(t, { pointerId: 1, pointerType: 'touch', isPrimary: true, bubbles: true, cancelable: true, clientX: r.left + x * r.width, clientY: r.top + y * r.height }));
+        ev('pointerdown', .2, .85); for (let i = 1; i <= 6; i++) { ev('pointermove', .2 + i * .1, .85); await new Promise(res => setTimeout(res, 8)); }
+        // 장에는 곡선의 앞 반 마디(가운데점)까지만 있고, 그 뒤(가운데점 → 지금 선 끝)는 화면에만 보인다.
+        const tipX = window.__bench.tip().steady.x - 3, y = .85 * 360;
+        const screen = document.getElementById('drawing').getContext('2d').getImageData(Math.round(tipX * 3), Math.round(y * 3), 1, 1).data[3];
+        const layer = window.__bench.hires().alphaAt(0, tipX, y);
+        ev('pointerup', .8, .85);
+        const after = window.__bench.hires().alphaAt(0, tipX, y);
+        return { screen, layer, after };
+      });
+      assert.ok(tip.screen > 200, '손을 떼기 전에도 화면에는 선 끝까지 보인다 ' + JSON.stringify(tip));
+      assert.equal(tip.layer, 0, '미리 보이는 끝은 장에 들어가지 않는다');
+      assert.ok(tip.after > 200, '손을 떼면 그 끝이 장에 들어간다');
+      await cmd({ type: 'undo' });
+      await cmd({ type: 'brushSettings', preset: null, opacity: 1, stabilizer: 'light', smoothing: false });
+    }
+
     // 2) 저장: 완성본 360, 장 PNG 1080.
     await cmd({ type: 'save', token: 1 });
     const saved = await last('save');
@@ -120,6 +142,6 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
     assert.deepEqual([one.canvas, one.layer, one.res], [[360, 360], [360, 360], 1], '1배는 예전 그대로');
 
     assert.deepEqual(errors, [], '페이지 오류 없음');
-    console.log('PASS: hires engine — 화면·장 1080(문서 좌표 360 그대로), 선 굵기 3배 촘촘, 저장 완성본 360 · 장 PNG 1080, 되돌리기/다시하기 픽셀 일치 + 바뀌지 않은 장 사본 공유 + 사본 상한 24, 채우기 틈 없음, 옛 360 장 그대로 열림, 카카오 프레임 360 · GIF · LINE 칸, 스포이드, 1배 그대로.');
+    console.log('PASS: hires engine — 화면·장 1080(문서 좌표 360 그대로), 선 굵기 3배 촘촘, 선 끝 미리 보이기(화면만), 저장 완성본 360 · 장 PNG 1080, 되돌리기/다시하기 픽셀 일치 + 바뀌지 않은 장 사본 공유 + 사본 상한 24, 채우기 틈 없음, 옛 360 장 그대로 열림, 카카오 프레임 360 · GIF · LINE 칸, 스포이드, 1배 그대로.');
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exit(1); });

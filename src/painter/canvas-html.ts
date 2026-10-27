@@ -199,7 +199,7 @@ window.__bench={tip:()=>({steady,lastRaw}),renders:()=>renderCount,
    sum:i=>{const {d}=px(i);let h=2166136261;for(let k=3;k<d.length;k+=4){h^=d[k]+(k&1023);h=Math.imul(h,16777619);}return h>>>0;},
    copies:()=>{const seen=new Set();for(const st of history.concat(future))for(const l of st.layers)if(l.copy)seen.add(l.copy);return {unique:seen.size,steps:history.length};},
    fillGap:(i,x,y)=>{const {d,w}=px(i),cx=Math.floor(x*RES);let gap=0;for(let yy=Math.floor(y*RES);yy>0;yy--){const k=(yy*w+cx)*4;if(d[k]<120&&d[k+3]>200)break;if(d[k+3]<250)gap++;}return gap;}};}};
-function render(t){renderCount++;ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));if(t===undefined)drawOnion(ctx);(t===undefined?layers:layersAt(t)).forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
+function render(t){renderCount++;ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));if(t===undefined)drawOnion(ctx);(t===undefined?layers:layersAt(t)).forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});if(t===undefined)drawTip(ctx);drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
@@ -331,6 +331,14 @@ let euro=null;
 // 이웃한 두 선분의 가운데를 잇고 그 사이 점을 조절점으로 삼아 2차 곡선으로 그린다(손글씨·드로잉 앱의 표준 방식).
 // 곧은 획은 그대로 곧고, 선 끝은 손을 뗄 때 마저 잇는다(curveFlush).
 let curveMid=null,curveCtl=null;
+// 선 끝 미리 보이기(2026-10-28). 곡선 잇기는 마지막 반 마디를 다음 점이 올 때 그리고, 휴대폰은 손가락이 갈 자리를 미리 알려 준다
+// (getPredictedEvents). 그 둘을 **화면에만** 얇게 이어 그려 선이 손가락에 붙어 보이게 한다. 장(레이어)에는 들어가지 않고 다음 화면에서 바뀐다.
+// 기본 펜·불투명 색에서만 — 반투명은 겹쳐 진해지고, 지우개·특수 브러시는 화면만으로 같은 모양을 낼 수 없다.
+let tipPath=null;
+function drawTip(g){
+ if(!active||!tipPath||tipPath.length<2||activePreset()||liveTool()!=='pen'||brush!=='pen'||wet||inkAlpha()<1)return;
+ const l=activeDraw();if(!l||!l.visible)return;
+ g.save();style(g);g.globalAlpha=l.opacity;g.beginPath();g.moveTo(tipPath[0].x,tipPath[0].y);for(const p of tipPath.slice(1))g.lineTo(p.x,p.y);g.stroke();g.restore();}
 function curveTo(l,p){
  if(!curveMid){const m={x:(last.x+p.x)/2,y:(last.y+p.y)/2};inkSegment(l,last,m);curveMid=m;curveCtl=p;return;}
  const a=curveMid,c=curveCtl,m={x:(c.x+p.x)/2,y:(c.y+p.y)/2};
@@ -418,7 +426,7 @@ function firstTwo(){return points().slice(0,2);}
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function middle(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
 function canvasUnits(px){const r=canvas.getBoundingClientRect();return px*W/Math.max(1,r.width);}
-function cancelStrokeForGesture(){curveMid=null;curveCtl=null;captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;strokeTool=null;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
+function cancelStrokeForGesture(){curveMid=null;curveCtl=null;tipPath=null;captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;strokeTool=null;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
 function beginMulti(){
  const ps=firstTwo();if(ps.length<2)return;const [a,b]=ps,mid=middle(a,b),ref=activeReference();
  if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,ids:[a.id,b.id],distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,didCheckpoint:false,capScale:caption?.scale||1,capRot:caption?.rot||0,angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};}
@@ -1135,6 +1143,9 @@ canvas.addEventListener('pointermove',e=>{
    strokeSpeed=strokeSpeed*(1-w)+v*w;lastMoveAt=now;}
   // 보정 끔은 손이 지난 자리 그대로(곡선 잇기도 하지 않는다).
   if(smoothing)curveTo(l,p);else inkSegment(l,last,p);last=p;}
+ {const pred=(e.getPredictedEvents&&e.getPredictedEvents())||[],tip=steady||last,raw=lastRaw;tipPath=[];
+  if(smoothing&&curveMid&&curveCtl)tipPath.push(curveMid,curveCtl);else tipPath.push(tip);
+  if(pred.length&&raw){const q=point(pred[pred.length-1]),dx=q.x-raw.x,dy=q.y-raw.y;if(Math.hypot(dx,dy)<cssToCanvas(40))tipPath.push({x:tip.x+dx,y:tip.y+dy});}}
  dirty=true;render();
 });
 // 한 구간을 그린다. 무료 펜/붓/연필은 예전 그대로(3px 간격 선분 + 연필 입자), PRO 프리셋만 분기를 탄다.
@@ -1340,7 +1351,7 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
   // 보정을 켜면 선이 손가락보다 조금 늦게 따라온다. 손을 뗄 때 남은 거리를 이어 그려 선 끝을 잃지 않는다(1€ 보정부터 약도 포함, 2026-10-28).
   // 보정이 셀수록 선이 손가락보다 뒤처진다. 남은 거리를 **한 번에 직선으로 잇지 않고** 몇 걸음에 나눠
   // 따라붙인다 — 한 번에 이으면 획 끝에 곧은 꼬리(혹)가 남는다(45.32).
-  curveFlush(layers.find(x=>x.id===wetLayer)||activeDraw());
+  tipPath=null;curveFlush(layers.find(x=>x.id===wetLayer)||activeDraw());
   if(smoothing&&lastRaw&&steady&&Math.hypot(lastRaw.x-steady.x,lastRaw.y-steady.y)>.5){
    const l=layers.find(x=>x.id===wetLayer)||activeDraw();
    if(l){let from=steady;for(let i=1;i<=4;i++){const t=i/4,to={x:steady.x+(lastRaw.x-steady.x)*t,y:steady.y+(lastRaw.y-steady.y)*t};inkSegment(l,from,to);from=to;}last=lastRaw;}}
