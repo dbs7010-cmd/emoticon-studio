@@ -22,4 +22,9 @@ export const zhHant: Partial<Record<Key, string>> = {
   'line.needMoving': 'LINE 動態貼圖需要 8 格以上的動態格(目前 {n} 格)。',
   'line.making': '正在製作 LINE 檔案…', 'line.progress': '正在製作 LINE 檔案 · {i}/{n}', 'line.mainTab': '正在製作 LINE 主要・標籤圖片…',
   'line.done': '已打包 LINE 動態貼圖 {n} 張 · 主要圖片 · 標籤圖片。', 'line.upload': '請自行上傳至 LINE Creators Market(審核由 LINE 進行)。',
+  'export.lineStill': '製作 LINE 靜態貼圖檔案',
+  'line.needStill': 'LINE 靜態貼圖需要 8 格以上已儲存的格子(目前 {n} 格)。',
+  'line.doneStill': '已打包 LINE 靜態貼圖 {n} 張 · 主要圖片 · 標籤圖片。',
+  'line.leftOut': '{n} 格未放入 {size} 張的套組。', 'line.stillsOut': '靜態格不會放入。',
+  'line.bad': '有不符合 LINE 規格的格子,因此未打包。', 'line.failed': '無法製作', 'line.noShare': '此裝置無法開啟分享畫面。',
 };

@@ -22,4 +22,9 @@ export const ja: Partial<Record<Key, string>> = {
   'line.needMoving': 'LINE 動くスタンプには動くコマが8つ以上必要です(今 {n}つ)。',
   'line.making': 'LINE ファイルを作成中…', 'line.progress': 'LINE ファイルを作成中 · {i}/{n}', 'line.mainTab': 'LINE メイン・タブ画像を作成中…',
   'line.done': 'LINE 動くスタンプ {n}個 · メイン · タブ画像をまとめました。', 'line.upload': 'LINE Creators Market にご自身で申請してください(審査は LINE が行います)。',
+  'export.lineStill': 'LINE 静止スタンプのファイルを作る',
+  'line.needStill': 'LINE 静止スタンプには保存したコマが8つ以上必要です(今 {n}つ)。',
+  'line.doneStill': 'LINE 静止スタンプ {n}個 · メイン · タブ画像をまとめました。',
+  'line.leftOut': '{n}コマは {size}個のセットに入りませんでした。', 'line.stillsOut': '止まったコマは含まれません。',
+  'line.bad': 'LINE の規格に合わないコマがあるため、まとめませんでした。', 'line.failed': '作成できませんでした', 'line.noShare': 'この端末では共有画面を開けません。',
 };

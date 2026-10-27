@@ -685,7 +685,8 @@ function buildLoop(fps,wantSheets){
 function buildLineFrames(spec){
  boilCache.clear();syncFrame();
  const L=loopSeconds(),count=spec.still?1:spec.count>0?Math.max(1,Math.min(20,spec.count|0)):Math.max(5,Math.min(20,Math.round(L*12)));
- const k=Math.min(spec.w/W,spec.h/H),dw=W*k,dh=H*k,ox=(spec.w-dw)/2,oy=(spec.h-dh)/2;
+ // pad: 바깥 여백(px). LINE 일반 스티커는 그림과 테두리 사이 약 10px 를 권한다.
+ const pad=Math.max(0,spec.pad|0),k=Math.min((spec.w-2*pad)/W,(spec.h-2*pad)/H),dw=W*k,dh=H*k,ox=(spec.w-dw)/2,oy=(spec.h-dh)/2;
  const out=[];
  for(let i=0;i<count;i++){
   const frame=bitmap(),g=frame.getContext('2d'),t=L*i/count;

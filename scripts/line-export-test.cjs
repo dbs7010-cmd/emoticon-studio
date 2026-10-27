@@ -59,6 +59,24 @@ const OUT = process.argv[2] ? path.resolve(process.argv[2]) : null;
     const zip = L.lineZip(files);
     assert.deepEqual(readZipNames(zip), [...files.map(f => f.name)]);
 
+    // 일반(멈춘) 스티커: 움직이는 칸이어도 멈춘 모습 하나 · 370×320 · 여백 10px · 짝수 · 1MB · 투명 · APNG 아님
+    {
+      const st = await line({ version: 1, preset: 'hop', speed: .5, strength: .5 }, { w: L.LINE_STILL_STICKER.w, h: L.LINE_STILL_STICKER.h, count: 1, still: true, pad: L.LINE_STILL.pad });
+      assert.equal(st.sheets.length, 1, '일반 스티커는 한 장');
+      const d = decodeDataUrl(st.sheets[0]), info = L.inspectPng(d);
+      assert.deepEqual(L.lineStillProblems(info, 'sticker'), [], '일반 스티커 규격');
+      assert.deepEqual([info.w, info.h, info.animated], [370, 320, false]);
+      const edge = await page.evaluate(async url => { const img = new Image(); img.src = url; await img.decode(); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0); const px = g.getImageData(0, 0, c.width, c.height).data; let hit = 0; for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if ((x < 10 || y < 10 || x >= c.width - 10 || y >= c.height - 10) && px[(y * c.width + x) * 4 + 3] > 8) hit++; return hit; }, st.sheets[0]);
+      assert.equal(edge, 0, '둘레 10px 안은 비어 있다(LINE 여백)');
+      for (const [w, h, kind] of [[240, 240, 'main'], [96, 74, 'tab']]) {
+        const x = await line({ version: 1, speed: .5, strength: .5 }, { w, h, count: 1, still: true, pad: 4 });
+        assert.deepEqual(L.lineStillProblems(L.inspectPng(decodeDataUrl(x.sheets[0])), kind), [], kind + ' 규격');
+      }
+      assert.ok(L.lineStillProblems({ w: 371, h: 321, colorType: 6, frames: 1, plays: 0, seconds: 0, bytes: 1e4, animated: false }, 'sticker').length >= 2, '370×320 넘음·홀수 거절');
+      assert.ok(L.lineStillProblems({ w: 370, h: 320, colorType: 6, frames: 5, plays: 1, seconds: 1, bytes: 1e4, animated: true }, 'sticker').length, 'APNG 거절');
+      const proj = n => ({ slots: Array.from({ length: 32 }, (_, i) => ({ number: i + 1, ...(i < n ? { finalImage: { path: 'x' }, work: { layers: [] } } : {}) })) });
+      assert.deepEqual([7, 8, 15, 16, 32, 33].map(n => L.lineStillCuts(proj(Math.min(n, 32))).size), [null, 8, 8, 16, 32, 32], '세트 8/16/24/32/40 중 가장 큰 수');
+    }
     // 검사기가 실제로 거절하는지(규격 밖 예)
     assert.ok(L.lineProblems({ w: 360, h: 360, colorType: 6, frames: 24, plays: 4, seconds: 1.5, bytes: 2e6, animated: true }, 'sticker').length >= 3);
     assert.ok(L.lineProblems({ w: 270, h: 270, colorType: 6, frames: 1, plays: 0, seconds: 0, bytes: 1e4, animated: false }, 'sticker').length);
@@ -95,6 +113,6 @@ const OUT = process.argv[2] ? path.resolve(process.argv[2]) : null;
     assert.equal(kinfo.w, 360); assert.equal(kinfo.h, 360); assert.ok(k.data.startsWith('data:image/gif'));
     assert.deepEqual(errors, [], errors.join(' | '));
     if (OUT) { fs.mkdirSync(OUT, { recursive: true }); for (const f of files) fs.writeFileSync(path.join(OUT, f.name), f.data); fs.writeFileSync(path.join(OUT, 'LINE-test.zip'), zip); }
-    console.log(`PASS: line export — 콘 8칸 APNG(270×270, 5~20장, ≤4초, 1~4회, ≤1MB, 투명) + main 240×240 APNG + tab 96×74 PNG, ZIP ${(zip.length / 1024).toFixed(0)}KB · 규격 밖 거절 · 장별 디코드·서로 다름 확인 · 카카오 프레임 그대로`);
+    console.log(`PASS: line export — 콘 8칸 APNG(270×270, 5~20장, ≤4초, 1~4회, ≤1MB, 투명) + main 240×240 APNG + tab 96×74 PNG, ZIP ${(zip.length / 1024).toFixed(0)}KB · 규격 밖 거절 · 장별 디코드·서로 다름 확인 · 카카오 프레임 그대로 · 일반 스티커 370×320 PNG(여백 10px·짝수)·세트 8~40`);
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exit(1); });

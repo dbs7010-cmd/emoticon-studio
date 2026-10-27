@@ -38,7 +38,7 @@ import { getRandomBytes, digestStringAsync, CryptoDigestAlgorithm } from 'expo-c
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { Dimensions } from 'react-native';
-import { assembleApng, inspectPng, LINE_SPEC, LINE_STICKER, lineCuts, lineName, lineProblems, linePlan, lineZip, shrinkSteps, type LineFile } from './src/services/line-export';
+import { assembleApng, inspectPng, LINE_SPEC, LINE_STICKER, LINE_STILL, LINE_STILL_STICKER, lineCuts, lineName, lineProblems, linePlan, lineStillCuts, lineStillProblems, lineZip, shrinkSteps, type LineFile } from './src/services/line-export';
 import { exportSet, decodeDataUrl, fileStamp, safeName, type HandoffFrames, exportFormatSummary } from './src/services/export';
 import { dataUrl, importBundledImage, pickImages, savePainterWork, saveMotionLoop, saveSubmitLoop, saveCutout } from './src/services/images';
 import { identicalFinalsAsync, finalsKey, inspectImage } from './src/services/qa';
@@ -832,7 +832,7 @@ function Studio() {
       for (const [i, slot] of pick.cuts.entries()) {
         setBusy(t('line.progress', { i: i + 1, n: pick.cuts.length }));
         try { files.push(await apng(slot, LINE_STICKER.w, LINE_STICKER.h, 'sticker', lineName(i))); }
-        catch (e) { files.push({ name: lineName(i), data: new Uint8Array(0), kind: 'sticker', problems: ['만들지 못했어요 · ' + userMessage(e)] }); }
+        catch (e) { files.push({ name: lineName(i), data: new Uint8Array(0), kind: 'sticker', problems: [t('line.failed') + ' · ' + userMessage(e)] }); }
       }
       setBusy(t('line.mainTab'));
       const first = pick.cuts[0];
@@ -842,15 +842,51 @@ function Studio() {
       files.push({ name: 'tab.png', data: tabData, kind: 'tab', problems: lineProblems(inspectPng(tabData), 'tab') });
       const bad = files.filter(f => f.problems.length);
       if (bad.length) {
-        const where = bad.map(f => f.kind === 'sticker' ? `${pad(pick.cuts[Number(f.name.slice(0, 2)) - 1].number)}번 칸(${f.problems.join(', ')})` : `${f.name}(${f.problems.join(', ')})`);
-        setNotice('LINE 규격에 맞지 않는 칸이 있어 묶지 않았어요. ' + where.join(' · '));
+        const where = bad.map(f => f.kind === 'sticker' ? `${pad(pick.cuts[Number(f.name.slice(0, 2)) - 1].number)} (${f.problems.join(', ')})` : `${f.name}(${f.problems.join(', ')})`);
+        setNotice(t('line.bad') + ' ' + where.join(' · '));
         return;
       }
       const file = exportFile(`${safeName(project.projectName)}-LINE-${pick.size}-${fileStamp(new Date())}.zip`);
       file.write(lineZip(files));
       const skipped = pick.moving - pick.size!;
-      const made = t('line.done', { n: pick.size! }) + (skipped ? ` 움직이는 칸 ${skipped}개는 ${pick.size}개 세트에 들어가지 않았어요.` : '') + (pick.stills.length ? ' 멈춘 칸은 빠져요.' : '');
-      if (!await Sharing.isAvailableAsync()) { setNotice(`${made} 이 기기에서는 공유 창을 열 수 없어요.`); return; }
+      const made = t('line.done', { n: pick.size! }) + (skipped ? ' ' + t('line.leftOut', { n: skipped, size: pick.size! }) : '') + (pick.stills.length ? ' ' + t('line.stillsOut') : '');
+      if (!await Sharing.isAvailableAsync()) { setNotice(`${made} ${t('line.noShare')}`); return; }
+      await Sharing.shareAsync(exportUri(file.name), { mimeType: 'application/zip', UTI: 'public.zip' });
+      setNotice(`${made} ${t('line.upload')}`);
+    });
+  }
+  // LINE 일반(멈춘) 스티커(2026-10-28): 저장된 칸 8/16/24/32/40 → 칸마다 370×320 PNG(여백 10px) · 메인 240×240 · 탭 96×74.
+  // 움직임을 빼고 그린 모습만 굽는다(애니메이션 칸은 첫 장). 작품은 바꾸지 않고 내보낼 파일만 새로 만든다.
+  function exportLineStill() {
+    if (!project) return;
+    const pick = lineStillCuts(project);
+    if (!pick.size) { setNotice(t('line.needStill', { n: pick.saved })); return; }
+    void task(t('line.making'), async () => {
+      if (!await adGate()) return;
+      const files: LineFile[] = [];
+      const still = async (slot: typeof pick.cuts[number], w: number, h: number, pad: number, kind: 'sticker' | 'main' | 'tab', name: string): Promise<LineFile> => {
+        const made = await baker.current!.line(slot.work!, DEFAULT_MOTION, { w, h, count: 1, still: true, pad });
+        const data = decodeDataUrl(made.sheets[0]);
+        return { name, data, kind, problems: lineStillProblems(inspectPng(data), kind) };
+      };
+      for (const [i, slot] of pick.cuts.entries()) {
+        setBusy(t('line.progress', { i: i + 1, n: pick.cuts.length }));
+        try { files.push(await still(slot, LINE_STILL_STICKER.w, LINE_STILL_STICKER.h, LINE_STILL.pad, 'sticker', lineName(i))); }
+        catch (e) { files.push({ name: lineName(i), data: new Uint8Array(0), kind: 'sticker', problems: [t('line.failed') + ' · ' + userMessage(e)] }); }
+      }
+      setBusy(t('line.mainTab'));
+      files.push(await still(pick.cuts[0], LINE_SPEC.main.w, LINE_SPEC.main.h, 8, 'main', 'main.png'));
+      files.push(await still(pick.cuts[0], LINE_SPEC.tab.w, LINE_SPEC.tab.h, 2, 'tab', 'tab.png'));
+      const bad = files.filter(f => f.problems.length);
+      if (bad.length) {
+        const where = bad.map(f => f.kind === 'sticker' ? `${pad(pick.cuts[Number(f.name.slice(0, 2)) - 1].number)} (${f.problems.join(', ')})` : `${f.name}(${f.problems.join(', ')})`);
+        setNotice(t('line.bad') + ' ' + where.join(' · '));
+        return;
+      }
+      const file = exportFile(`${safeName(project.projectName)}-LINE-still-${pick.size}-${fileStamp(new Date())}.zip`);
+      file.write(lineZip(files));
+      const made = t('line.doneStill', { n: pick.size! }) + (pick.saved > pick.size! ? ' ' + t('line.leftOut', { n: pick.saved - pick.size!, size: pick.size! }) : '');
+      if (!await Sharing.isAvailableAsync()) { setNotice(`${made} ${t('line.noShare')}`); return; }
       await Sharing.shareAsync(exportUri(file.name), { mimeType: 'application/zip', UTI: 'public.zip' });
       setNotice(`${made} ${t('line.upload')}`);
     });
@@ -1671,6 +1707,7 @@ function Studio() {
               {!pro && !!adUnit && <Text testID="광고 안내" style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>{t('export.adHint')}</Text>}
               {/* LINE 움직이는 스티커(2026-10-27): 카카오 묶음과 따로. 움직이는 칸 8개 이상일 때 만들 수 있다. */}
               <Action title={t('export.line')} disabled={!!busy || !drawn.length} onPress={exportLine} />
+              <Action title={t('export.lineStill')} disabled={!!busy || !drawn.length} onPress={exportLineStill} />
               {!!lastExport && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, borderRadius: 16, backgroundColor: T.successSoft }}>
                 <Glyph name="check-circle" size={20} color={colors.PASS} />
                 <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>{lastExport.count}칸을 묶었어요</Text>

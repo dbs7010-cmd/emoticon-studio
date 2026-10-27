@@ -86,6 +86,29 @@ export function lineProblems(info: ApngInfo, kind: 'sticker' | 'main' | 'tab'): 
   return p;
 }
 
+// 일반(멈춘) 스티커(2026-10-28, LINE 공식 가이드 확인): PNG · 최대 370×320 · 가로·세로 짝수 · 그림 둘레 약 10px 여백 · 1MB 이하 · 투명 · RGB
+// · 세트 8/16/24/32/40 · 메인 240×240 PNG · 탭 96×74 PNG. 움직이는 그림(APNG)은 받지 않는다(첫 장만 쓰인다).
+export const LINE_STILL = { sticker: { w: 370, h: 320 }, setSizes: [8, 16, 24, 32, 40] as const, pad: 10 };
+// 정사각 그림(360)을 세로 320 칸에 여백 10px 로 → 370×320 칸 가운데 300×300. 크기를 키우지 않아 선이 뭉개지지 않는다.
+export const LINE_STILL_STICKER = { w: 370, h: 320 };
+export function lineStillProblems(info: ApngInfo, kind: 'sticker' | 'main' | 'tab'): string[] {
+  const p: string[] = [], S = LINE_SPEC;
+  if (info.colorType !== 6) p.push('투명 바탕(RGBA)이 아니에요');
+  if (info.bytes > S.maxBytes) p.push(`파일이 1MB 를 넘어요(${(info.bytes / 1048576).toFixed(2)}MB)`);
+  if (info.animated) p.push('일반 스티커는 멈춘 PNG 여야 해요');
+  if (kind === 'tab') { if (info.w !== S.tab.w || info.h !== S.tab.h) p.push(`탭 그림은 ${S.tab.w}×${S.tab.h} 이어야 해요`); return p; }
+  if (kind === 'main') { if (info.w !== S.main.w || info.h !== S.main.h) p.push(`메인 그림은 ${S.main.w}×${S.main.h} 이어야 해요`); return p; }
+  if (info.w > LINE_STILL.sticker.w || info.h > LINE_STILL.sticker.h) p.push(`크기가 ${LINE_STILL.sticker.w}×${LINE_STILL.sticker.h} 을 넘어요`);
+  if (info.w % 2 || info.h % 2) p.push('가로·세로는 짝수여야 해요');
+  return p;
+}
+// 일반 스티커 세트에 넣을 칸: 저장된 칸 모두(움직이는 칸은 첫 모습으로), 칸 번호 순서. 8/16/24/32/40 중 넣을 수 있는 가장 큰 수.
+export function lineStillCuts(project: Project): { cuts: Slot[]; size: number | null; saved: number } {
+  const saved = project.slots.filter(s => s.finalImage && s.work);
+  const size = [...LINE_STILL.setSizes].reverse().find(n => saved.length >= n) ?? null;
+  return { cuts: size ? saved.slice(0, size) : [], size, saved: saved.length };
+}
+
 // 한 바퀴 길이(초) → 장 수·한 장 시간·반복 수. 장 수는 초당 약 12장, 5~20장 안. 한 바퀴가 4초를 넘으면 만들 수 없다(null).
 export function linePlan(loopSeconds: number, frames?: number): { frames: number; delayMs: number; plays: number } | null {
   if (!(loopSeconds > 0) || loopSeconds > LINE_SPEC.maxSeconds) return null;

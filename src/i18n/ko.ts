@@ -26,5 +26,10 @@ export const ko = {
   'line.needMoving': 'LINE 움직이는 스티커는 움직이는 칸이 8개 이상 필요해요(지금 {n}개).',
   'line.making': 'LINE 파일 만드는 중…', 'line.progress': 'LINE 파일 만드는 중 · {i}/{n}칸', 'line.mainTab': 'LINE 메인·탭 그림 만드는 중…',
   'line.done': 'LINE 움직이는 스티커 {n}개 · 메인 · 탭 파일을 묶었어요.', 'line.upload': 'LINE Creators Market 에 직접 올려 주세요(심사는 LINE 이 해요).',
+  'export.lineStill': 'LINE 일반 스티커 파일 만들기',
+  'line.needStill': 'LINE 일반 스티커는 저장된 칸이 8개 이상 필요해요(지금 {n}개).',
+  'line.doneStill': 'LINE 일반 스티커 {n}개 · 메인 · 탭 파일을 묶었어요.',
+  'line.leftOut': '{n}칸은 {size}개 세트에 들어가지 않았어요.', 'line.stillsOut': '멈춘 칸은 빠져요.',
+  'line.bad': 'LINE 규격에 맞지 않는 칸이 있어 묶지 않았어요.', 'line.failed': '만들지 못했어요', 'line.noShare': '이 기기에서는 공유 창을 열 수 없어요.',
 } as const;
 export type Key = keyof typeof ko;

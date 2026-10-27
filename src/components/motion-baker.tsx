@@ -7,7 +7,7 @@ import type { Caption, Motion, MotionLoop, PainterWork } from '../types';
 
 // sheets 를 켜면 공식 도구에 넣을 360x360 PNG 프레임까지 함께 돌려준다. 양이 크므로 내보낼 때만 켠다.
 // line: LINE 움직이는 스티커용 PNG 프레임(w×h 칸, count 장 · still 이면 첫 장만). 카카오 경로와 따로 만든다(2026-10-27).
-export type LineSpec = { w: number; h: number; count: number; still?: boolean };
+export type LineSpec = { w: number; h: number; count: number; still?: boolean; pad?: number };
 export type LineFrames = { loop: number; count: number; sheets: string[] };
 export type Baker = { bake: (work: PainterWork, motion: Motion, sheets?: boolean) => Promise<MotionLoop>; line: (work: PainterWork, motion: Motion, spec: LineSpec) => Promise<LineFrames> };
 
