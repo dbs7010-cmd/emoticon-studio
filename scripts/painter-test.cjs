@@ -81,7 +81,8 @@ const { canvasHtml } = loader()('src/painter/canvas-html.ts');
     await page.screenshot({path:'verification/states/canvas-empty.png'});
     const checker=await page.evaluate(()=>getComputedStyle(document.getElementById('surface')).backgroundImage);
     // 투명을 알리는 무늬일 뿐인데 예전에는 #eee 20px 로 그림보다 눈에 띄었다.
-    assert.ok(checker.includes('rgb(241, 241, 243)'),'투명 무늬가 옅은 중립색이다: '+checker);
+    // 2026-10: 바탕은 흰 종이(무늬 없음), '종이' 켜면 아주 옅은 점(#00000006)만. 그림보다 눈에 띄는 무늬가 없어야 한다.
+    assert.ok(checker==='none'||/rgba\(0, 0, 0, 0\.0[0-9]+\)/.test(checker),'바탕 무늬가 없거나 아주 옅다: '+checker);
     assert.ok(!checker.includes('rgb(238, 238, 238)'),'예전의 진한 무늬(#eee)가 남아 있지 않다: '+checker);
     await line(120,150,240,210);
     await page.screenshot({path:'verification/states/canvas-scribble.png'});

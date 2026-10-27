@@ -157,10 +157,10 @@ const say = (text) => { step.push(text); console.log('  ' + text); };
     await cmd({ type: 'tool', tool: 'pen' }); await cmd({ type: 'color', color: '#E94F4F' }); palette = ['#E94F4F'];
     await cmd({ type: 'width', tool: 'pen', width: 8 });
     await stroke([[175, 268], [195, 255], [215, 268]]);                            // a different mouth
-    await cmd({ type: 'caption', caption: { text: '고마워요', place: 'bottom', color: '#E94F4F' } });
+    await cmd({ type: 'caption', caption: { text: '고마워요', place: 'bottom', color: '#E94F4F', style: 'basic' } });
     await shot('03-edited-with-caption.png');
     const second = await save();
-    assert.deepEqual(second.caption, { text: '고마워요', place: 'bottom', color: '#E94F4F' }, 'the words travel with the save');
+    assert.deepEqual(second.caption, { text: '고마워요', place: 'bottom', color: '#E94F4F', style: 'basic' }, 'the words travel with the save');
     assert.ok(await difference(second.data, first.data) > 0, 'the edited copy is no longer the same picture');
     const slot2 = savePainterWork(second, []);
     project.slots[1] = { ...project.slots[1], ...slot2, qa: inspectImage(slot2.finalImage), done: true, status: 'PASS' };
@@ -218,7 +218,7 @@ const say = (text) => { step.push(text); console.log('  ' + text); };
     project = reopened.projects[0];
     assert.equal(doneCount(project), 2, 'both completions survived');
     assert.equal(project.lastSlot, 2, 'and it remembers where the work stopped');
-    assert.deepEqual(project.slots[1].work.caption, { text: '고마워요', place: 'bottom', color: '#E94F4F' }, 'together with the words');
+    assert.deepEqual(project.slots[1].work.caption, { text: '고마워요', place: 'bottom', color: '#E94F4F', style: 'basic' }, 'together with the words');
     const restoredLayers = await Promise.all(project.slots[1].work.layers.map(async ({ image, ...rest }) => ({ ...rest, data: image ? await dataUrl(image) : undefined })));
     await cmd({ type: 'init', layers: restoredLayers, references: [], activeLayerId: project.slots[1].work.activeLayerId, caption: project.slots[1].work.caption, color: '#E94F4F', penWidth: 8, eraserWidth: 30 });
     await shot('04-after-restart.png');
@@ -231,7 +231,7 @@ const say = (text) => { step.push(text); console.log('  ' + text); };
     const result = exportSet(project);
     assert.equal(result.count, 2);
     assert.equal(result.missing, SPEC.count - 2, 'it says plainly how many cuts are still empty');
-    const zipPath = path.join(documents, 'emoticon-studio', result.path);
+    const zipPath = path.join(documents, 'emoticon-studio', 'exports', result.path);   // 2026-10-06 사본은 exports/
     const zipBytes = fs.readFileSync(zipPath);
     assert.deepEqual(readZipNames(new Uint8Array(zipBytes)), ['01.png', '02.png'], 'named and ordered by cut');
     say(`ZIP ${result.path} · ${zipBytes.length}B`);
@@ -294,6 +294,9 @@ const say = (text) => { step.push(text); console.log('  ' + text); };
         if (!layer.image) continue;
         const layerFile = path.join(documents, 'emoticon-studio', layer.image.path);
         if (project.slots.some(s => s.finalImage?.path === layer.image.path)) continue;
+        // 한 장짜리 그림(문구 없음)은 작업 장과 완성본이 같은 그림이라 바이트가 같을 수 있다 — 그건 작업 파일을 보낸 게 아니다.
+        const own = project.slots.find(s => (s.work?.layers ?? []).includes(layer));
+        if (own?.finalImage && Buffer.compare(fs.readFileSync(layerFile), fs.readFileSync(path.join(documents, 'emoticon-studio', own.finalImage.path))) === 0) continue;
         assert.notDeepEqual([...bytes], [...fs.readFileSync(layerFile)], 'no working layer file is shipped');
       }
     }
@@ -315,7 +318,7 @@ const say = (text) => { step.push(text); console.log('  ' + text); };
     assert.equal(motionImage.height, SPEC.height);
 
     const animated = exportSet(project);
-    const animatedZip = path.join(documents, 'emoticon-studio', animated.path);
+    const animatedZip = path.join(documents, 'emoticon-studio', 'exports', animated.path);
     assert.deepEqual(readZipNames(new Uint8Array(fs.readFileSync(animatedZip))), ['01.png', '02.gif'], 'a moving cut ships as a loop, a still one as a picture');
     const extracted2 = path.join(out, 'unzipped-animated');
     const copy2 = path.join(out, 'submission-animated.zip');
@@ -345,7 +348,7 @@ const say = (text) => { step.push(text); console.log('  ' + text); };
     };
     const withFrames = await bake(motion);
     const handed = exportSet(project, [withFrames]);
-    const handedZip = path.join(documents, 'emoticon-studio', handed.path);
+    const handedZip = path.join(documents, 'emoticon-studio', 'exports', handed.path);
     const handedNames = readZipNames(new Uint8Array(fs.readFileSync(handedZip)));
     assert.ok(handedNames.includes('webp-animator/02/01.png'), '컷 폴더가 지금 번호로 들어간다: ' + handedNames.join(' '));
     assert.ok(handedNames.includes('webp-animator/읽어주세요.txt'), '쪽지도 함께 들어간다');
@@ -366,7 +369,7 @@ const say = (text) => { step.push(text); console.log('  ' + text); };
     // 움직임을 바꾸고 다시 만든다. 같은 컷인데 나오는 프레임이 달라야 한다.
     const other = { version: 1, preset: 'spin', speed: 1, strength: 1, captionMoves: false };
     const reBaked = await bake(other);
-    const reNames = readZipNames(new Uint8Array(fs.readFileSync(path.join(documents, 'emoticon-studio', exportSet(project, [reBaked]).path))));
+    const reNames = readZipNames(new Uint8Array(fs.readFileSync(path.join(documents, 'emoticon-studio', 'exports', exportSet(project, [reBaked]).path))));
     assert.ok(reNames.includes('webp-animator/02/01.png'), '바꾼 뒤에도 컷 폴더가 있다');
     const changed = Buffer.compare(Buffer.from(reBaked.frames[1]), Buffer.from(withFrames.frames[1])) !== 0;
     assert.ok(changed, '움직임을 바꾸면 묶음에 실리는 프레임도 바뀐다 — 옛 프레임이 남지 않는다');
@@ -376,7 +379,7 @@ const say = (text) => { step.push(text); console.log('  ' + text); };
     // 움직임을 빼면 다시 정지 파일로 나간다.
     project = { ...project, slots: project.slots.map(s => s.number === 2 ? { ...s, motion: undefined, motionImage: undefined } : s) };
     commit();
-    assert.deepEqual(readZipNames(new Uint8Array(fs.readFileSync(path.join(documents, 'emoticon-studio', exportSet(project).path)))), ['01.png', '02.png'], 'removing the movement ships the still picture again');
+    assert.deepEqual(readZipNames(new Uint8Array(fs.readFileSync(path.join(documents, 'emoticon-studio', 'exports', exportSet(project).path)))), ['01.png', '02.png'], 'removing the movement ships the still picture again');
     say('움직임 제거 → 다시 01.png, 02.png');
 
     assert.deepEqual(errors, [], 'the canvas raised no errors during the whole run');

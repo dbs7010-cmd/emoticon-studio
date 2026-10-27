@@ -22,9 +22,10 @@ const say = t => console.log('  ' + t);
 // changes, these guards fail instead of the mirror drifting out of date silently.
 const rule = {
   room: "room=W-32",
-  start: "let px=Math.round(H*.11),wide=0;",
-  loop: "for(;px>10;px--){g.font='700 '+px+'px system-ui, sans-serif';wide=g.measureText(text).width;if(wide<=room)break;}",
-  clamp: "if(wide>room){px=Math.max(1,Math.floor(px*room/wide));g.font='700 '+px+'px system-ui, sans-serif';wide=g.measureText(text).width;}",
+  start: "let px=Math.round(H*.11),wide=0,shown=0;",
+  // 2026-10 글씨 성격(capFont·capBold)과 흰 테두리 몫(edge)이 들어간 규칙. 기본 글씨는 700 굵기 · 테두리 0.22 · 덧댐 0.
+  loop: "for(;px>10;px--){g.font=capFont(px);wide=g.measureText(text).width+px*capBold(px);shown=wide+edge(px);if(shown<=room)break;}",
+  clamp: "if(shown>room){px=Math.max(1,Math.floor(px*room/shown));g.font=capFont(px);wide=g.measureText(text).width+px*capBold(px);}",
   bottom: "const x=W/2+(caption.dx||0),y=(caption.place==='top'?Math.round(H*.06):H-Math.round(H*.06))+(caption.dy||0);",
 };
 for (const [name, fragment] of Object.entries(rule)) assert.ok(canvasHtml.includes(fragment), `caption rule "${name}" still reads as the test expects`);
@@ -146,9 +147,10 @@ for (const [name, fragment] of Object.entries(rule)) assert.ok(canvasHtml.includ
       const c = document.createElement('canvas'); c.width = W; c.height = H;
       const g = c.getContext('2d');
       g.textAlign = 'center'; g.textBaseline = 'bottom';
-      let px = Math.round(H * .11), wide = 0;
-      for (; px > 10; px--) { g.font = '700 ' + px + 'px ' + family; wide = g.measureText(text).width; if (wide <= room) break; }
-      if (wide > room) { px = Math.max(1, Math.floor(px * room / wide)); g.font = '700 ' + px + 'px ' + family; }
+      const edge = p => Math.max(3, p * .22);
+      let px = Math.round(H * .11), wide = 0, shown = 0;
+      for (; px > 10; px--) { g.font = '700 ' + px + 'px ' + family; wide = g.measureText(text).width; shown = wide + edge(px); if (shown <= room) break; }
+      if (shown > room) { px = Math.max(1, Math.floor(px * room / shown)); g.font = '700 ' + px + 'px ' + family; }
       const x = W / 2, y = H - Math.round(H * .06);
       g.lineJoin = 'round'; g.lineWidth = Math.max(3, px * .22); g.strokeStyle = '#FFFFFF'; g.strokeText(text, x, y);
       g.fillStyle = '#242424'; g.fillText(text, x, y);
