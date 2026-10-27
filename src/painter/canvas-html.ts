@@ -1355,6 +1355,7 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
  if(strokePending){future=[];strokePending=false;}active=false;pointer=null;steady=null;strokeTool=null;state();
 }
 canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
+function pngLater(c){if(!c.toBlob)return Promise.resolve(c.toDataURL('image/png'));return new Promise(res=>c.toBlob(b=>{if(!b){res(c.toDataURL('image/png'));return;}const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>res(c.toDataURL('image/png'));r.readAsDataURL(b);},'image/png'));}
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('이미지를 열 수 없습니다.'));i.src=src;});}
 async function loadLayer(l){const b=bitmap();if(l.data){const i=await image(l.data),scale=Math.min(W/i.width,H/i.height),w=i.width*scale,h=i.height*scale;b.getContext('2d').drawImage(i,(W-w)/2,(H-h)/2,w,h);}return {...defaults(l.id,l.name),...l,bitmap:b,data:undefined};}
 function metrics(c){const g=c.getContext('2d',{willReadFrequently:true}),w=c.width,h=c.height,d=g.getImageData(0,0,w,h).data;let n=0,xs=0,ys=0,minX=w,minY=h,maxX=0,maxY=0,r=0,green=0,b=0,transparent=false;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=(y*w+x)*4;if(d[k+3]<255)transparent=true;if(d[k+3]>16){n++;xs+=x;ys+=y;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);r+=d[k];green+=d[k+1];b+=d[k+2];}}return {coverage:n/(w*h),centerX:n?xs/n/w:.5,centerY:n?ys/n/h:.5,width:n?(maxX-minX+1)/w:0,height:n?(maxY-minY+1)/h:0,color:n?[r/n/255,green/n/255,b/n/255]:[0,0,0],transparent};}
@@ -1504,8 +1505,16 @@ async function command(m){try{
  if(m.type==='stop'){stopPlaying();render();state();}
  if(m.type==='lineFrames'){const was=playing;stopPlaying();send({type:'lineFrames',id:m.id,line:buildLineFrames(m.spec)});if(was)startPlaying();else{render();state();}}
  if(m.type==='frames'){const was=playing;stopPlaying();send({type:'frames',id:m.id,gif:buildLoop(m.fps,!!m.sheets)});if(was)startPlaying();else{render();state();}}
- if(m.type==='save'){dry();if(selection)applySelection(false,'save');syncFrame();saving=true;saveToken=m.token===undefined?null:m.token;const first=animOn()?frames[0].layers:layers;const out=docCanvas(),g=out.getContext('2d');g.imageSmoothingQuality='high';first.forEach(l=>composite(g,l));drawCaption(g);send({type:'save',token:saveToken,dirty,data:out.toDataURL('image/png'),metrics:metrics(out),activeLayerId,caption,motion,gif:(m.gif&&(motion||animOn()))?buildLoop(12,false):undefined,layers:first.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')})),
-   frames:animOn()?frames.map((f,i)=>({id:f.id,duration:f.duration,layers:i===0?null:f.layers.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')}))})):undefined,references:references.map(l=>({...meta(l),path:l.path}))});}
+ if(m.type==='save'){dry();if(selection)applySelection(false,'save');syncFrame();saving=true;saveToken=m.token===undefined?null:m.token;const token=saveToken,wasDirty=dirty;const first=animOn()?frames[0].layers:layers;const out=docCanvas(),g=out.getContext('2d');g.imageSmoothingQuality='high';first.forEach(l=>composite(g,l));drawCaption(g);
+   // PNG 로 바꾸는 일은 toBlob 으로 브라우저가 따로 한다(2026-10-28) — 1080 장 여러 장을 바꾸는 동안에도 그리는 손이 멈칫하지 않는다.
+   // 부르는 순간의 그림을 찍으므로, 아래 png() 를 모두 한꺼번에(기다리기 전에) 불러 저장본이 한 순간의 상태가 되게 한다.
+   const outUrl=pngLater(out),met=metrics(out),gif=(m.gif&&(motion||animOn()))?buildLoop(12,false):undefined,cap=caption,mo=motion,act=activeLayerId;
+   const layerJobs=first.map(l=>({...meta(l),data:pngLater(l.bitmap)}));
+   const frameJobs=animOn()?frames.map((f,i)=>({id:f.id,duration:f.duration,layers:i===0?null:f.layers.map(l=>({...meta(l),data:pngLater(l.bitmap)}))})):undefined;
+   const refs=references.map(l=>({...meta(l),path:l.path}));
+   const settle=list=>Promise.all(list.map(async x=>({...x,data:await x.data})));
+   send({type:'save',token,dirty:wasDirty,data:await outUrl,metrics:met,activeLayerId:act,caption:cap,motion:mo,gif,layers:await settle(layerJobs),
+    frames:frameJobs?await Promise.all(frameJobs.map(async f=>({...f,layers:f.layers?await settle(f.layers):null}))):undefined,references:refs});}
  // ── 장 명령 ──
  if(m.type==='animStart'){if(animOn())return;if(selection)applySelection(false,'frame');const d=Number.isFinite(m.duration)?m.duration:.3;frames=[{id:'f1',duration:d,layers},{id:'f2',duration:d,layers:cloneLayers(layers)}];frameIdx=0;useFrame(1);dirty=true;stopPlaying();render();state();}
  if(m.type==='frameAdd'&&animOn()){if(frames.length>=MAX_FRAMES)return;if(selection)applySelection(false,'frame');syncFrame();const src=frames[frameIdx];let n=frames.length+1;while(frames.some(f=>f.id==='f'+n))n++;frames.splice(frameIdx+1,0,{id:'f'+n,duration:src.duration,layers:m.blank?blankLayers(src.layers):cloneLayers(src.layers)});useFrame(frameIdx+1);dirty=true;stopPlaying();render();state();}
