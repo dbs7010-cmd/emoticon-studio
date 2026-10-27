@@ -67,6 +67,20 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
       await cmd({ type: 'brushSettings', preset: null, opacity: 1, stabilizer: 'light', smoothing: false });
     }
 
+    // 1-3) 빠른 획: 마지막 이동 신호가 끝보다 앞에서 멈춰도 손을 뗀 자리까지 선이 닿는다(보정 끔·켬 모두).
+    for (const smoothing of [false, true]) {
+      await cmd({ type: 'brushSettings', preset: null, opacity: 1, stabilizer: 'light', smoothing });
+      const reach = await page.evaluate(async () => {
+        const c = document.getElementById('drawing'), r = c.getBoundingClientRect();
+        const ev = (t, x, y) => c.dispatchEvent(new PointerEvent(t, { pointerId: 1, pointerType: 'touch', isPrimary: true, bubbles: true, cancelable: true, clientX: r.left + x * r.width, clientY: r.top + y * r.height }));
+        ev('pointerdown', .1, .95); ev('pointermove', .3, .95); await new Promise(res => setTimeout(res, 16)); ev('pointerup', .9, .95);
+        return window.__bench.hires().alphaAt(0, .88 * 360, .95 * 360);
+      });
+      assert.ok(reach > 200, '손을 뗀 자리까지 선이 닿는다(보정 ' + (smoothing ? '켬' : '끔') + ')');
+      await cmd({ type: 'undo' });
+    }
+    await cmd({ type: 'brushSettings', preset: null, opacity: 1, stabilizer: 'light', smoothing: false });
+
     // 2) 저장: 완성본 360, 장 PNG 1080.
     await cmd({ type: 'save', token: 1 });
     const saved = await last('save');
@@ -142,6 +156,6 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
     assert.deepEqual([one.canvas, one.layer, one.res], [[360, 360], [360, 360], 1], '1배는 예전 그대로');
 
     assert.deepEqual(errors, [], '페이지 오류 없음');
-    console.log('PASS: hires engine — 화면·장 1080(문서 좌표 360 그대로), 선 굵기 3배 촘촘, 선 끝 미리 보이기(화면만), 저장 완성본 360 · 장 PNG 1080, 되돌리기/다시하기 픽셀 일치 + 바뀌지 않은 장 사본 공유 + 사본 상한 24, 채우기 틈 없음, 옛 360 장 그대로 열림, 카카오 프레임 360 · GIF · LINE 칸, 스포이드, 1배 그대로.');
+    console.log('PASS: hires engine — 화면·장 1080(문서 좌표 360 그대로), 선 굵기 3배 촘촘, 선 끝 미리 보이기(화면만), 빠른 획도 뗀 자리까지, 저장 완성본 360 · 장 PNG 1080, 되돌리기/다시하기 픽셀 일치 + 바뀌지 않은 장 사본 공유 + 사본 상한 24, 채우기 틈 없음, 옛 360 장 그대로 열림, 카카오 프레임 360 · GIF · LINE 칸, 스포이드, 1배 그대로.');
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exit(1); });

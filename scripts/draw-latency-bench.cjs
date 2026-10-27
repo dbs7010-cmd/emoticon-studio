@@ -16,17 +16,18 @@ const SHIM = `<script>window.ReactNativeWebView={postMessage:m=>window.__msgs.pu
   const cdp = await page.context().newCDPSession(page);
   await page.setContent(canvasHtml.replace('</head>', SHIM + '</head>'));
   await page.waitForFunction(() => window.__msgs.some(m => m.type === 'ready'));
+  await page.evaluate(r => { window.__RES = r; }, Number(process.env.RES || 1));
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: SLOW });
   const rows = [];
   for (const level of ['off', 'light', 'medium', 'strong']) {
     const r = await page.evaluate(async ({ level, HZ }) => {
       window.__msgs = [];
-      window.command({ type: 'init', id: 'bench-' + level, color: '#17191D', penWidth: 6,
+      window.command({ type: 'init', id: 'bench-' + level, res: window.__RES || 1, color: '#17191D', penWidth: 6,
         brush: { preset: null, opacity: 1, stabilizer: level === 'off' ? 'light' : level, smoothing: level !== 'off' },
         layers: [1, 2, 3].map(i => ({ id: 'draw-' + i, name: '그림 ' + i, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 })) });
       await new Promise(res => { const t = setInterval(() => { if (window.__msgs.some(m => m.type === 'initialized')) { clearInterval(t); res(); } }, 10); });
       window.command({ type: 'tool', tool: 'pen' });
-      const c = document.getElementById('drawing'), box = c.getBoundingClientRect(), k = c.width / box.width;
+      const c = document.getElementById('drawing'), box = c.getBoundingClientRect(), k = 360 / box.width   // 문서 단위(해상도와 무관);
       const ev = (type, x, y) => c.dispatchEvent(new PointerEvent(type, { pointerId: 1, pointerType: 'touch', isPrimary: true, bubbles: true, cancelable: true, clientX: box.left + x, clientY: box.top + y }));
       const mean = a => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length), q = (a, p) => [...a].sort((x, y) => x - y)[Math.floor(a.length * p)] || 0;
       const rough = pts => mean(pts.slice(2).map((p, i) => Math.hypot(p.x - 2 * pts[i + 1].x + pts[i].x, p.y - 2 * pts[i + 1].y + pts[i].y)));
@@ -63,7 +64,7 @@ const SHIM = `<script>window.ReactNativeWebView={postMessage:m=>window.__msgs.pu
     }, { level, HZ });
     rows.push(r);
   }
-  console.log(`CPU ×${SLOW} · 입력 ${HZ}Hz 목표`);
+  console.log(`CPU ×${SLOW} · 입력 ${HZ}Hz 목표 · 해상도 ×${process.env.RES || 1}`);
   console.table(rows);
   await browser.close();
 })().catch(e => { console.error(e); process.exit(1); });

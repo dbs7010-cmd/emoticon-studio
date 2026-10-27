@@ -1351,6 +1351,9 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
   // 보정을 켜면 선이 손가락보다 조금 늦게 따라온다. 손을 뗄 때 남은 거리를 이어 그려 선 끝을 잃지 않는다(1€ 보정부터 약도 포함, 2026-10-28).
   // 보정이 셀수록 선이 손가락보다 뒤처진다. 남은 거리를 **한 번에 직선으로 잇지 않고** 몇 걸음에 나눠
   // 따라붙인다 — 한 번에 이으면 획 끝에 곧은 꼬리(혹)가 남는다(45.32).
+  // 손을 뗀 자리가 획의 진짜 끝이다. 빠르게 그으면 마지막 이동 신호가 끝보다 한참 앞에서 멈춰 선 끝이 들쭉날쭉했다(에뮬레이터 0.12초 획, 2026-10-28).
+  if(e.type==='pointerup'&&Number.isFinite(e.clientX)&&Number.isFinite(e.clientY)&&lastRaw){const up=point(e);if(Math.hypot(up.x-lastRaw.x,up.y-lastRaw.y)>.5){lastRaw=up;
+   if(!smoothing){const l=layers.find(x=>x.id===wetLayer)||activeDraw();if(l){inkSegment(l,last,up);last=up;}}}}
   tipPath=null;curveFlush(layers.find(x=>x.id===wetLayer)||activeDraw());
   if(smoothing&&lastRaw&&steady&&Math.hypot(lastRaw.x-steady.x,lastRaw.y-steady.y)>.5){
    const l=layers.find(x=>x.id===wetLayer)||activeDraw();
