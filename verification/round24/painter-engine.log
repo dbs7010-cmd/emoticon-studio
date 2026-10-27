@@ -1,0 +1,6 @@
+Canvas: browser ready
+Canvas: initialized
+  상태 캡처: verification/states/canvas-empty.png, canvas-scribble.png
+  패널 높이가 바뀌어도 손가락 자리와 획 자리가 맞는다 (390×600 / 390×380 / 320×720)
+  종이 질감: 판에만 깔리고 작품 픽셀 0px
+PASS: Canvas brushes/eraser/Undo/Redo/Clear; active-reference toggle/transform independent from draw layer; 2 drawing layers; reference-free PNG; layered save/reopen. Desktop Chromium; native multi-touch still requires device test.

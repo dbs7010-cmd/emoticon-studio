@@ -1,0 +1,40 @@
+CONFIG   PASS
+   PASS    internal_review_off — 내부 검수 스위치 꺼짐
+   PASS    purchases — 명시적 구매 비활성 비공개 테스트
+   PASS    cloud — 서버 연결: emoti-18d80 · 로그인 kakao,naver,google
+   PASS    pro_trial — 비공개 테스트 PRO 체험 켜짐(구매 닫힘 빌드 전용)
+   PASS    privacy_url — 개인정보처리방침 https URL 필요
+   PASS    support_email — 유효한 문의 이메일 필요
+   WARN    receipt_endpoint [EXTERNAL] — 명시적 구매 비활성 테스트: 영수증 서버 미설정 허용
+   PASS    application_id — android.package = com.emoticonstudio.app
+   PASS    version_code — android.versionCode = 9 · 올린 적 있는 최대 8
+   PASS    version_name — version = 1.0.0
+   PASS    native_version_sync — android/ 의 버전이 설정과 같아요
+SIGNING  PASS
+   PASS    release_signing_structure — release → 업로드 키, AAB 디버그 서명 차단
+   PASS    signing_inputs — 업로드 키 설정 4개가 있어요(값은 읽지 않음)
+   PASS    no_project_properties_secret — 프로젝트 gradle.properties 에 서명 값 없음
+   PASS    no_secrets_in_repo — 저장소(추적·미추적)에 키 파일·비밀번호 값 없음
+   PASS    signing_certificate — 등록한 업로드 키로 서명됨 (089194ff3c864942b22963136c704e82f885f196f0c86a05773d619cfd17844e)
+ARTIFACT PASS
+   PASS    app_bundle — Android App Bundle(BundleConfig.pb · base 모듈)
+   PASS    application_id_in_bundle — 매니페스트 패키지 com.emoticonstudio.app
+   PASS    billing_permission — com.android.vending.BILLING 권한
+   PASS    no_overlay_permission — 출시 매니페스트에 SYSTEM_ALERT_WINDOW 없음
+   PASS    release_js_bundle — index.android.bundle 4188836 bytes
+   PASS    expo_iap_native — expo-iap 네이티브 모듈(dex 에 expo/modules/iap)
+   PASS    bundle_internal_review_off — 묶인 app.config internalReview = false
+   PASS    bundle_purchases — 명시적 구매 비활성 비공개 테스트
+   PASS    bundle_cloud — 서버 연결: emoti-18d80 · 로그인 kakao,naver,google
+   PASS    bundle_pro_trial — 비공개 테스트 PRO 체험 켜짐(구매 닫힘 빌드 전용)
+   PASS    bundle_privacy_url — 개인정보처리방침 https URL 필요
+   PASS    bundle_support_email — 유효한 문의 이메일 필요
+   PASS    bundle_pro_trial_match — 빌드 설정과 AAB 의 PRO 체험 설정 일치
+   PASS    bundle_purchases_match — 빌드 설정과 AAB 구매 구성 일치
+   WARN    bundle_receipt_endpoint [EXTERNAL] — 묶인 app.config: 구매 비활성 테스트의 서버 미설정
+ASSETS   PASS
+   PASS    brand_assets — 브랜드·스토어 에셋 통과
+
+빌드 식별 기록: verification/release_1004/build-identity-vc9-9c891be.json
+
+출시 검사 종료 코드 0 (0 통과 · 1 설정/서명/산출물 실패 · 2 에셋만 BLOCKED)

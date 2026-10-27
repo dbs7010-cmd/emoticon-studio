@@ -1,0 +1,158 @@
+{
+  "startedAt": "2026-09-14T20:18:17.574Z",
+  "steps": [
+    {
+      "name": "00-install",
+      "status": "ok",
+      "ms": 11811,
+      "detail": "Success"
+    },
+    {
+      "name": "01-installed-build",
+      "status": "ok",
+      "ms": 333,
+      "detail": "versionCode=1 minSdk=24 targetSdk=36\r\n    versionName=1.0.0\r\n    lastUpdateTime=2026-09-15 05:18:29"
+    },
+    {
+      "name": "02-startup-background",
+      "status": "ok",
+      "ms": 27812,
+      "detail": {
+        "samples": [
+          0,
+          0.009,
+          0.009,
+          0.009,
+          0.009,
+          0.009,
+          0,
+          0.009,
+          0.009,
+          0.009,
+          0.009,
+          0.009,
+          0,
+          0.009,
+          0.009,
+          0.009,
+          0.009,
+          0.009,
+          0.012,
+          0.009,
+          0.009,
+          0.009
+        ],
+        "worst": 0.012
+      }
+    },
+    {
+      "name": "03-home",
+      "status": "ok",
+      "ms": 6655,
+      "detail": null
+    },
+    {
+      "name": "04-new-set-canvas",
+      "status": "ok",
+      "ms": 31492,
+      "detail": null
+    },
+    {
+      "name": "05-draw-stroke",
+      "status": "ok",
+      "ms": 4109,
+      "detail": null
+    },
+    {
+      "name": "06-brush-retap-sheet",
+      "status": "ok",
+      "ms": 17381,
+      "detail": null
+    },
+    {
+      "name": "07-canvas-size-drag",
+      "status": "ok",
+      "ms": 6496,
+      "detail": null
+    },
+    {
+      "name": "08-color-and-recent",
+      "status": "ok",
+      "ms": 13521,
+      "detail": [
+        "최근 색 #54A9E8"
+      ]
+    },
+    {
+      "name": "09-eraser-same-control",
+      "status": "ok",
+      "ms": 21797,
+      "detail": null
+    },
+    {
+      "name": "10-undo-redo",
+      "status": "ok",
+      "ms": 6565,
+      "detail": null
+    },
+    {
+      "name": "11-reference-layers",
+      "status": "ok",
+      "ms": 13639,
+      "detail": null
+    },
+    {
+      "name": "12-caption-direct",
+      "status": "ok",
+      "ms": 16986,
+      "detail": null
+    },
+    {
+      "name": "13-motion-quick",
+      "status": "fail",
+      "ms": 14970,
+      "error": "보이지 않음: 통통"
+    },
+    {
+      "name": "14-complete-next",
+      "status": "ok",
+      "ms": 18098,
+      "detail": null
+    },
+    {
+      "name": "15-previous-start-and-motion-reuse",
+      "status": "fail",
+      "ms": 19703,
+      "error": "보이지 않음: 통통"
+    },
+    {
+      "name": "16-board",
+      "status": "ok",
+      "ms": 20038,
+      "detail": null
+    },
+    {
+      "name": "17-export",
+      "status": "fail",
+      "ms": 7582,
+      "error": "보이지 않음: 파일 묶음 만들기"
+    },
+    {
+      "name": "18-logcat-errors",
+      "status": "ok",
+      "ms": 398,
+      "detail": 0
+    }
+  ],
+  "device": {
+    "model": "SM-S928N",
+    "android": "16",
+    "size": "Physical size: 1080x2340",
+    "density": "Physical density: 450"
+  },
+  "apk": {
+    "path": "verification\\apk-keep\\app-39th-qa-release-debugsigned-arm64-c6e80ecb14e9.apk",
+    "sha256": "c6e80ecb14e9bcdf896fac44cc25cb428e42947dca87b487775636df36a73d63"
+  },
+  "finishedAt": "2026-09-14T20:22:48.650Z"
+}

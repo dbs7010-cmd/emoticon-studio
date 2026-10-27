@@ -1,0 +1,322 @@
+{
+ "bounce-excited": {
+  "label": "통통(무료)",
+  "loopSeconds": 0.7999999999999999,
+  "gifFrames": 10,
+  "moments": [
+   {
+    "f": 0,
+    "t": 0,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": 0,
+       "dy": 0,
+       "sx": 1.0672,
+       "sy": 0.916,
+       "rot": 0,
+       "hidden": false
+      }
+     }
+    ]
+   },
+   {
+    "f": 0.25,
+    "t": 0.2,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": 0,
+       "dy": -17.64,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     }
+    ]
+   },
+   {
+    "f": 0.5,
+    "t": 0.4,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": 0,
+       "dy": -2.160276953695931e-15,
+       "sx": 1.0672,
+       "sy": 0.916,
+       "rot": 0,
+       "hidden": false
+      }
+     }
+    ]
+   },
+   {
+    "f": 0.75,
+    "t": 0.6,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": 0,
+       "dy": -17.64,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "shake-pouty": {
+  "label": "흔들기(무료)",
+  "loopSeconds": 0.7999999999999999,
+  "gifFrames": 10,
+  "moments": [
+   {
+    "f": 0,
+    "t": 0,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": 0,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     }
+    ]
+   },
+   {
+    "f": 0.125,
+    "t": 0.1,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": 8.82,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     }
+    ]
+   },
+   {
+    "f": 0.25,
+    "t": 0.2,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": 1.0801384768479656e-15,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     }
+    ]
+   },
+   {
+    "f": 0.375,
+    "t": 0.3,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": -8.82,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     }
+    ]
+   },
+   {
+    "f": 0.5,
+    "t": 0.4,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": -2.160276953695931e-15,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "part-wave-hello": {
+  "label": "손만 까딱(PRO 부분 움직임)",
+  "loopSeconds": 0.7999999999999999,
+  "gifFrames": 10,
+  "moments": [
+   {
+    "f": 0,
+    "t": 0,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": 0,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     },
+     {
+      "id": "draw-2",
+      "d": {
+       "px": 250,
+       "py": 222,
+       "dx": 0,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     }
+    ]
+   },
+   {
+    "f": 0.25,
+    "t": 0.2,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": 0,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     },
+     {
+      "id": "draw-2",
+      "d": {
+       "px": 250,
+       "py": 222,
+       "dx": 0,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": -30,
+       "hidden": false
+      }
+     }
+    ]
+   },
+   {
+    "f": 0.5,
+    "t": 0.4,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": 0,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     },
+     {
+      "id": "draw-2",
+      "d": {
+       "px": 250,
+       "py": 222,
+       "dx": 0,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": -9.555958917168885e-14,
+       "hidden": false
+      }
+     }
+    ]
+   },
+   {
+    "f": 0.75,
+    "t": 0.6,
+    "deltas": [
+     {
+      "id": "draw-1",
+      "d": {
+       "px": 180,
+       "py": 180,
+       "dx": 0,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": 0,
+       "hidden": false
+      }
+     },
+     {
+      "id": "draw-2",
+      "d": {
+       "px": 250,
+       "py": 222,
+       "dx": 0,
+       "dy": 0,
+       "sx": 1,
+       "sy": 1,
+       "rot": 30,
+       "hidden": false
+      }
+     }
+    ]
+   }
+  ]
+ }
+}

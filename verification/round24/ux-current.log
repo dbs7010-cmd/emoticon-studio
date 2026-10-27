@@ -1,0 +1,13 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+AssertionError [ERR_ASSERTION]: 도구 줄은 패널이 열려도 같은 자리에 남는다
+
+2 !== 1
+
+    at C:\Dev\emoticon-studio\scripts\ux-test.cjs:276:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

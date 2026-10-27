@@ -1,0 +1,22 @@
+[
+  {
+    "id": "draw-base",
+    "title": "기본 그리기",
+    "file": "draw-base.html"
+  },
+  {
+    "id": "draw-brush",
+    "title": "펜/브러시 선택",
+    "file": "draw-brush.html"
+  },
+  {
+    "id": "draw-color",
+    "title": "색 선택",
+    "file": "draw-color.html"
+  },
+  {
+    "id": "draw-reference",
+    "title": "참고를 보면서 그리기",
+    "file": "draw-reference.html"
+  }
+]

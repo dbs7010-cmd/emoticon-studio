@@ -1,0 +1,148 @@
+{
+  "checkedAt": "2026-09-14T13:57:08.928Z",
+  "results": [
+    {
+      "id": "app_icon",
+      "priority": "P0",
+      "files": [],
+      "status": "FAIL",
+      "messages": [
+        "파일 없음: assets/brand/app-icon.png"
+      ]
+    },
+    {
+      "id": "adaptive_foreground",
+      "priority": "P0",
+      "files": [],
+      "status": "FAIL",
+      "messages": [
+        "파일 없음: assets/brand/adaptive-foreground.png"
+      ]
+    },
+    {
+      "id": "adaptive_background",
+      "priority": "P0",
+      "files": [],
+      "status": "FAIL",
+      "messages": [
+        "파일 없음: assets/brand/adaptive-background.png"
+      ]
+    },
+    {
+      "id": "adaptive_monochrome",
+      "priority": "P0",
+      "files": [],
+      "status": "FAIL",
+      "messages": [
+        "파일 없음: assets/brand/adaptive-monochrome.png"
+      ]
+    },
+    {
+      "id": "splash_icon",
+      "priority": "P0",
+      "files": [],
+      "status": "FAIL",
+      "messages": [
+        "파일 없음: assets/brand/splash-icon.png"
+      ]
+    },
+    {
+      "id": "play_icon",
+      "priority": "P0",
+      "files": [],
+      "status": "FAIL",
+      "messages": [
+        "파일 없음: assets/store/play-icon-512.png"
+      ]
+    },
+    {
+      "id": "feature_graphic",
+      "priority": "P0",
+      "files": [],
+      "status": "FAIL",
+      "messages": [
+        "파일 없음: assets/store/feature-graphic.png"
+      ]
+    },
+    {
+      "id": "phone_screenshots",
+      "priority": "P0",
+      "files": [],
+      "status": "FAIL",
+      "messages": [
+        "assets/store/screenshots/phone-01.png… 0장 — 2장 이상 필요해요"
+      ]
+    },
+    {
+      "id": "brush_preset_previews",
+      "priority": "P2",
+      "files": [
+        "assets/brush/preset-ink.png",
+        "assets/brush/preset-soft.png",
+        "assets/brush/preset-grain.png",
+        "assets/brush/preset-marker.png"
+      ],
+      "status": "WARN",
+      "messages": [
+        "파일 없음: assets/brush/preset-ink.png",
+        "파일 없음: assets/brush/preset-soft.png",
+        "파일 없음: assets/brush/preset-grain.png",
+        "파일 없음: assets/brush/preset-marker.png"
+      ]
+    },
+    {
+      "id": "app_config",
+      "priority": "P0",
+      "files": [],
+      "status": "FAIL",
+      "messages": [
+        "expo.icon → ./assets/icon.png 는 Expo 템플릿 이미지예요",
+        "android.adaptiveIcon.foregroundImage → ./assets/android-icon-foreground.png 는 Expo 템플릿 이미지예요",
+        "android.adaptiveIcon.backgroundImage → ./assets/android-icon-background.png 는 Expo 템플릿 이미지예요",
+        "android.adaptiveIcon.monochromeImage → ./assets/android-icon-monochrome.png 는 Expo 템플릿 이미지예요",
+        "expo-splash-screen 이 설치되지 않았어요 — npx expo install expo-splash-screen",
+        "스플래시가 설정에 연결되지 않았어요(assets/brand/splash-icon.png 를 넣으면 app.config.js 가 연결)"
+      ]
+    },
+    {
+      "id": "native_resources",
+      "priority": "P0",
+      "files": [
+        "android\\app\\src\\main\\res\\drawable-hdpi\\splashscreen_logo.png",
+        "android\\app\\src\\main\\res\\drawable-mdpi\\splashscreen_logo.png",
+        "android\\app\\src\\main\\res\\drawable-xhdpi\\splashscreen_logo.png",
+        "android\\app\\src\\main\\res\\drawable-xxhdpi\\splashscreen_logo.png",
+        "android\\app\\src\\main\\res\\drawable-xxxhdpi\\splashscreen_logo.png",
+        "android\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher.webp",
+        "android\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher_background.webp",
+        "android\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher_foreground.webp",
+        "android\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher_monochrome.webp",
+        "android\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher_round.webp",
+        "android\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher.webp",
+        "android\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher_background.webp",
+        "android\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher_foreground.webp",
+        "android\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher_monochrome.webp",
+        "android\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher_round.webp",
+        "android\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher.webp",
+        "android\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher_background.webp",
+        "android\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher_foreground.webp",
+        "android\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher_monochrome.webp",
+        "android\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher_round.webp",
+        "android\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher.webp",
+        "android\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher_background.webp",
+        "android\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher_foreground.webp",
+        "android\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher_monochrome.webp",
+        "android\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher_round.webp",
+        "android\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.webp",
+        "android\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher_background.webp",
+        "android\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher_foreground.webp",
+        "android\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher_monochrome.webp",
+        "android\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher_round.webp"
+      ],
+      "status": "FAIL",
+      "messages": [
+        "android/ 에 템플릿으로 만든 리소스 30개가 남아 있어요 — 에셋을 넣은 뒤 npx expo prebuild --platform android --clean"
+      ]
+    }
+  ]
+}

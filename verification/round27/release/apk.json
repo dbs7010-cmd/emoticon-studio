@@ -1,0 +1,8 @@
+{
+  "apk": "verification/apk-keep/app-27th-release-aebc2f527cc1.apk",
+  "bytes": 81139872,
+  "sha256": "aebc2f527cc19389d96d8bc2df650db53461eab20a1ad13a51d26d5c9d372ef7",
+  "sourceId": "d6327a4e31aed5b7a89fd995fa0a7fc21018b1846014fed6d8e2bd6e16f8f701",
+  "internalReview": false,
+  "signing": "debug keystore (local assembleRelease) - not a Play upload build"
+}

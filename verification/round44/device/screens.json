@@ -1,0 +1,43 @@
+{
+  "1-home": {
+    "ok": true,
+    "guideEntry": true,
+    "allEntry": true,
+    "allText": "전체 보기 12",
+    "homeCards": 4
+  },
+  "2-all-sets": {
+    "ok": true,
+    "title": true,
+    "rowsVisible": 10,
+    "backHome": true
+  },
+  "3-guide": {
+    "ok": true,
+    "cardsVisible": 4,
+    "categorySwitch": true,
+    "chipHeightPx": 112
+  },
+  "4-painter": {
+    "ok": false,
+    "error": "확대 안내가 한 번 보였다가 사라지지 않음 {\"hint\":false,\"hintAfterDismiss\":false,\"hintGone\":true}"
+  },
+  "5-reference": {
+    "ok": true,
+    "chips": [
+      "포즈",
+      "표정",
+      "손동작",
+      "소품·효과"
+    ],
+    "cellsVisible": 8,
+    "firstRow": 4,
+    "cellPx": [
+      233,
+      312
+    ]
+  },
+  "6-motion": {
+    "ok": true
+  }
+}

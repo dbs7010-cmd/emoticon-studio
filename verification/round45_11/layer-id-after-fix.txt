@@ -1,0 +1,11 @@
+# 45.11 재현: 고친 뒤(안 쓰는 가장 작은 번호). 같은 조작을 그대로 되풀이한 결과.
+1) after two adds        ids= draw-1,draw-2,draw-3 names= 그림 1,그림 2,그림 3
+2) ink per layer          {"draw-1":1658,"draw-2":1658,"draw-3":1658}
+3) motion part target     draw-3
+4) after deleting draw-2 ids= draw-1,draw-3 active= draw-1 motion= draw-3
+5) after add             ids= draw-1,draw-3,draw-2 names= 그림 1,그림 3,그림 2 active= draw-2
+   DUPLICATE IDS: none
+6) ink after drawing      {"draw-1":1658,"draw-3(first match)":1658}
+   per-slot ink           [["draw-1",1658],["draw-3",1658],["draw-2",1658]]
+7) visibility after hide  [["draw-1",true],["draw-3",false],["draw-2",true]]
+8) after removing draw-3 ids= draw-1,draw-2 motion= null

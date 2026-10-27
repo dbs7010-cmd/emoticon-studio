@@ -1,0 +1,111 @@
+{
+ "file": "emoti-promo-backup-mongi-day.zip",
+ "bytes": 635161,
+ "images": 28,
+ "slots": 32,
+ "filled": [
+  {
+   "n": 1,
+   "dialogue": "안녕",
+   "motion": "parts:rotate",
+   "layers": [
+    "몸",
+    "손"
+   ]
+  },
+  {
+   "n": 2,
+   "dialogue": "신나",
+   "motion": "bounce",
+   "layers": [
+    "그림 1"
+   ]
+  },
+  {
+   "n": 3,
+   "dialogue": "고마워",
+   "motion": null,
+   "layers": [
+    "그림 1"
+   ]
+  },
+  {
+   "n": 4,
+   "dialogue": "미안해",
+   "motion": null,
+   "layers": [
+    "그림 1"
+   ]
+  },
+  {
+   "n": 5,
+   "dialogue": "좋아",
+   "motion": null,
+   "layers": [
+    "그림 1"
+   ]
+  },
+  {
+   "n": 6,
+   "dialogue": "축하해",
+   "motion": null,
+   "layers": [
+    "그림 1"
+   ]
+  },
+  {
+   "n": 7,
+   "dialogue": "졸려",
+   "motion": null,
+   "layers": [
+    "그림 1"
+   ]
+  },
+  {
+   "n": 8,
+   "dialogue": "울먹",
+   "motion": null,
+   "layers": [
+    "그림 1"
+   ]
+  },
+  {
+   "n": 9,
+   "dialogue": "놀람",
+   "motion": null,
+   "layers": [
+    "그림 1"
+   ]
+  },
+  {
+   "n": 10,
+   "dialogue": "응원",
+   "motion": null,
+   "layers": [
+    "그림 1"
+   ]
+  },
+  {
+   "n": 11,
+   "dialogue": "삐짐",
+   "motion": "shake",
+   "layers": [
+    "그림 1"
+   ]
+  },
+  {
+   "n": 12,
+   "dialogue": "잘 자",
+   "motion": null,
+   "layers": [
+    "그림 1"
+   ]
+  }
+ ],
+ "checks": [
+  "readBackup 통과(형식·CRC·parseStore·그림 누락 없음)",
+  "기존 작품 파일 그대로(내용 비교)",
+  "되살린 그림은 모두 새 이름",
+  "두 번째 가져오기는 새 id 의 \"(복원)\" 사본"
+ ]
+}

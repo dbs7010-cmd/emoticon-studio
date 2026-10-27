@@ -1,0 +1,14 @@
+# 내보낸 PNG 에서 문구가 실제로 덮은 자리(흰 테두리 포함). 칸은 360, 여백 규칙은 16px.
+Z-lossless  box=9,20,359,343 w=351 h=324 margin(left,right,bottom)=9,0,16 inkAlpha>0=19841 white=6467
+en-basic    box=86,295,274,334 w=189 h=40 margin(left,right,bottom)=86,85,25 inkAlpha>0=5814 white=3737
+en-serif    box=82,295,276,337 w=195 h=43 margin(left,right,bottom)=82,83,22 inkAlpha>0=6435 white=4381
+en-thick    box=84,293,276,336 w=193 h=44 margin(left,right,bottom)=84,83,23 inkAlpha>0=6905 white=3376
+ko-basic    box=77,291,282,337 w=206 h=47 margin(left,right,bottom)=77,77,22 inkAlpha>0=7561 white=4708
+ko-serif    box=80,294,281,341 w=202 h=48 margin(left,right,bottom)=80,78,18 inkAlpha>0=6921 white=4508
+ko-thick    box=76,289,284,339 w=209 h=51 margin(left,right,bottom)=76,75,20 inkAlpha>0=8832 white=4002
+long-basic  box=22,315,337,337 w=316 h=23 margin(left,right,bottom)=22,22,22 inkAlpha>0=5195 white=3237
+long-serif  box=22,316,337,340 w=316 h=25 margin(left,right,bottom)=22,22,19 inkAlpha>0=5212 white=3349
+long-thick  box=21,314,338,338 w=318 h=25 margin(left,right,bottom)=21,21,21 inkAlpha>0=6095 white=2758
+num-basic   box=33,291,323,337 w=291 h=47 margin(left,right,bottom)=33,36,22 inkAlpha>0=9630 white=5992
+num-serif   box=43,294,315,341 w=273 h=48 margin(left,right,bottom)=43,44,18 inkAlpha>0=9519 white=6405
+num-thick   box=31,289,325,339 w=295 h=51 margin(left,right,bottom)=31,34,20 inkAlpha>0=11379 white=5303

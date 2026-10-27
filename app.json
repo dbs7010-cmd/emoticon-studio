@@ -1,29 +1,83 @@
 {
   "expo": {
-    "name": "나의 이모티콘 작업실",
+    "name": "emoti 이모티",
     "slug": "emoticon-studio",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "scheme": "emoti",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#F7F4EE",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.emoticonstudio.app",
+      "buildNumber": "1",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleAllowMixedLocalizations": true,
+        "CFBundleDevelopmentRegion": "ko"
+      }
     },
     "android": {
+      "package": "com.emoticonstudio.app",
+      "versionCode": 23,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#F7F4EE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.VIBRATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "most-recent"
+        }
+      ],
       "expo-sharing",
-      ["expo-image-picker", { "photosPermission": "CANON과 참고 이미지, 직접 그린 그림을 선택합니다.", "cameraPermission": false, "microphonePermission": false }]
-    ]
+      "expo-web-browser",
+      "expo-iap",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "원캐릭터와 참고 이미지, 직접 그린 그림을 고를 때만 사진을 사용합니다.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      "expo-apple-authentication",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-7942033735159248~3600454688",
+          "delayAppMeasurementInit": true
+        }
+      ]
+    ],
+    "extra": {
+      "internalReview": false,
+      "proTrial": false,
+      "ads": {
+        "rewarded": "ca-app-pub-7942033735159248/7188345901"
+      },
+      "privacyPolicyUrl": "https://dbs7010-cmd.github.io/emoticon-studio/privacy/",
+      "supportEmail": "emoticon755@gmail.com",
+      "login": {},
+      "eas": {
+        "projectId": "a4193f92-def9-45b1-be97-ea939f971512"
+      }
+    },
+    "owner": "usunge"
   }
 }

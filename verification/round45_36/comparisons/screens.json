@@ -1,0 +1,27 @@
+[
+  {
+    "id": "workspace",
+    "file": "workspace.html",
+    "title": "작업 화면"
+  },
+  {
+    "id": "brush",
+    "file": "brush.html",
+    "title": "브러시 창"
+  },
+  {
+    "id": "color",
+    "file": "color.html",
+    "title": "색상 판"
+  },
+  {
+    "id": "layers",
+    "file": "layers.html",
+    "title": "레이어 판"
+  },
+  {
+    "id": "selection",
+    "file": "selection.html",
+    "title": "선택 상태"
+  }
+]

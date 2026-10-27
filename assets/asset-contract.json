@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "note": "출시 에셋의 단일 원본. 파일 위치·규격·설정 연결·검증 방법을 여기서만 정한다. app.config.js 와 scripts/asset-check.cjs 가 이 파일을 읽는다. 이미지 자체는 별도 에셋 라운드에서 만든다.",
+  "assets": [
+    {
+      "id": "app_icon", "priority": "P0", "kind": "file",
+      "destination": "assets/brand/app-icon.png", "formats": ["png"], "width": 1024, "height": 1024,
+      "alphaChannel": "forbidden", "transparentPixels": "forbidden",
+      "config": "expo.icon (app.config.js 가 파일이 있으면 자동 연결)",
+      "use": "iOS 앱 아이콘 · Android 레거시 아이콘 원본 · Play 512 아이콘의 원본",
+      "rebuild": "expo prebuild --clean 후 네이티브 빌드(EAS 는 빌드 때 자동 생성)",
+      "validation": "존재 · PNG · 1024×1024 · 알파 채널 없음 · 템플릿 해시 아님",
+      "templateSource": "assets/icon.png"
+    },
+    {
+      "id": "adaptive_foreground", "priority": "P0", "kind": "file",
+      "destination": "assets/brand/adaptive-foreground.png", "formats": ["png"], "width": 1024, "height": 1024,
+      "alphaChannel": "required", "transparentPixels": "required",
+      "config": "expo.android.adaptiveIcon.foregroundImage",
+      "use": "Android 적응형 아이콘 앞면. 중요한 모양은 가운데 지름 약 66% 원(1024 기준 약 672px) 안에",
+      "rebuild": "expo prebuild --clean 후 네이티브 빌드",
+      "validation": "존재 · PNG · 1024×1024 · 투명 픽셀 있음 · 템플릿 해시 아님",
+      "templateSource": "assets/android-icon-foreground.png"
+    },
+    {
+      "id": "adaptive_background", "priority": "P0", "kind": "file",
+      "destination": "assets/brand/adaptive-background.png", "formats": ["png"], "width": 1024, "height": 1024,
+      "alphaChannel": "optional", "transparentPixels": "forbidden",
+      "config": "expo.android.adaptiveIcon.backgroundImage (색만 쓸 때는 assets/brand/brand.json 의 adaptiveBackgroundColor)",
+      "use": "Android 적응형 아이콘 뒷면(불투명)",
+      "rebuild": "expo prebuild --clean 후 네이티브 빌드",
+      "validation": "존재 · PNG · 1024×1024 · 투명 픽셀 없음 · 템플릿 해시 아님",
+      "templateSource": "assets/android-icon-background.png"
+    },
+    {
+      "id": "adaptive_monochrome", "priority": "P0", "kind": "file",
+      "destination": "assets/brand/adaptive-monochrome.png", "formats": ["png"], "width": 1024, "height": 1024,
+      "alphaChannel": "required", "transparentPixels": "required",
+      "config": "expo.android.adaptiveIcon.monochromeImage",
+      "use": "Android 13+ 테마 아이콘(한 가지 색 실루엣)",
+      "rebuild": "expo prebuild --clean 후 네이티브 빌드",
+      "validation": "존재 · PNG · 1024×1024 · 투명 픽셀 있음 · 템플릿 해시 아님",
+      "templateSource": "assets/android-icon-monochrome.png"
+    },
+    {
+      "id": "splash_icon", "priority": "P0", "kind": "file",
+      "destination": "assets/brand/splash-icon.png", "formats": ["png"], "width": 1024, "height": 1024,
+      "alphaChannel": "required", "transparentPixels": "required",
+      "config": "plugins: ['expo-splash-screen', { image, imageWidth, resizeMode: 'contain', backgroundColor }] (app.config.js 가 파일과 모듈이 모두 있을 때 자동 추가)",
+      "use": "앱 시작 화면 로고(Android 12+ SplashScreen API · iOS 런치 스크린)",
+      "rebuild": "npx expo install expo-splash-screen → expo prebuild --clean → 네이티브 빌드. Expo Go·개발 빌드에서는 실제 모습이 재현되지 않으므로 release/preview 빌드로 확인",
+      "validation": "존재 · PNG · 1024×1024 · 투명 픽셀 있음 · 템플릿 해시 아님 · expo-splash-screen 설치 · 설정에 연결",
+      "templateSource": "assets/splash-icon.png"
+    },
+    {
+      "id": "play_icon", "priority": "P0", "kind": "file",
+      "destination": "assets/store/play-icon-512.png", "formats": ["png"], "width": 512, "height": 512,
+      "alphaChannel": "optional", "transparentPixels": "optional", "maxBytes": 1048576,
+      "config": "없음(Play Console 에 업로드)",
+      "use": "Play 스토어 등록 아이콘. Google Play: 32-bit PNG(with alpha), 512×512, 1024KB 이하",
+      "rebuild": "불필요",
+      "validation": "존재 · PNG · 512×512 · 1024KB 이하 · 템플릿 해시 아님"
+    },
+    {
+      "id": "feature_graphic", "priority": "P0", "kind": "file",
+      "destination": "assets/store/feature-graphic.png", "alternatives": ["assets/store/feature-graphic.jpg"], "formats": ["png", "jpeg"], "width": 1024, "height": 500,
+      "alphaChannel": "forbidden", "transparentPixels": "forbidden",
+      "config": "없음(Play Console 에 업로드)",
+      "use": "Play 스토어 상단 그래픽. Google Play: JPEG 또는 24-bit PNG(no alpha), 1024×500",
+      "rebuild": "불필요",
+      "validation": "존재 · PNG/JPEG · 1024×500 · 알파 채널 없음"
+    },
+    {
+      "id": "phone_screenshots", "priority": "P0", "kind": "set",
+      "directory": "assets/store/screenshots", "pattern": "^phone-\\d{2}\\.(png|jpe?g)$", "formats": ["png", "jpeg"],
+      "minCount": 2, "maxCount": 8, "minSide": 320, "maxSide": 3840, "maxAspect": 2, "recommendedMinSide": 1080,
+      "alphaChannel": "forbidden", "transparentPixels": "forbidden",
+      "config": "없음(Play Console 에 업로드)",
+      "use": "Play 스토어 휴대폰 스크린샷. 반드시 실제 기기에서 출시 후보 빌드를 캡처한다(그림·목업 금지). Google Play: 2장 이상, JPEG 또는 24-bit PNG(no alpha), 변 320~3840px, 긴 변 ≤ 짧은 변×2, 홍보용 권장 1080×1920 이상 세로 9:16",
+      "rebuild": "불필요(캡처 대상 빌드는 출시 후보)",
+      "validation": "phone-01.png… 2~8장 · PNG/JPEG · 알파 없음 · 변 320~3840 · 비율 ≤ 2 · 1080 미만은 경고"
+    },
+    {
+      "id": "brush_preset_previews", "priority": "P2", "kind": "files",
+      "destinations": ["assets/brush/preset-ink.png", "assets/brush/preset-soft.png", "assets/brush/preset-grain.png", "assets/brush/preset-marker.png"],
+      "formats": ["png"], "width": 300, "height": 84,
+      "alphaChannel": "required", "transparentPixels": "required",
+      "config": "아직 코드 연결 없음 — Painter FREEZE. 실기기 확인 뒤 src/painter/painter.tsx PRO_BRUSHES 에 require 로 연결(assets/art/stroke-*.png 와 같은 방식)",
+      "use": "펜 설정의 PRO 브러시 카드 견본(무료 펜·붓·연필의 선 샘플과 같은 규격 300×84)",
+      "rebuild": "JS 번들에 들어가므로 앱 재빌드",
+      "validation": "네 파일 존재 · PNG · 300×84 · 투명 픽셀 있음(없으면 경고만)"
+    }
+  ],
+  "templateFingerprints": {
+    "note": "create-expo-app 템플릿 원본 이미지의 SHA-256. 이 해시와 같은 파일이 출시 설정에 연결돼 있으면 FAIL.",
+    "assets/icon.png": "119462bb78eb240a65c869fc067ee599639b3cb5a41953f25c07b17d2a8c7e0f",
+    "assets/splash-icon.png": "5f4c0a732b6325bf4071d9124d2ae67e037cb24fcc9c482ef82bea742109a3b8",
+    "assets/favicon.png": "a4e030697a7571b3e95d31860e4da55d2f98e5e861e2b55e414f45a8556828ba",
+    "assets/android-icon-foreground.png": "9e3d0315a33c6799de601dd34cd8bf8cc3a8d16f3bf75592baec2ceb7240b391",
+    "assets/android-icon-background.png": "fb139c2dee362ebf2070e23b96da6fc0d43f8492de38b8af1fd7223e19b5861d",
+    "assets/android-icon-monochrome.png": "6371fc2c12e33ad2215a86c281db3d682a81bebe7c957a842c13b8bf00cceb83"
+  },
+  "nativeTemplateFingerprints": {
+    "note": "android/(prebuild 결과, git 제외)에서 템플릿으로 만들어진 런처·스플래시 리소스의 SHA-256(2026-09-14 로컬 prebuild). 에셋을 바꾸고 prebuild 를 다시 돌리지 않으면 이 파일들이 그대로 남아 FAIL.",
+    "directory": "android/app/src/main/res",
+    "sha256": [
+      "f84b9b17a4a1c7d7dd840cd272c07a6c3fd66d5a9826b64bb53facb6f176bc24", "721c895579cb08ec4c9a0fe7dadafe9a97c33ef758d3578ad5e8b540de59f974",
+      "e1c5250e339add5ed7849cb0859d052edb9781abb91db049e68ae3a4059247d7", "23d97ccb41a821ee345b2c5bb0c9bdab730a751a9227925acbf0af021dc38a9b",
+      "be9fac5c4cda48c41dce592288c486524bba3e4ca7fa00c0a04a46928154b5bf",
+      "8bd68d4b966a5f67c523baffbf82af271c7ef966f7ba5948fdc99d0d29dfdbd6", "83b9b8e0a5d96d8feb72fd6f66ec105c9d7567a67affef95976cf968bd221e23",
+      "57e24fa48a9e5c5e3925578476021d9dc25d00f23ae59f7c94dbf7e5c3badafe", "0a27222f51b9eb447df820343127406d08c29bc4356c932579368bb0bbd32875",
+      "e603c82ad86fad422fdd2b9076cbf3a5c9a7e05de0082e5327e8d2f06134af58", "90e6b9fb52e629de7c346100fc9c851c2a99bb2dbb16eda7a0bc47c0e7163c3d",
+      "4db29bf0ad56d23246ff3d346a306a1bd8c27407e5618c08000d1916a651a637", "77618c4cf15ddc886bbc14baaf365e367db07d7fcbb859dd261519c009ad4f95",
+      "f5672b75ca1152a2ca15a419b15014f8b685fc0d73f070b3747ab385b8ed5394", "6e51d5d21d70387839fd9db5630a9010eec20fc0fa3a8483a6fa71ce96e5dddf",
+      "6d79f58ef23d445562e73784a4e171a48567a3a0c83a74079b97d6a5b09ad851", "7e6ea489d4b0f5d45b26409fea18f337e3618e88a118fe273e9ee2ff2edb14c7",
+      "9fad443a373b2d608657e7f0f97705ff50d759eed0f84e2c6bc7f7054b37f3dc", "6601c65d0fda77c3ffc9ce384bd51244e03318c99489889b71fce33cfbb55f1e",
+      "cc1683b7903036bd22920eab577440b2b47220299d218252734f5cd8e1a17d3a", "4344a3b3932051e9ce30b00c0854a053e8380872e7e5aff617523aa686382cf2",
+      "fe32d9c6f9e275490fbf107fb7b5a0f875435feae5836fc353119003bf902e25", "2900cbf264c8e5f054e5775517a7b0f74d9b70584f50c63313ae8fcc614dc789",
+      "65387f63ecdaf0e38f88ee687c14c08796f209fd37477dec25a29b29c57c42e1", "d4fb8abda16452b72fe3f3c5dc57faeb21e7addd285edd15f08b7eca02bb5253",
+      "4f66325ccbfa66c920e3f15cd781b438aefef5c9a1baddf917f74ba1217ff14c", "5610c78b9119bfbca264ff2c878076f980f93e0228257fcaa3934f2cae0822c3",
+      "9bf8d34e593642304891d175ff51e9b793e18bc4449eb0671c3481438a8bf1be", "bdcb69e524a83dc66eba67b572aca33525be7eaa661707acdbd66f89c40ef821",
+      "6c9c87eefa8a9c30b558006fcd96a5f754e6e9dc7cd301ca69d683e901076634"
+    ]
+  }
+}

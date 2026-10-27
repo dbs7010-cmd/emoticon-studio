@@ -1,0 +1,42 @@
+[
+  {
+    "id": "brush-F06-colorpencil",
+    "file": "page-F06.html",
+    "title": "색연필 수정 전후"
+  },
+  {
+    "id": "brush-P05-crayon",
+    "file": "page-P05.html",
+    "title": "크레용 수정 전후"
+  },
+  {
+    "id": "brush-P07-pastel",
+    "file": "page-P07.html",
+    "title": "소프트 파스텔 수정 전후"
+  },
+  {
+    "id": "brush-P09-pencilside",
+    "file": "page-P09.html",
+    "title": "연필 옆면 수정 전후"
+  },
+  {
+    "id": "brush-P16-oilpastel",
+    "file": "page-P16.html",
+    "title": "오일 파스텔 수정 전후"
+  },
+  {
+    "id": "brush-F03-ink",
+    "file": "page-F03.html",
+    "title": "테이퍼 펜 수정 전후"
+  },
+  {
+    "id": "brush-F04-brushpen2",
+    "file": "page-F04.html",
+    "title": "붓펜 수정 전후"
+  },
+  {
+    "id": "brush-F02-inknatural",
+    "file": "page-F02.html",
+    "title": "자연 잉크 수정 전후"
+  }
+]

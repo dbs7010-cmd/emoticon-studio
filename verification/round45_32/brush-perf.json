@@ -1,0 +1,57 @@
+[
+  {
+    "key": "pen",
+    "name": "기본 펜",
+    "how": "선분마다 그림",
+    "first50": 0.57,
+    "last50": 0.11,
+    "median": 0.1,
+    "p95": 0.6,
+    "max": 11.5,
+    "total": 102
+  },
+  {
+    "key": "marker2",
+    "name": "마커",
+    "how": "dab 찍기",
+    "first50": 0.4,
+    "last50": 0.25,
+    "median": 0.2,
+    "p95": 0.9,
+    "max": 4.7,
+    "total": 134
+  },
+  {
+    "key": "spray",
+    "name": "스프레이",
+    "how": "dab 뿌리기(가장 많이 찍는 축)",
+    "first50": 0.53,
+    "last50": 0.24,
+    "median": 0.2,
+    "p95": 0.7,
+    "max": 14.7,
+    "total": 154
+  },
+  {
+    "key": "outline",
+    "name": "테두리 펜",
+    "how": "획 전체 다시 긋기",
+    "first50": 0.95,
+    "last50": 0.19,
+    "median": 0.2,
+    "p95": 1.3,
+    "max": 14.7,
+    "total": 185
+  },
+  {
+    "key": "parallelpen",
+    "name": "평행선 펜",
+    "how": "획 전체 다시 긋기 ×3",
+    "first50": 0.44,
+    "last50": 0.44,
+    "median": 0.3,
+    "p95": 1.5,
+    "max": 18.4,
+    "total": 243
+  }
+]

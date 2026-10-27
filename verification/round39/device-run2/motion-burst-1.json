@@ -1,0 +1,82 @@
+{
+  "통통": {
+    "frames": 12,
+    "msSpan": 6954,
+    "topRange": [
+      382,
+      390
+    ],
+    "leftRange": [
+      352,
+      362
+    ],
+    "widthRange": [
+      192,
+      202
+    ]
+  },
+  "흔들기": {
+    "frames": 12,
+    "msSpan": 7742,
+    "topRange": [
+      388,
+      398
+    ],
+    "leftRange": [
+      312,
+      384
+    ],
+    "widthRange": [
+      196,
+      210
+    ]
+  },
+  "두근거리기": {
+    "frames": 12,
+    "msSpan": 7683,
+    "topRange": [
+      382,
+      410
+    ],
+    "leftRange": [
+      344,
+      358
+    ],
+    "widthRange": [
+      196,
+      210
+    ]
+  },
+  "없음": {
+    "frames": 12,
+    "msSpan": 7955,
+    "topRange": [
+      392,
+      392
+    ],
+    "leftRange": [
+      350,
+      350
+    ],
+    "widthRange": [
+      204,
+      204
+    ]
+  },
+  "통통2": {
+    "frames": 12,
+    "msSpan": 8264,
+    "topRange": [
+      392,
+      392
+    ],
+    "leftRange": [
+      350,
+      350
+    ],
+    "widthRange": [
+      204,
+      204
+    ]
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "method": "스타일 상수 계산(렌더링 아님). 상태 24dp·내비 48dp 가정.",
+  "TOP": 102,
+  "BEFORE_STACK": {
+    "dockBorder": 1,
+    "refLayerCaptionRow": 52,
+    "barBorderPad": 5,
+    "penCards": 87,
+    "tools": 48,
+    "colorWidthRow": 54,
+    "actionDockReserve": 58
+  },
+  "beforeStack": 305,
+  "BASE_H": 115,
+  "rows": [
+    {
+      "screen": "320×568",
+      "usable": 496,
+      "before": {
+        "squareDrawn": 320,
+        "visible": 89,
+        "visibleOfSquare": "28%",
+        "shareOfUsable": "18%",
+        "bottomUi": 305
+      },
+      "after": {
+        "square": 279,
+        "visible": 279,
+        "visibleOfSquare": "100%",
+        "shareOfUsable": "56%",
+        "bottomUi": 115
+      }
+    },
+    {
+      "screen": "360×640",
+      "usable": 568,
+      "before": {
+        "squareDrawn": 360,
+        "visible": 161,
+        "visibleOfSquare": "45%",
+        "shareOfUsable": "28%",
+        "bottomUi": 305
+      },
+      "after": {
+        "square": 351,
+        "visible": 351,
+        "visibleOfSquare": "100%",
+        "shareOfUsable": "62%",
+        "bottomUi": 115
+      }
+    },
+    {
+      "screen": "390×844",
+      "usable": 772,
+      "before": {
+        "squareDrawn": 390,
+        "visible": 365,
+        "visibleOfSquare": "94%",
+        "shareOfUsable": "47%",
+        "bottomUi": 305
+      },
+      "after": {
+        "square": 390,
+        "visible": 390,
+        "visibleOfSquare": "100%",
+        "shareOfUsable": "51%",
+        "bottomUi": 115
+      }
+    },
+    {
+      "screen": "412×915",
+      "usable": 843,
+      "before": {
+        "squareDrawn": 412,
+        "visible": 412,
+        "visibleOfSquare": "100%",
+        "shareOfUsable": "49%",
+        "bottomUi": 305
+      },
+      "after": {
+        "square": 412,
+        "visible": 412,
+        "visibleOfSquare": "100%",
+        "shareOfUsable": "49%",
+        "bottomUi": 115
+      }
+    }
+  ]
+}

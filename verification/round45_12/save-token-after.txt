@@ -1,0 +1,9 @@
+1) 획 하나                            dirty=true 그림픽셀=1658 저장응답=0
+2) 저장 1 요청                         dirty=true 그림픽셀=1658 저장응답=1 응답 token=1
+3) 응답 없이 저장 2 요청                   dirty=true 그림픽셀=1658 저장응답=2 응답 token=2 (새 응답이 오면 재시도가 된다)
+4) 옛 응답(saved token=1)             dirty=true 그림픽셀=1658 저장응답=2 (dirty 가 false 면 늦은 응답이 먹힌 것)
+5) 지금 응답(saved token=2)            dirty=false 그림픽셀=1658 저장응답=2
+6) 저장 실패 응답 뒤                      dirty=true 그림픽셀=3316 저장응답=3
+7) 실패 뒤에도 그릴 수 있는가                 dirty=true 그림픽셀=4974 저장응답=3
+8) 옛 saveFailed 뒤 그으면              dirty=true 그림픽셀=4974 저장응답=4 (늘면 저장 중 보호가 풀린 것)
+9) 지금 응답으로 마무리                     dirty=false 그림픽셀=4974 저장응답=4

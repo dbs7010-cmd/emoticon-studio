@@ -1,0 +1,19 @@
+# 45.12 내보낸 PNG 에서 문구가 덮은 실제 자리(흰 테두리 포함). 칸 360, 여백 규칙 16px.
+en-basic    box=86,295,274,334 w=189 h=40 margin(left,right,bottom)=86,85,25 inkAlpha>0=5814 white=3737
+en-serif    box=82,295,276,337 w=195 h=43 margin(left,right,bottom)=82,83,22 inkAlpha>0=6435 white=4381
+en-thick    box=85,293,275,336 w=191 h=44 margin(left,right,bottom)=85,84,23 inkAlpha>0=6607 white=3594
+ko-basic    box=77,291,282,337 w=206 h=47 margin(left,right,bottom)=77,77,22 inkAlpha>0=7561 white=4708
+ko-serif    box=80,294,281,341 w=202 h=48 margin(left,right,bottom)=80,78,18 inkAlpha>0=6921 white=4508
+ko-thick    box=76,290,284,339 w=209 h=50 margin(left,right,bottom)=76,75,20 inkAlpha>0=8510 white=4305
+long-basic  box=22,315,337,337 w=316 h=23 margin(left,right,bottom)=22,22,22 inkAlpha>0=5195 white=3237
+long-serif  box=22,316,337,340 w=316 h=25 margin(left,right,bottom)=22,22,19 inkAlpha>0=5212 white=3349
+long-thick  box=22,315,337,338 w=316 h=24 margin(left,right,bottom)=22,22,21 inkAlpha>0=5705 white=2829
+mid-basic   box=19,297,340,337 w=322 h=41 margin(left,right,bottom)=19,19,22 inkAlpha>0=8745 white=5399
+mid-serif   box=19,298,340,342 w=322 h=45 margin(left,right,bottom)=19,19,17 inkAlpha>0=8987 white=6107
+mid-thick   box=22,297,337,338 w=316 h=42 margin(left,right,bottom)=22,22,21 inkAlpha>0=9474 white=4866
+num-basic   box=33,291,323,337 w=291 h=47 margin(left,right,bottom)=33,36,22 inkAlpha>0=9630 white=5992
+num-serif   box=43,294,315,341 w=273 h=48 margin(left,right,bottom)=43,44,18 inkAlpha>0=9519 white=6405
+num-thick   box=32,290,325,338 w=294 h=49 margin(left,right,bottom)=32,34,21 inkAlpha>0=10898 white=5556
+short-basic box=137,291,219,337 w=83 h=47 margin(left,right,bottom)=137,140,22 inkAlpha>0=3189 white=2039
+short-serif box=138,294,218,341 w=81 h=48 margin(left,right,bottom)=138,141,18 inkAlpha>0=2901 white=1902
+short-thick box=136,290,221,338 w=86 h=49 margin(left,right,bottom)=136,138,21 inkAlpha>0=3577 white=1836
