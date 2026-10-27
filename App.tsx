@@ -1201,8 +1201,10 @@ function Studio() {
               아래 탭(홈 · 공모전 · 내 정보)은 화면 밖 TabBar 가 맡는다. */}
           {homeTab === 'home' && <>
           <Rise delay={20} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: T.tap }}>
-            <View testID="홈 브랜드" accessible accessibilityRole="header" accessibilityLabel="emoti 이모티" style={{ flex: 1 }}>
-              <Text numberOfLines={1} style={{ fontSize: 24, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>emoti<Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 13, fontFamily: undefined, fontWeight: '600', color: C.muted }}>{'  나의 작은 작업실'}</Text></Text>
+            <View testID="홈 브랜드" accessible accessibilityRole="header" accessibilityLabel="emoti 이모티" style={{ flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+              <Text numberOfLines={1} style={{ fontSize: 24, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>emoti</Text>
+              {/* 2026-10-27 큰 표지형 시안: 로고 옆 작은 부제(본문 글꼴). */}
+              <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 13, fontWeight: '600', color: C.muted }}>나의 작은 작업실</Text>
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드" onPress={() => setHomeView('guide')}
               style={({ pressed }) => ({ width: T.tap, height: T.tap, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : 'transparent' })}>
