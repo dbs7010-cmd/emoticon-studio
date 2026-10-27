@@ -87,8 +87,21 @@ function lockPhonePortrait() {
 }
 const CONTENT_MAX = 720;
 export default function App() {
-  useEffect(() => { lockPhonePortrait(); const sub = Dimensions?.addEventListener?.('change', lockPhonePortrait); return () => sub?.remove(); }, []);
-  return <SafeAreaProvider><Studio /></SafeAreaProvider>;
+  // 화면 밀도(설정 '화면 크기'·DeX)가 바뀌면 RN 은 이미 잰 글자·열린 Modal 을 옛 밀도로 둔다(글자 '…' 잘림,
+  // 그리기 화면이 예전 크기로 남음 — 폴드 에뮬레이터 2026-10-28). 그리기 화면은 같은 신호에 먼저 저장하고(painter),
+  // 여기서는 잠시 뒤 화면 전체를 새로 그린다. 저장된 세트는 다시 읽고 홈으로 돌아온다.
+  const [scale, setScale] = useState(() => Dimensions?.get?.('window')?.scale ?? 1);
+  useEffect(() => {
+    lockPhonePortrait();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const sub = Dimensions?.addEventListener?.('change', ({ window }: { window: { scale: number } }) => {
+      lockPhonePortrait();
+      clearTimeout(timer);
+      timer = setTimeout(() => setScale(window.scale), 1500);
+    });
+    return () => { clearTimeout(timer); sub?.remove(); };
+  }, []);
+  return <SafeAreaProvider><Studio key={scale} /></SafeAreaProvider>;
 }
 function Studio() {
   const [store, setStore] = useState<Store | null>(null), current = useRef<Store | null>(null);

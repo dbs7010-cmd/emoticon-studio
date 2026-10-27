@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, AppState, BackHandler, LayoutAnimation, Modal, View, Text, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, UIManager } from 'react-native';
-import { Keyboard, useWindowDimensions, type GestureResponderEvent, type ImageSourcePropType } from 'react-native';
+import { Dimensions, Keyboard, useWindowDimensions, type GestureResponderEvent, type ImageSourcePropType } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -649,7 +649,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   useEffect(() => {
     const timer = setInterval(() => autosave.current(), 40000);
     const sub = AppState.addEventListener('change', state => { if (state !== 'active') leaving.current(); });
-    return () => { clearInterval(timer); sub.remove(); };
+    // 밀도가 바뀌면 App 이 곧 화면을 새로 그린다 — 그 전에 저장한다.
+    let scale = Dimensions?.get?.('window')?.scale;   // 검사 대역에는 Dimensions 가 없다
+    const dims = Dimensions?.addEventListener?.('change', ({ window }) => { if (window.scale !== scale) { scale = window.scale; leaving.current(); } });
+    return () => { clearInterval(timer); sub.remove(); dims?.remove(); };
   }, []);
   useEffect(() => {
     if (!ready) return;
