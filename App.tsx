@@ -1252,7 +1252,10 @@ function Studio() {
             // 2026-10-27 승인 시안 '큰 표지형'(Codex 전달 · docs/design/APPROVED_VISUAL_20261027.md): 공지 배너 → 작은 공지 줄 →
             // 내 세트 2열 큰 표지(최근 3개 + 새 세트 칸) → 내 그림 가져오기 한 줄. 큰 대표 카드·제안까지 줄·소개 문구는 두지 않는다.
             // 노랑은 지금 할 일 하나 — 가장 최근 세트 표지 안의 '이어서 그리기'. 누름은 0.975배로 짧게(motion-spec).
-            const recent = sortedProjects.slice(0, 3);
+            // 넓은 화면(폴드 펼침·태블릿)은 3열 — 2열이면 표지 하나가 화면 반을 차지한다. 서가는 한 줄을 다 채우는 수만큼(새 세트 칸 포함).
+            const shelfW = Math.min(windowWidth, CONTENT_MAX) - gutter * 2, cols = shelfW >= 560 ? 3 : 2, tileW = Math.floor((shelfW - 14 * (cols - 1)) / cols);
+            const compact = tileW < 170;
+            const recent = sortedProjects.slice(0, cols * 2 - 1);
             const tints = [C.accentSoft, C.pointSoft, T.surface2];
             const coverOf = (q: Project) => {
               const made = q.slots.filter(s => s.finalImage);
@@ -1262,14 +1265,14 @@ function Studio() {
               const pic = coverOf(q), m = setMeta(q), first = i === 0;
               const next = nextUnfinished(q, q.lastSlot ?? 0);
               const kind = setIsAnimated(q) ? '움직이는' : '멈춰있는';
-              return <View key={q.id} style={{ flexBasis: '46%', flexGrow: 1, maxWidth: '50%', gap: 8 }}>
+              return <View key={q.id} style={{ width: tileW, gap: 8 }}>
                 <Pressable accessibilityRole="button" accessibilityLabel={q.projectName} onPress={() => { setProjectId(q.id); setScreen('board'); }}
                   style={({ pressed }) => ({ aspectRatio: 1, minHeight: 120, borderRadius: 28, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', ...Clay.card, backgroundColor: tints[i % tints.length], transform: pressed ? [{ scale: .975 }] : [] })}>
                   {pic ? <Image testID="홈 표지 그림" source={{ uri: imageUri((pic.motionImage ?? pic.finalImage)!.path) }} style={{ width: '78%', height: '78%' }} resizeMode="contain" />
                     : <ImtiIcon name="brush" size={IconSize.tab} color={C.faint} />}
                   {first && <Pressable accessibilityRole="button" accessibilityLabel={`${q.projectName} 이어서 만들기`} onPress={() => { setProjectId(q.id); setScreen('board'); setSlotNumber(next ?? q.lastSlot ?? 1); setPainting(true); }}
-                    style={({ pressed }) => ({ position: 'absolute', left: 10, bottom: 10, height: 40, paddingHorizontal: 14, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.accent, ...(pressed ? Clay.buttonPressed : Clay.button) })}>
-                    <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>{m.done || pic ? '이어서 그리기' : '그리기 시작'}</Text>
+                    style={({ pressed }) => ({ position: 'absolute', left: 8, bottom: 8, maxWidth: tileW - 16, height: compact ? 34 : 40, paddingHorizontal: compact ? 10 : 14, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.accent, ...(pressed ? Clay.buttonPressed : Clay.button) })}>
+                    <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: compact ? 12 : 13, fontWeight: '800', color: C.accentInk }}>{m.done || pic ? '이어서 그리기' : '그리기 시작'}</Text>
                     <Glyph name="arrow-right" size={14} color={C.accentInk} />
                   </Pressable>}
                   <Pressable accessibilityRole="button" accessibilityLabel={`${q.projectName} 관리`} onPress={() => setManageId(q.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
@@ -1283,7 +1286,7 @@ function Studio() {
                 </View>
               </View>;
             };
-            const newTile = <View key="new" style={{ flexBasis: '46%', flexGrow: 1, maxWidth: '50%', gap: 8 }}>
+            const newTile = <View key="new" style={{ width: tileW, gap: 8 }}>
               <Pressable accessibilityRole="button" accessibilityLabel="새 세트 만들기" onPress={createNewProject}
                 style={({ pressed }) => ({ aspectRatio: 1, minHeight: 120, borderRadius: 28, borderWidth: 2, borderStyle: 'dashed', borderColor: C.line, alignItems: 'center', justifyContent: 'center', backgroundColor: C.paper, transform: pressed ? [{ scale: .975 }] : [] })}>
                 <ImtiIcon name="plus" size={IconSize.tab} color={C.muted} />
