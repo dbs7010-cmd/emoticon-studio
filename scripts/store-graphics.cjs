@@ -41,8 +41,8 @@ const screen = (bg, titleHtml, sub, body) => `<div style="position:relative;widt
 const PHONES = {
   1: screen(backdrop('#3D8BFF', 'rgba(255,255,255,.13)'), `내 그림이<br>${hi('톡! 움직여요')}`, '그린 칸에 움직임을 고르면 바로 미리 보기',
     phone(capture(1), { x: 250, y: 640, w: 600, rot: -5, cropTop: 200, ring: [36, 1730, 240, 210] }) + sticker('cheer', 330, 40, 1420, -8) + sticker('kong-wave', 260, 800, 1560, 8)),
-  2: screen(backdrop('#FFB51E', 'rgba(255,255,255,.2)'), `이어 그리기부터<br>${hi('제안 준비')}까지`, '내 세트 · 남은 일 · 가이드북을 한 화면에',
-    phone(capture(2), { x: 250, y: 640, w: 600, rot: 5, cropTop: 0, ring: [660, 1240, 380, 170] }) + sticker('wave', 320, 30, 1450, -8) + sticker('goguma-cheer', 250, 810, 1590, 8)),
+  2: screen(backdrop('#FFB51E', 'rgba(255,255,255,.2)'), `이어 그리기부터<br>${hi('제안 준비')}까지`, '내 세트 · 이어 그리기 · 가이드북을 한 화면에',
+    phone(capture(2), { x: 250, y: 640, w: 600, rot: 5, cropTop: 0, ring: [40, 1250, 500, 120] }) + sticker('wave', 320, 30, 1450, -8) + sticker('goguma-cheer', 250, 810, 1590, 8)),
   3: screen(backdrop('#8B7BFF', 'rgba(255,255,255,.13)'), `원하는 부분만<br>${hi('따로')} 움직여요`, '손 흔들기 · 통통 튀기 · 조합까지',
     phone(capture(3), { x: 250, y: 640, w: 600, rot: 5, cropTop: 200, ring: [24, 1500, 420, 110] }) + tag('PRO', 70, 640, -6) + sticker('heart', 320, 730, 1450, 8) + sticker('goguma-wave', 250, 40, 1580, -8)),
   4: screen(backdrop('#FF7A59', 'rgba(255,255,255,.16)'), `무료 강좌로<br>${hi('차근차근')}`, '콘과 친구들이 알려 주는 10편',
