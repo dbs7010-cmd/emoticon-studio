@@ -16,8 +16,10 @@ u.waitFor('저장'); r.sleep(1200);
 r.stop(); r.pull('fs1');
 say('1 ' + r.cut('fs1', { from: 0.5, out: out(1), crop: [840, 1440] }) + 'B');
 
-// 2. 그리기 — 지금 Codex 콘을 큰 윤곽부터(예전 콘 선 그림은 쓰지 않는다)
+// 2. 그리기 — 갈색 · 굵기 8로 지금 Codex 콘을 큰 윤곽부터(예전 콘 선 그림은 쓰지 않는다)
 r.start('fs2'); r.sleep(600);
+corn.color(corn.COLOR.line);
+r.tap(230, 396, 900);   // 굵기 막대(153~521, 1~48) 8 자리
 corn.draw();
 r.sleep(1000);
 r.stop(); r.pull('fs2');

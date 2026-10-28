@@ -7,7 +7,7 @@ const path = require('path');
 const { PNG } = require('pngjs');
 const SRC = path.join(__dirname, '..', '..', 'assets', 'mascot', process.argv[2] || 'corn-base.png');
 const OUT = path.join(__dirname, process.argv[3] || 'corn-trace.json');
-const G = 200;                                     // 격자 한 변
+const G = +(process.env.TRACE_GRID || 300);                                     // 격자 한 변
 
 const png = PNG.sync.read(fs.readFileSync(SRC));
 const { width: W, height: H, data } = png;
@@ -71,13 +71,28 @@ const eyes = (() => { const lab = new Int32Array(W * H).fill(-1), found = []; le
     const w = x1 - x0, h = y1 - y0; if (w >= 20 && h >= 20 && w <= 90 && h <= 90 && n * 4 > w * h * .5) found.push({ n, cx: (x0 + x1) / 2 / W, cy: (y0 + y1) / 2 / H, r: Math.min(w, h) / 2 / W }); id++; }
   // 가장 큰 둘이 두 눈(입 안쪽의 작은 진한 자리는 뺀다)
   return found.sort((a, b) => b.n - a.n).slice(0, 2).map(e => Array.from({ length: 25 }, (_, i) => { const a = i / 12 * Math.PI * 2, r = e.r * (i < 13 ? .8 : .4); return [+(e.cx + r * Math.cos(a)).toFixed(4), +(e.cy + r * Math.sin(a)).toFixed(4)]; })); })();
-const strokes = paths.filter(p => p.length >= 4 && !small(p)).map(p => rdp(p, .7)).map(p => p.map(([x, y]) => [+((x + .5) / G).toFixed(4), +((y + .5) / G).toFixed(4)]));
+// 격자 계단을 펴고(이웃 평균) → 점 줄이기 → 모서리 깎기(Chaikin 두 번): 손으로 쓱 그은 매끈한 선처럼(2026-10-29 '짜치다' 지적).
+const soften = (p, k = 3) => p.map((q, i) => { if (i < 1 || i > p.length - 2) return q; let x = 0, y = 0, n = 0; for (let j = Math.max(0, i - k); j <= Math.min(p.length - 1, i + k); j++) { x += p[j][0]; y += p[j][1]; n++; } return [x / n, y / n]; });
+const chaikin = p => { if (p.length < 3) return p; const o = [p[0]]; for (let i = 0; i < p.length - 1; i++) { const [a, b] = [p[i], p[i + 1]]; o.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]); } o.push(p.at(-1)); return o; };
+const strokes = paths.filter(p => p.length >= 4 && !small(p)).map(p => chaikin(chaikin(rdp(soften(p), .5)))).map(p => p.map(([x, y]) => [+((x + .5) / G).toFixed(4), +((y + .5) / G).toFixed(4)]));
 // 틈 막기: 갈림길에서 끊긴 획 끝을 4칸 안의 다른 선에 이어 붙인다 — 틈이 있으면 채우기가 몸 밖으로 번진다.
 const near = .022;
 for (const st of strokes) for (const end of [0, 1]) {
   const p = end ? st.at(-1) : st[0]; let best = null, bd = near;
   for (const o of strokes) for (let i = 0; i < o.length; i++) { if (o === st && (end ? i > o.length - 4 : i < 3)) continue; const d = Math.hypot(o[i][0] - p[0], o[i][1] - p[1]); if (d > 1e-4 && d < bd) { bd = d; best = o[i]; } }
   if (best) { if (end) st.push([...best]); else st.unshift([...best]); }
+}
+// 그래도 떨어진 끝(새싹·손·발 끝, 원본 그림 기준 7% 안)은 가장 가까운 다른 선까지 잇는다 — 아래 잎이 칠해지지 않던 틈(2026-10-29).
+// 입처럼 작은 획(대각선 10% 이하)은 열린 채로 둔다.
+const free = (st, p) => { for (const o of strokes) for (let i = 0; i < o.length; i++) { if (o === st && Math.hypot(o[i][0] - p[0], o[i][1] - p[1]) < .03) continue; if (Math.hypot(o[i][0] - p[0], o[i][1] - p[1]) < .008) return false; } return true; };
+const big = st => { const xs = st.map(q => q[0]), ys = st.map(q => q[1]); return Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) > .1; };
+for (const st of strokes) if (big(st)) for (const end of [0, 1]) {
+  const p = end ? st.at(-1) : st[0]; if (!free(st, p)) continue;
+  let best = null, bd = .07;
+  for (const o of strokes) if (big(o)) for (let i = 0; i < o.length; i++) { const d = Math.hypot(o[i][0] - p[0], o[i][1] - p[1]); if (o === st && d < .06) continue; if (d < bd) { bd = d; best = o[i]; } }
+  if (best) { if (end) st.push([...best]); else st.unshift([...best]); }
+  // 오른쪽 새싹처럼 윗선이 빠진 잎: 반대쪽 끝이 가까우면(10% 안) 고리로 닫는다
+  else if (Math.hypot(st[0][0] - st.at(-1)[0], st[0][1] - st.at(-1)[1]) < .1) st.push([...st[0]]);
 }
 // 큰 획(몸·잎 윤곽)부터 — 손으로 그리는 순서처럼
 strokes.sort((p, q) => q.length - p.length);

@@ -1,16 +1,30 @@
 // 강좌 녹화용: 지금 Codex 콘(assets/mascot/corn-base.png)을 손가락 획으로 그린다(2026-10-28).
 // 획은 trace-corn.cjs 가 원본 윤곽선을 따라 뽑은 corn-trace.json. 예전 콘 선 그림(corn-strokes.cjs, 10-16)은 쓰지 않는다.
 // 좌표: 그림 기준 0~1 → 1080×2400 폰 에뮬레이터 캔버스(왼쪽 위 26,694 · 한 변 1028)의 가운데 90%.
-const r = require('./rec.cjs');
+// 색(2026-10-29): 원본처럼 갈색 선 · 노랑 몸·손·발 · 초록 새싹 둘과 아래 껍질 잎 둘 · 주황 알갱이 점 · 살구 볼. 칠하다 마는 곳이 없게 한다.
+const r = require('./rec.cjs'), u = require('./ui.cjs');
 const { strokes } = require('./corn-trace.json');
 const CANVAS = { x: 26, y: 694, side: 1028 }, FIT = .9;
 const at = (nx, ny) => [CANVAS.x + CANVAS.side * ((1 - FIT) / 2 + FIT * nx), CANVAS.y + CANVAS.side * ((1 - FIT) / 2 + FIT * ny)];
 // 획 사이에 잠깐 쉰다 — adb 입력을 몰아 보내면 작은 획(눈)이 가끔 빠졌다.
-function draw(pause = 350) { for (const s of strokes) { r.stroke(s.map(([x, y]) => at(x, y))); r.sleep(pause); } }
-// 원본 그림에서 잰 자리(그림 기준 0~1): 채우기·볼터치·알갱이·하트
+// 선 보정이 획 끝을 조금 짧게 끊어 이음새에 틈이 났다(10-29, 채우기가 몸 밖으로 샘) — 양 끝을 0.7% 더 긋고, 끝에서 잠깐 머문다.
+const reach = s => { if (s.length < 2) return s; const ext = (a, b) => { const dx = a[0] - b[0], dy = a[1] - b[1], l = Math.hypot(dx, dy) || 1; return [a[0] + dx / l * .007, a[1] + dy / l * .007]; };
+  const closed = Math.hypot(s[0][0] - s.at(-1)[0], s[0][1] - s.at(-1)[1]) < .005; const o = closed ? [...s, s[1]] : [ext(s[0], s[1]), ...s, ext(s.at(-1), s.at(-2))]; return [...o, ...Array(2).fill(o.at(-1))]; };
+function draw(pause = 350) { for (const s of strokes) { r.stroke(reach(s).map(([x, y]) => at(x, y))); r.sleep(pause); } }
+// 원본 그림에서 잰 자리(그림 기준 0~1): 채우기·볼터치·알갱이·하트. 채우기 자리는 corn-trace 선에서 가장 먼 칸 안쪽(10-29) — 선에 붙으면 굵은 선 위를 눌러 안 칠해졌다.
 const SPOT = {
-  body: [.5, .35], leafL: [.33, .72], leafR: [.67, .72], sproutL: [.43, .14], sproutR: [.675, .21],
-  handL: [.2, .7], handR: [.8, .7], footL: [.39, .91], footR: [.6, .91],
-  cheekL: [.36, .56], cheekR: [.64, .56], grains: [[.44, .3], [.52, .28], [.6, .31], [.48, .37], [.56, .38]], heart: [.86, .38],
+  body: [.5, .35], leafL: [.348, .768], leafR: [.65, .767], sproutL: [.443, .15], sproutR: [.633, .212],
+  handL: [.198, .72], handR: [.798, .728], footL: [.39, .905], footR: [.6, .907],
+  cheekL: [.33, .55], cheekR: [.66, .55], grains: [[.47, .31], [.53, .27], [.6, .335]], heart: [.86, .38],
 };
-module.exports = { draw, at, SPOT, strokes };
+const COLOR = { line: '#765044', body: '#FFD15C', leaf: '#65C47A', grain: '#FFAA4D', cheek: '#FF8C69', heart: '#E94F4F' };
+// 팔레트에서 색 고르기(색 칸 → 없으면 팔레트 펼치기)
+function color(hex) {
+  u.tap('색, ' + u.nodes().find(n => n.desc.startsWith('색, #')).desc.slice(3), 1200);
+  if (!u.has('색 ' + hex)) u.tap('팔레트', 1000);
+  u.tap('색 ' + hex, 900);
+  if (u.has('팔레트 닫기')) u.tap('팔레트 닫기', 900);
+}
+// 알갱이·볼: 작은 동그라미를 두 바퀴(마커로 칠한 점처럼)
+const dot = ([x, y], rad = .018) => Array.from({ length: 25 }, (_, i) => { const a = i / 12 * Math.PI * 2, k = i < 13 ? 1 : .5; return at(x + rad * k * Math.cos(a), y + rad * k * Math.sin(a)); });
+module.exports = { draw, at, dot, color, SPOT, COLOR, strokes };
