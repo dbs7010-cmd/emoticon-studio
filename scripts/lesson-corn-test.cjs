@@ -21,7 +21,7 @@ assert.ok(files.length >= 30, '강좌 그림·영상 ' + files.length);
 for (const f of files) assert.ok(fs.existsSync(path.join(ROOT, f)), '파일 있음: ' + f);
 assert.equal((src.match(/^\s{4}id: '/gm) || []).length, 10, '강좌 10편');
 assert.ok(!/고양이|몽이|귀를|꼬리/.test(src.replace(/^\s*\/\/.*$/gm, '')), '옛 캐릭터·없는 부위를 설명하지 않는다(주석 제외)');
-assert.ok(/group: 'app'/.test(src) && /group: 'draw'/.test(src) && /title: '무료 · 앱 사용법'/.test(src), '무료 강좌 그룹 유지');
+assert.ok(/group: 'app'/.test(src) && /group: 'draw'/.test(src) && loader()('src/constants/lessons.ts').LESSON_GROUPS.some(g => g.title === '무료 · 앱 사용법' && g.free), '무료 강좌 그룹 유지');
 
 (async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });

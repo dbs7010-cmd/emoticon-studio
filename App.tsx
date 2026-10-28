@@ -8,7 +8,7 @@ import { t } from './src/i18n/index';
 import { purchasesClosed, PURCHASES_CLOSED_NOTE } from './src/services/purchase-config';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
-import { Action, AssetSlot, CompleteCard, Dialog, Elev, EmptyState, Field, IconButton, ProBadge, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font, Card, Glyph, Clay } from './src/components/ui';
+import { Action, AssetSlot, CompleteCard, Dialog, Elev, EmptyState, Field, IconButton, ProBadge, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font, Card, Glyph, Clay } from './src/components/app-ui';
 import { Rise, HopStage, FillBar, Shine } from './src/components/motion-fx';
 import { ImtiIcon, IconSize, type IconName as ImtiName } from './src/design/icons';
 import { ASSET_SLOTS, EXPRESSION_GUIDE, HOME_NOTICE, type ExpressionExample, type ExpressionGuideCard } from './src/design/asset-slots';
@@ -475,7 +475,7 @@ function Studio() {
   // 겹치지 않는 기본 이름. 예전부터 쓰던 규칙 그대로다.
   function defaultSetName() {
     const taken = new Set((current.current?.projects ?? []).map(p => p.projectName));
-    let name = '새 이모티콘 세트';
+    let name = t('ui.newSetDefault');
     for (let n = 2; taken.has(name); n++) name = `새 이모티콘 세트 ${n}`;
     return name;
   }
@@ -942,7 +942,7 @@ function Studio() {
     setScreen('board'); setSlotNumber(nextUnfinished(latest, latest.lastSlot ?? 0) ?? latest.lastSlot ?? 1); setPainting(true);
   }
   // 내 정보 탭의 줄들(예전 설정 창 내용 그대로 — 기능·이름을 바꾸지 않았다). 흰 카드 한 장에 담는다.
-  const myRows = <View testID="내 정보 설정" style={{ gap: 4, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 28, ...Clay.card }}>
+  const myRows = <View testID="내 정보 설정" style={{ gap: 4, paddingHorizontal: 20, paddingVertical: 12, borderRadius: T.radius.card, ...Clay.card }}>
       <Text style={{ fontSize: 12, color: C.muted }}>{trial && !isPro(entitlement) ? 'PRO 체험 · 비공개 테스트' : entitlementLabel(entitlement)}</Text>
       {/* 검수용 빌드는 스스로 그렇다고 말한다. 출시 구성에서는 아예 그려지지 않는다(internalReviewBuild() 가 거짓). */}
       {reviewCapable() && <View style={{ gap: 8, padding: 12, borderRadius: T.radius.md, backgroundColor: C.accentSoft }}>
@@ -965,25 +965,25 @@ function Studio() {
           <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>홈 공지 미리 보기 {noticePreview ? '켜짐' : '꺼짐'}</Text>
         </Pressable>
       </View>}
-      <Pressable accessibilityRole="button" accessibilityLabel="사용 안내 다시 보기" onPress={() => { setSettings(false); setIntroStep(0); }}
+      <Pressable accessibilityRole="button" accessibilityLabel={t('ui.howtoAgain')} onPress={() => { setSettings(false); setIntroStep(0); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
         <Glyph name="help-circle-outline" size={20} color={C.muted} />
-        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>사용 안내 다시 보기</Text>
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>{t('ui.howtoAgain')}</Text>
         <Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="전체 백업 만들기" onPress={() => { setSettings(false); backupAll(); }}
+      <Pressable accessibilityRole="button" accessibilityLabel={t('ui.backupAll')} onPress={() => { setSettings(false); backupAll(); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
         <Glyph name="archive-arrow-down-outline" size={20} color={C.muted} />
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>전체 백업 만들기</Text>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{t('ui.backupAll')}</Text>
           <Text style={{ fontSize: 11, color: C.muted }}>모든 세트 · 색 · 보관한 움직임 · 조각 · 설정 (PRO 구매 제외)</Text>
         </View>
         <Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="백업에서 되살리기" onPress={restoreFromBackup}
+      <Pressable accessibilityRole="button" accessibilityLabel={t('ui.restore')} onPress={restoreFromBackup}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
         <Glyph name="archive-arrow-up-outline" size={20} color={C.muted} />
-        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>백업에서 되살리기</Text>
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>{t('ui.restore')}</Text>
         <Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
       {(() => {
@@ -994,16 +994,16 @@ function Studio() {
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
           <Glyph name="folder-zip-outline" size={20} color={C.muted} />
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>내보낸 파일</Text>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{t('ui.exportedFiles')}</Text>
             <Text style={{ fontSize: 11, color: C.muted }}>{`보낸 뒤 앱에 남은 사본 ${copies.length}개 · ${mb < .1 ? '0.1MB 미만' : mb.toFixed(1) + 'MB'}`}</Text>
           </View>
           <Glyph name="chevron-right" size={18} color={C.faint} />
         </Pressable>;
       })()}
-      <Pressable accessibilityRole="button" accessibilityLabel={'휴지통 ' + trashed.length + '개'} onPress={() => { setSettings(false); setTrashOpen(true); }}
+      <Pressable accessibilityRole="button" accessibilityLabel={t('ui.trash') + ' ' + trashed.length + '개'} onPress={() => { setSettings(false); setTrashOpen(true); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
         <Glyph name="delete-restore" size={20} color={C.muted} />
-        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>휴지통</Text>
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>{t('ui.trash')}</Text>
         <Text style={{ fontSize: 13, color: C.muted }}>{trashed.length ? trashed.length + '개' : '비어 있음'}</Text>
         <Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
@@ -1021,27 +1021,27 @@ function Studio() {
       {/* 앱 정보: 실제 설정에 적힌 버전만 보여 준다. 없는 도움말·백업 버튼은 만들지 않는다(명세 T01). */}
       <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, borderTopWidth: 1, borderColor: C.line }}>
         <Text style={{ flex: 1, fontSize: 13, color: C.muted }}>버전</Text>
-        <Text accessibilityLabel={'앱 버전 ' + appVersion} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{appVersion}</Text>
+        <Text accessibilityLabel={t('ui.version') + ' ' + appVersion} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{appVersion}</Text>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel="개인정보처리방침" accessibilityState={{ disabled: !privacyUrl }} disabled={!privacyUrl}
+      <Pressable accessibilityRole="button" accessibilityLabel={t('ui.privacy')} accessibilityState={{ disabled: !privacyUrl }} disabled={!privacyUrl}
         onPress={() => privacyUrl && void Linking.openURL(privacyUrl).catch(() => setNotice('개인정보처리방침을 열지 못했어요. 잠시 뒤 다시 시도해 주세요.'))}
         style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ flex: 1, color: C.ink }}>개인정보처리방침</Text><Text style={{ color: C.muted }}>{privacyUrl ? '열기 ›' : '준비 중'}</Text>
+        <Text style={{ flex: 1, color: C.ink }}>{t('ui.privacy')}</Text><Text style={{ color: C.muted }}>{privacyUrl ? '열기 ›' : '준비 중'}</Text>
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="문의하기" accessibilityState={{ disabled: !supportEmail }} disabled={!supportEmail}
+      <Pressable accessibilityRole="button" accessibilityLabel={t('ui.contact')} accessibilityState={{ disabled: !supportEmail }} disabled={!supportEmail}
         onPress={() => void openSupport()} style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ flex: 1, color: C.ink }}>문의하기</Text><Text style={{ color: C.muted }}>{supportEmail ? '메일 보내기 ›' : '준비 중'}</Text>
+        <Text style={{ flex: 1, color: C.ink }}>{t('ui.contact')}</Text><Text style={{ color: C.muted }}>{supportEmail ? '메일 보내기 ›' : '준비 중'}</Text>
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="PRO 이용" onPress={() => { setSettings(false); setProSheet(true); }}
+      <Pressable accessibilityRole="button" accessibilityLabel={t('ui.proAccess')} onPress={() => { setSettings(false); setProSheet(true); }}
         style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? T.fill : 'transparent' })}>
         <Glyph name="star-four-points-outline" size={19} color={C.muted} />
-        <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: C.ink }}>PRO 이용</Text>
+        <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: C.ink }}>{t('ui.proAccess')}</Text>
         <Glyph name="chevron-right" size={18} color={C.muted} />
       </Pressable>
   </View>;
   const setMeta = (p: Project) => { const when = new Date(p.updatedAt); return { moving: setIsAnimated(p), done: doneCount(p), working: p.slots.filter(isWorking).length, stamp: Number.isFinite(when.getTime()) ? `${when.getMonth() + 1}월 ${when.getDate()}일` : '' }; };
   // 첫 실행 한 장 · 로그인 · 작가명. 서버가 있으면 로그인 전에는 앱 안으로 들어가지 않는다(기기 안 작품은 그대로 있다).
-  if (store && !loadError && cloud && authUid === undefined) return <SafeAreaView style={{ flex: 1, backgroundColor: C.paper, alignItems: 'center', justifyContent: 'center' }}><StatusBar style="dark" /><Text style={{ fontSize: 13, color: C.muted }}>불러오는 중…</Text></SafeAreaView>;
+  if (store && !loadError && cloud && authUid === undefined) return <SafeAreaView style={{ flex: 1, backgroundColor: C.paper, alignItems: 'center', justifyContent: 'center' }}><StatusBar style="dark" /><Text style={{ fontSize: 13, color: C.muted }}>{t('ui.loading')}</Text></SafeAreaView>;
   if (store && !loadError && ((cloud && authUid === null) || (!cloud && startOpen))) return <SafeAreaView style={{ flex: 1, backgroundColor: C.paper }}><StatusBar style="dark" />
     <StartScreen providers={cloud ? { kakao: providerReady(Constants.expoConfig?.extra, 'kakao'), naver: providerReady(Constants.expoConfig?.extra, 'naver'), google: providerReady(Constants.expoConfig?.extra, 'google') } : null}
       apple={appleReady} onLogin={startLogin} onStart={finishStart} busy={loginBusy} error={loginError} /></SafeAreaView>;
@@ -1053,7 +1053,7 @@ function Studio() {
       {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 4, minHeight: 56, backgroundColor: (screen === 'board' || screen === 'export') && !canonOpen ? T.page : C.bg }}>
         <Pressable accessibilityRole="button" accessibilityLabel="뒤로" disabled={!!busy} onPress={back} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={28} color={C.ink} /></Pressable>
         <View style={{ flex: 1 }}>
-          <Text numberOfLines={1} style={{ fontSize: 20, lineHeight: 27, color: C.ink, fontWeight: '800', letterSpacing: -.2 }}>{canonOpen ? '캐릭터 기준' : screen === 'export' ? '내보내기' : screen === 'batch' ? '움직임 한 번에 적용' : screen === 'extras' ? '부가 이미지' : project.projectName}</Text>
+          <Text numberOfLines={1} style={{ fontSize: 20, lineHeight: 27, color: C.ink, fontWeight: '800', letterSpacing: -.2 }}>{canonOpen ? t('ui.reference') : screen === 'export' ? t('ui.export') : screen === 'batch' ? '움직임 한 번에 적용' : screen === 'extras' ? '부가 이미지' : project.projectName}</Text>
           {(canonOpen || screen !== 'board') && <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{project.projectName}</Text>}
         </View>
         {screen === 'board' && !canonOpen && <Pressable accessibilityRole="button" accessibilityLabel="세트 메뉴" disabled={!!busy} onPress={() => setMenu(true)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={24} color={C.ink} /></Pressable>}
@@ -1096,10 +1096,10 @@ function Studio() {
             {report.snapshots.map((file, i) => file.exists ? <Action key={file.name} title={`저장 사본 ${i + 1} 보내기`} icon="share-variant" disabled={!!busy} onPress={() => shareSnapshot(file.name)} /> : null)}
             {!report.snapshots.some(file => file.exists) && <Text style={{ fontSize: 12, color: C.muted }}>보낼 저장 파일이 없어요.</Text>}
           </View>}
-        </> : !store ? <Text style={{ fontSize: 13, color: C.muted }}>불러오는 중…</Text> : !project && homeView === 'all' ? <>
+        </> : !store ? <Text style={{ fontSize: 13, color: C.muted }}>{t('ui.loading')}</Text> : !project && homeView === 'all' ? <>
           {/* 전체 작업(44차): 여러 이모티콘 세트를 찾고 다시 여는 곳. 한 줄 목록 — 세트 안 24/32칸은 보드가 맡는다. 폴더·태그·필터 없음. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4, marginLeft: -8 }}>
-            <IconButton label="홈으로" icon="chevron-left" color={C.ink} onPress={() => setHomeView('home')} />
+            <IconButton label={t('ui.home')} icon="chevron-left" color={C.ink} onPress={() => setHomeView('home')} />
             <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>전체 작업</Text>
             <Text style={{ fontSize: 12, color: C.muted }}>{sortedProjects.length}개 세트</Text>
           </View>
@@ -1107,7 +1107,7 @@ function Studio() {
           <Segmented dense testID="세트 분류" value={projectFilter} onChange={setProjectFilter} items={[{ key: 'all', label: '전체' }, { key: 'working', label: '작업 중' }, { key: 'done', label: '완성' }]} />
           <Segmented dense testID="세트 정렬" value={projectOrder} onChange={setProjectOrder} items={[{ key: 'recent', label: '최근 수정순' }, { key: 'name', label: '이름순' }]} />
           {!visibleProjects.length && <Text style={{ fontSize: 13, color: C.muted }}>조건에 맞는 세트가 없어요. 찾는 말이나 분류를 바꿔 보세요.</Text>}
-          <View testID="전체 작업 목록" style={{ borderRadius: 24, ...Clay.card }}>
+          <View testID="전체 작업 목록" style={{ borderRadius: T.radius.card, ...Clay.card }}>
             {visibleProjects.map((p, i) => {
               const m = setMeta(p), cover = p.slots.find(s => s.finalImage);
               return <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 12, paddingRight: 2, borderTopWidth: i ? 1 : 0, borderColor: C.line }}>
@@ -1130,14 +1130,14 @@ function Studio() {
         </> : !project && homeView === 'book' ? <>
           {/* 이용 가이드북(2026-10-13, 홈 공지 슬라이드 ①): 장(章) 카드를 누르면 펼쳐진다. 규격 장은 카카오 공식 가이드 링크를 함께 준다. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4, marginLeft: -8 }}>
-            <IconButton label="홈으로" icon="chevron-left" color={C.ink} onPress={() => { setBookOpen(null); setHomeView('home'); }} />
+            <IconButton label={t('ui.home')} icon="chevron-left" color={C.ink} onPress={() => { setBookOpen(null); setHomeView('home'); }} />
             <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>이용 가이드북</Text>
           </View>
           <Text style={{ fontSize: 13, lineHeight: 20, color: C.muted, marginTop: -8 }}>앱 사용법부터 카카오 제안 규격, 승인에 가까워지는 팁까지</Text>
           {GUIDEBOOK.map((ch, i) => { const open = bookOpen === ch.id;
-            return <View key={ch.id} testID={'가이드북 ' + ch.id} style={{ borderRadius: 24, ...Clay.card, boxShadow: open ? '8px 10px 22px rgba(120, 100, 70, 0.16)' : Clay.card.boxShadow }}>
+            return <View key={ch.id} testID={'가이드북 ' + ch.id} style={{ borderRadius: T.radius.card, ...Clay.card, boxShadow: 'none' }}>
               <Pressable accessibilityRole="button" accessibilityLabel={ch.title} accessibilityState={{ expanded: open }} onPress={() => setBookOpen(open ? null : ch.id)}
-                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: 24, backgroundColor: pressed ? C.fill : C.paper })}>
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: T.radius.card, backgroundColor: pressed ? C.fill : C.paper })}>
                 <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: open ? C.pointSoft : C.surface2, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 13, fontWeight: '800', color: open ? C.pointInk : C.ink }}>{i + 1}</Text>
                 </View>
@@ -1163,14 +1163,14 @@ function Studio() {
           {/* 표현 가이드(44차): "무엇을 그릴까?". 분류 → 표현 카드(그림 자리 · 이름 · 짧은 몸짓 힌트). 긴 설명·대화형·생성 없음.
               "어떻게 그릴까?"는 그리기 화면 › 참고 › 기본 레퍼런스가 맡는다. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4, marginLeft: -8 }}>
-            <IconButton label={guideCard ? '표현 가이드로' : '홈으로'} icon="chevron-left" color={C.ink} onPress={() => guideCard ? setGuideCard(null) : setHomeView('home')} />
-            <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{guideCard ? guideCard.name : '표현 가이드'}</Text>
+            <IconButton label={guideCard ? t('ui.backToGuide') : t('ui.home')} icon="chevron-left" color={C.ink} onPress={() => guideCard ? setGuideCard(null) : setHomeView('home')} />
+            <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{guideCard ? guideCard.name : t('ui.guide')}</Text>
           </View>
           <Text style={{ fontSize: 13, lineHeight: 20, color: C.muted, marginTop: -8 }}>{guideCard ? '같은 말도 표정과 자세에 따라 달라져요' : '어떤 마음인가요?'}</Text>
           {!guideCard && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center', paddingVertical: 4 }} style={{ marginHorizontal: -16, flexGrow: 0 }}>
             <View style={{ width: 10 }} />
             {EXPRESSION_GUIDE.categories.map(name => { const on = guideCategory === name;
-              return <Pressable key={name} accessibilityRole="button" accessibilityLabel={'표현 가이드 ' + name} accessibilityState={{ selected: on }} onPress={() => setGuideCategory(name)}
+              return <Pressable key={name} accessibilityRole="button" accessibilityLabel={t('ui.guide') + ' ' + name} accessibilityState={{ selected: on }} onPress={() => setGuideCategory(name)}
                 hitSlop={{ top: 4, bottom: 4 }}
                 style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: on ? C.pointSoft : C.surface2 }}>
                 <Text style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{name}</Text>
@@ -1266,16 +1266,14 @@ function Studio() {
           {homeTab === 'home' && <>
           <Rise delay={20} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: T.tap }}>
             <View testID="홈 브랜드" accessible accessibilityRole="header" accessibilityLabel="emoti 이모티" style={{ flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-              <Text numberOfLines={1} style={{ fontSize: 24, fontFamily: Font.display, fontWeight: '400', color: C.ink }}>emoti</Text>
-              {/* 2026-10-27 큰 표지형 시안: 로고 옆 작은 부제(본문 글꼴). */}
-              <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 13, fontWeight: '600', color: C.muted }}>{t('home.subtitle')}</Text>
+              <Text numberOfLines={1} style={{ fontSize: 24, fontWeight: '700', letterSpacing: -.8, color: C.ink }}>emoti</Text>
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드" onPress={() => setHomeView('guide')}
-              style={({ pressed }) => ({ width: T.tap, height: T.tap, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : 'transparent' })}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('ui.guide')} onPress={() => setHomeView('guide')}
+              style={({ pressed }) => ({ width: T.tap, height: T.tap, borderRadius: T.radius.card, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.fill : 'transparent' })}>
               <ImtiIcon name="guide" size={IconSize.tool} />
             </Pressable>
             {/* 무료일 때 'PRO 보기', 산 뒤에는 'PRO'(노란 면) — 지금 PRO 인지 글자로 구분한다(출시 검사도 이 글자를 본다). */}
-            <ProBadge label="PRO 보기" text={trial && !isPro(entitlement) ? 'PRO 체험' : pro ? 'PRO' : 'PRO 보기'} owned={pro} onPress={() => setProSheet(true)} />
+            <ProBadge label={t('ui.proView')} text={trial && !isPro(entitlement) ? t('ui.proTrial') : pro ? 'PRO' : t('ui.proView')} owned={pro} onPress={() => setProSheet(true)} />
           </Rise>
           {(() => {
             // 2026-10-14 시안 Z-Home(사용자 확정 A안): 꽉 찬 공지 배너 → 노란 클레이 대표 카드(통통 튀는 그림 · 보라 진행 · 노란 버튼) → 제안까지 작은 줄 → 내 세트 96 카드.
@@ -1290,7 +1288,7 @@ function Studio() {
                 </View>
               </Pressable>;
             const ownPicture = setCard('own', '내 그림으로 시작', startFromImage, <ImtiIcon name="reference" size={IconSize.tab} disabled={!!busy} />, '내 그림', '사진에서 시작', C.paper, !!busy);
-            const newSet = setCard('new', '새 세트 만들기', createNewProject, <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', ...Clay.button }}><ImtiIcon name="plus" size={IconSize.tool} /></View>, '새 세트', '32칸', C.accentSoft);
+            const newSet = setCard('new', '새 세트 만들기', createNewProject, <View style={{ width: 48, height: 48, borderRadius: T.radius.card, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', ...Clay.button }}><ImtiIcon name="plus" size={IconSize.tool} /></View>, '새 세트', '32칸', C.accentSoft);
             // 공지 배너(사용자 확정): 둥근 모서리 없이 화면 가로에 꽉 차게. 그림 파일이 생기면 slide.image 로 덮는다.
             const art = (child: React.ReactNode) => <View style={{ width: 72, height: 72, borderRadius: 26, ...Clay.card, alignItems: 'center', justifyContent: 'center' }}>{child}</View>;
             const slides: NoticeSlide[] = [
@@ -1310,7 +1308,7 @@ function Studio() {
               <Rise delay={160}><EmptyState testID="홈 창작 표면" flow
                 art={<HopStage size={screenWidth < 380 ? 80 : 96}><AssetSlot name="homeHeroArtwork" size={screenWidth < 380 ? 80 : 96} /></HopStage>}
                 title="첫 칸부터 그려 볼까요?" body="한 세트 = 32칸 · 무료로 끝까지"
-                actionLabel="새 세트 만들기" onAction={createNewProject} /></Rise>
+                actionLabel={t('ui.newSet')} onAction={createNewProject} /></Rise>
               <Rise delay={240} style={{ flexDirection: 'row', gap: 10 }}>{ownPicture}</Rise>
             </>;
             // 2026-10-27 승인 시안 '큰 표지형'(Codex 전달 · docs/design/APPROVED_VISUAL_20261027.md): 공지 배너 → 작은 공지 줄 →
@@ -1320,7 +1318,7 @@ function Studio() {
             const shelfW = Math.min(windowWidth, CONTENT_MAX) - gutter * 2, cols = shelfW >= 560 ? 3 : 2, tileW = Math.floor((shelfW - 14 * (cols - 1)) / cols);
             const compact = tileW < 170;
             const recent = sortedProjects.slice(0, cols * 2 - 1);
-            const tints = [C.accentSoft, C.pointSoft, T.surface2];
+            const tints = ['#F8F4E8', '#F3F1F7', '#F0F3EB'];
             const coverOf = (q: Project) => {
               const made = q.slots.filter(s => s.finalImage);
               return made.find(s => s.number === q.lastSlot) ?? made.at(-1);
@@ -1331,14 +1329,9 @@ function Studio() {
               const kind = setIsAnimated(q) ? t('home.kindMoving') : t('home.kindStill');
               return <View key={q.id} style={{ width: tileW, gap: 8 }}>
                 <Pressable accessibilityRole="button" accessibilityLabel={q.projectName} onPress={() => { setProjectId(q.id); setScreen('board'); }}
-                  style={({ pressed }) => ({ aspectRatio: 1, minHeight: 120, borderRadius: 28, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', ...Clay.card, backgroundColor: tints[i % tints.length], transform: pressed ? [{ scale: .975 }] : [] })}>
+                  style={({ pressed }) => ({ aspectRatio: 1, minHeight: 120, borderRadius: T.radius.card, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', ...Clay.card, backgroundColor: tints[i % tints.length], transform: pressed ? [{ scale: .975 }] : [] })}>
                   {pic ? <Image testID="홈 표지 그림" source={{ uri: imageUri((pic.motionImage ?? pic.finalImage)!.path) }} style={{ width: '78%', height: '78%' }} resizeMode="contain" />
                     : <ImtiIcon name="brush" size={IconSize.tab} color={C.faint} />}
-                  {first && <Pressable accessibilityRole="button" accessibilityLabel={`${q.projectName} 이어서 만들기`} onPress={() => { setProjectId(q.id); setScreen('board'); setSlotNumber(next ?? q.lastSlot ?? 1); setPainting(true); }}
-                    style={({ pressed }) => ({ position: 'absolute', left: 8, bottom: 8, maxWidth: tileW - 16, height: compact ? 34 : 40, paddingHorizontal: compact ? 10 : 14, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.accent, ...(pressed ? Clay.buttonPressed : Clay.button) })}>
-                    <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: compact ? 12 : 13, fontWeight: '800', color: C.accentInk }}>{m.done || pic ? t('home.continue') : t('home.startDrawing')}</Text>
-                    <Glyph name="arrow-right" size={14} color={C.accentInk} />
-                  </Pressable>}
                   <Pressable accessibilityRole="button" accessibilityLabel={`${q.projectName} 관리`} onPress={() => setManageId(q.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     style={{ position: 'absolute', top: 6, right: 6, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.7)' }}>
                     <ImtiIcon name="more" size={IconSize.meta} color={C.muted} />
@@ -1351,8 +1344,8 @@ function Studio() {
               </View>;
             };
             const newTile = <View key="new" style={{ width: tileW, gap: 8 }}>
-              <Pressable accessibilityRole="button" accessibilityLabel="새 세트 만들기" onPress={createNewProject}
-                style={({ pressed }) => ({ aspectRatio: 1, minHeight: 120, borderRadius: 28, borderWidth: 2, borderStyle: 'dashed', borderColor: C.line, alignItems: 'center', justifyContent: 'center', backgroundColor: C.paper, transform: pressed ? [{ scale: .975 }] : [] })}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t('ui.newSet')} onPress={createNewProject}
+                style={({ pressed }) => ({ aspectRatio: 1, minHeight: 120, borderRadius: T.radius.card, borderWidth: 1, borderStyle: 'dashed', borderColor: C.line, alignItems: 'center', justifyContent: 'center', backgroundColor: C.paper, transform: pressed ? [{ scale: .975 }] : [] })}>
                 <ImtiIcon name="plus" size={IconSize.tab} color={C.muted} />
               </Pressable>
               <View style={{ paddingHorizontal: 4, gap: 2 }}>
@@ -1364,13 +1357,13 @@ function Studio() {
               {noticeLine}
               <Rise delay={120}><Pressable testID="홈 공지 줄" accessibilityRole="button" accessibilityLabel={t('home.notice')} onPress={() => setHomeView('book')}
                 style={({ pressed }) => ({ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4, opacity: pressed ? .7 : 1 })}>
-                <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: .8, color: C.point }}>NOTICE</Text>
+                <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: .8, color: C.point }}>{t('ui.notice')}</Text>
                 <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: C.ink }}>{t('home.notice')}</Text>
               </Pressable></Rise>
               <Rise delay={180} style={{ gap: 14 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 4 }}>
                   <Text style={{ fontSize: 20, fontWeight: '800', color: C.ink }}>{t('home.mySets')}<Text style={{ fontSize: 15, fontWeight: '600', color: C.muted }}>{sortedProjects.length}</Text></Text>
-                  <Pressable accessibilityRole="button" accessibilityLabel="전체 작업 보기" onPress={() => setHomeView('all')} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={t('ui.allWork')} onPress={() => setHomeView('all')} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
                     <Text style={{ fontSize: 13, fontWeight: '700', color: C.point }}>{t('home.recentAll', { n: sortedProjects.length })}</Text>
                   </Pressable>
                 </View>
@@ -1379,12 +1372,11 @@ function Studio() {
                   {newTile}
                 </View>
               </Rise>
-              <Rise delay={240}><Pressable accessibilityRole="button" accessibilityLabel="내 그림으로 시작" accessibilityState={{ disabled: !!busy }} disabled={!!busy} onPress={startFromImage}
-                style={({ pressed }) => ({ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: C.line, opacity: pressed ? .7 : 1 })}>
-                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: C.pointSoft, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="reference" size={IconSize.row} disabled={!!busy} /></View>
+              <Rise delay={240}><Pressable accessibilityRole="button" accessibilityLabel={t('ui.import')} accessibilityState={{ disabled: !!busy }} disabled={!!busy} onPress={startFromImage}
+                style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: C.line, opacity: pressed ? .7 : 1 })}>
+                <View style={{ width: 32, height: 44, borderRadius: 0, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="reference" size={IconSize.row} disabled={!!busy} /></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{t('home.ownTitle')}</Text>
-                  <Text style={{ fontSize: 12, color: C.muted }}>{t('home.ownSub')}</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '500', color: C.muted }}>{t('home.ownTitle')}</Text>
                 </View>
               </Pressable></Rise>
             </>;
@@ -1393,56 +1385,56 @@ function Studio() {
           {homeTab === 'class' && <>
             {/* 강좌(2026-10-14 시안 Z-Class): 지금은 무료 앱 사용법(가이드북 장)과 표현 가이드. 작가 강좌(유료)는 준비 중 자리만 둔다 — 결제·정산·영상은 아직 없다. */}
             <Rise delay={20} style={{ paddingTop: 6 }}>
-              <Text accessibilityRole="header" style={{ fontSize: 26, lineHeight: 34, fontWeight: '800', color: C.ink, letterSpacing: -.6 }}>강좌</Text>
-              <Text style={{ fontSize: 14, color: C.muted }}>작가에게 배우는 이모티콘 만들기</Text>
+              <Text accessibilityRole="header" style={{ fontSize: 26, lineHeight: 34, fontWeight: '800', color: C.ink, letterSpacing: -.6 }}>{t('ui.lessons')}</Text>
+              <Text style={{ fontSize: 14, color: C.muted }}>{t('ui.lessonSubtitle')}</Text>
             </Rise>
             {/* 2026-10-16 사용자: 유튜브처럼 단순하게 — 위에 묶음 칩, 아래 한 줄에 하나씩 16:9 썸네일 + 제목 + 한 줄 정보. */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-              {([['all', '전체'], ...LESSON_GROUPS.map(g => [g.id, g.short])] as [string, string][]).map(([id, label]) => { const on = lessonGroup === id;
+              {([['all', t('ui.all')], ...LESSON_GROUPS.map(g => [g.id, g.short])] as [string, string][]).map(([id, label]) => { const on = lessonGroup === id;
                 return <Pressable key={id} accessibilityRole="button" accessibilityLabel={'강좌 묶음 ' + label} accessibilityState={{ selected: on }} onPress={() => setLessonGroup(id)}
-                  style={{ height: 36, paddingHorizontal: 14, borderRadius: 18, justifyContent: 'center', backgroundColor: on ? C.ink : C.fill }}>
-                  <Text style={{ fontSize: 14, fontWeight: on ? '800' : '600', color: on ? C.paper : C.ink }}>{label}</Text>
+                  style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 10, justifyContent: 'center', borderBottomWidth: on ? 2 : 0, borderBottomColor: C.point, backgroundColor: pressed ? C.fill : 'transparent' })}>
+                  <Text style={{ fontSize: 14, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{label}</Text>
                 </Pressable>; })}
             </ScrollView>
             <View testID="강좌 목록" style={{ gap: 22 }}>
               {LESSONS.filter(l => lessonGroup === 'all' || l.group === lessonGroup).map(l => { const g = LESSON_GROUPS.find(x => x.id === l.group)!;
-                return <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={'강좌 ' + l.title} onPress={() => { setLessonId(l.id); setHomeView('lesson'); }}
+                return <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={t('ui.lessons') + ' ' + l.title} onPress={() => { setLessonId(l.id); setHomeView('lesson'); }}
                   style={({ pressed }) => ({ gap: 10, opacity: pressed ? .85 : 1 })}>
-                  <View style={{ aspectRatio: 16 / 9, borderRadius: 16, overflow: 'hidden', backgroundColor: C.surface2 }}>
+                  <View style={{ aspectRatio: 16 / 9, borderRadius: T.radius.card, overflow: 'hidden', backgroundColor: C.surface2 }}>
                     <Image accessibilityIgnoresInvertColors source={l.thumb} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                     <View style={{ position: 'absolute', right: 8, bottom: 8, height: 22, paddingHorizontal: 7, borderRadius: 6, backgroundColor: 'rgba(25,31,40,0.78)', justifyContent: 'center' }}>
                       <Text style={{ fontSize: 12, fontWeight: '700', color: '#FFFFFF' }}>{`${l.minutes}분`}</Text>
                     </View>
                   </View>
                   <View style={{ paddingHorizontal: 2, gap: 2 }}>
-                    <Text numberOfLines={2} style={{ fontSize: 16, lineHeight: 22, fontWeight: '800', color: C.ink }}>{l.title}</Text>
+                    <Text numberOfLines={2} style={{ fontSize: 16, lineHeight: 23, fontWeight: '700', color: C.ink }}>{l.title}</Text>
                     <Text numberOfLines={1} style={{ fontSize: 13, color: C.muted }}>{`${g.free ? '무료 · ' : ''}${g.short} · ${l.steps.length}단계 · ${l.summary}`}</Text>
                   </View>
                 </Pressable>; })}
             </View>
             {/* 작가 강좌(유료)는 아직 없다 — 큰 자리 대신 한 줄로 알린다. */}
             <View testID="작가 강좌 준비 중" accessible accessibilityLabel="작가 강좌 준비 중. 공모전 선정 작가의 강좌가 곧 열려요"
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 24, backgroundColor: C.pointSoft }}>
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: T.radius.card, backgroundColor: C.pointSoft }}>
               <Glyph name="school-outline" size={22} color={C.pointInk} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>작가에게 배우는 강좌가 곧 열려요</Text>
-                <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>공모전 선정 작가와 함께 준비하고 있어요</Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{t('ui.lessonSoon')}</Text>
+                <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{t('ui.lessonSoonBody')}</Text>
               </View>
             </View>
             <Rise delay={200}>
-              <Pressable accessibilityRole="button" accessibilityLabel="표현 가이드 열기" onPress={() => setHomeView('guide')}
-                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 24, ...Clay.card, transform: pressed ? [{ scale: .98 }] : [] })}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t('ui.openGuide')} onPress={() => setHomeView('guide')}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: T.radius.card, ...Clay.card, transform: pressed ? [{ scale: .98 }] : [] })}>
                 <View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="sticker" size={IconSize.tool} /></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>표현 가이드</Text>
-                  <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>어떤 마음을 그릴지 골라 밑그림으로</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{t('ui.guide')}</Text>
+                  <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{t('ui.expressionsHint')}</Text>
                 </View>
                 <ImtiIcon name="next" size={IconSize.row} color={C.faint} />
               </Pressable>
             </Rise>
           </>}
           {homeTab === 'contest' && <>
-            <Text accessibilityRole="header" style={{ fontSize: 26, lineHeight: 34, fontWeight: '800', color: C.ink, letterSpacing: -.4, paddingTop: 6 }}>공모전</Text>
+            <Text accessibilityRole="header" style={{ fontSize: 26, lineHeight: 34, fontWeight: '800', color: C.ink, letterSpacing: -.4, paddingTop: 6 }}>{t('ui.contest')}</Text>
             {store && <CloudScreen inline part="contest" visible onClose={() => setHomeTab('home')} cloud={cloud} extra={Constants.expoConfig?.extra} device={`${Platform.OS} ${Platform.Version}`}
               store={store} projects={store.projects} commit={commit} task={task} login={loginWith} bakeHandoff={bakeHandoff} />}
             <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 4 }}>
@@ -1451,7 +1443,7 @@ function Studio() {
             </View>
           </>}
           {homeTab === 'my' && <>
-            <Text accessibilityRole="header" style={{ fontSize: 26, lineHeight: 34, fontWeight: '800', color: C.ink, letterSpacing: -.4, paddingTop: 6 }}>내 정보</Text>
+            <Text accessibilityRole="header" style={{ fontSize: 26, lineHeight: 34, fontWeight: '800', color: C.ink, letterSpacing: -.4, paddingTop: 6 }}>{t('ui.profile')}</Text>
             {store && <CloudScreen inline part="account" visible onClose={() => setHomeTab('home')} cloud={cloud} extra={Constants.expoConfig?.extra} device={`${Platform.OS} ${Platform.Version}`}
               store={store} projects={store.projects} commit={commit} task={task} login={loginWith} bakeHandoff={bakeHandoff} />}
             {myRows}
@@ -1471,7 +1463,7 @@ function Studio() {
                 </View>
               </View>
               <View style={{ borderTopWidth: 1, borderColor: C.line, paddingTop: T.gap.md }}>
-                <Field label="세트 이름" value={project.projectName} onChangeText={projectName => updateProject(p => ({ ...p, projectName }))} multiline={false} />
+                <Field label={t('ui.setName')} value={project.projectName} onChangeText={projectName => updateProject(p => ({ ...p, projectName }))} multiline={false} />
               </View>
               {(!!memo.length || !!project.characterName.trim()) && <View style={styles.card}>
                 <Text style={styles.subtitle}>예전에 적어둔 메모</Text>
@@ -1495,7 +1487,7 @@ function Studio() {
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {(store?.savedMotions ?? []).map(saved => <Pressable key={saved.id} accessibilityRole="button" accessibilityLabel={`${saved.name} 적용하기`} accessibilityState={{ selected: batchSaved === saved.id }}
                     onPress={() => { setBatchSaved(batchSaved === saved.id ? null : saved.id); setBatchResults([]); setBatchPreview(null); }}
-                    style={{ minHeight: 48, paddingHorizontal: 14, borderRadius: 24, borderWidth: 1, borderColor: batchSaved === saved.id ? C.accentBorder : C.line, backgroundColor: batchSaved === saved.id ? C.accentSoft : C.paper, alignItems: 'center', justifyContent: 'center' }}>
+                    style={{ minHeight: 48, paddingHorizontal: 14, borderRadius: T.radius.card, borderWidth: 1, borderColor: batchSaved === saved.id ? C.accentBorder : C.line, backgroundColor: batchSaved === saved.id ? C.accentSoft : C.paper, alignItems: 'center', justifyContent: 'center' }}>
                     <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{saved.name}</Text>
                   </Pressable>)}
                 </View>
@@ -1538,7 +1530,7 @@ function Studio() {
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {([[true, '움직임 바꾸기'], [false, '있는 칸은 그대로']] as const).map(([value, label]) =>
                   <Pressable key={label} accessibilityRole="radio" accessibilityLabel={label} accessibilityState={{ checked: batchReplace === value }} onPress={() => { setBatchReplace(value); setBatchPreview(null); }}
-                    style={{ flex: 1, minHeight: 48, borderRadius: 24, borderWidth: 1, borderColor: batchReplace === value ? C.accentBorder : C.line, backgroundColor: batchReplace === value ? C.accentSoft : C.paper, alignItems: 'center', justifyContent: 'center' }}>
+                    style={{ flex: 1, minHeight: 48, borderRadius: T.radius.card, borderWidth: 1, borderColor: batchReplace === value ? C.accentBorder : C.line, backgroundColor: batchReplace === value ? C.accentSoft : C.paper, alignItems: 'center', justifyContent: 'center' }}>
                     <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{label}</Text>
                   </Pressable>)}
               </View>
@@ -1580,7 +1572,7 @@ function Studio() {
             const previewHeight = previewWidth * frame.height / frame.width;
             const box = slot?.finalImage ? placeInFrame(slot.finalImage, { width: previewWidth, height: previewHeight }, place) : null;
             return <>
-              <View style={{ flexDirection: 'row', padding: 3, borderRadius: 24, backgroundColor: T.fill }}>
+              <View style={{ flexDirection: 'row', padding: 3, borderRadius: T.radius.card, backgroundColor: T.fill }}>
                 {REQUIRED_EXTRAS.map(e => <Pressable key={e.id} accessibilityRole="button" accessibilityLabel={e.label} accessibilityState={{ selected: extraKind === e.id }}
                   onPress={() => { setExtraKind(e.id); setPlace({ scale: 1, dx: 0, dy: 0 }); }}
                   style={{ flex: 1, minHeight: 42, borderRadius: 21, backgroundColor: extraKind === e.id ? C.paper : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
@@ -1676,7 +1668,7 @@ function Studio() {
               {/* 1. 내가 만든 결과가 먼저다. 손볼 칸은 테두리로 드러나고, 누르면 그 칸이 열린다. */}
               {/* 요약 표면: 완성 상태가 먼저. 모두 채우면 따뜻한 표면과 완성 그림 자리(exportSuccessArtwork). */}
               {/* 2026-10-08 토스식(캔버스 U-Export): 흰 카드 · 세트 이름과 종류 · 큰 숫자 · 막대. 다 채우면 완성 그림. */}
-              <View testID="내보내기 요약" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 20, borderRadius: 24, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }}>
+              <View testID="내보내기 요약" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 20, borderRadius: T.radius.card, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }}>
                 <View style={{ flex: 1, gap: 8 }}>
                   <Text style={{ fontSize: 14, color: C.muted }}>{finished >= profile.count ? `세트를 모두 완성했어요 · ${profile.profileLabel}` : profile.profileLabel}</Text>
                   <Text style={{ fontSize: 26, lineHeight: 32, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{finished}<Text style={{ fontSize: 17, fontWeight: '500', color: C.muted }}>{` / ${profile.count}칸 완성`}</Text></Text>
@@ -1728,10 +1720,10 @@ function Studio() {
               </View>}
 
               {/* 제출 준비: 지금 그리는 일보다 뒤에 오는 일이라 접어 둔다. 접힌 줄에도 몇 개가 남았는지 보인다(45.2차). */}
-              <View style={{ borderRadius: 24, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper, paddingVertical: 6, paddingHorizontal: 20 }}>
-              <Pressable accessibilityRole="button" accessibilityLabel={prepOpen ? '제출 준비 접기' : '제출 준비 보기'} accessibilityState={{ expanded: prepOpen }} onPress={() => setPrepOpen(!prepOpen)}
+              <View style={{ borderRadius: T.radius.card, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper, paddingVertical: 6, paddingHorizontal: 20 }}>
+              <Pressable accessibilityRole="button" accessibilityLabel={prepOpen ? '제출 준비 접기' : t('lesson.text043')} accessibilityState={{ expanded: prepOpen }} onPress={() => setPrepOpen(!prepOpen)}
                 style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>제출 준비</Text>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>{t('ui.reviewSubmit')}</Text>
                 <Text style={{ flex: 1, fontSize: 13, color: prepShort ? C.warning : C.muted }}>{prepShort ? `${prepShort}가지 더 필요해요` : '필요한 것을 다 채웠어요'}</Text>
                 <Glyph name={prepOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
               </Pressable>
@@ -1827,7 +1819,7 @@ function Studio() {
             // 45.43 S5: 전부 완성하면 완성 카드 B(흰 카드 · 노란 체크 · 작품 격자 · 노란 행동 하나)가 머리를 맡는다.
             // 행동 글자는 시안의 '파일 묶음 만들기' 대신 '내보내기' — 이 버튼은 묶음을 바로 만들지 않고 내보내기 화면을 연다(거기서 파일 묶음 만들기).
             // 기준을 채우면 완성 카드. 카드의 숫자는 실제로 완성한 칸 수(움직이는 세트를 32칸 다 채웠으면 32).
-            if (done === total) return <><CompleteCard total={finishedCount} subtitle={`${project.projectName} · 파일 묶음을 만들 수 있어요`} actionLabel="내보내기" actionIcon="tray-arrow-up" onAction={() => setScreen('export')}>
+            if (done === total) return <><CompleteCard total={finishedCount} subtitle={`${project.projectName} · 파일 묶음을 만들 수 있어요`} actionLabel={t('ui.export')} actionIcon="tray-arrow-up" onAction={() => setScreen('export')}>
               {/* 시안처럼 여덟 칸씩 두 줄(앞 16칸). 전체는 아래 격자에 있다. */}
               <View testID="완성 작품 격자" style={{ gap: 6 }}>
                 {[0, 1].map(row => <View key={row} style={{ flexDirection: 'row', gap: 6 }}>
@@ -1841,7 +1833,7 @@ function Studio() {
             {!!playButton && <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>{playButton}</View>}</>;
             // 요약 카드(캔버스 U-Board): 큰 숫자 n / 32칸 · 종류 꼬리표 · 막대 하나 · 전체 재생. 네 상태 범례는 걷었다 — 칸 모서리 점이 말한다.
             // 2026-10-14 시안 Z-Board: 노란 클레이 요약 카드 · 보라 진행 막대.
-            return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 18, paddingHorizontal: 20, borderRadius: 28, ...Clay.yellow }}>
+            return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 18, paddingHorizontal: 20, borderRadius: T.radius.card, ...Clay.yellow }}>
               <View style={{ flex: 1, gap: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <Text style={{ fontSize: 26, lineHeight: 32, color: C.ink, fontWeight: '800', letterSpacing: -.4 }}>{done}<Text style={{ fontSize: 17, fontWeight: '500', color: C.yellowInk }}>{` / ${total}칸`}</Text></Text>
@@ -1853,11 +1845,11 @@ function Studio() {
               {playButton}
             </View>;
           })()}
-          {!reordering && project.slots.some(s => s.finalImage) && <Pressable testID="채팅에서 써 보기" accessibilityRole="button" accessibilityLabel="채팅에서 써 보기" onPress={() => setChatOpen(true)}
+          {!reordering && project.slots.some(s => s.finalImage) && <Pressable testID="채팅에서 써 보기" accessibilityRole="button" accessibilityLabel={t('guide.text018')} onPress={() => setChatOpen(true)}
             style={({ pressed }) => ({ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, borderRadius: 22, ...Clay.card, transform: pressed ? [{ scale: .98 }] : [] })}>
             <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.pointSoft, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="chat" size={IconSize.row} color={C.point} /></View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>채팅에서 써 보기</Text>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{t('guide.text018')}</Text>
               <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>대화 속에 넣어 크기·표정을 확인해요</Text>
             </View>
             <ImtiIcon name="next" size={IconSize.row} color={C.faint} />
@@ -1888,7 +1880,7 @@ function Studio() {
                 {s.finalImage
                   ? <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%', opacity: done ? 1 : .55 }} resizeMode="contain" />
                   // 명세 S01: 빈 칸은 '+' 로 분명히 알린다(지금 칸은 붓). 누르면 예전과 똑같이 그 칸이 열린다(동작은 그대로).
-                  : <View style={{ alignItems: 'center' }}><Text style={{ fontSize: current ? 15 : 14, fontWeight: '800', color: current ? C.ink : C.muted }}>{pad(s.number)}</Text>{current && <Text style={{ fontSize: 10, fontWeight: '700', color: C.pointInk }}>다음</Text>}</View>}
+                  : <View style={{ alignItems: 'center' }}><Text style={{ fontSize: current ? 15 : 14, fontWeight: '800', color: current ? C.ink : C.muted }}>{pad(s.number)}</Text>{current && <Text style={{ fontSize: 10, fontWeight: '700', color: C.pointInk }}>{t('ui.next')}</Text>}</View>}
                 {/* 상태는 모서리 점 하나: 완성 = 초록 · 그리는 중 = 노랑(잉크 테두리). 손볼 곳은 왼쪽 위. */}
                 {done && <View pointerEvents="none" testID="완성 표시" style={{ position: 'absolute', right: 7, bottom: 7, width: 10, height: 10, borderRadius: 5, backgroundColor: C.success }} />}
                 {working && <View pointerEvents="none" testID="그리는 중 표시" style={{ position: 'absolute', right: 7, bottom: 7, width: 10, height: 10, borderRadius: 5, backgroundColor: C.dotWorking }} />}
@@ -1910,25 +1902,25 @@ function Studio() {
         const done = doneCount(project), started = done > 0 || project.slots.some(isWorking);
         // 움직이는 세트가 24칸 기준을 채우면 완성 카드가 '내보내기'를 맡는다 — 같은 버튼을 두 번 두지 않는다(2026-10-15).
         const met = done >= (setIsAnimated(project) ? STAGES.animated : STAGES.still).proposal.emoticons;
-        return <View testID="board-action-dock" style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: C.paper, boxShadow: '0px -8px 24px rgba(120, 100, 70, 0.10)' }}>
-          {next !== null && <View style={{ flex: 2 }}><Action primary title={started ? '이어서 그리기' : '첫 칸 그리기'} disabled={!!busy} onPress={() => drawFrom()} /></View>}
-          {!met && (done > 0 || next === null) && <View style={{ flex: 1 }}><Action primary={next === null} title="내보내기" disabled={!!busy} onPress={() => setScreen('export')} /></View>}
+        return <View testID="board-action-dock" style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: C.paper, borderTopWidth: 1, borderColor: C.line }}>
+          {next !== null && <View style={{ flex: 2 }}><Action primary title={started ? t('ui.drawContinue') : t('ui.firstSet')} disabled={!!busy} onPress={() => drawFrom()} /></View>}
+          {!met && (done > 0 || next === null) && <View style={{ flex: 1 }}><Action primary={next === null} title={t('ui.export')} disabled={!!busy} onPress={() => setScreen('export')} /></View>}
         </View>;
       })()}
     </KeyboardAvoidingView>
 
-    {newSetName !== null && <Dialog title="새 이모티콘 세트" onClose={() => setNewSetName(null)}>
+    {newSetName !== null && <Dialog title={t('ui.newSetDefault')} onClose={() => setNewSetName(null)}>
       <Text style={styles.muted}>이름을 정하면 {SPEC.count}칸짜리 빈 세트를 만들어요. 이름은 나중에도 바꿀 수 있어요.</Text>
-      <Field label="세트 이름" value={newSetName} onChangeText={setNewSetName} multiline={false} />
-      <Action primary icon="plus" title="만들기" onPress={() => createProjectNow(newSetName)} />
-      <Action title="취소" onPress={() => setNewSetName(null)} />
+      <Field label={t('ui.setName')} value={newSetName} onChangeText={setNewSetName} multiline={false} />
+      <Action primary icon="plus" title={t('ui.create')} onPress={() => createProjectNow(newSetName)} />
+      <Action title={t('ui.cancel')} onPress={() => setNewSetName(null)} />
     </Dialog>}
-    {managed && !pendingDelete && <Dialog title="세트 관리" onClose={() => setManageId(null)}>
+    {managed && !pendingDelete && <Dialog title={t('ui.setManage')} onClose={() => setManageId(null)}>
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{managed.projectName}</Text>
       {/* 2026-10-16: 홈·세트 화면과 같은 기준(멈춤 32 · 움직임 24) */}
       <Text style={styles.muted}>{Math.min(doneCount(managed), (setIsAnimated(managed) ? STAGES.animated : STAGES.still).proposal.emoticons)} / {(setIsAnimated(managed) ? STAGES.animated : STAGES.still).proposal.emoticons}칸 완성</Text>
-      <Field label="세트 이름" value={managedName} onChangeText={setManagedName} multiline={false} />
-      <Action primary title="이름 바꾸기" disabled={!managedName.trim() || managedName.trim() === managed.projectName} onPress={() => renameProject(managed.id, managedName)} />
+      <Field label={t('ui.setName')} value={managedName} onChangeText={setManagedName} multiline={false} />
+      <Action primary title={t('ui.rename')} disabled={!managedName.trim() || managedName.trim() === managed.projectName} onPress={() => renameProject(managed.id, managedName)} />
       <Action icon="content-copy" title="세트 복제" onPress={() => duplicateProject(managed.id)} />
       <Action icon="archive-arrow-down-outline" title="백업 파일 만들기" onPress={() => { const target = managed; setManageId(null); backupProject(target); }} />
       <Text style={{ fontSize: 12, color: C.muted, lineHeight: 17 }}>그림·레이어·문구·움직임·참고를 파일 하나로 보관해요. 앱을 지우거나 기기를 바꾸기 전에 만들어 두면 내 정보 › 백업에서 되살리기로 그대로 돌아와요.</Text>
@@ -1953,7 +1945,7 @@ function Studio() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Glyph name={step.icon} size={22} /><Text style={{ fontSize: 17, fontWeight: '800', color: C.ink }}>{step.title}</Text></View>
         <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{step.body}</Text>
         {last && trial && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{PRO_TRIAL_NOTE}</Text>}
-        <Action primary title={last ? '시작하기' : '다음'} onPress={() => last ? finish() : setIntroStep(introStep + 1)} />
+        <Action primary title={last ? '시작하기' : t('ui.next')} onPress={() => last ? finish() : setIntroStep(introStep + 1)} />
         {!last && <Action title="건너뛰기" onPress={finish} />}
       </Dialog>;
     })()}
@@ -1961,7 +1953,7 @@ function Studio() {
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{pendingDelete.projectName}</Text>
       <Text style={styles.muted}>휴지통으로 옮겨요. {TRASH_DAYS}일 안에는 내 정보 › 휴지통에서 그림까지 그대로 되살릴 수 있고, 그 뒤에는 영구 삭제돼요.</Text>
       <Action danger title="휴지통으로 옮기기" onPress={() => deleteProject(pendingDelete.id)} />
-      <Action title="취소" onPress={() => setConfirmDeleteId(null)} />
+      <Action title={t('ui.cancel')} onPress={() => setConfirmDeleteId(null)} />
     </Dialog>}
     {guideTargetPick && <Dialog title="넣을 곳 고르기" onClose={() => setGuideTargetPick(false)}>
       {sortedProjects.map(p => { const open = nextUnfinished(p, p.lastSlot ?? 0);
@@ -1977,10 +1969,10 @@ function Studio() {
         onPress={() => { setGuideTargetId('new'); setGuideTargetPick(false); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 12, borderRadius: 12, backgroundColor: guideTargetId === 'new' ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
         <Glyph name="plus" size={18} color={C.ink} />
-        <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: C.ink }}>새 이모티콘 세트</Text>
+        <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: C.ink }}>{t('ui.newSetDefault')}</Text>
       </Pressable>
     </Dialog>}
-    {trashOpen && !pendingPurge && <Dialog title="휴지통" onClose={() => setTrashOpen(false)}>
+    {trashOpen && !pendingPurge && <Dialog title={t('ui.trash')} onClose={() => setTrashOpen(false)}>
       <Text style={styles.muted}>지운 세트는 {TRASH_DAYS}일 동안 여기 남아요. 되살리면 그림·움직임·참고가 그대로 돌아와요.</Text>
       {!trashed.length && <Text style={{ fontSize: 13, color: C.muted }}>휴지통이 비어 있어요.</Text>}
       {trashed.map(p => {
@@ -1989,7 +1981,7 @@ function Studio() {
           <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{p.projectName}</Text>
           <Text style={{ fontSize: 12, color: C.muted }}>{doneCount(p)} / {p.slots.length} 완성 · {left}일 뒤 영구 삭제</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1 }}><Action primary compact icon="restore" title="되살리기" onPress={() => restoreProject(p.id)} /></View>
+            <View style={{ flex: 1 }}><Action primary compact icon="restore" title={t('ui.restoreShort')} onPress={() => restoreProject(p.id)} /></View>
             <View style={{ flex: 1 }}><Action compact danger title="영구 삭제" onPress={() => setConfirmPurgeId(p.id)} /></View>
           </View>
         </View>; })}
@@ -1998,7 +1990,7 @@ function Studio() {
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{pendingPurge.projectName}</Text>
       <Text style={styles.muted}>이 세트의 그림과 참고 사진이 함께 지워지고, 되돌릴 수 없어요.</Text>
       <Action danger title="영구 삭제" onPress={() => purgeProject(pendingPurge.id)} />
-      <Action title="취소" onPress={() => setConfirmPurgeId(null)} />
+      <Action title={t('ui.cancel')} onPress={() => setConfirmPurgeId(null)} />
     </Dialog>}
     {store && cloudOpen && <CloudScreen visible={cloudOpen} onClose={() => setCloudOpen(false)} cloud={cloud} extra={Constants.expoConfig?.extra} device={`${Platform.OS} ${Platform.Version}`}
       store={store} projects={store.projects} commit={commit} task={task}
@@ -2009,7 +2001,7 @@ function Studio() {
       {!!restoreReport.missed.length && <Text style={{ fontSize: 13, lineHeight: 19, color: C.ink }}>{'보관 칸이 차서 넣지 못했어요: ' + restoreReport.missed.join(', ') + '. 지금 것을 정리한 뒤 같은 파일로 다시 되살리면 들어와요(세트는 사본이 하나 더 생겨요).'}</Text>}
       {!!restoreReport.kept.length && <Text style={{ fontSize: 13, lineHeight: 19, color: C.ink }}>{'이 기기에서 정해 둔 ' + restoreReport.kept.join('·') + '은(는) 바꾸지 않았어요.'}</Text>}
       <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>PRO 구매는 백업에 들어가지 않아요. 구매했다면 PRO 화면의 구매 복원으로 다시 켜 주세요. 휴지통에 있던 세트는 백업에 없어요.</Text>
-      <Action primary title="확인" onPress={() => setRestoreReport(null)} />
+      <Action primary title={t('ui.confirm')} onPress={() => setRestoreReport(null)} />
     </Dialog>}
     {exportsConfirm && <Dialog title="내보낸 파일 정리" onClose={() => setExportsConfirm(null)}>
       <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{`제출 묶음·백업·한 칸 공유를 만들 때 앱에 남은 사본 ${exportsConfirm.length}개예요. 지워도 세트·그림 원본은 그대로이고, 이미 다른 앱(드라이브·메신저 등)으로 보낸 파일도 그대로예요.`}</Text>
@@ -2024,31 +2016,31 @@ function Studio() {
     {proSheet && <Modal animationType="slide" onRequestClose={() => { setProSheet(false); resetPayment(); }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 4 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="PRO 닫기" onPress={() => { setProSheet(false); resetPayment(); }} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={28} color={C.ink} /></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('ui.proClose')} onPress={() => { setProSheet(false); resetPayment(); }} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={28} color={C.ink} /></Pressable>
           <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: C.ink }}>PRO</Text>
         </View>
         <ScrollView contentContainerStyle={{ padding: T.gap.lg, gap: T.gap.md, paddingBottom: 32 }}>
-          <Text style={{ fontSize: 24, fontWeight: '800', color: C.ink, lineHeight: 32, letterSpacing: -.4 }}>{'다양한 붓과 움직임으로\n여러 칸을 한 번에'}</Text>
+          <Text style={{ fontSize: 24, fontWeight: '800', color: C.ink, lineHeight: 32, letterSpacing: -.4 }}>{t('ui.proHeadline')}</Text>
           {/* 45.43 S6 전/후(시안 WB2-States 'PRO 표현'): 색이 아니라 배지·구성으로 PRO 를 보인다(보라 없음).
               왼쪽·오른쪽은 같은 그림(proFeatureArtwork source / sourceAfter)이다. 달라지는 것은 '무엇이 움직이는가'뿐 —
               실제 PRO 기능인 '부분만 움직이기'(고른 레이어만 따로)를 그린다. 흔드는 손 자리만 점선 원으로 표시한다. */}
-          <View testID="PRO 전후" accessibilityLabel="움직임 전후 미리보기" style={{ gap: 12, padding: 14, borderRadius: 24, backgroundColor: C.surface2 }}>
+          <View testID="PRO 전후" accessibilityLabel={t('ui.proPreview')} style={{ gap: 12, padding: 14, borderRadius: T.radius.card, backgroundColor: C.surface2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <ProTag />
-              <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>같은 그림, 움직임만 달라져요</Text>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{t('ui.proCompare')}</Text>
             </View>
             {/* 2026-10-15: 같은 그림에 무료 통통 · PRO 손 흔들기(부분) · PRO 등장→인사(단계)를 건 세 장. 앱 엔진으로 구운 실제 움직임이다(scripts/pro-clips.cjs). */}
             <View style={{ flexDirection: 'row', gap: 6 }}>
-              {([[ASSET_SLOTS.proFeatureArtwork.source, '무료 ·', '전체 움직임', '통통', false],
-                 [ASSET_SLOTS.proFeatureArtwork.sourceAfter, 'PRO ·', '부분 움직임', '손만 흔들기', true],
-                 [ASSET_SLOTS.proFeatureArtwork.sourceSteps, 'PRO ·', '이어 움직임', '등장 → 인사', true]] as const).map(([src, tier, label, hint, pro]) =>
-                <View key={label} accessibilityLabel={`${tier} ${label} · ${hint}`} style={{ flex: 1, paddingVertical: 8, borderRadius: 16, backgroundColor: pro ? C.paper : C.surface2, borderWidth: pro ? 1.5 : 0, borderColor: C.edge, alignItems: 'center', gap: 4 }}>
+              {([[ASSET_SLOTS.proFeatureArtwork.source, '무료 ·', t('ui.fullMotion'), t('ui.bounce'), false],
+                 [ASSET_SLOTS.proFeatureArtwork.sourceAfter, 'PRO ·', t('ui.partMotion'), t('ui.waveHand'), true],
+                 [ASSET_SLOTS.proFeatureArtwork.sourceSteps, 'PRO ·', t('ui.sequenceMotion'), t('ui.enterHello'), true]] as const).map(([src, tier, label, hint, pro]) =>
+                <View key={label} accessibilityLabel={`${tier} ${label} · ${hint}`} style={{ flex: 1, paddingVertical: 8, borderRadius: 16, backgroundColor: pro ? C.paper : C.surface2, borderWidth: pro ? 1 : 0, borderColor: C.line, alignItems: 'center', gap: 4 }}>
                   <Image accessibilityIgnoresInvertColors source={src ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
                   <View style={{ flexDirection: 'row', gap: 3 }}><Text style={{ fontSize: 11, fontWeight: pro ? '800' : '400', color: pro ? C.ink : C.muted }}>{tier}</Text><Text style={{ fontSize: 11, fontWeight: pro ? '800' : '700', color: pro ? C.ink : C.muted }}>{label}</Text></View>
                   <Text style={{ fontSize: 11, color: C.muted }}>{hint}</Text>
                 </View>)}
             </View>
-            <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>PRO 움직임과 조합은 구매 전에 내 그림으로 미리 볼 수 있어요(저장은 PRO).</Text>
+            <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{t('ui.proPreviewNote')}</Text>
             {/* PRO 움직임 칩: 실제 PRO 효과 이름(PRESETS 에서 PRO 인 것)을 앞에서 다섯, 나머지는 +N. */}
             <View testID="PRO 움직임 칩" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {proMotions.slice(0, 5).map(m => <View key={m.id} style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: C.surface2, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{m.label}</Text></View>)}
@@ -2068,7 +2060,7 @@ function Studio() {
             <Glyph name="check" size={16} color={C.muted} />
             <Text style={{ flex: 1, fontSize: 12, lineHeight: 18, color: C.muted }}>{`무료 브러시 ${CATALOG.filter(b => !b.pro).length}종 · 무료 움직임 ${PRESETS.filter(p => !isProPreset(p.id)).length}종으로 한 세트를 끝까지 만들고, 워터마크 없이 파일 묶음으로 내보낼 수 있어요.`}</Text>
           </View>
-          {entitlementLabel(entitlement) !== '무료' && <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>}
+          {entitlementLabel(entitlement) !== t('ui.free') && <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>}
           {expiredButRemembered(entitlement) && <Text style={{ fontSize: 12, color: C.ink }}>기간이 끝나도 이미 만든 움직임은 계속 재생되고 내보낼 수 있어요.</Text>}
           {/* 파는 것은 하나다: 한 번 구매하면 계속 쓰는 PRO. 값은 **스토어가 말해 주는 것만** 적는다.
               불러오지 못하면 값을 지어내지 않고, 지금 살 수 없다는 것과 다음에 할 일을 적는다. */}
@@ -2082,22 +2074,22 @@ function Studio() {
                   <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink }}>{prices.lifetime}</Text>
                   {!!prices.regular && <Text testID="PRO 정가" accessibilityLabel={'정가 ' + prices.regular} style={{ fontSize: 14, color: C.muted, textDecorationLine: 'line-through' }}>{prices.regular}</Text>}
                 </View>
-              : <Text style={{ fontSize: 15, fontWeight: '700', color: C.muted }}>{payment.phase === 'loading' ? '가격을 불러오는 중…' : '가격을 불러오지 못했어요'}</Text>}
+              : <Text style={{ fontSize: 15, fontWeight: '700', color: C.muted }}>{payment.phase === 'loading' ? t('ui.priceLoading') : t('ui.priceFailed')}</Text>}
             {!prices?.lifetime && payment.phase !== 'loading' && <Text style={{ fontSize: 11, color: C.muted, lineHeight: 16 }}>지금은 구매할 수 없어요. 잠시 뒤 다시 시도해 주세요. 무료 기능은 그대로 쓸 수 있어요.</Text>}
-            <Text style={{ fontSize: 11, color: C.muted }}>구독이 아니라 한 번만 결제해요. 정기 결제나 해지가 없어요.</Text>
+            <Text style={{ fontSize: 11, color: C.muted }}>{t('ui.onceNote')}</Text>
           </View>
           <PaymentStatus payment={payment} onRestore={() => void restorePro()} onRetry={() => void loadPrices()} />
           {payment.phase === 'bought' || payment.phase === 'restored'
-            ? <Action primary title="PRO로 만들러 가기" onPress={() => { setProSheet(false); resetPayment(); }} />
-            : <Action primary title="PRO 한 번 구매하기" busy={payment.phase === 'buying'} disabled={!prices?.lifetime || payment.phase === 'loading' || payment.phase === 'restoring' || isPro(entitlement)} onPress={() => void startPurchase()} />}
+            ? <Action primary title={t('ui.proContinue')} onPress={() => { setProSheet(false); resetPayment(); }} />
+            : <Action primary title={t('ui.purchaseOnce')} busy={payment.phase === 'buying'} disabled={!prices?.lifetime || payment.phase === 'loading' || payment.phase === 'restoring' || isPro(entitlement)} onPress={() => void startPurchase()} />}
           </>}
           {/* 내부 검수 빌드에서는 이 기기에서 결제를 열 수 없는 일이 흔하다. 잠금에 부딪힌 검수자가
               설정 깊은 곳의 토글을 찾아 헤매지 않도록, 막힌 바로 그 자리에서 켤 수 있게 한다.
               출시 구성에서는 internalReviewBuild() 가 거짓이라 이 줄이 아예 그려지지 않는다. 구매가 아니다. */}
           {reviewCapable() && !pro && <Action icon="key-variant" title="결제 없이 검수용 PRO 켜기"
             onPress={() => { try { commit(st => ({ ...st, reviewUnlock: true })); setProSheet(false); resetPayment(); setNotice(internalReviewBuild() ? REVIEW_BUILD_NOTE : REVIEW_DEV_NOTE); } catch (e) { setNotice('검수용 PRO 를 켜지 못했어요. ' + userMessage(e)); } }} />}
-          <Action title={trial ? 'PRO 체험 계속하기' : '무료로 계속하기'} onPress={() => { setProSheet(false); resetPayment(); }} />
-          {!purchasesClosed() && <Pressable accessibilityRole="button" accessibilityLabel="구매 복원" disabled={payment.phase === 'buying' || payment.phase === 'restoring'} onPress={() => void restorePro()} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{payment.phase === 'restoring' ? '구매 내역을 확인하는 중…' : '구매 복원'}</Text></Pressable>}
+          <Action title={trial ? t('ui.proTrialContinue') : t('ui.freeContinue')} onPress={() => { setProSheet(false); resetPayment(); }} />
+          {!purchasesClosed() && <Pressable accessibilityRole="button" accessibilityLabel={t('ui.purchaseRestore')} disabled={payment.phase === 'buying' || payment.phase === 'restoring'} onPress={() => void restorePro()} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{payment.phase === 'restoring' ? '구매 내역을 확인하는 중…' : t('ui.purchaseRestore')}</Text></Pressable>}
           {/* 일회성 구매에는 해지가 없다. 영수증·환불은 스토어의 구매 내역에서 본다.
               예전 구독 저장본을 가진 사람에게는 구독 관리 길도 함께 둔다 — 길을 막지 않는다. */}
           {isPro(entitlement) && !!entitlement && entitlement.plan === 'lifetime' && <Pressable accessibilityRole="button" accessibilityLabel="구매 내역" onPress={() => { Linking.openURL(purchaseHistoryUrl()).catch(() => setPayment({ phase: 'failed', problem: 'store-unavailable' })); }} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>구매 내역 보기</Text></Pressable>}
@@ -2231,7 +2223,7 @@ function PaymentStatus({ payment, onRestore, onRetry }: { payment: Payment; onRe
       {!!view.next && <Text style={{ fontSize: 12, color: T.muted, lineHeight: 18 }}>{view.next}</Text>}
       {!!view.action && <Pressable accessibilityRole="button" accessibilityLabel={view.action === 'restore' ? '안내에서 구매 복원' : '다시 시도'} onPress={view.action === 'restore' ? onRestore : onRetry}
         style={{ minHeight: 40, justifyContent: 'center', alignSelf: 'flex-start' }}>
-        <Text style={{ fontSize: 13, fontWeight: '800', color: T.ink, textDecorationLine: 'underline' }}>{view.action === 'restore' ? '구매 복원' : '다시 시도'}</Text>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: T.ink, textDecorationLine: 'underline' }}>{view.action === 'restore' ? t('ui.purchaseRestore') : '다시 시도'}</Text>
       </Pressable>}
     </View>
   </View>;

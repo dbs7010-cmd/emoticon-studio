@@ -1,0 +1,12 @@
+{
+  "npmTestExit": 0,
+  "passLines": 47,
+  "androidHermesExport": "PASS",
+  "deviceLabels": 56,
+  "frozenFiles": 8,
+  "localeKeys": 305,
+  "remainingLessonGuideStringsPerForeignLocale": 45,
+  "nativeBuild": false,
+  "nativeDeviceValidation": false,
+  "humanNativeLanguageReview": false
+}

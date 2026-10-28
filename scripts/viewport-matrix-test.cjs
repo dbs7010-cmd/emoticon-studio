@@ -64,7 +64,7 @@ const HEADER = 52, TABS = 48, STATUS = 24, NAV = 0; // 안드로이드 제스처
 
 async function openPainter() {
   await act(async () => { tree = create(React.createElement(App)); });
-  await press('매트릭스 세트 이어서 만들기');
+  await press('매트릭스 세트'); await press(labelled('이어서 그리기').length ? '이어서 그리기' : '첫 칸 그리기');
   await message({ type: 'ready' });
   const init = sent().filter(m => m.type === 'init').at(-1);
   await message({ type: 'state', undo: true, redo: false, dirty: false, activeLayerId: 'draw-1', activeReferenceId: null, caption: { text: '고마워요', place: 'bottom', color: '#242424' }, layers: init.layers.map(l => ({ id: l.id, name: l.name, visible: true, opacity: 1, x: 0, y: 0, scale: 1, rotation: 0 })), references: [] });
@@ -344,7 +344,7 @@ const heights = [568, 640, 720, 800, 900, 1000];
     // 홈 → 그리기 → 보드 → 내보내기 순서로 한 번씩 훑는다. 여는 데 실패하면 press 가 바로 멈춘다.
     const screens = [
       ['홈', async () => {}],
-      ['그리기', async () => { await press('매트릭스 세트 이어서 만들기'); }],
+      ['그리기', async () => { await press('매트릭스 세트'); await press(labelled('이어서 그리기').length ? '이어서 그리기' : '첫 칸 그리기'); }],
       ['보드', async () => { await press('그리기 닫기'); }],
       ['내보내기', async () => { await press('내보내기'); }],
     ];

@@ -5,7 +5,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { T, Font, Clay } from './ui';
+import { T, Font, Clay } from './app-ui';
 import { HopStage } from './motion-fx';
 import { ImtiIcon, IconSize } from '../design/icons';
 import type { Provider } from '../services/cloud/account';
@@ -42,7 +42,7 @@ const Corn = ({ s, pose }: { s: number; pose: keyof typeof CORN }) => <Image acc
 function MovingSet({ size }: { size: number }) {
   const a = useLoop(900), b = useLoop(1300), c = useLoop(1800);
   const cell = (size - 56 - 12) / 2, art = Math.round(cell * .62);
-  const box = { width: cell, height: cell, borderRadius: 28, alignItems: 'center', justifyContent: 'center', ...Clay.card } as const;
+  const box = { width: cell, height: cell, borderRadius: C.radius.card, alignItems: 'center', justifyContent: 'center', ...Clay.card } as const;
   // 시안 Z-Start: 옅은 노란 동그라미 위에 흰 클레이 칸들.
   return <View accessible accessibilityLabel="움직이는 이모티콘 예시" style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#FFFBE0', padding: 28 }}>
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
@@ -85,7 +85,7 @@ export function StartScreen({ providers, apple, onLogin, onStart, busy, error }:
           <Logo id={x.id} /><Text style={{ fontSize: 16, fontWeight: '700', color: x.ink }}>{ready ? x.label : x.label + t('start.soon')}</Text>
         </Pressable>; })
         : <Pressable accessibilityRole="button" accessibilityLabel={t('start.go')} onPress={onStart}
-            style={({ pressed }) => ({ height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: C.accent, ...(pressed ? Clay.buttonPressed : Clay.button) })}>
+            style={({ pressed }) => ({ height: 56, borderRadius: C.radius.card, alignItems: 'center', justifyContent: 'center', backgroundColor: C.accent, ...(pressed ? Clay.buttonPressed : Clay.button) })}>
             <Text style={{ fontSize: 17, fontWeight: '800', color: C.accentInk }}>{t('start.go')}</Text>
           </Pressable>}
       {!!providers && <Text style={{ marginTop: 4, fontSize: 12, lineHeight: 18, color: C.muted, textAlign: 'center' }}>{t('start.terms')}</Text>}
@@ -120,7 +120,7 @@ export function ArtistNameScreen({ check, save, formatError, onBack }: {
       {!!onBack && <Pressable accessibilityRole="button" accessibilityLabel="뒤로" onPress={onBack} style={{ width: 44, height: 44, marginLeft: -10, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="back" size={IconSize.tool} /></Pressable>}
     </View>
     <View style={{ gap: 10, paddingTop: 12 }}>
-      <View style={{ alignSelf: 'flex-start', marginLeft: -20, marginBottom: 6 }}><HopStage size={64}><View style={{ width: 84, height: 84, borderRadius: 28, ...Clay.yellow, alignItems: 'center', justifyContent: 'center' }}><Corn s={64} pose="wave" /></View></HopStage></View>
+      <View style={{ alignSelf: 'flex-start', marginLeft: -20, marginBottom: 6 }}><HopStage size={64}><View style={{ width: 84, height: 84, borderRadius: C.radius.card, ...Clay.yellow, alignItems: 'center', justifyContent: 'center' }}><Corn s={64} pose="wave" /></View></HopStage></View>
       <Text accessibilityRole="header" style={{ fontSize: 28, lineHeight: 37, fontWeight: '800', color: C.ink, letterSpacing: -.9 }}>{t('artist.title')}</Text>
       <Text style={{ fontSize: 15, lineHeight: 23, color: C.muted }}>{t('artist.rule')}</Text>
     </View>
@@ -134,9 +134,9 @@ export function ArtistNameScreen({ check, save, formatError, onBack }: {
       {state.kind !== 'idle' && <Text testID="작가명 확인" accessibilityLiveRegion="polite" style={{ marginHorizontal: 4, fontSize: 13, fontWeight: '700', color: tone }}>{state.kind === 'checking' ? t('artist.checking') : state.text}</Text>}
     </View>
     <View style={{ flex: 1 }} />
-    <Pressable accessibilityRole="button" accessibilityLabel="완료" accessibilityState={{ disabled: state.kind !== 'ok' || saving }} disabled={state.kind !== 'ok' || saving} onPress={() => void done()}
-      style={({ pressed }) => ({ height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: state.kind !== 'ok' ? C.fill : C.accent, ...(state.kind !== 'ok' ? {} : pressed ? Clay.buttonPressed : Clay.button) })}>
-      <Text style={{ fontSize: 17, fontWeight: '800', color: state.kind !== 'ok' ? C.faint : C.accentInk }}>{saving ? '저장하는 중…' : '완료'}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('ui.done')} accessibilityState={{ disabled: state.kind !== 'ok' || saving }} disabled={state.kind !== 'ok' || saving} onPress={() => void done()}
+      style={({ pressed }) => ({ height: 56, borderRadius: C.radius.card, alignItems: 'center', justifyContent: 'center', backgroundColor: state.kind !== 'ok' ? C.fill : C.accent, ...(state.kind !== 'ok' ? {} : pressed ? Clay.buttonPressed : Clay.button) })}>
+      <Text style={{ fontSize: 17, fontWeight: '800', color: state.kind !== 'ok' ? C.faint : C.accentInk }}>{saving ? '저장하는 중…' : t('ui.done')}</Text>
     </Pressable>
   </View>;
 }

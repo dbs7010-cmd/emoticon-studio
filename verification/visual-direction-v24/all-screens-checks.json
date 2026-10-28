@@ -1,0 +1,38 @@
+[
+  {
+    "screen": "lessons",
+    "height": 845,
+    "overflow": false,
+    "horizontal": false
+  },
+  {
+    "screen": "contest",
+    "height": 845,
+    "overflow": false,
+    "horizontal": false
+  },
+  {
+    "screen": "profile",
+    "height": 845,
+    "overflow": false,
+    "horizontal": false
+  },
+  {
+    "screen": "motion",
+    "height": 845,
+    "overflow": false,
+    "horizontal": false
+  },
+  {
+    "screen": "pro",
+    "height": 845,
+    "overflow": false,
+    "horizontal": false
+  },
+  {
+    "screen": "settings",
+    "height": 845,
+    "overflow": false,
+    "horizontal": false
+  }
+]

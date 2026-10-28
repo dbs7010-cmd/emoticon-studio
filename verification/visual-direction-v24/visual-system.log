@@ -1,0 +1,23 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '#F7F5F1'
+- '#F6F6F8'
+     ^
+
+    at C:\Dev\emoticon-studio\scripts\visual-system-test.cjs:89:10
+    at Object.<anonymous> (C:\Dev\emoticon-studio\scripts\visual-system-test.cjs:377:3)
+    at Module._compile (node:internal/modules/cjs/loader:1871:14)
+    at Object..js (node:internal/modules/cjs/loader:2002:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '#F7F5F1',
+  expected: '#F6F6F8',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

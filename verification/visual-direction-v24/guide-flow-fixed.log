@@ -1,0 +1,21 @@
+  에셋 등록: 기존 5 + 신규 76 = 81 · id/파일 중복 0 · 파일 없음 0 · 가장자리 잉크 0
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  진입 확인: ready=false 상태에서 홈 → 감정 → 표현 목록 → 참고 창 · 밑그림 모두 열림(안녕 · 잘 자)
+[emoticon-studio] importBundledImage 1 Error: no file uri
+    at C:\Dev\emoticon-studio\src\services\images.ts:98:19
+    at async stage (C:\Dev\emoticon-studio\src\services\images.ts:75:16)
+    at async Object.importBundledImage (C:\Dev\emoticon-studio\src\services\images.ts:93:17)
+    at async C:\Dev\emoticon-studio\scripts\guide-flow-test.cjs:562:11
+  릴리스 조건: 리소스 이름을 파일로 오해하지 않고 내려받아 쓴다 · 실패 시 단계만 한글로 알린다
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  넣을 곳 — 기본은 가장 최근 세트, 다른 세트로 바꾸면 그 세트의 다음 빈 칸이 열린다
+PASS: guide flow — 고마워 다섯 표현의 ID·이름·힌트, 그림 없는 표현의 준비 중과 잠긴 버튼, 고른 표현의 그림·힌트 전달, 참고 창 옮기기(화면 밖 이탈 없음)·접기·다시 열기·닫기와 캔버스 입력 분리, 밑그림의 기존 참고 레이어 재사용(30%·중앙·별도 그림 레이어·조절·삭제), 저장 그림·움직임·썸네일 제외를 확인했다. Native/WebView mocked.

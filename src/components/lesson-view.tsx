@@ -1,9 +1,10 @@
+import { t } from '../i18n/index';
 // 강좌 보기(2026-10-15 · 2026-10-16 유튜브식으로 다시). 맨 위 영상(지금 단계) → 제목·한 줄 정보 → 지금 단계 설명 → 단계 목록(챕터).
 // 영상은 한 번에 하나만 돈다(소리 없음 · 반복). 단계 목록을 누르면 그 단계로 간다. 마지막 '정리'도 목록의 한 줄이다.
 import React, { useState } from 'react';
 import { Image, Linking, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { T, Clay, Glyph } from './ui';
+import { T, Clay, Glyph } from './app-ui';
 import type { Lesson, LessonAction } from '../constants/lessons';
 
 const C = T;
@@ -23,8 +24,8 @@ export function LessonView({ lesson, onBack, onAction }: { lesson: Lesson; onBac
   const image = step?.image ?? (!step ? lesson.thumb : undefined);
   return <View testID="강좌 보기" style={{ gap: 14 }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, marginLeft: -8 }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="강좌 목록으로" onPress={onBack} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={24} color={C.ink} /></Pressable>
-      <Text numberOfLines={1} style={{ flex: 1, fontSize: 15, fontWeight: '700', color: C.muted }}>강좌</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('ui.backLesson')} onPress={onBack} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={24} color={C.ink} /></Pressable>
+      <Text numberOfLines={1} style={{ flex: 1, fontSize: 15, fontWeight: '700', color: C.muted }}>{t('ui.lessons')}</Text>
     </View>
     {/* 플레이어 */}
     <View testID="강좌 플레이어" style={{ marginHorizontal: -16, width: playerW, height: step?.video ? playerH : undefined, alignItems: 'center', justifyContent: 'center', backgroundColor: C.surface2 }}>
@@ -49,8 +50,8 @@ export function LessonView({ lesson, onBack, onAction }: { lesson: Lesson; onBac
         <Glyph name="chevron-right" size={18} color={C.pointInk} />
       </Pressable>}
     </View> : <View testID="강좌 정리" style={{ gap: 12 }}>
-      <View style={{ borderRadius: 24, padding: 18, gap: 10, ...Clay.yellow }}>
-        <Text style={{ fontSize: 13, fontWeight: '800', color: C.yellowInk }}>핵심 정리</Text>
+      <View style={{ borderRadius: C.radius.card, padding: 18, gap: 10, ...Clay.yellow }}>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: C.yellowInk }}>{t('ui.keyPoints')}</Text>
         {lesson.points.map((p, i) => <View key={i} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
           <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.paper, alignItems: 'center', justifyContent: 'center', marginTop: 1 }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{i + 1}</Text></View>
           <Text style={{ flex: 1, fontSize: 16, lineHeight: 23, fontWeight: '700', color: C.ink }}>{p}</Text>
@@ -61,7 +62,7 @@ export function LessonView({ lesson, onBack, onAction }: { lesson: Lesson; onBac
         <Text style={{ fontSize: 16, fontWeight: '800', color: C.accentInk }}>{`바로 해 보기 · ${lesson.tryIt.label}`}</Text>
       </Pressable>}
       {!!lesson.youtube && <Pressable accessibilityRole="link" accessibilityLabel="유튜브에서 전체 영상 보기" onPress={() => Linking.openURL(lesson.youtube!).catch(() => {})}
-        style={{ minHeight: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: C.fill }}>
+        style={{ minHeight: 48, borderRadius: C.radius.card, alignItems: 'center', justifyContent: 'center', backgroundColor: C.fill }}>
         <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>유튜브에서 전체 영상 보기</Text>
       </Pressable>}
     </View>}

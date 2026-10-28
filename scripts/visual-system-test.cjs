@@ -43,7 +43,7 @@ const images = { dataUrl: async () => pngData, pickImages: async () => [], saveP
 const load = loader({ ...mocks, './src/services/images': images, '../services/images': images });
 const { loadStore, saveStore } = load('src/services/storage.ts');
 const { createProject } = load('src/project.ts');
-const { T, S, Motion, Type, Elev, Pop, Font } = load('src/components/ui.tsx');
+const { T, S, Motion, Type, Elev, Pop, Font } = load('src/components/app-ui.tsx');
 const slots = load('src/design/asset-slots.ts');
 const App = load('App.tsx').default;
 
@@ -66,7 +66,7 @@ async function ready() {
   // ── 1. 토큰: 명세 값 · 한 벌 ─────────────────────────────────────────────────────────────
   // 45.42 WHITE BASE(사용자 확정 2026-09-28): WHITE · INK · NEUTRAL · MAKER YELLOW. 값이 되돌아가지 않게 못 박는다.
   // 바탕과 패널이 모두 흰색이다 — 층은 옅은 중립 선 + 부드러운 그림자, 가라앉은 면(surface2)으로 읽힌다.
-  assert.equal(T.bg, '#FFFFFF'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.surface2, '#F7F5F1');
+  assert.equal(T.bg, '#FFFFFF'); assert.equal(T.paper, '#FFFFFF'); assert.equal(T.surface2, '#F6F6F8');
   assert.notEqual(T.cardLine, T.paper, '흰 카드는 바탕과 다른 선으로 층이 읽힌다');
   assert.notEqual(T.bg, T.surface2, '눌린 면은 앱 바탕과도 달라야 한다');
   // 2026-10-14 시안 Z(사용자 확정): 차가운 잉크 · 노랑 #FFE14D · 포인트 보라 #5B57D9(지금·고른 것·진행에만).
@@ -81,7 +81,7 @@ async function ready() {
   assert.notEqual(T.accent.toUpperCase(), '#FEE500', '카카오 노랑을 쓰지 않는다');
   // 스티커 문법: 2px 짙은 테두리 + 딱 떨어지는 그림자(노란 버튼·고른 것에만). PRO 는 보라 없이 잉크(배지 모양으로 구분).
   assert.equal(T.stroke, 2); assert.equal(T.edge, T.ink, '스티커 테두리는 본문 색');
-  assert.equal(Pop.border.borderWidth, 2); assert.ok(/^3px 3px 0px /.test(Pop.shadow.boxShadow), '주요 표면 그림자는 흐림 없이 3px');
+  assert.equal(Pop.border.borderWidth, 1); assert.equal(Pop.shadow.boxShadow, 'none', '앱 화면은 평평한 표면');
   assert.equal(T.pro, T.ink, 'PRO 는 보라가 아니라 잉크'); assert.equal(T.proSoft, T.accentSoft, 'PRO 옅은 면은 옅은 노랑(시안 Z)');
   for (const k of Object.keys(T)) if (typeof T[k] === 'string') assert.notEqual(T[k].toUpperCase(), '#5B47E0', 'PRO 보라가 남지 않는다: ' + k);
   // 상태 토큰 한 벌(45.42): 선택 = 노란 면 + 잉크 가장자리, 비활성 = 옅은 색(투명도 아님).
@@ -91,7 +91,7 @@ async function ready() {
   // 아이콘 부품(icons.tsx)은 순환 참조를 피하려 색을 따로 들고 있다 — 토큰과 같은 값이어야 한다.
   { const I = load('src/design/icons.tsx'); assert.equal(I.ICON_INK, T.ink, '아이콘 잉크 = T.ink'); assert.equal(I.ICON_FAINT, T.faint, '아이콘 비활성 = T.faint'); }
   // 제목 글꼴 Jua: 빌드 설정에 들어 있고, 파일과 OFL 사용권 문서가 함께 있다.
-  assert.equal(Font.display, 'Jua'); assert.equal(Type.screenTitle.fontFamily, 'Jua'); assert.equal(Type.screenTitle.fontWeight, '400', '한 굵기 글꼴에 가짜 굵기를 걸지 않는다');
+  assert.equal(Font.display, 'Jua'); assert.equal(Type.screenTitle.fontFamily, undefined); assert.equal(Type.screenTitle.fontWeight, '700');
   {
     const plugin = require('../app.config.js')().plugins.find(x => Array.isArray(x) && x[0] === 'expo-font');
     assert.ok(plugin && plugin[1].android.fonts[0].fontFamily === 'Jua', 'expo-font 설정 플러그인이 Jua 를 넣는다');
@@ -113,16 +113,16 @@ async function ready() {
     assert.ok(ratio(T.faint, T.paper) >= 3.27, '비활성 글자·아이콘은 흰 면 위 3:1 이상(45.39 보다 옅어지지 않는다): ' + ratio(T.faint, T.paper).toFixed(2));
     assert.ok(ratio(T.ink, T.accentSoft) >= 7, '옅은 노랑(목록형 선택) 위 본문 7:1 이상');
   }
-  assert.deepEqual([T.radius.xs, T.radius.sm, T.radius.md, T.radius.lg, T.radius.xl], [8, 12, 16, 20, 24], '모서리는 8·12·16·20·24 한 벌');
+  assert.deepEqual([T.radius.xs, T.radius.sm, T.radius.md, T.radius.lg, T.radius.xl], [6, 8, 10, 12, 16], '앱 화면의 절제된 모서리');
   // 명세 §2 는 쓰임새로 부른다: 카드16 · 버튼12 · 칩10.
   // 45.39: 스티커 표면은 조금 더 둥글다 — 카드20 · 버튼14 · 칩10.
-  assert.deepEqual([T.radius.card, T.radius.button, T.radius.chip], [24, 18, 10], '카드24·버튼18·칩10(2026-10-14 시안 Z: 더 둥근 클레이)');
+  assert.deepEqual([T.radius.card, T.radius.button, T.radius.chip], [12, 8, 8], '앱 화면 카드12·버튼8·칩8');
   // 45.39 글자 위계. 제목26 · 화면명22 · 섹션19(Jua) · 본문16 · 버튼15 · 보조13 · 도구12.
   assert.deepEqual([Type.screenTitle.fontSize, Type.screenName.fontSize, Type.sectionTitle.fontSize, Type.body.fontSize, Type.button.fontSize, Type.bodySecondary.fontSize, Type.caption.fontSize],
     [26, 22, 19, 16, 15, 13, 12], '글자 크기 한 벌');
   assert.deepEqual(Object.values(T.gap), [4, 8, 12, 16, 20, 24, 32], '간격은 4 기반 한 벌');
   for (const key of ['screenTitle', 'sectionTitle', 'cardTitle', 'body', 'bodySecondary', 'button', 'caption', 'micro']) assert.ok(Type[key]?.fontSize, 'Type.' + key);
-  assert.ok(Elev[1].shadowOpacity <= .08 && Elev[2].shadowOpacity <= .12, '그림자는 옅다(짙은 drop shadow 금지)');
+  assert.deepEqual(Elev[1], {}); assert.ok(Elev[2].boxShadow.includes('0.08'));
   // 소스: 2px 노랑 선택 테두리(`borderWidth: on ? 2` + accent) 가 돌아오지 않는다. 버튼 900 굵기 남발도 막는다.
   const sources = ['App.tsx', 'src/painter/painter.tsx', 'src/painter/motion-panel.tsx', 'src/components/ui.tsx'].map(f => [f, fs.readFileSync(f, 'utf8')]);
   for (const [file, src] of sources) {
@@ -171,14 +171,14 @@ async function ready() {
   assert.equal(byTestID('홈 창작 표면').length, 0, '작업이 있으면 소개용 큰 표면을 두지 않는다');
   assert.equal(byTestID('홈 알림').length, 0, '알림·공모전 없음 → 자리 없음');
   const primaryYellow = tree.root.findAll(n => n.type === 'Pressable' && flat(n.props.style).backgroundColor === T.accent).map(n => n.props.accessibilityLabel);
-  assert.deepEqual(primaryYellow, ['시각 세트 이어서 만들기'], '노란 버튼은 지금 할 일 하나(시안 Z-Home): ' + JSON.stringify(primaryYellow));
+  assert.deepEqual(primaryYellow, [], '표지를 가리는 이어 그리기 버튼 없음');
   // 2026-10-27 큰 표지형(사용자 승인): 큰 대표 카드·제안까지 줄 대신 2열 작품 서가. 표지 안의 '이어서 그리기'가 지금 할 일.
   assert.equal(byTestID('홈 작품 서가').length, 1, '작품 서가가 있다');
   {
     const ids = n => n.findAll(x => x.type === 'Svg').map(x => x.props.testID);
     const card = labelled('시각 세트')[0];
     assert.ok(!card.findAll(n => typeof n.props.testID === 'string' && /^slot-/.test(n.props.testID)).length, '홈 표지에는 32칸 격자가 없다');
-    assert.ok(texts().includes('이어서 그리기'), '표지 안 버튼 글자');
+    assert.ok(!texts().includes('이어서 그리기'), '표지 안 이어 그리기 버튼 없음');
     const fresh = flat(labelled('새 세트 만들기')[0].props.style);
     assert.ok((fresh.height ?? fresh.minHeight) >= T.tap, '새로 만들기 누르는 자리');
     assert.ok(ids(labelled('내 그림으로 시작')[0]).includes('icon-reference'));

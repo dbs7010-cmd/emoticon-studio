@@ -1,0 +1,540 @@
+
+> emoticon-studio@1.0.0 test
+> npm run typecheck && npm run test:ux
+
+
+> emoticon-studio@1.0.0 typecheck
+> tsc --noEmit
+
+
+> emoticon-studio@1.0.0 test:ux
+> node scripts/lesson-corn-test.cjs && node scripts/line-export-test.cjs && node scripts/ads-test.cjs && node scripts/config-changes-test.cjs && node scripts/i18n-test.cjs && node scripts/icon-test.cjs && node scripts/state-ui-test.cjs && node scripts/text-contrast-test.cjs && node scripts/entry-reset-test.cjs && node scripts/ux-test.cjs && node scripts/storage-test.cjs && node scripts/backup-test.cjs && node scripts/full-backup-test.cjs && node scripts/backup-rules-test.cjs && node scripts/gesture-test.cjs && node scripts/fill-test.cjs && node scripts/export-test.cjs && node scripts/spec-test.cjs && node scripts/recovery-test.cjs && node scripts/e2e-test.cjs && node scripts/pro-test.cjs && node scripts/review-pro-test.cjs && node scripts/server-test.cjs && node scripts/color-test.cjs && node scripts/motion-v1-test.cjs && node scripts/motion-preset-test.cjs && node scripts/motion-step-test.cjs && node scripts/iap-test.cjs && node scripts/asset-check-test.cjs && node scripts/release-check-test.cjs && node scripts/product-ux-test.cjs && node scripts/viewport-matrix-test.cjs && node scripts/slot-repeat-test.cjs && node scripts/visual-system-test.cjs && node scripts/ui-structure-test.cjs && node scripts/asset-contract-test.cjs && node scripts/guide-flow-test.cjs && node scripts/convenience-test.cjs && node scripts/closed-purchases-test.cjs && node scripts/closed-config-test.cjs && node scripts/closed-test-ui-test.cjs && node scripts/cloud-ui-test.cjs && node scripts/onboarding-test.cjs && node scripts/chat-guide-test.cjs && node scripts/pro-trial-test.cjs && node scripts/closed-docs-test.cjs && node scripts/device-qa.cjs --dry
+
+  통통(전체): 10장 · 360×360 · 150KB · 한 바퀴 0.8초
+  하트만 통통 튀기(부분): 10장 · 360×360 · 125KB · 한 바퀴 0.8초
+  윙크 애니메이션(3장): 15장 · 360×360 · 210KB · 한 바퀴 1.5초
+PASS: lesson corn — 강좌 10편 파일·무료 그룹·옛 캐릭터 문구 없음, 콘 예시 세 가지(통통 · 하트만 · 윙크 3장)가 앱 엔진에서 ≤24장 · 360×360 · ≤650KB · 잘림 없음
+  01.png bounce: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 457KB
+  02.png hop: 270×270 · 19장 · 한 바퀴 1.60초 × 2회 · 864KB
+  03.png tilt: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 458KB
+  04.png float: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 457KB
+  05.png nod: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 454KB
+  06.png bow: 270×270 · 19장 · 한 바퀴 1.60초 × 2회 · 824KB
+  07.png dance: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 458KB
+  08.png sway: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 458KB
+PASS: line export — 콘 8칸 APNG(270×270, 5~20장, ≤4초, 1~4회, ≤1MB, 투명) + main 240×240 APNG + tab 96×74 PNG, ZIP 4811KB · 규격 밖 거절 · 장별 디코드·서로 다름 확인 · 카카오 프레임 그대로 · 일반 스티커 370×320 PNG(여백 10px·짝수)·세트 8~40
+PASS: ads — 끝까지 봄=만듦 · 닫음=이번엔 안 만듦 · 실패/시간 초과=막지 않음 · 광고 단위(출시/검수 시험 광고/iOS·형식 오류=없음). SDK mocked.
+PASS: config changes — density 추가(중복 없음), 매니페스트에 density·screenSize·smallestScreenSize·screenLayout·orientation
+PASS: i18n — 기기 언어 고르기(ko/ja/zh-Hant, 간체·영어는 한국어), 키 305개 모두 일본어·번체, 자리 표시 일치, 한국어 잔존 없음
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+PASS: icons — 「임티 라인」 32종 × 14/18/22 모두 24 격자·선 1.8·둥근 끝·채움 없음·잉크 색, 비활성은 옅은 선(투명도 아님), 기본은 화면 읽기에서 숨고 이름을 주면 이미지로 읽힘. SVG 는 검사 로더의 목 — 실제 렌더링은 _icon-sheet(브라우저)·APK 에서 확인.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: state ui — 선택(노란 면+잉크/옅은 노랑)·비활성(옅은 색, disabled·접근성 유지) 규칙, 빈 상태 새 모양(제목·설명·노란 행동 하나·흐름 아이콘, 예전 모양 유지), 저장 알림(흰 알약·초록 체크 한 점·잉크 다음 칸·0.24초 네이티브), 완성 카드(흰 카드·노란 체크 0.28초·행동 하나), PRO 배지(잉크 테두리·반짝 아이콘·48dp·보라 없음). Animated·SVG 는 검사 대역 — 실제 움직임과 그림은 APK 에서.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: text contrast — 58개 화면(360·390dp) 글자 3077개: 일반 4.5:1 · 큰 글자 3:1 이상(실제 조상 바탕·반투명 섞음·투명도 반영). 비활성 컨트롤 안 글자 2곳은 WCAG 1.4.3 예외로 따로 셈. 검사 대역 트리 기준 — 기기 픽셀 대비는 실기기에서.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: entry reset — 가이드 직접 선택 → 그 칸에 밑그림 · 가이드 직후 완성·다음 → 빈 캔버스 · 가이드 직후 새 세트 → 빈 캔버스 · 가이드 고른 뒤 닫고 보드의 다른 칸 → 가이드 없음 · 저장된 참고 설정 재열기·앱 재시작 → 그대로, 옛 참고 → 숨김(데이터 보존) · 내 그림으로 시작 → 그 칸만, 옆 칸은 빈 캔버스. WebView·네이티브는 검사 대역(캔버스 실제 표시는 기기에서).
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+[emoticon-studio] disk full
+[emoticon-studio] disk full
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  48dp 미만(보조): 없음
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+[emoticon-studio] 저장 파일을 읽지 못했습니다 {
+  "directory": "document/emoticon-studio",
+  "snapshots": [
+    {
+      "name": "store-a.json",
+      "uri": "document/emoticon-studio/store-a.json",
+      "exists": true,
+      "bytes": 21,
+      "head": "{ \"version\": 1, \"revi",
+      "tail": "{ \"version\": 1, \"revi",
+      "revision": null,
+      "stage": "json",
+      "error": "SyntaxError: Unterminated string in JSON at position 21 (line 1 column 22)"
+    },
+    {
+      "name": "store-b.json",
+      "uri": "document/emoticon-studio/store-b.json",
+      "exists": true,
+      "bytes": 50,
+      "head": "{\"version\":1,\"revision\":9,\"projects\":[{\"",
+      "tail": ":1,\"revision\":9,\"projects\":[{\"id\":\"x\"}]}",
+      "revision": null,
+      "stage": "shape",
+      "error": "Error: 프로젝트 저장 데이터가 손상되었습니다."
+    }
+  ]
+}
+[emoticon-studio] 저장 파일을 읽지 못했습니다 {
+  "directory": "document/emoticon-studio",
+  "snapshots": [
+    {
+      "name": "store-a.json",
+      "uri": "document/emoticon-studio/store-a.json",
+      "exists": true,
+      "bytes": 21,
+      "head": "{ \"version\": 1, \"revi",
+      "tail": "{ \"version\": 1, \"revi",
+      "revision": null,
+      "stage": "json",
+      "error": "SyntaxError: Unterminated string in JSON at position 21 (line 1 column 22)"
+    },
+    {
+      "name": "store-b.json",
+      "uri": "document/emoticon-studio/store-b.json",
+      "exists": true,
+      "bytes": 50,
+      "head": "{\"version\":1,\"revision\":9,\"projects\":[{\"",
+      "tail": ":1,\"revision\":9,\"projects\":[{\"id\":\"x\"}]}",
+      "revision": null,
+      "stage": "shape",
+      "error": "Error: 프로젝트 저장 데이터가 손상되었습니다."
+    }
+  ]
+}
+  노랑 글자 0곳 · 노랑 위 글자 #17191D 고정 · PRO 역할 분리
+PASS: one-tap start into an empty canvas, two tabs over one drawing, free effects that reach the canvas, PRO parts announced before use (free users go to PRO first, never blocked at save), a movement kept on a shelf and taken back down without touching the cut, a piece kept as its own picture and brought back, movement order changed by dragging, a batch preview that builds one cut for real without writing anything, a batch apply that reaches every drawn cut and names the reason for the ones it skips, and survives a cold restart, empty canvas never counts as finished, 완성 declaration separate from autosave, autosave on backgrounding, one save per double tap, copy-previous as an independent document, captions saved with the drawing, temporary and adopted set references, re-edit returns a cut to 작업 중, board states, the last open cut returning to the board, export flow that only claims what it measured, share retry, legacy stores preserved and readable, guarded set deletion, save failure that never claims a completion, an unreadable store that names the cause and writes nothing. Native modules/WebView mocked; drawing and file delivery still require a device.
+PASS: project image ownership, orphan set difference across projects, shared-path protection, deletion guard for store snapshots and foreign files. File system mocked.
+PASS: backup — 세트 하나를 ZIP 하나로(정보 + 가리키는 그림 전부), 빈 저장소에서 되살리면 칸·레이어·문구·움직임·참고·완성·부가 이미지와 그림 내용이 그대로, 기기에서 이미 사라진 그림은 적어 두고 나머지를 담음, 그림은 새 이름(덮어쓰기 없음), 같은 세트가 있으면 (복원) 사본, 휴지통 표시 제외. 손상·잘림·다른 형식·새 버전·깨진 세트·경로 조작·적히지 않은 그림 누락·재압축은 아무것도 쓰지 않고 거절. File system mocked.
+PASS: full backup — caps and kept settings are counted and reported, skipped cutouts leave no files, a failed write removes only its own new files; every live set + settings (palettes, saved motions, cutouts, favourite brushes, paper, guide) in one file; never carries PRO entitlement or review unlock (even if injected); restore adds without overwriting (sets as copies, lists merged under caps, single settings only when unset); damaged or incomplete files write nothing
+PASS: backup rules — auto backup stays on, only emoticon-studio/exports/ (sent copies) is excluded from cloud backup, no include rules, path matches storage
+PASS: one-finger stroke, two-finger tap undo, three-finger tap redo across staggered lifts, drag is not a tap, three consecutive undo+redo steps restore every state in order, new stroke clears redo, reference move/pinch, caption: tap selects (no stroke, no undo step), tap again asks to edit, jitter is not a move, drag moves the words, handle drag scales, two-finger pinch scales (cap 3) and twist rotates, soft bounds keep the centre on the canvas, tapping elsewhere ends the selection without drawing, saved caption equals the on-canvas one. DOM shimmed; Android touch delivery still requires device test.
+PASS: 새 장 id 가 겹치지 않는다(가운데·마지막·되풀이·저장 후·복제) · 장의 차례 바꾸기(앞으로·양 끝 멈춤·되돌리기) · flood fill stays inside closed line art, respects undo/redo, touches only the active drawing, never reaches references, and yields to multi-touch gestures; captions are painted into the export but never into a layer, survive undo, and travel with a copied cut. Canvas rasteriser is a test double; device test still required.
+PASS: zip structure parses, crc32 agrees with zlib, slot ordering, 부가 이미지와 공식 도구용 프레임 폴더·안내 쪽지, 제출 형식(WebP)이 묶음에 들어가고 못 만든 컷은 GIF 로 남는 것, reference/canon/working layers excluded, safe file naming, empty set refused. File system mocked.
+PASS: a flawless final passes, real defects still fail, 공식 가이드에서 읽은 용량·개수·형식이 실제로 강제되고, artwork judgement is never scored, identical exports are reported, messages are Korean, and QA and export judge the same asset. File system mocked.
+  예전 저장 파일 호환: 그대로 열리고, 브러시 이름 변경이 획에 닿지 않는다
+PASS: failed writes keep the last good snapshot and the retryable edit, damaged and future schemas refuse safely, repeated captions are found without mistaking old planning text, pre-완성 stores keep every finished cut, export refuses missing files and unverifiable archives. File system mocked with injected write failure.
+PASS: plan, draw, save, restart, review, export and reopen the archive; every entry is the inspected final PNG at the working canvas size, with references and canon excluded. Services integration, not a screen-level end to end.
+PASS: 서버가 확인한 영수증만 PRO를 만들고(테스트 구매·이상한 대답·연결 실패는 전부 거절), 스토어 영수증만 PRO를 만들고, 손으로 쓴 이용권은 통하지 않으며, 오프라인에서 남은 기간이 유지되고, 모듈 없는 빌드는 구매·복원을 성공으로 처리하지 않으며, 만료 뒤에도 작품과 저장된 PRO 움직임이 남는다. 스토어 연동 자체는 개발 빌드와 상품 등록이 필요해 여기서 검증하지 않는다.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: review pro — 내부 검수 구성에서 설정의 검수용 PRO 토글을 누르면 홈 배지·부분 움직임·고급 브러시가 실제로 함께 열리고 끄면 함께 잠긴다. 출시 구성에는 토글이 그려지지 않는다. Native/WebView mocked.
+PASS: 서버 판정 — 비소모성 일회성 상품은 구매 상태만 보고 기한 없이 통과(취소·보류·다른 상품·구독 응답은 거절), 예전 구독은 살아 있는 것만 통과하고 상품·기간·상태가 어긋나면 거절, 테스트 구매는 서버 설정이 정하고 그 사실이 응답에 남는다. 프로모션 코드 구매는 운영 설정에서도 인정(테스트 표시 없음·기한 없음)하고, 취소·보류·다른 상품·우리 상품 아님은 거절한다. 실제 스토어 호출은 서비스 계정 키가 있어야 하므로 여기서 검증하지 않는다.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: color — SV 사각·색상 막대·투명도가 캔버스 색을 바꾸고 최근 색은 멈춘 뒤 한 번만 기록, 스포이드 켜기·취소·읽은 색 반영·빈 곳 안내·누른 채 끌어 집기(끄는 동안 미리보기, 떼면 확정), 내 팔레트 저장·재사용·정리, HEX 투명도, 브러시 도구 다시 누르기로 설정, 고급 브러시 저장·복원, 색 패널은 SV 사각으로 열리고 팔레트 견본은 갈래 안. 무료: 무료 프리셋(부드러운 펜·마커)은 PRO 없이도 살아 있고, 색·진하기·선 보정 전부 사용, 자물쇠 0, PRO 표시는 고급 브러시 한 줄, 누르면 안내로 가고 캔버스는 그대로. Native/WebView mocked.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: motion v1 — 통통·흔들기·두근거리기 각각 고르는 즉시 미리보기(설정은 고른 뒤)·속도·세기·칸 닫기로 저장·재시작 복원·그대로 닫아도 유지, 움직임 없음(그림·문구 유지), 빈 칸·이전 버전 저장본, PRO 부분 2개·차례로·시작 간격·세부 조절은 펼쳐야 보임·끌기/버튼 순서 바꾸기·저장, PRO 종료 뒤: 저장된 PRO 움직임 유지, 부분 움직임 입구·PRO 보관 움직임은 누르는 순간 안내(칸 불변), 무료 효과 변경 저장은 막히지 않음, 32칸·다른 칸·완성 수·브러시 설정 불변. Native/WebView mocked.
+PASS: 전체 움직임 20종(pop·slide·peek·drop·vanish·bounce·float·tilt·hop·nod·bow·dance·sway·spin·shake·pulse·jitter·shiver·punch·stretch) 모두 선택 → 저장 → 재열기. 모르는 종류는 여전히 거부하고, 거부된 저장은 이전 저장본을 건드리지 않는다. 엔진·견본 식 일치, 옛 여섯 값 불변, 스무 가지 이음매, 무료 6·PRO 14, 방향 저장.
+경계 2592곳(효과 18×18×세기 2×반복 2×경계 2) — 앞·뒤 자세 최대 차이 0.0708px (shiver→slide)
+PASS: motion steps (V2) — engine and RN formulas identical, no jumps at step boundaries or loop seam (all usable pairs), store accepts valid steps and rejects peek/vanish/too many/out of range, legacy motion unchanged, steps are PRO and animate the cut
+PASS: motion combos — 등장→인사 · 놀람→떨기 · 폴짝→신남(서로 다름, ≤3초, 저장 가능, PRO) · 부분 출발점 3
+  규칙 층 PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: iap — 비소모성 일회성 PRO: 상품 조회(in-app·가격·네트워크 실패·상품 없음·모듈 없음), 구매 성공 시 서버 확인 뒤에만 이용권·확정, Android purchaseToken 만 전송(주문 번호·원본 JSON 미사용)·token 없음/pending 은 확인 보류, 취소·네트워크·이미 보유·요청 거절·알 수 없음·상품 없음, 서버 없음·연결 실패·거절 시 이용권 없음·미확정, 복원(일회성 우선·예전 구독도 인정·없음·결제 보류 제외·연결 실패), 앱 시작 재확인(오프라인·서버 실패 유지, 구독 없음·거절 시 종료하되 기록 보존, 재설치 자동 복원), 화면 상태(불러오기·구매 가능·성공·구매 내역·취소·실패+다시 시도·구매 없음·확인 실패·복원 성공·조회 실패 시 값 없음·재시도 안내·버튼 꺼짐), 오류 코드 노출 없음, 출시 구성 검수 스위치 없음. 실제 Play 결제·서버 배포는 미검증.
+PASS: asset check — PNG 크기·알파 채널·투명 픽셀(필터 해석 포함)·JPEG 크기 판독, 계약 P0 없음 FAIL·P2 WARN, 규격대로면 전부 PASS, 템플릿 복사·알파·크기·스플래시 불투명·피처 그래픽 크기·스크린샷 비율/장수/알파 FAIL, 설정의 템플릿 참조·스플래시 모듈 미설치·미연결 FAIL, android 템플릿 리소스 잔존 FAIL, 실제 app.config 는 브랜드 파일 없으면 템플릿으로 떨어지고 검사가 잡는다.
+PASS: release check — 서명 플러그인(템플릿 디버그 서명 제거·업로드 키만·AAB 디버그 서명 차단 가드·반복 적용 안전·템플릿 변경 시 중단), 설정(내부 검수·영수증 서버 https·applicationId·versionCode 증가/정수·네이티브 버전 동기), 서명 입력(이름만·값 미출력·프로젝트 properties 비밀 FAIL), 저장소 키 파일·비밀번호 값 탐지, 인증서(디버그·임시 키·미등록 FAIL, 등록 키 PASS), AAB 판독(ZIP·PKCS#7·BILLING·JS 번들·expo-iap·app.config), 요약 SIGNING PASS / ASSETS BLOCKED 구분.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  FLOW A(다음 칸·붓·굵기·최근 색·문구 배치): 누르기 9 · 끌기 2 · 확인창 0
+  FLOW B(다음 칸·문구 고치기·직전 움직임): 누르기 7 · 끌기 0 · 확인창 0
+PASS: product ux — 도구 다시 누르기=설정·"펜" 이중 의미 없음, 브러시·색·움직이기 패널 자물쇠 0·PRO 표시 ≤1, 참고·문구·움직이기 입구 하나·저장 버튼 없음, 새 칸·재시작에서 선 종류·굵기·지우개·보정·도구 유지, 빈 칸 이전 그림 이어받기(확인창 없음), 가짜 재생 막대 없음·효과 견본이 실제로 움직임·설정은 고른 뒤, PRO(부분 움직임·여러 칸 한 번에)는 시작 전에 안내, FREE 흐름(브러시·색·문구·움직임·완성·보드·내보내기)에 결제 화면 없음, 열었다 닫기만 하면 세트 불변, 결과 우선 내보내기와 약속 문구 일치, 개발자 문구·오류 원문·글자 기호 없음. Native/WebView mocked.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  머리줄 — 모드 줄은 한 줄(큰 글자로 넘칠 때만 두 줄) · 되돌리기는 380dp 이상 참고 왼쪽, 미만은 윗줄 · 손가락 높이 48dp
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  글자 배율 홈     — 훑은 글자 18곳 · 1.0/1.3/1.5 에서 잘림 0곳
+  글자 배율 그리기   — 훑은 글자 62곳 · 1.0/1.3/1.5 에서 잘림 0곳
+  글자 배율 보드    — 훑은 글자 41곳 · 1.0/1.3/1.5 에서 잘림 0곳
+  글자 배율 내보내기  — 훑은 글자 43곳 · 1.0/1.3/1.5 에서 잘림 0곳
+  (렌더된 스타일 계산이다. 실기기 캡처가 아니다 — 실제 줄바꿈·글꼴 메트릭은 기기가 판정한다.)
+  viewport  canvas share brush detail color ref layers motion kbRoom boardTile exportCell
+  320×568       242   0.34  1.88  1.88  0.45  0.3  0.5  0.38  217  91  52
+  360×568       272   0.38  1.65  1.65  0.45  0.24  0.5  0.29  217  76  49
+  390×568       286   0.39  1.59  1.59  0.45  0.25  0.5  0.32  217  84  54
+  412×568       286   0.36  1.59  1.59  0.45  0.25  0.5  0.32  217  89  58
+  320×640       304   0.47  1.6  1.6  0.45  0.22  0.5  0.27  260  91  52
+  360×640       314   0.44  1.57  1.57  0.45  0.23  0.5  0.29  260  76  49
+  390×640       314   0.41  1.57  1.57  0.45  0.23  0.5  0.29  260  84  54
+  412×640       324   0.41  1.47  1.47  0.45  0.17  0.5  0.18  260  89  58
+  320×720       304   0.41  1.73  1.73  0.45  0.09  0.5  0.01  308  91  52
+  360×720       344   0.47  1.59  1.59  0.45  0.14  0.5  0.12  308  76  49
+  390×720       374   0.52  1.5  1.5  0.45  0.17  0.5  0.19  308  84  54
+  412×720       394   0.54  1.45  1.45  0.45  0.18  0.5  0.23  308  89  58
+  320×800       304   0.37  1.87  1.87  0.45  0  0.5  0  356  91  52
+  360×800       344   0.42  1.71  1.71  0.45  0.02  0.5  0  356  76  49
+  390×800       374   0.46  1.61  1.61  0.45  0.06  0.5  0  356  84  54
+  412×800       396   0.49  1.55  1.55  0.45  0.08  0.5  0.04  356  89  58
+  320×900       304   0.33  2.03  2.03  0.45  0  0.45  0  416  91  52
+  360×900       344   0.38  1.85  1.85  0.45  0  0.46  0  416  76  49
+  390×900       374   0.41  1.74  1.74  0.45  0  0.46  0  416  84  54
+  412×900       396   0.43  1.67  1.67  0.45  0  0.46  0  416  89  58
+  320×1000      304    0.3  2.19  2.19  0.45  0  0.29  0  476  91  52
+  360×1000      344   0.34  2  2  0.45  0  0.31  0  476  76  49
+  390×1000      374   0.37  1.88  1.88  0.45  0  0.33  0  476  84  54
+  412×1000      396   0.39  1.8  1.8  0.45  0  0.34  0  476  89  58
+320×568 bar 228→242 · 360×568 rail 268→272 · 390×568 rail 282→286 · 412×568 rail 282→286 · 320×640 bar 228→304 · 360×640 bar 268→314 · 390×640 bar 298→314 · 412×640 rail 320→324 · 320×720 bar 228→304 · 360×720 bar 268→344 · 390×720 bar 298→374 · 412×720 bar 320→394 · 320×800 bar 228→304 · 360×800 bar 268→344 · 390×800 bar 298→374 · 412×800 bar 320→396 · 320×900 bar 228→304 · 360×900 bar 268→344 · 390×900 bar 298→374 · 412×900 bar 320→396 · 320×1000 bar 228→304 · 360×1000 bar 268→344 · 390×1000 bar 298→374 · 412×1000 bar 320→396
+PASS: viewport matrix — 568/640/720/800/900/1000 × 320/360/390/412: 캔버스는 기기가 허락하는 만큼 정사각으로 꽉 차고(45.38 보다 작아지는 화면 0), 굵기·불투명도는 캔버스 위 조절 줄(세로가 아주 짧은 화면만 옆 조절대)에 하나씩, 여백 두 손가락 톡 되돌리기, 도구 줄 두 줄 안 잘림, 브러시 창은 줄 넷이 보이는 독립 창, 색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침·설정 목록만 줄고 완성 줄은 스크롤 밖, 보드 세 칸·아래 줄, 내보내기 결과 격자 한 줄 다섯 칸 이상, 글자 배율 1.0/1.3/1.5 에서 높이 고정 상자 잘림 0곳. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  반복 단축(같은 범위): 칸당 탭 8 → 6 (움직이기 탭 · 직전 칸 움직임 다시 쓰기 생략), 스크롤 0 → 0, 설정 변경 0 → 0, 확인창 0
+  칸별 누르기: 2:11 3:11 4:11 5:11 6:11 7:11 8:11 9:11 10:11 11:11 12:11 13:11 14:11 15:11 16:11 17:11 18:11 19:11 20:11 21:11 22:11 23:11 24:11
+PASS: slot repeat — 1~24칸 연속 제작: 연필·굵기·도구 유지, 최근 색 맨 앞 유지, 빈 칸마다 이전 그림 제안, 직전 움직임 행 매번, 칸당 누르기 11→11(늘지 않음), 확인창 0, 24칸 그림·문구·움직임 저장, 앞 칸 다시 열면 그대로. Native/WebView mocked.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: visual system — 토큰(색·모서리 8/12/16/20/24·간격 4 기반·옅은 그림자·글자 위계 8단), 2px 노랑 선택 박스·900 굵기 남발 없음, 화면 하드코딩 색 29곳(39차 56, 견본·토큰 정의 제외), 에셋 자리 8개 규격(44차 표현 가이드 카드 포함)·캔버스 가이드 힌트 없음·알림 꺼짐·레퍼런스 V1 분류 넷, 홈 브랜드→창작 표면→최근 작업·노랑 버튼 1, 세트 12개여도 홈은 가장 최근 하나+전체 보기·전체 작업→보드→뒤로 전체 작업·표현 가이드 분류/카드, 보드 글자 배지 없음·떠 있는 아래 줄, 도구 네 칸 테두리 없음·고른 도구만 노랑 표면·되돌리기 조용, 빠른 브러시 카드 셋(획 견본·노랑 하나)·전체 목록 무료4+PRO8, 문구 키보드 한 줄, 움직임 네 칸 격자(전 효과 닿음·없음은 견본 없이 조용), 내보내기 요약→격자·제출 준비·노랑 1. Native/WebView mocked.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: ui structure — 홈(세트 0·1·4·10 × 공지 꺼짐/켜짐) 순서 고정·공지 꺼지면 자리 0·큰 표지 서가(최근 3개)+전체 보기·노랑은 지금 할 일 하나·공지 줄, 그리기 캔버스 알림 한 번에 하나·패널 한 번에 하나·굵기는 행동 줄·선택 도구엔 없음·배율은 따로, 움직이기 효과→재사용→PRO 한 줄, 보드 범례는 두 상태일 때만, 내보내기 요약→격자→손볼 곳→만들기→제출 준비(접힘)→부가 이미지→자세히. Native/WebView mocked.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: asset contract — 브러시 30종(이름·무료/PRO·분류·엔진 효과·견본)·예전 6종 호환, 자리 8개 규격, 표현 가이드 20개 안정 ID·기존 순서/문구, 카드별 서로 다른 이미지와 이미지 없는 카드의 준비 중 자리표시, 나머지 자리의 source/placeholder 연결을 확인했다. 화면 파일의 mascot 직접 참조 0. Native/WebView mocked.
+  에셋 등록: 기존 5 + 신규 76 = 81 · id/파일 중복 0 · 파일 없음 0 · 가장자리 잉크 0
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  진입 확인: ready=false 상태에서 홈 → 감정 → 표현 목록 → 참고 창 · 밑그림 모두 열림(안녕 · 잘 자)
+[emoticon-studio] importBundledImage 1 Error: no file uri
+    at C:\Dev\emoticon-studio\src\services\images.ts:98:19
+    at async stage (C:\Dev\emoticon-studio\src\services\images.ts:75:16)
+    at async Object.importBundledImage (C:\Dev\emoticon-studio\src\services\images.ts:93:17)
+    at async C:\Dev\emoticon-studio\scripts\guide-flow-test.cjs:562:11
+  릴리스 조건: 리소스 이름을 파일로 오해하지 않고 내려받아 쓴다 · 실패 시 단계만 한글로 알린다
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  넣을 곳 — 기본은 가장 최근 세트, 다른 세트로 바꾸면 그 세트의 다음 빈 칸이 열린다
+PASS: guide flow — 고마워 다섯 표현의 ID·이름·힌트, 그림 없는 표현의 준비 중과 잠긴 버튼, 고른 표현의 그림·힌트 전달, 참고 창 옮기기(화면 밖 이탈 없음)·접기·다시 열기·닫기와 캔버스 입력 분리, 밑그림의 기존 참고 레이어 재사용(30%·중앙·별도 그림 레이어·조절·삭제), 저장 그림·움직임·썸네일 제외를 확인했다. Native/WebView mocked.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: convenience — 새 칸 한 장·옛 다중 장 저장본과 부분 움직임 참조 보존, 레이어 차례 앞으로/뒤로·손잡이 끌기(양 끝 멈춤), 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 브러시 카드의 실제 획 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, SV 사각 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.
+PASS: closed purchases — zero store/server calls, explicit opt-in, no review bypass, server-only exception, signing/BILLING guards retained
+PASS: C2/C4 config — contact validation/config/artifact owner gates, idempotent release-only overlay removal
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: C1/C2/C3/C7 app rendering — catalogs, contact links/fallback, async issue parity/cache, closed vs release purchase UI
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: cloud screen — no server config shows only 준비 중 with zero requests; login buttons locked without provider SDK; free members get no personal cloud space; PRO backup records time/files (same content once); contest: notice & rules first, set + consent required, interrupted upload not reported as received, retry reuses the submission key, receipt shown only after the server marks it received, whole 32-cut set uploaded
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: onboarding — 첫 실행 한 장(움직이는 이모티콘 강조, 서버 없으면 시작하기 하나, 서버 있으면 카카오·네이버·구글 버튼만·설정 안 된 회사 잠김·실패 이유), 작가명(형식 2~12자·띄어쓰기 막음·서버 금지어/중복 이유·바꿀 수 없음 안내·확인돼야 완료·저장 거절 이유). 서버는 가짜 — 실제 규칙은 server/firebase 에뮬레이터, 실제 로그인은 운영 키 설정 뒤 실기기.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: chat sim + guidebook + notice slides — 가이드북 6장(공식 규격 값·링크, 팁은 공식 기준이라 하지 않음), 공지 슬라이드(꽉 찬 폭·n/전체·누르면 열기·없으면 자리 없음), 채팅(고른 뒤 보내기·나/친구·글·어두운 바탕·처음부터·빈 세트 안내)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: closed-test PRO trial — off by default, closed builds only, release-check guard, no purchase records, saves PRO work, trial off restores limits without touching saved PRO work, real purchase kept
+PASS: C5/C6 docs — one-time PRO only, current data flows, owner placeholders, historical results not overwritten
+labels ok: 56 labels exist in current source

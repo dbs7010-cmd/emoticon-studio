@@ -68,7 +68,7 @@ const texts = () => tree.root.findAll(n => n.type === 'Text').map(n => [n.props.
 const sent = () => commands.map(s => JSON.parse(s.slice(s.indexOf('(') + 1, s.lastIndexOf(');true;'))));
 const message = async m => { await act(async () => tree.root.findByType('WebView').props.onMessage({ nativeEvent: { data: JSON.stringify(m) } })); };
 async function openPainter() {
-  await press('검수 세트 이어서 만들기');
+  await press('검수 세트'); await press(labelled('이어서 그리기').length ? '이어서 그리기' : '첫 칸 그리기');
   await message({ type: 'ready' });
   const init = sent().filter(m => m.type === 'init').at(-1);
   await message({ type: 'state', undo: false, redo: false, dirty: false, activeLayerId: 'draw-1', activeReferenceId: null, caption: null, motion: null,

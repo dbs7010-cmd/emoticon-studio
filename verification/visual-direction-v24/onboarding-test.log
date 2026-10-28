@@ -1,0 +1,5 @@
+PASS: onboarding — 첫 실행 한 장(움직이는 이모티콘 강조, 서버 없으면 시작하기 하나, 서버 있으면 카카오·네이버·구글 버튼만·설정 안 된 회사 잠김·실패 이유), 작가명(형식 2~12자·띄어쓰기 막음·서버 금지어/중복 이유·바꿀 수 없음 안내·확인돼야 완료·저장 거절 이유). 서버는 가짜 — 실제 규칙은 server/firebase 에뮬레이터, 실제 로그인은 운영 키 설정 뒤 실기기.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer

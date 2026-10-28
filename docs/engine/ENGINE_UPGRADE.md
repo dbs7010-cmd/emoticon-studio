@@ -6,7 +6,7 @@
 ## 진행 중 — 2단계 고해상도(RES) (WIP 커밋, 아직 앱에서 켜지 않음)
 - [x] `canvas-html.ts`: 문서 좌표 360 유지, 장 픽셀만 RES 배. `init` 의 `res` 로 켬(없으면 1 = 예전 그대로).
   bitmap()/docCanvas()/docData()/setRes(), 되돌리기 GPU 사본 + 안 바뀐 장 공유 + 사본 36개 상한, composite·boil·종이결·poolEdge·채우기·선택·스포이드·썸네일 RES 대응, 저장 완성본·카카오 프레임은 360.
-- [ ] **실패 1개 고치기**: `scripts/guide-flow-test.cjs` "저장 그림은 그림 레이어만 합친다" — 저장 완성본을 `docCanvas()` 로 바꾼 뒤 검사가 보는 캔버스가 달라졌을 가능성. 테스트가 무엇을 보는지 확인 후 수정.
+- [x] **기존 실패 검사 수정(2026-10-28 Codex)**: `scripts/guide-flow-test.cjs`가 예전 `const out=bitmap()` 구간을 찾던 것을 실제 `const out=docCanvas()`로 맞추고 시작/끝 인덱스 존재를 먼저 단언했다. 그림 레이어만 합치고 참고 레이어를 제외하는 기존 단언은 유지. 단독 검사 통과, 엔진 수정 없음. 아래의 고해상도 실제 Chrome 검사까지 완료했다는 뜻은 아님.
 - [ ] 실제 Chrome 고해상도 검사 새로 작성(res:3): 화면 1080, 장 PNG 1080, 완성본 360, 되돌리기/다시하기 3단계 픽셀 일치, 옛 360 장 열기, 채우기, 선택 옮기기, 움직임 GIF/WebP 360, LINE 프레임.
 - [ ] `painter.tsx` init 에 `res: 3` 전달(저사양이면 2 고려), motion-baker 는 LINE 선명도 위해 검토.
 - [ ] 메모리: 폰에서 장 여러 개 + 되돌리기 40단계 확인. 저장 파일 크기·백업 크기 확인.

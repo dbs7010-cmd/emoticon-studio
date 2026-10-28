@@ -1,0 +1,379 @@
+{
+  "scope": "Runtime lesson/guide copy only; painter and raster text remain outside this audit",
+  "results": [
+    {
+      "locale": "ko",
+      "remaining": []
+    },
+    {
+      "locale": "ja",
+      "remaining": [
+        {
+          "path": "content.LESSONS[0].points[0]",
+          "text": "만들면 01번 칸이 바로 열려요"
+        },
+        {
+          "path": "content.LESSONS[0].points[1]",
+          "text": "저장하면 보드에 올라가요"
+        },
+        {
+          "path": "content.LESSONS[0].points[2]",
+          "text": "다음 칸은 이전 칸에서 이어 그리기"
+        },
+        {
+          "path": "content.LESSONS[1].points[0]",
+          "text": "같은 도구를 한 번 더 누르면 설정"
+        },
+        {
+          "path": "content.LESSONS[1].points[1]",
+          "text": "레이어로 나누면 움직이기가 쉬워요"
+        },
+        {
+          "path": "content.LESSONS[1].points[2]",
+          "text": "선택은 적용해야 그림에 남아요"
+        },
+        {
+          "path": "content.LESSONS[2].points[0]",
+          "text": "효과는 고르는 즉시 칸에 들어가요"
+        },
+        {
+          "path": "content.LESSONS[2].points[1]",
+          "text": "점선 밖은 잘려요 — 세기를 줄여요"
+        },
+        {
+          "path": "content.LESSONS[2].points[2]",
+          "text": "떨림은 무료, 어떤 효과와도 함께"
+        },
+        {
+          "path": "content.LESSONS[3].points[0]",
+          "text": "복사한 뒤 바뀌는 곳만 고쳐요"
+        },
+        {
+          "path": "content.LESSONS[3].points[1]",
+          "text": "짧은 장이 움직임의 리듬을 만들어요"
+        },
+        {
+          "path": "content.LESSONS[3].points[2]",
+          "text": "카카오는 한 칸 24장까지"
+        },
+        {
+          "path": "content.LESSONS[4].points[0]",
+          "text": "움직이는 세트는 24칸"
+        },
+        {
+          "path": "content.LESSONS[4].points[1]",
+          "text": "제출 준비에서 남은 것 확인"
+        },
+        {
+          "path": "content.LESSONS[4].points[2]",
+          "text": "제안은 작가님 이름으로 직접"
+        },
+        {
+          "path": "content.LESSONS[4].tryIt.label",
+          "text": "내보내기 보기"
+        },
+        {
+          "path": "content.LESSONS[5].points[0]",
+          "text": "로그인한 작가만 접수"
+        },
+        {
+          "path": "content.LESSONS[5].points[1]",
+          "text": "조건(칸 수·움직이는 칸)을 먼저 채워요"
+        },
+        {
+          "path": "content.LESSONS[5].points[2]",
+          "text": "접수번호로 상태를 확인"
+        },
+        {
+          "path": "content.LESSONS[6].points[0]",
+          "text": "기준 그림 한 장부터"
+        },
+        {
+          "path": "content.LESSONS[6].points[1]",
+          "text": "지킬 특징을 적어 두기"
+        },
+        {
+          "path": "content.LESSONS[6].points[2]",
+          "text": "작게 봐도 알아보게 단순하게"
+        },
+        {
+          "path": "content.LESSONS[7].points[0]",
+          "text": "대화에서 자주 쓰는 마음 먼저"
+        },
+        {
+          "path": "content.LESSONS[7].points[1]",
+          "text": "표현 가이드를 밑그림으로"
+        },
+        {
+          "path": "content.LESSONS[7].points[2]",
+          "text": "얼굴 + 몸짓 + 소품"
+        },
+        {
+          "path": "content.LESSONS[8].points[0]",
+          "text": "칸마다 다른 마음"
+        },
+        {
+          "path": "content.LESSONS[8].points[1]",
+          "text": "움직임은 의미 있게"
+        },
+        {
+          "path": "content.LESSONS[8].points[2]",
+          "text": "마지막 장이 미리보기"
+        },
+        {
+          "path": "content.LESSONS[8].tryIt.label",
+          "text": "가이드북 보기"
+        },
+        {
+          "path": "content.LESSONS[9].points[0]",
+          "text": "한 편에 한 가지"
+        },
+        {
+          "path": "content.LESSONS[9].points[1]",
+          "text": "영상은 손, 글은 이유"
+        },
+        {
+          "path": "content.LESSONS[9].points[2]",
+          "text": "정리 세 줄 + 해 보기 하나"
+        },
+        {
+          "path": "content.GUIDEBOOK[1].items[3].body",
+          "text": "움직이는 이모티콘은 마지막 프레임이 이모티콘샵과 키보드의 미리보기로 쓰여요. 대표하는 모습이 마지막에 오게 만들어요."
+        },
+        {
+          "path": "content.GUIDEBOOK[2].items[4].body",
+          "text": "WebP 파일을 제작할 때는 카카오에서 제공하는 전용 WebPAnimator만 사용해 주세요. 파일 묶음 안의 360×360 프레임 PNG 를 그 도구에 순서대로 넣으면 돼요."
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[0].title",
+          "text": "멈춰있는 이모티콘"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[0].body",
+          "text": "제안: PNG 32개 + 아이콘 1개. PNG · 360×360 · 150KB 이하 · 투명 배경."
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[1].title",
+          "text": "움직이는 이모티콘"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[1].body",
+          "text": "제안: 24개 중 움직이는 WebP 3개는 필수, 나머지는 PNG 가능 + 아이콘 1개. 360×360 · 650KB 이하 · 24프레임 이하 · 4회 반복 · 투명 배경."
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[2].title",
+          "text": "아이콘 이미지(제안·출시)"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[2].body",
+          "text": "PNG 1개 · 78×78 · 16KB 이하"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[3].title",
+          "text": "공유 이미지(출시)"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[3].body",
+          "text": "PNG 1개 · 600×166 · 500KB 이하"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[4].title",
+          "text": "대표 이미지(출시)"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[4].body",
+          "text": "이모티콘 이미지 중 1개 선택"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[5].body",
+          "text": "텍스트에는 흰색 아웃라인을 넣어요. 다크모드 배경에서도 읽히게 하기 위한 규칙이에요."
+        }
+      ]
+    },
+    {
+      "locale": "zh-Hant",
+      "remaining": [
+        {
+          "path": "content.LESSONS[0].points[0]",
+          "text": "만들면 01번 칸이 바로 열려요"
+        },
+        {
+          "path": "content.LESSONS[0].points[1]",
+          "text": "저장하면 보드에 올라가요"
+        },
+        {
+          "path": "content.LESSONS[0].points[2]",
+          "text": "다음 칸은 이전 칸에서 이어 그리기"
+        },
+        {
+          "path": "content.LESSONS[1].points[0]",
+          "text": "같은 도구를 한 번 더 누르면 설정"
+        },
+        {
+          "path": "content.LESSONS[1].points[1]",
+          "text": "레이어로 나누면 움직이기가 쉬워요"
+        },
+        {
+          "path": "content.LESSONS[1].points[2]",
+          "text": "선택은 적용해야 그림에 남아요"
+        },
+        {
+          "path": "content.LESSONS[2].points[0]",
+          "text": "효과는 고르는 즉시 칸에 들어가요"
+        },
+        {
+          "path": "content.LESSONS[2].points[1]",
+          "text": "점선 밖은 잘려요 — 세기를 줄여요"
+        },
+        {
+          "path": "content.LESSONS[2].points[2]",
+          "text": "떨림은 무료, 어떤 효과와도 함께"
+        },
+        {
+          "path": "content.LESSONS[3].points[0]",
+          "text": "복사한 뒤 바뀌는 곳만 고쳐요"
+        },
+        {
+          "path": "content.LESSONS[3].points[1]",
+          "text": "짧은 장이 움직임의 리듬을 만들어요"
+        },
+        {
+          "path": "content.LESSONS[3].points[2]",
+          "text": "카카오는 한 칸 24장까지"
+        },
+        {
+          "path": "content.LESSONS[4].points[0]",
+          "text": "움직이는 세트는 24칸"
+        },
+        {
+          "path": "content.LESSONS[4].points[1]",
+          "text": "제출 준비에서 남은 것 확인"
+        },
+        {
+          "path": "content.LESSONS[4].points[2]",
+          "text": "제안은 작가님 이름으로 직접"
+        },
+        {
+          "path": "content.LESSONS[4].tryIt.label",
+          "text": "내보내기 보기"
+        },
+        {
+          "path": "content.LESSONS[5].points[0]",
+          "text": "로그인한 작가만 접수"
+        },
+        {
+          "path": "content.LESSONS[5].points[1]",
+          "text": "조건(칸 수·움직이는 칸)을 먼저 채워요"
+        },
+        {
+          "path": "content.LESSONS[5].points[2]",
+          "text": "접수번호로 상태를 확인"
+        },
+        {
+          "path": "content.LESSONS[6].points[0]",
+          "text": "기준 그림 한 장부터"
+        },
+        {
+          "path": "content.LESSONS[6].points[1]",
+          "text": "지킬 특징을 적어 두기"
+        },
+        {
+          "path": "content.LESSONS[6].points[2]",
+          "text": "작게 봐도 알아보게 단순하게"
+        },
+        {
+          "path": "content.LESSONS[7].points[0]",
+          "text": "대화에서 자주 쓰는 마음 먼저"
+        },
+        {
+          "path": "content.LESSONS[7].points[1]",
+          "text": "표현 가이드를 밑그림으로"
+        },
+        {
+          "path": "content.LESSONS[7].points[2]",
+          "text": "얼굴 + 몸짓 + 소품"
+        },
+        {
+          "path": "content.LESSONS[8].points[0]",
+          "text": "칸마다 다른 마음"
+        },
+        {
+          "path": "content.LESSONS[8].points[1]",
+          "text": "움직임은 의미 있게"
+        },
+        {
+          "path": "content.LESSONS[8].points[2]",
+          "text": "마지막 장이 미리보기"
+        },
+        {
+          "path": "content.LESSONS[8].tryIt.label",
+          "text": "가이드북 보기"
+        },
+        {
+          "path": "content.LESSONS[9].points[0]",
+          "text": "한 편에 한 가지"
+        },
+        {
+          "path": "content.LESSONS[9].points[1]",
+          "text": "영상은 손, 글은 이유"
+        },
+        {
+          "path": "content.LESSONS[9].points[2]",
+          "text": "정리 세 줄 + 해 보기 하나"
+        },
+        {
+          "path": "content.GUIDEBOOK[1].items[3].body",
+          "text": "움직이는 이모티콘은 마지막 프레임이 이모티콘샵과 키보드의 미리보기로 쓰여요. 대표하는 모습이 마지막에 오게 만들어요."
+        },
+        {
+          "path": "content.GUIDEBOOK[2].items[4].body",
+          "text": "WebP 파일을 제작할 때는 카카오에서 제공하는 전용 WebPAnimator만 사용해 주세요. 파일 묶음 안의 360×360 프레임 PNG 를 그 도구에 순서대로 넣으면 돼요."
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[0].title",
+          "text": "멈춰있는 이모티콘"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[0].body",
+          "text": "제안: PNG 32개 + 아이콘 1개. PNG · 360×360 · 150KB 이하 · 투명 배경."
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[1].title",
+          "text": "움직이는 이모티콘"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[1].body",
+          "text": "제안: 24개 중 움직이는 WebP 3개는 필수, 나머지는 PNG 가능 + 아이콘 1개. 360×360 · 650KB 이하 · 24프레임 이하 · 4회 반복 · 투명 배경."
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[2].title",
+          "text": "아이콘 이미지(제안·출시)"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[2].body",
+          "text": "PNG 1개 · 78×78 · 16KB 이하"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[3].title",
+          "text": "공유 이미지(출시)"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[3].body",
+          "text": "PNG 1개 · 600×166 · 500KB 이하"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[4].title",
+          "text": "대표 이미지(출시)"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[4].body",
+          "text": "이모티콘 이미지 중 1개 선택"
+        },
+        {
+          "path": "content.GUIDEBOOK[3].items[5].body",
+          "text": "텍스트에는 흰색 아웃라인을 넣어요. 다크모드 배경에서도 읽히게 하기 위한 규칙이에요."
+        }
+      ]
+    }
+  ]
+}

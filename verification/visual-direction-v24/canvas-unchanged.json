@@ -1,0 +1,42 @@
+[
+  {
+    "file": "src/painter/painter.tsx",
+    "unchanged": true,
+    "sha256": "5d27358814d9fb873dabc4677ba83146f8eef08161165baf65ea84e181124ae5"
+  },
+  {
+    "file": "src/painter/canvas-html.ts",
+    "unchanged": true,
+    "sha256": "7f7213c0eab412a38e5f3a38c923f238987fefa39d73fb22f4ae73242bae1f5d"
+  },
+  {
+    "file": "src/painter/motion-panel.tsx",
+    "unchanged": true,
+    "sha256": "b33dbeca8386033ad3cd00a12565c091eda52d5479147d874c4530c37b210775"
+  },
+  {
+    "file": "src/painter/anim-panel.tsx",
+    "unchanged": true,
+    "sha256": "ad3264cb6cd9275e8253ce45e4846b11e0b82ba235b72138bab2a4d2d1ef128e"
+  },
+  {
+    "file": "src/components/ui.tsx",
+    "unchanged": true,
+    "sha256": "466574ad29648630988003fcff5cca411a7783c4f6d3aa94f95ea1051ac830f5"
+  },
+  {
+    "file": "src/types.ts",
+    "unchanged": true,
+    "sha256": "ad48208a17fa618143b0b7a26436387dabe3b99c0fed4535179b62c21d7bb9b9"
+  },
+  {
+    "file": "app.config.js",
+    "unchanged": true,
+    "sha256": "6f6633a972ab5105aed176ea45a0fb044714823d96d6af82f202fb0ba3779f63"
+  },
+  {
+    "file": "app.json",
+    "unchanged": true,
+    "sha256": "e611c625322e6b36d174ff5d30450b5c466807038db3058e50b1473d32c1545e"
+  }
+]

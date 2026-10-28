@@ -1,0 +1,279 @@
+
+> emoticon-studio@1.0.0 test
+> npm run typecheck && npm run test:ux
+
+
+> emoticon-studio@1.0.0 typecheck
+> tsc --noEmit
+
+
+> emoticon-studio@1.0.0 test:ux
+> node scripts/lesson-corn-test.cjs && node scripts/line-export-test.cjs && node scripts/ads-test.cjs && node scripts/config-changes-test.cjs && node scripts/i18n-test.cjs && node scripts/icon-test.cjs && node scripts/state-ui-test.cjs && node scripts/text-contrast-test.cjs && node scripts/entry-reset-test.cjs && node scripts/ux-test.cjs && node scripts/storage-test.cjs && node scripts/backup-test.cjs && node scripts/full-backup-test.cjs && node scripts/backup-rules-test.cjs && node scripts/gesture-test.cjs && node scripts/fill-test.cjs && node scripts/export-test.cjs && node scripts/spec-test.cjs && node scripts/recovery-test.cjs && node scripts/e2e-test.cjs && node scripts/pro-test.cjs && node scripts/review-pro-test.cjs && node scripts/server-test.cjs && node scripts/color-test.cjs && node scripts/motion-v1-test.cjs && node scripts/motion-preset-test.cjs && node scripts/motion-step-test.cjs && node scripts/iap-test.cjs && node scripts/asset-check-test.cjs && node scripts/release-check-test.cjs && node scripts/product-ux-test.cjs && node scripts/viewport-matrix-test.cjs && node scripts/slot-repeat-test.cjs && node scripts/visual-system-test.cjs && node scripts/ui-structure-test.cjs && node scripts/asset-contract-test.cjs && node scripts/guide-flow-test.cjs && node scripts/convenience-test.cjs && node scripts/closed-purchases-test.cjs && node scripts/closed-config-test.cjs && node scripts/closed-test-ui-test.cjs && node scripts/cloud-ui-test.cjs && node scripts/onboarding-test.cjs && node scripts/chat-guide-test.cjs && node scripts/pro-trial-test.cjs && node scripts/closed-docs-test.cjs && node scripts/device-qa.cjs --dry
+
+  통통(전체): 10장 · 360×360 · 150KB · 한 바퀴 0.8초
+  하트만 통통 튀기(부분): 10장 · 360×360 · 125KB · 한 바퀴 0.8초
+  윙크 애니메이션(3장): 15장 · 360×360 · 210KB · 한 바퀴 1.5초
+PASS: lesson corn — 강좌 10편 파일·무료 그룹·옛 캐릭터 문구 없음, 콘 예시 세 가지(통통 · 하트만 · 윙크 3장)가 앱 엔진에서 ≤24장 · 360×360 · ≤650KB · 잘림 없음
+  01.png bounce: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 457KB
+  02.png hop: 270×270 · 19장 · 한 바퀴 1.60초 × 2회 · 864KB
+  03.png tilt: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 458KB
+  04.png float: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 457KB
+  05.png nod: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 454KB
+  06.png bow: 270×270 · 19장 · 한 바퀴 1.60초 × 2회 · 824KB
+  07.png dance: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 458KB
+  08.png sway: 270×270 · 10장 · 한 바퀴 0.80초 × 4회 · 458KB
+PASS: line export — 콘 8칸 APNG(270×270, 5~20장, ≤4초, 1~4회, ≤1MB, 투명) + main 240×240 APNG + tab 96×74 PNG, ZIP 4811KB · 규격 밖 거절 · 장별 디코드·서로 다름 확인 · 카카오 프레임 그대로 · 일반 스티커 370×320 PNG(여백 10px·짝수)·세트 8~40
+PASS: ads — 끝까지 봄=만듦 · 닫음=이번엔 안 만듦 · 실패/시간 초과=막지 않음 · 광고 단위(출시/검수 시험 광고/iOS·형식 오류=없음). SDK mocked.
+PASS: config changes — density 추가(중복 없음), 매니페스트에 density·screenSize·smallestScreenSize·screenLayout·orientation
+PASS: i18n — 기기 언어 고르기(ko/ja/zh-Hant, 간체·영어는 한국어), 키 59개 모두 일본어·번체, 자리 표시 일치, 한국어 잔존 없음
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+The current testing environment is not configured to support act(...)
+PASS: icons — 「임티 라인」 32종 × 14/18/22 모두 24 격자·선 1.8·둥근 끝·채움 없음·잉크 색, 비활성은 옅은 선(투명도 아님), 기본은 화면 읽기에서 숨고 이름을 주면 이미지로 읽힘. SVG 는 검사 로더의 목 — 실제 렌더링은 _icon-sheet(브라우저)·APK 에서 확인.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: state ui — 선택(노란 면+잉크/옅은 노랑)·비활성(옅은 색, disabled·접근성 유지) 규칙, 빈 상태 새 모양(제목·설명·노란 행동 하나·흐름 아이콘, 예전 모양 유지), 저장 알림(흰 알약·초록 체크 한 점·잉크 다음 칸·0.24초 네이티브), 완성 카드(흰 카드·노란 체크 0.28초·행동 하나), PRO 배지(잉크 테두리·반짝 아이콘·48dp·보라 없음). Animated·SVG 는 검사 대역 — 실제 움직임과 그림은 APK 에서.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+일반 글자 대비 미달 32곳:
+360dp draw-base: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-size: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-ink: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-brush: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-fav-edit: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-fav-slot: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-color: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-reference: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-layers: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-caption: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-selection: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp motion-base: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp motion-parts: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-brush-2: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-brush-detail: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+360dp draw-ref-and-brush: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-base: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-size: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-ink: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-brush: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-fav-edit: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-fav-slot: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-color: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-reference: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-layers: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-caption: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-selection: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp motion-base: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp motion-parts: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-brush-2: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-brush-detail: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+390dp draw-ref-and-brush: "위" #4744B8 1.00:1 (필요 4.5, 글자 12, 투명도 0.00)
+
+32 !== 0
+

@@ -1,0 +1,20 @@
+[
+  {
+    "file_upload_id": "407b8b85-854a-8112-8d16-00b29ac492ae",
+    "filename": "EMOTI-UI-SOURCE-20261028.zip",
+    "content_type": "application/zip",
+    "content_length": 295737,
+    "status": "uploaded",
+    "markdown_source": "file-upload://407b8b85-854a-8112-8d16-00b29ac492ae",
+    "suggested_markdown": "<file source=\"file-upload://407b8b85-854a-8112-8d16-00b29ac492ae\" />"
+  },
+  {
+    "file_upload_id": "407b8b85-854a-812d-8ad9-00b2513f102e",
+    "filename": "FINAL-VISUAL-AUDIT-20261028.md",
+    "content_type": "text/markdown",
+    "content_length": 4357,
+    "status": "uploaded",
+    "markdown_source": "file-upload://407b8b85-854a-812d-8ad9-00b2513f102e",
+    "suggested_markdown": "<file source=\"file-upload://407b8b85-854a-812d-8ad9-00b2513f102e\" />"
+  }
+]

@@ -86,7 +86,7 @@ const writeCaption = async text => {
   assert.ok(total >= 24, '세트는 24칸 이상: ' + total);
   saveStore({ version: 1, introDone: true, revision: 1, projects: [project], palette: ['#54A9E8', '#E94F4F'] });
   await act(async () => { tree = create(React.createElement(App)); });
-  await press('반복 세트 이어서 만들기');
+  await press('반복 세트'); await press(labelled('이어서 그리기').length ? '이어서 그리기' : '첫 칸 그리기');
   if (!hasWebView()) await act(async () => tiles().find(t => t.props.testID === 'slot-1').props.onPress());
   await ready();
 

@@ -5,7 +5,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ImtiIcon, IconSize, type IconName } from '../design/icons';
 import { t } from '../i18n/index';
-import { T, Clay } from './ui';
+import { T } from './app-ui';
 
 export type HomeTab = 'home' | 'class' | 'contest' | 'my';
 const TABS: { key: HomeTab; label: string; icon: IconName }[] = [
@@ -15,12 +15,12 @@ const TABS: { key: HomeTab; label: string; icon: IconName }[] = [
   { key: 'my', label: t('tab.my'), icon: 'person' },
 ];
 export function TabBar({ value, onChange, bottomInset = 0 }: { value: HomeTab; onChange: (tab: HomeTab) => void; bottomInset?: number }) {
-  return <View style={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 14 + bottomInset, backgroundColor: T.bg }}>
-    <View testID="아래 탭" accessibilityRole="tablist" style={{ flexDirection: 'row', height: 62, borderRadius: 31, paddingHorizontal: 6, ...Clay.nav }}>
+  return <View style={{ paddingHorizontal: 0, paddingTop: 0, paddingBottom: bottomInset, backgroundColor: T.bg }}>
+    <View testID="아래 탭" accessibilityRole="tablist" style={{ flexDirection: 'row', minHeight: 62, paddingHorizontal: 8, borderTopWidth: 1, borderColor: T.line, backgroundColor: T.paper }}>
       {TABS.map(t => { const on = t.key === value;
         return <Pressable key={t.key} accessibilityRole="tab" accessibilityLabel={t.label} accessibilityState={{ selected: on }} onPress={() => onChange(t.key)}
-          style={({ pressed }) => ({ flex: 1, marginVertical: 7, marginHorizontal: 2, borderRadius: 24, alignItems: 'center', justifyContent: 'center', gap: 2,
-            backgroundColor: on ? T.pointSoft : pressed ? T.fill : 'transparent', transform: pressed ? [{ scale: .96 }] : [] })}>
+          style={({ pressed }) => ({ flex: 1, minHeight: 48, marginVertical: 5, marginHorizontal: 2, borderRadius: T.radius.sm, alignItems: 'center', justifyContent: 'center', gap: 2,
+            backgroundColor: pressed ? T.fill : 'transparent', transform: pressed ? [{ scale: .96 }] : [] })}>
           <ImtiIcon name={t.icon} size={IconSize.row} color={on ? T.point : T.faint} filled={on} />
           <Text style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? T.pointInk : T.muted }}>{t.label}</Text>
         </Pressable>; })}

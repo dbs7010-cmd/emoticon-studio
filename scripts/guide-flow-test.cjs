@@ -434,7 +434,12 @@ async function echoReferences(scene) {
   const engine = fs.readFileSync('src/painter/canvas-html.ts', 'utf8');
   const saveLine = engine.split('\n').find(l => l.indexOf("m.type==='save'") >= 0);
   assert.ok(saveLine, '엔진의 저장 줄');
-  const saveBody = saveLine.slice(saveLine.indexOf('const out=bitmap()'), saveLine.indexOf(',layers:'));
+  // The RES engine exports at document size using docCanvas(), not its high-resolution bitmap().
+  // Keep the layer/reference assertions below; fail explicitly if the save block cannot be located.
+  const outputStart = saveLine.indexOf('const out=docCanvas()');
+  const outputEnd = saveLine.indexOf(',layers:', outputStart);
+  assert.ok(outputStart >= 0 && outputEnd > outputStart, '저장 합성 구간을 정확히 찾는다');
+  const saveBody = saveLine.slice(outputStart, outputEnd);
   // 애니메이션(2026-10-15)이면 저장 그림은 첫 장(first)의 그림 레이어다.
   assert.ok(/(layers|first)\.forEach\(l=>composite\(g,l\)\)/.test(saveBody), '저장 그림은 그림 레이어만 합친다');
   assert.ok(!/references\.forEach/.test(saveBody), '저장 그림에 참고(밑그림)를 합치지 않는다');

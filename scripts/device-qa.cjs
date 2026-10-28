@@ -45,7 +45,9 @@ const L = {
 const DYNAMIC = new Set(['swatch', 'recentPrefix', 'saveMark']);
 
 function labelsMissingFromSource() {
-  const source = ['App.tsx', 'src/painter/painter.tsx', 'src/painter/motion-panel.tsx', 'src/components/ui.tsx'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
+  const { ko } = require('./load-ts.cjs').loader()('src/i18n/ko.ts');
+  const source = ['App.tsx', 'src/painter/painter.tsx', 'src/painter/motion-panel.tsx', 'src/components/ui.tsx'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
+    .replace(/t\('([^']+)'\)/g, (call, key) => key in ko ? JSON.stringify(ko[key]) : call);
   return Object.entries(L).filter(([key, label]) => {
     if (key === 'swatch') return !source.includes("'색 ' + c");
     if (key === 'recentPrefix') return !source.includes("'최근 색 ' + c");

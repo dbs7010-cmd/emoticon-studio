@@ -1,0 +1,63 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  머리줄 — 모드 줄은 한 줄(큰 글자로 넘칠 때만 두 줄) · 되돌리기는 380dp 이상 참고 왼쪽, 미만은 윗줄 · 손가락 높이 48dp
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  글자 배율 홈     — 훑은 글자 18곳 · 1.0/1.3/1.5 에서 잘림 0곳
+  글자 배율 그리기   — 훑은 글자 62곳 · 1.0/1.3/1.5 에서 잘림 0곳
+  글자 배율 보드    — 훑은 글자 41곳 · 1.0/1.3/1.5 에서 잘림 0곳
+  글자 배율 내보내기  — 훑은 글자 43곳 · 1.0/1.3/1.5 에서 잘림 0곳
+  (렌더된 스타일 계산이다. 실기기 캡처가 아니다 — 실제 줄바꿈·글꼴 메트릭은 기기가 판정한다.)
+  viewport  canvas share brush detail color ref layers motion kbRoom boardTile exportCell
+  320×568       242   0.34  1.88  1.88  0.45  0.3  0.5  0.38  217  91  52
+  360×568       272   0.38  1.65  1.65  0.45  0.24  0.5  0.29  217  76  49
+  390×568       286   0.39  1.59  1.59  0.45  0.25  0.5  0.32  217  84  54
+  412×568       286   0.36  1.59  1.59  0.45  0.25  0.5  0.32  217  89  58
+  320×640       304   0.47  1.6  1.6  0.45  0.22  0.5  0.27  260  91  52
+  360×640       314   0.44  1.57  1.57  0.45  0.23  0.5  0.29  260  76  49
+  390×640       314   0.41  1.57  1.57  0.45  0.23  0.5  0.29  260  84  54
+  412×640       324   0.41  1.47  1.47  0.45  0.17  0.5  0.18  260  89  58
+  320×720       304   0.41  1.73  1.73  0.45  0.09  0.5  0.01  308  91  52
+  360×720       344   0.47  1.59  1.59  0.45  0.14  0.5  0.12  308  76  49
+  390×720       374   0.52  1.5  1.5  0.45  0.17  0.5  0.19  308  84  54
+  412×720       394   0.54  1.45  1.45  0.45  0.18  0.5  0.23  308  89  58
+  320×800       304   0.37  1.87  1.87  0.45  0  0.5  0  356  91  52
+  360×800       344   0.42  1.71  1.71  0.45  0.02  0.5  0  356  76  49
+  390×800       374   0.46  1.61  1.61  0.45  0.06  0.5  0  356  84  54
+  412×800       396   0.49  1.55  1.55  0.45  0.08  0.5  0.04  356  89  58
+  320×900       304   0.33  2.03  2.03  0.45  0  0.45  0  416  91  52
+  360×900       344   0.38  1.85  1.85  0.45  0  0.46  0  416  76  49
+  390×900       374   0.41  1.74  1.74  0.45  0  0.46  0  416  84  54
+  412×900       396   0.43  1.67  1.67  0.45  0  0.46  0  416  89  58
+  320×1000      304    0.3  2.19  2.19  0.45  0  0.29  0  476  91  52
+  360×1000      344   0.34  2  2  0.45  0  0.31  0  476  76  49
+  390×1000      374   0.37  1.88  1.88  0.45  0  0.33  0  476  84  54
+  412×1000      396   0.39  1.8  1.8  0.45  0  0.34  0  476  89  58
+320×568 bar 228→242 · 360×568 rail 268→272 · 390×568 rail 282→286 · 412×568 rail 282→286 · 320×640 bar 228→304 · 360×640 bar 268→314 · 390×640 bar 298→314 · 412×640 rail 320→324 · 320×720 bar 228→304 · 360×720 bar 268→344 · 390×720 bar 298→374 · 412×720 bar 320→394 · 320×800 bar 228→304 · 360×800 bar 268→344 · 390×800 bar 298→374 · 412×800 bar 320→396 · 320×900 bar 228→304 · 360×900 bar 268→344 · 390×900 bar 298→374 · 412×900 bar 320→396 · 320×1000 bar 228→304 · 360×1000 bar 268→344 · 390×1000 bar 298→374 · 412×1000 bar 320→396
+PASS: viewport matrix — 568/640/720/800/900/1000 × 320/360/390/412: 캔버스는 기기가 허락하는 만큼 정사각으로 꽉 차고(45.38 보다 작아지는 화면 0), 굵기·불투명도는 캔버스 위 조절 줄(세로가 아주 짧은 화면만 옆 조절대)에 하나씩, 여백 두 손가락 톡 되돌리기, 도구 줄 두 줄 안 잘림, 브러시 창은 줄 넷이 보이는 독립 창, 색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침·설정 목록만 줄고 완성 줄은 스크롤 밖, 보드 세 칸·아래 줄, 내보내기 결과 격자 한 줄 다섯 칸 이상, 글자 배율 1.0/1.3/1.5 에서 높이 고정 상자 잘림 0곳. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).

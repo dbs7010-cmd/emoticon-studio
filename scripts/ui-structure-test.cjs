@@ -43,7 +43,7 @@ const base = { ...mocks, './src/services/images': images, '../services/images': 
 const load = loader(base);
 const { saveStore } = load('src/services/storage.ts');
 const { createProject } = load('src/project.ts');
-const { T } = load('src/components/ui.tsx');
+const { T } = load('src/components/app-ui.tsx');
 const App = load('App.tsx').default;
 // 공지가 켜진 홈은 같은 화면을 다른 자료로 그린 것이다. 자료(asset-slots)만 갈아끼워 같은 App 을 다시 그린다.
 const slotSource = load('src/design/asset-slots.ts');
@@ -119,8 +119,8 @@ const homeSections = () => {
       // 45.39 홈(시안 H4): 노랑은 하나 — 세트가 있으면 카드 안 '이어 그리기', 없으면 창작 표면의 '새 세트 만들기'.
       // 2026-10-08 토스식: 큰 노랑은 지금 할 일 하나. 세트가 있으면 내 세트 줄의 작은 + 칸도 노랑이다(캔버스 T-Home).
       // 2026-10-14 시안 Z-Home: 노란 버튼은 지금 할 일 하나뿐(세트가 있으면 대표 카드의 '이어 그리기'). 새 세트 칸은 옅은 노랑 카드 안 작은 노란 원.
-      assert.equal(yellow.length, 1, '홈의 노랑(' + where + '): ' + JSON.stringify(yellow));
-      assert.ok(count ? /^세트 [0-9]+ 이어서 만들기$/.test(yellow[0]) : yellow[0] === '새 세트 만들기', '노랑은 지금 할 일(' + where + '): ' + yellow[0]);
+      assert.equal(yellow.length, count ? 0 : 1, '홈의 노랑(' + where + '): ' + JSON.stringify(yellow));
+      assert.ok(count ? yellow.length === 0 : yellow[0] === '새 세트 만들기', '노랑은 지금 할 일(' + where + '): ' + yellow[0]);
       // 2026-10-27 큰 표지형(사용자 승인): 큰 대표 카드·제안까지 줄을 걷고 2열 작품 서가 + 공지 줄.
       if (count) { assert.equal(byTestID('제안까지 남은 일').length, 0, '제안까지 줄 없음(' + where + ')'); assert.equal(byTestID('홈 작품 서가').length, 1, '작품 서가(' + where + ')'); assert.equal(byTestID('홈 공지 줄').length, 1, '작은 공지 줄(' + where + ')'); }
       // 45.42 빈 홈 = EmptyState(그림 · 제목 · 노란 행동 하나 · 그리기 › 움직이기 › 내보내기 흐름) + 내 그림으로 시작 한 줄.

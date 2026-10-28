@@ -23,6 +23,6 @@ for (const [name, table] of [['ja', ja], ['zh-Hant', zhHant]]) for (const k of k
 }
 assert.equal(i.t('home.recentAll', { n: 7 }), '최근 작업순 · 전체 7');
 i.setLang('ja'); assert.equal(i.t('tab.home'), 'ホーム'); assert.equal(i.overseas(), true);
-i.setLang('zh-Hant'); assert.equal(i.t('line.needMoving', { n: 3 }), 'LINE 動態貼圖需要 8 格以上的動態格(目前 3 格)。');
+i.setLang('zh-Hant'); assert.equal(i.t('line.needMoving', { n: 3 }), 'LINE 動態貼圖至少需要 8 張（目前有 3 張）。');
 i.setLang('ko'); assert.equal(i.overseas(), false);
 console.log(`PASS: i18n — 기기 언어 고르기(ko/ja/zh-Hant, 간체·영어는 한국어), 키 ${keys.length}개 모두 일본어·번체, 자리 표시 일치, 한국어 잔존 없음`);

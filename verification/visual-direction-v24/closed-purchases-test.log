@@ -1,0 +1,1 @@
+PASS: closed purchases — zero store/server calls, explicit opt-in, no review bypass, server-only exception, signing/BILLING guards retained

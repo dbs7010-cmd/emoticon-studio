@@ -1,0 +1,36 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  home-empty-free 실제 그림 2장        홈 · 작업 없음 · 무료
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  home-work-free  실제 그림 2장        홈 · 작업 있음 · 무료
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  home-empty      실제 그림 2장        홈 · 작업 없음 · PRO(검수용)
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  home-work       실제 그림 2장        홈 · 작업 있음 · PRO(검수용)
+  new-set         실제 그림 2장        새 세트 만들기
+  guide-emotions  실제 그림 4장        표현 가이드 · 감정 목록
+  guide-examples  실제 그림 5장        표현 가이드 · 표현 고르기
+  set-detail      실제 그림 18장       세트 상세(보드)
+  draw-base       실제 그림 21장       그리기 · 기본
+  draw-size       실제 그림 21장       그리기 · 굵기 조절 중
+  draw-ink        실제 그림 21장       그리기 · 불투명도 조절 중
+  draw-brush      실제 그림 30장       그리기 · 브러시 전체 목록
+  draw-fav-edit   실제 그림 30장       그리기 · 즐겨찾기 편집
+  draw-fav-slot   실제 그림 30장       그리기 · 즐겨찾기 넣을 칸 고르기
+  draw-color      실제 그림 24장       그리기 · 색
+  draw-reference  실제 그림 21장       그리기 · 참고
+  draw-layers     실제 그림 21장       그리기 · 레이어
+  draw-caption    실제 그림 18장       그리기 · 문구 + 키보드
+  draw-selection  실제 그림 21장       그리기 · 선택과 변형
+  motion-base     실제 그림 38장       움직이기
+  motion-parts    실제 그림 18장       움직이기 · 부분 움직임
+  export-before   실제 그림 18장       내보내기 · 만들기 전
+  export-result   실제 그림 18장       내보내기 · 결과
+  settings        실제 그림 0장        설정
+  pro             실제 그림 3장        PRO
+  draw-brush-2    실제 그림 31장       그리기 · 브러시 선택
+  draw-brush-detail실제 그림 32장       그리기 · 브러시 세부 설정
+  draw-ref-and-brush실제 그림 31장       그리기 · 참고와 브러시 함께
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  board-complete  실제 그림 48장       보드 · 전부 완성
+
+  29개 화면 · verification/visual-direction-v24/implemented-390/index.html
