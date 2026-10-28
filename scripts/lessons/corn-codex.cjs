@@ -52,3 +52,15 @@ function fill([nx, ny], hex, wait = 1100) {
   throw new Error('채우기가 안 됨: ' + hex + ' @ ' + nx + ',' + ny);
 }
 module.exports.fill = fill;
+// 한 자리 둘레(그림 기준 반지름 rad)의 갈색 선 픽셀 수 — 윙크처럼 작은 획이 실제로 들어갔는지 본다.
+function inkNear([nx, ny], rad = .05) {
+  const { PNG } = require('pngjs');
+  const png = PNG.sync.read(r.adb(['exec-out', 'screencap', '-p']));
+  const [x0, y0] = at(nx - rad, ny - rad), [x1, y1] = at(nx + rad, ny + rad);
+  let n = 0;
+  for (let y = y0 | 0; y < y1; y++) for (let x = x0 | 0; x < x1; x++) {
+    const k = (y * png.width + x) * 4; if (Math.abs(png.data[k] - 0x76) + Math.abs(png.data[k + 1] - 0x50) + Math.abs(png.data[k + 2] - 0x44) < 60) n++;
+  }
+  return n;
+}
+module.exports.inkNear = inkNear;

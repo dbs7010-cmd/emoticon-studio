@@ -9,6 +9,7 @@ const S = corn.SPOT, C = corn.COLOR, at = ([x, y]) => corn.at(x, y);
 r.touches(true);
 
 // 1. 선 종류 — 기본 펜으로 알갱이(주황 점)와 볼터치(살구 점), 같은 칸 한 번 더 → 세부 설정. 마커는 겹친 자리가 얼룩져 원본처럼 꽉 찬 볼이 안 나왔다.
+u.dismiss();
 r.start('bl1'); r.sleep(600);
 corn.color(C.grain);   // 첫 세트에서 이미 기본 펜 — 다시 누르면 세부 설정 창이 열린다
 for (const g of S.grains) r.stroke(corn.dot(g, .02));
@@ -18,9 +19,10 @@ r.sleep(600);
 u.tap('기본 펜', 2200);                         // 같은 칸을 한 번 더 → 진하기·선 보정
 for (const close of ['브러시 닫기', '닫기']) if (u.has(close)) { u.tap(close, 900); break; }
 r.stop(); r.pull('bl1');
-say('1 ' + r.cut('bl1', { from: 0.4, speed: 1.4, out: out(1), crop: [420, 1440] }) + 'B');
+say('1 ' + r.cut('bl1', { from: 0.4, squeeze: true, speed: 1.2, out: out(1), crop: [420, 1440] }) + 'B');
 
 // 2. 색 고르기 — 노랑으로 몸·손·발, 초록으로 새싹 둘과 아래 잎 둘을 채우기
+u.dismiss();
 r.start('bl2'); r.sleep(600);
 corn.color(C.body);
 u.tap('채우기', 900);
@@ -29,9 +31,10 @@ corn.color(C.leaf);   // 채우기는 이미 골라져 있다 — 다시 누르�
 for (const k of ['sproutL', 'sproutR', 'leafL', 'leafR']) corn.fill(S[k], C.leaf);
 r.sleep(800);
 r.stop(); r.pull('bl2');
-say('2 ' + r.cut('bl2', { from: 0.4, speed: 1.6, out: out(2), crop: [420, 1440] }) + 'B');
+say('2 ' + r.cut('bl2', { from: 0.4, squeeze: true, speed: 1.2, out: out(2), crop: [420, 1440] }) + 'B');
 
 // 3. 레이어 나누기 — 레이어 2에 하트
+u.dismiss();
 r.start('bl3'); r.sleep(600);
 u.tap('레이어', 1300);
 u.tap('레이어 추가', 1300);
@@ -47,5 +50,5 @@ u.tap('레이어', 1500);
 r.sleep(1200);
 u.tap('레이어 닫기', 900);
 r.stop(); r.pull('bl3');
-say('3 ' + r.cut('bl3', { from: 0.4, speed: 1.6, out: out(3), crop: [150, 1440] }) + 'B');
+say('3 ' + r.cut('bl3', { from: 0.4, squeeze: true, speed: 1.2, out: out(3), crop: [150, 1440] }) + 'B');
 r.touches(false);

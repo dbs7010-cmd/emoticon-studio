@@ -18,6 +18,7 @@ const at = label => { const n = u.find(label); if (!n) throw new Error('화면�
 const T = { closeGuide: [1013, 395], closeHint: [975, 543], continue: [360, 545], caption: [1005, 270], pickDone: [795, 1884] };
 
 // 1. 가이드에서 대사 고르기 — 신나 › 양팔 들고 › 우와 → 예시 위에 대사 → 참고 보기 › 이전 칸 그림으로 시작: 색칠한 콘 위에 '우와'
+u.dismiss();
 r.start('sp1'); r.sleep(600);
 u.tap('표현 가이드', 2500);
 u.tap('신나', 2500, { exact: false });
@@ -27,9 +28,9 @@ u.tap('참고 보기', 3500);
 // 표현 예시 창과 그 뒤에 남는 힌트 줄을 닫아야 '이전 칸 그림으로 시작' 안내가 보인다(창이 열려 있으면 아래 자리가 모두 밀린다).
 r.tap(...T.closeGuide, 1500);
 r.tap(...T.closeHint, 1500);
-r.tap(...T.continue, 5000);              // 가져와도 고른 대사는 남는다(10-29 고침)
+r.tap(...T.continue, 9000);              // 가져와도 고른 대사는 남는다(10-29 고침)
 r.stop(); r.pull('sp1');
-say('1 ' + r.cut('sp1', { from: 0.4, out: out(1), crop: [0, 1440] }) + 'B');
+say('1 ' + r.cut('sp1', { from: 0.4, squeeze: true, out: out(1), crop: [0, 1440] }) + 'B');
 
 // 녹화 전 재기: 문구 창(키보드) → 추천 대사·적용·키보드 닫기, 키보드 닫은 창 → 배치·닫기
 r.tap(...T.caption, 2500);
@@ -40,6 +41,7 @@ r.tap(...M.close, 2500);
 console.log('  잰 자리', JSON.stringify(M));
 
 // 2. 추천 대사로 바로 넣기 — 문구 › ㅋㅋㅋㅋ › 적용 → 캐릭터 위에 작게
+u.dismiss();
 r.start('sp2'); r.sleep(600);
 r.tap(...T.caption, 2500);
 r.tap(...M.kk, 1500);
@@ -49,6 +51,7 @@ r.stop(); r.pull('sp2');
 say('2 ' + r.cut('sp2', { from: 0.4, out: out(2), crop: [150, 1440] }) + 'B');
 
 // 3. 글씨 배치 바꾸기 — 양옆(ㅋㅋ … ㅋㅋ), 그다음 말풍선. 배치는 누르는 즉시 캔버스에 반영된다.
+u.dismiss();
 r.start('sp3'); r.sleep(600);
 for (const lay of [M.split, M.bubble]) {
   r.tap(...T.caption, 2500);

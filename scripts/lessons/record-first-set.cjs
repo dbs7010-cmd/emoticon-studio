@@ -26,7 +26,7 @@ r.sleep(1000);
 r.stop(); r.pull('fs2');
 const inkPx = corn.ink(); say('선 픽셀 ' + inkPx);
 if (inkPx < 80000) throw new Error('선이 빠졌다(' + inkPx + ' < 80000) — 다시 녹화');
-say('2 ' + r.cut('fs2', { from: 0.4, speed: 1.3, out: out(2), crop: [420, 1440] }) + 'B');
+say('2 ' + r.cut('fs2', { from: 0.4, speed: 3, out: out(2), crop: [420, 1440] }) + 'B');
 
 // 3. 저장하고 보드로
 r.start('fs3'); r.sleep(600);

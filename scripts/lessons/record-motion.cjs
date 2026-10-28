@@ -23,6 +23,7 @@ r.touches(true);
 r.tap(...P.drawTab, 1500);
 
 // 1. 효과 고르기 — 등장 묶음에서 뿅, 동작 묶음에서 통통
+u.dismiss();
 r.start('mo1'); r.sleep(600);
 r.tap(...P.motionTab, 2000);
 r.tap(...P.chipEnter, 1200);
@@ -33,6 +34,7 @@ r.shot(path.join(r.RAW || 'C:/build-temp/lesson-raw', 'mo1-end.png')); r.stop();
 say('1 ' + r.cut('mo1', { from: 0.4, out: out(1), crop: [150, 1440] }) + 'B');
 
 // 2. 세기 · 속도 — 아주 세게면 빨간 띠(칸 밖), 다시 보통으로. 속도는 조금 빠르게
+u.dismiss();
 r.start('mo2'); r.sleep(800);
 // 효과가 도는 동안엔 막대를 눌러도 안 바뀐다 — 손잡이(보통 = 가운데)를 잡고 끈다.
 r.swipe(360, 396, 515, 396, 900, 3000);
@@ -42,6 +44,7 @@ r.shot(path.join(r.RAW || 'C:/build-temp/lesson-raw', 'mo2-end.png')); r.stop();
 say('2 ' + r.cut('mo2', { from: 0.4, out: out(2), crop: [150, 1440] }) + 'B');
 
 // 3. 손그림 떨림 — 조합 묶음 아래 줄에서 보통
+u.dismiss();
 r.start('mo3'); r.sleep(600);
 r.tap(...P.chipCombo, 1500);
 r.tap(...P.boilMid, 4000);
@@ -49,6 +52,7 @@ r.shot(path.join(r.RAW || 'C:/build-temp/lesson-raw', 'mo3-end.png')); r.stop();
 say('3 ' + r.cut('mo3', { from: 0.4, out: out(3), crop: [150, 1440] }) + 'B');
 
 // 4. 부분만(PRO) — 부분 칩 → 레이어 2(하트) → 통통 튀기
+u.dismiss();
 r.start('mo4'); r.sleep(600);
 r.tap(...P.chipPart, 2000);
 r.tap(...P.layer2, 3000);

@@ -36,10 +36,11 @@ module.exports = {
   arc(cx, cy, rx, ry, a0, a1, n = 18) { const pts = []; for (let i = 0; i <= n; i++) { const a = (a0 + (a1 - a0) * i / n) * Math.PI / 180; pts.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]); } return pts; },
   shot(file) { fs.writeFileSync(file, adb(['exec-out', 'screencap', '-p'])); },
   // 다듬기: from~to 초만, speed 배속, 폭 540, 소리 없음, H.264(앱 안 재생용), 빠른 시작.
-  cut(name, { from = 0, to, speed = 1, out, crop }) {
+  // squeeze: 같은 화면이 이어지는 기다림(화면 읽기 대기)을 줄인다 — 10fps로 펴고 같은 장은 8장까지만 건너뛰어 멈춤을 1초 안쪽으로.
+  cut(name, { from = 0, to, speed = 1, out, crop, squeeze = false }) {
     const src = path.join(RAW, name + '.mp4');
     const args = ['-y', '-ss', String(from), '-i', src, ...(to ? ['-t', String(to - from)] : []), '-an',
-      '-vf', `${crop ? `crop=1080:${crop[1]}:0:${crop[0]},` : ''}setpts=PTS/${speed},scale=540:-2,fps=30`, '-c:v', 'libx264', '-profile:v', 'main', '-pix_fmt', 'yuv420p', '-crf', '30', '-preset', 'slow', '-movflags', '+faststart', out];
+      '-vf', `${crop ? `crop=1080:${crop[1]}:0:${crop[0]},` : ''}${squeeze ? 'fps=10,mpdecimate=max=8,setpts=N/10/TB,' : ''}setpts=PTS/${speed},scale=540:-2,fps=30`, '-c:v', 'libx264', '-profile:v', 'main', '-pix_fmt', 'yuv420p', '-crf', '30', '-preset', 'slow', '-movflags', '+faststart', out];
     execFileSync(FFMPEG, args, { stdio: 'ignore' });
     return fs.statSync(out).size;
   },

@@ -6,11 +6,13 @@ const r = require('./rec.cjs');
 function nodes() {
   // 화면이 움직이는 중이면 덤프가 실패하고 예전 파일이 남는다 — 지우고 될 때까지 다시 뜬다.
   let xml = '';
-  for (let i = 0; i < 8 && !xml.includes('<hierarchy'); i++) {
+  for (let i = 0; i < 16 && !xml.includes('<hierarchy'); i++) {
     r.adb(['shell', 'rm', '-f', '/sdcard/ui.xml']);
     try { r.adb(['shell', 'uiautomator', 'dump', '/sdcard/ui.xml'], { stdio: ['ignore', 'pipe', 'ignore'] }); xml = r.adb(['shell', 'cat', '/sdcard/ui.xml'], { stdio: ['ignore', 'pipe', 'ignore'] }).toString('utf8'); } catch { xml = ''; }
     if (!xml.includes('<hierarchy')) r.sleep(500);
   }
+  // 계속 실패하면 빈 목록으로 넘기지 않는다 — '없음'으로 읽혀 창 닫기 같은 단계가 조용히 빠졌다(10-29).
+  if (!xml.includes('<hierarchy')) throw new Error('화면 읽기 실패(uiautomator)');
   const out = [];
   for (const m of xml.matchAll(/<node [^>]*>/g)) {
     const a = m[0], get = k => (a.match(new RegExp(k + '="([^"]*)"')) || [])[1] || '';
@@ -44,7 +46,9 @@ function fresh() {
   const end = Date.now() + 120000;
   // 비운 뒤 첫 실행이 시작 그림에서 멈출 때가 있다(에뮬레이터) — 40초가 지나면 앱을 다시 띄운다.
   let since = Date.now();
-  for (;;) { r.sleep(6000); r.tap(540, 2199, 2500); if (has('새 세트 만들기')) break; if (Date.now() > end) throw new Error('홈이 안 열림');
+  for (;;) { r.sleep(6000); r.tap(540, 2199, 2500); let home = false; try { if (has('Wait')) tap('Wait', 3000); home = has('새 세트 만들기'); } catch { /* 시작 그림이 움직이는 중 */ } if (home) break;   // 막 켠 에뮬레이터의 '응답 없음' 창은 기다리기 if (Date.now() > end) throw new Error('홈이 안 열림');
     if (Date.now() - since > 40000) { r.adb(['shell', 'am', 'force-stop', 'com.emoticonstudio.app']); r.adb(['shell', 'monkey', '-p', 'com.emoticonstudio.app', '-c', 'android.intent.category.LAUNCHER', '1'], { stdio: 'ignore' }); since = Date.now(); } }
 }
-module.exports = { nodes, find, tap, has, waitFor, fresh };
+// 에뮬레이터가 느릴 때 뜨는 '저장이 늦어지고 있어요' 알림을 닫는다(화면 읽기가 안 되면 그냥 넘어간다).
+function dismiss() { try { if (has('저장이 늦어지고 있어요')) { tap('OK', 1200); return true; } } catch { /* 화면이 움직이는 중 */ } return false; }
+module.exports = { nodes, find, tap, has, waitFor, fresh, dismiss };
