@@ -15,9 +15,9 @@ import { usesPro } from '../project';
 import { isProPreset } from '../motion-math';
 import { dataUrl } from '../services/images';
 import { imageUri } from '../services/storage';
-import { CAPTION_STYLES } from '../types';
+import { CAPTION_LAYOUTS, CAPTION_STYLES } from '../types';
 import { popularLines } from '../i18n/index';
-import type { BrushSettings, Caption, CaptionStyle, LayerTransform, LocalImage, Motion, PainterExport, QA, SavedMotion, Slot } from '../types';
+import type { BrushSettings, Caption, CaptionLayout, CaptionStyle, LayerTransform, LocalImage, Motion, PainterExport, QA, SavedMotion, Slot } from '../types';
 
 import { AnimPanel } from './anim-panel';
 type Scene = {
@@ -551,6 +551,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [captionOpen, setCaptionOpen] = useState(false), [captionDraft, setCaptionDraft] = useState(''), [captionPlace, setCaptionPlace] = useState<Caption['place']>('bottom');
   // 문구 글씨체(45.6차): 한 번 고르면 다음 칸에서도 그대로 — 24칸을 만드는 동안 같은 성격을 다시 고르지 않는다.
   const [captionFace, setFace] = useState<CaptionStyle>(sessionCaptionFace);
+  // 대사 배치(2026-10-28): 한 줄 · 양옆 · 세로 · 말풍선. 고른 즉시 캔버스 글씨에 반영된다.
+  const [captionLayout, setCaptionLayout] = useState<CaptionLayout>('line');
   const setCaptionFace = (next: CaptionStyle) => { sessionCaptionFace = next; setFace(next); };
   // 참고 줄의 두 갈래: 내 사진 / 기본 레퍼런스(관절 인형 — 에셋 들어오기 전에는 준비 중 자리표시).
   const [refSource, setRefSource] = useState<'mine' | 'builtin'>('mine');
@@ -911,7 +913,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     // 입력칸에 확정하지 않은 문구가 남아 있으면 저장 직전에 그대로 넣는다 — '적용'을 누르지 않았다고 조용히 잃지 않는다(45.1차).
     // 빈 입력은 건드리지 않는다: 문구를 지우는 일은 '문구 지우기'로만 한다.
     const pendingCaption = captionOpen ? captionDraft.trim() : '';
-    if (pendingCaption && pendingCaption !== (scene.caption?.text ?? '')) send({ type: 'caption', caption: { text: pendingCaption, place: captionPlace, color, style: captionFace } });
+    if (pendingCaption && pendingCaption !== (scene.caption?.text ?? '')) send({ type: 'caption', caption: { ...(scene.caption ?? {}), text: pendingCaption, place: captionPlace, color, style: captionFace, layout: captionLayout } });
     inFlight.current = true; nextAction.current = action;
     // 자동저장('stay')은 화면을 잠그지 않는다. 칸을 떠나는 저장(닫기·완성·이동·공유)만 잠깐 잠근다.
     if (action === 'stay') quiet.current = true; else setBusy(true);
@@ -950,6 +952,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     const current = scene.caption ?? slot.work?.caption ?? null;
     setCaptionDraft(current?.text ?? ''); setCaptionPlace(current?.place ?? 'bottom');
     if (current?.style) setCaptionFace(current.style);
+    setCaptionLayout(current?.layout ?? 'line');
     ease(); setDrawRail(false); setRefRail(false); setPanel('caption'); setCaptionOpen(true);
   }
   // 문구 색(45.5차): 지금까지 문구 패널의 동그라미는 '지금 색'을 보여 주기만 했다. 이제 누르면 실제로 바뀐다.
@@ -962,9 +965,14 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     setCaptionFace(next);
     if (scene.caption?.text) send({ type: 'caption', caption: { ...scene.caption, style: next } });
   }
+  function changeCaptionLayout(next: CaptionLayout) {
+    setCaptionLayout(next);
+    if (scene.caption?.text) send({ type: 'caption', caption: { ...scene.caption, layout: next } });
+  }
   function applyCaption(text: string) {
     const clean = text.trim();
-    send({ type: 'caption', caption: clean ? { text: clean, place: captionPlace, color, style: captionFace } : null });
+    // 글자만 바꾸면 옮겨 둔 자리·크기·회전은 그대로 둔다(가이드에서 위쪽 작게 놓인 대사를 고쳐도 그 자리에 남는다).
+    send({ type: 'caption', caption: clean ? { ...(scene.caption ?? {}), text: clean, place: captionPlace, color, style: captionFace, layout: captionLayout } : null });
     // 입력이 끝나면 키보드를 내리고 글씨를 고른 상태로 둔다 — 바로 캔버스에서 끌어 옮기고 손잡이로 크기를 바꾼다.
     Keyboard.dismiss();
     if (clean) send({ type: 'captionPick', on: true });
@@ -1759,6 +1767,18 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                   style={({ pressed }) => ({ flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
                   <Text style={{ fontSize: 17, lineHeight: 22, fontWeight: face.key === 'thick' ? '900' : '700', fontFamily: face.key === 'serif' ? 'serif' : undefined, color: on ? C.ink : C.muted }}>가</Text>
                   <Text style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{face.title}</Text>
+                </Pressable>; })}
+            </View>
+          </View>}
+          {/* 대사 배치(2026-10-28, 실제 이모티콘 레퍼런스): 한 줄 · 양옆 나눠 쓰기(응 … 응) · 세로 · 말풍선. */}
+          {!typing && <View testID="문구 배치" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>배치</Text>
+            <View style={{ flex: 1, flexDirection: 'row', gap: 6 }}>
+              {CAPTION_LAYOUTS.map(lay => { const on = captionLayout === lay.key;
+                return <Pressable key={lay.key} accessibilityRole="button" accessibilityLabel={'문구 배치 ' + lay.title} accessibilityState={{ selected: on }}
+                  onPress={() => changeCaptionLayout(lay.key)}
+                  style={({ pressed }) => ({ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
+                  <Text style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{lay.title}</Text>
                 </Pressable>; })}
             </View>
           </View>}

@@ -409,7 +409,7 @@ function readGif(bytes) {
     // ── 움직임은 그림을 건드리지 않는다 ─────────────────────────────────────────────────────
     const afterAll = await saved();
     assert.equal(afterAll.layers.length, 2, 'the layers are untouched by all of this');
-    assert.deepEqual(afterAll.caption, { text: '고마워요', place: 'bottom', color: '#242424', style: 'basic' }, 'and so are the words');
+    assert.deepEqual(afterAll.caption, { text: '고마워요', place: 'bottom', color: '#242424', style: 'basic', layout: 'line' }, 'and so are the words');
     // Undo reaches movement like any other edit.
     await cmd({ type: 'undo' });
     assert.notEqual((await state()).motion && (await state()).motion.preset, 'bounce', 'undo takes the last movement change back');

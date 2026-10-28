@@ -68,9 +68,39 @@ function captionSpot(g){
  if(shown>room){px=Math.max(1,Math.floor(px*room/shown));g.font=capFont(px);wide=g.measureText(text).width+px*capBold(px);}
  const x=W/2+(caption.dx||0),y=(caption.place==='top'?Math.round(H*.06):H-Math.round(H*.06))+(caption.dy||0);
  const scale=caption.scale||1,rot=caption.rot||0;
+ // 대사 배치(2026-10-28, 실제 이모티콘 레퍼런스): 한 줄(예전 그대로) · 양옆 나눠 쓰기(응 … 응) · 세로 한 줄 · 말풍선.
+ // 어느 배치든 x 는 상자 한가운데라, 옮기기·크기·회전·고르기 판정이 예전과 같은 길로 돈다.
+ const lay=caption.layout||'line',dx=caption.dx||0,dy=caption.dy||0;
+ if(lay==='split'){
+  const parts=splitCaption(text),half=W*.34;
+  let p=Math.round(H*.1);for(;p>10;p--){g.font=capFont(p);if(Math.max(...parts.map(t=>g.measureText(t).width+p*capBold(p)))+edge(p)<=half)break;}
+  g.font=capFont(p);const ws=parts.map(t=>g.measureText(t).width+p*capBold(p));
+  const cx=W/2+dx,y0=(caption.place==='top'?Math.round(H*.08):H-Math.round(H*.08))+dy,xa=cx-W*.3,xb=cx+W*.3,hh=p*1.25,tp=caption.place==='top'?y0:y0-hh;
+  const left=xa-ws[0]/2,right=xb+ws[1]/2;
+  return {text,px:p,wide:right-left,x:(left+right)/2,y:y0,scale,rot,parts:[{t:parts[0],x:xa,y:y0},{t:parts[1],x:xb,y:y0}],box:{x:left,y:tp,w:right-left,h:hh}};
+ }
+ if(lay==='vertical'){
+  const chars=Array.from(text.replace(/ +/g,'')),n=Math.max(1,chars.length);
+  const p=Math.max(10,Math.min(Math.round(H*.1),Math.floor(H*.78/(n*1.08)))),lh=p*1.08,colx=W*.86+dx,y0=Math.round(H*.08)+dy;
+  g.font=capFont(p);const wmax=Math.max(...chars.map(c=>g.measureText(c).width+p*capBold(p)));
+  return {text,px:p,wide:wmax,x:colx,y:y0,scale,rot,base:'top',parts:chars.map((c,i)=>({t:c,x:colx,y:y0+i*lh})),box:{x:colx-wmax/2,y:y0,w:Math.max(8,wmax),h:n*lh}};
+ }
+ if(lay==='bubble'){
+  let p=Math.min(px,Math.round(H*.08));g.font=capFont(p);let w=g.measureText(text).width;
+  for(;w>W*.6&&p>10;p--){g.font=capFont(p);w=g.measureText(text).width;}
+  const padX=p*.65,padY=p*.45,tail=p*.55,hh=p*1.2+padY*2,cx=W/2+dx;
+  const y0=(caption.place==='top'?Math.round(H*.04):H-Math.round(H*.04)-hh-tail)+dy;
+  const bx=cx-w/2-padX,bw=w+padX*2;
+  return {text,px:p,wide:bw,x:cx,y:y0,scale,rot,base:'top',plain:true,bubble:{x:bx,y:y0,w:bw,h:hh,tail,up:caption.place!=='top'},parts:[{t:text,x:cx,y:y0+padY}],box:{x:bx,y:y0,w:bw,h:hh+tail}};
+ }
  // 글자 상자. 기준선이 위/아래로 갈리므로 상자의 세로 위치도 그에 맞춘다.
  const h=px*1.25,top=caption.place==='top'?y:y-h;
- return {text,px,wide,x,y,scale,rot,box:{x:x-wide/2,y:top,w:Math.max(8,wide),h}};
+ return {text,px,wide,x,y,scale,rot,parts:[{t:text,x,y}],box:{x:x-wide/2,y:top,w:Math.max(8,wide),h}};
+}
+// 양옆 나눠 쓰기: 띄어쓰기가 있으면 첫 낱말 | 나머지, 없으면 글자 수 반씩(응응 → 응 | 응, 최고 → 최 | 고). 한 글자면 양쪽에 같은 글자.
+function splitCaption(text){
+ const sp=text.split(/ +/).filter(Boolean);if(sp.length>1)return [sp[0],sp.slice(1).join(' ')];
+ const c=Array.from(text);if(c.length<2)return [text,text];const k=Math.ceil(c.length/2);return [c.slice(0,k).join(''),c.slice(k).join('')];
 }
 function drawCaption(g,d){
  const spot=captionSpot(g);
@@ -80,15 +110,24 @@ function drawCaption(g,d){
  // 사용자가 준 크기·회전은 글자 한가운데를 축으로 건다. 그래야 돌려도 제자리에서 돈다.
  const cx=spot.x,cy=spot.box.y+spot.box.h/2;
  g.translate(cx,cy);g.rotate(spot.rot*Math.PI/180);g.scale(spot.scale,spot.scale);g.translate(-cx,-cy);
- g.textAlign='center';g.textBaseline=caption.place==='top'?'top':'bottom';
- const face=capFace(),bold=capBold(spot.px);
- g.font=capFont(spot.px);
+ g.textAlign='center';g.textBaseline=spot.base||(caption.place==='top'?'top':'bottom');
+ const face=capFace(),bold=capBold(spot.px),ink=css(caption.color||'#242424');
  g.lineJoin='round';g.lineCap='round';
- // 흰 테두리는 굵어진 글자 바깥을 감싸도록 덧댄 만큼 함께 넓힌다.
- g.lineWidth=Math.max(3,spot.px*(face.o+bold));g.strokeStyle='#FFFFFF';g.strokeText(spot.text,spot.x,spot.y);
- g.fillStyle=css(caption.color||'#242424');
- if(bold){g.lineWidth=spot.px*bold;g.strokeStyle=css(caption.color||'#242424');g.strokeText(spot.text,spot.x,spot.y);}
- g.fillText(spot.text,spot.x,spot.y);
+ // 말풍선: 흰 바탕 + 글자색 테두리 + 꼬리(위 말풍선은 아래로, 아래 말풍선은 위로). 글자에 흰 테두리는 두르지 않는다.
+ if(spot.bubble){const b=spot.bubble,r=Math.min(b.h/2,spot.px*.9),tx=b.x+b.w/2,tw=b.tail*.9;
+  g.beginPath();g.moveTo(b.x+r,b.y);g.arcTo(b.x+b.w,b.y,b.x+b.w,b.y+b.h,r);g.arcTo(b.x+b.w,b.y+b.h,b.x,b.y+b.h,r);g.arcTo(b.x,b.y+b.h,b.x,b.y,r);g.arcTo(b.x,b.y,b.x+b.w,b.y,r);g.closePath();
+  g.fillStyle='#FFFFFF';g.strokeStyle=ink;g.lineWidth=Math.max(2,spot.px*.08);g.fill();g.stroke();
+  const ty=b.up?b.y:b.y+b.h,dir=b.up?-1:1;
+  g.beginPath();g.moveTo(tx-tw/2,ty-dir*g.lineWidth);g.lineTo(tx,ty+dir*b.tail);g.lineTo(tx+tw/2,ty-dir*g.lineWidth);g.fill();
+  g.beginPath();g.moveTo(tx-tw/2,ty);g.lineTo(tx,ty+dir*b.tail);g.lineTo(tx+tw/2,ty);g.stroke();}
+ g.font=capFont(spot.px);
+ for(const q of spot.parts){
+  // 흰 테두리는 굵어진 글자 바깥을 감싸도록 덧댄 만큼 함께 넓힌다.
+  if(!spot.plain){g.lineWidth=Math.max(3,spot.px*(face.o+bold));g.strokeStyle='#FFFFFF';g.strokeText(q.t,q.x,q.y);}
+  g.fillStyle=ink;
+  if(bold){g.lineWidth=spot.px*bold;g.strokeStyle=ink;g.strokeText(q.t,q.x,q.y);}
+  g.fillText(q.t,q.x,q.y);
+ }
  g.restore();
 }
 // 문구를 고르고 있을 때 그 둘레에 그리는 표시. 그림 선택과 **다른 색**을 쓴다 — 지금 무엇을 만지고
@@ -1481,7 +1520,10 @@ async function command(m){try{
  if(m.type==='smooth'){smoothing=m.on!==false;state();}
  if(m.type==='clear'){const l=activeDraw();if(l){checkpoint();l.bitmap.getContext('2d').clearRect(0,0,W,H);render();state();}}
  if(m.type==='caption'){checkpoint();const face=['basic','serif','thick'].indexOf(m.caption&&m.caption.style)>=0?m.caption.style:(caption&&caption.style)||'basic';
-  caption=m.caption&&m.caption.text.trim()?{...(caption||{}),text:m.caption.text,place:m.caption.place==='top'?'top':'bottom',color:m.caption.color||caption?.color||'#242424',style:face}:null;dirty=true;render();state();}
+  caption=m.caption&&m.caption.text.trim()?{...(caption||{}),text:m.caption.text,place:m.caption.place==='top'?'top':'bottom',color:m.caption.color||caption?.color||'#242424',style:face,
+   // 대사 배치(2026-10-28)와, 화면이 함께 보낸 자리·크기·회전. 보내지 않은 값은 지금 문구의 것을 그대로 둔다.
+   layout:['line','split','vertical','bubble'].indexOf(m.caption.layout)>=0?m.caption.layout:(caption&&caption.layout)||'line',
+   ...['dx','dy','scale','rot'].reduce((o,k)=>Number.isFinite(m.caption[k])?Object.assign(o,{[k]:m.caption[k]}):o,{})}:null;dirty=true;render();state();}
  // An explicit copy of another cut. Every bitmap is decoded fresh here, so editing or clearing
  // the copy can never reach back into the drawing it came from.
  if(m.type==='copyWork'){

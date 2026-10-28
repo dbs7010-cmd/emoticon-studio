@@ -149,6 +149,23 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
     const picked = await last('picked');
     assert.equal(picked.color, '#123456', '스포이드가 고해상도에서도 그 자리 색');
 
+    // 8-2) 대사 배치(2026-10-28): 양옆은 위 양쪽에만, 세로는 오른쪽 세로줄에만, 말풍선은 흰 바탕 위에 글자. 저장 완성본(360)에서 잰다.
+    {
+      const inkIn = (url, x0, y0, x1, y1) => page.evaluate(async ([u, x0, y0, x1, y1]) => { const i = new Image(); i.src = u; await i.decode(); const c = document.createElement('canvas'); c.width = c.height = 360; const g = c.getContext('2d'); g.drawImage(i, 0, 0); const d = g.getImageData(x0, y0, x1 - x0, y1 - y0).data; let n = 0; for (let k = 3; k < d.length; k += 4) if (d[k] > 128) n++; return n; }, [url, x0, y0, x1, y1]);
+      const shot = async caption => { await cmd({ type: 'init', res: 3, layers: [{ id: 'draw-1', name: '그림 1' }], activeLayerId: 'draw-1' }); await cmd({ type: 'caption', caption }); await cmd({ type: 'save', token: 9 }); const r = await last('save'); await cmd({ type: 'saved', token: 9 }); return r; };
+      const split = await shot({ text: '응응', place: 'top', color: '#242424', style: 'basic', layout: 'split' });
+      assert.equal(split.caption.layout, 'split', '배치가 저장된다');
+      assert.ok(await inkIn(split.data, 40, 10, 140, 70) > 30 && await inkIn(split.data, 220, 10, 320, 70) > 30, '양옆: 위 왼쪽과 오른쪽에 글자');
+      assert.equal(await inkIn(split.data, 150, 10, 210, 70), 0, '양옆: 가운데 위는 비어 있다(캐릭터 머리 자리)');
+      const vert = await shot({ text: '좋아요', place: 'top', color: '#242424', style: 'basic', layout: 'vertical' });
+      assert.ok(await inkIn(vert.data, 280, 20, 345, 150) > 60, '세로: 오른쪽 세로줄에 글자');
+      assert.equal(await inkIn(vert.data, 0, 0, 250, 360), 0, '세로: 나머지는 비어 있다');
+      const bub = await shot({ text: '뭐해?', place: 'top', color: '#242424', style: 'basic', layout: 'bubble' });
+      assert.ok(await inkIn(bub.data, 100, 8, 260, 70) > 400, '말풍선: 위 가운데에 흰 풍선(채운 면)');
+      const plain = await shot({ text: '뭐해?', place: 'top', color: '#242424', style: 'basic' });
+      assert.equal(plain.caption.layout, 'line', '배치를 안 주면 한 줄(예전 그대로)');
+    }
+
     // 9) 1배(res 1)로 다시 열면 예전과 같은 360 장이다(앱이 res 를 주지 않는 경우).
     await cmd({ type: 'init', res: 1, layers: [{ id: 'draw-1', name: '그림 1' }], activeLayerId: 'draw-1' });
     await page.waitForTimeout(100);
@@ -156,6 +173,6 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
     assert.deepEqual([one.canvas, one.layer, one.res], [[360, 360], [360, 360], 1], '1배는 예전 그대로');
 
     assert.deepEqual(errors, [], '페이지 오류 없음');
-    console.log('PASS: hires engine — 화면·장 1080(문서 좌표 360 그대로), 선 굵기 3배 촘촘, 선 끝 미리 보이기(화면만), 빠른 획도 뗀 자리까지, 저장 완성본 360 · 장 PNG 1080, 되돌리기/다시하기 픽셀 일치 + 바뀌지 않은 장 사본 공유 + 사본 상한 24, 채우기 틈 없음, 옛 360 장 그대로 열림, 카카오 프레임 360 · GIF · LINE 칸, 스포이드, 1배 그대로.');
+    console.log('PASS: hires engine — 화면·장 1080(문서 좌표 360 그대로), 선 굵기 3배 촘촘, 선 끝 미리 보이기(화면만), 빠른 획도 뗀 자리까지, 저장 완성본 360 · 장 PNG 1080, 되돌리기/다시하기 픽셀 일치 + 바뀌지 않은 장 사본 공유 + 사본 상한 24, 채우기 틈 없음, 옛 360 장 그대로 열림, 카카오 프레임 360 · GIF · LINE 칸, 스포이드, 대사 배치(양옆·세로·말풍선), 1배 그대로.');
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exit(1); });

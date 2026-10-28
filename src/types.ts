@@ -14,7 +14,12 @@ export type CaptionStyle = 'basic' | 'serif' | 'thick';
 export const CAPTION_STYLES: { key: CaptionStyle; title: string }[] = [
   { key: 'basic', title: '기본' }, { key: 'serif', title: '또박' }, { key: 'thick', title: '도톰' },
 ];
-export type Caption = { text: string; place: 'top' | 'bottom'; color: string; style?: CaptionStyle; dx?: number; dy?: number; scale?: number; rot?: number };
+// 대사 배치(2026-10-28): 한 줄 · 양옆 나눠 쓰기(응 … 응) · 세로 한 줄 · 말풍선. 없으면 한 줄(예전 저장본 그대로).
+export type CaptionLayout = 'line' | 'split' | 'vertical' | 'bubble';
+export const CAPTION_LAYOUTS: { key: CaptionLayout; title: string; sample: string }[] = [
+  { key: 'line', title: '한 줄', sample: '가나' }, { key: 'split', title: '양옆', sample: '가 · 나' }, { key: 'vertical', title: '세로', sample: '가\n나' }, { key: 'bubble', title: '말풍선', sample: '( 가 )' },
+];
+export type Caption = { text: string; place: 'top' | 'bottom'; color: string; style?: CaptionStyle; layout?: CaptionLayout; dx?: number; dy?: number; scale?: number; rot?: number };
 // 애니메이션(2026-10-15): 장마다 그림 전체를 따로 그린다. 2장 이상일 때만 있고, 첫 장의 레이어는 layers 와 같다(대표 그림).
 // duration 은 그 장을 보여 주는 초(0.1~2). 무료 3장 · PRO 24장(카카오 규격 상한).
 export type AnimFrame = { id: string; duration: number; layers: WorkLayer[] };
