@@ -503,7 +503,9 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await press('문구 적용');
  const caption=lastCommand('caption').caption;
  assert.equal(caption.text,'고마워요','Korean text reaches the canvas as written');
- assert.equal(caption.place,'bottom','새 문구는 아래에서 시작하고 자리는 캔버스에서 옮긴다');
+ // 2026-10-29: 새 문구는 캐릭터 위에 작게(0.7배) 시작한다 — 대사가 몸을 덮지 않게. 자리는 캔버스에서 옮긴다.
+ assert.equal(caption.place,'top','새 문구는 위에서 시작하고 자리는 캔버스에서 옮긴다');
+ assert.equal(caption.scale,.7,'새 문구는 작게(0.7배) 시작한다');
  assert.deepEqual(lastCommand('captionPick'),{type:'captionPick',on:true},'입력을 마치면 글씨가 골라진 상태로 남아 바로 옮길 수 있다');
  scene={...scene,dirty:true,caption,captionPicked:true};await message(scene);
  assert.equal(labelled('문구 내용 고치기').length,1,'고른 동안에는 내용 고치기');

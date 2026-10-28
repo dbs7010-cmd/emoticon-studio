@@ -108,6 +108,8 @@ type Props = {
 
 // 'manual': 저장 버튼(45.38). 이 칸을 저장하고 완성으로 표시하되 **이 칸에 머문다**. 다음 칸은 저장 뒤 안내에서 고른다.
 type SaveAction = 'stay' | 'manual' | 'close' | 'share' | 'complete' | 'reference' | 'motion' | number;
+// 새로 넣는 문구는 캐릭터 위에 작게(2026-10-29) — 실제 카카오 이모티콘처럼 대사는 몸을 덮지 않는다. 가이드 대사와 같은 0.7배.
+const NEW_CAPTION = { scale: .7 };
 export type Tool = 'pen' | 'fill' | 'eraser' | 'select';
 type Brush = 'pen' | 'brush' | 'pencil';
 type Panel = 'color' | 'width' | 'brush' | 'reference' | 'more' | 'caption' | null;
@@ -548,7 +550,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   useEffect(() => { if (!copiedNote) return; const t = setTimeout(() => setCopiedNote(null), 4500); return () => clearTimeout(t); }, [copiedNote]);
   const [proSheet, setProSheet] = useState(false);
   const pendingAction = useRef<SaveAction | null>(null), proHandled = useRef(false);
-  const [captionOpen, setCaptionOpen] = useState(false), [captionDraft, setCaptionDraft] = useState(''), [captionPlace, setCaptionPlace] = useState<Caption['place']>('bottom');
+  const [captionOpen, setCaptionOpen] = useState(false), [captionDraft, setCaptionDraft] = useState(''), [captionPlace, setCaptionPlace] = useState<Caption['place']>('top');
   // 문구 글씨체(45.6차): 한 번 고르면 다음 칸에서도 그대로 — 24칸을 만드는 동안 같은 성격을 다시 고르지 않는다.
   const [captionFace, setFace] = useState<CaptionStyle>(sessionCaptionFace);
   // 대사 배치(2026-10-28): 한 줄 · 양옆 · 세로 · 말풍선. 고른 즉시 캔버스 글씨에 반영된다.
@@ -913,7 +915,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     // 입력칸에 확정하지 않은 문구가 남아 있으면 저장 직전에 그대로 넣는다 — '적용'을 누르지 않았다고 조용히 잃지 않는다(45.1차).
     // 빈 입력은 건드리지 않는다: 문구를 지우는 일은 '문구 지우기'로만 한다.
     const pendingCaption = captionOpen ? captionDraft.trim() : '';
-    if (pendingCaption && pendingCaption !== (scene.caption?.text ?? '')) send({ type: 'caption', caption: { ...(scene.caption ?? {}), text: pendingCaption, place: captionPlace, color, style: captionFace, layout: captionLayout } });
+    if (pendingCaption && pendingCaption !== (scene.caption?.text ?? '')) send({ type: 'caption', caption: { ...(scene.caption ?? NEW_CAPTION), text: pendingCaption, place: captionPlace, color, style: captionFace, layout: captionLayout } });
     inFlight.current = true; nextAction.current = action;
     // 자동저장('stay')은 화면을 잠그지 않는다. 칸을 떠나는 저장(닫기·완성·이동·공유)만 잠깐 잠근다.
     if (action === 'stay') quiet.current = true; else setBusy(true);
@@ -934,7 +936,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       try {
         const copied = await onCopyPrevious();
         if (!copied) { Alert.alert('복사할 그림이 없어요', '다른 칸에 저장된 그림이 아직 없어요.'); return; }
-        send({ type: 'copyWork', layers: copied.layers, caption: copied.caption ?? null });
+        // 가져온 칸에 문구가 없으면 지금 문구(가이드에서 고른 대사)를 지우지 않는다(2026-10-29).
+        send({ type: 'copyWork', layers: copied.layers, caption: copied.caption ?? scene.caption ?? null });
         // 2026-10-15 세트 반복 단축: 이 칸에 아직 움직임이 없으면 **가져온 칸의 움직임도 함께** 넣는다(덮어쓰지 않는다).
         // 따로 움직이기 탭에 가서 '직전 칸 움직임 다시 쓰기'를 누르던 단계가 없어진다. 되돌리기 한 번이면 움직임만 빠진다.
         const m = copied.motion;
@@ -950,7 +953,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   }
   function openCaption() {
     const current = scene.caption ?? slot.work?.caption ?? null;
-    setCaptionDraft(current?.text ?? ''); setCaptionPlace(current?.place ?? 'bottom');
+    setCaptionDraft(current?.text ?? ''); setCaptionPlace(current?.place ?? 'top');
     if (current?.style) setCaptionFace(current.style);
     setCaptionLayout(current?.layout ?? 'line');
     ease(); setDrawRail(false); setRefRail(false); setPanel('caption'); setCaptionOpen(true);
@@ -972,7 +975,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   function applyCaption(text: string) {
     const clean = text.trim();
     // 글자만 바꾸면 옮겨 둔 자리·크기·회전은 그대로 둔다(가이드에서 위쪽 작게 놓인 대사를 고쳐도 그 자리에 남는다).
-    send({ type: 'caption', caption: clean ? { ...(scene.caption ?? {}), text: clean, place: captionPlace, color, style: captionFace, layout: captionLayout } : null });
+    send({ type: 'caption', caption: clean ? { ...(scene.caption ?? NEW_CAPTION), text: clean, place: captionPlace, color, style: captionFace, layout: captionLayout } : null });
     // 입력이 끝나면 키보드를 내리고 글씨를 고른 상태로 둔다 — 바로 캔버스에서 끌어 옮기고 손잡이로 크기를 바꾼다.
     Keyboard.dismiss();
     if (clean) send({ type: 'captionPick', on: true });
