@@ -16,19 +16,22 @@ let rec = null;
 module.exports = {
   adb, sleep, FFMPEG,
   touches(on) { adb(['shell', 'settings', 'put', 'system', 'show_touches', on ? '1' : '0']); },
-  start(name, seconds = 40) {
+  start(name, seconds = 150) {
     adb(['shell', 'rm', '-f', `/sdcard/${name}.mp4`]);
     rec = spawn(ADB, ['-s', SERIAL, 'shell', 'screenrecord', '--bit-rate', '8000000', '--time-limit', String(seconds), `/sdcard/${name}.mp4`], { stdio: 'ignore', detached: true }); rec.unref();
     sleep(1200);
   },
-  stop() { adb(['shell', 'pkill', '-INT', 'screenrecord']); sleep(3000); rec = null; },
+  // 녹화가 시간 제한으로 먼저 끝났으면 pkill 이 실패한다 — 그래도 파일은 있으니 넘어간다.
+  stop() { try { adb(['shell', 'pkill', '-INT', 'screenrecord'], { stdio: 'ignore' }); } catch { /* 이미 끝남 */ } sleep(3000); rec = null; },
   pull(name) { const out = path.join(RAW, name + '.mp4'); adb(['pull', `/sdcard/${name}.mp4`, out]); return out; },
   tap(x, y, wait = 900) { adb(['shell', 'input', 'tap', String(x), String(y)]); sleep(wait); },
   swipe(x1, y1, x2, y2, ms = 400, wait = 700) { adb(['shell', 'input', 'swipe', String(x1), String(y1), String(x2), String(y2), String(ms)]); sleep(wait); },
   // 곡선 한 획: 점 목록을 손가락 한 번으로(DOWN · MOVE… · UP). 한 셸에 이어 보내 끊기지 않게.
   stroke(points) {
     const cmds = [`input motionevent DOWN ${points[0][0] | 0} ${points[0][1] | 0}`, ...points.slice(1).map(([x, y]) => `input motionevent MOVE ${x | 0} ${y | 0}`), `input motionevent UP ${points.at(-1)[0] | 0} ${points.at(-1)[1] | 0}`];
-    adb(['shell', cmds.join(';')]); sleep(250);
+    // 긴 획은 셸 한 줄 길이 제한에 걸려 뒤가 잘렸다(2026-10-28) — 손을 떼지 않은 채 40개씩 나눠 보낸다.
+    for (let i = 0; i < cmds.length; i += 40) adb(['shell', cmds.slice(i, i + 40).join(';')]);
+    sleep(250);
   },
   arc(cx, cy, rx, ry, a0, a1, n = 18) { const pts = []; for (let i = 0; i <= n; i++) { const a = (a0 + (a1 - a0) * i / n) * Math.PI / 180; pts.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]); } return pts; },
   shot(file) { fs.writeFileSync(file, adb(['exec-out', 'screencap', '-p'])); },
