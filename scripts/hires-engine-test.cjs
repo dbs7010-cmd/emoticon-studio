@@ -120,6 +120,17 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
     assert.equal(await alphaAt(60, 60), 0, '네모 밖은 비어 있다');
     const gap = await page.evaluate(() => window.__bench.hires().fillGap(0, 180, 108.5));
     assert.ok(gap <= 2, '칠과 선 사이 흰 틈 없음(고해상도 픽셀 ' + gap + ')');
+    // 5-2) 누른 자리의 색은 고해상도 줄 폭(1080)으로 읽는다(2026-10-29). 360 폭으로 읽으면 가운데(540,540)를 눌러도
+    // 위쪽 (540,180) 픽셀 색을 기준으로 삼아, 그 자리에 선이 있으면 안이 칠해지지 않거나 엉뚱한 곳이 칠해졌다(강좌 콘 잎 안 칠해짐).
+    await cmd({ type: 'init', res: 3, layers: [{ id: 'draw-1', name: '그림 1' }], activeLayerId: 'draw-1', penWidth: 4, color: '#000000', brush: { preset: null, opacity: 1, stabilizer: 'light', smoothing: false } });
+    await page.waitForTimeout(100);
+    await cmd({ type: 'tool', tool: 'pen' });
+    for (const seg of [[.3, .3, .7, .3], [.7, .3, .7, .7], [.7, .7, .3, .7], [.3, .7, .3, .3], [.1, 60 / 360, .9, 60 / 360]]) await stroke(line(...seg));
+    await cmd({ type: 'color', color: '#FF0000' }); await cmd({ type: 'tool', tool: 'fill' });
+    await stroke([[.5, .5], [.5, .5]]);
+    await page.waitForTimeout(50);
+    assert.deepEqual((await page.evaluate(() => window.__bench.hires().rgbaAt(0, 180, 180))).slice(0, 3), [255, 0, 0], '위에 선이 있어도 누른 네모 안이 찬다');
+    assert.equal(await alphaAt(60, 120), 0, '네모 밖은 그대로 비어 있다');
 
     // 6) 옛 360 장(예전 저장본)이 그대로 열리고, 같은 자리에 같은 그림이 있다.
     const old = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = c.height = 360; const g = c.getContext('2d'); g.fillStyle = '#123456'; g.fillRect(100, 100, 50, 50); return c.toDataURL('image/png'); });

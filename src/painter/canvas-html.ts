@@ -488,7 +488,7 @@ function fillAt(spot){usedColors.add(solid(color));
  // 픽셀 격자(고해상도면 1080)에서 칠한다 — 선 사이 좁은 틈까지 촘촘히 찬다.
  const PW=l.bitmap.width,PH=l.bitmap.height,P=PW/W,seed=local(spot,l),sx=Math.round(seed.x*P),sy=Math.round(seed.y*P);
  if(sx<0||sy<0||sx>=PW||sy>=PH)return;
- const g=l.bitmap.getContext('2d'),image=g.getImageData(0,0,PW,PH),d=image.data,start=(sy*W+sx)*4;
+ const g=l.bitmap.getContext('2d'),image=g.getImageData(0,0,PW,PH),d=image.data,start=(sy*PW+sx)*4;
  const target=[d[start],d[start+1],d[start+2],d[start+3]],paint=rgba(color);
  if(Math.abs(target[3]-paint[3])<8&&Math.abs(target[0]-paint[0])<8&&Math.abs(target[1]-paint[1])<8&&Math.abs(target[2]-paint[2])<8)return;
  // Tolerance is fixed: line art only needs "is this the same flat area", never a numeric dial.
