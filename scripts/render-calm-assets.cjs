@@ -10,6 +10,7 @@ const topics = [
   ['first-set', 'APP BASICS', '내 캐릭터의\n첫 번째 세트', 'wave', '#F8F1DD'],
   ['brush-layer', 'DRAWING TOOLS', '나에게 맞는 선,\n차곡차곡 레이어', 'base', '#F0EDF7'],
   ['motion', 'MOTION CLASS', '작은 움직임,\n살아나는 표정', 'cheer', '#F0EDF7'],
+  ['speech', 'SPEECH LINES', '응응, ㅋㅋㅋ\n짧은 대사 한마디', 'shy', '#F5EEF2'],
   ['animation', 'FRAME ANIMATION', '한 장, 또 한 장\n내 손으로 움직임', 'nod', '#EDF2F1'],
   ['export', 'EXPORT GUIDE', '완성한 내 세트,\n파일로 꺼내기', 'wave', '#EDF2F1'],
   ['contest', 'CONTEST GUIDE', '나의 캐릭터로\n새로운 도전', 'cheer', '#F5EEF2'],
@@ -22,13 +23,16 @@ const topics = [
   const browser = await chromium.launch({ headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
   try {
     const page = await browser.newPage({ viewport: { width: 960, height: 540 }, deviceScaleFactor: 1 });
-    for (const [id, category, title, pose, bg] of topics) {
+    // ONLY=speech → 그 썸네일만 다시 그린다(나머지 확정 그림·배너·선 견본은 건드리지 않는다).
+    const only = process.env.ONLY ? process.env.ONLY.split(',') : null;
+    for (const [id, category, title, pose, bg] of topics.filter(t => !only || only.includes(t[0]))) {
       await page.setContent('<div id="cover"><div id="words"><small></small><strong></strong></div><img alt=""></div>');
       await page.addStyleTag({ content: `body{margin:0;font-family:'Malgun Gothic',sans-serif}#cover{width:960px;height:540px;background:${bg};position:relative;overflow:hidden}#words{position:absolute;left:58px;top:119px;z-index:1;width:510px}small{display:block;font-size:21px;letter-spacing:2px;color:#887957;margin-bottom:32px}strong{display:block;font-size:61px;line-height:1.36;letter-spacing:-2px;white-space:pre-line;color:#29272e;font-weight:700}img{position:absolute;right:10px;bottom:0;width:465px;height:520px;object-fit:contain}` });
       await page.evaluate(({ category, title, src }) => { document.querySelector('small').textContent = category; document.querySelector('strong').textContent = title; document.querySelector('img').src = src; }, { category, title, src: data('assets/mascot/corn-' + pose + '.png') });
       await page.evaluate(() => document.querySelector('img').decode());
       await page.locator('#cover').screenshot({ path: path.join(ROOT, 'assets/lessons/thumbs', id + '.png') });
     }
+    if (only) return;
     await page.setViewportSize({ width: 1170, height: 390 });
     for (const [id, pose, bg] of [['book', 'wave', '#FFF4CD'], ['contest', 'cheer', '#F0EDF7']]) {
       await page.setContent('<div id="banner"><img alt=""></div>');

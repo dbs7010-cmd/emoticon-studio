@@ -64,6 +64,18 @@ export const LESSONS: Lesson[] = [
     tryIt: { label: t('ui.drawContinue'), action: 'continue' },
   },
   {
+    // 2026-10-29: 대사(가이드 대사 · 추천 대사 · 글씨 배치). 실제 카카오 이모티콘처럼 짧은 말을 캐릭터 위에 작게.
+    id: 'speech', group: 'app', title: t('lesson.text091'), summary: t('lesson.text092'), minutes: 2,
+    thumb: require('../../assets/lessons/thumbs/speech.png'),
+    steps: [
+      { title: t('lesson.text093'), video: require('../../assets/lessons/speech/step1.mp4'), body: t('lesson.text094') },
+      { title: t('lesson.text095'), video: require('../../assets/lessons/speech/step2.mp4'), body: t('lesson.text096') },
+      { title: t('lesson.text097'), video: require('../../assets/lessons/speech/step3.mp4'), body: t('lesson.text098') },
+    ],
+    points: ['대사는 짧게, 캐릭터 위에 작게', 'ㅋㅋㅋㅋ·딱!·응응 같은 말이 더 자주 쓰여요', '양옆·세로·말풍선으로 배치를 바꿔요'],
+    tryIt: { label: t('ui.openGuide'), action: 'guide' },
+  },
+  {
     id: 'animation', group: 'app', title: t('lesson.text029'), summary: t('lesson.text030'), minutes: 4,
     thumb: require('../../assets/lessons/thumbs/animation.png'),
     cover: require('../../assets/lessons/animation/cover.png'),

@@ -24,9 +24,9 @@ say('1 ' + r.cut('bl1', { from: 0.4, speed: 1.4, out: out(1), crop: [420, 1440] 
 r.start('bl2'); r.sleep(600);
 corn.color(C.body);
 u.tap('채우기', 900);
-for (const k of ['body', 'handL', 'handR', 'footL', 'footR']) r.tap(...at(S[k]), 1100);
+for (const k of ['body', 'handL', 'handR', 'footL', 'footR']) corn.fill(S[k], C.body);
 corn.color(C.leaf);   // 채우기는 이미 골라져 있다 — 다시 누르면 세부 설정 창이 열려 다음 탭이 배경을 칠했다
-for (const k of ['sproutL', 'sproutR', 'leafL', 'leafR']) r.tap(...at(S[k]), 1100);
+for (const k of ['sproutL', 'sproutR', 'leafL', 'leafR']) corn.fill(S[k], C.leaf);
 r.sleep(800);
 r.stop(); r.pull('bl2');
 say('2 ' + r.cut('bl2', { from: 0.4, speed: 1.6, out: out(2), crop: [420, 1440] }) + 'B');
@@ -41,7 +41,7 @@ u.tap('그리기 도구 펜', 700);
 const heart = []; for (let i = 0; i <= 28; i++) { const t = i / 28 * Math.PI * 2, x = 16 * Math.sin(t) ** 3, y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)); heart.push(corn.at(S.heart[0] + x * .0042, S.heart[1] + y * .0042)); }
 r.stroke(heart);
 u.tap('채우기', 700);
-r.tap(...at(S.heart), 1200);
+corn.fill(S.heart, C.heart, 1200);
 r.sleep(400);
 u.tap('레이어', 1500);
 r.sleep(1200);

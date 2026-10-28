@@ -20,9 +20,12 @@ say('1 ' + r.cut('fs1', { from: 0.5, out: out(1), crop: [840, 1440] }) + 'B');
 r.start('fs2'); r.sleep(600);
 corn.color(corn.COLOR.line);
 r.tap(230, 396, 900);   // 굵기 막대(153~521, 1~48) 8 자리
+r.sleep(2500);           // 칸을 막 연 뒤 엔진이 준비되기 전 획은 빠졌다 — 잠깐 두고 그린다
 corn.draw();
 r.sleep(1000);
 r.stop(); r.pull('fs2');
+const inkPx = corn.ink(); say('선 픽셀 ' + inkPx);
+if (inkPx < 80000) throw new Error('선이 빠졌다(' + inkPx + ' < 80000) — 다시 녹화');
 say('2 ' + r.cut('fs2', { from: 0.4, speed: 1.3, out: out(2), crop: [420, 1440] }) + 'B');
 
 // 3. 저장하고 보드로

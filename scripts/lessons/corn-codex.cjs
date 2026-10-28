@@ -28,3 +28,27 @@ function color(hex) {
 // 알갱이·볼: 작은 동그라미를 두 바퀴(마커로 칠한 점처럼)
 const dot = ([x, y], rad = .018) => Array.from({ length: 25 }, (_, i) => { const a = i / 12 * Math.PI * 2, k = i < 13 ? 1 : .5; return at(x + rad * k * Math.cos(a), y + rad * k * Math.sin(a)); });
 module.exports = { draw, at, dot, color, SPOT, COLOR, strokes };
+// 다 그린 뒤 확인: 캔버스 안 갈색 선 픽셀 수. 첫 획들이 엔진 준비 전에 들어가 빠진 일이 있었다(10-29, 몸 아래 선이 없어 칠이 샘).
+// 획 길이 × 굵기로 어림하면 약 10만 — 크게 모자라면 녹화를 멈춘다.
+function ink() {
+  const { PNG } = require('pngjs');
+  const png = PNG.sync.read(r.adb(['exec-out', 'screencap', '-p']));
+  let n = 0;
+  for (let y = CANVAS.y; y < CANVAS.y + CANVAS.side; y++) for (let x = CANVAS.x; x < CANVAS.x + CANVAS.side; x++) {
+    const k = (y * png.width + x) * 4; if (Math.abs(png.data[k] - 0x76) + Math.abs(png.data[k + 1] - 0x50) + Math.abs(png.data[k + 2] - 0x44) < 60) n++;
+  }
+  return n;
+}
+module.exports.ink = ink;
+// 채우기: 누른 뒤 그 자리 색을 보고, 안 칠해졌으면 한 번 더 누른다(에뮬레이터에서 탭이 가끔 씹혀 잎 하나가 하얗게 남았다, 10-29).
+function fill([nx, ny], hex, wait = 1100) {
+  const { PNG } = require('pngjs');
+  const [x, y] = at(nx, ny), want = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  for (let i = 0; i < 3; i++) {
+    r.tap(x, y, wait);
+    const png = PNG.sync.read(r.adb(['exec-out', 'screencap', '-p'])), k = ((y | 0) * png.width + (x | 0)) * 4;
+    if (Math.abs(png.data[k] - want[0]) + Math.abs(png.data[k + 1] - want[1]) + Math.abs(png.data[k + 2] - want[2]) < 40) return true;
+  }
+  throw new Error('채우기가 안 됨: ' + hex + ' @ ' + nx + ',' + ny);
+}
+module.exports.fill = fill;
