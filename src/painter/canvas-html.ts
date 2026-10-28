@@ -18,6 +18,14 @@ function send(m){window.ReactNativeWebView&&window.ReactNativeWebView.postMessag
 // 그래서 선·브러시 코드는 그대로 360 단위로 그리고, 결과는 3배 촘촘하다. 내보내기(카카오 360·LINE)는 이 장을 줄여 만든다.
 // init 이 res 를 주지 않으면 1(예전 그대로) — 검사 대역(가짜 캔버스)도 이 길을 탄다.
 let RES=1;
+// 스포이드: 누른 자리 둘레(문서 2px)에서 가장 진한 픽셀의 색. 손가락은 선 한가운데를 정확히 누르기 어렵고,
+// 가장자리의 반투명 픽셀은 색이 한 끗 틀어진다(#3366AA → #3265AA).
+function pickAt(g,sx,sy){const r=2*RES,x0=Math.max(0,sx*RES+(RES>>1)-r),y0=Math.max(0,sy*RES+(RES>>1)-r),w=Math.min(W*RES-x0,2*r+1),h=Math.min(H*RES-y0,2*r+1),d=g.getImageData(x0,y0,w,h).data;
+ let best=0;for(let k=4;k<d.length;k+=4)if(d[k+3]>d[best+3])best=k;const px=[d[best],d[best+1],d[best+2],d[best+3]];
+ // GPU 캔버스는 겹쳐 그린 자리에서 색이 1 정도 반올림된다. 이 그림에 쓴 색과 2 이내면 그 색 그대로 돌려준다 — 같은 색을 다시 집으면 같은 값.
+ for(const c of usedColors){const p=rgba(c);if(Math.abs(p[0]-px[0])<=2&&Math.abs(p[1]-px[1])<=2&&Math.abs(p[2]-px[2])<=2)return [p[0],p[1],p[2],px[3]];}
+ return px;}
+const usedColors=new Set();
 function bitmap(){const c=document.createElement('canvas');c.width=W*RES;c.height=H*RES;
  // 되돌리기 기록이 바뀌지 않은 장을 다시 복사하지 않도록, 그리려고 맥락을 꺼낼 때마다 번호를 올린다.
  if(RES!==1){const get=c.getContext.bind(c);c.__rev=0;c.getContext=function(t,o){c.__rev++;return get(t,o);};get('2d').setTransform(RES,0,0,RES,0,0);}
@@ -132,8 +140,8 @@ function snapLayer(l,prev){
 function snapshot(){return {layers:layers.map(l=>snapLayer(l,history[history.length-1])),references:references.map(l=>({...l})),activeLayerId,activeDrawLayerId,activeReferenceId,caption:caption&&{...caption},motion:motion&&JSON.parse(JSON.stringify(motion)),selection:selection&&{...selection,bitmap:copyOf(selection.bitmap)}};}
 function restore(s){trace('restore:before');extentCache=null;layers=s.layers.map(l=>{let b;if(l.copy)b=copyOf(l.copy);else{b=bitmap();b.getContext('2d').putImageData(l.pixels,0,0);}return {...meta(l),bitmap:b};});references=s.references;activeLayerId=s.activeLayerId;activeDrawLayerId=s.activeDrawLayerId||layers[0]?.id||'';activeReferenceId=s.activeReferenceId||null;caption=s.caption||null;motion=s.motion||null;selection=s.selection||null;render();state();trace('restore:after');}
 function checkpoint(preserveFuture=false){history.push(snapshot());if(history.length>40)history.shift();if(!preserveFuture)future=[];trimHistory();dirty=true;}
-// 고해상도 기록은 서로 다른 사본 수로 묶는다(1080 사본 하나 ≈ 4.7MB). 넘치면 가장 오래된 단계부터 버린다.
-const MAX_COPIES=36;
+// 고해상도 기록은 서로 다른 사본 수로 묶는다(1080 사본 하나 ≈ 4.7MB, 24개 ≈ 113MB). 넘치면 가장 오래된 단계부터 버린다.
+const MAX_COPIES=24;
 function trimHistory(){if(RES===1)return;const count=()=>{const seen=new Set();for(const st of history.concat(future))for(const l of st.layers)if(l.copy)seen.add(l.copy);return seen.size;};
  while(history.length>1&&count()>MAX_COPIES)history.shift();}
 function composite(g,l,d){if(!l.visible||(d&&d.hidden))return;g.save();g.globalAlpha=l.opacity;if(d){g.translate(d.px+d.dx,d.py+d.dy);g.rotate(d.rot*Math.PI/180);g.scale(d.sx,d.sy);g.translate(-d.px,-d.py);if(d.part){const q=d.part;g.translate(q.px+q.dx,q.py+q.dy);g.rotate(q.rot*Math.PI/180);g.scale(q.sx,q.sy);g.translate(-q.px,-q.py);}}g.translate(W/2+l.x,H/2+l.y);g.rotate(l.rotation*Math.PI/180);g.scale(l.scale,l.scale);g.drawImage(d&&d.boilK!=null?boiled(l,d.boilK):l.bitmap,-W/2,-H/2,W,H);g.restore();}
@@ -181,12 +189,21 @@ function boiled(l,k){
 }
 let renderCount=0;
 // 측정용(scripts/draw-latency-bench.cjs): 선 끝·손가락 자리와 다시 그린 횟수만 읽는다. 동작은 바꾸지 않는다.
-window.__bench={tip:()=>({steady,lastRaw}),renders:()=>renderCount};
-function render(t){renderCount++;ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));if(t===undefined)drawOnion(ctx);(t===undefined?layers:layersAt(t)).forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
+window.__bench={tip:()=>({steady,lastRaw}),renders:()=>renderCount,
+ // 고해상도 검사(scripts/hires-engine-test.cjs)가 장 픽셀·사본 수를 읽는 창. 읽기만 한다.
+ hires:()=>{const px=i=>{const b=layers[i].bitmap;return {b,d:b.getContext('2d').getImageData(0,0,b.width,b.height).data,w:b.width};};
+  const at=(i,x,y)=>{const {d,w}=px(i),k=(Math.floor(y*RES)*w+Math.floor(x*RES))*4;return [d[k],d[k+1],d[k+2],d[k+3]];};
+  return {res:RES,canvas:[canvas.width,canvas.height],layer:[layers[0].bitmap.width,layers[0].bitmap.height],
+   alphaAt:(i,x,y)=>at(i,x,y)[3],rgbaAt:at,
+   edgeProfile:(i,x,y)=>{const {d,w}=px(i),cx=Math.floor(x*RES);let solid=0;for(let yy=Math.floor((y-20)*RES);yy<(y+20)*RES;yy++)if(d[(yy*w+cx)*4+3]>128)solid++;return {solid};},
+   sum:i=>{const {d}=px(i);let h=2166136261;for(let k=3;k<d.length;k+=4){h^=d[k]+(k&1023);h=Math.imul(h,16777619);}return h>>>0;},
+   copies:()=>{const seen=new Set();for(const st of history.concat(future))for(const l of st.layers)if(l.copy)seen.add(l.copy);return {unique:seen.size,steps:history.length};},
+   fillGap:(i,x,y)=>{const {d,w}=px(i),cx=Math.floor(x*RES);let gap=0;for(let yy=Math.floor(y*RES);yy>0;yy--){const k=(yy*w+cx)*4;if(d[k]<120&&d[k+3]>200)break;if(d[k+3]<250)gap++;}return gap;}};}};
+function render(t){renderCount++;ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));if(t===undefined)drawOnion(ctx);(t===undefined?layers:layersAt(t)).forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});if(t===undefined)drawTip(ctx);drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
-function style(g){const T=liveTool();g.globalCompositeOperation=T==='eraser'?'destination-out':'source-over';g.globalAlpha=T==='eraser'?1:(brush==='pencil'&&wet)?1:brush==='brush'?0.85:brush==='pencil'?0.55:1;g.lineWidth=T==='eraser'?eraserWidth:(brush==='brush'?penWidth*1.4:penWidth);g.strokeStyle=solid(color);g.fillStyle=solid(color);g.lineCap='round';g.lineJoin='round';const P=activePreset();if(P){g.globalAlpha=1;g.lineWidth=computeBrushWidth(penWidth*P.width,lastPressure,P)*(P.taper?Math.min(1,.3+.7*strokeLen/P.taper):1);g.lineCap=P.cap||'round';
+function style(g){const T=liveTool();g.globalCompositeOperation=T==='eraser'?'destination-out':'source-over';g.globalAlpha=T==='eraser'?1:(brush==='pencil'&&wet)?1:brush==='brush'?0.85:brush==='pencil'?0.55:1;g.lineWidth=T==='eraser'?eraserWidth:(brush==='brush'?penWidth*1.4:penWidth)*pressureScale(lastPressure,null);g.strokeStyle=solid(color);g.fillStyle=solid(color);g.lineCap='round';g.lineJoin='round';const P=activePreset();if(P){g.globalAlpha=1;g.lineWidth=computeBrushWidth(penWidth*P.width,lastPressure,P)*(P.taper?Math.min(1,.3+.7*strokeLen/P.taper):1);g.lineCap=P.cap||'round';
   // 점선 펜만 점 간격을 건다. 프리셋이 없는 기본 펜·붓·연필은 이 줄을 지나지 않는다 — 예전 획이 한 픽셀도 바뀌지 않게.
   if(P.dash){g.setLineDash([Math.max(.6,g.lineWidth*.22),Math.max(1,g.lineWidth*P.dash)]);g.lineDashOffset=-strokeLen;}else g.setLineDash([]);}}
 // 색 투명도. 획은 **불투명하게 따로 그린 뒤(wet) 손을 뗄 때 한 번에 투명도를 걸어 얹는다.** 짧은 선분마다
@@ -310,6 +327,28 @@ const PRESETS={
 // 시간 기준이라 입력이 60Hz 든 240Hz 든 같은 느낌이다. 측정: scripts/draw-latency-bench.cjs.
 const STAB={light:{min:2,beta:.04},medium:{min:1,beta:.03},strong:{min:.5,beta:.025}};
 let euro=null;
+// 곡선 잇기(2026-10-28). 점과 점을 곧은 선분으로 이으면 빠르게 그은 곡선이 다각형처럼 각진다.
+// 이웃한 두 선분의 가운데를 잇고 그 사이 점을 조절점으로 삼아 2차 곡선으로 그린다(손글씨·드로잉 앱의 표준 방식).
+// 곧은 획은 그대로 곧고, 선 끝은 손을 뗄 때 마저 잇는다(curveFlush).
+let curveMid=null,curveCtl=null;
+// 선 끝 미리 보이기(2026-10-28). 곡선 잇기는 마지막 반 마디를 다음 점이 올 때 그리고, 휴대폰은 손가락이 갈 자리를 미리 알려 준다
+// (getPredictedEvents). 그 둘을 **화면에만** 얇게 이어 그려 선이 손가락에 붙어 보이게 한다. 장(레이어)에는 들어가지 않고 다음 화면에서 바뀐다.
+// 기본 펜·불투명 색에서만 — 반투명은 겹쳐 진해지고, 지우개·특수 브러시는 화면만으로 같은 모양을 낼 수 없다.
+let tipPath=null;
+function drawTip(g){
+ if(!active||!tipPath||tipPath.length<2||activePreset()||liveTool()!=='pen'||brush!=='pen'||wet||inkAlpha()<1)return;
+ const l=activeDraw();if(!l||!l.visible)return;
+ g.save();style(g);g.globalAlpha=l.opacity;g.beginPath();g.moveTo(tipPath[0].x,tipPath[0].y);for(const p of tipPath.slice(1))g.lineTo(p.x,p.y);g.stroke();g.restore();}
+function curveTo(l,p){
+ if(!curveMid){const m={x:(last.x+p.x)/2,y:(last.y+p.y)/2};inkSegment(l,last,m);curveMid=m;curveCtl=p;return;}
+ const a=curveMid,c=curveCtl,m={x:(c.x+p.x)/2,y:(c.y+p.y)/2};
+ const P=activePreset(),len=Math.hypot(c.x-a.x,c.y-a.y)+Math.hypot(m.x-c.x,m.y-c.y);
+ // 획 전체를 다시 긋는 브러시는 부르는 횟수가 곧 비용이라 조금 성기게 나눈다.
+ const n=Math.max(1,Math.min(P&&(P.repath||P.outline||P.ribbon)?6:16,Math.ceil(len/1.5)));
+ let from=a;
+ for(let i=1;i<=n;i++){const t=i/n,u=1-t,to={x:u*u*a.x+2*u*t*c.x+t*t*m.x,y:u*u*a.y+2*u*t*c.y+t*t*m.y};inkSegment(l,from,to);from=to;}
+ curveMid=m;curveCtl=p;}
+function curveFlush(l){if(l&&curveMid&&curveCtl&&Math.hypot(curveCtl.x-curveMid.x,curveCtl.y-curveMid.y)>.01)inkSegment(l,curveMid,curveCtl);curveMid=null;curveCtl=null;}
 const stamp=e=>Number.isFinite(e&&e.timeStamp)&&e.timeStamp>0?e.timeStamp:(typeof performance!=='undefined'?performance.now():Date.now());
 function stabilize(raw,ts){const S=STAB[stabilizer]||STAB.light,dt=Math.max(1,Math.min(100,ts-euro.t))/1000;euro.t=ts;
  const al=fc=>1/(1+1/(2*Math.PI*fc*dt)),ad=al(.5);
@@ -318,12 +357,16 @@ function stabilize(raw,ts){const S=STAB[stabilizer]||STAB.light,dt=Math.max(1,Ma
  return {x:steady.x+(raw.x-steady.x)*a,y:steady.y+(raw.y-steady.y)*a};}
 let preset=null,brushOpacity=1,stabilizer='light',strokeLen=0,lastRaw=null,lastPressure=null;
 const PENCIL_ALPHA=.55;
-function applyBrush(m){preset=m.preset&&PRESETS[m.preset]?m.preset:null;const o=Number(m.opacity);brushOpacity=Number.isFinite(o)?Math.max(.05,Math.min(1,o)):1;stabilizer=STAB[m.stabilizer]?m.stabilizer:'light';if(typeof m.smoothing==='boolean')smoothing=m.smoothing;}
+function applyBrush(m){preset=m.preset&&PRESETS[m.preset]?m.preset:null;const o=Number(m.opacity);brushOpacity=Number.isFinite(o)?Math.max(.05,Math.min(1,o)):1;stabilizer=STAB[m.stabilizer]?m.stabilizer:'light';if(typeof m.smoothing==='boolean')smoothing=m.smoothing;if(typeof m.pressure==='boolean')pressureOn=m.pressure;}
 // 필압 자리. 스타일러스(pointerType 'pen')의 0~1 값만 받는다. 지금 프리셋에는 pressure 반응이 없어 항상 기본값을 돌려준다 —
 // 손가락·마우스의 체감은 바뀌지 않는다. 0·undefined·범위 밖 값은 없는 것으로 본다.
 function validPressure(p){return Number.isFinite(p)&&p>0&&p<=1?p:null;}
 function penPressure(e){return e&&e.pointerType==='pen'?validPressure(e.pressure):null;}
-function computeBrushWidth(base,pressure,settings){const p=validPressure(pressure);if(p===null||!settings||!settings.pressure)return base;return base*Math.max(.25,Math.min(1.5,.5+p));}
+// S펜 필압(2026-10-28): 스타일러스일 때만 굵기가 누르는 힘을 따른다(보통 힘 ≈ 정한 굵기, 0.25~1.5배). 손가락·마우스는 그대로.
+// 획 전체를 다시 긋는 브러시(테두리·평행선)는 굵기가 획 전체에서 같아야 해 제외한다. pressure:false 로 끌 수 있다.
+let pressureOn=true;
+function pressureScale(pressure,settings){const p=validPressure(pressure);if(p===null||!pressureOn||(settings&&(settings.outline||settings.repath)))return 1;return Math.max(.25,Math.min(1.5,.5+p));}
+function computeBrushWidth(base,pressure,settings){return base*pressureScale(pressure,settings);}
 function computeBrushAlpha(base,pressure,settings){const p=validPressure(pressure);if(p===null||!settings||!settings.pressure)return base;return base*Math.max(.1,Math.min(1,p*1.25));}
 function activePreset(){return liveTool()!=='eraser'&&preset?PRESETS[preset]:null;}
 function solid(hex){const p=rgba(hex);return '#'+[p[0],p[1],p[2]].map(n=>n.toString(16).padStart(2,'0')).join('');}
@@ -383,7 +426,7 @@ function firstTwo(){return points().slice(0,2);}
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function middle(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
 function canvasUnits(px){const r=canvas.getBoundingClientRect();return px*W/Math.max(1,r.width);}
-function cancelStrokeForGesture(){captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;strokeTool=null;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
+function cancelStrokeForGesture(){curveMid=null;curveCtl=null;tipPath=null;captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;strokeTool=null;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
 function beginMulti(){
  const ps=firstTwo();if(ps.length<2)return;const [a,b]=ps,mid=middle(a,b),ref=activeReference();
  if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,ids:[a.id,b.id],distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,didCheckpoint:false,capScale:caption?.scale||1,capRot:caption?.rot||0,angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};}
@@ -401,7 +444,7 @@ function applyMulti(){
  const next=Math.max(1,Math.min(4,multi.zoom*(d/multi.distance)));zoom=next;size();const ratio=next/multi.zoom;viewport.scrollLeft=(multi.scrollLeft+multi.mid.x)*ratio-mid.x;viewport.scrollTop=(multi.scrollTop+multi.mid.y)*ratio-mid.y;send({type:'zoom',zoom});
 }
 function rgba(hex){let v=String(hex||'').replace('#','');if(v.length===3)v=v.split('').map(c=>c+c).join('');const n=parseInt(v.slice(0,6),16)||0,a=v.length>=8?parseInt(v.slice(6,8),16):255;return [n>>16&255,n>>8&255,n&255,Number.isFinite(a)?a:255];}
-function fillAt(spot){
+function fillAt(spot){usedColors.add(solid(color));
  const l=activeDraw();if(!l||!l.visible)return;
  // 픽셀 격자(고해상도면 1080)에서 칠한다 — 선 사이 좁은 틈까지 촘촘히 찬다.
  const PW=l.bitmap.width,PH=l.bitmap.height,P=PW/W,seed=local(spot,l),sx=Math.round(seed.x*P),sy=Math.round(seed.y*P);
@@ -1011,7 +1054,7 @@ canvas.addEventListener('pointerdown',e=>{
  }
  if(active)return;
  // 스포이드: 보이는 그림(참고·그림·문구)에서 한 점의 색을 읽는다. 선택 점선 같은 화면 표시는 섞지 않는다. 숨긴 그림을 골라 두었어도 막지 않는다.
- if(picking){e.preventDefault();const p0=point(e),sx=Math.max(0,Math.min(W-1,Math.floor(p0.x))),sy=Math.max(0,Math.min(H-1,Math.floor(p0.y)));const out=bitmap(),pg=out.getContext('2d',{willReadFrequently:true});references.forEach(r=>composite(pg,r));layers.forEach(x=>composite(pg,x));drawCaption(pg);const px=pg.getImageData(sx*RES+(RES>>1),sy*RES+(RES>>1),1,1).data;picking=false;send({type:'picked',color:px[3]<8?null:'#'+[px[0],px[1],px[2]].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase(),x:sx,y:sy});state();return;}
+ if(picking){e.preventDefault();const p0=point(e),sx=Math.max(0,Math.min(W-1,Math.floor(p0.x))),sy=Math.max(0,Math.min(H-1,Math.floor(p0.y)));const out=bitmap(),pg=out.getContext('2d',{willReadFrequently:true});references.forEach(r=>composite(pg,r));layers.forEach(x=>composite(pg,x));drawCaption(pg);const px=pickAt(pg,sx,sy);picking=false;send({type:'picked',color:px[3]<8?null:'#'+[px[0],px[1],px[2]].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase(),x:sx,y:sy});state();return;}
  // 문구는 캔버스 위의 물건이다: 글자를 누르면 고르고 그대로 끌어 옮긴다. 고른 뒤 손잡이를 끌면 크기,
  // 글자 밖을 누르면 선택이 끝나고 그 손가락은 그림을 그리지 않는다. 움직이기 미리보기 중·중심점 고르기 중에는 건드리지 않는다.
  if(caption&&caption.text.trim()&&!playing&&!pivotPick){const p0=point(e);
@@ -1043,7 +1086,7 @@ canvas.addEventListener('pointerdown',e=>{
    if(inside){dragging={from:p0,dx:selection.dx,dy:selection.dy};return;}
    applySelection(false,'pointerdown-outside');}
   marquee={x0:p0.x,y0:p0.y,x1:p0.x,y1:p0.y};render();return;}
- checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;euro={t:stamp(e),x:last.x,y:last.y,dx:0,dy:0};
+ usedColors.add(solid(color));checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;curveMid=null;curveCtl=null;euro={t:stamp(e),x:last.x,y:last.y,dx:0,dy:0};
  strokeTool=tool;                      // 이 획은 끝까지 이 도구로 그린다
  const P0=activePreset();lastPressure=penPressure(e);strokeLen=0;lastRaw=last;strokePath=[];
  strokeSeed=(Date.now()^Math.round(last.x*7919)^Math.round(last.y*104729))>>>0;resetRand();strokeSpeed=0;lastMoveAt=stamp(e);
@@ -1093,12 +1136,16 @@ canvas.addEventListener('pointermove',e=>{
  // 휴대폰은 화면을 한 번 그릴 동안 모은 터치(120~240Hz)를 함께 준다. 모두 이어야 빠른 획이 각지지 않는다(2026-10-28).
  const evs=(e.getCoalescedEvents&&e.getCoalescedEvents())||[];
  for(const ce of evs.length?evs:[e]){const raw=point(ce);
-  lastPressure=penPressure(ce);lastRaw=raw;
+  {const pr=penPressure(ce);lastPressure=pr===null?null:lastPressure===null?pr:lastPressure*.6+pr*.4;}lastRaw=raw;
   if(smoothing&&euro){steady=stabilize(raw,stamp(ce));}else{steady=raw;}const p=steady;
   // 손가락에는 압력이 없다. 대신 속도를 재서 굵기 반응에 쓴다(급격히 튀지 않게 이어 붙인다). 입력이 잦아도 같은 반응이 되게 시간으로 섞는다.
   {const now=stamp(ce),dt=Math.max(2,Math.min(100,now-lastMoveAt)),v=Math.hypot(p.x-last.x,p.y-last.y)/dt*16,w=1-Math.pow(.7,dt/16);
    strokeSpeed=strokeSpeed*(1-w)+v*w;lastMoveAt=now;}
-  inkSegment(l,last,p);last=p;}
+  // 보정 끔은 손이 지난 자리 그대로(곡선 잇기도 하지 않는다).
+  if(smoothing)curveTo(l,p);else inkSegment(l,last,p);last=p;}
+ {const pred=(e.getPredictedEvents&&e.getPredictedEvents())||[],tip=steady||last,raw=lastRaw;tipPath=[];
+  if(smoothing&&curveMid&&curveCtl)tipPath.push(curveMid,curveCtl);else tipPath.push(tip);
+  if(pred.length&&raw){const q=point(pred[pred.length-1]),dx=q.x-raw.x,dy=q.y-raw.y;if(Math.hypot(dx,dy)<cssToCanvas(40))tipPath.push({x:tip.x+dx,y:tip.y+dy});}}
  dirty=true;render();
 });
 // 한 구간을 그린다. 무료 펜/붓/연필은 예전 그대로(3px 간격 선분 + 연필 입자), PRO 프리셋만 분기를 탄다.
@@ -1304,6 +1351,10 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
   // 보정을 켜면 선이 손가락보다 조금 늦게 따라온다. 손을 뗄 때 남은 거리를 이어 그려 선 끝을 잃지 않는다(1€ 보정부터 약도 포함, 2026-10-28).
   // 보정이 셀수록 선이 손가락보다 뒤처진다. 남은 거리를 **한 번에 직선으로 잇지 않고** 몇 걸음에 나눠
   // 따라붙인다 — 한 번에 이으면 획 끝에 곧은 꼬리(혹)가 남는다(45.32).
+  // 손을 뗀 자리가 획의 진짜 끝이다. 빠르게 그으면 마지막 이동 신호가 끝보다 한참 앞에서 멈춰 선 끝이 들쭉날쭉했다(에뮬레이터 0.12초 획, 2026-10-28).
+  if(e.type==='pointerup'&&Number.isFinite(e.clientX)&&Number.isFinite(e.clientY)&&lastRaw){const up=point(e);if(Math.hypot(up.x-lastRaw.x,up.y-lastRaw.y)>.5){lastRaw=up;
+   if(!smoothing){const l=layers.find(x=>x.id===wetLayer)||activeDraw();if(l){inkSegment(l,last,up);last=up;}}}}
+  tipPath=null;curveFlush(layers.find(x=>x.id===wetLayer)||activeDraw());
   if(smoothing&&lastRaw&&steady&&Math.hypot(lastRaw.x-steady.x,lastRaw.y-steady.y)>.5){
    const l=layers.find(x=>x.id===wetLayer)||activeDraw();
    if(l){let from=steady;for(let i=1;i<=4;i++){const t=i/4,to={x:steady.x+(lastRaw.x-steady.x)*t,y:steady.y+(lastRaw.y-steady.y)*t};inkSegment(l,from,to);from=to;}last=lastRaw;}}
@@ -1318,6 +1369,7 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
  if(strokePending){future=[];strokePending=false;}active=false;pointer=null;steady=null;strokeTool=null;state();
 }
 canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
+function pngLater(c){if(!c.toBlob)return Promise.resolve(c.toDataURL('image/png'));return new Promise(res=>c.toBlob(b=>{if(!b){res(c.toDataURL('image/png'));return;}const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>res(c.toDataURL('image/png'));r.readAsDataURL(b);},'image/png'));}
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('이미지를 열 수 없습니다.'));i.src=src;});}
 async function loadLayer(l){const b=bitmap();if(l.data){const i=await image(l.data),scale=Math.min(W/i.width,H/i.height),w=i.width*scale,h=i.height*scale;b.getContext('2d').drawImage(i,(W-w)/2,(H-h)/2,w,h);}return {...defaults(l.id,l.name),...l,bitmap:b,data:undefined};}
 function metrics(c){const g=c.getContext('2d',{willReadFrequently:true}),w=c.width,h=c.height,d=g.getImageData(0,0,w,h).data;let n=0,xs=0,ys=0,minX=w,minY=h,maxX=0,maxY=0,r=0,green=0,b=0,transparent=false;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=(y*w+x)*4;if(d[k+3]<255)transparent=true;if(d[k+3]>16){n++;xs+=x;ys+=y;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);r+=d[k];green+=d[k+1];b+=d[k+2];}}return {coverage:n/(w*h),centerX:n?xs/n/w:.5,centerY:n?ys/n/h:.5,width:n?(maxX-minX+1)/w:0,height:n?(maxY-minY+1)/h:0,color:n?[r/n/255,green/n/255,b/n/255]:[0,0,0],transparent};}
@@ -1344,7 +1396,7 @@ async function command(m){try{
   const cx=vr.left+m.vx*vr.width,cy=vr.top+m.vy*vr.height;
   const sx=Math.max(0,Math.min(W-1,Math.floor((cx-r.left)*W/r.width))),sy=Math.max(0,Math.min(H-1,Math.floor((cy-r.top)*H/r.height)));
   const out=bitmap(),pg=out.getContext('2d',{willReadFrequently:true});references.forEach(l=>composite(pg,l));layers.forEach(l=>composite(pg,l));drawCaption(pg);
-  const px=pg.getImageData(sx*RES+(RES>>1),sy*RES+(RES>>1),1,1).data;
+  const px=pickAt(pg,sx,sy);
   send({type:'sampled',color:px[3]<8?null:'#'+[px[0],px[1],px[2]].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase()});return;}
  if(m.type==='brushSettings'){applyBrush(m);state();}
  if(m.type==='width'){if(m.tool==='eraser')eraserWidth=m.width;else penWidth=m.width;}
@@ -1467,8 +1519,16 @@ async function command(m){try{
  if(m.type==='stop'){stopPlaying();render();state();}
  if(m.type==='lineFrames'){const was=playing;stopPlaying();send({type:'lineFrames',id:m.id,line:buildLineFrames(m.spec)});if(was)startPlaying();else{render();state();}}
  if(m.type==='frames'){const was=playing;stopPlaying();send({type:'frames',id:m.id,gif:buildLoop(m.fps,!!m.sheets)});if(was)startPlaying();else{render();state();}}
- if(m.type==='save'){dry();if(selection)applySelection(false,'save');syncFrame();saving=true;saveToken=m.token===undefined?null:m.token;const first=animOn()?frames[0].layers:layers;const out=docCanvas(),g=out.getContext('2d');g.imageSmoothingQuality='high';first.forEach(l=>composite(g,l));drawCaption(g);send({type:'save',token:saveToken,dirty,data:out.toDataURL('image/png'),metrics:metrics(out),activeLayerId,caption,motion,gif:(m.gif&&(motion||animOn()))?buildLoop(12,false):undefined,layers:first.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')})),
-   frames:animOn()?frames.map((f,i)=>({id:f.id,duration:f.duration,layers:i===0?null:f.layers.map(l=>({...meta(l),data:l.bitmap.toDataURL('image/png')}))})):undefined,references:references.map(l=>({...meta(l),path:l.path}))});}
+ if(m.type==='save'){dry();if(selection)applySelection(false,'save');syncFrame();saving=true;saveToken=m.token===undefined?null:m.token;const token=saveToken,wasDirty=dirty;const first=animOn()?frames[0].layers:layers;const out=docCanvas(),g=out.getContext('2d');g.imageSmoothingQuality='high';first.forEach(l=>composite(g,l));drawCaption(g);
+   // PNG 로 바꾸는 일은 toBlob 으로 브라우저가 따로 한다(2026-10-28) — 1080 장 여러 장을 바꾸는 동안에도 그리는 손이 멈칫하지 않는다.
+   // 부르는 순간의 그림을 찍으므로, 아래 png() 를 모두 한꺼번에(기다리기 전에) 불러 저장본이 한 순간의 상태가 되게 한다.
+   const outUrl=pngLater(out),met=metrics(out),gif=(m.gif&&(motion||animOn()))?buildLoop(12,false):undefined,cap=caption,mo=motion,act=activeLayerId;
+   const layerJobs=first.map(l=>({...meta(l),data:pngLater(l.bitmap)}));
+   const frameJobs=animOn()?frames.map((f,i)=>({id:f.id,duration:f.duration,layers:i===0?null:f.layers.map(l=>({...meta(l),data:pngLater(l.bitmap)}))})):undefined;
+   const refs=references.map(l=>({...meta(l),path:l.path}));
+   const settle=list=>Promise.all(list.map(async x=>({...x,data:await x.data})));
+   send({type:'save',token,dirty:wasDirty,data:await outUrl,metrics:met,activeLayerId:act,caption:cap,motion:mo,gif,layers:await settle(layerJobs),
+    frames:frameJobs?await Promise.all(frameJobs.map(async f=>({...f,layers:f.layers?await settle(f.layers):null}))):undefined,references:refs});}
  // ── 장 명령 ──
  if(m.type==='animStart'){if(animOn())return;if(selection)applySelection(false,'frame');const d=Number.isFinite(m.duration)?m.duration:.3;frames=[{id:'f1',duration:d,layers},{id:'f2',duration:d,layers:cloneLayers(layers)}];frameIdx=0;useFrame(1);dirty=true;stopPlaying();render();state();}
  if(m.type==='frameAdd'&&animOn()){if(frames.length>=MAX_FRAMES)return;if(selection)applySelection(false,'frame');syncFrame();const src=frames[frameIdx];let n=frames.length+1;while(frames.some(f=>f.id==='f'+n))n++;frames.splice(frameIdx+1,0,{id:'f'+n,duration:src.duration,layers:m.blank?blankLayers(src.layers):cloneLayers(src.layers)});useFrame(frameIdx+1);dirty=true;stopPlaying();render();state();}

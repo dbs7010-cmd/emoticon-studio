@@ -682,7 +682,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       // looking selected.
       // 저장된 움직임도 함께 보낸다. 빠뜨리면 다시 연 칸의 캔버스에 움직임이 없고, 그 상태로 저장하는 순간
       // 저장 파일의 움직임과 움직이는 파일이 조용히 지워진다(재실행 뒤 '저장'만 눌러도).
-      if (!canceled) send({ type: 'init', layers: decodedLayers, frames: decodedFrames, references: decodedRefs, activeLayerId: slot.work?.activeLayerId, caption: slot.work?.caption ?? null, motion: slot.motion ?? null, color, penWidth, eraserWidth });
+      // res 3: 장을 1080×1080 으로 그린다(문서 좌표·저장 값은 360 그대로, 완성본·카카오 출력도 360). 화면에서 선이 또렷하다(2026-10-28).
+      if (!canceled) send({ type: 'init', res: 3, layers: decodedLayers, frames: decodedFrames, references: decodedRefs, activeLayerId: slot.work?.activeLayerId, caption: slot.work?.caption ?? null, motion: slot.motion ?? null, color, penWidth, eraserWidth });
     })().catch(e => Alert.alert('작업을 불러오지 못했어요', userMessage(e)));
     return () => { canceled = true; };
   }, [ready]);

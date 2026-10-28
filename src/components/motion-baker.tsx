@@ -33,7 +33,8 @@ export const MotionBaker = forwardRef<Baker>(function MotionBaker(_, ref) {
       return new Promise<T>((resolve, reject) => {
         const timer = setTimeout(() => { pending.current.delete(id); reject(new Error('움직임 만들기 시간 초과')); }, 60000);
         pending.current.set(id, { stage: 'init', sheets, spec, resolve, reject, timer });
-        send({ type: 'init', id, layers, frames, references: [], activeLayerId: work.activeLayerId, caption: work.caption ?? null, motion });
+        // LINE 은 고해상도 장(1080)에서 바로 줄여 만든다(res 3) — 360 을 거쳐 늘리면 370×320 칸에서 선이 뭉갠다. 카카오(360)는 예전 그대로 1배.
+        send({ type: 'init', id, res: spec ? 3 : 1, layers, frames, references: [], activeLayerId: work.activeLayerId, caption: work.caption ?? null, motion });
       });
   }
 

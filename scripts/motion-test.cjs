@@ -219,7 +219,7 @@ function readGif(bytes) {
     await cmd({ type: 'init', color: '#242424', penWidth: 14, eraserWidth: 24 });
     await cmd({ type: 'tool', tool: 'pen' });
     await stroke([[120, 150], [260, 150], [260, 280], [120, 280], [120, 150]]);
-    await cmd({ type: 'select', id: 'draw-2' });
+    await cmd({ type: 'addLayer', id: 'draw-2' }); await cmd({ type: 'select', id: 'draw-2' });   // 장은 더해야 생긴다
     await cmd({ type: 'color', color: '#E94F4F' });
     await stroke([[280, 120], [320, 160]]);                    // a second layer: the "hand"
     const still = await saved();
@@ -263,9 +263,10 @@ function readGif(bytes) {
     assert.deepEqual(pw, p0, 'the loop with parts is seamless too');
     // The hand must move differently from the body: compare the two layers' own boxes over time.
     const handTravel = await page.evaluate(() => {
-      const box = t => { const c = document.createElement('canvas'); c.width = c.height = 360; const g = c.getContext('2d'); window.__renderLayer(g, 'draw-2', t); const d = g.getImageData(0, 0, 360, 360).data; let minY = 360, maxY = -1; for (let y = 0; y < 360; y++) for (let x = 0; x < 360; x++) { if (d[(y * 360 + x) * 4 + 3] === 0) continue; if (y < minY) minY = y; if (y > maxY) maxY = y; } return { minY, maxY }; };
-      const a = box(0), b = box(window.__loop() / 4);
-      return { a, b, moved: a.minY !== b.minY || a.maxY !== b.maxY };
+      const box = t => { const c = document.createElement('canvas'); c.width = c.height = 360; const g = c.getContext('2d'); window.__renderLayer(g, 'draw-2', t); const d = g.getImageData(0, 0, 360, 360).data; let minY = 360, maxY = -1, minX = 360, maxX = -1; for (let y = 0; y < 360; y++) for (let x = 0; x < 360; x++) { if (d[(y * 360 + x) * 4 + 3] === 0) continue; if (y < minY) minY = y; if (y > maxY) maxY = y; if (x < minX) minX = x; if (x > maxX) maxX = x; } return { minY, maxY, minX, maxX }; };
+      // 한 바퀴 안 여러 때를 본다 — 부분 움직임은 속도·지연이 따로라 1/4 바퀴에 제자리로 돌아와 있을 수도 있다.
+      const a = box(0), seen = [1, 2, 3, 5, 6, 7].map(k => box(window.__loop() * k / 8));
+      return { a, seen, moved: seen.some(b => a.minY !== b.minY || a.maxY !== b.maxY || a.minX !== b.minX || a.maxX !== b.maxX) };
     });
     assert.equal(handTravel.moved, true, 'the hand alone changes position during the loop');
     say('부분 움직임: 손만 회전, 몸은 별도 이동 — 각각 적용됨');
@@ -293,7 +294,9 @@ function readGif(bytes) {
     }, t);
     assert.deepEqual(await bottomAt(capLoop / 4), await bottomAt(0), '문구는 흔들리지 않는다');
     await cmd({ type: 'motion', motion: { version: 1, preset: 'shake', speed: .8, strength: 1, captionMoves: true } });
-    assert.notDeepEqual(await bottomAt(capLoop / 4), await bottomAt(0), '켜면 문구도 함께 움직인다');
+    // 흔들기는 한 바퀴에 여러 번 오가서 1/4 바퀴에 마침 제자리일 수 있다 — 여러 때를 본다.
+    { const at0 = JSON.stringify(await bottomAt(0)); let moved = false; for (const k of [1, 2, 3, 5, 6, 7]) if (JSON.stringify(await bottomAt(capLoop * k / 8)) !== at0) moved = true;
+      assert.equal(moved, true, '켜면 문구도 함께 움직인다'); }
     await cmd({ type: 'motion', motion: { version: 1, preset: 'bounce', speed: .5, strength: .5, captionMoves: false } });
 
     // ── 어느 부분을 만지는 중인지 그림에서 보인다 ────────────────────────────────────────────
@@ -406,7 +409,7 @@ function readGif(bytes) {
     // ── 움직임은 그림을 건드리지 않는다 ─────────────────────────────────────────────────────
     const afterAll = await saved();
     assert.equal(afterAll.layers.length, 2, 'the layers are untouched by all of this');
-    assert.deepEqual(afterAll.caption, { text: '고마워요', place: 'bottom', color: '#242424' }, 'and so are the words');
+    assert.deepEqual(afterAll.caption, { text: '고마워요', place: 'bottom', color: '#242424', style: 'basic' }, 'and so are the words');
     // Undo reaches movement like any other edit.
     await cmd({ type: 'undo' });
     assert.notEqual((await state()).motion && (await state()).motion.preset, 'bounce', 'undo takes the last movement change back');
