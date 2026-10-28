@@ -1197,8 +1197,8 @@ function Studio() {
                     style={({ pressed }) => ({ width: cell, padding: 8, gap: 6, borderRadius: 16, backgroundColor: pressed ? C.fill : C.paper,
                       borderWidth: on ? 2 : 1, borderColor: on ? C.point : C.line, opacity: has ? 1 : .55 })}>
                     <View style={{ width: cell - 18, height: cell - 18, borderRadius: 12, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      <AssetSlot name="expressionGuideArtwork" size={Math.round((cell - 18) * .84)} sourceOverride={shownArt(x)} />
-                      {!!line && has && <SpeechLine text={line} size={Math.max(14, Math.round(cell * .11))} style={{ position: 'absolute', left: 6, right: 6, bottom: 6 }} />}
+                      <View style={{ marginTop: line ? Math.round((cell - 18) * .1) : 0 }}><AssetSlot name="expressionGuideArtwork" size={Math.round((cell - 18) * (line ? .72 : .84))} sourceOverride={shownArt(x)} /></View>
+                      {!!line && has && <SpeechLine text={line} size={Math.max(12, Math.round(cell * .085))} style={{ position: 'absolute', left: 8, right: 8, top: Math.round((cell - 18) * .05) }} />}
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 2, paddingBottom: 2 }}>
                       {on && <Glyph name="check" size={15} color={C.point} />}
@@ -1267,8 +1267,9 @@ function Studio() {
                     return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => { setGuideLine(undefined); c.examples?.length ? setGuideCard(c) : startFromGuide(c); }}
                     style={({ pressed }) => ({ width: cardWidth, padding: 10, gap: 8, borderRadius: T.radius.card, backgroundColor: pressed ? C.fill : C.paper, ...Card.border })}>
                     <View style={{ width: frame, height: frame, borderRadius: 14, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      <AssetSlot name="expressionGuideArtwork" size={Math.round(frame * .8)} sourceOverride={cover} />
-                      {!!sayLines(c.id)[0] && <SpeechLine text={sayLines(c.id)[0]} size={Math.max(14, Math.round(frame * .12))} style={{ position: 'absolute', left: 6, right: 6, bottom: 8 }} />}
+                      {/* 대사는 캐릭터 위 빈 자리에 작게(실제 이모티콘 배치). 대사가 있으면 그림을 조금 줄여 아래로 내린다. */}
+                      <View style={{ marginTop: sayLines(c.id)[0] ? Math.round(frame * .1) : 0 }}><AssetSlot name="expressionGuideArtwork" size={Math.round(frame * (sayLines(c.id)[0] ? .7 : .8))} sourceOverride={cover} /></View>
+                      {!!sayLines(c.id)[0] && <SpeechLine text={sayLines(c.id)[0]} size={Math.max(12, Math.round(frame * .085))} style={{ position: 'absolute', left: 8, right: 8, top: Math.round(frame * .05) }} />}
                     </View>
                     <View style={{ gap: 2, paddingHorizontal: 2, paddingBottom: 2 }}>
                       <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{c.name}</Text>

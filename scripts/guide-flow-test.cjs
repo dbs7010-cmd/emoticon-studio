@@ -260,8 +260,8 @@ async function echoReferences(scene) {
   assert.equal(tree.root.findAllByType('WebView').length, 0, '고르기만으로는 그리기에 들어가지 않는다');
   // 대사(2026-10-28): 감정의 추천 대사 셋 + 대사 없이. 기본은 첫 대사이고 고른 그림 위에 얹힌다.
   assert.ok(byTestID('표현 대사').length, '대사 고르기가 보인다');
-  for (const x of ['고마워!', '감사합니다', '땡큐~', '대사 없이']) assert.ok(labelled(x + ' 대사 고르기').length, x + ' 대사 칩');
-  assert.equal(labelled('고마워! 대사 고르기')[0].props.accessibilityState.selected, true, '기본은 첫 대사');
+  for (const x of ['감사합니다', '꾸벅', '땡큐', '대사 없이']) assert.ok(labelled(x + ' 대사 고르기').length, x + ' 대사 칩');
+  assert.equal(labelled('감사합니다 대사 고르기')[0].props.accessibilityState.selected, true, '기본은 첫 대사');
 
   // ── 4. ① 참고 보기: 캔버스 밖 전용 자리 (45.25 정정) ─────────────────────────────────
   // 예전에는 캔버스 위에 떠 있는 창이었다. 실기기에서 그리는 자리를 덮어, 참고를 보려면 그림을 가려야 했다.
@@ -321,12 +321,12 @@ async function echoReferences(scene) {
   await press('표현 가이드');
   await press('고마워 · 두 손 모아 꾸벅');
   await press('친근하게 고르기');
-  await press('땡큐~ 대사 고르기');
+  await press('꾸벅 대사 고르기');
   await press('밑그림 넣기');
   let scene = await ready();
   // 고른 대사가 빈 칸의 첫 문구로 들어간다(그리기 화면에서 그대로 고치거나 지울 수 있다).
   const firstInit = sent().filter(m => m.type === 'init').at(-1);
-  assert.deepEqual(firstInit.caption && { text: firstInit.caption.text, place: firstInit.caption.place }, { text: '땡큐~', place: 'bottom' }, '고른 대사가 문구로 들어간다');
+  assert.deepEqual(firstInit.caption && { text: firstInit.caption.text, place: firstInit.caption.place, scale: firstInit.caption.scale }, { text: '꾸벅', place: 'top', scale: .7 }, '고른 대사가 위쪽에 작게 문구로 들어간다');
   const added = sent().filter(m => m.type === 'addReferences');
   assert.equal(added.length, 1, '밑그림은 한 번만 깔린다');
   assert.deepEqual(imported, [art('greeting-thanks-friendly')], '들여온 그림은 고른 표현의 것이다');

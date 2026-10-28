@@ -435,7 +435,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
   // 대사(2026-10-28): 표현 가이드에서 고른 대사는 **빈 칸**에서만 처음 문구가 된다. 이미 그린 칸은 그 칸의 문구 그대로.
-  const firstCaption: Caption | null = slot.work?.caption ?? (!slot.work && guideExample?.line ? { text: guideExample.line, place: 'bottom', color: '#242424', style: 'basic' } : null);
+  // 실제 이모티콘처럼 위쪽에 작게(0.7배) 놓는다 — 손가락으로 옮기거나 키울 수 있다.
+  const firstCaption: Caption | null = slot.work?.caption ?? (!slot.work && guideExample?.line ? { text: guideExample.line, place: 'top', color: '#242424', style: 'basic', scale: .7 } : null);
   const [scene, setScene] = useState<Scene>({ undo: false, redo: false, dirty: false, activeLayerId: 'draw-1', activeReferenceId: null, caption: firstCaption, layers: [], references: [] });
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -1702,7 +1703,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <Pressable accessibilityRole="button" accessibilityLabel="선택 적용" onPress={() => { tap('button:선택 적용'); send({ type: 'selectApply' }); }} style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 14, backgroundColor: pressed ? C.accentLine : C.accent, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 15, fontWeight: '800', color: C.accentInk }}>적용</Text></Pressable>
           </View>
         </View> : panel === 'color' ? <View testID="색상 패널" style={{ maxHeight: panelRoom(0.38, 0.45) + (typing ? 0 : BASE_H) }}><ColorPanel scrollable={!dropping} color={color} recent={palette} saved={userPalette} view={colorView} onView={setColorView} onPick={pickColor} onEyedrop={startEyedrop} eyedropHandlers={eyedropHandlers} onSave={onSaveUserColor} onForget={onRemoveUserColor} onClose={() => { ease(); setPanel(null); }} /></View>
-        : panel === 'caption' ? <View style={{ backgroundColor: C.paper, maxHeight: panelRoom(0.5) }}>
+        // 문구 창은 글씨 줄이 늘면(추천 대사·색·글씨) 낮은 화면에서 '문구 적용'이 잘렸다 — 창 안을 위아래로 밀 수 있게 한다(2026-10-28).
+        : panel === 'caption' ? <ScrollView keyboardShouldPersistTaps="handled" style={{ backgroundColor: C.paper, maxHeight: panelRoom(0.5), flexGrow: 0 }}>
           {/* 미확정 변경은 '문구 적용'으로만 확정된다. 닫으면 고치던 글자는 버려지고 화면의 문구는 그대로 남는다.
               키보드가 올라오면 머리·지우기·아래 버튼을 접고 입력 한 줄(색 · 입력 · 키보드 닫기 · 적용)만 남긴다 —
               캔버스가 띠로 줄어 고치는 글씨가 잘리던 39차 P2. 입력칸은 같은 자리에 남아 포커스를 잃지 않는다. */}
@@ -1725,7 +1727,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             </Pressable>}
           </View>
           {/* 추천 대사(2026-10-28): 가이드에서 고른 대사가 있으면 그것부터, 없으면 자주 쓰는 대사. 누르면 입력칸에 들어가고 '적용'으로 확정한다. */}
-          <ScrollView testID="추천 대사" horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: typing ? 8 : 16, paddingBottom: 8 }} style={{ flexGrow: 0 }}>
+          <ScrollView testID="추천 대사" horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: typing ? 8 : 16, paddingBottom: 8 }} style={{ flexGrow: 0, flexShrink: 0 }}>
             {[...new Set([guideExample?.line, ...popularLines()].filter((x): x is string => !!x))].map(x =>
               <Pressable key={x} accessibilityRole="button" accessibilityLabel={'대사 ' + x} onPress={() => setCaptionDraft(x)}
                 style={({ pressed }) => ({ minHeight: 36, paddingHorizontal: 12, borderRadius: 18, justifyContent: 'center', backgroundColor: pressed ? C.fill : captionDraft.trim() === x ? C.pointSoft : C.surface2 })}>
@@ -1766,7 +1768,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           {!typing && <View style={{ paddingHorizontal: 16, paddingBottom: 10, paddingTop: 6, backgroundColor: C.paper }}>
             <Action primary title="문구 적용" onPress={() => applyCaption(captionDraft)} />
           </View>}
-        </View>
+        </ScrollView>
 
         : panel === 'reference' && selectedReference ? <Sheet room={coverRoom()} title="참고 사진" onClose={() => { ease(); setPanel(null); }}>
           <View style={{ paddingHorizontal: 8, gap: 8 }}>

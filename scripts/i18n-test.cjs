@@ -25,8 +25,8 @@ assert.equal(i.t('home.recentAll', { n: 7 }), '최근 작업순 · 전체 7');
 // 대사(2026-10-28): 표현 가이드 20감정 모두 세 언어로 대사 셋. 비거나 겹치면 안 된다.
 const sayIds = keys.filter(k => k.startsWith('say.') && k.split('.')[1].includes('-')).map(k => k.slice(4));
 assert.equal(sayIds.length, 20, '감정 20개의 대사');
-for (const L of ['ko', 'ja', 'zh-Hant']) { i.setLang(L); for (const id of sayIds) { const lines = i.sayLines(id); assert.equal(lines.length, 3, L + ' ' + id + ' 대사 셋'); assert.equal(new Set(lines).size, 3, L + ' ' + id + ' 겹침 없음'); } assert.equal(i.popularLines().length, 8); }
-i.setLang('ko'); assert.deepEqual(i.sayLines('greeting-hello'), ['안녕!', '하이~', '반가워']); assert.deepEqual(i.sayLines('없는-감정'), []);
+for (const L of ['ko', 'ja', 'zh-Hant']) { i.setLang(L); for (const id of sayIds) { const lines = i.sayLines(id); assert.equal(lines.length, 3, L + ' ' + id + ' 대사 셋'); assert.equal(new Set(lines).size, 3, L + ' ' + id + ' 겹침 없음'); } assert.equal(i.popularLines().length, 10); }
+i.setLang('ko'); assert.deepEqual(i.sayLines('greeting-hello'), ['하이~', '넵!', '안뇽']); assert.deepEqual(i.popularLines().slice(0, 4), ['응응', '넵!', 'ㅋㅋㅋㅋ', '딱!']); assert.deepEqual(i.sayLines('없는-감정'), []);
 i.setLang('ja'); assert.equal(i.t('tab.home'), 'ホーム'); assert.equal(i.overseas(), true);
 i.setLang('zh-Hant'); assert.equal(i.t('line.needMoving', { n: 3 }), 'LINE 動態貼圖至少需要 8 張（目前有 3 張）。');
 i.setLang('ko'); assert.equal(i.overseas(), false);

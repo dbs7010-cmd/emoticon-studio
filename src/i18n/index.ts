@@ -42,5 +42,6 @@ export function sayLines(cardId: string): string[] {
   return text ? text.split('|').map(s => s.trim()).filter(Boolean) : [];
 }
 // 감정을 정하지 않고 문구를 쓸 때 보여 줄 대표 대사 — 자주 쓰는 감정의 첫 대사.
-const POPULAR = ['greeting-hello', 'greeting-thanks', 'greeting-like', 'sad-sorry', 'sad-crying', 'surprise-gasp', 'angry-hmph', 'daily-good-night'];
-export const popularLines = (): string[] => POPULAR.map(id => sayLines(id)[0]).filter(Boolean);
+// 채팅에서 가장 자주 쓰는 짧은 말 — 감정 대사들에서 골라 모은다(응응·넵!·ㅋㅋㅋㅋ·딱!·헐·?!·ㅠㅠ…).
+const POPULAR: [string, number][] = [['daily-wait', 0], ['greeting-hello', 1], ['greeting-excited', 0], ['greeting-like', 0], ['surprise-no-way', 0], ['surprise-gasp', 1], ['sad-crying', 0], ['greeting-thanks', 0], ['surprise-flustered', 0], ['daily-depart', 1]];
+export const popularLines = (): string[] => POPULAR.map(([id, i]) => sayLines(id)[i]).filter(Boolean);
