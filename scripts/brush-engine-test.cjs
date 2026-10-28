@@ -113,7 +113,9 @@ function previousEngine() {
 
     // ── C. 선 보정: 같은 흔들리는 입력에서 강하게 보정하면 덜 흔들리고, 선 끝을 잃지 않는다 ──────
     const noisy = []; for (let i = 0; i <= 60; i++) noisy.push([60 + i * 4.5, 160 + (i % 2 ? 7 : -7)]);
-    const shake = async settings => { await fresh(settings, 6); await E.drag(noisy, 1); return E.analyse((await E.saved()).layers[0].data); };
+    // 보정은 시간 기준(1€)이라 입력 간격이 일정해야 비교가 흔들리지 않는다 — 8ms 간격(약 120Hz)으로 보낸다.
+    const paced = pts => E.page.evaluate(async pts => { const c = document.getElementById('drawing'); const ev = (t, [x, y]) => c.dispatchEvent(new PointerEvent(t, { pointerId: 1, pointerType: 'touch', isPrimary: true, bubbles: true, cancelable: true, clientX: x, clientY: y })); ev('pointerdown', pts[0]); for (const p of pts.slice(1)) { ev('pointermove', p); await new Promise(r => setTimeout(r, 8)); } ev('pointerup', pts[pts.length - 1]); }, pts);
+    const shake = async settings => { await fresh(settings, 6); await paced(noisy); return E.analyse((await E.saved()).layers[0].data); };
     const off = await shake({ preset: null, opacity: 1, stabilizer: 'light', smoothing: false });
     const light = await shake({ preset: null, opacity: 1, stabilizer: 'light', smoothing: true });
     const strong = await shake({ preset: null, opacity: 1, stabilizer: 'strong', smoothing: true });
