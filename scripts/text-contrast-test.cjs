@@ -41,6 +41,8 @@ function textOf(n) { return [n.props.children].flat(9).filter(x => typeof x === 
           const b = hex(st.backgroundColor);
           if (b && b.a > 0) bg = mix(b.rgb, b.a, bg);
           if (node.type === 'Modal' && node.props.transparent) bg = bg;   // 모달 바탕은 안쪽 상자가 정한다
+          // 대사 글씨의 흰 테두리(겹쳐 그린 장식 글씨)는 글자가 아니라 외곽선이다 — 실제 글씨(바로 위 층)만 잰다.
+          if (node.type === 'Text' && node.props.testID === '대사 테두리') return;
           if (node.type === 'Text') {
             if (st.color) color = st.color;
             if (st.fontSize) size = st.fontSize;

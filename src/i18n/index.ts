@@ -36,3 +36,11 @@ export function t(key: Key, vars?: Record<string, string | number>): string {
 }
 // 해외(한국어가 아닌) 이용자인가 — 카카오 전용 안내·국내 공모전을 숨기고 LINE 을 앞에 둘 때 쓴다.
 export const overseas = () => current !== 'ko';
+// 대사(2026-10-28): 표현 가이드 감정(카드 id)마다 추천 대사 세 개. 없는 id 는 빈 목록.
+export function sayLines(cardId: string): string[] {
+  const text = (TABLES[current] as Record<string, string | undefined>)['say.' + cardId] ?? (ko as Record<string, string>)['say.' + cardId];
+  return text ? text.split('|').map(s => s.trim()).filter(Boolean) : [];
+}
+// 감정을 정하지 않고 문구를 쓸 때 보여 줄 대표 대사 — 자주 쓰는 감정의 첫 대사.
+const POPULAR = ['greeting-hello', 'greeting-thanks', 'greeting-like', 'sad-sorry', 'sad-crying', 'surprise-gasp', 'angry-hmph', 'daily-good-night'];
+export const popularLines = (): string[] => POPULAR.map(id => sayLines(id)[0]).filter(Boolean);

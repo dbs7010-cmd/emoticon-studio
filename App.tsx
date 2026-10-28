@@ -4,13 +4,14 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Constants from 'expo-constants';
 import { rewardedUnit, showRewarded } from './src/services/ads';
-import { t } from './src/i18n/index';
+import { t , sayLines } from './src/i18n/index';
 import { purchasesClosed, PURCHASES_CLOSED_NOTE } from './src/services/purchase-config';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import { Action, AssetSlot, CompleteCard, Dialog, Elev, EmptyState, Field, IconButton, ProBadge, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font, Card, Glyph, Clay } from './src/components/app-ui';
 import { Rise, HopStage, FillBar, Shine } from './src/components/motion-fx';
 import { ImtiIcon, IconSize, type IconName as ImtiName } from './src/design/icons';
+import { SpeechLine } from './src/components/speech-line';
 import { ASSET_SLOTS, EXPRESSION_GUIDE, HOME_NOTICE, type ExpressionExample, type ExpressionGuideCard } from './src/design/asset-slots';
 import { ImageAnalyzer, type Analyzer } from './src/components/image-analyzer';
 import { MotionBaker, type Baker } from './src/components/motion-baker';
@@ -244,7 +245,9 @@ function Studio() {
   // 두 행동의 차이는 처음 한 번만 알려 준다. 앱을 다시 켜기 전까지 다시 뜨지 않는다.
   const [guideTip] = useState(() => !guideTipShown);
   // artwork = 캔버스에 깔 원본 · display = 보여 줄 그림(몸 안 흰색). 둘을 섞지 않는다.
-  const [guideExample, setGuideExample] = useState<{ id: string; title: string; hint: string; artwork: ImageSourcePropType; display?: ImageSourcePropType } | null>(null);
+  const [guideExample, setGuideExample] = useState<{ id: string; title: string; hint: string; artwork: ImageSourcePropType; display?: ImageSourcePropType; line?: string } | null>(null);
+  // 고른 대사(2026-10-28). undefined = 그 감정의 첫 대사, null = 대사 없이.
+  const [guideLine, setGuideLine] = useState<string | null | undefined>(undefined);
   const [guideExampleMode, setGuideExampleMode] = useState<'watch' | 'underlay' | null>(null);
   // 가이드에서 고른 표현 한 줄. Painter 가 힌트로 한 번 보여 주고 끝난다 — 저장 구조에는 남기지 않는다(44.2차).
   const [guideHint, setGuideHint] = useState<{ name: string; hint: string } | null>(null);
@@ -490,11 +493,12 @@ function Studio() {
   function createNewProject() { setNewSetName(defaultSetName()); }
   // 표현 가이드에서 고른 표현으로 바로 그리러 간다. 새 흐름을 만들지 않고, 이어서 만들기·새 세트 만들기와 같은 길을 쓴다(44.2차).
   // 예시를 함께 고른 경우에도 새 흐름을 만들지 않는다 — 대상 칸을 정하는 길은 예전 그대로다(44.2차).
-  function startFromGuide(card: { name: string; hint: string }, example?: ExpressionExample, mode?: 'watch' | 'underlay') {
+  function startFromGuide(card: { name: string; hint: string }, example?: ExpressionExample, mode?: 'watch' | 'underlay', line?: string | null) {
     setGuideHint(card);
     // 그림이 아직 없는 예시는 가이드 화면에서 고를 수 없으므로 여기까지 오지 않는다.
     const artwork = example?.artwork;
-    setGuideExample(example && artwork ? { id: example.id, title: card.name + ' · ' + example.label, hint: example.hint, artwork, display: example.display } : null);
+    // 대사는 그리기 화면에서 문구로 미리 들어간다(빈 칸일 때만 — 이미 그린 칸의 문구는 건드리지 않는다).
+    setGuideExample(example && artwork ? { id: example.id, title: card.name + ' · ' + example.label, hint: example.hint, artwork, display: example.display, line: line || undefined } : null);
     setGuideExampleMode(example && artwork ? mode ?? 'watch' : null);
     setGuideCard(null);
     setHomeView('home');
@@ -1183,6 +1187,7 @@ function Studio() {
             const cell = Math.floor((screenWidth - 32 - 12) / 2);
             const picked = list.find(x => x.id === guidePick) ?? null;
             const ready = !!picked?.artwork;
+            const lines = sayLines(guideCard.id), line = guideLine === undefined ? lines[0] ?? null : guideLine;
             return <>
               <View testID="표현 예시 목록" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
                 {list.map(x => { const on = x.id === guidePick, has = !!x.artwork;
@@ -1193,6 +1198,7 @@ function Studio() {
                       borderWidth: on ? 2 : 1, borderColor: on ? C.point : C.line, opacity: has ? 1 : .55 })}>
                     <View style={{ width: cell - 18, height: cell - 18, borderRadius: 12, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       <AssetSlot name="expressionGuideArtwork" size={Math.round((cell - 18) * .84)} sourceOverride={shownArt(x)} />
+                      {!!line && has && <SpeechLine text={line} size={Math.max(14, Math.round(cell * .11))} style={{ position: 'absolute', left: 6, right: 6, bottom: 6 }} />}
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 2, paddingBottom: 2 }}>
                       {on && <Glyph name="check" size={15} color={C.point} />}
@@ -1206,6 +1212,18 @@ function Studio() {
                 <Text numberOfLines={2} style={{ fontSize: 13, lineHeight: 19, color: picked ? C.ink : C.muted }}>
                   {picked ? picked.hint : '표현을 골라 주세요'}
                 </Text>
+                {/* 대사(2026-10-28): 이 감정의 추천 대사 · 대사 없이. 고른 대사는 위 그림에 바로 얹히고, 그리기 화면 문구로 들어간다. */}
+                {!!lines.length && <View testID="표현 대사" style={{ gap: 6 }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{t('say.title')}</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                    {[...lines, null].map(x => { const on = x === line;
+                      return <Pressable key={x ?? '-'} accessibilityRole="button" accessibilityLabel={(x ?? t('say.none')) + ' ' + t('say.pick')} accessibilityState={{ selected: on }}
+                        onPress={() => setGuideLine(x)} hitSlop={{ top: 4, bottom: 4 }}
+                        style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: on ? C.pointSoft : C.surface2 }}>
+                        <Text style={{ fontSize: 14, fontWeight: on ? '800' : '600', color: on ? C.pointInk : x ? C.ink : C.muted }}>{x ?? t('say.none')}</Text>
+                      </Pressable>; })}
+                  </View>
+                </View>}
                 {guideTip && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>참고는 옆에 두고 보고, 밑그림은 캔버스에 겹쳐 놓고 그려요</Text>}
                 {/* 어느 세트의 몇 번 칸에 넣는지 행동 바로 위에서 말한다(45.38). 예전에는 가장 최근 세트의 다음 빈 칸이 말없이 열렸다. */}
                 {(() => {
@@ -1223,13 +1241,13 @@ function Studio() {
                 })()}
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable accessibilityRole="button" accessibilityLabel="참고 보기" accessibilityState={{ disabled: !ready }} disabled={!ready}
-                    onPress={() => { guideTipShown = true; startFromGuide(guideCard!, picked!, 'watch'); }}
+                    onPress={() => { guideTipShown = true; startFromGuide(guideCard!, picked!, 'watch', line); }}
                     style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
                       backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: ready ? C.lineStrong : C.line, opacity: ready ? 1 : .5 })}>
                     <Text style={{ fontSize: 15, fontWeight: '700', color: ready ? C.ink : C.faint }}>참고 보기</Text>
                   </Pressable>
                   <Pressable accessibilityRole="button" accessibilityLabel="밑그림 넣기" accessibilityState={{ disabled: !ready }} disabled={!ready}
-                    onPress={() => { guideTipShown = true; startFromGuide(guideCard!, picked!, 'underlay'); }}
+                    onPress={() => { guideTipShown = true; startFromGuide(guideCard!, picked!, 'underlay', line); }}
                     style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
                       backgroundColor: !ready ? C.fill : pressed ? C.accentSoft : C.accent, opacity: ready ? 1 : .6 })}>
                     <Text style={{ fontSize: 15, fontWeight: '800', color: ready ? C.accentInk : C.faint }}>밑그림 넣기</Text>
@@ -1246,10 +1264,11 @@ function Studio() {
                   {cards.map(c => { const count = c.examples?.length ?? 0;
                     // 대표 그림은 이 감정의 예시 중 cover 가 가리키는 것을 그대로 쓴다(카드 전용 그림이 오면 artwork 가 먼저다).
                     const cover = c.artwork ?? shownArt(c.examples?.find(x => x.id === c.cover)) ?? null;
-                    return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => { c.examples?.length ? setGuideCard(c) : startFromGuide(c); }}
+                    return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.name} · ${c.hint}`} onPress={() => { setGuideLine(undefined); c.examples?.length ? setGuideCard(c) : startFromGuide(c); }}
                     style={({ pressed }) => ({ width: cardWidth, padding: 10, gap: 8, borderRadius: T.radius.card, backgroundColor: pressed ? C.fill : C.paper, ...Card.border })}>
                     <View style={{ width: frame, height: frame, borderRadius: 14, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       <AssetSlot name="expressionGuideArtwork" size={Math.round(frame * .8)} sourceOverride={cover} />
+                      {!!sayLines(c.id)[0] && <SpeechLine text={sayLines(c.id)[0]} size={Math.max(14, Math.round(frame * .12))} style={{ position: 'absolute', left: 6, right: 6, bottom: 8 }} />}
                     </View>
                     <View style={{ gap: 2, paddingHorizontal: 2, paddingBottom: 2 }}>
                       <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{c.name}</Text>

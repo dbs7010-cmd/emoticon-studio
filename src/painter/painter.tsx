@@ -16,6 +16,7 @@ import { isProPreset } from '../motion-math';
 import { dataUrl } from '../services/images';
 import { imageUri } from '../services/storage';
 import { CAPTION_STYLES } from '../types';
+import { popularLines } from '../i18n/index';
 import type { BrushSettings, Caption, CaptionStyle, LayerTransform, LocalImage, Motion, PainterExport, QA, SavedMotion, Slot } from '../types';
 
 import { AnimPanel } from './anim-panel';
@@ -73,7 +74,7 @@ type Props = {
   guideHint?: { name: string; hint: string } | null;
   onGuideHintDone?: () => void;
   // 표현 가이드에서 고른 예시(45.17차). 그림은 앱에 함께 실린 번들 모듈이고, 없으면 가이드 화면이 고르지 못하게 막는다.
-  guideExample?: { id: string; title: string; hint: string; artwork: ImageSourcePropType; display?: ImageSourcePropType } | null;
+  guideExample?: { id: string; title: string; hint: string; artwork: ImageSourcePropType; display?: ImageSourcePropType; line?: string } | null;
   // 가이드 화면에서 무엇을 눌렀는지: 참고 창으로 보며 그릴지, 밑그림으로 깔지.
   guideExampleMode?: 'watch' | 'underlay' | null;
   // 번들 그림을 참고 사진과 같은 자리(세트의 referenceImages)로 들여온다 — 저장·복원은 기존 참고 정책 그대로다.
@@ -433,7 +434,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<SaveAction>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
-  const [scene, setScene] = useState<Scene>({ undo: false, redo: false, dirty: false, activeLayerId: 'draw-1', activeReferenceId: null, caption: slot.work?.caption ?? null, layers: [], references: [] });
+  // 대사(2026-10-28): 표현 가이드에서 고른 대사는 **빈 칸**에서만 처음 문구가 된다. 이미 그린 칸은 그 칸의 문구 그대로.
+  const firstCaption: Caption | null = slot.work?.caption ?? (!slot.work && guideExample?.line ? { text: guideExample.line, place: 'bottom', color: '#242424', style: 'basic' } : null);
+  const [scene, setScene] = useState<Scene>({ undo: false, redo: false, dirty: false, activeLayerId: 'draw-1', activeReferenceId: null, caption: firstCaption, layers: [], references: [] });
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   // adjustResize 가 켜져 있어도 useWindowDimensions 는 화면 전체 높이를 돌려준다. 그 값으로 패널
@@ -683,7 +686,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       // 저장된 움직임도 함께 보낸다. 빠뜨리면 다시 연 칸의 캔버스에 움직임이 없고, 그 상태로 저장하는 순간
       // 저장 파일의 움직임과 움직이는 파일이 조용히 지워진다(재실행 뒤 '저장'만 눌러도).
       // res 3: 장을 1080×1080 으로 그린다(문서 좌표·저장 값은 360 그대로, 완성본·카카오 출력도 360). 화면에서 선이 또렷하다(2026-10-28).
-      if (!canceled) send({ type: 'init', res: 3, layers: decodedLayers, frames: decodedFrames, references: decodedRefs, activeLayerId: slot.work?.activeLayerId, caption: slot.work?.caption ?? null, motion: slot.motion ?? null, color, penWidth, eraserWidth });
+      if (!canceled) send({ type: 'init', res: 3, layers: decodedLayers, frames: decodedFrames, references: decodedRefs, activeLayerId: slot.work?.activeLayerId, caption: firstCaption, motion: slot.motion ?? null, color, penWidth, eraserWidth });
     })().catch(e => Alert.alert('작업을 불러오지 못했어요', userMessage(e)));
     return () => { canceled = true; };
   }, [ready]);
@@ -1721,6 +1724,14 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               <Text style={{ fontSize: 15, fontWeight: '800', color: C.accentInk }}>적용</Text>
             </Pressable>}
           </View>
+          {/* 추천 대사(2026-10-28): 가이드에서 고른 대사가 있으면 그것부터, 없으면 자주 쓰는 대사. 누르면 입력칸에 들어가고 '적용'으로 확정한다. */}
+          <ScrollView testID="추천 대사" horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: typing ? 8 : 16, paddingBottom: 8 }} style={{ flexGrow: 0 }}>
+            {[...new Set([guideExample?.line, ...popularLines()].filter((x): x is string => !!x))].map(x =>
+              <Pressable key={x} accessibilityRole="button" accessibilityLabel={'대사 ' + x} onPress={() => setCaptionDraft(x)}
+                style={({ pressed }) => ({ minHeight: 36, paddingHorizontal: 12, borderRadius: 18, justifyContent: 'center', backgroundColor: pressed ? C.fill : captionDraft.trim() === x ? C.pointSoft : C.surface2 })}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: captionDraft.trim() === x ? C.pointInk : C.ink }}>{x}</Text>
+              </Pressable>)}
+          </ScrollView>
           {/* 문구 색: 최근 쓴 색을 바로 누르고, 더 고르려면 팔레트로 간다. 고르는 즉시 캔버스의 글씨에 반영된다(45.5차). */}
           {!typing && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 6 }}>
             <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>색</Text>
