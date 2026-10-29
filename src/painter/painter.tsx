@@ -447,6 +447,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 키보드 뒤로 내려간다. 그래서 키보드 높이를 직접 받아 상한에서 뺀다.
   const [keyboard, setKeyboard] = useState(0);
   useEffect(() => {
+    // iOS(10-30): 모달 안에서는 keyboardDidShow 가 오지 않아 키보드 높이가 0으로 남고 문구 창이 키보드 뒤에 숨었다.
+    // iOS 는 키보드 틀이 바뀔 때마다(올라옴·예측 줄·내려감) 화면 아래에서 키보드 윗변까지를 높이로 쓴다. 안드로이드는 그대로.
+    if (Platform.OS === 'ios') {
+      const frame = Keyboard.addListener('keyboardWillChangeFrame', e => setKeyboard(Math.max(0, Math.round(Dimensions.get('window').height - (e.endCoordinates?.screenY ?? Dimensions.get('window').height)))));
+      const hide = Keyboard.addListener('keyboardWillHide', () => setKeyboard(0));
+      return () => { frame.remove(); hide.remove(); };
+    }
     const shown = Keyboard.addListener('keyboardDidShow', e => setKeyboard(e.endCoordinates?.height ?? 0));
     const hidden = Keyboard.addListener('keyboardDidHide', () => setKeyboard(0));
     return () => { shown.remove(); hidden.remove(); };
