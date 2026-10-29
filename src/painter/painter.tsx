@@ -1358,7 +1358,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       <Text numberOfLines={1} style={{ color: busy || !initialized ? C.faint : C.accentInk, fontWeight: '800', fontSize: 15 }}>저장</Text>
     </Pressable>;
   return <Modal onRequestClose={() => { if (Keyboard.isVisible()) { Keyboard.dismiss(); return; } if (panel === 'brush' && brushDetail) { ease(); setBrushDetail(false); return; } if (panel === 'brush') { closeBrush(); return; } if (panel) { ease(); setPanel(null); return; } if (drawRail || refRail) { ease(); setDrawRail(false); setRefRail(false); return; } if (showCanon) { setShowCanon(false); return; } save('close'); }} animationType="slide"><SafeAreaProvider><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    {/* iOS(10-29 시뮬레이터): 모달 안에서 KeyboardAvoidingView 가 밀어 올리지 않아 문구 창이 키보드 뒤에 숨었다.
+        iOS 는 받은 키보드 높이만큼 직접 아래를 비운다(SafeAreaView 가 이미 준 아래 여백만큼은 뺀다). 안드로이드는 그대로. */}
+    <KeyboardAvoidingView style={{ flex: 1, paddingBottom: Platform.OS === 'ios' ? Math.max(0, keyboard - insets.bottom) : 0 }} behavior={Platform.OS === 'ios' ? undefined : 'height'} enabled={Platform.OS !== 'ios'}>
       {/* 머리: 닫기 · 세트 이름과 칸 번호 · 저장 · 더보기. 되돌리기·다시 실행은 아래 줄(참고 왼쪽)로 옮겼다(45.37). */}
       <View style={{ minHeight: 52, paddingHorizontal: 2, flexDirection: 'row', alignItems: 'center', backgroundColor: C.paper }}>
         <Bar label="그리기 닫기" icon="chevron-left" strong disabled={busy} onPress={() => save('close')} />
