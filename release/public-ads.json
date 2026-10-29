@@ -1,5 +1,6 @@
 {
-  "_note": "AdMob 공개 ID(비밀 아님, 2026-10-27 운영자 생성). 앱 ID 는 app.json 플러그인, 보상형 광고 단위는 app.config.js 가 extra.ads 로 넣는다. iOS 앱은 아직 AdMob 에 없음 — iOS 빌드 전에 iOS 앱 ID 를 만들어 app.json 의 iosAppId 에 넣어야 한다(없으면 iOS 에서 광고 SDK 가 시작 시 멈춤).",
+  "_note": "AdMob 공개 ID(비밀 아님, 2026-10-27 운영자 생성). 앱 ID 는 app.json 플러그인, 보상형 광고 단위는 app.config.js 가 extra.ads 로 넣는다. iOS 앱 ID 는 2026-10-30 운영자가 만들었다(iOS 보상형 광고 단위는 아직 없음 — iOS 에서는 광고 단위가 생길 때까지 광고를 붙이지 않는다).",
   "androidAppId": "ca-app-pub-7942033735159248~3600454688",
-  "rewardedAndroid": "ca-app-pub-7942033735159248/7188345901"
+  "rewardedAndroid": "ca-app-pub-7942033735159248/7188345901",
+  "iosAppId": "ca-app-pub-7942033735159248~5797925961"
 }
