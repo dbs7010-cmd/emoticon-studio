@@ -35,7 +35,7 @@ class File {
   async base64() { return fs.readFileSync(real(this.uri)).toString('base64'); }
   delete() { fs.unlinkSync(real(this.uri)); }
 }
-const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } }, 'expo-image-picker': {}, 'expo-image-manipulator': {}, 'expo-asset': { Asset: { fromModule: () => ({ downloadAsync: async () => ({ localUri: 'bundled://art', uri: 'bundled://art' }) }) } } });
+const load = loader({ 'expo-file-system': { Directory, File, Paths: { document: 'document' } }, 'expo-image-picker': {}, 'expo-image-manipulator': {}, 'expo-constants': { __esModule: true, default: { expoConfig: { extra: {} } } }, 'expo-asset': { Asset: { fromModule: () => ({ downloadAsync: async () => ({ localUri: 'bundled://art', uri: 'bundled://art' }) }) } } });
 const { canvasHtml } = load('src/painter/canvas-html.ts');
 const { createProject, isDone, doneCount, nextUnfinished, previousDrawn } = load('src/project.ts');
 const { loadStore, saveStore, localFile } = load('src/services/storage.ts');

@@ -1,12 +1,20 @@
 import * as Picker from 'expo-image-picker';
 import { Asset } from 'expo-asset';
+import Constants from 'expo-constants';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { File } from 'expo-file-system';
 import { newImageFile, newMotionFile, localFile } from './storage';
 import type { ImageSourcePropType } from 'react-native';
 import type { LocalImage, Metrics, PainterExport, PainterWork } from '../types';
 
+// 스크린샷용 iOS 시뮬레이터 빌드(app.config screenshotBuild, 2026-10-29)에서만: 사진첩 대신 앱에 이미 실린 Codex 콘 그림을
+// 차례로 돌려준다. 클라우드 시뮬레이터는 3분마다 새로 깔려 사진을 매번 다시 올려야 했다. 출시·검수 빌드에서는 늘 실제 사진첩.
+const DEMO_PICTURES = [require('../../assets/mascot/corn-wave.png'), require('../../assets/mascot/corn-cheer.png'), require('../../assets/mascot/corn-heart.png'),
+  require('../../assets/mascot/corn-nod.png'), require('../../assets/mascot/corn-shy.png'), require('../../assets/mascot/corn-base.png')];
+let demoNext = 0;
+const screenshotBuild = (): boolean => (Constants.expoConfig?.extra as { screenshotBuild?: boolean } | undefined)?.screenshotBuild === true;
 export async function pickImages(multiple = false): Promise<LocalImage[]> {
+  if (screenshotBuild()) return [await importBundledImage(DEMO_PICTURES[demoNext++ % DEMO_PICTURES.length])];
   const result = await Picker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: multiple, selectionLimit: multiple ? 8 : 1, quality: 1 });
   if (result.canceled) return [];
   const images: LocalImage[] = [];

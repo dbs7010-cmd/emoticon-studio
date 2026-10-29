@@ -110,6 +110,8 @@ module.exports = () => {
     ...(base.expo.extra ?? {}),
     // 이 값이 참인 빌드에서만 설정 화면에 검수용 스위치가 나타난다. 거짓이면 그 화면도, 그 길도 없다.
     internalReview,
+    // 스크린샷용 시뮬레이터 빌드 표시 — 사진 고르기가 앱에 실린 콘 그림을 돌려준다(src/services/images.ts).
+    screenshotBuild,
     purchases,
     // 비공개 테스트 PRO 체험(구매 닫힘 빌드 전용). 저장되지 않는 빌드 값이다.
     proTrial,
