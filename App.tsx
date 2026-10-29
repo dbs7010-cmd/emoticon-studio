@@ -2039,7 +2039,8 @@ function Studio() {
           <Pressable accessibilityRole="button" accessibilityLabel={t('ui.proClose')} onPress={() => { setProSheet(false); resetPayment(); }} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={28} color={C.ink} /></Pressable>
           <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: C.ink }}>PRO</Text>
         </View>
-        <ScrollView contentContainerStyle={{ padding: T.gap.lg, gap: T.gap.md, paddingBottom: 32 }}>
+        {/* 아이패드·펼친 폴더블(2026-10-29): 다른 화면처럼 CONTENT_MAX 폭 가운데로 — 13" 에서 줄이 화면 끝까지 늘어났다. */}
+        <ScrollView contentContainerStyle={[{ padding: T.gap.lg, gap: T.gap.md, paddingBottom: 32 }, windowWidth > CONTENT_MAX && { width: '100%', maxWidth: CONTENT_MAX, alignSelf: 'center' }]}>
           <Text style={{ fontSize: 24, fontWeight: '800', color: C.ink, lineHeight: 32, letterSpacing: -.4 }}>{t('ui.proHeadline')}</Text>
           {/* 45.43 S6 전/후(시안 WB2-States 'PRO 표현'): 색이 아니라 배지·구성으로 PRO 를 보인다(보라 없음).
               왼쪽·오른쪽은 같은 그림(proFeatureArtwork source / sourceAfter)이다. 달라지는 것은 '무엇이 움직이는가'뿐 —
