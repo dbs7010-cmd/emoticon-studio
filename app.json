@@ -51,7 +51,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "원캐릭터와 참고 이미지, 직접 그린 그림을 고를 때만 사진을 사용합니다.",
+          "photosPermission": "내 캐릭터 기준 그림, 참고 이미지, 직접 그린 그림을 가져올 때만 사진을 사용합니다.",
           "cameraPermission": false,
           "microphonePermission": false
         }
