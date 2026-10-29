@@ -1,0 +1,85 @@
+{
+  "status": "COMPOSED_REVIEW_REQUIRED",
+  "records": [
+    {
+      "file": "iphone69/01.png",
+      "width": 1290,
+      "height": 2796,
+      "colorMode": "RGB",
+      "sha256": "86513337dd7c52f909f161f27ae5e7dc089b406cf312b9db4d6d3bd83aecf515",
+      "status": "composed-needs-visual-review"
+    },
+    {
+      "file": "iphone69/02.png",
+      "width": 1290,
+      "height": 2796,
+      "colorMode": "RGB",
+      "sha256": "f64fd666d678d29e1c32aad789082209fa9ba9b1b21ce774b6be9a76b5fc5f53",
+      "status": "composed-needs-visual-review"
+    },
+    {
+      "file": "iphone69/03.png",
+      "width": 1290,
+      "height": 2796,
+      "colorMode": "RGB",
+      "sha256": "9a9ebf38d6f0d65caf8a45ea2ff139f2c9edb4a94b1124998210ce46a2cced6f",
+      "status": "composed-needs-visual-review"
+    },
+    {
+      "file": "iphone69/04.png",
+      "width": 1290,
+      "height": 2796,
+      "colorMode": "RGB",
+      "sha256": "a13c46780922a9609034013a6dfe6f60acbe08dee9960fd7fb3888e2ae95204c",
+      "status": "composed-needs-visual-review"
+    },
+    {
+      "file": "iphone69/05.png",
+      "width": 1290,
+      "height": 2796,
+      "colorMode": "RGB",
+      "sha256": "d1dc8b8e8a8dc1ef22fae61baf1f51d2564732644a96994c5647ce0e4abca9ed",
+      "status": "composed-needs-visual-review"
+    },
+    {
+      "file": "ipad13/01.png",
+      "width": 2064,
+      "height": 2752,
+      "colorMode": "RGB",
+      "sha256": "d982b49672945196302ef10de17fa20593b96bc9091032fa1b016a51d0b0bc5a",
+      "status": "composed-needs-visual-review"
+    },
+    {
+      "file": "ipad13/02.png",
+      "width": 2064,
+      "height": 2752,
+      "colorMode": "RGB",
+      "sha256": "ef50d0bf8773d4c590e788f30cdce5cb1f3fd489060f71a057d44a3050e6a901",
+      "status": "composed-needs-visual-review"
+    },
+    {
+      "file": "ipad13/03.png",
+      "width": 2064,
+      "height": 2752,
+      "colorMode": "RGB",
+      "sha256": "d12f78d8a577c57d56178f3d219954f13231d2d020efcabf1f1b0cf0a29f936d",
+      "status": "composed-needs-visual-review"
+    },
+    {
+      "file": "ipad13/04.png",
+      "width": 2064,
+      "height": 2752,
+      "colorMode": "RGB",
+      "sha256": "022969b763f6b7a4083e8f40f481da930d60e01d135166cb24d4587d95245e58",
+      "status": "composed-needs-visual-review"
+    },
+    {
+      "file": "ipad13/05.png",
+      "width": 2064,
+      "height": 2752,
+      "colorMode": "RGB",
+      "sha256": "2ddde306ad741f29ca8010a10a53e4a2d89c0edf2f81284542ef69909b7220b3",
+      "status": "composed-needs-visual-review"
+    }
+  ]
+}

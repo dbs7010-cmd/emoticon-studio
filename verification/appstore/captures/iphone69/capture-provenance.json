@@ -1,0 +1,10 @@
+{
+  "platform": "ios",
+  "matchesReleaseBuild": true,
+  "device": "iPhone 14 Pro (iOS 17.2 simulator, Appetize.io)",
+  "size": "1179x2556",
+  "capturedAt": "2026-10-30",
+  "build": "EAS iOS simulator build 278a97e7 (profile 'screenshots'), commit 3c40614",
+  "basis": "Same app code as the release build at 3c40614. The screenshots profile only differs in: review mode (no server login), ads off, and the photo picker returning bundled Codex corn art. None of those differences are visible in these five screens (no review notices, no ads, no picker). Status bar is the real iOS one.",
+  "screens": ["01 그리기", "02 움직이기(뿅)", "03 보드", "04 표현 가이드(대사)", "05 내보내기"]
+}
