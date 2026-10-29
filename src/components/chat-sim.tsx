@@ -4,7 +4,7 @@
 // - 이모티콘을 누르면 입력창 위에 미리 보이고, 보내기를 눌러야 대화에 들어간다. '나 / 친구'로 누가 보낸 말인지 고른다.
 import React, { useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ImtiIcon, IconSize } from '../design/icons';
 import { T } from './ui';
 
@@ -36,7 +36,8 @@ export function ChatSim({ visible, setName, stickers, onClose }: { visible: bool
   };
   const reset = () => { setMessages([{ id: 0, who: 'friend', text: '뭐 해? 오늘 하루 어땠어?' }]); setPicked(null); setText(''); };
 
-  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}><SafeAreaProvider>
+    {/* iOS: 모달은 바깥 SafeAreaProvider 와 이어지지 않아 위쪽 여백이 0이 됐다(10-29 iOS 시뮬레이터에서 머리줄이 상태줄 밑으로) — Expo 안내대로 모달마다 둔다. */}
     <SafeAreaView style={{ flex: 1, backgroundColor: T.paper }}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* 머리줄: 뒤로 · 제목 · 바탕 바꾸기 · 처음부터 */}
@@ -109,6 +110,6 @@ export function ChatSim({ visible, setName, stickers, onClose }: { visible: bool
             : <Text style={{ padding: 24, textAlign: 'center', fontSize: 14, color: T.muted }}>아직 그린 칸이 없어요. 칸을 하나 그리면 여기에 나와요.</Text>}
         </View>}
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </SafeAreaView></SafeAreaProvider>
   </Modal>;
 }

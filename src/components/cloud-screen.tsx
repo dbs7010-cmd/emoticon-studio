@@ -4,7 +4,7 @@ import { t } from '../i18n/index';
 // 로그인 버튼은 그 회사 로그인 SDK·키가 들어간 빌드에서만 눌린다(providerReady). 클라우드 백업은 **서버가 기록한** PRO 만 쓴다.
 import React, { useEffect, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Action, Clay, Glyph, T } from './app-ui';
 import { ImtiIcon, IconSize } from '../design/icons';
 import type { Cloud } from '../services/cloud/firebase';
@@ -175,13 +175,14 @@ export function CloudScreen(p: Props) {
         </>}
   </>;
   if (p.inline) return <View style={{ gap: 12 }}>{!p.cloud ? <View style={{ padding: 20, borderRadius: C.radius.card, ...Clay.card }}>{body}</View> : body}</View>;
-  return <Modal visible={p.visible} animationType="slide" onRequestClose={p.onClose}>
+  // iOS: 모달 안에는 SafeAreaProvider 를 따로 둔다(바깥과 이어지지 않아 위 여백이 0, 10-29).
+  return <Modal visible={p.visible} animationType="slide" onRequestClose={p.onClose}><SafeAreaProvider>
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 4 }}>
         <Pressable accessibilityRole="button" accessibilityLabel="계정·클라우드 닫기" onPress={p.onClose} style={{ padding: 12 }}><Glyph name="close" size={22} color={C.ink} /></Pressable>
         <Text style={{ fontSize: 18, fontWeight: '800', color: C.ink }}>계정 · 클라우드</Text>
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>{body}</ScrollView>
-    </SafeAreaView>
+    </SafeAreaView></SafeAreaProvider>
   </Modal>;
 }

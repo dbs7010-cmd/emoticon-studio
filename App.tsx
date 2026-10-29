@@ -2033,7 +2033,8 @@ function Studio() {
       <Text>메일 앱을 열지 못했어요. 아래 주소를 길게 눌러 복사해 주세요.</Text>
       <Text selectable accessibilityLabel="복사할 문의 이메일" style={{ fontSize: 17, color: C.ink }}>{supportEmail}</Text>
     </Dialog>}
-    {proSheet && <Modal animationType="slide" onRequestClose={() => { setProSheet(false); resetPayment(); }}>
+    {/* iOS: 모달 안에는 SafeAreaProvider 를 따로 둔다(바깥과 이어지지 않아 위 여백이 0, 10-29). */}
+    {proSheet && <Modal animationType="slide" onRequestClose={() => { setProSheet(false); resetPayment(); }}><SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 4 }}>
           <Pressable accessibilityRole="button" accessibilityLabel={t('ui.proClose')} onPress={() => { setProSheet(false); resetPayment(); }} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={28} color={C.ink} /></Pressable>
@@ -2117,7 +2118,7 @@ function Studio() {
           {isPro(entitlement) && !!entitlement && (entitlement.plan === 'monthly' || entitlement.plan === 'yearly') && <Pressable accessibilityRole="button" accessibilityLabel="구독 관리" onPress={() => { Linking.openURL(subscriptionManageUrl('pro_' + entitlement.plan)).catch(() => setPayment({ phase: 'failed', problem: 'store-unavailable' })); }} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>구독 관리 · 해지</Text></Pressable>}
           <Text style={{ fontSize: 10, color: C.muted, lineHeight: 16 }}>한 번 구매하면 같은 스토어 계정에서 계속 쓸 수 있어요. 기기를 바꾸거나 다시 설치하면 구매 복원을 눌러 주세요. 작품과 파일은 어떤 경우에도 지우지 않아요.</Text>
         </ScrollView>
-      </SafeAreaView>
+      </SafeAreaView></SafeAreaProvider>
     </Modal>}
     {chatOpen && project && <ChatSim visible setName={project.projectName} onClose={() => setChatOpen(false)}
       stickers={project.slots.filter(sl => sl.finalImage).map(sl => ({ number: sl.number, uri: imageUri((sl.motionImage ?? sl.finalImage)!.path) }))} />}
