@@ -24,6 +24,18 @@
       "ios": {
         "resourceClass": "default"
       }
+    },
+    "screenshots": {
+      "distribution": "internal",
+      "environment": "preview",
+      "channel": "screenshots",
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "EMOTICON_INTERNAL_REVIEW": "1",
+        "EMOTICON_SCREENSHOT_BUILD": "1"
+      }
     }
   },
   "submit": {

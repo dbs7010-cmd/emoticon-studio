@@ -20,7 +20,12 @@ const { httpsUrl, email } = require('./release/config-values.cjs');
 const publicContact = require('./release/public-contact.json');
 const publicAds = require('./release/public-ads.json');
 // iOS 빌드(EAS)는 AdMob iOS 앱 ID 가 있어야 한다 — 없으면 광고 SDK 가 iOS 앱 시작 때 멈춘다. 빈 앱을 내보내지 않게 여기서 멈춘다.
-if (process.env.EAS_BUILD_PLATFORM === 'ios' && !/^ca-app-pub-\d+~\d+$/.test(publicAds.iosAppId || '')) throw new Error('release/public-ads.json 에 iosAppId(AdMob iOS 앱 ID)가 필요해요');
+// 스크린샷용 iOS 시뮬레이터 빌드(eas.json 'screenshots', 2026-10-29): 검수 모드에서만 켤 수 있고, 광고를 끄고 AdMob iOS 앱 ID 가
+// 아직 없으면 구글이 공개한 시험용 앱 ID 를 쓴다(시뮬레이터 전용 — 출시 빌드는 아래 검사가 그대로 막는다).
+const screenshotBuild = process.env.EMOTICON_SCREENSHOT_BUILD === '1';
+if (screenshotBuild && process.env.EMOTICON_INTERNAL_REVIEW !== '1') throw new Error('EMOTICON_SCREENSHOT_BUILD=1 needs EMOTICON_INTERNAL_REVIEW=1');
+const iosAppId = /^ca-app-pub-\d+~\d+$/.test(publicAds.iosAppId || '') ? publicAds.iosAppId : screenshotBuild ? 'ca-app-pub-3940256099942544~1458002511' : '';
+if (process.env.EAS_BUILD_PLATFORM === 'ios' && !iosAppId) throw new Error('release/public-ads.json 에 iosAppId(AdMob iOS 앱 ID)가 필요해요');
 const pick = (envValue, fileValue, valid) => envValue !== undefined ? (valid(envValue) ? envValue : undefined) : (valid(fileValue) ? fileValue : undefined);
 
 const internalReview = process.env.EMOTICON_INTERNAL_REVIEW === '1';
@@ -75,7 +80,7 @@ module.exports = () => {
   }
   // 출시 서명: prebuild 때마다 app/build.gradle 의 release 서명을 업로드 키로 바꾸고 AAB 디버그 서명을 막는다(docs/RELEASE_SIGNING.md).
   // AdMob iOS 앱 ID(있을 때만) — app.json 의 광고 플러그인 설정에 덧붙인다.
-  if (publicAds.iosAppId) { const i = plugins.findIndex(p => Array.isArray(p) && p[0] === 'react-native-google-mobile-ads'); if (i >= 0) plugins[i] = [plugins[i][0], { ...plugins[i][1], iosAppId: publicAds.iosAppId }]; }
+  if (iosAppId) { const i = plugins.findIndex(p => Array.isArray(p) && p[0] === 'react-native-google-mobile-ads'); if (i >= 0) plugins[i] = [plugins[i][0], { ...plugins[i][1], iosAppId }]; }
   plugins.push('./plugins/withReleaseSigning');
   plugins.push('./plugins/withReleasePermissions');
   plugins.push('./plugins/withReleaseOptimization');   // R8 코드 줄이기·난독화(Play 발견 항목, 2026-10-10)
@@ -110,7 +115,8 @@ module.exports = () => {
     proTrial,
     receiptEndpoint,
     // 보상형 광고(2026-10-27): 무료 사용자의 파일 묶음 만들기 전에 한 번. EMOTICON_ADS=off 면 광고 없음. 공개 ID(release/public-ads.json).
-    ...(process.env.EMOTICON_ADS === 'off' ? {} : { ads: { rewarded: publicAds.rewardedAndroid } }),
+    // 끌 때는 app.json extra.ads 까지 지운다 — 예전에는 {} 를 펼쳐 app.json 값이 그대로 남아 꺼지지 않았다(10-29).
+    ...(process.env.EMOTICON_ADS === 'off' || screenshotBuild ? { ads: undefined } : { ads: { rewarded: publicAds.rewardedAndroid } }),
     // 공개 연락처: 환경변수가 있으면 그 값(형식이 틀리면 비움), 없으면 release/public-contact.json(저장소에 둔 공개 값).
     privacyPolicyUrl: pick(process.env.EMOTICON_PRIVACY_URL, publicContact.privacyPolicyUrl, httpsUrl),
     supportEmail: pick(process.env.EMOTICON_SUPPORT_EMAIL, publicContact.supportEmail, email),
