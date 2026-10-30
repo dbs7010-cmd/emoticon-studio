@@ -142,6 +142,7 @@ export const ja: Record<Key, string> = {
   "ui.animation": "アニメーション",
   "ui.tabMotion": "動き",
   "ui.tabAnim": "アニメ",
+  "ui.toolLayers": "レイヤ",
   "ui.draw": "描く",
 
   "lesson.text000": "無料 · アプリの使い方",

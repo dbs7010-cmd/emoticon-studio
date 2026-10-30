@@ -1287,7 +1287,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const drawLayers = scene.layers.filter(l => l.id.startsWith('draw-'));
   const layerAt = (id: string) => scene.layers.findIndex(l => l.id === id);
   const activeLayerAt = drawLayers.findIndex(l => l.id === scene.activeLayerId);
-  const layerBadge = drawLayers.length > 1 && activeLayerAt >= 0 ? t("release.s0595") + " " + (activeLayerAt + 1) : t("release.s0595");
+  const layerBadge = drawLayers.length > 1 && activeLayerAt >= 0 ? t("ui.toolLayers") + " " + (activeLayerAt + 1) : t("ui.toolLayers");
   // 보조 도구 묶음. 한 줄에 설 때나 두 줄로 내려올 때나 같은 것이라, 잰 폭이 자리에 따라 달라지지 않는다.
   const aidRow = <View onLayout={e => { const w = Math.ceil(e.nativeEvent.layout.width); if (w !== aidsW) setAidsW(w); }} style={{ flexDirection: 'row', alignItems: 'center' }}>
       {/* 되돌리기·다시 실행은 참고·레이어·문구의 **왼쪽 끝**에 선다(45.37 사용자 요청). 윗줄의 '‹ 닫기' 옆에 있으면
