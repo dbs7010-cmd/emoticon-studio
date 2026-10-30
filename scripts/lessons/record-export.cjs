@@ -6,7 +6,7 @@ const out = n => r.langOut(path.join(__dirname, '..', '..', 'assets', 'lessons',
 const say = t => console.log('  ' + t);
 // node record-export.cjs 2 → 2단계부터(녹화가 비었을 때 이어 찍기, 화면은 내보내기에 있어야 한다)
 const from = +(process.argv[2] || 1);
-if (from === 1) {
+if (from === 1 && !u.has('내보내기')) {   // 이미 보드에 있으면 그대로 시작
 r.tap(977, 1584, 1200);                 // 재생 멈춤(애니메이션 재생 단추)
 u.tap('그리기 닫기', 3000);
 if (u.has('알림 닫기')) u.tap('알림 닫기', 900);   // 검수용 빌드 알림은 영상에 넣지 않는다
