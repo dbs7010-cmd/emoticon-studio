@@ -61,7 +61,7 @@ export function EmptyState(props: { icon: IconName; message: string; action: Rea
         <Text style={{ ...Type.bodySecondary, textAlign: 'center' }}>{body}</Text>
       </View>
       <Action primary title={actionLabel} onPress={onAction} icon="plus" />
-      {flow && <View testID="흐름 아이콘" accessible accessibilityLabel="그리기, 움직이기, 내보내기 순서" style={{ flexDirection: 'row', alignItems: 'center', gap: T.gap.sm }}>
+      {flow && <View testID="흐름 아이콘" accessible accessibilityLabel={t("release.s0353")} style={{ flexDirection: 'row', alignItems: 'center', gap: T.gap.sm }}>
         {([['brush', t('ui.draw')], ['motion', t('ui.motion')], ['export', t('ui.export')]] as const).map(([name, label], i) => <React.Fragment key={name}>
           {i > 0 && <ImtiIcon name="next" size={IconSize.meta} color={T.faint} />}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><ImtiIcon name={name} size={IconSize.meta} color={T.muted} /><Text style={{ ...Type.caption, color: T.muted }}>{label}</Text></View>
@@ -110,5 +110,5 @@ export function Dialog({ title, onClose, children }: { title: string; onClose: (
 }
 
 export function Field({ label, value, onChangeText, multiline = true, flat = false }: { label: string; value: string; onChangeText: (s: string) => void; multiline?: boolean; flat?: boolean }) {
-  return <View style={{ gap: flat ? 2 : 6 }}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} multiline={multiline} style={[styles.input, multiline && { minHeight: 76, textAlignVertical: 'top' }, flat && { borderWidth: 0, backgroundColor: 'transparent', paddingHorizontal: 0, paddingVertical: 2, minHeight: 44 }, flat && multiline && { minHeight: 44 }]} placeholder={`${label} 입력`} placeholderTextColor={T.muted} /></View>;
+  return <View style={{ gap: flat ? 2 : 6 }}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} multiline={multiline} style={[styles.input, multiline && { minHeight: 76, textAlignVertical: 'top' }, flat && { borderWidth: 0, backgroundColor: 'transparent', paddingHorizontal: 0, paddingVertical: 2, minHeight: 44 }, flat && multiline && { minHeight: 44 }]} placeholder={t("release.d082", { v0: (label) })} placeholderTextColor={T.muted} /></View>;
 }

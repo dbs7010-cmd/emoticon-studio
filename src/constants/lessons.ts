@@ -34,7 +34,7 @@ export const LESSONS: Lesson[] = [
       { title: t('lesson.text007'), video: require('../../assets/lessons/first-set/step3.mp4'), body: t('lesson.text008') },
       { title: t('lesson.text009'), video: require('../../assets/lessons/first-set/step4.mp4'), body: t('lesson.text010') },
     ],
-    points: ['만들면 01번 칸이 바로 열려요', '저장하면 보드에 올라가요', '다음 칸은 이전 칸에서 이어 그리기'],
+    points: [t("release.s1016"), t("release.s1017"), t("release.s1018")],
     tryIt: { label: t('ui.newSet'), action: 'newSet' },
   },
   {
@@ -47,7 +47,7 @@ export const LESSONS: Lesson[] = [
       { title: t('lesson.text017'), video: require('../../assets/lessons/brush-layer/step3.mp4'), body: t('lesson.text018') },
       { title: t('lesson.text019'), image: require('../../assets/lessons/brush-layer/step4.png'), body: t('lesson.text020') },
     ],
-    points: ['같은 도구를 한 번 더 누르면 설정', '레이어로 나누면 움직이기가 쉬워요', '선택은 적용해야 그림에 남아요'],
+    points: [t("release.s1019"), t("release.s1020"), t("release.s1021")],
     tryIt: { label: t('ui.drawContinue'), action: 'continue' },
   },
   {
@@ -60,7 +60,7 @@ export const LESSONS: Lesson[] = [
       { title: t('lesson.text026'), video: require('../../assets/lessons/motion/step3.mp4'), body: t('lesson.text027') },
       { title: t('ui.partOnly'), video: require('../../assets/lessons/motion/step4.mp4'), body: t('lesson.text028') },
     ],
-    points: ['효과는 고르는 즉시 칸에 들어가요', '점선 밖은 잘려요 — 세기를 줄여요', '떨림은 무료, 어떤 효과와도 함께'],
+    points: [t("release.s1022"), t("release.s1023"), t("release.s1024")],
     tryIt: { label: t('ui.drawContinue'), action: 'continue' },
   },
   {
@@ -72,7 +72,7 @@ export const LESSONS: Lesson[] = [
       { title: t('lesson.text095'), video: require('../../assets/lessons/speech/step2.mp4'), body: t('lesson.text096') },
       { title: t('lesson.text097'), video: require('../../assets/lessons/speech/step3.mp4'), body: t('lesson.text098') },
     ],
-    points: ['대사는 짧게, 캐릭터 위에 작게', 'ㅋㅋㅋㅋ·딱!·응응 같은 말이 더 자주 쓰여요', '양옆·세로·말풍선으로 배치를 바꿔요'],
+    points: [t("release.s1025"), t("release.s1026"), t("release.s1027")],
     tryIt: { label: t('ui.openGuide'), action: 'guide' },
   },
   {
@@ -85,7 +85,7 @@ export const LESSONS: Lesson[] = [
       { title: t('lesson.text035'), video: require('../../assets/lessons/animation/step3.mp4'), body: t('lesson.text036') },
       { title: t('lesson.text037'), video: require('../../assets/lessons/animation/step4.mp4'), body: t('lesson.text038') },
     ],
-    points: ['복사한 뒤 바뀌는 곳만 고쳐요', '짧은 장이 움직임의 리듬을 만들어요', `카카오는 한 칸 ${KAKAO_ANIMATED_SPEC.maxFrames}장까지`],
+    points: [t("release.s1028"), t("release.s1029"), t("release.d153", { v0: (KAKAO_ANIMATED_SPEC.maxFrames) })],
     tryIt: { label: t('ui.drawContinue'), action: 'continue' },
   },
   {
@@ -97,8 +97,8 @@ export const LESSONS: Lesson[] = [
       { title: t('lesson.text045'), video: require('../../assets/lessons/export/step3.mp4'), body: t('lesson.text046') },
       { title: t('lesson.text047'), body: t('lesson.text048') },
     ],
-    points: [`움직이는 세트는 ${cuts}칸`, '제출 준비에서 남은 것 확인', '제안은 작가님 이름으로 직접'],
-    tryIt: { label: '내보내기 보기', action: 'export' },
+    points: [t("release.d154", { v0: (cuts) }), t("release.s1030"), t("release.s1031")],
+    tryIt: { label: t("release.s1032"), action: 'export' },
   },
   {
     id: 'contest', group: 'app', title: t('lesson.text049'), summary: t('lesson.text050'), minutes: 2,
@@ -108,7 +108,7 @@ export const LESSONS: Lesson[] = [
       { title: t('lesson.text053'), body: t('lesson.text054') },
       { title: t('lesson.text055'), body: t('lesson.text056') },
     ],
-    points: ['로그인한 작가만 접수', '조건(칸 수·움직이는 칸)을 먼저 채워요', '접수번호로 상태를 확인'],
+    points: [t("release.s1033"), t("release.s1034"), t("release.s1035")],
     tryIt: { label: t('lesson.text051'), action: 'contest' },
   },
   {
@@ -120,7 +120,7 @@ export const LESSONS: Lesson[] = [
       { title: t('lesson.text061'), image: require('../../assets/lessons/character/step2.png'), body: t('lesson.text062') },
       { title: t('lesson.text063'), image: require('../../assets/lessons/character/step3.png'), body: t('lesson.text064') },
     ],
-    points: ['기준 그림 한 장부터', '지킬 특징을 적어 두기', '작게 봐도 알아보게 단순하게'],
+    points: [t("release.s1036"), t("release.s1037"), t("release.s1038")],
     tryIt: { label: t('ui.drawContinue'), action: 'continue' },
   },
   {
@@ -132,7 +132,7 @@ export const LESSONS: Lesson[] = [
       { title: t('lesson.text069'), body: t('lesson.text070') },
       { title: t('lesson.text071'), image: require('../../assets/lessons/expressions/step3.png'), body: t('lesson.text072') },
     ],
-    points: ['대화에서 자주 쓰는 마음 먼저', '표현 가이드를 밑그림으로', '얼굴 + 몸짓 + 소품'],
+    points: [t("release.s1039"), t("release.s1040"), t("release.s1041")],
     tryIt: { label: t('ui.openGuide'), action: 'guide' },
   },
   {
@@ -143,8 +143,8 @@ export const LESSONS: Lesson[] = [
       { title: t('lesson.text077'), body: t('lesson.text078') },
       { title: t('lesson.text079'), body: t('lesson.text080') },
     ],
-    points: ['칸마다 다른 마음', '움직임은 의미 있게', '마지막 장이 미리보기'],
-    tryIt: { label: '가이드북 보기', action: 'book' },
+    points: [t("release.s1042"), t("lesson.text077"), t("release.s1043")],
+    tryIt: { label: t("release.s1044"), action: 'book' },
   },
   {
     id: 'make-lesson', group: 'artist', title: t('lesson.text081'), summary: t('lesson.text082'), minutes: 3,
@@ -155,6 +155,6 @@ export const LESSONS: Lesson[] = [
       { title: t('lesson.text087'), image: require('../../assets/lessons/make-lesson/step3.png'), body: t('lesson.text088') },
       { title: t('lesson.text089'), body: t('lesson.text090') },
     ],
-    points: ['한 편에 한 가지', '영상은 손, 글은 이유', '정리 세 줄 + 해 보기 하나'],
+    points: [t("release.s1045"), t("release.s1046"), t("release.s1047")],
   },
 ];

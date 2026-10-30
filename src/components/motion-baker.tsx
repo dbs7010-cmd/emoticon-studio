@@ -1,3 +1,4 @@
+import { t } from '../i18n/index';
 import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
@@ -24,14 +25,14 @@ export const MotionBaker = forwardRef<Baker>(function MotionBaker(_, ref) {
     line: (work: PainterWork, motion: Motion, spec: LineSpec) => run<LineFrames>(work, motion, false, spec),
   }));
   async function run<T>(work: PainterWork, motion: Motion, sheets: boolean, spec?: LineSpec): Promise<T> {
-      if (!ready.current) throw new Error('움직임 만들기가 준비 중입니다.');
+      if (!ready.current) throw new Error(t("release.s0422"));
       const decode = (list: PainterWork['layers']) => Promise.all(list.map(async ({ image, ...rest }) => ({ ...rest, data: image ? await dataUrl(image) : undefined })));
       const layers = await decode(work.layers);
       // 애니메이션 장도 함께 보낸다(첫 장 = layers).
       const frames = work.frames && work.frames.length > 1 ? await Promise.all(work.frames.map(async (f, i) => ({ id: f.id, duration: f.duration, layers: i === 0 ? layers : await decode(f.layers) }))) : undefined;
       const id = ++sequence.current;
       return new Promise<T>((resolve, reject) => {
-        const timer = setTimeout(() => { pending.current.delete(id); reject(new Error('움직임 만들기 시간 초과')); }, 60000);
+        const timer = setTimeout(() => { pending.current.delete(id); reject(new Error(t("release.s0423"))); }, 60000);
         pending.current.set(id, { stage: 'init', sheets, spec, resolve, reject, timer });
         // LINE 은 고해상도 장(1080)에서 바로 줄여 만든다(res 3) — 360 을 거쳐 늘리면 370×320 칸에서 선이 뭉갠다. 카카오(360)는 예전 그대로 1배.
         send({ type: 'init', id, res: spec ? 3 : 1, layers, frames, references: [], activeLayerId: work.activeLayerId, caption: work.caption ?? null, motion });
@@ -39,7 +40,7 @@ export const MotionBaker = forwardRef<Baker>(function MotionBaker(_, ref) {
   }
 
   React.useEffect(() => () => {
-    for (const p of pending.current.values()) { clearTimeout(p.timer); p.reject(new Error('움직임 만들기가 닫혔습니다.')); }
+    for (const p of pending.current.values()) { clearTimeout(p.timer); p.reject(new Error(t("release.s0424"))); }
     pending.current.clear();
   }, []);
 
@@ -57,7 +58,7 @@ export const MotionBaker = forwardRef<Baker>(function MotionBaker(_, ref) {
         clearTimeout(job.timer); pending.current.delete(m.id);
         if (m.type === 'frames' && m.gif) job.resolve(m.gif);
         else if (m.type === 'lineFrames' && m.line) job.resolve(m.line);
-        else job.reject(new Error(m.message || '움직임을 만들지 못했어요.'));
+        else job.reject(new Error(m.message || t("release.s0425")));
       }} />
   </View>;
 });

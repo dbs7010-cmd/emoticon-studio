@@ -34,15 +34,15 @@ export const GUIDEBOOK: GuideChapter[] = [
       { title: t('guide.text018'), body: t('guide.text019') },
       { title: t('guide.text020'), body: t('guide.text021') },
       { title: t('guide.text022'), body: t('guide.text023') },
-      { title: t('guide.text024'), body: WEBP_TOOL_RULE + ' 파일 묶음 안의 360×360 프레임 PNG 를 그 도구에 순서대로 넣으면 돼요.' },
+      { title: t('guide.text024'), body: WEBP_TOOL_RULE + " " + t("release.x139") },
     ],
   },
   {
     id: 'spec', title: t('guide.text025'), summary: t('guide.text026'),
     source: SPEC_SOURCE.guide,
     items: [
-      { title: KAKAO_STATIC_SPEC.profileLabel, body: `${STAGES.still.proposal.text}. PNG · ${KAKAO_STATIC_SPEC.width}×${KAKAO_STATIC_SPEC.height} · ${kb(KAKAO_STATIC_SPEC.maxBytes)} 이하 · 투명 배경.` },
-      { title: KAKAO_ANIMATED_SPEC.profileLabel, body: `${STAGES.animated.proposal.text}. ${KAKAO_ANIMATED_SPEC.width}×${KAKAO_ANIMATED_SPEC.height} · ${kb(KAKAO_ANIMATED_SPEC.maxBytes)} 이하 · ${KAKAO_ANIMATED_SPEC.maxFrames}프레임 이하 · ${KAKAO_ANIMATED_SPEC.loops}회 반복 · 투명 배경.` },
+      { title: KAKAO_STATIC_SPEC.profileLabel, body: t("release.k23", { v0: (STAGES.still.proposal.text), v1: (KAKAO_STATIC_SPEC.width), v2: (KAKAO_STATIC_SPEC.height), v3: (kb(KAKAO_STATIC_SPEC.maxBytes)) }) },
+      { title: KAKAO_ANIMATED_SPEC.profileLabel, body: t("release.k24", { v0: (STAGES.animated.proposal.text), v1: (KAKAO_ANIMATED_SPEC.width), v2: (KAKAO_ANIMATED_SPEC.height), v3: (kb(KAKAO_ANIMATED_SPEC.maxBytes)), v4: (KAKAO_ANIMATED_SPEC.maxFrames), v5: (KAKAO_ANIMATED_SPEC.loops) }) },
       ...REQUIRED_EXTRAS.map(x => ({ title: `${x.label}(${x.stage})`, body: x.spec })),
       { title: t('guide.text027'), body: GUIDE_RULES[0] },
     ],

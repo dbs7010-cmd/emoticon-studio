@@ -53,10 +53,10 @@ const C = T;
 const proBrushes = CATALOG.filter(b => b.pro);
 const proMotions = PRESETS.filter(p => isProPreset(p.id));
 const proFeatures = [
-  [`PRO 움직임 ${proMotions.length}종`, proMotions.map(p => p.label).join(' · '), 'motion'],
-  ['부분만 움직이기 · 두 모습 번갈아', '손·새싹 잎·소품처럼 원하는 곳만 따로, 차례로', 'layer'],
-  ['여러 칸에 같은 움직임 한 번에', '보관한 움직임을 고른 칸 전부에', 'check'],
-  [`PRO 브러시 ${proBrushes.length}종`, proBrushes.map(b => b.title).join(' · '), 'brush'],
+  [t("release.d000", { v0: (proMotions.length) }), proMotions.map(p => p.label).join(' · '), 'motion'],
+  [t("release.s0000"), t("release.s0001"), 'layer'],
+  [t("release.s0002"), t("release.s0003"), 'check'],
+  [t("release.d001", { v0: (proBrushes.length) }), proBrushes.map(b => b.title).join(' · '), 'brush'],
 ] as const;
 // 설정 화면에 보여 줄 앱 버전. app.json 의 값을 그대로 읽는다.
 const appVersion = Constants.expoConfig?.version ?? '—';
@@ -153,7 +153,7 @@ function Studio() {
   // 비공개 테스트 PRO 체험 빌드에서는 같은 홈 공지 자리(승인된 한 줄 배너)에 체험 안내를 둔다 — 팝업이 아니라 늘 보이는 한 줄이고,
   // 누르면 PRO 화면(전체 안내)이 열린다. 체험이 아닌 빌드에서는 기존 공지 규칙 그대로다.
   const trialNotice = proTrial();
-  const homeNotice = trialNotice ? { title: 'PRO 무료 체험 중 · 비공개 테스트', body: '정식 출시 시 일부 기능은 별도 구매가 필요해요', link: undefined } : HOME_NOTICE;
+  const homeNotice = trialNotice ? { title: t("release.s0004"), body: t("release.s0005"), link: undefined } : HOME_NOTICE;
   const noticeOn = trialNotice || HOME_NOTICE.enabled || (reviewCapable() && noticePreview);
   const [prepOpen, setPrepOpen] = useState(false); // 제출 준비는 묶음을 만든 뒤 보는 일이라 접어 둔다(45.2차).
   // 부가 이미지 만들기. 고른 컷을 프레임 안에서 옮기고 키우기만 한다 — 원본 컷은 건드리지 않는다.
@@ -224,8 +224,8 @@ function Studio() {
   const supportEmail = Constants.expoConfig?.extra?.supportEmail as string | undefined;
   async function openSupport() {
     if (!supportEmail) return;
-    const subject = encodeURIComponent('[emoti 이모티] 문의');
-    const body = encodeURIComponent(`앱 버전: ${appVersion}\nOS: ${Platform.OS} ${Platform.Version}`);
+    const subject = encodeURIComponent(t("release.s0006"));
+    const body = encodeURIComponent(t("release.d002", { v0: (appVersion), v1: (Platform.OS), v2: (Platform.Version) }));
     try { await Linking.openURL(`mailto:${supportEmail}?subject=${subject}&body=${body}`); }
     catch { setContactFallback(true); }
   }
@@ -326,28 +326,28 @@ function Studio() {
     try {
       const result = loadStore();
       current.current = result.store; setStore(result.store); setLoadError(''); setReport(result.report);
-      if (result.recovered) setNotice('저장 파일 하나가 손상돼 다른 사본으로 열었어요. 손상된 파일도 지우지 않았어요.');
+      if (result.recovered) setNotice(t("release.s0007"));
       // 예전 빌드가 앱 폴더 바로 아래 둔 내보낸 사본을 exports/ 로 옮긴다(지우지 않는다, 실패해도 다음 실행에 다시).
       migrateExports().catch(() => {});
     } catch (e) {
       // Nothing is written or removed on this path: the files stay exactly as they are found.
       const found = (e as { report?: StoreReport }).report ?? safely(inspectStore);
       setLoadError(String(e)); setReport(found ?? null);
-      if (found) console.error('[emoticon-studio] 저장 파일을 읽지 못했습니다', JSON.stringify(found, null, 2));
+      if (found) console.error(t("release.s0008"), JSON.stringify(found, null, 2));
     }
   }
   function safely<T>(read: () => T): T | null { try { return read(); } catch { return null; } }
   // Hands the file over exactly as it is on disk. Reading only: the damaged original stays put,
   // and a copy of it is what makes the cause findable off the device.
   function shareSnapshot(name: string) {
-    void task('저장 파일 꺼내는 중…', async () => {
-      if (!await Sharing.isAvailableAsync()) throw new Error('이 기기에서는 파일을 내보낼 수 없어요.');
+    void task(t("release.s0009"), async () => {
+      if (!await Sharing.isAvailableAsync()) throw new Error(t("release.s0010"));
       await Sharing.shareAsync(exportUri(name), { mimeType: 'application/json', UTI: 'public.json' });
     });
   }
   useEffect(load, []);
   function commit(transform: (s: Store) => Store) {
-    if (!current.current) throw new Error('저장소가 준비되지 않았습니다.');
+    if (!current.current) throw new Error(t("release.s0011"));
     const previous = current.current;
     const next = { ...transform(previous), revision: previous.revision + 1 };
     current.current = next; setStore(next);
@@ -390,13 +390,13 @@ function Studio() {
   }, [projectId]);
   // 보드의 일시 상태는 보드를 떠나면 끝난다(칸을 열거나 내보내기·부가 이미지로 가면).
   useEffect(() => { if (painting || screen !== 'board') { setReordering(false); setPlaying(false); } }, [painting, screen]);
-  async function task(label: string, work: () => Promise<void>) { if (busy) return; setBusy(label); try { await work(); } catch (e) { Alert.alert('하지 못했어요', userMessage(e)); } finally { setBusy(''); } }
-  async function analyzed(image: LocalImage): Promise<LocalImage> { if (image.metrics) return image; try { return { ...image, metrics: await analyzer.current!.analyze(image) }; } catch { setNotice('일부 그림을 검사하지 못했어요. 그 칸은 확인이 필요하다고 표시돼요.'); return image; } }
+  async function task(label: string, work: () => Promise<void>) { if (busy) return; setBusy(label); try { await work(); } catch (e) { Alert.alert(t("release.s0012"), userMessage(e)); } finally { setBusy(''); } }
+  async function analyzed(image: LocalImage): Promise<LocalImage> { if (image.metrics) return image; try { return { ...image, metrics: await analyzer.current!.analyze(image) }; } catch { setNotice(t("release.s0013")); return image; } }
   // Re-reads the saved files and replaces every verdict. No earlier PASS survives this.
   async function recheckAll() {
     if (!project) return;
     const id = project.id;
-    await task('이미지 검수 중…', async () => {
+    await task(t("release.s0014"), async () => {
       const checked = new Map<number, Slot>();
       for (const s of project.slots) {
         // 빈 칸은 검사할 그림이 없다. 검사하면 "그림 파일 없음" FAIL 이 빈 칸마다 쌓여 내보내기에 가짜 손볼 곳이 된다(42차 실기기).
@@ -407,7 +407,7 @@ function Studio() {
         checked.set(s.number, { ...s, finalImage, qa, status: finalImage ? qa.status : s.status });
       }
       changeProject(id, p => ({ ...p, slots: p.slots.map(s => checked.get(s.number) ?? s) }));
-      setNotice('저장된 그림을 다시 검사했어요.');
+      setNotice(t("release.s0015"));
     });
   }
   // Autosave preserves work; `complete` is the user saying this cut is finished. Re-editing a
@@ -417,7 +417,7 @@ function Studio() {
     if (!project || !slot) return;
     let qa: QA;
     try { qa = inspectImage(finalImage, motion ? KAKAO_ANIMATED_SPEC : SPEC); }
-    catch { qa = { status: 'WARNING', checkedAt: new Date().toISOString(), checks: [{ label: '자동 검사', status: 'WARNING', detail: '검사를 마치지 못했어요. 다시 저장해 주세요.' }], consistency: [], notes: [] }; }
+    catch { qa = { status: 'WARNING', checkedAt: new Date().toISOString(), checks: [{ label: t("release.s0016"), status: 'WARNING', detail: t("release.s0017") }], consistency: [], notes: [] }; }
     // A blank canvas is never a finished cut, whatever the button said.
     const done = complete && (finalImage.metrics?.coverage ?? 0) > 0;
     const id = project.id, number = slot.number;
@@ -430,7 +430,7 @@ function Studio() {
         const held = current.current;
         const corrected = { ...held, projects: held.projects.map(p => p.id === id ? { ...p, slots: p.slots.map(s => s.number === number ? { ...s, done: false } : s) } : p) };
         current.current = corrected; setStore(corrected);
-        setNotice('저장하지 못해서 완성으로 표시하지 않았어요. 위의 다시 저장을 눌러 주세요.');
+        setNotice(t("release.s0018"));
       }
       throw e;
     }
@@ -453,7 +453,7 @@ function Studio() {
     if (next === null) {
       setPainting(false); setSlotNumber(null);
       if (returnToExport) { setScreen('export'); setReturnToExport(false); }
-      else { setScreen('board'); setNotice('모든 칸을 완성했어요. 전체를 훑어보고 내보내기로 넘어가세요.'); }
+      else { setScreen('board'); setNotice(t("release.s0019")); }
       return;
     }
     setSlotNumber(next);
@@ -462,9 +462,9 @@ function Studio() {
   // to that cut create a new file and leave this one alone.
   function useAsReference() {
     const latest = current.current?.projects.find(p => p.id === projectId)?.slots.find(s => s.number === slotNumber);
-    if (!latest?.finalImage || !((latest.finalImage.metrics?.coverage ?? 0) > 0)) { setNotice('먼저 이 칸에 그림을 그려 주세요.'); return; }
+    if (!latest?.finalImage || !((latest.finalImage.metrics?.coverage ?? 0) > 0)) { setNotice(t("release.s0020")); return; }
     updateProject(p => ({ ...p, canon: { ...p.canon, image: latest.finalImage } }));
-    setNotice('이 칸을 캐릭터 기준으로 정했어요.');
+    setNotice(t("release.s0021"));
   }
   async function copyPreviousWork(): Promise<CopiedWork | null> {
     const latest = current.current?.projects.find(p => p.id === projectId);
@@ -479,7 +479,7 @@ function Studio() {
   function defaultSetName() {
     const taken = new Set((current.current?.projects ?? []).map(p => p.projectName));
     let name = t('ui.newSetDefault');
-    for (let n = 2; taken.has(name); n++) name = `새 이모티콘 세트 ${n}`;
+    for (let n = 2; taken.has(name); n++) name = t("release.d003", { v0: (n) });
     return name;
   }
   // 실제로 세트를 만들어 1번 칸을 연다. 저장 의미는 예전과 같다(칸 수·기본값 불변).
@@ -487,7 +487,7 @@ function Studio() {
   function createProjectNow(name: string, fromGuide = false) {
     const p = createProject(name.trim() || defaultSetName(), '');
     try { commit(s => ({ ...s, projects: [...s.projects, p] })); setNewSetName(null); setProjectId(p.id); setScreen('board'); setSlotNumber(1); setPainting(true); setEntryFor(fromGuide ? p.id + '/1' : null); }
-    catch (e) { Alert.alert('세트를 만들지 못했어요', userMessage(e)); }
+    catch (e) { Alert.alert(t("release.s0022"), userMessage(e)); }
   }
   // 명세 H03: 먼저 이름을 보여 주고 확인을 받는다. 여기서 되돌아가도 빈 세트가 남지 않는다.
   function createNewProject() { setNewSetName(defaultSetName()); }
@@ -509,11 +509,11 @@ function Studio() {
     const open = nextUnfinished(target, target.lastSlot ?? 0);
     setProjectId(target.id); setScreen('board');
     // 칸이 다 찬 세트에서는 완성한 칸을 대신 열지 않는다 — 보드를 보여 주고 고를 사람에게 맡긴다(45.1차).
-    if (open === null) { clearEntry(); setNotice('이 세트는 칸이 다 찼어요. 고칠 칸을 고르거나 새 이모티콘 세트를 만들어 주세요.'); return; }
+    if (open === null) { clearEntry(); setNotice(t("release.s0023")); return; }
     setSlotNumber(open); setPainting(true); setEntryFor(target.id + '/' + open);
   }
   function startFromImage() {
-    void task('그림을 여는 중…', async () => {
+    void task(t("release.s0024"), async () => {
       const picked = await pickImages();
       if (!picked[0]) return;
       const data = await dataUrl(picked[0]);
@@ -533,35 +533,35 @@ function Studio() {
     const target = current.current?.projects.find(p => p.id === id);
     if (!target) return;
     try { commit(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...p, deletedAt: new Date().toISOString() } : p) })); }
-    catch (e) { Alert.alert('휴지통으로 옮기지 못했어요', userMessage(e)); return; }
+    catch (e) { Alert.alert(t("release.s0025"), userMessage(e)); return; }
     if (id === projectId) { setProjectId(null); setSlotNumber(null); setCanonOpen(false); }
     setConfirmDeleteId(null); setManageId(null);
-    setNotice(`${target.projectName} 세트를 휴지통으로 옮겼어요. ${TRASH_DAYS}일 안에 되살릴 수 있어요.`);
+    setNotice(t("release.d004", { v0: (target.projectName), v1: (TRASH_DAYS) }));
   }
   // 세트 백업(45.38): 세트 하나를 파일 하나로 만들어 공유 창으로 넘긴다. 앱을 지우거나 기기를 바꿔도 이 파일로 되살린다.
   function backupProject(target: Project) {
-    void task('백업 파일 만드는 중…', async () => {
+    void task(t("release.s0026"), async () => {
       const made = writeBackup(target);
-      const lost = made.missing ? ` 그림 ${made.missing}개는 이 기기에 이미 없어 빼고 만들었어요.` : '';
-      if (!await Sharing.isAvailableAsync()) { setNotice(`백업 파일을 만들었어요(그림 ${made.images}개).${lost} 이 기기에서는 공유 창을 열 수 없어요.`); return; }
-      await Sharing.shareAsync(exportUri(made.path), { mimeType: 'application/zip', UTI: 'public.zip', dialogTitle: '백업 파일 보관' });
-      setNotice(`${target.projectName} 백업 파일을 만들었어요(그림 ${made.images}개).${lost} 공유 창에서 드라이브·메일 등 앱 밖에 보관해 주세요.`);
+      const lost = made.missing ? t("release.d005", { v0: (made.missing) }) : '';
+      if (!await Sharing.isAvailableAsync()) { setNotice(t("release.d006", { v0: (made.images), v1: (lost) })); return; }
+      await Sharing.shareAsync(exportUri(made.path), { mimeType: 'application/zip', UTI: 'public.zip', dialogTitle: t("release.s0027") });
+      setNotice(t("release.d007", { v0: (target.projectName), v1: (made.images), v2: (lost) }));
     });
   }
   // 전체 백업(2026-10-06): 모든 세트와 앱 설정을 파일 하나로. 구매 권한(PRO)은 담지 않는다.
   function backupAll() {
-    void task('전체 백업 만드는 중…', async () => {
+    void task(t("release.s0028"), async () => {
       if (!current.current) return;
       const made = writeFullBackup(current.current);
-      const lost = made.missing ? ` 그림 ${made.missing}개는 이 기기에 이미 없어 빼고 만들었어요.` : '';
-      if (!await Sharing.isAvailableAsync()) { setNotice(`전체 백업 파일을 만들었어요(세트 ${made.sets}개).${lost} 이 기기에서는 공유 창을 열 수 없어요.`); return; }
-      await Sharing.shareAsync(exportUri(made.path), { mimeType: 'application/zip', UTI: 'public.zip', dialogTitle: '전체 백업 보관' });
-      setNotice(`전체 백업 파일을 만들었어요(세트 ${made.sets}개 · 그림 ${made.images}개 · 설정 포함${made.trashed ? ` · 휴지통 세트 ${made.trashed}개 제외` : ''}).${lost} 공유 창에서 드라이브·메일 등 앱 밖에 보관해 주세요. PRO 구매는 백업에 들어가지 않고 구매 복원으로 돌아와요.`);
+      const lost = made.missing ? t("release.d005", { v0: (made.missing) }) : '';
+      if (!await Sharing.isAvailableAsync()) { setNotice(t("release.d008", { v0: (made.sets), v1: (lost) })); return; }
+      await Sharing.shareAsync(exportUri(made.path), { mimeType: 'application/zip', UTI: 'public.zip', dialogTitle: t("release.s0029") });
+      setNotice(t("release.d009", { v0: (made.sets), v1: (made.images), v2: (made.trashed ? t("release.d155", { v0: (made.trashed) }) : ''), v3: (lost) }));
     });
   }
   // 백업에서 되살리기: 파일을 고르면 먼저 전부 검사하고, 통과하면 새 세트로 들인다. 같은 세트가 있으면 덮어쓰지 않고 사본으로.
   function restoreFromBackup() {
-    void task('백업 확인하는 중…', async () => {
+    void task(t("release.s0030"), async () => {
       // 문서 선택 모듈은 누를 때만 불러온다(네이티브 모듈 — 앱 시작과 검사 환경에 부담을 주지 않는다).
       const picker = require('expo-document-picker') as typeof import('expo-document-picker');
       const picked = await picker.getDocumentAsync({ type: ['application/zip', 'application/octet-stream', '*/*'], copyToCacheDirectory: true, multiple: false });
@@ -572,31 +572,31 @@ function Studio() {
         if (!current.current) return;
         let all;
         try { all = restoreFullBackup(bytes, current.current); }
-        catch (e) { throw new Error(userMessage(e) + ' 기존 작품·설정은 바뀌지 않았어요.'); }
+        catch (e) { throw new Error(userMessage(e) + " " + t("release.s0031")); }
         commit(() => all.store);
         setSettings(false); setHomeView('all');
-        const count = (n: number, what: string) => n ? [`${what} ${n}개`] : [];
+        const count = (n: number, what: string) => n ? [t("release.d010", { v0: (what), v1: (n) })] : [];
         setRestoreReport({
-          done: [`세트 ${all.sets}개(그림 ${all.images}개)${all.copies ? ` — 같은 세트 ${all.copies}개는 '(복원)' 사본으로` : ''}`, ...count(all.added.savedMotions, '보관한 움직임'), ...count(all.added.cutouts, '조각'), ...count(all.added.userPalette, '내 색'), ...count(all.added.palette, '최근 색')],
-          missed: [...count(all.skipped.savedMotions, '보관한 움직임(최대 12개)'), ...count(all.skipped.cutouts, '조각(최대 40개)'), ...count(all.skipped.userPalette, '내 색(최대 48개)'), ...count(all.skipped.palette, '최근 색(최대 8개)')],
+          done: [t("release.d011", { v0: (all.sets), v1: (all.images), v2: (all.copies ? t("release.d156", { v0: (all.copies) }) : '') }), ...count(all.added.savedMotions, t("release.s0032")), ...count(all.added.cutouts, t("release.s0033")), ...count(all.added.userPalette, t("release.s0034")), ...count(all.added.palette, t("release.s0035"))],
+          missed: [...count(all.skipped.savedMotions, t("release.s0036")), ...count(all.skipped.cutouts, t("release.s0037")), ...count(all.skipped.userPalette, t("release.s0038")), ...count(all.skipped.palette, t("release.s0039"))],
           kept: all.kept,
         });
         return;
       }
       let restored;
       try { restored = restoreBackup(bytes, current.current?.projects ?? []); }
-      catch (e) { throw new Error(userMessage(e) + ' 기존 작품은 바뀌지 않았어요.'); }
+      catch (e) { throw new Error(userMessage(e) + " " + t("release.s0040")); }
       commit(s => ({ ...s, projects: [...s.projects, restored.project] }));
       setSettings(false); setHomeView('all');
-      setNotice(`${restored.project.projectName} 세트를 되살렸어요(그림 ${restored.images}개)${restored.copy ? ' — 같은 세트가 있어 사본으로 넣었어요' : ''}.`);
+      setNotice(t("release.d012", { v0: (restored.project.projectName), v1: (restored.images), v2: (restored.copy ? " " + t("release.x000") : '') }));
     });
   }
   // 세트 관리에 이름 바꾸기·복제를 모은다(45.38). 예전에는 이름을 바꾸려면 '캐릭터 기준 · 세트 이름'으로 따로 들어가야 했다.
   function renameProject(id: string, name: string) {
     const next = name.trim();
     if (!next) return;
-    try { changeProject(id, p => ({ ...p, projectName: next })); } catch (e) { Alert.alert('이름을 바꾸지 못했어요', userMessage(e)); return; }
-    setManageId(null); setNotice(`세트 이름을 '${next}'(으)로 바꿨어요.`);
+    try { changeProject(id, p => ({ ...p, projectName: next })); } catch (e) { Alert.alert(t("release.s0041"), userMessage(e)); return; }
+    setManageId(null); setNotice(t("release.d013", { v0: (next) }));
   }
   // 복제는 세트 정보만 새로 만든다. 그림 파일은 두 세트가 함께 가리킨다 — 편집은 늘 새 파일로 저장되고,
   // 한쪽을 지워도 다른 쪽이 가리키는 파일은 정리되지 않으므로(droppedImagePaths) 안전하다.
@@ -605,83 +605,83 @@ function Studio() {
     if (!source) return;
     const now = new Date().toISOString();
     const taken = new Set((current.current?.projects ?? []).map(p => p.projectName));
-    let name = source.projectName + ' 사본';
-    for (let i = 2; taken.has(name); i++) name = `${source.projectName} 사본 ${i}`;
+    let name = source.projectName + " " + t("release.s0042");
+    for (let i = 2; taken.has(name); i++) name = t("release.d014", { v0: (source.projectName), v1: (i) });
     const copy: Project = { ...JSON.parse(JSON.stringify(source)), id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, projectName: name, createdAt: now, updatedAt: now, deletedAt: undefined };
-    try { commit(st => ({ ...st, projects: [...st.projects, copy] })); } catch (e) { Alert.alert('복제하지 못했어요', userMessage(e)); return; }
-    setManageId(null); setNotice(`'${name}' 세트를 만들었어요.`);
+    try { commit(st => ({ ...st, projects: [...st.projects, copy] })); } catch (e) { Alert.alert(t("release.s0043"), userMessage(e)); return; }
+    setManageId(null); setNotice(t("release.d015", { v0: (name) }));
   }
   function restoreProject(id: string) {
     const target = current.current?.projects.find(p => p.id === id);
     if (!target) return;
     try { commit(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...p, deletedAt: undefined, updatedAt: new Date().toISOString() } : p) })); }
-    catch (e) { Alert.alert('되살리지 못했어요', userMessage(e)); return; }
-    setNotice(`${target.projectName} 세트를 되살렸어요.`);
+    catch (e) { Alert.alert(t("release.s0044"), userMessage(e)); return; }
+    setNotice(t("release.d016", { v0: (target.projectName) }));
   }
   // 영구 삭제: 저장소에서 빼면 다른 곳이 가리키지 않는 그림 파일은 commit 이 정리한다(droppedImagePaths).
   function purgeProject(id: string) {
     const target = current.current?.projects.find(p => p.id === id);
     if (!target) return;
     try { commit(s => ({ ...s, projects: s.projects.filter(p => p.id !== id) })); }
-    catch (e) { Alert.alert('삭제하지 못했어요', userMessage(e)); return; }
+    catch (e) { Alert.alert(t("release.s0045"), userMessage(e)); return; }
     setConfirmPurgeId(null);
-    setNotice(`${target.projectName} 세트를 영구 삭제했어요.`);
+    setNotice(t("release.d017", { v0: (target.projectName) }));
   }
   // A movement someone liked is kept at the store level, so it can be opened again from any cut of
   // any set. The name is made from the settings themselves: nobody has to invent one mid-drawing.
   function motionName(motion: Motion) {
     const preset = PRESETS.find(p => p.id === motion.preset)?.label;
-    const parts = motion.parts?.length ? `부분 ${motion.parts.length}` : null;
-    const pose = motion.alternate ? '두 모습' : null;
-    const boil = motion.boil ? '떨림' : null;
-    return [preset, parts, pose, boil].filter(Boolean).join(' · ') || '움직임';
+    const parts = motion.parts?.length ? t("release.d018", { v0: (motion.parts.length) }) : null;
+    const pose = motion.alternate ? t("release.s0046") : null;
+    const boil = motion.boil ? t("release.s0047") : null;
+    return [preset, parts, pose, boil].filter(Boolean).join(' · ') || t("release.s0048");
   }
   function saveMotion(motion: Motion) {
     const kept = store?.savedMotions ?? [];
     const body = JSON.stringify(motion);
-    if (kept.some(s => JSON.stringify(s.motion) === body)) { setNotice('같은 움직임이 이미 보관되어 있어요.'); return; }
+    if (kept.some(s => JSON.stringify(s.motion) === body)) { setNotice(t("release.s0049")); return; }
     const base = motionName(motion);
     const same = kept.filter(s => s.name === base || s.name.startsWith(base + ' (')).length;
     const saved: SavedMotion = { id: 'm-' + Date.now().toString(36), name: same ? `${base} (${same + 1})` : base, motion };
-    try { commit(s => ({ ...s, savedMotions: [saved, ...(s.savedMotions ?? [])].slice(0, 12) })); setNotice(`${saved.name} 움직임을 보관했어요.`); }
-    catch (e) { setNotice('움직임을 보관하지 못했어요. ' + userMessage(e)); }
+    try { commit(s => ({ ...s, savedMotions: [saved, ...(s.savedMotions ?? [])].slice(0, 12) })); setNotice(t("release.d019", { v0: (saved.name) })); }
+    catch (e) { setNotice(t("release.s0050") + " " + userMessage(e)); }
   }
   const EXTRA_FRAMES = { icon: { width: 78, height: 78 }, share: { width: 600, height: 166 } } as const;
   async function makeExtra() {
     if (!project || extraSlot === null) return;
     const slot = project.slots.find(s => s.number === extraSlot);
-    if (!slot?.finalImage) { setNotice('그림이 있는 칸을 골라 주세요.'); return; }
+    if (!slot?.finalImage) { setNotice(t("release.s0051")); return; }
     if (extraKind === 'cover') {
       // 대표 이미지는 새로 만드는 그림이 아니라 고르는 것이다 — 가이드가 그렇게 정했다.
       changeProject(project.id, p => ({ ...p, extras: { ...p.extras, coverSlot: extraSlot } }));
-      setNotice(`${pad(extraSlot)}번을 대표 이미지로 정했어요.`);
+      setNotice(t("release.d020", { v0: (pad(extraSlot)) }));
       return;
     }
     const frame = EXTRA_FRAMES[extraKind];
-    await task('부가 이미지를 만드는 중…', async () => {
+    await task(t("release.s0052"), async () => {
       const source = await dataUrl(slot.finalImage!);
       const data = await composer.current!.compose(source, frame, place, null);
       const image = saveCutout(data);
       changeProject(project.id, p => ({ ...p, extras: { ...p.extras, [extraKind]: image } }));
-      setNotice(`${extraKind === 'icon' ? '아이콘' : '공유'} 이미지를 만들었어요. 원본 ${pad(extraSlot)}번은 그대로예요.`);
+      setNotice(t("release.d021", { v0: (extraKind === 'icon' ? t("release.x001") : t("release.s0351")), v1: (pad(extraSlot)) }));
     });
   }
   function keepCutout(data: string) {
     const image = saveCutout(data);
     const kept = store?.cutouts ?? [];
-    const name = `보관한 그림 ${kept.length + 1}`;
+    const name = t("release.d022", { v0: (kept.length + 1) });
     try {
       commit(s => ({ ...s, cutouts: [{ id: 'cut-' + Date.now().toString(36), name, image }, ...(s.cutouts ?? [])].slice(0, 40) }));
       return name;
-    } catch (e) { setNotice('그림을 보관하지 못했어요. ' + userMessage(e)); return null; }
+    } catch (e) { setNotice(t("release.s0053") + " " + userMessage(e)); return null; }
   }
   function forgetCutout(id: string) {
     try { commit(s => ({ ...s, cutouts: (s.cutouts ?? []).filter(c => c.id !== id) })); }
-    catch (e) { setNotice('보관을 지우지 못했어요. ' + userMessage(e)); }
+    catch (e) { setNotice(t("release.s0054") + " " + userMessage(e)); }
   }
   function forgetMotion(id: string) {
     try { commit(s => ({ ...s, savedMotions: (s.savedMotions ?? []).filter(saved => saved.id !== id) })); }
-    catch (e) { setNotice('보관을 지우지 못했어요. ' + userMessage(e)); }
+    catch (e) { setNotice(t("release.s0054") + " " + userMessage(e)); }
   }
   function rememberColor(color: string) {
     try { commit(s => ({ ...s, palette: [color, ...(s.palette ?? []).filter(c => c !== color)].slice(0, 8) })); } catch { /* colour history is a convenience, never a blocker */ }
@@ -690,11 +690,11 @@ function Studio() {
   // 이미 모아 둔 색을 쓰거나 지우는 것은 PRO가 끝나도 막지 않는다(만든 것은 회수하지 않는다).
   function saveUserColor(color: string) {
     try { commit(s => ({ ...s, userPalette: [color, ...(s.userPalette ?? []).filter(c => c.toUpperCase() !== color.toUpperCase())].slice(0, 24) })); }
-    catch (e) { setNotice('내 팔레트에 저장하지 못했어요. ' + userMessage(e)); }
+    catch (e) { setNotice(t("release.s0055") + " " + userMessage(e)); }
   }
   function removeUserColor(color: string) {
     try { commit(s => ({ ...s, userPalette: (s.userPalette ?? []).filter(c => c.toUpperCase() !== color.toUpperCase()) })); }
-    catch (e) { setNotice('내 팔레트에서 지우지 못했어요. ' + userMessage(e)); }
+    catch (e) { setNotice(t("release.s0056") + " " + userMessage(e)); }
   }
   // Deterministic set-level checks over the saved files themselves. Everything here works offline,
   // and nothing here is a judgement about the artwork: those belong to the person drawing it.
@@ -702,7 +702,7 @@ function Studio() {
   const projectFinals = project ? checkedFinals[project.id] : undefined;
   const issuesPending = !!project && projectFinals?.key !== finalsKey(project);
   const setChecks: Check[] = !project ? [] : setIssues(project, issuesPending ? [] : projectFinals?.groups);
-  if (projectFinals?.error && !issuesPending) setChecks.push({ label: '그림 비교', status: 'WARNING', detail: '그림 파일을 비교하지 못했어요. 세트를 다시 열어 확인해 주세요.' });
+  if (projectFinals?.error && !issuesPending) setChecks.push({ label: t("release.s0057"), status: 'WARNING', detail: t("release.s0058") });
   // A purchase only ever lands here, and only after the store and our receipt server both said yes.
   async function startPurchase() {
     if (purchasesClosed()) return;
@@ -732,12 +732,12 @@ function Studio() {
     if (!pro) { setProSheet(true); return; }
     const id = project.id;
     setBatchResults([]);
-    await task(`${numbers.length}칸에 적용하는 중…`, async () => {
+    await task(t("release.d023", { v0: (numbers.length) }), async () => {
       const done: number[] = [], failed: { number: number; reason: string }[] = [];
       for (const number of numbers) {
         const slot = current.current?.projects.find(p => p.id === id)?.slots.find(s => s.number === number);
-        if (!slot?.work) { failed.push({ number, reason: '아직 그림이 없어요' }); continue; }
-        if (!replace && slot.motion) { failed.push({ number, reason: '이미 있는 움직임을 그대로 두었어요' }); continue; }
+        if (!slot?.work) { failed.push({ number, reason: t("release.s0059") }); continue; }
+        if (!replace && slot.motion) { failed.push({ number, reason: t("release.s0060") }); continue; }
         try {
           const loop = await baker.current!.bake(slot.work, motion);
           const motionImage = saveMotionLoop(loop.data);
@@ -751,17 +751,17 @@ function Studio() {
         } catch (e) { failed.push({ number, reason: userMessage(e) }); }
       }
       setBatchResults([...done.map(number => ({ number, ok: true as const })), ...failed.map(f => ({ number: f.number, ok: false as const, reason: f.reason }))]);
-      setNotice(failed.length ? `${done.length}칸에 적용했고 ${failed.length}칸은 실패했어요. 실패한 칸만 다시 시도할 수 있어요.` : `${done.length}칸에 같은 움직임을 적용했어요.`);
+      setNotice(failed.length ? t("release.d024", { v0: (done.length), v1: (failed.length) }) : t("release.d025", { v0: (done.length) }));
     });
   }
   async function previewOnOne(motion: Motion, number: number) {
     const slot = current.current?.projects.find(p => p.id === projectId)?.slots.find(s => s.number === number);
-    if (!slot?.work) { setNotice(`${pad(number)}번은 아직 그림이 없어 미리 만들어 볼 수 없어요.`); return; }
+    if (!slot?.work) { setNotice(t("release.d026", { v0: (pad(number)) })); return; }
     setPreviewing(true);
     try {
       const loop = await baker.current!.bake(slot.work, motion);
       setBatchPreview({ number, data: loop.data, loop: loop.loop, bytes: loop.bytes });
-    } catch (e) { setNotice('미리보기를 만들지 못했어요. ' + userMessage(e)); }
+    } catch (e) { setNotice(t("release.s0061") + " " + userMessage(e)); }
     finally { setPreviewing(false); }
   }
   // Stepping through the finished cuts. A moving cut plays its own loop; a still one holds.
@@ -783,7 +783,7 @@ function Studio() {
     // 칸마다 차례로 만든다. 진행 수를 그대로 보여 준다(45.38) — 예전에는 '만드는 중…' 한 줄뿐이라 멈춘 것처럼 보였다.
     const targets = target.slots.filter(slot => slot.work && (slot.motion || slot.work.frames) && isAnimated(slot));
     for (const [index, slot] of targets.entries()) {
-      setBusy(`움직이는 칸 프레임 만드는 중 · ${index + 1}/${targets.length}칸`);
+      setBusy(t("release.d027", { v0: (index + 1), v1: (targets.length) }));
       try {
         // 장만 있고 효과가 없는 칸은 빈 움직임으로 굽는다(엔진이 이전 칸의 움직임을 이어 쓰지 않게 늘 무언가를 보낸다).
         const loop = await baker.current!.bake(slot.work!, slot.motion ?? DEFAULT_MOTION, true);
@@ -807,19 +807,19 @@ function Studio() {
     if (!project) return;
     // 화면·약속 문구는 모두 '파일 묶음'이다(38차). 움직이는 칸은 카카오 WebPAnimator 에서 마무리하므로
     // 앱이 '제출 파일'을 만들어 준다고 말하지 않는다 — PRO 화면의 무료 약속과 같은 말을 쓴다.
-    void task('파일 묶음 만드는 중…', async () => {
+    void task(t("release.s0062"), async () => {
       if (!await adGate()) return;
       const { handoff, failed } = await bakeHandoff(project);
-      setBusy('파일 묶음 정리하는 중…');
+      setBusy(t("release.s0063"));
       const result = exportSet(project, handoff);
       setLastExport({ path: result.path, count: result.count });
       setHandoffCuts(handoff.map(cut => ({ number: cut.number, count: cut.frames.length, delayMs: cut.delayMs })));
-      const short = failed.length ? ` ${failed.map(pad).join(', ')}번은 WebPAnimator용 프레임을 넣지 못했어요.` : '';
-      const made = (result.missing ? `${result.count}칸으로 파일 묶음을 만들었어요. ${result.missing}칸은 아직 비어 있어요.` : `${result.count}칸 전체로 파일 묶음을 만들었어요.`) + short;
-      if (!await Sharing.isAvailableAsync()) { setNotice(`${made} 이 기기에서는 공유 창을 열 수 없어요.`); return; }
+      const short = failed.length ? t("release.d028", { v0: (failed.map(pad).join(', ')) }) : '';
+      const made = (result.missing ? t("release.d029", { v0: (result.count), v1: (result.missing) }) : t("release.d030", { v0: (result.count) })) + short;
+      if (!await Sharing.isAvailableAsync()) { setNotice(t("release.d031", { v0: (made) })); return; }
       await Sharing.shareAsync(exportUri(result.path), { mimeType: 'application/zip', UTI: 'public.zip' });
       // A share sheet that opened is not a file that arrived. Say only what we know.
-      setNotice(`${made} 공유 창에서 저장할 곳을 골라 주세요.`);
+      setNotice(t("release.d032", { v0: (made) }));
     });
   }
   // LINE 움직이는 스티커 파일 묶음(2026-10-27, 글로벌 통합안 EM-G07). 카카오 묶음과 따로 만든다 — 카카오 경로는 그대로.
@@ -837,7 +837,7 @@ function Studio() {
       const apng = async (slot: Cut, w: number, h: number, kind: 'sticker' | 'main', name: string): Promise<LineFile> => {
         let made = await baker.current!.line(slot.work!, motionOf(slot), { w, h, count: 0 });
         let plan = linePlan(made.loop, made.count), data: Uint8Array = new Uint8Array(0), problems: string[] = [];
-        if (!plan) return { name, data, kind, problems: [`한 바퀴가 4초를 넘어요(${made.loop.toFixed(1)}초) — 움직임 속도를 빠르게 해 주세요`] };
+        if (!plan) return { name, data, kind, problems: [t("release.d033", { v0: (made.loop.toFixed(1)) })] };
         for (const count of shrinkSteps(plan.frames)) {
           if (count !== made.count) { made = await baker.current!.line(slot.work!, motionOf(slot), { w, h, count }); plan = linePlan(made.loop, made.count)!; }
           data = assembleApng(made.sheets.map(decodeDataUrl), plan.delayMs, plan.plays);
@@ -910,8 +910,8 @@ function Studio() {
   }
   function shareAgain() {
     if (!lastExport) return;
-    void task('다시 공유하는 중…', async () => {
-      if (!await Sharing.isAvailableAsync()) { setNotice(`저장 위치: ${lastExport.path}`); return; }
+    void task(t("release.s0064"), async () => {
+      if (!await Sharing.isAvailableAsync()) { setNotice(t("release.d034", { v0: (lastExport.path) })); return; }
       await Sharing.shareAsync(exportUri(lastExport.path), { mimeType: 'application/zip', UTI: 'public.zip' });
     });
   }
@@ -947,26 +947,26 @@ function Studio() {
   }
   // 내 정보 탭의 줄들(예전 설정 창 내용 그대로 — 기능·이름을 바꾸지 않았다). 흰 카드 한 장에 담는다.
   const myRows = <View testID="내 정보 설정" style={{ gap: 4, paddingHorizontal: 20, paddingVertical: 12, borderRadius: T.radius.card, ...Clay.card }}>
-      <Text style={{ fontSize: 12, color: C.muted }}>{trial && !isPro(entitlement) ? 'PRO 체험 · 비공개 테스트' : entitlementLabel(entitlement)}</Text>
+      <Text style={{ fontSize: 12, color: C.muted }}>{trial && !isPro(entitlement) ? t("release.s0066") : entitlementLabel(entitlement)}</Text>
       {/* 검수용 빌드는 스스로 그렇다고 말한다. 출시 구성에서는 아예 그려지지 않는다(internalReviewBuild() 가 거짓). */}
       {reviewCapable() && <View style={{ gap: 8, padding: 12, borderRadius: T.radius.md, backgroundColor: C.accentSoft }}>
         <Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>{reviewEnvLabel()}</Text>
         <Text style={{ fontSize: 11, color: C.accentInk, lineHeight: 16 }}>{internalReviewBuild() ? REVIEW_BUILD_NOTE : REVIEW_DEV_NOTE}</Text>
-        <Pressable accessibilityRole="switch" accessibilityLabel="검수용 PRO 켜기" accessibilityState={{ checked: !!store?.reviewUnlock }}
+        <Pressable accessibilityRole="switch" accessibilityLabel={t("release.s0067")} accessibilityState={{ checked: !!store?.reviewUnlock }}
           onPress={() => { try { commit(st => ({ ...st, reviewUnlock: !st.reviewUnlock })); } catch { /* 저장 실패는 위 배너가 말한다 */ } }}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
           <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: store?.reviewUnlock ? C.point : C.lineStrong }}>
             <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.reviewUnlock ? 18 : 0 }} />
           </View>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>검수용 PRO {store?.reviewUnlock ? '켜짐' : '꺼짐'}</Text>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>{t("release.s0068") + " "}{store?.reviewUnlock ? t("release.s0069") : t("release.s0070")}</Text>
         </Pressable>
-        <Pressable accessibilityRole="switch" accessibilityLabel="홈 공지 미리 보기" accessibilityState={{ checked: noticePreview }}
+        <Pressable accessibilityRole="switch" accessibilityLabel={t("release.s0071")} accessibilityState={{ checked: noticePreview }}
           onPress={() => setNoticePreview(!noticePreview)}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
           <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: noticePreview ? C.point : C.lineStrong }}>
             <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: noticePreview ? 18 : 0 }} />
           </View>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>홈 공지 미리 보기 {noticePreview ? '켜짐' : '꺼짐'}</Text>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.accentInk }}>{t("release.s0071") + " "}{noticePreview ? t("release.s0069") : t("release.s0070")}</Text>
         </Pressable>
       </View>}
       <Pressable accessibilityRole="button" accessibilityLabel={t('ui.howtoAgain')} onPress={() => { setSettings(false); setIntroStep(0); }}
@@ -980,7 +980,7 @@ function Studio() {
         <Glyph name="archive-arrow-down-outline" size={20} color={C.muted} />
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{t('ui.backupAll')}</Text>
-          <Text style={{ fontSize: 11, color: C.muted }}>모든 세트 · 색 · 보관한 움직임 · 조각 · 설정 (PRO 구매 제외)</Text>
+          <Text style={{ fontSize: 11, color: C.muted }}>{t("release.s0072")}</Text>
         </View>
         <Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
@@ -994,29 +994,29 @@ function Studio() {
         const copies = settings ? safely(listExports) ?? [] : [];
         if (!copies.length) return null;
         const mb = copies.reduce((t, x) => t + x.bytes, 0) / 1048576;
-        return <Pressable accessibilityRole="button" accessibilityLabel={`내보낸 파일 ${copies.length}개`} onPress={() => { setSettings(false); setExportsConfirm(copies); }}
+        return <Pressable accessibilityRole="button" accessibilityLabel={t("release.d035", { v0: (copies.length) })} onPress={() => { setSettings(false); setExportsConfirm(copies); }}
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
           <Glyph name="folder-zip-outline" size={20} color={C.muted} />
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{t('ui.exportedFiles')}</Text>
-            <Text style={{ fontSize: 11, color: C.muted }}>{`보낸 뒤 앱에 남은 사본 ${copies.length}개 · ${mb < .1 ? '0.1MB 미만' : mb.toFixed(1) + 'MB'}`}</Text>
+            <Text style={{ fontSize: 11, color: C.muted }}>{t("release.d036", { v0: (copies.length), v1: (mb < .1 ? t("release.x003") : mb.toFixed(1) + 'MB') })}</Text>
           </View>
           <Glyph name="chevron-right" size={18} color={C.faint} />
         </Pressable>;
       })()}
-      <Pressable accessibilityRole="button" accessibilityLabel={t('ui.trash') + ' ' + trashed.length + '개'} onPress={() => { setSettings(false); setTrashOpen(true); }}
+      <Pressable accessibilityRole="button" accessibilityLabel={t('ui.trash') + ' ' + trashed.length + t("release.s0073")} onPress={() => { setSettings(false); setTrashOpen(true); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, borderRadius: T.radius.md, backgroundColor: pressed ? C.fill : 'transparent' })}>
         <Glyph name="delete-restore" size={20} color={C.muted} />
         <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>{t('ui.trash')}</Text>
-        <Text style={{ fontSize: 13, color: C.muted }}>{trashed.length ? trashed.length + '개' : '비어 있음'}</Text>
+        <Text style={{ fontSize: 13, color: C.muted }}>{trashed.length ? trashed.length + t("release.s0073") : t("release.s0074")}</Text>
         <Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
-      <Pressable accessibilityRole="switch" accessibilityLabel="캔버스 종이 질감" accessibilityState={{ checked: store?.paperTexture === true }}
+      <Pressable accessibilityRole="switch" accessibilityLabel={t("release.s0075")} accessibilityState={{ checked: store?.paperTexture === true }}
         onPress={() => { try { commit(st => ({ ...st, paperTexture: st.paperTexture !== true })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>캔버스 종이 질감</Text>
-          <Text style={{ fontSize: 11, color: C.muted }}>파일에는 들어가지 않아요</Text>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{t("release.s0075")}</Text>
+          <Text style={{ fontSize: 11, color: C.muted }}>{t("release.s0076")}</Text>
         </View>
         <View style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: store?.paperTexture === true ? C.point : C.lineStrong }}>
           <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF', marginLeft: store?.paperTexture === true ? 18 : 0 }} />
@@ -1024,17 +1024,17 @@ function Studio() {
       </Pressable>
       {/* 앱 정보: 실제 설정에 적힌 버전만 보여 준다. 없는 도움말·백업 버튼은 만들지 않는다(명세 T01). */}
       <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, borderTopWidth: 1, borderColor: C.line }}>
-        <Text style={{ flex: 1, fontSize: 13, color: C.muted }}>버전</Text>
+        <Text style={{ flex: 1, fontSize: 13, color: C.muted }}>{t("release.s0077")}</Text>
         <Text accessibilityLabel={t('ui.version') + ' ' + appVersion} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{appVersion}</Text>
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel={t('ui.privacy')} accessibilityState={{ disabled: !privacyUrl }} disabled={!privacyUrl}
-        onPress={() => privacyUrl && void Linking.openURL(privacyUrl).catch(() => setNotice('개인정보처리방침을 열지 못했어요. 잠시 뒤 다시 시도해 주세요.'))}
+        onPress={() => privacyUrl && void Linking.openURL(privacyUrl).catch(() => setNotice(t("release.s0078")))}
         style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ flex: 1, color: C.ink }}>{t('ui.privacy')}</Text><Text style={{ color: C.muted }}>{privacyUrl ? '열기 ›' : '준비 중'}</Text>
+        <Text style={{ flex: 1, color: C.ink }}>{t('ui.privacy')}</Text><Text style={{ color: C.muted }}>{privacyUrl ? t("release.s0079") : t("release.s0080")}</Text>
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={t('ui.contact')} accessibilityState={{ disabled: !supportEmail }} disabled={!supportEmail}
         onPress={() => void openSupport()} style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ flex: 1, color: C.ink }}>{t('ui.contact')}</Text><Text style={{ color: C.muted }}>{supportEmail ? '메일 보내기 ›' : '준비 중'}</Text>
+        <Text style={{ flex: 1, color: C.ink }}>{t('ui.contact')}</Text><Text style={{ color: C.muted }}>{supportEmail ? t("release.s0081") : t("release.s0080")}</Text>
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={t('ui.proAccess')} onPress={() => { setSettings(false); setProSheet(true); }}
         style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? T.fill : 'transparent' })}>
@@ -1043,7 +1043,7 @@ function Studio() {
         <Glyph name="chevron-right" size={18} color={C.muted} />
       </Pressable>
   </View>;
-  const setMeta = (p: Project) => { const when = new Date(p.updatedAt); return { moving: setIsAnimated(p), done: doneCount(p), working: p.slots.filter(isWorking).length, stamp: Number.isFinite(when.getTime()) ? `${when.getMonth() + 1}월 ${when.getDate()}일` : '' }; };
+  const setMeta = (p: Project) => { const when = new Date(p.updatedAt); return { moving: setIsAnimated(p), done: doneCount(p), working: p.slots.filter(isWorking).length, stamp: Number.isFinite(when.getTime()) ? t("release.d037", { v0: (when.getMonth() + 1), v1: (when.getDate()) }) : '' }; };
   // 첫 실행 한 장 · 로그인 · 작가명. 서버가 있으면 로그인 전에는 앱 안으로 들어가지 않는다(기기 안 작품은 그대로 있다).
   if (store && !loadError && cloud && authUid === undefined) return <SafeAreaView style={{ flex: 1, backgroundColor: C.paper, alignItems: 'center', justifyContent: 'center' }}><StatusBar style="dark" /><Text style={{ fontSize: 13, color: C.muted }}>{t('ui.loading')}</Text></SafeAreaView>;
   if (store && !loadError && ((cloud && authUid === null) || (!cloud && startOpen))) return <SafeAreaView style={{ flex: 1, backgroundColor: C.paper }}><StatusBar style="dark" />
@@ -1055,25 +1055,25 @@ function Studio() {
   return <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}><StatusBar style="dark" /><ImageAnalyzer ref={analyzer} /><MotionBaker ref={baker} /><ExtraComposer ref={composer} />
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {project && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 4, minHeight: 56, backgroundColor: (screen === 'board' || screen === 'export') && !canonOpen ? T.page : C.bg }}>
-        <Pressable accessibilityRole="button" accessibilityLabel="뒤로" disabled={!!busy} onPress={back} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={28} color={C.ink} /></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0082")} disabled={!!busy} onPress={back} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="chevron-left" size={28} color={C.ink} /></Pressable>
         <View style={{ flex: 1 }}>
-          <Text numberOfLines={1} style={{ fontSize: 20, lineHeight: 27, color: C.ink, fontWeight: '800', letterSpacing: -.2 }}>{canonOpen ? t('ui.reference') : screen === 'export' ? t('ui.export') : screen === 'batch' ? '움직임 한 번에 적용' : screen === 'extras' ? '부가 이미지' : project.projectName}</Text>
+          <Text numberOfLines={1} style={{ fontSize: 20, lineHeight: 27, color: C.ink, fontWeight: '800', letterSpacing: -.2 }}>{canonOpen ? t('ui.reference') : screen === 'export' ? t('ui.export') : screen === 'batch' ? t("release.s0083") : screen === 'extras' ? t("release.s0084") : project.projectName}</Text>
           {(canonOpen || screen !== 'board') && <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{project.projectName}</Text>}
         </View>
-        {screen === 'board' && !canonOpen && <Pressable accessibilityRole="button" accessibilityLabel="세트 메뉴" disabled={!!busy} onPress={() => setMenu(true)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={24} color={C.ink} /></Pressable>}
+        {screen === 'board' && !canonOpen && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0085")} disabled={!!busy} onPress={() => setMenu(true)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={24} color={C.ink} /></Pressable>}
       </View>}
       {!!busy && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 6 }}><Glyph name="timer-sand" size={15} color={C.muted} /><Text style={{ fontSize: 12, color: C.muted }}>{busy}</Text></View>}
       {!!saveError && <View style={{ margin: 12, padding: 12, gap: 8, borderRadius: T.radius.md, backgroundColor: T.dangerSoft }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Glyph name="content-save-alert-outline" size={20} color={T.danger} />
-          <Text style={{ flex: 1, fontSize: 16, fontWeight: '800', color: C.ink }}>변경 내용을 아직 저장하지 못했어요</Text>
+          <Text style={{ flex: 1, fontSize: 16, fontWeight: '800', color: C.ink }}>{t("release.s0086")}</Text>
         </View>
-        <Text style={{ fontSize: 12, color: C.ink, lineHeight: 18 }}>작업은 화면에 그대로 있어요. 다시 저장을 눌러 주세요.</Text>
-        <Action primary title="다시 저장" onPress={() => { try { commit(s => s); } catch {} }} />
+        <Text style={{ fontSize: 12, color: C.ink, lineHeight: 18 }}>{t("release.s0087")}</Text>
+        <Action primary title={t("release.s0088")} onPress={() => { try { commit(s => s); } catch {} }} />
       </View>}
       <ScrollView style={{ backgroundColor: (!project && !loadError && homeView === 'home') || (project && (screen === 'board' || screen === 'export') && !canonOpen) ? T.page : C.bg }} pointerEvents={busy ? 'none' : 'auto'} key={`${projectId}/${slotNumber}/${canonOpen}/${screen}/${homeView}`} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, windowWidth > CONTENT_MAX && { width: '100%', maxWidth: CONTENT_MAX, alignSelf: 'center' }, !project && !loadError && { flexGrow: 1 }, !project && !loadError && homeView === 'home' && { paddingHorizontal: screenWidth < 340 ? 12 : 16, paddingTop: 8, gap: 12, backgroundColor: T.page },
         project && (screen === 'board' || screen === 'export') && !canonOpen && { gap: 12, backgroundColor: T.page }]}>
-        {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="알림 닫기" onPress={() => setNotice('')}
+        {!!notice && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0089")} onPress={() => setNotice('')}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap, paddingVertical: 10, paddingHorizontal: 14, borderRadius: T.radius.md, backgroundColor: C.paper, ...Elev[1] }}>
           <Glyph name="information-outline" size={18} color={C.muted} />
           <Text style={{ flex: 1, fontSize: 13, color: C.ink, lineHeight: 19 }}>{notice}</Text>
@@ -1085,32 +1085,32 @@ function Studio() {
               <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: T.dangerSoft, alignItems: 'center', justifyContent: 'center' }}>
                 <Glyph name="file-alert-outline" size={22} color={T.danger} />
               </View>
-              <Text style={[styles.subtitle, { flex: 1 }]}>저장 파일을 열지 못했어요</Text>
+              <Text style={[styles.subtitle, { flex: 1 }]}>{t("release.s0090")}</Text>
             </View>
-            <Text style={{ fontSize: 16, color: C.ink, lineHeight: 21 }}>작품 파일은 그대로 있어요. <Text style={{ fontWeight: '800' }}>앱을 지우거나 저장 데이터를 삭제하지 마세요.</Text></Text>
-            <Action primary title="다시 불러오기" onPress={load} />
+            <Text style={{ fontSize: 16, color: C.ink, lineHeight: 21 }}>{t("release.s0091") + " "}<Text style={{ fontWeight: '800' }}>{t("release.s0092")}</Text></Text>
+            <Action primary title={t("release.s0093")} onPress={load} />
           </View>
           {/* 문의할 때만 쓰는 길. 기술 정보를 화면에 늘어놓지 않고, 저장 파일 사본을 그대로 보낼 수 있게만 한다. */}
-          <Pressable accessibilityRole="button" accessibilityLabel={diagOpen ? '문의용 파일 접기' : '문의용 파일 보내기'} accessibilityState={{ expanded: diagOpen }} onPress={() => setDiagOpen(!diagOpen)}
+          <Pressable accessibilityRole="button" accessibilityLabel={diagOpen ? t("release.s0094") : t("release.s0095")} accessibilityState={{ expanded: diagOpen }} onPress={() => setDiagOpen(!diagOpen)}
             style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>문의용 파일 보내기</Text>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{t("release.s0095")}</Text>
             <Glyph name={diagOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
           </Pressable>
           {!!report && diagOpen && <View testID="문의용 파일" style={[styles.card, { gap: 8 }]}>
-            {report.snapshots.map((file, i) => file.exists ? <Action key={file.name} title={`저장 사본 ${i + 1} 보내기`} icon="share-variant" disabled={!!busy} onPress={() => shareSnapshot(file.name)} /> : null)}
-            {!report.snapshots.some(file => file.exists) && <Text style={{ fontSize: 12, color: C.muted }}>보낼 저장 파일이 없어요.</Text>}
+            {report.snapshots.map((file, i) => file.exists ? <Action key={file.name} title={t("release.d038", { v0: (i + 1) })} icon="share-variant" disabled={!!busy} onPress={() => shareSnapshot(file.name)} /> : null)}
+            {!report.snapshots.some(file => file.exists) && <Text style={{ fontSize: 12, color: C.muted }}>{t("release.s0097")}</Text>}
           </View>}
         </> : !store ? <Text style={{ fontSize: 13, color: C.muted }}>{t('ui.loading')}</Text> : !project && homeView === 'all' ? <>
           {/* 전체 작업(44차): 여러 이모티콘 세트를 찾고 다시 여는 곳. 한 줄 목록 — 세트 안 24/32칸은 보드가 맡는다. 폴더·태그·필터 없음. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4, marginLeft: -8 }}>
             <IconButton label={t('ui.home')} icon="chevron-left" color={C.ink} onPress={() => setHomeView('home')} />
-            <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>전체 작업</Text>
-            <Text style={{ fontSize: 12, color: C.muted }}>{sortedProjects.length}개 세트</Text>
+            <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{t("release.s0098")}</Text>
+            <Text style={{ fontSize: 12, color: C.muted }}>{sortedProjects.length}{t("release.s0099")}</Text>
           </View>
-          <Field label="세트 이름으로 찾기" value={projectQuery} onChangeText={setProjectQuery} multiline={false} />
-          <Segmented dense testID="세트 분류" value={projectFilter} onChange={setProjectFilter} items={[{ key: 'all', label: '전체' }, { key: 'working', label: '작업 중' }, { key: 'done', label: '완성' }]} />
-          <Segmented dense testID="세트 정렬" value={projectOrder} onChange={setProjectOrder} items={[{ key: 'recent', label: '최근 수정순' }, { key: 'name', label: '이름순' }]} />
-          {!visibleProjects.length && <Text style={{ fontSize: 13, color: C.muted }}>조건에 맞는 세트가 없어요. 찾는 말이나 분류를 바꿔 보세요.</Text>}
+          <Field label={t("release.s0100")} value={projectQuery} onChangeText={setProjectQuery} multiline={false} />
+          <Segmented dense testID="세트 분류" value={projectFilter} onChange={setProjectFilter} items={[{ key: 'all', label: t("ui.all") }, { key: 'working', label: t("release.s0102") }, { key: 'done', label: t("release.s0103") }]} />
+          <Segmented dense testID="세트 정렬" value={projectOrder} onChange={setProjectOrder} items={[{ key: 'recent', label: t("release.s0105") }, { key: 'name', label: t("release.s0106") }]} />
+          {!visibleProjects.length && <Text style={{ fontSize: 13, color: C.muted }}>{t("release.s0107")}</Text>}
           <View testID="전체 작업 목록" style={{ borderRadius: T.radius.card, ...Clay.card }}>
             {visibleProjects.map((p, i) => {
               const m = setMeta(p), cover = p.slots.find(s => s.finalImage);
@@ -1122,10 +1122,10 @@ function Studio() {
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>{p.projectName}</Text>
-                    <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{m.moving ? '움직이는' : '멈춰있는'} · {m.done}개 완성{m.stamp ? ` · ${m.stamp}` : ''}</Text>
+                    <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{m.moving ? t("home.kindMoving") : t("home.kindStill")} · {m.done}{t("release.s0109")}{m.stamp ? ` · ${m.stamp}` : ''}</Text>
                   </View>
                 </Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel={`${p.projectName} 관리`} onPress={() => setManageId(p.id)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={22} color={C.muted} /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={t("release.d116", { v0: (p.projectName) })} onPress={() => setManageId(p.id)} style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={22} color={C.muted} /></Pressable>
               </View>;
             })}
           </View>
@@ -1135,11 +1135,11 @@ function Studio() {
           {/* 이용 가이드북(2026-10-13, 홈 공지 슬라이드 ①): 장(章) 카드를 누르면 펼쳐진다. 규격 장은 카카오 공식 가이드 링크를 함께 준다. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginTop: -4, marginLeft: -8 }}>
             <IconButton label={t('ui.home')} icon="chevron-left" color={C.ink} onPress={() => { setBookOpen(null); setHomeView('home'); }} />
-            <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>이용 가이드북</Text>
+            <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{t("release.s0110")}</Text>
           </View>
-          <Text style={{ fontSize: 13, lineHeight: 20, color: C.muted, marginTop: -8 }}>앱 사용법부터 카카오 제안 규격, 승인에 가까워지는 팁까지</Text>
+          <Text style={{ fontSize: 13, lineHeight: 20, color: C.muted, marginTop: -8 }}>{t("release.s0111")}</Text>
           {GUIDEBOOK.map((ch, i) => { const open = bookOpen === ch.id;
-            return <View key={ch.id} testID={'가이드북 ' + ch.id} style={{ borderRadius: T.radius.card, ...Clay.card, boxShadow: 'none' }}>
+            return <View key={ch.id} testID={t("ui.guidebook") + " " + ch.id} style={{ borderRadius: T.radius.card, ...Clay.card, boxShadow: 'none' }}>
               <Pressable accessibilityRole="button" accessibilityLabel={ch.title} accessibilityState={{ expanded: open }} onPress={() => setBookOpen(open ? null : ch.id)}
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: T.radius.card, backgroundColor: pressed ? C.fill : C.paper })}>
                 <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: open ? C.pointSoft : C.surface2, alignItems: 'center', justifyContent: 'center' }}>
@@ -1156,9 +1156,9 @@ function Studio() {
                   <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{it.title}</Text>
                   <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{it.body}</Text>
                 </View>)}
-                {!!ch.source && <Pressable accessibilityRole="link" accessibilityLabel="카카오 이모티콘 스튜디오 공식 가이드 열기" onPress={() => Linking.openURL(ch.source!).catch(() => setNotice('링크를 열지 못했어요.'))}
+                {!!ch.source && <Pressable accessibilityRole="link" accessibilityLabel={t("release.s0112")} onPress={() => Linking.openURL(ch.source!).catch(() => setNotice(t("release.s0113")))}
                   style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 12, borderRadius: 22, backgroundColor: pressed ? C.fillPressed : C.fill })}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>공식 가이드 열기</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{t("release.s0114")}</Text>
                   <Glyph name="open-in-new" size={16} color={C.muted} />
                 </Pressable>}
               </View>}
@@ -1170,7 +1170,7 @@ function Studio() {
             <IconButton label={guideCard ? t('ui.backToGuide') : t('ui.home')} icon="chevron-left" color={C.ink} onPress={() => guideCard ? setGuideCard(null) : setHomeView('home')} />
             <Text numberOfLines={1} style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{guideCard ? guideCard.name : t('ui.guide')}</Text>
           </View>
-          <Text style={{ fontSize: 13, lineHeight: 20, color: C.muted, marginTop: -8 }}>{guideCard ? '같은 말도 표정과 자세에 따라 달라져요' : '어떤 마음인가요?'}</Text>
+          <Text style={{ fontSize: 13, lineHeight: 20, color: C.muted, marginTop: -8 }}>{guideCard ? t("release.s0115") : t("release.s0116")}</Text>
           {!guideCard && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center', paddingVertical: 4 }} style={{ marginHorizontal: -16, flexGrow: 0 }}>
             <View style={{ width: 10 }} />
             {EXPRESSION_GUIDE.categories.map(name => { const on = guideCategory === name;
@@ -1191,7 +1191,7 @@ function Studio() {
             return <>
               <View testID="표현 예시 목록" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
                 {list.map(x => { const on = x.id === guidePick, has = !!x.artwork;
-                  return <Pressable key={x.id} accessibilityRole="button" accessibilityLabel={`${x.label} 고르기`}
+                  return <Pressable key={x.id} accessibilityRole="button" accessibilityLabel={t("release.d040", { v0: (x.label) })}
                     accessibilityState={{ selected: on, disabled: !has }} disabled={!has}
                     onPress={() => setGuidePick(x.id)}
                     style={({ pressed }) => ({ width: cell, padding: 8, gap: 6, borderRadius: 16, backgroundColor: pressed ? C.fill : C.paper,
@@ -1204,13 +1204,13 @@ function Studio() {
                       {on && <Glyph name="check" size={15} color={C.point} />}
                       <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: on ? '800' : '700', color: has ? C.ink : C.faint }}>{x.label}</Text>
                     </View>
-                    {!has && <Text style={{ paddingHorizontal: 2, fontSize: 11, color: C.faint }}>그림 준비 중이에요</Text>}
+                    {!has && <Text style={{ paddingHorizontal: 2, fontSize: 11, color: C.faint }}>{t("release.s0118")}</Text>}
                   </Pressable>; })}
               </View>
               {/* 고른 표현의 설명과 두 행동. 고르기 전에는 눌리지 않는다. */}
               <View testID="표현 고른 뒤" style={{ gap: 10, marginTop: 4 }}>
                 <Text numberOfLines={2} style={{ fontSize: 13, lineHeight: 19, color: picked ? C.ink : C.muted }}>
-                  {picked ? picked.hint : '표현을 골라 주세요'}
+                  {picked ? picked.hint : t("release.s0120")}
                 </Text>
                 {/* 대사(2026-10-28): 이 감정의 추천 대사 · 대사 없이. 고른 대사는 위 그림에 바로 얹히고, 그리기 화면 문구로 들어간다. */}
                 {!!lines.length && <View testID="표현 대사" style={{ gap: 6 }}>
@@ -1224,33 +1224,33 @@ function Studio() {
                       </Pressable>; })}
                   </View>
                 </View>}
-                {guideTip && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>참고는 옆에 두고 보고, 밑그림은 캔버스에 겹쳐 놓고 그려요</Text>}
+                {guideTip && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{t("release.s0122")}</Text>}
                 {/* 어느 세트의 몇 번 칸에 넣는지 행동 바로 위에서 말한다(45.38). 예전에는 가장 최근 세트의 다음 빈 칸이 말없이 열렸다. */}
                 {(() => {
                   const dest = guideTargetId === 'new' ? null : sortedProjects.find(p => p.id === guideTargetId) ?? sortedProjects[0] ?? null;
                   const open = dest ? nextUnfinished(dest, dest.lastSlot ?? 0) : null;
-                  const text = !dest ? '새 이모티콘 세트의 01번 칸' : open === null ? `${dest.projectName} · 빈 칸 없음(보드에서 골라요)` : `${dest.projectName} · ${pad(open)}번 칸`;
+                  const text = !dest ? t("release.s0123") : open === null ? t("release.d041", { v0: (dest.projectName) }) : t("release.d042", { v0: (dest.projectName), v1: (pad(open)) });
                   return <View testID="표현 넣을 곳" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, borderRadius: 12, backgroundColor: C.surface2 }}>
                     <Glyph name="arrow-down-bold-box-outline" size={18} color={C.muted} />
-                    <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: C.ink }}><Text style={{ color: C.muted }}>넣을 곳 </Text><Text style={{ fontWeight: '800' }}>{text}</Text></Text>
-                    {!!sortedProjects.length && <Pressable accessibilityRole="button" accessibilityLabel="넣을 곳 바꾸기" onPress={() => setGuideTargetPick(true)}
+                    <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: C.ink }}><Text style={{ color: C.muted }}>{t("release.s0125") + " "}</Text><Text style={{ fontWeight: '800' }}>{text}</Text></Text>
+                    {!!sortedProjects.length && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0126")} onPress={() => setGuideTargetPick(true)}
                       style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 12, backgroundColor: pressed ? C.fill : 'transparent' })}>
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>바꾸기</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{t("release.s0127")}</Text>
                     </Pressable>}
                   </View>;
                 })()}
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <Pressable accessibilityRole="button" accessibilityLabel="참고 보기" accessibilityState={{ disabled: !ready }} disabled={!ready}
+                  <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0128")} accessibilityState={{ disabled: !ready }} disabled={!ready}
                     onPress={() => { guideTipShown = true; startFromGuide(guideCard!, picked!, 'watch', line); }}
                     style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
                       backgroundColor: pressed ? C.fill : C.paper, borderWidth: 1, borderColor: ready ? C.lineStrong : C.line, opacity: ready ? 1 : .5 })}>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: ready ? C.ink : C.faint }}>참고 보기</Text>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: ready ? C.ink : C.faint }}>{t("release.s0128")}</Text>
                   </Pressable>
-                  <Pressable accessibilityRole="button" accessibilityLabel="밑그림 넣기" accessibilityState={{ disabled: !ready }} disabled={!ready}
+                  <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0129")} accessibilityState={{ disabled: !ready }} disabled={!ready}
                     onPress={() => { guideTipShown = true; startFromGuide(guideCard!, picked!, 'underlay', line); }}
                     style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
                       backgroundColor: !ready ? C.fill : pressed ? C.accentSoft : C.accent, opacity: ready ? 1 : .6 })}>
-                    <Text style={{ fontSize: 15, fontWeight: '800', color: ready ? C.accentInk : C.faint }}>밑그림 넣기</Text>
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: ready ? C.accentInk : C.faint }}>{t("release.s0129")}</Text>
                   </Pressable>
                 </View>
               </View>
@@ -1273,11 +1273,11 @@ function Studio() {
                     </View>
                     <View style={{ gap: 2, paddingHorizontal: 2, paddingBottom: 2 }}>
                       <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{c.name}</Text>
-                      <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{count ? count + '가지 표현' : '준비 중'}</Text>
+                      <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{count ? count + t("release.s0131") : t("release.s0080")}</Text>
                     </View>
                   </Pressable>; })}
                 </View>
-              : <Text style={{ paddingVertical: 24, textAlign: 'center', fontSize: 13, color: C.muted }}>이 분류에는 아직 표현이 없어요</Text>;
+              : <Text style={{ paddingVertical: 24, textAlign: 'center', fontSize: 13, color: C.muted }}>{t("release.s0132")}</Text>;
           })()}
         </> : !project ? <>
           {/* 2026-10-08 토스식 개편(캔버스 T-Home, 사용자 확인): 회색 바탕 + 흰 카드. 글자를 줄이고 한눈에 —
@@ -1285,7 +1285,7 @@ function Studio() {
               아래 탭(홈 · 공모전 · 내 정보)은 화면 밖 TabBar 가 맡는다. */}
           {homeTab === 'home' && <>
           <Rise delay={20} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: T.tap }}>
-            <View testID="홈 브랜드" accessible accessibilityRole="header" accessibilityLabel="emoti 이모티" style={{ flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+            <View testID="홈 브랜드" accessible accessibilityRole="header" accessibilityLabel={t("release.s0134")} style={{ flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
               <Text numberOfLines={1} style={{ fontSize: 24, fontWeight: '700', letterSpacing: -.8, color: C.ink }}>emoti</Text>
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel={t('ui.guide')} onPress={() => setHomeView('guide')}
@@ -1307,19 +1307,19 @@ function Studio() {
                   <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{sub}</Text>
                 </View>
               </Pressable>;
-            const ownPicture = setCard('own', '내 그림으로 시작', startFromImage, <ImtiIcon name="reference" size={IconSize.tab} disabled={!!busy} />, '내 그림', '사진에서 시작', C.paper, !!busy);
-            const newSet = setCard('new', '새 세트 만들기', createNewProject, <View style={{ width: 48, height: 48, borderRadius: T.radius.card, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', ...Clay.button }}><ImtiIcon name="plus" size={IconSize.tool} /></View>, '새 세트', '32칸', C.accentSoft);
+            const ownPicture = setCard('own', t("ui.import"), startFromImage, <ImtiIcon name="reference" size={IconSize.tab} disabled={!!busy} />, t("release.s0135"), t("release.s0136"), C.paper, !!busy);
+            const newSet = setCard('new', t("ui.newSet"), createNewProject, <View style={{ width: 48, height: 48, borderRadius: T.radius.card, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', ...Clay.button }}><ImtiIcon name="plus" size={IconSize.tool} /></View>, t("release.s0137"), t("release.s0138"), C.accentSoft);
             // 공지 배너(사용자 확정): 둥근 모서리 없이 화면 가로에 꽉 차게. 그림 파일이 생기면 slide.image 로 덮는다.
             const art = (child: React.ReactNode) => <View style={{ width: 72, height: 72, borderRadius: 26, ...Clay.card, alignItems: 'center', justifyContent: 'center' }}>{child}</View>;
             const slides: NoticeSlide[] = [
-              { key: 'book', kicker: '가이드북', title: '앱 사용부터\n승인 팁까지', label: '가이드북 열기', tone: T.bannerYellow, kickerColor: T.yellowInk, backdrop: require('./assets/notices/book.png'),
+              { key: 'book', kicker: t("ui.guidebook"), title: t("release.s0139"), label: t("ui.openGuidebook"), tone: T.bannerYellow, kickerColor: T.yellowInk, backdrop: require('./assets/notices/book.png'),
                 art: art(<ImtiIcon name="guide" size={IconSize.tab} color={C.ink} />), onPress: () => setHomeView('book') },
-              ...(cloud ? [{ key: 'contest', kicker: homeContest ? (homeContest.dday ? `공모전 · ${homeContest.dday}` : '공모전') : '공모전 현황', kickerColor: T.pointInk,
-                title: homeContest ? homeContest.title : '열리는 공모전을\n여기서 알려 드려요', label: homeContest ? '공모전 ' + homeContest.title : '공모전 현황 보기', tone: T.bannerViolet, backdrop: require('./assets/notices/contest.png'),
+              ...(cloud ? [{ key: 'contest', kicker: homeContest ? (homeContest.dday ? t("release.d043", { v0: (homeContest.dday) }) : t("ui.contest")) : t("release.s0140"), kickerColor: T.pointInk,
+                title: homeContest ? homeContest.title : t("release.s0141"), label: homeContest ? t("ui.contest") + " " + homeContest.title : t("release.s0142"), tone: T.bannerViolet, backdrop: require('./assets/notices/contest.png'),
                 art: art(<ImtiIcon name="contest" size={IconSize.tab} color={C.point} />), onPress: () => setHomeTab('contest') }] : []),
-              ...(noticeOn ? [{ key: 'notice', testID: '홈 알림', kicker: '알림', title: homeNotice.title, label: homeNotice.title, tone: T.accentSoft,
+              ...(noticeOn ? [{ key: 'notice', testID: t("release.s0143"), kicker: t("release.s0144"), title: homeNotice.title, label: homeNotice.title, tone: T.accentSoft,
                 art: <AssetSlot name="noticeArtwork" size={72} />,
-                onPress: () => { if (trialNotice) { setProSheet(true); return; } if (homeNotice.link) Linking.openURL(homeNotice.link).catch(() => setNotice('링크를 열지 못했어요.')); } }] : []),
+                onPress: () => { if (trialNotice) { setProSheet(true); return; } if (homeNotice.link) Linking.openURL(homeNotice.link).catch(() => setNotice(t("release.s0113"))); } }] : []),
             ];
             const noticeLine = <Rise delay={80} style={{ marginHorizontal: -gutter }}><NoticeCarousel slides={slides} guessWidth={Math.min(windowWidth, CONTENT_MAX)} /></Rise>;
             if (!sortedProjects.length) return <>
@@ -1327,7 +1327,7 @@ function Studio() {
               {/* 빈 홈: 그림 · 제목 · 노란 행동 하나. */}
               <Rise delay={160}><EmptyState testID="홈 창작 표면" flow
                 art={<HopStage size={screenWidth < 380 ? 80 : 96}><AssetSlot name="homeHeroArtwork" size={screenWidth < 380 ? 80 : 96} /></HopStage>}
-                title="첫 칸부터 그려 볼까요?" body="한 세트 = 32칸 · 무료로 끝까지"
+                title={t("release.s0146")} body={t("release.s0147")}
                 actionLabel={t('ui.newSet')} onAction={createNewProject} /></Rise>
               <Rise delay={240} style={{ flexDirection: 'row', gap: 10 }}>{ownPicture}</Rise>
             </>;
@@ -1352,7 +1352,7 @@ function Studio() {
                   style={({ pressed }) => ({ aspectRatio: 1, minHeight: 120, borderRadius: T.radius.card, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', ...Clay.card, backgroundColor: tints[i % tints.length], transform: pressed ? [{ scale: .975 }] : [] })}>
                   {pic ? <Image testID="홈 표지 그림" source={{ uri: imageUri((pic.motionImage ?? pic.finalImage)!.path) }} style={{ width: '78%', height: '78%' }} resizeMode="contain" />
                     : <ImtiIcon name="brush" size={IconSize.tab} color={C.faint} />}
-                  <Pressable accessibilityRole="button" accessibilityLabel={`${q.projectName} 관리`} onPress={() => setManageId(q.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  <Pressable accessibilityRole="button" accessibilityLabel={t("release.d116", { v0: (q.projectName) })} onPress={() => setManageId(q.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     style={{ position: 'absolute', top: 6, right: 6, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.7)' }}>
                     <ImtiIcon name="more" size={IconSize.meta} color={C.muted} />
                   </Pressable>
@@ -1411,7 +1411,7 @@ function Studio() {
             {/* 2026-10-16 사용자: 유튜브처럼 단순하게 — 위에 묶음 칩, 아래 한 줄에 하나씩 16:9 썸네일 + 제목 + 한 줄 정보. */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
               {([['all', t('ui.all')], ...LESSON_GROUPS.map(g => [g.id, g.short])] as [string, string][]).map(([id, label]) => { const on = lessonGroup === id;
-                return <Pressable key={id} accessibilityRole="button" accessibilityLabel={'강좌 묶음 ' + label} accessibilityState={{ selected: on }} onPress={() => setLessonGroup(id)}
+                return <Pressable key={id} accessibilityRole="button" accessibilityLabel={t("release.s0151") + " " + label} accessibilityState={{ selected: on }} onPress={() => setLessonGroup(id)}
                   style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 10, justifyContent: 'center', borderBottomWidth: on ? 2 : 0, borderBottomColor: C.point, backgroundColor: pressed ? C.fill : 'transparent' })}>
                   <Text style={{ fontSize: 14, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{label}</Text>
                 </Pressable>; })}
@@ -1423,17 +1423,17 @@ function Studio() {
                   <View style={{ aspectRatio: 16 / 9, borderRadius: T.radius.card, overflow: 'hidden', backgroundColor: C.surface2 }}>
                     <Image accessibilityIgnoresInvertColors source={l.thumb} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                     <View style={{ position: 'absolute', right: 8, bottom: 8, height: 22, paddingHorizontal: 7, borderRadius: 6, backgroundColor: 'rgba(25,31,40,0.78)', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#FFFFFF' }}>{`${l.minutes}분`}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#FFFFFF' }}>{t("release.d045", { v0: (l.minutes) })}</Text>
                     </View>
                   </View>
                   <View style={{ paddingHorizontal: 2, gap: 2 }}>
                     <Text numberOfLines={2} style={{ fontSize: 16, lineHeight: 23, fontWeight: '700', color: C.ink }}>{l.title}</Text>
-                    <Text numberOfLines={1} style={{ fontSize: 13, color: C.muted }}>{`${g.free ? '무료 · ' : ''}${g.short} · ${l.steps.length}단계 · ${l.summary}`}</Text>
+                    <Text numberOfLines={1} style={{ fontSize: 13, color: C.muted }}>{t("release.d046", { v0: (g.free ? t("release.s0299") + " " : ''), v1: (g.short), v2: (l.steps.length), v3: (l.summary) })}</Text>
                   </View>
                 </Pressable>; })}
             </View>
             {/* 작가 강좌(유료)는 아직 없다 — 큰 자리 대신 한 줄로 알린다. */}
-            <View testID="작가 강좌 준비 중" accessible accessibilityLabel="작가 강좌 준비 중. 공모전 선정 작가의 강좌가 곧 열려요"
+            <View testID="작가 강좌 준비 중" accessible accessibilityLabel={t("release.s0154")}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: T.radius.card, backgroundColor: C.pointSoft }}>
               <Glyph name="school-outline" size={22} color={C.pointInk} />
               <View style={{ flex: 1 }}>
@@ -1459,7 +1459,7 @@ function Studio() {
               store={store} projects={store.projects} commit={commit} task={task} login={loginWith} bakeHandoff={bakeHandoff} />}
             <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 4 }}>
               <ImtiIcon name="info" size={IconSize.row} color={C.muted} />
-              <Text style={{ flex: 1, fontSize: 13, lineHeight: 20, color: C.muted }}>카카오·라인 같은 플랫폼 제안은 작가님 이름으로 직접 내요. emoti 가 대신 제출하지 않아요.</Text>
+              <Text style={{ flex: 1, fontSize: 13, lineHeight: 20, color: C.muted }}>{t("release.s0155")}</Text>
             </View>
           </>}
           {homeTab === 'my' && <>
@@ -1470,24 +1470,24 @@ function Studio() {
           </>}
         </> : canonOpen ? <>
           {(() => {
-            const pickReference = () => task('그림을 여는 중…', async () => { const images = await pickImages(); if (!images[0]) return; updateProject(p => ({ ...p, canon: { ...p.canon, image: images[0] } })); });
-            const memo = ([['personality', '성격'], ['speech', '말투'], ['locked', '꼭 유지할 특징'], ['variable', '바꿔도 되는 특징']] as const).filter(([key]) => project.canon[key].trim());
+            const pickReference = () => task(t("release.s0024"), async () => { const images = await pickImages(); if (!images[0]) return; updateProject(p => ({ ...p, canon: { ...p.canon, image: images[0] } })); });
+            const memo = ([['personality', t("release.s0156")], ['speech', t("release.s0157")], ['locked', t("release.s0158")], ['variable', t("release.s0159")]] as const).filter(([key]) => project.canon[key].trim());
             return <>
               <View style={{ flexDirection: 'row', gap: T.gap.md, alignItems: 'center' }}>
                 <View style={{ width: 116, height: 116, borderRadius: T.radius.lg, backgroundColor: project.canon.image ? C.bg : C.paper, borderWidth: 1, borderStyle: project.canon.image ? 'solid' : 'dashed', borderColor: C.line, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  {project.canon.image ? <Image accessibilityLabel="캐릭터 기준 그림" source={{ uri: imageUri(project.canon.image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Doodle />}
+                  {project.canon.image ? <Image accessibilityLabel={t("release.s0160")} source={{ uri: imageUri(project.canon.image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Doodle />}
                 </View>
                 <View style={{ flex: 1, gap: T.gap.sm }}>
-                  <Action icon="image-outline" title={project.canon.image ? '다른 그림으로 바꾸기' : '그림 고르기'} disabled={!!busy} onPress={pickReference} />
-                  {!!project.canon.image && <Action title="캐릭터 기준 내리기" onPress={() => updateProject(p => ({ ...p, canon: { ...p.canon, image: undefined } }))} />}
+                  <Action icon="image-outline" title={project.canon.image ? t("release.s0161") : t("release.s0162")} disabled={!!busy} onPress={pickReference} />
+                  {!!project.canon.image && <Action title={t("release.s0163")} onPress={() => updateProject(p => ({ ...p, canon: { ...p.canon, image: undefined } }))} />}
                 </View>
               </View>
               <View style={{ borderTopWidth: 1, borderColor: C.line, paddingTop: T.gap.md }}>
                 <Field label={t('ui.setName')} value={project.projectName} onChangeText={projectName => updateProject(p => ({ ...p, projectName }))} multiline={false} />
               </View>
               {(!!memo.length || !!project.characterName.trim()) && <View style={styles.card}>
-                <Text style={styles.subtitle}>예전에 적어둔 메모</Text>
-                {!!project.characterName.trim() && <Text style={{ fontSize: 13, color: C.ink }}>캐릭터 이름 · {project.characterName}</Text>}
+                <Text style={styles.subtitle}>{t("release.s0164")}</Text>
+                {!!project.characterName.trim() && <Text style={{ fontSize: 13, color: C.ink }}>{t("release.s0165") + " "}{project.characterName}</Text>}
                 {memo.map(([key, label]) => <Text key={key} style={{ fontSize: 13, color: C.ink }}>{label} · {project.canon[key]}</Text>)}
               </View>}
             </>;
@@ -1500,12 +1500,12 @@ function Studio() {
             const candidates = project.slots.filter(s => s.work && s.number !== batchSource);
             const failedNumbers = batchResults.filter(r => !r.ok).map(r => r.number);
             return <>
-              <Text style={styles.subtitle}>{kept ? `${kept.name} 움직임` : batchSource ? `${pad(batchSource)}번 칸의 움직임` : '옮길 움직임을 고르세요'}</Text>
+              <Text style={styles.subtitle}>{kept ? t("release.d047", { v0: (kept.name) }) : batchSource ? t("release.d048", { v0: (pad(batchSource)) }) : t("release.s0166")}</Text>
 
               {!!(store?.savedMotions ?? []).length && <>
-                <Text style={styles.label}>보관한 움직임</Text>
+                <Text style={styles.label}>{t("release.s0032")}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {(store?.savedMotions ?? []).map(saved => <Pressable key={saved.id} accessibilityRole="button" accessibilityLabel={`${saved.name} 적용하기`} accessibilityState={{ selected: batchSaved === saved.id }}
+                  {(store?.savedMotions ?? []).map(saved => <Pressable key={saved.id} accessibilityRole="button" accessibilityLabel={t("release.d049", { v0: (saved.name) })} accessibilityState={{ selected: batchSaved === saved.id }}
                     onPress={() => { setBatchSaved(batchSaved === saved.id ? null : saved.id); setBatchResults([]); setBatchPreview(null); }}
                     style={{ minHeight: 48, paddingHorizontal: 14, borderRadius: T.radius.card, borderWidth: 1, borderColor: batchSaved === saved.id ? C.accentBorder : C.line, backgroundColor: batchSaved === saved.id ? C.accentSoft : C.paper, alignItems: 'center', justifyContent: 'center' }}>
                     <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{saved.name}</Text>
@@ -1513,9 +1513,9 @@ function Studio() {
                 </View>
               </>}
 
-              <Text style={styles.label}>움직임을 가져올 칸</Text>
+              <Text style={styles.label}>{t("release.s0167")}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
-                {project.slots.filter(isAnimated).map(s => <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={`${s.number}번을 기준으로`} accessibilityState={{ selected: batchSource === s.number }}
+                {project.slots.filter(isAnimated).map(s => <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={t("release.d050", { v0: (s.number) })} accessibilityState={{ selected: batchSource === s.number }}
                   onPress={() => { setBatchSource(s.number); setBatchSaved(null); setBatchPicked([]); setBatchResults([]); setBatchPreview(null); }}
                   style={{ width: 64, gap: 3 }}>
                   <View style={{ width: 64, height: 64, borderRadius: T.radius.sm, borderWidth: batchSource === s.number ? 2.5 : 0, borderColor: batchSource === s.number ? C.accent : 'transparent', overflow: 'hidden', backgroundColor: batchSource === s.number ? C.paper : C.surface2 }}>
@@ -1526,16 +1526,16 @@ function Studio() {
               </ScrollView>
 
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={[styles.label, { flex: 1 }]}>적용할 칸 {batchPicked.length}개</Text>
-                <Pressable accessibilityRole="button" accessibilityLabel="전체 선택" onPress={() => setBatchPicked(batchPicked.length === candidates.length ? [] : candidates.map(s => s.number))} style={{ minHeight: 48, paddingHorizontal: 12, justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{batchPicked.length === candidates.length ? '전체 해제' : '전체 선택'}</Text>
+                <Text style={[styles.label, { flex: 1 }]}>{t("release.s0168") + " "}{batchPicked.length}{t("release.s0073")}</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0169")} onPress={() => setBatchPicked(batchPicked.length === candidates.length ? [] : candidates.map(s => s.number))} style={{ minHeight: 48, paddingHorizontal: 12, justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{batchPicked.length === candidates.length ? t("release.s0170") : t("release.s0169")}</Text>
                 </Pressable>
               </View>
               <ScrollView testID="batch-grid-scroll" nestedScrollEnabled showsVerticalScrollIndicator contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingBottom: 18 }} style={{ maxHeight: 360 }}>
                 {candidates.map(s => {
                   const picked = batchPicked.includes(s.number);
                   const result = batchResults.find(r => r.number === s.number);
-                  return <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={`${s.number}번 고르기`} accessibilityState={{ selected: picked }}
+                  return <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={t("release.d051", { v0: (s.number) })} accessibilityState={{ selected: picked }}
                     onPress={() => { setBatchPicked(picked ? batchPicked.filter(n => n !== s.number) : [...batchPicked, s.number]); setBatchPreview(null); }}
                     style={{ width: tileWidth, gap: 3 }}>
                     <View style={{ width: tileWidth, aspectRatio: 1, borderRadius: T.radius.md, borderWidth: picked ? 2.5 : 1, borderColor: picked ? C.accent : C.line, overflow: 'hidden', backgroundColor: picked ? C.accentSoft : C.paper }}>
@@ -1543,12 +1543,12 @@ function Studio() {
                       {picked && <View style={{ position: 'absolute', left: 4, top: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><Glyph name="check" size={14} color={C.accentInk} /></View>}
                       {!!result && <View style={{ position: 'absolute', right: 4, bottom: 4, width: 12, height: 12, borderRadius: 6, backgroundColor: result.ok ? colors.PASS : colors.FAIL, borderWidth: 1.5, borderColor: '#FFF' }} />}
                     </View>
-                    <Text numberOfLines={1} style={{ fontSize: 10, color: C.muted }}>{pad(s.number)}{isAnimated(s) ? ' · 움직임 있음' : ''}</Text>
+                    <Text numberOfLines={1} style={{ fontSize: 10, color: C.muted }}>{pad(s.number)}{isAnimated(s) ? " " + t("release.s0171") : ''}</Text>
                   </Pressable>;
                 })}
               </ScrollView>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                {([[true, '움직임 바꾸기'], [false, '있는 칸은 그대로']] as const).map(([value, label]) =>
+                {([[true, t("release.s0172")], [false, t("release.s0173")]] as const).map(([value, label]) =>
                   <Pressable key={label} accessibilityRole="radio" accessibilityLabel={label} accessibilityState={{ checked: batchReplace === value }} onPress={() => { setBatchReplace(value); setBatchPreview(null); }}
                     style={{ flex: 1, minHeight: 48, borderRadius: T.radius.card, borderWidth: 1, borderColor: batchReplace === value ? C.accentBorder : C.line, backgroundColor: batchReplace === value ? C.accentSoft : C.paper, alignItems: 'center', justifyContent: 'center' }}>
                     <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{label}</Text>
@@ -1559,26 +1559,26 @@ function Studio() {
                 // 적용하면 어떻게 되는지 한 칸으로 실제 만들어 본다. 저장된 것은 건드리지 않는다.
                 const willChange = batchPicked.filter(n => batchReplace || !isAnimated(project.slots[n - 1]));
                 const target = batchPreview?.number ?? willChange[0];
-                if (!target) return <Text style={{ fontSize: 12, color: colors.WARNING }}>고른 칸에 이미 움직임이 있어 바뀌는 칸이 없어요.</Text>;
+                if (!target) return <Text style={{ fontSize: 12, color: colors.WARNING }}>{t("release.s0174")}</Text>;
                 return <View style={[styles.card, { alignItems: 'center' }]}>
                   <View style={{ width: 160, height: 160, borderRadius: T.radius.md, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                     {batchPreview
-                      ? <Image accessibilityLabel="적용 전 미리보기" source={{ uri: batchPreview.data }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                      ? <Image accessibilityLabel={t("release.s0175")} source={{ uri: batchPreview.data }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
                       : <Glyph name="play-circle-outline" size={40} color="#B8B8BD" />}
                   </View>
-                  <Text style={{ fontSize: 11, color: C.muted }}>{pad(target)}번{batchPreview ? ` · ${batchPreview.loop.toFixed(1)}초 반복 · 적용 전` : ''}</Text>
-                  <Action title={batchPreview ? '다시 만들어 보기' : '미리 만들어 보기'} icon="play" disabled={!!busy || previewing || !pro}
+                  <Text style={{ fontSize: 11, color: C.muted }}>{pad(target)}{t("release.s0176")}{batchPreview ? t("release.d052", { v0: (batchPreview.loop.toFixed(1)) }) : ''}</Text>
+                  <Action title={batchPreview ? t("release.s0177") : t("release.s0178")} icon="play" disabled={!!busy || previewing || !pro}
                     onPress={() => void previewOnOne(motion, target)} />
-                  {previewing && <Text style={{ fontSize: 12, color: C.muted }}>만들어 보는 중…</Text>}
+                  {previewing && <Text style={{ fontSize: 12, color: C.muted }}>{t("release.s0179")}</Text>}
                 </View>;
               })()}
 
               {!!batchResults.length && <View style={styles.card}>
-                {batchResults.map(r => <Text key={r.number} style={{ fontSize: 12, color: r.ok ? C.ink : colors.FAIL }}>{pad(r.number)} · {r.ok ? '적용됨' : r.reason}</Text>)}
-                {!!failedNumbers.length && <Action title={`실패한 ${failedNumbers.length}칸 다시 시도`} disabled={!!busy || !motion} onPress={() => motion && void applyMotionToMany(motion, failedNumbers, batchReplace)} />}
+                {batchResults.map(r => <Text key={r.number} style={{ fontSize: 12, color: r.ok ? C.ink : colors.FAIL }}>{pad(r.number)} · {r.ok ? t("release.s0180") : r.reason}</Text>)}
+                {!!failedNumbers.length && <Action title={t("release.d053", { v0: (failedNumbers.length) })} disabled={!!busy || !motion} onPress={() => motion && void applyMotionToMany(motion, failedNumbers, batchReplace)} />}
               </View>}
 
-              <Action primary title={`${batchPicked.length}칸에 적용`} disabled={!!busy || !motion || !batchPicked.length || !pro}
+              <Action primary title={t("release.d054", { v0: (batchPicked.length) })} disabled={!!busy || !motion || !batchPicked.length || !pro}
                 onPress={() => motion && void applyMotionToMany(motion, batchPicked, batchReplace)} />
             </>;
           })()}
@@ -1603,7 +1603,7 @@ function Studio() {
 
               {drawn.length
                 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
-                    {drawn.map(s => <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={`${s.number}번으로 만들기`} accessibilityState={{ selected: extraSlot === s.number }}
+                    {drawn.map(s => <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={t("release.d055", { v0: (s.number) })} accessibilityState={{ selected: extraSlot === s.number }}
                       onPress={() => { setExtraSlot(s.number); setPlace({ scale: 1, dx: 0, dy: 0 }); }}
                       style={{ width: 64, gap: 3 }}>
                       <View style={{ width: 64, height: 64, borderRadius: T.radius.sm, borderWidth: extraSlot === s.number ? 2.5 : 0, borderColor: extraSlot === s.number ? C.accent : 'transparent', overflow: 'hidden', backgroundColor: extraSlot === s.number ? C.paper : C.surface2 }}>
@@ -1612,27 +1612,27 @@ function Studio() {
                       <Text style={{ fontSize: 10, color: C.muted, textAlign: 'center' }}>{pad(s.number)}</Text>
                     </Pressable>)}
                   </ScrollView>
-                : <Text style={{ fontSize: 12, color: C.muted }}>먼저 칸을 하나라도 그려 주세요.</Text>}
+                : <Text style={{ fontSize: 12, color: C.muted }}>{t("release.s0181")}</Text>}
 
               {!!slot?.finalImage && <>
                 <View style={{ alignItems: 'center' }}>
                   <View style={{ width: previewWidth, height: previewHeight, borderRadius: T.radius.sm, borderWidth: 1, borderColor: C.line, backgroundColor: '#FFF', overflow: 'hidden' }}>
-                    {!!box && <Image accessibilityLabel="부가 이미지 미리보기" source={{ uri: imageUri(slot.finalImage.path) }}
+                    {!!box && <Image accessibilityLabel={t("release.s0182")} source={{ uri: imageUri(slot.finalImage.path) }}
                       style={{ position: 'absolute', left: box.x, top: box.y, width: box.w, height: box.h }} resizeMode="stretch" />}
                   </View>
                 </View>
                 {extraKind !== 'cover' && <>
-                  <Range label="크기" value={place.scale} min={.3} max={2} display={place.scale.toFixed(2) + '배'} onChange={scale => setPlace({ ...place, scale: Number(scale.toFixed(2)) })} />
-                  <Range label="가로" value={place.dx} min={-.5} max={.5} display={Math.round(place.dx * 100) + '%'} onChange={dx => setPlace({ ...place, dx: Number(dx.toFixed(3)) })} />
-                  <Range label="세로" value={place.dy} min={-.5} max={.5} display={Math.round(place.dy * 100) + '%'} onChange={dy => setPlace({ ...place, dy: Number(dy.toFixed(3)) })} />
+                  <Range label={t("release.s0183")} value={place.scale} min={.3} max={2} display={place.scale.toFixed(2) + t("release.s0184")} onChange={scale => setPlace({ ...place, scale: Number(scale.toFixed(2)) })} />
+                  <Range label={t("release.s0185")} value={place.dx} min={-.5} max={.5} display={Math.round(place.dx * 100) + '%'} onChange={dx => setPlace({ ...place, dx: Number(dx.toFixed(3)) })} />
+                  <Range label={t("release.s0186")} value={place.dy} min={-.5} max={.5} display={Math.round(place.dy * 100) + '%'} onChange={dy => setPlace({ ...place, dy: Number(dy.toFixed(3)) })} />
                 </>}
-                <Action primary title={extraKind === 'cover' ? '이 그림을 대표로' : '이 모양으로 만들기'} disabled={!!busy} onPress={() => void makeExtra()} />
+                <Action primary title={extraKind === 'cover' ? t("release.s0187") : t("release.s0188")} disabled={!!busy} onPress={() => void makeExtra()} />
               </>}
 
               <View style={styles.card}>
-                {([['아이콘 이미지', !!project.extras?.icon, project.extras?.icon ? `${project.extras.icon.width}×${project.extras.icon.height}` : '아직 없어요'],
-                   ['공유 이미지', !!project.extras?.share, project.extras?.share ? `${project.extras.share.width}×${project.extras.share.height}` : '아직 없어요'],
-                   ['대표 이미지', !!project.extras?.coverSlot, project.extras?.coverSlot ? `${pad(project.extras.coverSlot)}번` : '아직 없어요']] as const).map(([label, ok, detail]) =>
+                {([[t("release.s0189"), !!project.extras?.icon, project.extras?.icon ? `${project.extras.icon.width}×${project.extras.icon.height}` : t("release.s0190")],
+                   [t("release.s0191"), !!project.extras?.share, project.extras?.share ? `${project.extras.share.width}×${project.extras.share.height}` : t("release.s0190")],
+                   [t("release.s0192"), !!project.extras?.coverSlot, project.extras?.coverSlot ? t("release.d056", { v0: (pad(project.extras.coverSlot)) }) : t("release.s0190")]] as const).map(([label, ok, detail]) =>
                   <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36 }}>
                     <Glyph name={ok ? 'check-circle' : 'circle-outline'} size={18} color={ok ? colors.PASS : C.muted} />
                     <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>{label}</Text>
@@ -1653,11 +1653,11 @@ function Studio() {
             const sized = drawn.filter(s => s.finalImage!.width === SPEC.width && s.finalImage!.height === SPEC.height);
             const clear = measured.filter(s => s.finalImage!.metrics!.transparent);
             const facts: [string, string][] = [
-              ['완성한 칸', `${doneCount(project)} / ${profile.count}`],
-              [`크기 ${SPEC.width}×${SPEC.height}`, `${sized.length} / ${drawn.length}`],
-              ['투명 배경', measured.length === drawn.length ? `${clear.length} / ${drawn.length}` : `${clear.length} / ${measured.length}`],
-              ['파일 형식', exportFormatSummary(project)],   // 45.38: ZIP 과 같은 규칙으로 센 실제 파일 수
-              ['용량 상한', `${Math.round(profile.maxBytes / 1024)}KB`],
+              [t("release.s0193"), `${doneCount(project)} / ${profile.count}`],
+              [t("release.d057", { v0: (SPEC.width), v1: (SPEC.height) }), `${sized.length} / ${drawn.length}`],
+              [t("release.s0194"), measured.length === drawn.length ? `${clear.length} / ${drawn.length}` : `${clear.length} / ${measured.length}`],
+              [t("release.s0195"), exportFormatSummary(project)],   // 45.38: ZIP 과 같은 규칙으로 센 실제 파일 수
+              [t("release.s0196"), `${Math.round(profile.maxBytes / 1024)}KB`],
             ];
             const problems = setChecks.filter(c => c.status !== 'PASS');
             const need = (moving ? STAGES.animated : STAGES.still)[stage];
@@ -1666,12 +1666,12 @@ function Studio() {
             const movingNeed = moving && 'animatedMin' in need ? need.animatedMin : 0;
             const movingShort = Math.max(0, movingNeed - submitReady);
             const requirements: { label: string; ok: boolean; detail: string }[] = [
-              { label: `이모티콘 ${need.emoticons}개`, ok: shortBy === 0, detail: shortBy ? `${shortBy}개 더` : '채웠어요' },
-              ...(moving ? [{ label: `움직이는 WebP ${movingNeed}개`, ok: movingShort === 0, detail: movingShort ? `${movingShort}개 더` : '채웠어요' }] : []),
-              { label: '아이콘 이미지', ok: !!project.extras?.icon, detail: project.extras?.icon ? '있어요' : '아직 없어요' },
+              { label: t("release.d058", { v0: (need.emoticons) }), ok: shortBy === 0, detail: shortBy ? t("release.d061", { v0: (shortBy) }) : t("release.s0197") },
+              ...(moving ? [{ label: t("release.d060", { v0: (movingNeed) }), ok: movingShort === 0, detail: movingShort ? t("release.d061", { v0: (movingShort) }) : t("release.s0197") }] : []),
+              { label: t("release.s0189"), ok: !!project.extras?.icon, detail: project.extras?.icon ? t("release.s0198") : t("release.s0190") },
               ...(need.share ? [
-                { label: '공유 이미지', ok: !!project.extras?.share, detail: project.extras?.share ? '있어요' : '아직 없어요' },
-                { label: '대표 이미지', ok: !!project.extras?.coverSlot, detail: project.extras?.coverSlot ? `${pad(project.extras.coverSlot)}번` : '아직 없어요' },
+                { label: t("release.s0191"), ok: !!project.extras?.share, detail: project.extras?.share ? t("release.s0198") : t("release.s0190") },
+                { label: t("release.s0192"), ok: !!project.extras?.coverSlot, detail: project.extras?.coverSlot ? t("release.d056", { v0: (pad(project.extras.coverSlot)) }) : t("release.s0190") },
               ] : []),
             ];
             const prepShort = requirements.filter(r => !r.ok).length;
@@ -1690,8 +1690,8 @@ function Studio() {
               {/* 2026-10-08 토스식(캔버스 U-Export): 흰 카드 · 세트 이름과 종류 · 큰 숫자 · 막대. 다 채우면 완성 그림. */}
               <View testID="내보내기 요약" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 20, borderRadius: T.radius.card, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }}>
                 <View style={{ flex: 1, gap: 8 }}>
-                  <Text style={{ fontSize: 14, color: C.muted }}>{finished >= profile.count ? `세트를 모두 완성했어요 · ${profile.profileLabel}` : profile.profileLabel}</Text>
-                  <Text style={{ fontSize: 26, lineHeight: 32, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{finished}<Text style={{ fontSize: 17, fontWeight: '500', color: C.muted }}>{` / ${profile.count}칸 완성`}</Text></Text>
+                  <Text style={{ fontSize: 14, color: C.muted }}>{finished >= profile.count ? t("release.d062", { v0: (profile.profileLabel) }) : profile.profileLabel}</Text>
+                  <Text style={{ fontSize: 26, lineHeight: 32, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{finished}<Text style={{ fontSize: 17, fontWeight: '500', color: C.muted }}>{t("release.d063", { v0: (profile.count) })}</Text></Text>
                   <View style={{ height: 6, borderRadius: 3, backgroundColor: C.surface2, overflow: 'hidden' }}><View style={{ width: `${Math.max(2, Math.min(100, finished / profile.count * 100))}%`, height: '100%', borderRadius: 3, backgroundColor: C.accent }} /></View>
                 </View>
                 {finished >= profile.count && <AssetSlot name="exportSuccessArtwork" size={84} />}
@@ -1699,7 +1699,7 @@ function Studio() {
               <View testID="결과 격자" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {project.slots.map(s => {
                   const bad = problems.some(c => c.slot === s.number), shown = s.motionImage ?? s.finalImage;
-                  return <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={`${pad(s.number)}번 칸 열기`} onPress={() => fixSlot(s.number)}
+                  return <Pressable key={s.number} accessibilityRole="button" accessibilityLabel={t("release.d064", { v0: (pad(s.number)) })} onPress={() => fixSlot(s.number)}
                     style={{ width: cell, height: cell, borderRadius: 10, borderWidth: bad ? 2 : 0, borderColor: STATUS_TONE.fail, backgroundColor: shown ? C.paper : C.fillPressed, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                     {shown ? <Image source={{ uri: imageUri(shown.path) }} style={{ width: '100%', height: '100%', opacity: isDone(s) ? 1 : .55 }} resizeMode="contain" /> : <Text style={{ fontSize: 10, fontWeight: '600', color: C.muted }}>{pad(s.number)}</Text>}
                   </Pressable>;
@@ -1708,14 +1708,14 @@ function Studio() {
 
               {/* 2·3. 손볼 곳과 고치는 길 */}
               {/* 손볼 곳: 한 표면 안의 목록. 상태는 옅은 호박/빨강 동그라미 하나로 — 강한 경고 상자를 쌓지 않는다. */}
-              {issuesPending && <View style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }}><Glyph name="timer-sand" size={18} color={C.muted} /><Text style={{ fontSize: 15, color: C.muted }}>손볼 곳 확인 중</Text></View>}
+              {issuesPending && <View style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }}><Glyph name="timer-sand" size={18} color={C.muted} /><Text style={{ fontSize: 15, color: C.muted }}>{t("release.s0201")}</Text></View>}
               {!issuesPending && !problems.length && <View style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }}>
                 <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="check" size={IconSize.meta} color={C.paper} /></View>
-                <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: C.ink }}>손볼 곳 없음</Text></View>}
+                <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: C.ink }}>{t("release.s0202")}</Text></View>}
               {!issuesPending && !!problems.length && <View style={{ gap: 8 }}>
-                <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink, marginTop: 4 }}>손볼 곳 {problems.length}개</Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink, marginTop: 4 }}>{t("release.s0203") + " "}{problems.length}{t("release.s0073")}</Text>
                 <View style={{ borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper, overflow: 'hidden' }}>
-                  {problems.map((c, i) => <Pressable key={c.label + i} accessibilityRole="button" accessibilityLabel={`${c.label} 고치기`} disabled={!c.slot} onPress={() => c.slot && fixSlot(c.slot)}
+                  {problems.map((c, i) => <Pressable key={c.label + i} accessibilityRole="button" accessibilityLabel={t("release.d065", { v0: (c.label) })} disabled={!c.slot} onPress={() => c.slot && fixSlot(c.slot)}
                     style={({ pressed }) => ({ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderColor: C.line, backgroundColor: pressed && c.slot ? C.fill : 'transparent' })}>
                     <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.status === 'FAIL' ? T.dangerSoft : T.warningSoft, alignItems: 'center', justifyContent: 'center' }}>
                       <Glyph name={c.status === 'FAIL' ? 'alert-circle-outline' : 'alert-outline'} size={17} color={c.status === 'FAIL' ? T.danger : T.warning} />
@@ -1728,40 +1728,40 @@ function Studio() {
 
               {/* 4. 지금 할 일. 이 화면의 노란 버튼은 이것 하나다. */}
               <Action primary title={t('export.make')} disabled={!!busy || !drawn.length} onPress={exportProject} />
-              {!!drawn.length && drawn.length < project.slots.length && <Text style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>{`지금 있는 ${drawn.length}칸으로 만들어요 · 빈 칸은 빠져요`}</Text>}
+              {!!drawn.length && drawn.length < project.slots.length && <Text style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>{t("release.d066", { v0: (drawn.length) })}</Text>}
               {!pro && !!adUnit && <Text testID="광고 안내" style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>{t('export.adHint')}</Text>}
               {/* LINE 움직이는 스티커(2026-10-27): 카카오 묶음과 따로. 움직이는 칸 8개 이상일 때 만들 수 있다. */}
               <Action title={t('export.line')} disabled={!!busy || !drawn.length} onPress={exportLine} />
               <Action title={t('export.lineStill')} disabled={!!busy || !drawn.length} onPress={exportLineStill} />
               {!!lastExport && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, borderRadius: 16, backgroundColor: T.successSoft }}>
                 <Glyph name="check-circle" size={20} color={colors.PASS} />
-                <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>{lastExport.count}칸을 묶었어요</Text>
-                <Pressable accessibilityRole="button" accessibilityLabel="다시 공유" disabled={!!busy} onPress={shareAgain} style={{ minHeight: T.tap, paddingHorizontal: 14, justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>다시 공유</Text></Pressable>
+                <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>{lastExport.count}{t("release.s0205")}</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0206")} disabled={!!busy} onPress={shareAgain} style={{ minHeight: T.tap, paddingHorizontal: 14, justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{t("release.s0206")}</Text></Pressable>
               </View>}
 
               {/* 제출 준비: 지금 그리는 일보다 뒤에 오는 일이라 접어 둔다. 접힌 줄에도 몇 개가 남았는지 보인다(45.2차). */}
               <View style={{ borderRadius: T.radius.card, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper, paddingVertical: 6, paddingHorizontal: 20 }}>
-              <Pressable accessibilityRole="button" accessibilityLabel={prepOpen ? '제출 준비 접기' : t('lesson.text043')} accessibilityState={{ expanded: prepOpen }} onPress={() => setPrepOpen(!prepOpen)}
+              <Pressable accessibilityRole="button" accessibilityLabel={prepOpen ? t("release.s0207") : t('lesson.text043')} accessibilityState={{ expanded: prepOpen }} onPress={() => setPrepOpen(!prepOpen)}
                 style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>{t('ui.reviewSubmit')}</Text>
-                <Text style={{ flex: 1, fontSize: 13, color: prepShort ? C.warning : C.muted }}>{prepShort ? `${prepShort}가지 더 필요해요` : '필요한 것을 다 채웠어요'}</Text>
+                <Text style={{ flex: 1, fontSize: 13, color: prepShort ? C.warning : C.muted }}>{prepShort ? t("release.d067", { v0: (prepShort) }) : t("release.s0208")}</Text>
                 <Glyph name={prepOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
               </Pressable>
               {prepOpen && <View style={{ paddingBottom: 10, gap: 4 }}>
-                <Segmented dense value={stage} onChange={setStage} items={[{ key: 'proposal', label: '제안에 필요한 것', a11y: '제안 기준으로 보기' }, { key: 'release', label: '출시에 필요한 것', a11y: '출시 기준으로 보기' }]} />
+                <Segmented dense value={stage} onChange={setStage} items={[{ key: 'proposal', label: t("release.s0209"), a11y: t("release.s0210") }, { key: 'release', label: t("release.s0211"), a11y: t("release.s0212") }]} />
                 <View style={{ height: 4 }} />
                 {requirements.map(r => row(r.label, r.ok, r.label, r.detail))}
               </View>}
-              <Pressable accessibilityRole="button" accessibilityLabel="부가 이미지 만들기" onPress={() => setScreen('extras')}
+              <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0213")} onPress={() => setScreen('extras')}
                 style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderColor: C.line }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: C.ink }}>부가 이미지 만들기</Text>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: C.ink }}>{t("release.s0213")}</Text>
                 <Glyph name="chevron-right" size={18} color={C.faint} />
               </Pressable>
 
               {/* 5. 규격·직접 확인·파일 검사는 접어 둔다. 지우지 않고, 필요할 때 펼친다. */}
-              <Pressable accessibilityRole="button" accessibilityLabel={specOpen ? '자세히 접기' : '자세히 보기'} accessibilityState={{ expanded: specOpen }} onPress={() => setSpecOpen(!specOpen)}
+              <Pressable accessibilityRole="button" accessibilityLabel={specOpen ? t("release.s0214") : t("release.s0215")} accessibilityState={{ expanded: specOpen }} onPress={() => setSpecOpen(!specOpen)}
                 style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderColor: C.line }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: C.ink }}>규격 · 파일 검사</Text>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: C.ink }}>{t("release.s0216")}</Text>
                 <Glyph name={specOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
               </Pressable>
               </View>
@@ -1769,52 +1769,52 @@ function Studio() {
                 {/* 가이드가 정한 제작 도구 규칙. 앱이 대신하지 않는 일을 한 줄로 분명히 한다. */}
                 {moving && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16, backgroundColor: C.surface2 }}>
                   <Glyph name="movie-open-outline" size={20} color={C.muted} />
-                  <Text style={{ flex: 1, fontSize: 12, color: C.ink, lineHeight: 18 }}>움직이는 칸은 카카오 WebPAnimator에서 WebP로 마무리해요. 묶음에 칸별 프레임이 들어 있어요.</Text>
-                  <Pressable accessibilityRole="button" accessibilityLabel="WebPAnimator 열기" onPress={() => { Linking.openURL(WEBP_ANIMATOR_URL).catch(() => Alert.alert('링크를 열지 못했어요', '잠시 후 다시 시도해 주세요.')); }}
+                  <Text style={{ flex: 1, fontSize: 12, color: C.ink, lineHeight: 18 }}>{t("release.s0217")}</Text>
+                  <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0218")} onPress={() => { Linking.openURL(WEBP_ANIMATOR_URL).catch(() => Alert.alert(t("release.s0219"), t("release.s0220"))); }}
                     style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center' }}>
                     <Glyph name="open-in-new" size={18} color={C.muted} />
                   </Pressable>
                 </View>}
                 <View style={styles.card}>
-                  <Text style={{ fontSize: 12, color: C.ink, lineHeight: 18 }}><Text style={{ fontWeight: '700' }}>{profile.profileLabel}</Text> · {profile.format} · {profile.width}×{profile.height} · {Math.round(profile.maxBytes / 1024)}KB 이하</Text>
-                  {moving && movingCuts > submitReady && <Text style={{ fontSize: 12, color: colors.WARNING, lineHeight: 18 }}>움직이는 {movingCuts}칸 중 {movingCuts - submitReady}칸은 WebP를 만들지 못해 GIF로 들어가요. 그 칸을 다시 열었다 닫으면 다시 만들어요.</Text>}
-                  {!!submitOver && <Text style={{ fontSize: 12, color: colors.FAIL, lineHeight: 18 }}>{submitOver}칸의 WebP 크기가 {KAKAO_ANIMATED_SPEC.width}×{KAKAO_ANIMATED_SPEC.height}가 아니에요.</Text>}
+                  <Text style={{ fontSize: 12, color: C.ink, lineHeight: 18 }}><Text style={{ fontWeight: '700' }}>{profile.profileLabel}</Text> · {profile.format} · {profile.width}×{profile.height} · {Math.round(profile.maxBytes / 1024)}{t("release.s0221")}</Text>
+                  {moving && movingCuts > submitReady && <Text style={{ fontSize: 12, color: colors.WARNING, lineHeight: 18 }}>{t("home.kindMoving") + " "}{movingCuts}{t("release.s0222") + " "}{movingCuts - submitReady}{t("release.s0223")}</Text>}
+                  {!!submitOver && <Text style={{ fontSize: 12, color: colors.FAIL, lineHeight: 18 }}>{submitOver}{t("release.s0224") + " "}{KAKAO_ANIMATED_SPEC.width}×{KAKAO_ANIMATED_SPEC.height}{t("release.s0225")}</Text>}
                   {facts.map(([label, value]) => <View key={label} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}><Text style={{ fontSize: 12, color: C.muted }}>{label}</Text><Text style={{ flexShrink: 1, fontSize: 12, fontWeight: '800', color: C.ink, textAlign: 'right' }}>{value}</Text></View>)}
                   <Text style={{ fontSize: 12, color: C.ink, lineHeight: 18 }}>{need.text}</Text>
-                  <Text style={{ fontSize: 11, color: C.muted, lineHeight: 16 }}>공식 가이드 확인일 {profile.checkedAt}</Text>
+                  <Text style={{ fontSize: 11, color: C.muted, lineHeight: 16 }}>{t("release.s0226") + " "}{profile.checkedAt}</Text>
                 </View>
                 <View style={styles.card}>
-                  <Text style={styles.label}>직접 확인</Text>
+                  <Text style={styles.label}>{t("release.s0227")}</Text>
                   {!!shownCheck && <View style={{ flexDirection: 'row', gap: 8 }}>
-                    {([['밝은 배경', '#FFFFFF'], ['어두운 배경', '#2B2B2E']] as const).map(([label, background]) =>
+                    {([[t("release.s0228"), '#FFFFFF'], [t("release.s0229"), '#2B2B2E']] as const).map(([label, background]) =>
                       <View key={label} style={{ flex: 1, gap: 4, alignItems: 'center' }}>
                         <View style={{ width: '100%', maxWidth: 140, aspectRatio: 1, borderRadius: T.radius.md, borderWidth: 1, borderColor: C.line, backgroundColor: background, overflow: 'hidden' }}>
-                          <Image accessibilityLabel={`${label} 미리보기`} source={{ uri: imageUri((shownCheck.motionImage ?? shownCheck.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                          <Image accessibilityLabel={t("release.d068", { v0: (label) })} source={{ uri: imageUri((shownCheck.motionImage ?? shownCheck.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
                         </View>
                         <Text style={{ fontSize: 11, color: C.muted }}>{label}</Text>
                       </View>)}
                   </View>}
-                  {['캐릭터가 칸마다 같은 인물로 보여요', '표현이 지나치게 겹치지 않아요', '작게 줄여도 알아볼 수 있어요', '남의 그림·글꼴·상표가 없어요'].map(line => <Text key={line} style={{ fontSize: 12, lineHeight: 18, color: C.ink }}>· {line}</Text>)}
-                  <Pressable accessibilityRole="checkbox" accessibilityLabel="표현과 문구 확인" accessibilityState={{ checked: !!project.selfChecked }}
+                  {[t("release.s0230"), t("release.s0231"), t("release.s0232"), t("release.s0233")].map(line => <Text key={line} style={{ fontSize: 12, lineHeight: 18, color: C.ink }}>· {line}</Text>)}
+                  <Pressable accessibilityRole="checkbox" accessibilityLabel={t("release.s0234")} accessibilityState={{ checked: !!project.selfChecked }}
                     onPress={() => updateProject(p => ({ ...p, selfChecked: !p.selfChecked }))}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: T.tap }}>
                     <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: project.selfChecked ? C.ink : C.line, backgroundColor: project.selfChecked ? C.ink : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                       {project.selfChecked && <Glyph name="check" size={14} color="#FFF" />}
                     </View>
-                    <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>표현과 문구를 확인했어요</Text>
+                    <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>{t("release.s0235")}</Text>
                   </Pressable>
                 </View>
                 <View style={styles.card}>
-                  <Text style={styles.label}>파일 검사</Text>
-                  {row('open', drawn.length > 0 && measured.length === drawn.length, '파일 열기', `${measured.length} / ${drawn.length}칸`)}
-                  {row('clear', measured.length > 0 && clear.length === measured.length, '투명 배경', `${clear.length} / ${measured.length}칸`)}
-                  {row('size', drawn.length > 0 && sized.length === drawn.length, '크기', `${sized.length} / ${drawn.length}칸`)}
+                  <Text style={styles.label}>{t("release.s0236")}</Text>
+                  {row('open', drawn.length > 0 && measured.length === drawn.length, t("release.s0237"), t("release.d071", { v0: (measured.length), v1: (drawn.length) }))}
+                  {row('clear', measured.length > 0 && clear.length === measured.length, t("release.s0194"), t("release.d071", { v0: (clear.length), v1: (measured.length) }))}
+                  {row('size', drawn.length > 0 && sized.length === drawn.length, t("release.s0183"), t("release.d071", { v0: (sized.length), v1: (drawn.length) }))}
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', columnGap: 12 }}>
-                    <Pressable accessibilityRole="button" accessibilityLabel="저장된 그림 다시 검사" disabled={!!busy || !drawn.length} onPress={() => void recheckAll()} style={{ minHeight: T.tap, justifyContent: 'center', opacity: !!busy || !drawn.length ? .4 : 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>다시 검사</Text>
+                    <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0238")} disabled={!!busy || !drawn.length} onPress={() => void recheckAll()} style={{ minHeight: T.tap, justifyContent: 'center', opacity: !!busy || !drawn.length ? .4 : 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{t("release.s0239")}</Text>
                     </Pressable>
-                    <Pressable accessibilityRole="button" accessibilityLabel="공식 가이드 보기" onPress={() => { Linking.openURL(SPEC.officialUrl).catch(() => Alert.alert('링크를 열지 못했어요', '잠시 후 다시 시도해 주세요.')); }} style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>공식 가이드</Text>
+                    <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0240")} onPress={() => { Linking.openURL(SPEC.officialUrl).catch(() => Alert.alert(t("release.s0219"), t("release.s0220"))); }} style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{t("release.s0241")}</Text>
                       <Glyph name="open-in-new" size={15} color={C.muted} />
                     </Pressable>
                   </View>
@@ -1832,14 +1832,14 @@ function Studio() {
             const working = project.slots.filter(isWorking).length;
             const drawnCount = project.slots.filter(s => s.finalImage).length;
             const nextCut = nextUnfinished(project, project.lastSlot ?? 0);
-            const playButton = drawnCount >= 2 && <Pressable accessibilityRole="button" accessibilityLabel={playing ? '전체 재생 멈추기' : '전체 재생'} onPress={() => { setPlayIndex(0); setPlaying(!playing); }}
+            const playButton = drawnCount >= 2 && <Pressable accessibilityRole="button" accessibilityLabel={playing ? t("release.s0242") : t("release.s0243")} onPress={() => { setPlayIndex(0); setPlaying(!playing); }}
               style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: playing ? C.pointSoft : C.accent, alignItems: 'center', justifyContent: 'center', ...(playing ? {} : pressed ? Clay.buttonPressed : Clay.button) })}>
               <Glyph name={playing ? 'pause' : 'play'} size={22} color={C.ink} />
             </Pressable>;
             // 45.43 S5: 전부 완성하면 완성 카드 B(흰 카드 · 노란 체크 · 작품 격자 · 노란 행동 하나)가 머리를 맡는다.
             // 행동 글자는 시안의 '파일 묶음 만들기' 대신 '내보내기' — 이 버튼은 묶음을 바로 만들지 않고 내보내기 화면을 연다(거기서 파일 묶음 만들기).
             // 기준을 채우면 완성 카드. 카드의 숫자는 실제로 완성한 칸 수(움직이는 세트를 32칸 다 채웠으면 32).
-            if (done === total) return <><CompleteCard total={finishedCount} subtitle={`${project.projectName} · 파일 묶음을 만들 수 있어요`} actionLabel={t('ui.export')} actionIcon="tray-arrow-up" onAction={() => setScreen('export')}>
+            if (done === total) return <><CompleteCard total={finishedCount} subtitle={t("release.d072", { v0: (project.projectName) })} actionLabel={t('ui.export')} actionIcon="tray-arrow-up" onAction={() => setScreen('export')}>
               {/* 시안처럼 여덟 칸씩 두 줄(앞 16칸). 전체는 아래 격자에 있다. */}
               <View testID="완성 작품 격자" style={{ gap: 6 }}>
                 {[0, 1].map(row => <View key={row} style={{ flexDirection: 'row', gap: 6 }}>
@@ -1856,11 +1856,11 @@ function Studio() {
             return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 18, paddingHorizontal: 20, borderRadius: T.radius.card, ...Clay.yellow }}>
               <View style={{ flex: 1, gap: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <Text style={{ fontSize: 26, lineHeight: 32, color: C.ink, fontWeight: '800', letterSpacing: -.4 }}>{done}<Text style={{ fontSize: 17, fontWeight: '500', color: C.yellowInk }}>{` / ${total}칸`}</Text></Text>
-                  <View style={{ height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{setIsAnimated(project) ? '움직이는 세트 · 24칸 기준' : '멈춰 있는 세트 · 32칸 기준'}</Text></View>
+                  <Text style={{ fontSize: 26, lineHeight: 32, color: C.ink, fontWeight: '800', letterSpacing: -.4 }}>{done}<Text style={{ fontSize: 17, fontWeight: '500', color: C.yellowInk }}>{t("release.d073", { v0: (total) })}</Text></Text>
+                  <View style={{ height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{setIsAnimated(project) ? t("release.s0245") : t("release.s0246")}</Text></View>
                 </View>
-                {!!working && <Text style={{ fontSize: 13, color: C.yellowInk, marginTop: -6 }}>{working}칸 그리는 중</Text>}
-                <FillBar testID="보드 진행" label={`${total}칸 중 ${done}칸 완성${nextCut !== null ? `, 지금 ${nextCut}번 칸` : ''}`} ratio={done / total} />
+                {!!working && <Text style={{ fontSize: 13, color: C.yellowInk, marginTop: -6 }}>{working}{t("release.s0247")}</Text>}
+                <FillBar testID="보드 진행" label={t("release.d074", { v0: (total), v1: (done), v2: (nextCut !== null ? t("release.d157", { v0: (nextCut) }) : '') })} ratio={done / total} />
               </View>
               {playButton}
             </View>;
@@ -1870,14 +1870,14 @@ function Studio() {
             <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.pointSoft, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="chat" size={IconSize.row} color={C.point} /></View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{t('guide.text018')}</Text>
-              <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>대화 속에 넣어 크기·표정을 확인해요</Text>
+              <Text numberOfLines={1} style={{ fontSize: 12, color: C.muted }}>{t("release.s0249")}</Text>
             </View>
             <ImtiIcon name="next" size={IconSize.row} color={C.faint} />
           </Pressable>}
           {reordering && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 12, borderRadius: T.radius.md, backgroundColor: T.infoSoft }}>
             <Glyph name="swap-horizontal" size={18} color={T.info} />
-            <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: T.info }}>순서 바꾸는 중</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="순서 바꾸기 끝" onPress={() => setReordering(false)} style={{ minHeight: T.tap, paddingHorizontal: 16, justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '800', color: T.info }}>끝</Text></Pressable>
+            <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: T.info }}>{t("release.s0250")}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0251")} onPress={() => setReordering(false)} style={{ minHeight: T.tap, paddingHorizontal: 16, justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '800', color: T.info }}>{t("release.s0252")}</Text></Pressable>
           </View>}
           {playing && (() => {
             const made = project.slots.filter(s => s.finalImage);
@@ -1885,7 +1885,7 @@ function Studio() {
             if (!shown) return null;
             return <View style={{ alignItems: 'center', gap: 6 }}>
               <View style={{ width: 200, height: 200, borderRadius: T.radius.md, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
-                <Image accessibilityLabel="전체 재생 화면" source={{ uri: imageUri((shown.motionImage ?? shown.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                <Image accessibilityLabel={t("release.s0253")} source={{ uri: imageUri((shown.motionImage ?? shown.finalImage)!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
               </View>
               <Text style={{ fontSize: 11, color: C.muted }}>{pad(shown.number)} · {playIndex + 1} / {made.length}</Text>
             </View>;
@@ -1895,7 +1895,7 @@ function Studio() {
           <View testID="slot-grid" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{(() => { const nextCut = nextUnfinished(project, project.lastSlot ?? 0); return project.slots.map(s => {
             const done = isDone(s), working = isWorking(s);
             const current = s.number === nextCut, empty = !s.finalImage;
-            return <Pressable key={s.number} testID={`slot-${s.number}`} accessibilityRole="button" accessibilityLabel={`슬롯 ${s.number} ${done ? '완성' : working ? '작업 중' : '미착수'}`} accessibilityState={{ selected: current }} onPress={() => { setSlotNumber(s.number); setPainting(true); }} style={{ width: tileWidth, gap: 4 }}>
+            return <Pressable key={s.number} testID={`slot-${s.number}`} accessibilityRole="button" accessibilityLabel={t("release.d075", { v0: (s.number), v1: (done ? t("release.s0103") : working ? t("release.s0102") : t("release.x025")) })} accessibilityState={{ selected: current }} onPress={() => { setSlotNumber(s.number); setPainting(true); }} style={{ width: tileWidth, gap: 4 }}>
               <View testID={`slot-face-${s.number}`} style={{ width: tileWidth, aspectRatio: 1, borderRadius: 20, backgroundColor: current ? C.pointSoft : empty ? C.paper : C.fill, borderWidth: current ? 2 : empty ? 1.5 : 0, borderColor: current ? C.point : C.lineStrong, borderStyle: empty && !current ? 'dashed' : 'solid', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 4 }}>
                 {s.finalImage
                   ? <Image source={{ uri: imageUri((s.motionImage ?? s.finalImage).path) }} style={{ width: '100%', height: '100%', opacity: done ? 1 : .55 }} resizeMode="contain" />
@@ -1907,8 +1907,8 @@ function Studio() {
                 {(s.status === 'FAIL' || s.status === 'WARNING') && <View pointerEvents="none" style={{ position: 'absolute', left: 6, top: 6 }}><StatusDot tone={s.status === 'FAIL' ? 'fail' : 'warn'} /></View>}
               </View>
               {reordering && !!s.finalImage && <View style={{ flexDirection: 'row', gap: 2 }}>
-                <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 앞으로'} disabled={s.number === 1} onPress={() => moveSlot(s.number, s.number - 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === 1 ? 'transparent' : C.surface2 }}><Glyph name="chevron-left" size={18} color={s.number === 1 ? C.lineStrong : C.ink} /></Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + '번 뒤로'} disabled={s.number === project.slots.length} onPress={() => moveSlot(s.number, s.number + 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === project.slots.length ? 'transparent' : C.surface2 }}><Glyph name="chevron-right" size={18} color={s.number === project.slots.length ? C.lineStrong : C.ink} /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + t("release.s0256")} disabled={s.number === 1} onPress={() => moveSlot(s.number, s.number - 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === 1 ? 'transparent' : C.surface2 }}><Glyph name="chevron-left" size={18} color={s.number === 1 ? C.lineStrong : C.ink} /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={String(s.number) + t("release.s0257")} disabled={s.number === project.slots.length} onPress={() => moveSlot(s.number, s.number + 1)} style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: s.number === project.slots.length ? 'transparent' : C.surface2 }}><Glyph name="chevron-right" size={18} color={s.number === project.slots.length ? C.lineStrong : C.ink} /></Pressable>
               </View>}
               {!empty && <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted, paddingHorizontal: 2 }}><Text style={{ fontWeight: '700', color: C.ink }}>{pad(s.number)}</Text>{captionText(s) ? ' ' + captionText(s) : ''}</Text>}
             </Pressable>;
@@ -1930,7 +1930,7 @@ function Studio() {
     </KeyboardAvoidingView>
 
     {newSetName !== null && <Dialog title={t('ui.newSetDefault')} onClose={() => setNewSetName(null)}>
-      <Text style={styles.muted}>이름을 정하면 {SPEC.count}칸짜리 빈 세트를 만들어요. 이름은 나중에도 바꿀 수 있어요.</Text>
+      <Text style={styles.muted}>{t("release.s0258") + " "}{SPEC.count}{t("release.s0259")}</Text>
       <Field label={t('ui.setName')} value={newSetName} onChangeText={setNewSetName} multiline={false} />
       <Action primary icon="plus" title={t('ui.create')} onPress={() => createProjectNow(newSetName)} />
       <Action title={t('ui.cancel')} onPress={() => setNewSetName(null)} />
@@ -1938,54 +1938,54 @@ function Studio() {
     {managed && !pendingDelete && <Dialog title={t('ui.setManage')} onClose={() => setManageId(null)}>
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{managed.projectName}</Text>
       {/* 2026-10-16: 홈·세트 화면과 같은 기준(멈춤 32 · 움직임 24) */}
-      <Text style={styles.muted}>{Math.min(doneCount(managed), (setIsAnimated(managed) ? STAGES.animated : STAGES.still).proposal.emoticons)} / {(setIsAnimated(managed) ? STAGES.animated : STAGES.still).proposal.emoticons}칸 완성</Text>
+      <Text style={styles.muted}>{Math.min(doneCount(managed), (setIsAnimated(managed) ? STAGES.animated : STAGES.still).proposal.emoticons)} / {(setIsAnimated(managed) ? STAGES.animated : STAGES.still).proposal.emoticons}{t("release.s0260")}</Text>
       <Field label={t('ui.setName')} value={managedName} onChangeText={setManagedName} multiline={false} />
       <Action primary title={t('ui.rename')} disabled={!managedName.trim() || managedName.trim() === managed.projectName} onPress={() => renameProject(managed.id, managedName)} />
-      <Action icon="content-copy" title="세트 복제" onPress={() => duplicateProject(managed.id)} />
-      <Action icon="archive-arrow-down-outline" title="백업 파일 만들기" onPress={() => { const target = managed; setManageId(null); backupProject(target); }} />
-      <Text style={{ fontSize: 12, color: C.muted, lineHeight: 17 }}>그림·레이어·문구·움직임·참고를 파일 하나로 보관해요. 앱을 지우거나 기기를 바꾸기 전에 만들어 두면 내 정보 › 백업에서 되살리기로 그대로 돌아와요.</Text>
-      <Action danger icon="delete-outline" title="세트 삭제" onPress={() => setConfirmDeleteId(managed.id)} />
+      <Action icon="content-copy" title={t("release.s0261")} onPress={() => duplicateProject(managed.id)} />
+      <Action icon="archive-arrow-down-outline" title={t("release.s0262")} onPress={() => { const target = managed; setManageId(null); backupProject(target); }} />
+      <Text style={{ fontSize: 12, color: C.muted, lineHeight: 17 }}>{t("release.s0263")}</Text>
+      <Action danger icon="delete-outline" title={t("release.s0264")} onPress={() => setConfirmDeleteId(managed.id)} />
     </Dialog>}
     {introStep !== null && (() => {
       // 첫 실행 안내(2026-10-06 정리): 그림은 '장식 캐릭터'가 아니라 **실제 기능의 축소판**이다 — 표현 가이드의 선 그림 캐릭터를
       // 캔버스·보드에 놓고, 앱의 선 아이콘·노랑 선택 표시로 그 쪽의 실제 버튼(펜·지우개·가져오기 / 효과 / 자동 저장·묶음·공유)을 보여 준다.
       // 예전 종이 질감 입체 캐릭터(mascot-paper)·사진 같은 펜 그림은 쓰지 않는다. 문구는 실제 저장·공유 동작과 맞춘다.
       const steps = [
-        { icon: 'pencil-outline' as const, title: '그리기·가져오기', body: "세트의 칸을 눌러 손가락으로 그려요. 사진이나 그림은 홈의 '내 그림으로 시작'이나 그리기 화면의 더보기 › 그림 가져오기로 가져와요. 그리는 동안 자동으로 저장되고, 저장을 누르면 보드에 바로 올라가요." },
-        { icon: 'motion-play-outline' as const, title: '움직임 적용', body: `'움직이기' 탭에서 효과를 고르면 내 그림으로 바로 미리 봐요. 세기·속도도 바꿀 수 있어요. 무료 움직임 ${PRESETS.filter(x => !isProPreset(x.id)).length}종으로도 한 세트를 끝까지 만들 수 있어요.` },
-        { icon: 'export-variant' as const, title: '저장·내보내기', body: '그린 칸은 이 기기 안에만 저장돼요. 세트의 내보내기는 제출용 파일 묶음(ZIP)을, 그리기 화면의 이 칸 공유는 그 칸 하나(움직이면 GIF)를 만들어 고른 앱으로 보내요. 앱을 지우거나 기기를 바꾸기 전에는 내 정보 › 전체 백업 만들기로 백업 파일을 만들어 앱 밖에 보관해 두세요.' },
+        { icon: 'pencil-outline' as const, title: t("release.s0265"), body: t("release.s0266") },
+        { icon: 'motion-play-outline' as const, title: t("release.s0267"), body: t("release.d076", { v0: (PRESETS.filter(x => !isProPreset(x.id)).length) }) },
+        { icon: 'export-variant' as const, title: t("release.s0268"), body: t("release.s0269") },
       ];
       const step = steps[introStep]; const last = introStep === steps.length - 1;
       const finish = () => { setIntroStep(null); if (!store?.introDone) { try { commit(st => ({ ...st, introDone: true })); } catch { /* 저장 실패는 다음 실행에 다시 보일 뿐이다 */ } } };
-      return <Dialog title={`사용 안내 ${introStep + 1}/${steps.length}`} onClose={finish}>
+      return <Dialog title={t("release.d077", { v0: (introStep + 1), v1: (steps.length) })} onClose={finish}>
         <IntroArt step={introStep} />
-        <View accessibilityLabel={`${steps.length}단계 중 ${introStep + 1}단계`} style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
+        <View accessibilityLabel={t("release.d078", { v0: (steps.length), v1: (introStep + 1) })} style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
           {steps.map((_, i) => <View key={i} style={{ width: i === introStep ? 20 : 8, height: 8, borderRadius: 4, backgroundColor: i === introStep ? C.point : C.line, borderWidth: i === introStep ? 1 : 0, borderColor: C.accentLine }} />)}
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Glyph name={step.icon} size={22} /><Text style={{ fontSize: 17, fontWeight: '800', color: C.ink }}>{step.title}</Text></View>
         <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{step.body}</Text>
         {last && trial && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{PRO_TRIAL_NOTE}</Text>}
-        <Action primary title={last ? '시작하기' : t('ui.next')} onPress={() => last ? finish() : setIntroStep(introStep + 1)} />
-        {!last && <Action title="건너뛰기" onPress={finish} />}
+        <Action primary title={last ? t("start.go") : t('ui.next')} onPress={() => last ? finish() : setIntroStep(introStep + 1)} />
+        {!last && <Action title={t("release.s0270")} onPress={finish} />}
       </Dialog>;
     })()}
-    {pendingDelete && <Dialog title="세트 삭제" onClose={() => setConfirmDeleteId(null)}>
+    {pendingDelete && <Dialog title={t("release.s0264")} onClose={() => setConfirmDeleteId(null)}>
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{pendingDelete.projectName}</Text>
-      <Text style={styles.muted}>휴지통으로 옮겨요. {TRASH_DAYS}일 안에는 내 정보 › 휴지통에서 그림까지 그대로 되살릴 수 있고, 그 뒤에는 영구 삭제돼요.</Text>
-      <Action danger title="휴지통으로 옮기기" onPress={() => deleteProject(pendingDelete.id)} />
+      <Text style={styles.muted}>{t("release.s0271") + " "}{TRASH_DAYS}{t("release.s0272")}</Text>
+      <Action danger title={t("release.s0273")} onPress={() => deleteProject(pendingDelete.id)} />
       <Action title={t('ui.cancel')} onPress={() => setConfirmDeleteId(null)} />
     </Dialog>}
-    {guideTargetPick && <Dialog title="넣을 곳 고르기" onClose={() => setGuideTargetPick(false)}>
+    {guideTargetPick && <Dialog title={t("release.s0274")} onClose={() => setGuideTargetPick(false)}>
       {sortedProjects.map(p => { const open = nextUnfinished(p, p.lastSlot ?? 0);
         const on = (guideTargetId ?? sortedProjects[0]?.id) === p.id;
-        return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={'넣을 곳 ' + p.projectName} accessibilityState={{ selected: on }}
+        return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={t("release.s0125") + " " + p.projectName} accessibilityState={{ selected: on }}
           onPress={() => { setGuideTargetId(p.id); setGuideTargetPick(false); }}
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 12, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 15, fontWeight: on ? '800' : '700', color: C.ink }}>{p.projectName}</Text>
-          <Text style={{ fontSize: 12, color: C.muted }}>{open === null ? '빈 칸 없음' : pad(open) + '번 칸'}</Text>
+          <Text style={{ fontSize: 12, color: C.muted }}>{open === null ? t("release.s0275") : pad(open) + t("release.s0276")}</Text>
           {on && <Glyph name="check" size={18} color={C.ink} />}
         </Pressable>; })}
-      <Pressable accessibilityRole="button" accessibilityLabel="넣을 곳 새 세트" accessibilityState={{ selected: guideTargetId === 'new' }}
+      <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0277")} accessibilityState={{ selected: guideTargetId === 'new' }}
         onPress={() => { setGuideTargetId('new'); setGuideTargetPick(false); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 12, borderRadius: 12, backgroundColor: guideTargetId === 'new' ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
         <Glyph name="plus" size={18} color={C.ink} />
@@ -1993,45 +1993,45 @@ function Studio() {
       </Pressable>
     </Dialog>}
     {trashOpen && !pendingPurge && <Dialog title={t('ui.trash')} onClose={() => setTrashOpen(false)}>
-      <Text style={styles.muted}>지운 세트는 {TRASH_DAYS}일 동안 여기 남아요. 되살리면 그림·움직임·참고가 그대로 돌아와요.</Text>
-      {!trashed.length && <Text style={{ fontSize: 13, color: C.muted }}>휴지통이 비어 있어요.</Text>}
+      <Text style={styles.muted}>{t("release.s0278") + " "}{TRASH_DAYS}{t("release.s0279")}</Text>
+      {!trashed.length && <Text style={{ fontSize: 13, color: C.muted }}>{t("release.s0280")}</Text>}
       {trashed.map(p => {
         const left = Math.max(0, TRASH_DAYS - Math.floor((Date.now() - Date.parse(p.deletedAt!)) / 86400000));
-        return <View key={p.id} testID={'휴지통 ' + p.projectName} style={{ gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderColor: C.line }}>
+        return <View key={p.id} testID={t("ui.trash") + " " + p.projectName} style={{ gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderColor: C.line }}>
           <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{p.projectName}</Text>
-          <Text style={{ fontSize: 12, color: C.muted }}>{doneCount(p)} / {p.slots.length} 완성 · {left}일 뒤 영구 삭제</Text>
+          <Text style={{ fontSize: 12, color: C.muted }}>{doneCount(p)} / {p.slots.length} {t("release.s0281") + " "}{left}{t("release.s0282")}</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1 }}><Action primary compact icon="restore" title={t('ui.restoreShort')} onPress={() => restoreProject(p.id)} /></View>
-            <View style={{ flex: 1 }}><Action compact danger title="영구 삭제" onPress={() => setConfirmPurgeId(p.id)} /></View>
+            <View style={{ flex: 1 }}><Action compact danger title={t("release.s0283")} onPress={() => setConfirmPurgeId(p.id)} /></View>
           </View>
         </View>; })}
     </Dialog>}
-    {pendingPurge && <Dialog title="영구 삭제" onClose={() => setConfirmPurgeId(null)}>
+    {pendingPurge && <Dialog title={t("release.s0283")} onClose={() => setConfirmPurgeId(null)}>
       <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{pendingPurge.projectName}</Text>
-      <Text style={styles.muted}>이 세트의 그림과 참고 사진이 함께 지워지고, 되돌릴 수 없어요.</Text>
-      <Action danger title="영구 삭제" onPress={() => purgeProject(pendingPurge.id)} />
+      <Text style={styles.muted}>{t("release.s0284")}</Text>
+      <Action danger title={t("release.s0283")} onPress={() => purgeProject(pendingPurge.id)} />
       <Action title={t('ui.cancel')} onPress={() => setConfirmPurgeId(null)} />
     </Dialog>}
     {store && cloudOpen && <CloudScreen visible={cloudOpen} onClose={() => setCloudOpen(false)} cloud={cloud} extra={Constants.expoConfig?.extra} device={`${Platform.OS} ${Platform.Version}`}
       store={store} projects={store.projects} commit={commit} task={task}
       login={loginWith}
       bakeHandoff={bakeHandoff} />}
-    {restoreReport && <Dialog title="전체 백업에서 되살렸어요" onClose={() => setRestoreReport(null)}>
+    {restoreReport && <Dialog title={t("release.s0285")} onClose={() => setRestoreReport(null)}>
       {restoreReport.done.map(line => <Text key={line} style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{'· ' + line}</Text>)}
-      {!!restoreReport.missed.length && <Text style={{ fontSize: 13, lineHeight: 19, color: C.ink }}>{'보관 칸이 차서 넣지 못했어요: ' + restoreReport.missed.join(', ') + '. 지금 것을 정리한 뒤 같은 파일로 다시 되살리면 들어와요(세트는 사본이 하나 더 생겨요).'}</Text>}
-      {!!restoreReport.kept.length && <Text style={{ fontSize: 13, lineHeight: 19, color: C.ink }}>{'이 기기에서 정해 둔 ' + restoreReport.kept.join('·') + '은(는) 바꾸지 않았어요.'}</Text>}
-      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>PRO 구매는 백업에 들어가지 않아요. 구매했다면 PRO 화면의 구매 복원으로 다시 켜 주세요. 휴지통에 있던 세트는 백업에 없어요.</Text>
+      {!!restoreReport.missed.length && <Text style={{ fontSize: 13, lineHeight: 19, color: C.ink }}>{t("release.s0286") + " " + restoreReport.missed.join(', ') + t("release.s0287")}</Text>}
+      {!!restoreReport.kept.length && <Text style={{ fontSize: 13, lineHeight: 19, color: C.ink }}>{t("release.s0288") + " " + restoreReport.kept.join('·') + t("release.s0289")}</Text>}
+      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{t("release.s0290")}</Text>
       <Action primary title={t('ui.confirm')} onPress={() => setRestoreReport(null)} />
     </Dialog>}
-    {exportsConfirm && <Dialog title="내보낸 파일 정리" onClose={() => setExportsConfirm(null)}>
-      <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{`제출 묶음·백업·한 칸 공유를 만들 때 앱에 남은 사본 ${exportsConfirm.length}개예요. 지워도 세트·그림 원본은 그대로이고, 이미 다른 앱(드라이브·메신저 등)으로 보낸 파일도 그대로예요.`}</Text>
-      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>앱 안에만 있는 백업 파일은 지우면 되돌릴 수 없어요. 앱 밖에 보관했는지 먼저 확인해 주세요.</Text>
-      <Action danger icon="delete-outline" title="사본 지우기" onPress={() => { const done = removeExports(exportsConfirm.map(x => x.name)); setExportsConfirm(null); setNotice(`내보낸 사본 ${done.removed}개를 지웠어요. 세트·그림은 그대로예요.`); }} />
-      <Action title="그대로 두기" onPress={() => setExportsConfirm(null)} />
+    {exportsConfirm && <Dialog title={t("release.s0291")} onClose={() => setExportsConfirm(null)}>
+      <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{t("release.d079", { v0: (exportsConfirm.length) })}</Text>
+      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{t("release.s0292")}</Text>
+      <Action danger icon="delete-outline" title={t("release.s0293")} onPress={() => { const done = removeExports(exportsConfirm.map(x => x.name)); setExportsConfirm(null); setNotice(t("release.d080", { v0: (done.removed) })); }} />
+      <Action title={t("release.s0294")} onPress={() => setExportsConfirm(null)} />
     </Dialog>}
-    {contactFallback && <Dialog title="문의 이메일" onClose={() => setContactFallback(false)}>
-      <Text>메일 앱을 열지 못했어요. 아래 주소를 길게 눌러 복사해 주세요.</Text>
-      <Text selectable accessibilityLabel="복사할 문의 이메일" style={{ fontSize: 17, color: C.ink }}>{supportEmail}</Text>
+    {contactFallback && <Dialog title={t("release.s0295")} onClose={() => setContactFallback(false)}>
+      <Text>{t("release.s0296")}</Text>
+      <Text selectable accessibilityLabel={t("release.s0297")} style={{ fontSize: 17, color: C.ink }}>{supportEmail}</Text>
     </Dialog>}
     {/* iOS: 모달 안에는 SafeAreaProvider 를 따로 둔다(바깥과 이어지지 않아 위 여백이 0, 10-29). */}
     {proSheet && <Modal animationType="slide" onRequestClose={() => { setProSheet(false); resetPayment(); }}><SafeAreaProvider>
@@ -2053,7 +2053,7 @@ function Studio() {
             </View>
             {/* 2026-10-15: 같은 그림에 무료 통통 · PRO 손 흔들기(부분) · PRO 등장→인사(단계)를 건 세 장. 앱 엔진으로 구운 실제 움직임이다(scripts/pro-clips.cjs). */}
             <View style={{ flexDirection: 'row', gap: 6 }}>
-              {([[ASSET_SLOTS.proFeatureArtwork.source, '무료 ·', t('ui.fullMotion'), t('ui.bounce'), false],
+              {([[ASSET_SLOTS.proFeatureArtwork.source, t("release.s0299"), t('ui.fullMotion'), t('ui.bounce'), false],
                  [ASSET_SLOTS.proFeatureArtwork.sourceAfter, 'PRO ·', t('ui.partMotion'), t('ui.waveHand'), true],
                  [ASSET_SLOTS.proFeatureArtwork.sourceSteps, 'PRO ·', t('ui.sequenceMotion'), t('ui.enterHello'), true]] as const).map(([src, tier, label, hint, pro]) =>
                 <View key={label} accessibilityLabel={`${tier} ${label} · ${hint}`} style={{ flex: 1, paddingVertical: 8, borderRadius: 16, backgroundColor: pro ? C.paper : C.surface2, borderWidth: pro ? 1 : 0, borderColor: C.line, alignItems: 'center', gap: 4 }}>
@@ -2080,24 +2080,24 @@ function Studio() {
             </View>)}
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start', paddingVertical: 4 }}>
             <Glyph name="check" size={16} color={C.muted} />
-            <Text style={{ flex: 1, fontSize: 12, lineHeight: 18, color: C.muted }}>{`무료 브러시 ${CATALOG.filter(b => !b.pro).length}종 · 무료 움직임 ${PRESETS.filter(p => !isProPreset(p.id)).length}종으로 한 세트를 끝까지 만들고, 워터마크 없이 파일 묶음으로 내보낼 수 있어요.`}</Text>
+            <Text style={{ flex: 1, fontSize: 12, lineHeight: 18, color: C.muted }}>{t("release.d081", { v0: (CATALOG.filter(b => !b.pro).length), v1: (PRESETS.filter(p => !isProPreset(p.id)).length) })}</Text>
           </View>
           {entitlementLabel(entitlement) !== t('ui.free') && <Text style={{ fontSize: 12, color: C.muted }}>{entitlementLabel(entitlement)}</Text>}
-          {expiredButRemembered(entitlement) && <Text style={{ fontSize: 12, color: C.ink }}>기간이 끝나도 이미 만든 움직임은 계속 재생되고 내보낼 수 있어요.</Text>}
+          {expiredButRemembered(entitlement) && <Text style={{ fontSize: 12, color: C.ink }}>{t("release.s0301")}</Text>}
           {/* 파는 것은 하나다: 한 번 구매하면 계속 쓰는 PRO. 값은 **스토어가 말해 주는 것만** 적는다.
               불러오지 못하면 값을 지어내지 않고, 지금 살 수 없다는 것과 다음에 할 일을 적는다. */}
-          {purchasesClosed() ? <Text testID={trial ? 'PRO 체험 안내' : '구매 비활성 안내'} style={{ color: C.ink, fontSize: 15, lineHeight: 23 }}>{trial ? PRO_TRIAL_NOTE : PURCHASES_CLOSED_NOTE}</Text> : <>
-          <View accessibilityRole="summary" accessibilityLabel={prices?.lifetime ? 'PRO 가격 ' + prices.lifetime + (prices.regular ? ', 할인 중, 정가 ' + prices.regular : '') : 'PRO 가격을 불러오지 못했어요'}
+          {purchasesClosed() ? <Text testID={trial ? t("release.s0302") : t("release.s0303")} style={{ color: C.ink, fontSize: 15, lineHeight: 23 }}>{trial ? PRO_TRIAL_NOTE : PURCHASES_CLOSED_NOTE}</Text> : <>
+          <View accessibilityRole="summary" accessibilityLabel={prices?.lifetime ? t("release.s0304") + " " + prices.lifetime + (prices.regular ? t("release.s0305") + " " + prices.regular : '') : t("release.s0306")}
             style={{ borderWidth: 1, borderColor: prices?.lifetime ? C.accentBorder : C.line, borderRadius: 16, padding: 14, gap: 2, backgroundColor: prices?.lifetime ? C.accentSoft : C.surface2 }}>
             <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{PLANS[0].label}</Text>
             {prices?.lifetime
               ? <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                   {!!prices.percent && <Text testID="PRO 할인율" style={{ fontSize: 22, fontWeight: '900', color: C.danger }}>{`${prices.percent}%`}</Text>}
                   <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink }}>{prices.lifetime}</Text>
-                  {!!prices.regular && <Text testID="PRO 정가" accessibilityLabel={'정가 ' + prices.regular} style={{ fontSize: 14, color: C.muted, textDecorationLine: 'line-through' }}>{prices.regular}</Text>}
+                  {!!prices.regular && <Text testID="PRO 정가" accessibilityLabel={t("release.s0309") + " " + prices.regular} style={{ fontSize: 14, color: C.muted, textDecorationLine: 'line-through' }}>{prices.regular}</Text>}
                 </View>
               : <Text style={{ fontSize: 15, fontWeight: '700', color: C.muted }}>{payment.phase === 'loading' ? t('ui.priceLoading') : t('ui.priceFailed')}</Text>}
-            {!prices?.lifetime && payment.phase !== 'loading' && <Text style={{ fontSize: 11, color: C.muted, lineHeight: 16 }}>지금은 구매할 수 없어요. 잠시 뒤 다시 시도해 주세요. 무료 기능은 그대로 쓸 수 있어요.</Text>}
+            {!prices?.lifetime && payment.phase !== 'loading' && <Text style={{ fontSize: 11, color: C.muted, lineHeight: 16 }}>{t("release.s0310")}</Text>}
             <Text style={{ fontSize: 11, color: C.muted }}>{t('ui.onceNote')}</Text>
           </View>
           <PaymentStatus payment={payment} onRestore={() => void restorePro()} onRetry={() => void loadPrices()} />
@@ -2108,15 +2108,15 @@ function Studio() {
           {/* 내부 검수 빌드에서는 이 기기에서 결제를 열 수 없는 일이 흔하다. 잠금에 부딪힌 검수자가
               설정 깊은 곳의 토글을 찾아 헤매지 않도록, 막힌 바로 그 자리에서 켤 수 있게 한다.
               출시 구성에서는 internalReviewBuild() 가 거짓이라 이 줄이 아예 그려지지 않는다. 구매가 아니다. */}
-          {reviewCapable() && !pro && <Action icon="key-variant" title="결제 없이 검수용 PRO 켜기"
-            onPress={() => { try { commit(st => ({ ...st, reviewUnlock: true })); setProSheet(false); resetPayment(); setNotice(internalReviewBuild() ? REVIEW_BUILD_NOTE : REVIEW_DEV_NOTE); } catch (e) { setNotice('검수용 PRO 를 켜지 못했어요. ' + userMessage(e)); } }} />}
+          {reviewCapable() && !pro && <Action icon="key-variant" title={t("release.s0311")}
+            onPress={() => { try { commit(st => ({ ...st, reviewUnlock: true })); setProSheet(false); resetPayment(); setNotice(internalReviewBuild() ? REVIEW_BUILD_NOTE : REVIEW_DEV_NOTE); } catch (e) { setNotice(t("release.s0312") + " " + userMessage(e)); } }} />}
           <Action title={trial ? t('ui.proTrialContinue') : t('ui.freeContinue')} onPress={() => { setProSheet(false); resetPayment(); }} />
-          {!purchasesClosed() && <Pressable accessibilityRole="button" accessibilityLabel={t('ui.purchaseRestore')} disabled={payment.phase === 'buying' || payment.phase === 'restoring'} onPress={() => void restorePro()} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{payment.phase === 'restoring' ? '구매 내역을 확인하는 중…' : t('ui.purchaseRestore')}</Text></Pressable>}
+          {!purchasesClosed() && <Pressable accessibilityRole="button" accessibilityLabel={t('ui.purchaseRestore')} disabled={payment.phase === 'buying' || payment.phase === 'restoring'} onPress={() => void restorePro()} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{payment.phase === 'restoring' ? t("release.s0313") : t('ui.purchaseRestore')}</Text></Pressable>}
           {/* 일회성 구매에는 해지가 없다. 영수증·환불은 스토어의 구매 내역에서 본다.
               예전 구독 저장본을 가진 사람에게는 구독 관리 길도 함께 둔다 — 길을 막지 않는다. */}
-          {isPro(entitlement) && !!entitlement && entitlement.plan === 'lifetime' && <Pressable accessibilityRole="button" accessibilityLabel="구매 내역" onPress={() => { Linking.openURL(purchaseHistoryUrl()).catch(() => setPayment({ phase: 'failed', problem: 'store-unavailable' })); }} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>구매 내역 보기</Text></Pressable>}
-          {isPro(entitlement) && !!entitlement && (entitlement.plan === 'monthly' || entitlement.plan === 'yearly') && <Pressable accessibilityRole="button" accessibilityLabel="구독 관리" onPress={() => { Linking.openURL(subscriptionManageUrl('pro_' + entitlement.plan)).catch(() => setPayment({ phase: 'failed', problem: 'store-unavailable' })); }} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>구독 관리 · 해지</Text></Pressable>}
-          <Text style={{ fontSize: 10, color: C.muted, lineHeight: 16 }}>한 번 구매하면 같은 스토어 계정에서 계속 쓸 수 있어요. 기기를 바꾸거나 다시 설치하면 구매 복원을 눌러 주세요. 작품과 파일은 어떤 경우에도 지우지 않아요.</Text>
+          {isPro(entitlement) && !!entitlement && entitlement.plan === 'lifetime' && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0314")} onPress={() => { Linking.openURL(purchaseHistoryUrl()).catch(() => setPayment({ phase: 'failed', problem: 'store-unavailable' })); }} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{t("release.s0315")}</Text></Pressable>}
+          {isPro(entitlement) && !!entitlement && (entitlement.plan === 'monthly' || entitlement.plan === 'yearly') && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0316")} onPress={() => { Linking.openURL(subscriptionManageUrl('pro_' + entitlement.plan)).catch(() => setPayment({ phase: 'failed', problem: 'store-unavailable' })); }} style={{ minHeight: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{t("release.s0317")}</Text></Pressable>}
+          <Text style={{ fontSize: 10, color: C.muted, lineHeight: 16 }}>{t("release.s0318")}</Text>
         </ScrollView>
       </SafeAreaView></SafeAreaProvider>
     </Modal>}
@@ -2125,10 +2125,10 @@ function Studio() {
     {menu && project && <Dialog title={project.projectName} onClose={() => setMenu(false)}>
       <View style={{ borderRadius: T.radius.md, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
         {([
-          ['캐릭터 기준 · 세트 이름', 'account-star-outline', false, () => { setSlotNumber(null); setCanonOpen(true); }],
-          ['칸 순서 바꾸기', 'swap-horizontal', false, () => { setReordering(true); }],
+          [t("release.s0319"), 'account-star-outline', false, () => { setSlotNumber(null); setCanonOpen(true); }],
+          [t("release.s0320"), 'swap-horizontal', false, () => { setReordering(true); }],
           // 여러 칸 한 번에는 움직이는 칸이 생긴 뒤에만 보인다. 무료 사용자는 들어가기 전에 PRO 안내로 간다.
-          ...(setIsAnimated(project) ? [['움직임 한 번에 적용', 'content-duplicate', !pro, () => {
+          ...(setIsAnimated(project) ? [[t("release.s0083"), 'content-duplicate', !pro, () => {
             if (!pro) { setProSheet(true); return; }
             setBatchSource(project.slots.find(isAnimated)?.number ?? null); setBatchSaved(null); setBatchPicked([]); setBatchResults([]); setBatchPreview(null); setScreen('batch');
           }] as const] : []),
@@ -2143,9 +2143,9 @@ function Studio() {
     {painting && project && slot && <Painter key={project.id + '/' + slot.number} slot={slot} slotCount={project.slots.length} setName={project.projectName} canon={project.canon.image} canonName={project.characterName} canonLocked={project.canon.locked} palette={store?.palette ?? []} onColorUsed={rememberColor} userPalette={store?.userPalette ?? []} onSaveUserColor={saveUserColor} onRemoveUserColor={removeUserColor}
       brushSettings={project.brush}
       favoriteBrushes={store?.favoriteBrushes}
-      onFavoriteBrushes={keys => { try { commit(st => ({ ...st, favoriteBrushes: keys })); } catch (e) { setNotice('즐겨찾기를 저장하지 못했어요. ' + userMessage(e)); } }}
-      onBrushSettings={brush => { try { changeProject(project.id, p => ({ ...p, brush })); } catch (e) { setNotice('브러시 설정을 저장하지 못했어요. ' + userMessage(e)); } }}
-      completeTitle={nextUnfinished(project, slot.number) === null ? '완성 · 전체 보기' : '완성 · 다음'}
+      onFavoriteBrushes={keys => { try { commit(st => ({ ...st, favoriteBrushes: keys })); } catch (e) { setNotice(t("release.s0321") + " " + userMessage(e)); } }}
+      onBrushSettings={brush => { try { changeProject(project.id, p => ({ ...p, brush })); } catch (e) { setNotice(t("release.s0322") + " " + userMessage(e)); } }}
+      completeTitle={nextUnfinished(project, slot.number) === null ? t("release.s0323") : t("release.s0324")}
       hasPrevious={!!previousDrawn(project, slot.number)}
       previousImage={previousDrawn(project, slot.number)?.finalImage}
       pro={pro}
@@ -2198,14 +2198,14 @@ function Studio() {
         // 움직임 효과가 없어도 애니메이션 장이 있으면 움직이는 칸이다(2026-10-15).
         if (!motion && !work.frames) { motionImage = undefined; submitImage = undefined; }
         else if (payload.gif?.data) {
-          try { motionImage = saveMotionLoop(payload.gif.data); } catch (e) { console.warn(e); setNotice('움직이는 파일을 만들지 못했어요. 그림은 저장했어요.'); }
-          if (payload.gif.webp) { try { submitImage = saveSubmitLoop(payload.gif.webp); } catch (e) { console.warn(e); submitImage = undefined; setNotice('WebP를 만들지 못했어요. 그림과 움직임은 저장했어요.'); } }
+          try { motionImage = saveMotionLoop(payload.gif.data); } catch (e) { console.warn(e); setNotice(t("release.s0325")); }
+          if (payload.gif.webp) { try { submitImage = saveSubmitLoop(payload.gif.webp); } catch (e) { console.warn(e); submitImage = undefined; setNotice(t("release.s0326")); } }
           else submitImage = undefined;
         }
         // 공식 도구에 넘길 PNG 프레임은 여기서 만들지 않는다. 내보낼 때 지금 그림·움직임에서 새로 만든다.
         return saveFinal(finalImage, work, dialogue, complete, motion, motionImage, submitImage);
       }}
-      onShare={async () => { const latest = current.current!.projects.find(p => p.id === project.id)!.slots.find(s => s.number === slot.number)!; if (!latest.finalImage || !await Sharing.isAvailableAsync()) throw new Error('공유할 이미지가 없거나 공유 기능을 사용할 수 없습니다.'); // 2026-10-05: 움직임이 있는 칸은 움직이는 GIF 를 보낸다(예전에는 정지 PNG 만 보내 받는 쪽에서 움직임이 없어 보였다).
+      onShare={async () => { const latest = current.current!.projects.find(p => p.id === project.id)!.slots.find(s => s.number === slot.number)!; if (!latest.finalImage || !await Sharing.isAvailableAsync()) throw new Error(t("release.s0327")); // 2026-10-05: 움직임이 있는 칸은 움직이는 GIF 를 보낸다(예전에는 정지 PNG 만 보내 받는 쪽에서 움직임이 없어 보였다).
         // 받는 앱·갤러리에 보이는 이름이 작품을 알아보게 '세트이름-칸번호-시각' 사본을 만들어 보낸다. 원본 파일은 그대로다.
         const source = latest.motion && latest.motionImage ? latest.motionImage : latest.finalImage; const gif = source.path.endsWith('.gif');
         const copy = cutFile(`${safeName(project.projectName)}-${String(slot.number).padStart(2, '0')}-${fileStamp()}.${gif ? 'gif' : 'png'}`); copy.write(localFile(source.path).bytesSync());
@@ -2219,14 +2219,14 @@ type Payment = { phase: 'idle' | 'loading' | 'ready' | 'unavailable' | 'buying' 
 type PaymentView = { tone: 'plain' | 'good' | 'warn'; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; title: string; next?: string; action?: 'restore' | 'retry' };
 function paymentView(payment: Payment): PaymentView | null {
   switch (payment.phase) {
-    case 'loading': return { tone: 'plain', icon: 'progress-clock', title: '스토어 가격을 불러오는 중이에요' };
-    case 'buying': return { tone: 'plain', icon: 'credit-card-outline', title: '결제 창에서 결제를 마쳐 주세요', next: '결제가 끝나면 이 화면에서 바로 PRO가 켜져요.' };
-    case 'restoring': return { tone: 'plain', icon: 'history', title: '구매 내역을 확인하는 중이에요' };
-    case 'bought': return { tone: 'good', icon: 'check-circle-outline', title: 'PRO를 시작했어요', next: '부분 움직임, 여러 칸 한 번에, 고급 브러시를 바로 쓸 수 있어요.' };
-    case 'restored': return { tone: 'good', icon: 'check-circle-outline', title: 'PRO를 다시 켰어요', next: '이 기기에서도 PRO 기능을 쓸 수 있어요.' };
-    case 'cancelled': return { tone: 'plain', icon: 'close-circle-outline', title: '결제를 취소했어요', next: '결제는 진행되지 않았어요. 언제든 다시 시작할 수 있어요.' };
-    case 'pending': return { tone: 'plain', icon: 'timer-sand', title: '결제를 처리하는 중이에요', next: '스토어에서 결제가 끝나면 구매 복원을 눌러 주세요.', action: 'restore' };
-    case 'none': return { tone: 'plain', icon: 'magnify', title: '복원할 구매가 없어요', next: '지금 Play 스토어 계정에서 구매한 PRO를 찾지 못했어요. 다른 계정으로 구매했다면 그 계정으로 바꿔 주세요.' };
+    case 'loading': return { tone: 'plain', icon: 'progress-clock', title: t("release.s0328") };
+    case 'buying': return { tone: 'plain', icon: 'credit-card-outline', title: t("release.s0329"), next: t("release.s0330") };
+    case 'restoring': return { tone: 'plain', icon: 'history', title: t("release.s0331") };
+    case 'bought': return { tone: 'good', icon: 'check-circle-outline', title: t("release.s0332"), next: t("release.s0333") };
+    case 'restored': return { tone: 'good', icon: 'check-circle-outline', title: t("release.s0334"), next: t("release.s0335") };
+    case 'cancelled': return { tone: 'plain', icon: 'close-circle-outline', title: t("release.s0336"), next: t("release.s0337") };
+    case 'pending': return { tone: 'plain', icon: 'timer-sand', title: t("release.s0338"), next: t("release.s0339"), action: 'restore' };
+    case 'none': return { tone: 'plain', icon: 'magnify', title: t("release.s0340"), next: t("release.s0341") };
     // 서버가 거절 이유를 알려 주면(예: 다른 emoti 계정에 연결된 구매) 그 문장을 그대로 보인다.
     case 'unavailable': case 'failed': { const t = problemText(payment.problem ?? 'unknown'); return { tone: 'warn', icon: 'alert-circle-outline', title: t.title, next: payment.problem === 'refused' && payment.reason ? payment.reason : t.next, action: t.action }; }
     default: return null;
@@ -2243,9 +2243,9 @@ function PaymentStatus({ payment, onRestore, onRetry }: { payment: Payment; onRe
     <View style={{ flex: 1, gap: 2 }}>
       <Text style={{ fontSize: 14, fontWeight: '800', color: T.ink }}>{view.title}</Text>
       {!!view.next && <Text style={{ fontSize: 12, color: T.muted, lineHeight: 18 }}>{view.next}</Text>}
-      {!!view.action && <Pressable accessibilityRole="button" accessibilityLabel={view.action === 'restore' ? '안내에서 구매 복원' : '다시 시도'} onPress={view.action === 'restore' ? onRestore : onRetry}
+      {!!view.action && <Pressable accessibilityRole="button" accessibilityLabel={view.action === 'restore' ? t("release.s0343") : t("release.s0344")} onPress={view.action === 'restore' ? onRestore : onRetry}
         style={{ minHeight: 40, justifyContent: 'center', alignSelf: 'flex-start' }}>
-        <Text style={{ fontSize: 13, fontWeight: '800', color: T.ink, textDecorationLine: 'underline' }}>{view.action === 'restore' ? t('ui.purchaseRestore') : '다시 시도'}</Text>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: T.ink, textDecorationLine: 'underline' }}>{view.action === 'restore' ? t('ui.purchaseRestore') : t("release.s0344")}</Text>
       </Pressable>}
     </View>
   </View>;
@@ -2296,9 +2296,9 @@ function IntroArt({ step }: { step: number }) {
     {step === 0 && <>
       <IntroCanvas id="wave" size={canvas} />
       <View style={{ gap }}>
-        <IntroChip small={compact} icon="pencil-outline" label="펜" on />
-        <IntroChip small={compact} icon="eraser" label="지우개" />
-        <IntroChip small={compact} icon="image-plus" label="그림 가져오기" />
+        <IntroChip small={compact} icon="pencil-outline" label={t("release.s0346")} on />
+        <IntroChip small={compact} icon="eraser" label={t("release.s0347")} />
+        <IntroChip small={compact} icon="image-plus" label={t("release.s0348")} />
       </View>
     </>}
     {step === 1 && <>
@@ -2312,9 +2312,9 @@ function IntroArt({ step }: { step: number }) {
         {['wave', 'goguma', 'kong', 'heart'].map(id => <IntroCanvas key={id} id={id} size={tile} />)}
       </View>
       <View style={{ gap }}>
-        <IntroChip small={compact} icon="check" label="자동 저장" />
-        <IntroChip small={compact} icon="folder-zip-outline" label="파일 묶음(ZIP)" on />
-        <IntroChip small={compact} icon="share-variant" label="공유" />
+        <IntroChip small={compact} icon="check" label={t("release.s0349")} />
+        <IntroChip small={compact} icon="folder-zip-outline" label={t("release.s0350")} on />
+        <IntroChip small={compact} icon="share-variant" label={t("release.s0351")} />
       </View>
     </>}
   </View>;

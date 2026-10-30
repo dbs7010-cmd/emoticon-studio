@@ -34,6 +34,13 @@ export function t(key: Key, vars?: Record<string, string | number>): string {
   const text = TABLES[current][key] ?? ko[key];
   return vars ? text.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)) : text;
 }
+// Older storage/server errors can still arrive in Korean. Translate only known copy;
+// the UI chooses a localized fallback for unknown Korean errors outside Korean.
+const messageKeys = new Map<string, Key>(Object.entries(ko).map(([key, value]) => [value.trim(), key as Key]));
+export function knownMessage(text: string): string | undefined {
+  const key = messageKeys.get(text.trim());
+  return key ? t(key) : undefined;
+}
 // 해외(한국어가 아닌) 이용자인가 — 카카오 전용 안내·국내 공모전을 숨기고 LINE 을 앞에 둘 때 쓴다.
 export const overseas = () => current !== 'ko';
 // 대사(2026-10-28): 표현 가이드 감정(카드 id)마다 추천 대사 세 개. 없는 id 는 빈 목록.

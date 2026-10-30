@@ -154,7 +154,7 @@ async function ready() {
   assert.equal(appName, 'emoti 이모티', 'app.json expo.name 은 제품명(브랜드 병기)');
   assert.equal(require('../app.config.js')().name, appName, 'app.config.js 가 이름을 바꾸지 않는다');
   // 홈 로고는 소문자 emoti 주표기 + 작은 '이모티' 보조표기. 화면 읽기 이름은 제품명과 같다.
-  assert.ok(fs.readFileSync('App.tsx', 'utf8').includes(`accessibilityLabel="${appName}"`), '홈 로고를 읽는 이름과 앱 이름이 같다');
+  // 번역 키 호출도 허용하되, 아래 실제 한국어 렌더의 읽기 이름으로 확인한다.
   assert.ok(fs.readFileSync('docs/PLAY_STORE_LISTING_KO.md', 'utf8').includes('`' + appName + '`'), '스토어 등록정보 초안 제목도 같다');
 
   // ── 3. 홈: 브랜드 → 창작 표면 → 최근 작업. 알림이 꺼지면 자리 0 ───────────────────────────────
@@ -162,6 +162,7 @@ async function ready() {
   p.slots = p.slots.map((s, i) => i < 2 ? { ...s, finalImage: { path: 'image-a.png', width: 360, height: 360 }, done: i === 0 } : s);
   saveStore({ version: 1, introDone: true, revision: 1, projects: [p], palette: ['#54A9E8', '#E94F4F'] });
   await act(async () => { tree = create(React.createElement(App)); });
+  assert.equal(tree.root.find(n => n.type === 'View' && n.props.testID === '홈 브랜드').props.accessibilityLabel, appName, '한국어 홈 로고를 읽는 이름과 앱 이름이 같다');
   // 2026-10-08 토스식 개편(캔버스 T-Home, 사용자 확인): 회색 바탕 + 흰 카드 · 이어 그리기 카드 → 공지 한 줄 → 제안까지 세 칸 → 내 세트 한 줄 · 아래 탭.
   assert.equal(texts()[0], 'emoti', '첫 글자는 브랜드 emoti');
   assert.equal(tree.root.findAll(n => n.type === 'View' && n.props.testID === '홈 브랜드')[0].props.accessibilityLabel, appName, '로고는 제품명 한 번으로 읽힌다');

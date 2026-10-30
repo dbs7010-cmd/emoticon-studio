@@ -1,3 +1,4 @@
+import { t } from '../i18n/index';
 import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
@@ -56,16 +57,16 @@ export const ExtraComposer = forwardRef<Composer>(function ExtraComposer(_, ref)
 
   useImperativeHandle(ref, () => ({
     compose: (source, frame, place, background) => new Promise<string>((resolve, reject) => {
-      if (!ready.current) { reject(new Error('그림판이 아직 준비되지 않았어요.')); return; }
+      if (!ready.current) { reject(new Error(t("release.s0404"))); return; }
       const id = ++sequence.current;
-      const timer = setTimeout(() => { pending.current.delete(id); reject(new Error('시간이 너무 오래 걸렸어요.')); }, 20000);
+      const timer = setTimeout(() => { pending.current.delete(id); reject(new Error(t("release.s0405"))); }, 20000);
       pending.current.set(id, { resolve, reject, timer });
       send({ type: 'compose', id, source, frame, place, background });
     }),
   }));
 
   React.useEffect(() => () => {
-    for (const p of pending.current.values()) { clearTimeout(p.timer); p.reject(new Error('화면이 닫혔어요.')); }
+    for (const p of pending.current.values()) { clearTimeout(p.timer); p.reject(new Error(t("release.s0406"))); }
     pending.current.clear();
   }, []);
 
@@ -80,7 +81,7 @@ export const ExtraComposer = forwardRef<Composer>(function ExtraComposer(_, ref)
         const job = pending.current.get(m.id);
         if (!job) return;
         clearTimeout(job.timer); pending.current.delete(m.id);
-        if (m.data) job.resolve(m.data); else job.reject(new Error(m.message || '그리지 못했어요.'));
+        if (m.data) job.resolve(m.data); else job.reject(new Error(m.message || t("release.s0407")));
       }} />
   </View>;
 });

@@ -8,7 +8,7 @@ const rn = Object.fromEntries(['View', 'Text', 'TextInput', 'Pressable', 'Scroll
 Object.assign(rn, { StyleSheet: { create: x => x }, Platform: { OS: 'android' }, useWindowDimensions: () => ({ width: 390, height: 844 }), Animated: require('./_rn-animated-mock.cjs') });
 const load = loader({
   'react-native': rn, '@expo/vector-icons': { MaterialCommunityIcons: 'Icon' }, '@expo/ui': { Host: 'Host' },
-  'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView', useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) },
+  'react-native-safe-area-context': { SafeAreaProvider: 'SafeAreaProvider', SafeAreaView: 'SafeAreaView', useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) },
   'expo-file-system': { Directory: class {}, File: class {}, Paths: { document: 'document' } },
 });
 const { ChatSim } = load('src/components/chat-sim.tsx');

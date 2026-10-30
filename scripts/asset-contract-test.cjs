@@ -212,7 +212,9 @@ async function walk(App, { sourcesOn }) {
     const { read } = require('./_png.cjs');
     const src = fs.readFileSync('src/painter/painter.tsx', 'utf8');
     const block = src.slice(src.indexOf('const CATALOG:'), src.indexOf('const GROUPS:'));
-    const files = [...block.matchAll(/title: '([^']+)'[^\n]*stroke: require\('[^']*\/([^'\/]+\.png)'\)/g)].map(m => ({ title: m[1], file: m[2] }));
+    // 표시 이름은 번역 키가 됐으므로 안정적인 브러시 ID와 한국어 실행값으로 대조한다.
+    const catalog = plain('src/painter/painter.tsx').CATALOG;
+    const files = [...block.matchAll(/key: '([^']+)'[^\n]*stroke: require\('[^']*\/([^'\/]+\.png)'\)/g)].map(m => ({ title: catalog.find(b => b.key === m[1]).title, file: m[2] }));
     assert.equal(files.length, 30, '서른 종 모두 견본 파일을 갖는다: ' + files.length);
     const seenBytes = new Map(), ink = new Map();
     for (const { title, file } of files) {
@@ -241,8 +243,7 @@ async function walk(App, { sourcesOn }) {
   {
     const src = fs.readFileSync('src/painter/painter.tsx', 'utf8');
     const block = src.slice(src.indexOf('const CATALOG:'), src.indexOf('const GROUPS:'));
-    const rows = [...block.matchAll(/\{ key: '([^']+)', title: '([^']+)', pro: (true|false), group: '([^']+)', (?:base: '([^']+)'|preset: '([^']+)')/g)]
-      .map(m => ({ key: m[1], title: m[2], pro: m[3] === 'true', group: m[4], base: m[5], preset: m[6] }));
+    const rows = plain('src/painter/painter.tsx').CATALOG;
     assert.equal(rows.length, 30, '브러시는 서른 가지다: ' + rows.length);
     const free = rows.filter(r => !r.pro), paid = rows.filter(r => r.pro);
     assert.equal(free.length, 10, '무료 열 가지: ' + free.length);

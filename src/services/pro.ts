@@ -1,3 +1,4 @@
+import { t } from '../i18n/index';
 import type { Entitlement } from '../types';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
@@ -17,7 +18,7 @@ export { storeModuleAvailable, PRODUCT_IDS };
 // 45.29: 값은 **스토어가 말해 주는 것만** 화면에 적는다. 내부 기획의 후보 가격은 코드에 두지 않는다
 // (문서 docs/IAP_AUDIT.md 에만 남긴다) — 제품 화면에 '미확정' 같은 내부 상태가 나가지 않게.
 export const PLANS = [
-  { id: 'lifetime' as const, label: '한 번 구매 · 계속 이용' },
+  { id: 'lifetime' as const, label: t("release.p11") },
 ];
 
 export const FREE_ENTITLEMENT: Entitlement = { plan: 'free', source: 'none' };
@@ -45,12 +46,12 @@ export const reviewUnlocked = (store: { reviewUnlock?: boolean } | undefined): b
   reviewCapable() && store?.reviewUnlock === true;
 
 // 화면이 이 빌드가 무엇인지 스스로 말하게 한다. 검수용임을 숨기면 검수 결과를 출시 상태로 착각한다.
-export const REVIEW_BUILD_NOTE = '내부 검수용 빌드예요. PRO 기능을 결제 없이 켜서 확인할 수 있고, 이 권한은 구매가 아니며 출시 앱으로 넘어가지 않아요.';
+export const REVIEW_BUILD_NOTE = t("release.p12");
 // 개발 실행에서 켰을 때의 안내. 검수 APK 와 구분해 적는다 — 어느 쪽에서 본 결과인지 헷갈리면 안 된다.
-export const REVIEW_DEV_NOTE = '개발 실행이라 PRO 기능을 결제 없이 켜서 확인할 수 있어요. 구매가 아니고, 출시 앱에서는 이 스위치가 없어요.';
+export const REVIEW_DEV_NOTE = t("release.p13");
 // 지금 환경의 이름. 화면이 스스로 무엇인지 말하게 한다.
 export const reviewEnvLabel = (): string =>
-  internalReviewBuild() ? '내부 검수용 빌드' : devBuild() ? '개발 실행' : '';
+  internalReviewBuild() ? t("release.p14") : devBuild() ? t("release.p15") : '';
 
 // An entitlement is live when a receipt says so and the term has not run out.
 // "verified" is set only by a server that checked the receipt with Google/Apple. The store file is
@@ -66,7 +67,7 @@ export function isPro(entitlement: Entitlement | undefined, now = new Date()): b
 export function proBlockedReason(entitlement: Entitlement | undefined): string | null {
   if (!entitlement || entitlement.plan === 'free') return null;
   if (entitlement.source === 'store' && !entitlement.verified && !devBuild())
-    return '영수증 확인 서버가 아직 없어서 이 빌드에서는 PRO를 켤 수 없어요. 결제는 진행되지 않습니다.';
+    return t("release.p16");
   return null;
 }
 export function expiredButRemembered(entitlement: Entitlement | undefined, now = new Date()): boolean {
@@ -74,12 +75,12 @@ export function expiredButRemembered(entitlement: Entitlement | undefined, now =
 }
 export function entitlementLabel(entitlement: Entitlement | undefined, now = new Date()): string {
   if (isPro(entitlement, now)) {
-    if (entitlement!.plan === 'lifetime') return 'PRO 이용 중 · 한 번 구매';
-    const until = entitlement!.expiresAt ? ` · ${new Date(entitlement!.expiresAt).toLocaleDateString('ko-KR')}까지` : '';
-    return `PRO 이용 중${until}`;
+    if (entitlement!.plan === 'lifetime') return t("release.p17");
+    const until = entitlement!.expiresAt ? t("release.p47", { v0: (new Date(entitlement!.expiresAt).toLocaleDateString('ko-KR')) }) : '';
+    return t("release.p48", { v0: (until) });
   }
-  if (expiredButRemembered(entitlement, now)) return 'PRO 기간이 끝났어요. 만든 움직임은 그대로 재생·저장할 수 있어요.';
-  return '무료';
+  if (expiredButRemembered(entitlement, now)) return t("release.p18");
+  return t("ui.free");
 }
 
 // ── 구매·복원·재확인 ─────────────────────────────────────────────────────────────────────────
@@ -98,19 +99,19 @@ export type PaymentOptions = { endpoint?: string; fetchImpl?: typeof fetch; now?
 // 사람이 읽는 말. 스토어 오류 코드는 여기서 끝나고 화면에 나가지 않는다. 늘 **다음에 할 일**을 함께 준다.
 export function problemText(problem: PaymentProblem | 'save'): { title: string; next: string; action?: 'restore' | 'retry' } {
   switch (problem) {
-    case 'purchases-closed': return { title: 'PRO 구매 준비 중', next: PURCHASES_CLOSED_NOTE };
-    case 'store-missing': return { title: '이 기기에서는 결제를 열 수 없어요', next: 'Play 스토어에서 받은 앱에서 결제할 수 있어요. 무료 기능은 그대로 쓸 수 있어요.' };
-    case 'network': return { title: '스토어에 연결하지 못했어요', next: '인터넷 연결을 확인하고 다시 시도해 주세요. 결제는 진행되지 않았어요.', action: 'retry' };
-    case 'store-unavailable': return { title: '지금은 스토어 결제를 쓸 수 없어요', next: 'Play 스토어에 로그인되어 있는지 확인하고 잠시 뒤 다시 시도해 주세요.', action: 'retry' };
-    case 'not-found': return { title: 'PRO 상품을 불러오지 못했어요', next: '잠시 뒤 다시 시도해 주세요. 계속되면 앱을 최신 버전으로 업데이트해 주세요.', action: 'retry' };
-    case 'already-owned': return { title: '이미 PRO를 가지고 있어요', next: '한 번 산 PRO 예요. 구매 복원을 누르면 이 기기에서도 켜져요 — 다시 결제되지 않아요.', action: 'restore' };
-    case 'server-missing': return { title: '구매 확인을 아직 할 수 없어요', next: '결제가 됐다면 확인되지 않은 결제는 스토어가 3일 안에 자동으로 환불해요. 앱을 업데이트한 뒤 구매 복원을 눌러 주세요.' };
-    case 'store-account': return { title: 'Play 스토어 계정이 필요해요', next: '기기의 Play 스토어에 로그인한 뒤 다시 시도해 주세요. 무료 기능은 그대로 쓸 수 있어요.' };
-    case 'server-unreachable': return { title: '결제 확인을 마치지 못했어요', next: '인터넷 연결을 확인하고 구매 복원을 눌러 주세요. 확인되기 전에는 결제가 확정되지 않아요.', action: 'restore' };
-    case 'signed-out': return { title: '로그인한 뒤 확인할 수 있어요', next: '구매는 로그인한 emoti 계정에 연결돼요. 로그인한 뒤 구매 복원을 눌러 주세요. 다시 결제되지 않아요.', action: 'restore' };
-    case 'refused': return { title: '이 구매를 확인하지 못했어요', next: 'Play 스토어의 구매 내역을 확인해 주세요. 결제가 됐는데 계속 안 되면 문의해 주세요.' };
-    case 'save': return { title: '구매는 확인했지만 저장하지 못했어요', next: '구매 복원을 누르면 다시 켜져요. 추가 결제는 없어요.', action: 'restore' };
-    default: return { title: '결제를 마치지 못했어요', next: '잠시 뒤 다시 시도해 주세요. 결제가 됐다면 구매 복원으로 켤 수 있어요.', action: 'restore' };
+    case 'purchases-closed': return { title: t("release.p20"), next: PURCHASES_CLOSED_NOTE };
+    case 'store-missing': return { title: t("release.p21"), next: t("release.p22") };
+    case 'network': return { title: t("release.p23"), next: t("release.p24"), action: 'retry' };
+    case 'store-unavailable': return { title: t("release.p25"), next: t("release.p26"), action: 'retry' };
+    case 'not-found': return { title: t("release.p27"), next: t("release.p28"), action: 'retry' };
+    case 'already-owned': return { title: t("release.p29"), next: t("release.p30"), action: 'restore' };
+    case 'server-missing': return { title: t("release.p31"), next: t("release.p32") };
+    case 'store-account': return { title: t("release.p33"), next: t("release.p34") };
+    case 'server-unreachable': return { title: t("release.p35"), next: t("release.p36"), action: 'restore' };
+    case 'signed-out': return { title: t("release.p37"), next: t("release.p38"), action: 'restore' };
+    case 'refused': return { title: t("release.p39"), next: t("release.p40") };
+    case 'save': return { title: t("release.p41"), next: t("release.p42"), action: 'restore' };
+    default: return { title: t("release.p43"), next: t("release.p44"), action: 'restore' };
   }
 }
 

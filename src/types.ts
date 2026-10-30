@@ -1,3 +1,4 @@
+import { t } from './i18n/index';
 export type Status = 'EMPTY' | 'PLANNED' | 'DRAWING' | 'REVIEW' | 'PASS' | 'WARNING' | 'FAIL';
 export type Verdict = 'PASS' | 'WARNING' | 'FAIL';
 export type Metrics = { coverage: number; centerX: number; centerY: number; width: number; height: number; color: number[]; transparent: boolean };
@@ -12,12 +13,12 @@ export type WorkLayer = LayerTransform & { image?: LocalImage };
 // 저장에는 선택 항목으로만 들어간다 — 이 값이 없는 예전 저장본은 'basic' 으로 열리고, 옮겨 심는 작업(migration)이 필요 없다.
 export type CaptionStyle = 'basic' | 'serif' | 'thick';
 export const CAPTION_STYLES: { key: CaptionStyle; title: string }[] = [
-  { key: 'basic', title: '기본' }, { key: 'serif', title: '또박' }, { key: 'thick', title: '도톰' },
+  { key: 'basic', title: t("release.p00") }, { key: 'serif', title: t("release.p01") }, { key: 'thick', title: t("release.p02") },
 ];
 // 대사 배치(2026-10-28): 한 줄 · 양옆 나눠 쓰기(응 … 응) · 세로 한 줄 · 말풍선. 없으면 한 줄(예전 저장본 그대로).
 export type CaptionLayout = 'line' | 'split' | 'vertical' | 'bubble';
 export const CAPTION_LAYOUTS: { key: CaptionLayout; title: string; sample: string }[] = [
-  { key: 'line', title: '한 줄', sample: '가나' }, { key: 'split', title: '양옆', sample: '가 · 나' }, { key: 'vertical', title: '세로', sample: '가\n나' }, { key: 'bubble', title: '말풍선', sample: '( 가 )' },
+  { key: 'line', title: t("release.p03"), sample: t("release.p04") }, { key: 'split', title: t("release.p05"), sample: t("release.p06") }, { key: 'vertical', title: t("release.s0186"), sample: t("release.p08") }, { key: 'bubble', title: t("release.p09"), sample: t("release.p10") },
 ];
 export type Caption = { text: string; place: 'top' | 'bottom'; color: string; style?: CaptionStyle; layout?: CaptionLayout; dx?: number; dy?: number; scale?: number; rot?: number };
 // 애니메이션(2026-10-15): 장마다 그림 전체를 따로 그린다. 2장 이상일 때만 있고, 첫 장의 레이어는 layers 와 같다(대표 그림).

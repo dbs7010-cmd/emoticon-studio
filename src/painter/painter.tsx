@@ -1,3 +1,4 @@
+import { t } from '../i18n/index';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, AppState, BackHandler, LayoutAnimation, Modal, View, Text, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, UIManager } from 'react-native';
 import { Dimensions, Keyboard, useWindowDimensions, type GestureResponderEvent, type ImageSourcePropType } from 'react-native';
@@ -134,9 +135,9 @@ let sessionCaptionFace: CaptionStyle = 'basic';
 if (Platform.OS === 'android') UIManager?.setLayoutAnimationEnabledExperimental?.(true);
 const ease = () => LayoutAnimation?.configureNext?.(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 const BRUSHES = [
-  { key: 'pen' as const, title: '펜', art: require('../../assets/art/tool-pen.png'), stroke: require('../../assets/art/stroke-pen.png') },
-  { key: 'brush' as const, title: '붓', art: require('../../assets/art/tool-brush.png'), stroke: require('../../assets/art/stroke-brush.png') },
-  { key: 'pencil' as const, title: '연필', art: require('../../assets/art/tool-pencil.png'), stroke: require('../../assets/art/stroke-pencil.png') },
+  { key: 'pen' as const, title: t("release.s0346"), art: require('../../assets/art/tool-pen.png'), stroke: require('../../assets/art/stroke-pen.png') },
+  { key: 'brush' as const, title: t("release.s0444"), art: require('../../assets/art/tool-brush.png'), stroke: require('../../assets/art/stroke-brush.png') },
+  { key: 'pencil' as const, title: t("release.s0445"), art: require('../../assets/art/tool-pencil.png'), stroke: require('../../assets/art/stroke-pencil.png') },
 ];
 // 브러시 한 벌(45.28차). 무료 4종 + PRO 8종 = 12종. key 는 저장되는 값이라 바꾸지 않는다.
 // base = 엔진의 기본 브러시, preset = 엔진 PRESETS 의 key. 둘 중 하나만 갖는다.
@@ -147,44 +148,45 @@ export type BrushKey = string;
 type Group = '선' | '채색' | '질감' | '효과';
 export const CATALOG: { key: BrushKey; title: string; pro: boolean; group: Group; base?: Brush; preset?: NonNullable<BrushSettings['preset']>; use: string; stroke: ImageSourcePropType }[] = [
   // ── 무료 10 ──
-  { key: 'pen', title: '기본 펜', pro: false, group: '선', base: 'pen', use: '고른 굵기의 또렷한 선 · 외곽선', stroke: require('../../assets/art/stroke-pen.png') },
-  { key: 'inknatural', title: '자연 잉크', pro: false, group: '선', preset: 'inknatural', use: '가장자리가 살아 있는 손맛 선', stroke: require('../../assets/art/stroke-inknatural.png') },
-  { key: 'ink', title: '테이퍼 펜', pro: false, group: '선', preset: 'ink', use: '시작이 가늘어지는 선 · 펜선 정리', stroke: require('../../assets/art/stroke-ink.png') },
-  { key: 'brushpen2', title: '붓펜', pro: false, group: '선', preset: 'brushpen2', use: '천천히 그으면 굵어지는 붓 선 · 손글씨', stroke: require('../../assets/art/stroke-brushpen2.png') },
-  { key: 'flat', title: '납작 펜', pro: false, group: '선', preset: 'flat', use: '팁 각도에 따라 굵기가 달라지는 선', stroke: require('../../assets/art/stroke-flat.png') },
-  { key: 'pencil2', title: '연필', pro: false, group: '질감', preset: 'pencil2', use: '마른 입자의 옅은 선 · 밑그림과 해칭', stroke: require('../../assets/art/stroke-pencil2.png') },
-  { key: 'colorpencil', title: '색연필', pro: false, group: '질감', preset: 'colorpencil', use: '종이결에 색이 쌓이는 선 · 덧칠', stroke: require('../../assets/art/stroke-colorpencil.png') },
-  { key: 'opaque', title: '불투명 채색붓', pro: false, group: '채색', preset: 'opaque', use: '겹쳐도 얼룩 없는 고른 면 · 평면 채색', stroke: require('../../assets/art/stroke-opaque.png') },
-  { key: 'marker2', title: '마커', pro: false, group: '채색', preset: 'marker2', use: '납작하고 넓은 선 · 빠른 색 채우기', stroke: require('../../assets/art/stroke-marker2.png') },
-  { key: 'airbrush', title: '에어브러시', pro: false, group: '채색', preset: 'airbrush', use: '옅게 번지는 색 · 볼터치와 그림자', stroke: require('../../assets/art/stroke-airbrush.png') },
+  { key: 'pen', title: t("release.s0450"), pro: false, group: '선', base: 'pen', use: t("release.s0451"), stroke: require('../../assets/art/stroke-pen.png') },
+  { key: 'inknatural', title: t("release.s0452"), pro: false, group: '선', preset: 'inknatural', use: t("release.s0453"), stroke: require('../../assets/art/stroke-inknatural.png') },
+  { key: 'ink', title: t("release.s0454"), pro: false, group: '선', preset: 'ink', use: t("release.s0455"), stroke: require('../../assets/art/stroke-ink.png') },
+  { key: 'brushpen2', title: t("release.s0456"), pro: false, group: '선', preset: 'brushpen2', use: t("release.s0457"), stroke: require('../../assets/art/stroke-brushpen2.png') },
+  { key: 'flat', title: t("release.s0458"), pro: false, group: '선', preset: 'flat', use: t("release.s0459"), stroke: require('../../assets/art/stroke-flat.png') },
+  { key: 'pencil2', title: t("release.s0445"), pro: false, group: '질감', preset: 'pencil2', use: t("release.s0460"), stroke: require('../../assets/art/stroke-pencil2.png') },
+  { key: 'colorpencil', title: t("release.s0461"), pro: false, group: '질감', preset: 'colorpencil', use: t("release.s0462"), stroke: require('../../assets/art/stroke-colorpencil.png') },
+  { key: 'opaque', title: t("release.s0463"), pro: false, group: '채색', preset: 'opaque', use: t("release.s0464"), stroke: require('../../assets/art/stroke-opaque.png') },
+  { key: 'marker2', title: t("release.s0465"), pro: false, group: '채색', preset: 'marker2', use: t("release.s0466"), stroke: require('../../assets/art/stroke-marker2.png') },
+  { key: 'airbrush', title: t("release.s0467"), pro: false, group: '채색', preset: 'airbrush', use: t("release.s0468"), stroke: require('../../assets/art/stroke-airbrush.png') },
   // ── PRO 20 ──
-  { key: 'inkrough', title: '거친 잉크', pro: true, group: '선', preset: 'inkrough', use: '속은 꽉 차고 가장자리가 거친 굵은 선', stroke: require('../../assets/art/stroke-inkrough.png') },
-  { key: 'rough', title: '드라이 잉크', pro: true, group: '선', preset: 'rough', use: '안쪽이 끊기는 마른 잉크 선', stroke: require('../../assets/art/stroke-rough.png') },
-  { key: 'bristle', title: '붓결 잉크', pro: true, group: '선', preset: 'bristle', use: '획 방향으로 이어지는 붓털 결', stroke: require('../../assets/art/stroke-bristle.png') },
-  { key: 'ballpen', title: '볼펜', pro: true, group: '선', preset: 'ballpen', use: '가늘고 옅은 선 · 겹쳐 쌓는 해칭', stroke: require('../../assets/art/stroke-ballpen.png') },
-  { key: 'crayon', title: '크레용', pro: true, group: '질감', preset: 'crayon', use: '왁스가 뭉치고 종이가 비치는 선', stroke: require('../../assets/art/stroke-crayon.png') },
-  { key: 'chalk', title: '분필', pro: true, group: '질감', preset: 'chalk', use: '가루가 성글게 앉는 굵은 선', stroke: require('../../assets/art/stroke-chalk.png') },
-  { key: 'pastel', title: '소프트 파스텔', pro: true, group: '질감', preset: 'pastel', use: '고운 가루가 넓게 앉는 채색', stroke: require('../../assets/art/stroke-pastel.png') },
-  { key: 'charcoal', title: '목탄', pro: true, group: '질감', preset: 'charcoal', use: '큰 결이 불규칙하게 번지는 선·면', stroke: require('../../assets/art/stroke-charcoal.png') },
-  { key: 'pencilside', title: '연필 옆면', pro: true, group: '질감', preset: 'pencilside', use: '넓은 접촉면의 결 있는 음영', stroke: require('../../assets/art/stroke-pencilside.png') },
-  { key: 'grainshade', title: '입자 음영', pro: true, group: '질감', preset: 'grainshade', use: '미세한 입자가 쌓이는 음영', stroke: require('../../assets/art/stroke-grainshade.png') },
-  { key: 'oilpastel', title: '오일 파스텔', pro: true, group: '채색', preset: 'oilpastel', use: '두껍게 눌리는 왁스 채색', stroke: require('../../assets/art/stroke-oilpastel.png') },
-  { key: 'wash', title: '워시', pro: true, group: '채색', preset: 'wash', use: '얇은 색을 겹쳐 쌓는 넓은 칠', stroke: require('../../assets/art/stroke-wash.png') },
-  { key: 'wateredge', title: '가장자리 수채', pro: true, group: '채색', preset: 'wateredge', use: '가장자리에 색이 고이는 수채 면', stroke: require('../../assets/art/stroke-wateredge.png') },
-  { key: 'dryflat', title: '드라이 평붓', pro: true, group: '효과', preset: 'dryflat', use: '넓은 붓결과 끊어진 색면', stroke: require('../../assets/art/stroke-dryflat.png') },
-  { key: 'pointil', title: '점묘', pro: true, group: '효과', preset: 'pointil', use: '경로 둘레에 흩어지는 점', stroke: require('../../assets/art/stroke-pointil.png') },
-  { key: 'spray', title: '스프레이', pro: true, group: '효과', preset: 'spray', use: '넓게 퍼지는 분사 입자', stroke: require('../../assets/art/stroke-spray.png') },
-  { key: 'outline', title: '테두리 펜', pro: true, group: '효과', preset: 'outline', use: '속이 빈 두 겹 선 · 굵은 강조', stroke: require('../../assets/art/stroke-outline.png') },
-  { key: 'dotted', title: '점선 펜', pro: true, group: '효과', preset: 'dotted', use: '점이 이어지는 선 · 재봉선과 안내선', stroke: require('../../assets/art/stroke-dotted.png') },
-  { key: 'parallelpen', title: '평행선 펜', pro: true, group: '효과', preset: 'parallelpen', use: '나란한 세 줄 · 속도선과 무늬', stroke: require('../../assets/art/stroke-parallelpen.png') },
-  { key: 'glowpen', title: '발광 펜', pro: true, group: '효과', preset: 'glowpen', use: '또렷한 중심과 흐린 번짐 · 반짝임', stroke: require('../../assets/art/stroke-glowpen.png') },
+  { key: 'inkrough', title: t("release.s0469"), pro: true, group: '선', preset: 'inkrough', use: t("release.s0470"), stroke: require('../../assets/art/stroke-inkrough.png') },
+  { key: 'rough', title: t("release.s0471"), pro: true, group: '선', preset: 'rough', use: t("release.s0472"), stroke: require('../../assets/art/stroke-rough.png') },
+  { key: 'bristle', title: t("release.s0473"), pro: true, group: '선', preset: 'bristle', use: t("release.s0474"), stroke: require('../../assets/art/stroke-bristle.png') },
+  { key: 'ballpen', title: t("release.s0475"), pro: true, group: '선', preset: 'ballpen', use: t("release.s0476"), stroke: require('../../assets/art/stroke-ballpen.png') },
+  { key: 'crayon', title: t("release.s0477"), pro: true, group: '질감', preset: 'crayon', use: t("release.s0478"), stroke: require('../../assets/art/stroke-crayon.png') },
+  { key: 'chalk', title: t("release.s0479"), pro: true, group: '질감', preset: 'chalk', use: t("release.s0480"), stroke: require('../../assets/art/stroke-chalk.png') },
+  { key: 'pastel', title: t("release.s0481"), pro: true, group: '질감', preset: 'pastel', use: t("release.s0482"), stroke: require('../../assets/art/stroke-pastel.png') },
+  { key: 'charcoal', title: t("release.s0483"), pro: true, group: '질감', preset: 'charcoal', use: t("release.s0484"), stroke: require('../../assets/art/stroke-charcoal.png') },
+  { key: 'pencilside', title: t("release.s0485"), pro: true, group: '질감', preset: 'pencilside', use: t("release.s0486"), stroke: require('../../assets/art/stroke-pencilside.png') },
+  { key: 'grainshade', title: t("release.s0487"), pro: true, group: '질감', preset: 'grainshade', use: t("release.s0488"), stroke: require('../../assets/art/stroke-grainshade.png') },
+  { key: 'oilpastel', title: t("release.s0489"), pro: true, group: '채색', preset: 'oilpastel', use: t("release.s0490"), stroke: require('../../assets/art/stroke-oilpastel.png') },
+  { key: 'wash', title: t("release.s0491"), pro: true, group: '채색', preset: 'wash', use: t("release.s0492"), stroke: require('../../assets/art/stroke-wash.png') },
+  { key: 'wateredge', title: t("release.s0493"), pro: true, group: '채색', preset: 'wateredge', use: t("release.s0494"), stroke: require('../../assets/art/stroke-wateredge.png') },
+  { key: 'dryflat', title: t("release.s0495"), pro: true, group: '효과', preset: 'dryflat', use: t("release.s0496"), stroke: require('../../assets/art/stroke-dryflat.png') },
+  { key: 'pointil', title: t("release.s0497"), pro: true, group: '효과', preset: 'pointil', use: t("release.s0498"), stroke: require('../../assets/art/stroke-pointil.png') },
+  { key: 'spray', title: t("release.s0499"), pro: true, group: '효과', preset: 'spray', use: t("release.s0500"), stroke: require('../../assets/art/stroke-spray.png') },
+  { key: 'outline', title: t("release.s0501"), pro: true, group: '효과', preset: 'outline', use: t("release.s0502"), stroke: require('../../assets/art/stroke-outline.png') },
+  { key: 'dotted', title: t("release.s0503"), pro: true, group: '효과', preset: 'dotted', use: t("release.s0504"), stroke: require('../../assets/art/stroke-dotted.png') },
+  { key: 'parallelpen', title: t("release.s0505"), pro: true, group: '효과', preset: 'parallelpen', use: t("release.s0506"), stroke: require('../../assets/art/stroke-parallelpen.png') },
+  { key: 'glowpen', title: t("release.s0507"), pro: true, group: '효과', preset: 'glowpen', use: t("release.s0508"), stroke: require('../../assets/art/stroke-glowpen.png') },
 ];
 const GROUPS: Group[] = ['선', '채색', '질감', '효과'];
+const brushGroupLabel = (group: Group) => ({ '선': t('release.s0446'), '채색': t('release.s0447'), '질감': t('release.s0448'), '효과': t('release.s0449') })[group];
 // 무료로 쓰는 프리셋. PRO 가 끝나도 이 값들은 효력이 남는다.
 const FREE_PRESETS = new Set(CATALOG.filter(b => !b.pro && b.preset).map(b => b.preset as string));
 // 목록에서 내린 예전 브러시. 엔진에는 그대로 있어 저장된 작품이 쓰던 값이 살아 있다.
 // 45.31 에서 마커·붓펜·연필이 새 것으로 갈렸고, 예전 것은 여기에 남아 계속 해석된다.
-const RETIRED: Record<string, string> = { grain: '결 연필', calligraphy: '캘리그래피', chisel: '납작펜(구형)', soft: '부드러운 펜', marker: '마커(구형)', brushpen: '붓펜(구형)' };
+const RETIRED: Record<string, string> = { grain: t("release.s0509"), calligraphy: t("release.s0510"), chisel: t("release.s0511"), soft: t("release.s0512"), marker: t("release.s0513"), brushpen: t("release.s0514") };
 export const FREE_BRUSHES = CATALOG.filter(b => !b.pro).map(b => b.key);
 export const PRO_BRUSH_KEYS = CATALOG.filter(b => b.pro).map(b => b.key);
 // 빠른 선택 줄의 첫 모습. 승인 보드처럼 세 칸이고, 전체 목록에서 고르면 그 자리가 바뀐다.
@@ -209,7 +211,7 @@ const QUICK_DEFAULT: BrushKey[] = ['pen', 'pencil2', 'marker2'];
 // 두 탭이 같은 자리·같은 모양을 쓴다: 그리기 = 굵기·불투명도, 움직이기 = 세기·속도(시안 D).
 export const BAR_H = 44;
 // 움직임 세기·속도를 말로(움직임 판의 예전 조절 줄과 같은 말).
-const MOTION_WORDS = (r: number) => r < .2 ? '아주 약하게' : r < .4 ? '약하게' : r < .6 ? '보통' : r < .8 ? '세게' : '아주 세게';
+const MOTION_WORDS = (r: number) => r < .2 ? t("release.s0515") : r < .4 ? t("release.s0516") : r < .6 ? t("release.s0517") : r < .8 ? t("release.s0518") : t("release.s0519");
 // 캔버스 둘레 여백. 종이 가장자리가 화면 끝에 붙어 잘린 듯 보이지 않을 만큼만 둔다(45.37: 10 → 45.39: 8).
 export const CANVAS_GAP = 8;
 // 손잡이 지름. 홈의 양 끝을 손잡이 반만큼 들여 두어 끝에서 잘리지 않는다.
@@ -242,13 +244,13 @@ function BarSlider({ label, value, min, max, step = 1, onCommit, show, lead, dis
       <Text numberOfLines={1} style={{ fontSize: 11, lineHeight: 14, fontWeight: '700', color: T.muted }}>{label}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, minHeight: 16 }}>
         {lead?.(shown)}
-        <Text testID={testID ? testID + ' 값' : undefined} numberOfLines={1} style={{ fontSize: 12, lineHeight: 16, fontWeight: '800', color: T.ink }}>{show(shown)}</Text>
+        <Text testID={testID ? testID + " " + t("release.s0435") : undefined} numberOfLines={1} style={{ fontSize: 12, lineHeight: 16, fontWeight: '800', color: T.ink }}>{show(shown)}</Text>
       </View>
     </View>
     <View testID={testID} accessibilityRole="adjustable" accessibilityLabel={a11yLabel ?? label}
       accessibilityState={{ disabled }} accessibilityValue={{ min, max, now: shown }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-      accessibilityHint={disabled ? undefined : '누른 채 좌우로 끌어서 바꿔요'}
+      accessibilityHint={disabled ? undefined : t("release.s0520")}
       onAccessibilityAction={e => { if (disabled) return; if (e.nativeEvent.actionName === 'increment') nudge(1); if (e.nativeEvent.actionName === 'decrement') nudge(-1); }}
       onLayout={e => { const n = Math.round(e.nativeEvent.layout.width); if (n > 0 && n !== w) setW(n); }}
       onStartShouldSetResponder={() => !disabled} onMoveShouldSetResponder={() => !disabled} onResponderTerminationRequest={() => false}
@@ -311,7 +313,7 @@ function VSlider({ label, value, min, max, step = 1, onCommit, bubble, disabled,
     <View testID={testID} accessibilityRole="adjustable" accessibilityLabel={a11yLabel ?? label}
       accessibilityState={{ disabled }} accessibilityValue={{ min, max, now: Math.round(shown) }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-      accessibilityHint={disabled ? undefined : '누른 채 위아래로 끌어서 바꿔요'}
+      accessibilityHint={disabled ? undefined : t("release.s0521")}
       onAccessibilityAction={e => { if (disabled) return; if (e.nativeEvent.actionName === 'increment') nudge(1); if (e.nativeEvent.actionName === 'decrement') nudge(-1); }}
       onLayout={e => { const n = Math.round(e.nativeEvent.layout.height); if (n > 0 && n !== h) setH(n); }}
       onStartShouldSetResponder={() => !disabled} onMoveShouldSetResponder={() => !disabled} onResponderTerminationRequest={() => false}
@@ -329,7 +331,7 @@ function VSlider({ label, value, min, max, step = 1, onCommit, bubble, disabled,
         {/* 아래에서 지금 값까지만 노랑이 찬다. */}
         <View style={{ position: 'absolute', left: RAIL_GROOVE_X, width: RAIL_GROOVE_W, top: pct(1 - ratio), bottom: -RAIL_HANDLE_H / 2, borderRadius: RAIL_GROOVE_W / 2, backgroundColor: disabled ? T.lineStrong : T.point }} />
         {/* 손잡이. 누르는 동안에도 크기는 그대로다 — 테두리 색만 짙어진다. */}
-        <View testID={testID ? testID + ' 손잡이' : undefined}
+        <View testID={testID ? testID + " " + t("release.s0522") : undefined}
           style={{ position: 'absolute', left: 0, bottom: pct(ratio), marginBottom: -RAIL_HANDLE_H / 2, width: RAIL_HANDLE_W, height: RAIL_HANDLE_H, borderRadius: RAIL_HANDLE_W / 2,
             alignItems: 'center', justifyContent: 'center', backgroundColor: T.paper,
             borderWidth: 1, borderColor: live !== null ? T.ink : T.lineStrong, ...Elev[1] }}>
@@ -407,8 +409,8 @@ function DragList({ ids, rowH, onMove, onDragging, renderRow }: {
       </Animated.View>; })}
   </View>;
 }
-const ALL_TOOLS: [Tool, string, IconName, string][] = [['pen', '펜', 'fountain-pen-tip', '그리기 도구 펜'], ['eraser', '지우개', 'eraser', '지우개'], ['fill', '채우기', 'format-color-fill', '채우기'], ['select', '선택', 'select-drag', '선택']];
-const STAB_LEVELS = [['light', '약'], ['medium', '중'], ['strong', '강']] as const;
+const ALL_TOOLS: [Tool, string, IconName, string][] = [['pen', t("release.s0346"), 'fountain-pen-tip', t("release.s0523")], ['eraser', t("release.s0347"), 'eraser', t("release.s0347")], ['fill', t("release.s0524"), 'format-color-fill', t("release.s0524")], ['select', t("release.s0525"), 'select-drag', t("release.s0525")]];
+const STAB_LEVELS = [['light', t("release.s0526")], ['medium', t("release.s0527")], ['strong', t("release.s0528")]] as const;
 // 저장된 브러시 설정을 믿지 않고 한 칸씩 읽는다. 낯선 값은 없는 것으로 본다.
 function cleanBrush(b?: BrushSettings): BrushSettings {
   const size = (n: unknown) => typeof n === 'number' && Number.isFinite(n) ? Math.max(1, Math.min(48, Math.round(n))) : undefined;
@@ -684,7 +686,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         // 45.37 이전에 한 칸의 가이드 그림이 세트의 모든 칸에 들어간 데이터가 남아 있어 **새 빈 칸마다 참고 그림이 깔렸다**.
         // 참고 그림 자체(데이터)는 지우지 않는다 — 참고 줄에서 다시 켤 수 있다. 기획에서 칸에 지정한 참고(referenceKey)만 켠다.
         const planned = slot.referenceKey !== undefined && image.path === slot.referenceKey;
-        return savedRef ?? { ...transform('ref-' + image.path, `참고 ${i + 1}`), visible: planned, opacity: .3, image };
+        return savedRef ?? { ...transform('ref-' + image.path, t("release.d119", { v0: (i + 1) })), visible: planned, opacity: .3, image };
       });
       const decodedLayers = await Promise.all(layers.map(async l => ({ ...l, data: 'image' in l && l.image ? await dataUrl(l.image) : undefined })));
       // 애니메이션 장(첫 장 = 위 레이어).
@@ -699,7 +701,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       // 저장 파일의 움직임과 움직이는 파일이 조용히 지워진다(재실행 뒤 '저장'만 눌러도).
       // res 3: 장을 1080×1080 으로 그린다(문서 좌표·저장 값은 360 그대로, 완성본·카카오 출력도 360). 화면에서 선이 또렷하다(2026-10-28).
       if (!canceled) send({ type: 'init', res: 3, layers: decodedLayers, frames: decodedFrames, references: decodedRefs, activeLayerId: slot.work?.activeLayerId, caption: firstCaption, motion: slot.motion ?? null, color, penWidth, eraserWidth });
-    })().catch(e => Alert.alert('작업을 불러오지 못했어요', userMessage(e)));
+    })().catch(e => Alert.alert(t("release.s0530"), userMessage(e)));
     return () => { canceled = true; };
   }, [ready]);
 
@@ -859,16 +861,16 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   }
   // ── 애니메이션 ──
   const animOn = (scene.frames?.length ?? 0) > 1;
-  function startAnim() { send({ type: 'animStart', duration: .3 }); setAnimHint('2장은 1장을 복사했어요. 바뀌는 부분만 고쳐 그려요'); }
+  function startAnim() { send({ type: 'animStart', duration: .3 }); setAnimHint(t("release.s0531")); }
   function playAnim(on: boolean) { setAnimPlaying(on); send({ type: on ? 'play' : 'stop' }); }
   function pickFrame(i: number) { setAnimPlaying(false); send({ type: 'frameSelect', index: i }); }
   function deleteFrame(i: number) {
-    Alert.alert(`${i + 1}장을 지울까요?`, (scene.frames?.length ?? 0) <= 2 ? '1장만 남으면 애니메이션이 꺼지고 남은 장이 그림이 돼요.' : '이 장의 그림이 지워져요.', [
-      { text: '취소', style: 'cancel' }, { text: '지우기', style: 'destructive', onPress: () => { setAnimPlaying(false); send({ type: 'frameDelete', index: i }); } }]);
+    Alert.alert(t("release.d108", { v0: (i + 1) }), (scene.frames?.length ?? 0) <= 2 ? t("release.s0532") : t("release.s0533"), [
+      { text: t("ui.cancel"), style: 'cancel' }, { text: t("release.s0534"), style: 'destructive', onPress: () => { setAnimPlaying(false); send({ type: 'frameDelete', index: i }); } }]);
   }
   function animOff() {
-    Alert.alert('애니메이션을 끌까요?', '1장만 남기고 나머지 장은 지워져요.', [
-      { text: '취소', style: 'cancel' }, { text: '끄기', style: 'destructive', onPress: () => { setAnimPlaying(false); setAnimHint(null); send({ type: 'animOff' }); } }]);
+    Alert.alert(t("release.s0535"), t("release.s0536"), [
+      { text: t("ui.cancel"), style: 'cancel' }, { text: t("release.s0537"), style: 'destructive', onPress: () => { setAnimPlaying(false); setAnimHint(null); send({ type: 'animOff' }); } }]);
   }
   useEffect(() => { if (initialized && animOn && (tab === 'anim' || tab === 'draw')) send({ type: 'frameThumbs', size: 64 }); }, [initialized, animOn, tab, scene.frameIdx, scene.frames?.length, scene.dirty, scene.undo]);
   // 움직임은 고르는 즉시 칸에 들어간다. 따로 '적용'하지 않고 칸과 함께 자동저장·완성으로 저장된다.
@@ -930,7 +932,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     const token = ++saveToken.current;
     if (slowTimer.current) clearTimeout(slowTimer.current);
     slowTimer.current = setTimeout(() => setSlowSave(true), 1500);
-    timeout.current = setTimeout(() => { send({ type: 'saveFailed', token }); setSaveMark(null); unlock(); Alert.alert('저장이 늦어지고 있어요', '작업은 화면에 그대로 있어요. 잠시 뒤 스스로 다시 저장하고, 닫기나 완성을 누르면 바로 다시 저장해요.'); }, 20000);
+    timeout.current = setTimeout(() => { send({ type: 'saveFailed', token }); setSaveMark(null); unlock(); Alert.alert(t("release.s0538"), t("release.s0539")); }, 20000);
     send({ type: 'save', gif: !!scene.motion || (scene.frames?.length ?? 0) > 1, token });
   }
   saveRef.current = save;
@@ -942,20 +944,20 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       inFlight.current = true; setBusy(true);
       try {
         const copied = await onCopyPrevious();
-        if (!copied) { Alert.alert('복사할 그림이 없어요', '다른 칸에 저장된 그림이 아직 없어요.'); return; }
+        if (!copied) { Alert.alert(t("release.s0540"), t("release.s0541")); return; }
         // 가져온 칸에 문구가 없으면 지금 문구(가이드에서 고른 대사)를 지우지 않는다(2026-10-29).
         send({ type: 'copyWork', layers: copied.layers, caption: copied.caption ?? scene.caption ?? null });
         // 2026-10-15 세트 반복 단축: 이 칸에 아직 움직임이 없으면 **가져온 칸의 움직임도 함께** 넣는다(덮어쓰지 않는다).
         // 따로 움직이기 탭에 가서 '직전 칸 움직임 다시 쓰기'를 누르던 단계가 없어진다. 되돌리기 한 번이면 움직임만 빠진다.
         const m = copied.motion;
         if (m && !scene.motion && !slot.motion) {
-          if (usesPro(m) && !pro) setCopiedNote('그림을 가져왔어요 · 이전 칸 움직임은 PRO라 빼고 가져왔어요');
-          else { send({ type: 'motion', motion: m }); setCopiedNote('그림과 움직임을 함께 가져왔어요 · 되돌리기로 움직임만 뺄 수 있어요'); }
-        } else setCopiedNote('이전 칸 그림을 가져왔어요');
-      } catch (e) { Alert.alert('이전 그림을 복사하지 못했어요', userMessage(e)); }
+          if (usesPro(m) && !pro) setCopiedNote(t("release.s0542"));
+          else { send({ type: 'motion', motion: m }); setCopiedNote(t("release.s0543")); }
+        } else setCopiedNote(t("release.s0544"));
+      } catch (e) { Alert.alert(t("release.s0545"), userMessage(e)); }
       finally { unlock(); }
     };
-    if (scene.dirty || slot.finalImage) Alert.alert('이전 그림 복사', '지금 이 칸의 그림이 이전 칸 그림으로 바뀌어요. 되돌리기로 되살릴 수 있어요.', [{ text: '취소', style: 'cancel' }, { text: '복사', onPress: () => void run() }]);
+    if (scene.dirty || slot.finalImage) Alert.alert(t("release.s0546"), t("release.s0547"), [{ text: t("ui.cancel"), style: 'cancel' }, { text: t("release.s0548"), onPress: () => void run() }]);
     else void run();
   }
   function openCaption() {
@@ -993,7 +995,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     if (inFlight.current) return;
     inFlight.current = true; setBusy(true); setPanel(null);
     try { const data = await onImportDrawing(); if (data) send({ type: 'importDrawing', data }); }
-    catch (e) { Alert.alert('그림을 가져오지 못했어요', userMessage(e)); }
+    catch (e) { Alert.alert(t("release.s0549"), userMessage(e)); }
     finally { unlock(); }
   }
   // 시안 A3의 '내 그림으로 보관'. 고른 부분을 그림 한 장으로 떠서 앱에 남긴다. 원래 그림도, 레이어도,
@@ -1002,7 +1004,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     if (inFlight.current) return;
     inFlight.current = true; setBusy(true);
     try { const data = await onUseCutout(id); if (data) send({ type: 'importDrawing', data }); }
-    catch (e) { Alert.alert('그림을 가져오지 못했어요', userMessage(e)); }
+    catch (e) { Alert.alert(t("release.s0549"), userMessage(e)); }
     finally { unlock(); }
   }
   async function keepCutout() {
@@ -1016,8 +1018,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       });
       if (!data) return;
       const name = await onKeepCutout(data);
-      if (name) Alert.alert('보관했어요', `'${name}'으로 보관했어요. 다른 칸의 더보기 › 그림 가져오기에서 꺼내 써요.`);
-    } catch (e) { Alert.alert('보관하지 못했어요', userMessage(e)); }
+      if (name) Alert.alert(t("release.s0550"), t("release.d109", { v0: (name) }));
+    } catch (e) { Alert.alert(t("release.s0551"), userMessage(e)); }
     finally { unlock(); }
   }
   async function addReferences() {
@@ -1026,9 +1028,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     try {
       const added = await onAddReferences();
       if (added.length) send({ type: 'addReferences', references: await Promise.all(added.map(async (image, i) => ({
-        ...transform('ref-' + image.path, `참고 ${scene.references.length + i + 1}`), visible: false, opacity: .3, path: image.path, data: await dataUrl(image),
+        ...transform('ref-' + image.path, t("release.d119", { v0: (scene.references.length + i + 1) })), visible: false, opacity: .3, path: image.path, data: await dataUrl(image),
       }))) });
-    } catch (e) { Alert.alert('참고 사진을 넣지 못했어요', userMessage(e)); }
+    } catch (e) { Alert.alert(t("release.s0552"), userMessage(e)); }
     finally { unlock(); }
   }
   // 고른 표현을 밑그림으로 깐다. 새 길을 내지 않고 참고 사진과 똑같은 길을 쓴다:
@@ -1049,7 +1051,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     // 예전에는 밑그림만 깔고 빈 장을 못 만든 채 끝냈다 — 참고는 늘었는데 그 위에 그릴 곳이 없는 반쪽 상태였다.
     // 그것을 성공으로 치지 않는다: 참고도 장도 건드리지 않고 돌아간다.
     if (scene.layers.length >= 4) {
-      Alert.alert('그림 장이 가득 찼어요', '밑그림을 깔면 그 위에 새로 그릴 장이 한 장 필요해요. 지금은 네 장이 모두 차 있어 넣지 않았어요 — 레이어에서 쓰지 않는 장을 지우고 다시 눌러 주세요. 지금 그림은 그대로예요.');
+      Alert.alert(t("release.s0553"), t("release.s0554"));
       return;
     }
     inFlight.current = true; setBusy(true);
@@ -1059,7 +1061,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       const image = await onImportGuideExample(guideExample.artwork);
       if (!image) return;
       const id = 'ref-' + image.path;
-      send({ type: 'addReferences', references: [{ ...transform(id, '밑그림 · ' + guideExample.title), visible: false, opacity: .3, path: image.path, data: await dataUrl(image) }] });
+      send({ type: 'addReferences', references: [{ ...transform(id, t("release.s0555") + " " + guideExample.title), visible: false, opacity: .3, path: image.path, data: await dataUrl(image) }] });
       laidId = id;
       // 보이게 하는 일은 참고 타일을 누를 때와 같은 명령에 맡긴다 — '한 번에 하나만 보인다'는 기존 규칙이 그대로 지켜진다.
       send({ type: 'toggleReference', id });
@@ -1073,7 +1075,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       // 이번에 더한 참고만 걷어내고 넣기 전 상태로 돌린다. 기존 그림·참고는 건드리지 않는다.
       if (laidId) send({ type: 'removeReference', id: laidId });
       guideLaid.current = null;
-      Alert.alert('밑그림을 넣지 못했어요', userMessage(e));
+      Alert.alert(t("release.s0556"), userMessage(e));
     }
     finally { unlock(); }
   }
@@ -1089,9 +1091,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 사용자가 우하단 손잡이로 늘리면 그 폭을 쓰되, 최소 112 · 최대 캔버스폭 60% 를 넘지 않는다.
 
   function removeReference(path: string, id: string) {
-    Alert.alert('참고 삭제', '이 칸에서 이 참고를 없앱니다. 다른 칸의 참고는 그대로예요.', [
-      { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => { onRemoveReference(path); send({ type: 'removeReference', id }); setPanel(null); } },
+    Alert.alert(t("release.s0557"), t("release.s0558"), [
+      { text: t("ui.cancel"), style: 'cancel' },
+      { text: t("ui.delete"), style: 'destructive', onPress: () => { onRemoveReference(path); send({ type: 'removeReference', id }); setPanel(null); } },
     ]);
   }
 
@@ -1113,55 +1115,55 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   closeBrushRef.current = closeBrush;
   const stab = effectiveBrush.stabilizer;
   const brushWindow = panel !== 'brush' ? null : <View testID="브러시 창 배경" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 40, backgroundColor: '#12151A59' }}>
-    <Pressable accessibilityRole="button" accessibilityLabel="브러시 창 바깥 닫기" onPress={closeBrush} style={{ flex: 1 }} />
+    <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0560")} onPress={closeBrush} style={{ flex: 1 }} />
     <View testID="브러시 창" accessibilityViewIsModal style={{ height: brushWindowH, marginHorizontal: 8, marginBottom: 8, borderRadius: 20, overflow: 'hidden', backgroundColor: C.paper, ...Elev[2] }}>
       <SheetHeader
-        title={brushDetail ? brushInfo(currentBrushKey).title : favEdit ? '즐겨찾기 편집' : '브러시'}
-        closeLabel="브러시 닫기" onClose={closeBrush}
-        left={brushDetail ? <IconButton label="브러시 목록으로" icon="chevron-left" size={22} color={C.ink} onPress={() => { ease(); setBrushDetail(false); }} /> : undefined}
-        right={brushDetail ? undefined : <Pressable accessibilityRole="button" accessibilityLabel={favEdit ? '즐겨찾기 편집 끝내기' : '즐겨찾기 편집'}
+        title={brushDetail ? brushInfo(currentBrushKey).title : favEdit ? t("release.s0562") : t("release.s0563")}
+        closeLabel={t("release.s0564")} onClose={closeBrush}
+        left={brushDetail ? <IconButton label={t("release.s0565")} icon="chevron-left" size={22} color={C.ink} onPress={() => { ease(); setBrushDetail(false); }} /> : undefined}
+        right={brushDetail ? undefined : <Pressable accessibilityRole="button" accessibilityLabel={favEdit ? t("release.s0566") : t("release.s0562")}
           accessibilityState={{ selected: favEdit }}
           onPress={() => { ease(); setFavEdit(!favEdit); setPinning(null); }}
           style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, borderRadius: C.radius.button, alignItems: 'center', justifyContent: 'center',
             backgroundColor: favEdit ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{favEdit ? '끝내기' : '즐겨찾기 편집'}</Text>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{favEdit ? t("release.s0567") : t("release.s0562")}</Text>
         </Pressable>} />
 
       {/* 목록 쪽은 세부 설정에 들어가도 **살아 있다**(보이지만 않는다) — 돌아오면 보던 분류와
           구르던 자리가 그대로다. 다시 만들면 맨 위로 튕긴다. */}
       <View style={{ flex: 1, minHeight: 0, display: brushDetail ? 'none' : 'flex' }}>
-        {favEdit && !pinning && <Text style={{ fontSize: 12, color: C.muted, paddingHorizontal: 16, paddingBottom: 6 }}>넣을 브러시를 고르면 1·2·3번 칸 중에 고를 수 있어요.</Text>}
+        {favEdit && !pinning && <Text style={{ fontSize: 12, color: C.muted, paddingHorizontal: 16, paddingBottom: 6 }}>{t("release.s0568")}</Text>}
         {/* 어느 칸에 넣을지. 지금 그 칸에 무엇이 있는지 함께 보여 준다 — 무엇과 바뀌는지 알고 눌러야 한다. */}
         {!!pinning && <View style={{ gap: 6, marginHorizontal: 12, marginBottom: 6, paddingVertical: 6, paddingHorizontal: 10, borderRadius: C.radius.md, backgroundColor: C.surface2 }}>
-          <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>‘{brushInfo(pinning).title}’ 를 어느 칸에 넣을까요?</Text>
+          <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>‘{brushInfo(pinning).title}{t("release.s0569")}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            {quickBrushes.map((k, i) => <Pressable key={i} accessibilityRole="button" accessibilityLabel={(i + 1) + '번 칸 — 지금 ' + brushInfo(k).title + ' · 여기에 넣기'}
+            {quickBrushes.map((k, i) => <Pressable key={i} accessibilityRole="button" accessibilityLabel={(i + 1) + t("release.s0570") + " " + brushInfo(k).title + " " + t("release.s0571")}
               onPress={() => { pinBrush(i, pinning); setPinning(null); }}
               style={({ pressed }) => ({ flex: 1, minHeight: C.tap, paddingHorizontal: 6, borderRadius: C.radius.button, alignItems: 'center', justifyContent: 'center',
                 borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper })}>
-              <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{i + 1}번 칸</Text>
-              <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted }}>지금 {brushInfo(k).title}</Text>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{i + 1}{t("release.s0276")}</Text>
+              <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted }}>{t("release.s0572") + " "}{brushInfo(k).title}</Text>
             </Pressable>)}
-            <Pressable accessibilityRole="button" accessibilityLabel="즐겨찾기 고정 취소" onPress={() => setPinning(null)}
+            <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0573")} onPress={() => setPinning(null)}
               style={{ minHeight: C.tap, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>취소</Text>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{t("ui.cancel")}</Text>
             </Pressable>
           </View>
         </View>}
         {/* 분류: 선·채색·질감·효과. 한 분류 안에서는 마지막 줄까지 한 번의 스크롤로 닿는다. */}
         <TabBar testID="브러시 분류" value={brushGroup} onChange={setBrushGroup}
-          items={GROUPS.map(g => ({ key: g, label: g, a11y: '브러시 분류 ' + g }))} />
+          items={GROUPS.map(g => ({ key: g, label: brushGroupLabel(g), a11y: t("release.s0574") + " " + brushGroupLabel(g) }))} />
         {!!effectiveBrush.preset && effectiveBrush.preset in RETIRED &&
-          <Text style={{ fontSize: 11, color: C.muted, paddingHorizontal: 16, paddingTop: 6 }}>지금은 예전 브러시 ‘{RETIRED[effectiveBrush.preset]}’ 로 그리고 있어요. 그대로 쓸 수 있어요.</Text>}
+          <Text style={{ fontSize: 11, color: C.muted, paddingHorizontal: 16, paddingTop: 6 }}>{t("release.s0575")}{RETIRED[effectiveBrush.preset]}{t("release.s0576")}</Text>}
         {/* 한 줄에 한 브러시. 줄마다 카드를 두르지 않는다 — 얇은 구분선과 여백으로만 가른다.
             고른 줄만 옅은 노랑과 체크다. 잠긴 것도 이름과 견본이 선명하다 — 흐리게 지우지 않는다. */}
         <ScrollView testID="브러시 목록" style={{ flex: 1, minHeight: 0 }} showsVerticalScrollIndicator contentContainerStyle={{ paddingBottom: 8 }}>
           {CATALOG.filter(b => b.group === brushGroup).map(b => { const on = isBrushOn(b.key), fav = quickBrushes.indexOf(b.key);
-            return <Pressable key={b.key} testID={'브러시 줄 ' + b.title}
+            return <Pressable key={b.key} testID={t("release.s0578") + " " + b.title}
               accessibilityRole="button"
-              accessibilityLabel={(favEdit ? '즐겨찾기에 넣기 ' : '브러시 ') + b.title}
-              accessibilityValue={{ text: (b.pro ? 'PRO' : '무료') + (fav >= 0 ? ' · 즐겨찾기 ' + (fav + 1) + '번' : '') }}
-              accessibilityHint={favEdit ? '누르면 어느 칸에 넣을지 고를 수 있어요' : b.pro && !pro ? 'PRO 브러시예요' : b.use}
+              accessibilityLabel={(favEdit ? t("release.s0579") + " " : t("release.s0563") + " ") + b.title}
+              accessibilityValue={{ text: (b.pro ? 'PRO' : t("ui.free")) + (fav >= 0 ? " " + t("release.s0580") + " " + (fav + 1) + t("release.s0176") : '') }}
+              accessibilityHint={favEdit ? t("release.s0581") : b.pro && !pro ? t("release.s0582") : b.use}
               accessibilityState={{ selected: on }}
               onPress={() => { if (favEdit) { setPinning(b.key); return; } pickFromAll(b.key); }}
               style={({ pressed }) => ({ minHeight: BRUSH_ROW_H, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 16, paddingRight: 10,
@@ -1170,7 +1172,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               {/* 이름 칸 — 견본과 겹치지 않는 제 자리를 갖는다. */}
               <View style={{ width: 96 }}>
                 <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: on ? '800' : '700', color: C.ink }}>{b.title}</Text>
-                {fav >= 0 && <Text style={{ fontSize: 11, color: C.muted }}>즐겨찾기 {fav + 1}번</Text>}
+                {fav >= 0 && <Text style={{ fontSize: 11, color: C.muted }}>{t("release.s0583") + " "}{fav + 1}{t("release.s0176")}</Text>}
               </View>
               {/* 견본 칸 — 남은 가로폭을 전부 쓴다. 실제 브러시 엔진이 낸 획이다. */}
               <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
@@ -1185,13 +1187,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             </Pressable>; })}
         </ScrollView>
         {/* 세부 설정은 같은 창의 **다른 화면**이다. 목록 창 안에 조절을 쌓아 두지 않는다. */}
-        <Pressable accessibilityRole="button" accessibilityLabel="세부 설정" accessibilityHint="진하기와 선 보정을 바꿔요"
+        <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0584")} accessibilityHint={t("release.s0585")}
           onPress={() => { ease(); setBrushDetail(true); }}
           style={({ pressed }) => ({ minHeight: C.tap, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16,
             borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper })}>
           <Glyph name="tune-variant" size={18} color={C.muted} />
-          <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>세부 설정</Text>
-          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted, textAlign: 'right' }}>진하기 {Math.round(effectiveBrush.opacity * 100)}% · 선 보정 {STAB_LEVELS.find(([k]) => k === stab)?.[1] ?? '끔'}</Text>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{t("release.s0584")}</Text>
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted, textAlign: 'right' }}>{t("release.s0586") + " "}{Math.round(effectiveBrush.opacity * 100)}{t("release.s0587") + " "}{STAB_LEVELS.find(([k]) => k === stab)?.[1] ?? t("release.s0588")}</Text>
           <Glyph name="chevron-right" size={18} color={C.faint} />
         </Pressable>
       </View>
@@ -1200,17 +1202,17 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       {brushDetail && <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 12 }} showsVerticalScrollIndicator={false}>
         <Text style={{ fontSize: 12, color: C.muted }}>{brushInfo(currentBrushKey).use}</Text>
         <View style={{ height: 40, borderRadius: C.radius.button, backgroundColor: C.surface2, justifyContent: 'center', paddingHorizontal: 10 }}>
-          <Image accessibilityIgnoresInvertColors accessibilityLabel="지금 브러시 획 견본" source={brushInfo(currentBrushKey).stroke} style={{ width: '100%', height: 28, tintColor: color }} resizeMode="contain" />
+          <Image accessibilityIgnoresInvertColors accessibilityLabel={t("release.s0589")} source={brushInfo(currentBrushKey).stroke} style={{ width: '100%', height: 28, tintColor: color }} resizeMode="contain" />
         </View>
-        <Range label="진하기" value={Math.round(effectiveBrush.opacity * 100)} min={5} max={100} step={1} onChange={n => changeBrush({ opacity: Math.round(n) / 100 }, false)} onActive={a => { if (a === false) changeBrush({ opacity: effectiveBrush.opacity }, true); }} display={Math.round(effectiveBrush.opacity * 100) + '%'} />
+        <Range label={t("release.s0586")} value={Math.round(effectiveBrush.opacity * 100)} min={5} max={100} step={1} onChange={n => changeBrush({ opacity: Math.round(n) / 100 }, false)} onActive={a => { if (a === false) changeBrush({ opacity: effectiveBrush.opacity }, true); }} display={Math.round(effectiveBrush.opacity * 100) + '%'} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Pressable accessibilityRole="switch" accessibilityLabel="선 보정" accessibilityState={{ checked: stab !== 'off' }} onPress={() => changeBrush({ stabilizer: stab === 'off' ? 'light' : 'off' })}
+          <Pressable accessibilityRole="switch" accessibilityLabel={t("release.s0590")} accessibilityState={{ checked: stab !== 'off' }} onPress={() => changeBrush({ stabilizer: stab === 'off' ? 'light' : 'off' })}
             style={{ minHeight: C.tap, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 2 }}>
             <Switch on={stab !== 'off'} />
-            <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>선 보정</Text>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{t("release.s0590")}</Text>
           </Pressable>
           {stab !== 'off' && <View style={{ flex: 1 }}>
-            <Segmented dense value={stab} onChange={level => changeBrush({ stabilizer: level })} items={STAB_LEVELS.map(([level, name]) => ({ key: level, label: name, a11y: '보정 ' + name }))} />
+            <Segmented dense value={stab} onChange={level => changeBrush({ stabilizer: level })} items={STAB_LEVELS.map(([level, name]) => ({ key: level, label: name, a11y: t("release.s0591") + " " + name }))} />
           </View>}
         </View>
       </ScrollView>}
@@ -1228,7 +1230,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const colorDock = tab === 'draw' && panel === 'color' && !scene.selection;
   // 더보기가 열린 동안 아래 판(움직임 판·브러시 줄·도구 줄)도 어둡게 덮고, 누르면 메뉴를 닫는다(2026-10-07).
   // 예전에는 메뉴 위쪽만 어두워 아래 판이 그대로 눌렸다. 판마다 맨 위 자식으로 넣는다(부모가 달라 하나로 덮을 수 없다).
-  const moreDim = panel === 'more' ? <Pressable accessibilityLabel="더보기 닫기(바깥)" onPress={() => { ease(); setPanel(null); }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 50, elevation: 50, backgroundColor: '#00000055' }} /> : null;
+  const moreDim = panel === 'more' ? <Pressable accessibilityLabel={t("release.s0592")} onPress={() => { ease(); setPanel(null); }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 50, elevation: 50, backgroundColor: '#00000055' }} /> : null;
   const dock = { position: 'absolute', left: 0, right: 0, bottom: tab === 'draw' && !typing && !colorDock ? BASE_H : 0, zIndex: 20, borderTopWidth: raised ? 1 : 0, borderLeftWidth: raised ? 1 : 0, borderRightWidth: raised ? 1 : 0, borderColor: C.line, borderTopLeftRadius: raised ? 24 : 0, borderTopRightRadius: raised ? 24 : 0, overflow: 'hidden', backgroundColor: C.paper, flexShrink: 0 } as const;
   const narrow = windowWidth < 360;
   // 머리줄이 두 줄로 갈릴지는 '실제로 잰 폭'으로 정한다 — 화면이 좁아서든 글자가 커서든 같은 규칙이다.
@@ -1275,8 +1277,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const showDrawAdjust = tab === 'draw' && !typing && !panel && !drawRail && !refRail && !scene.selection;
   const motionMoving = !!(scene.motion?.preset || scene.motion?.parts?.length || scene.motion?.alternate || scene.motion?.steps?.length || scene.motion?.boil);
   const undoPair = <>
-    <Bar label="되돌리기" icon="undo-variant" narrow disabled={!initialized || !scene.undo || busy} onPress={() => send({ type: 'undo' })} />
-    <Bar label="다시 실행" icon="redo-variant" narrow disabled={!initialized || !scene.redo || busy} onPress={() => send({ type: 'redo' })} />
+    <Bar label={t("release.s0593")} icon="undo-variant" narrow disabled={!initialized || !scene.undo || busy} onPress={() => send({ type: 'undo' })} />
+    <Bar label={t("release.s0594")} icon="redo-variant" narrow disabled={!initialized || !scene.redo || busy} onPress={() => send({ type: 'redo' })} />
   </>;
   // 모드 줄이 넘칠 때(큰 글자)만 두 줄로 간다 — 잰 폭으로 정한다.
   const headStacked = tab === 'draw' && headW > 0 && tabsW > 0 && aidsW > 0 && tabsW + aidsW + 12 > headW;
@@ -1284,7 +1286,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const drawLayers = scene.layers.filter(l => l.id.startsWith('draw-'));
   const layerAt = (id: string) => scene.layers.findIndex(l => l.id === id);
   const activeLayerAt = drawLayers.findIndex(l => l.id === scene.activeLayerId);
-  const layerBadge = drawLayers.length > 1 && activeLayerAt >= 0 ? '레이어 ' + (activeLayerAt + 1) : '레이어';
+  const layerBadge = drawLayers.length > 1 && activeLayerAt >= 0 ? t("release.s0595") + " " + (activeLayerAt + 1) : t("release.s0595");
   // 보조 도구 묶음. 한 줄에 설 때나 두 줄로 내려올 때나 같은 것이라, 잰 폭이 자리에 따라 달라지지 않는다.
   const aidRow = <View onLayout={e => { const w = Math.ceil(e.nativeEvent.layout.width); if (w !== aidsW) setAidsW(w); }} style={{ flexDirection: 'row', alignItems: 'center' }}>
       {/* 되돌리기·다시 실행은 참고·레이어·문구의 **왼쪽 끝**에 선다(45.37 사용자 요청). 윗줄의 '‹ 닫기' 옆에 있으면
@@ -1294,9 +1296,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       {undoInModeRow && tab === 'draw' && <View style={{ width: 1, height: 24, marginHorizontal: 4, backgroundColor: C.line }} />}
       {/* 그림을 돕는 것끼리 한 무리(45.5차): 가져오는 것(참고) · 쌓는 것(레이어) · 얹는 것(문구).
           아래 도구 줄은 '지금 그리는 손'만 다룬다. 레이어는 몇 번째를 쓰는 중인지 여기서 바로 읽힌다. */}
-      {tab === 'draw' && ([['참고', refRail || showCanon, 'image-outline', '참고', () => { ease(); setRefRail(!refRail); setRefBrowse(true); setDrawRail(false); setPanel(null); setCaptionOpen(false); }],
-         ['레이어', drawRail, 'layers-outline', layerBadge, () => { ease(); setDrawRail(!drawRail); setRefRail(false); setPanel(null); setCaptionOpen(false); }],
-         ['문구', panel === 'caption' || !!scene.captionPicked, 'format-text', '문구', () => { if (panel === 'caption') { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); } else { setDrawRail(false); setRefRail(false); openCaption(); } }]] as const).map(([label, on, icon, title, run]) =>
+      {tab === 'draw' && ([[t("release.s0596"), refRail || showCanon, 'image-outline', t("release.s0596"), () => { ease(); setRefRail(!refRail); setRefBrowse(true); setDrawRail(false); setPanel(null); setCaptionOpen(false); }],
+         [t("release.s0595"), drawRail, 'layers-outline', layerBadge, () => { ease(); setDrawRail(!drawRail); setRefRail(false); setPanel(null); setCaptionOpen(false); }],
+         [t("ui.caption"), panel === 'caption' || !!scene.captionPicked, 'format-text', t("ui.caption"), () => { if (panel === 'caption') { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); } else { setDrawRail(false); setRefRail(false); openCaption(); } }]] as const).map(([label, on, icon, title, run]) =>
         <Pressable key={label} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }} onPress={run} hitSlop={{ left: 2, right: 2 }}
           style={({ pressed }) => ({ width: 44, minHeight: 48, borderRadius: C.radius.button, alignItems: 'center', justifyContent: 'center', gap: 1,
             backgroundColor: on ? C.accentSoft : pressed ? C.fill : 'transparent' })}>
@@ -1350,19 +1352,19 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const brushIcon: IconName = effectiveBrush.preset ? 'brush-variant' : brush === 'pen' ? 'fountain-pen-tip' : brush === 'brush' ? 'brush' : 'pencil';
   // 아래 줄은 '지금 그리는 손'이다: 브러시와 색이 주인공, 나머지 셋은 모드를 바꾸는 빠른 칸(45.5차).
   // 네 번째 값: 아이콘 옆에 이름을 남길지. 처음 보는 사람이 그림만으로 알 수 있는 것은 이름을 떼고, 애매한 것만 남긴다.
-  const quickTools: [Tool, string, IconName, boolean][] = [['eraser', '지우개', 'eraser', true], ['fill', '채우기', 'format-color-fill', true], ['select', '선택', 'select-drag', true]];
+  const quickTools: [Tool, string, IconName, boolean][] = [['eraser', t("release.s0347"), 'eraser', true], ['fill', t("release.s0524"), 'format-color-fill', true], ['select', t("release.s0525"), 'select-drag', true]];
   // 윗줄의 주 동작 하나: 저장. 누르면 **이 칸에 머문다**(45.38). 45.37 까지는 이름만 '저장'이고 실제로는 다음 칸으로 넘어가,
   // 단순히 저장하려던 사람이 작업 자리를 잃었다. 이제 저장한 뒤 캔버스 위 안내에서 '다음 칸'을 고를 수 있다.
   // 내보내기 검수에서 고치러 들어온 칸이면 저장 뒤 그 검수 화면으로 돌아간다.
   // 모양(2026-10-08 토스식 개편): 노란 알약 면만 — 검정 테두리·스티커 그림자는 걷었다. 배치는 그대로.
-  const saveButton = <Pressable accessibilityRole="button" accessibilityLabel="저장" accessibilityHint={returnToReview ? '저장한 뒤 내보내기 검수로 돌아가요' : '이 칸을 저장하고 완성으로 표시해요. 이 칸에 그대로 있어요'}
+  const saveButton = <Pressable accessibilityRole="button" accessibilityLabel={t("ui.save")} accessibilityHint={returnToReview ? t("release.s0597") : t("release.s0598")}
       disabled={busy || !initialized} onPress={() => save('manual')}
       hitSlop={{ top: 4, bottom: 4 }}
       style={({ pressed }) => ({ minHeight: 40, minWidth: 60, paddingHorizontal: 16, marginHorizontal: 4, borderRadius: 20,
         alignItems: 'center', justifyContent: 'center', backgroundColor: busy || !initialized ? C.fill : C.accent,
         ...(busy || !initialized ? {} : pressed ? { boxShadow: '0px 1px 0px #E6BB17, inset 0px 2px 0px rgba(255, 255, 255, 0.7)', transform: [{ translateY: 2 }] } : { boxShadow: '0px 4px 0px #E6BB17, inset 0px 2px 0px rgba(255, 255, 255, 0.7)' }),
         })}>
-      <Text numberOfLines={1} style={{ color: busy || !initialized ? C.faint : C.accentInk, fontWeight: '800', fontSize: 15 }}>저장</Text>
+      <Text numberOfLines={1} style={{ color: busy || !initialized ? C.faint : C.accentInk, fontWeight: '800', fontSize: 15 }}>{t("ui.save")}</Text>
     </Pressable>;
   return <Modal onRequestClose={() => { if (Keyboard.isVisible()) { Keyboard.dismiss(); return; } if (panel === 'brush' && brushDetail) { ease(); setBrushDetail(false); return; } if (panel === 'brush') { closeBrush(); return; } if (panel) { ease(); setPanel(null); return; } if (drawRail || refRail) { ease(); setDrawRail(false); setRefRail(false); return; } if (showCanon) { setShowCanon(false); return; } save('close'); }} animationType="slide"><SafeAreaProvider><SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
     {/* iOS(10-29 시뮬레이터): 모달 안에서 KeyboardAvoidingView 가 밀어 올리지 않아 문구 창이 키보드 뒤에 숨었다.
@@ -1370,15 +1372,15 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     <KeyboardAvoidingView style={{ flex: 1, paddingBottom: Platform.OS === 'ios' ? Math.max(0, keyboard - insets.bottom) : 0 }} behavior={Platform.OS === 'ios' ? undefined : 'height'} enabled={Platform.OS !== 'ios'}>
       {/* 머리: 닫기 · 세트 이름과 칸 번호 · 저장 · 더보기. 되돌리기·다시 실행은 아래 줄(참고 왼쪽)로 옮겼다(45.37). */}
       <View style={{ minHeight: 52, paddingHorizontal: 2, flexDirection: 'row', alignItems: 'center', backgroundColor: C.paper }}>
-        <Bar label="그리기 닫기" icon="chevron-left" strong disabled={busy} onPress={() => save('close')} />
+        <Bar label={t("release.s0599")} icon="chevron-left" strong disabled={busy} onPress={() => save('close')} />
         {/* 이름은 한 줄로 줄이고 넘치면 말줄임한다. 칸 번호도 한 줄이다 — 글자 단위로 여러 줄에 쌓지 않는다. */}
         <View style={{ flex: 1, flexShrink: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', minHeight: C.tap }}>
           <Text numberOfLines={1} ellipsizeMode="tail" style={{ maxWidth: '100%', fontSize: 15, lineHeight: 20, color: C.ink, fontWeight: '700' }}>{setName}</Text>
           {/* 저장 표시는 칸 번호 옆 작은 자리다. 예전에는 머리줄에 28dp 칸을 따로 차지해, 320dp 에서 세트 이름이 설 자리를 빼앗았다(45.36-R1 G3).
               자리 폭은 늘 같아서 표시가 뜨고 사라져도 글자가 밀리지 않는다. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', maxWidth: '100%' }}>
-            <Text numberOfLines={1} accessibilityLabel="현재 칸" style={{ flexShrink: 1, fontSize: 11, lineHeight: 14, fontWeight: '600', color: C.muted, letterSpacing: .4 }}>{String(slot.number).padStart(2, '0') + ' / ' + slotCount}</Text>
-            <View testID="저장 표시" accessibilityLabel={saveMark === 'saving' ? '저장 중' : saveMark === 'done' ? '저장됨' : undefined} style={{ width: 16, height: 14, marginLeft: 3, alignItems: 'center', justifyContent: 'center' }}>
+            <Text numberOfLines={1} accessibilityLabel={t("release.s0600")} style={{ flexShrink: 1, fontSize: 11, lineHeight: 14, fontWeight: '600', color: C.muted, letterSpacing: .4 }}>{String(slot.number).padStart(2, '0') + ' / ' + slotCount}</Text>
+            <View testID="저장 표시" accessibilityLabel={saveMark === 'saving' ? t("release.s0602") : saveMark === 'done' ? t("release.s0603") : undefined} style={{ width: 16, height: 14, marginLeft: 3, alignItems: 'center', justifyContent: 'center' }}>
               {saveMark === 'saving' && <Glyph name="cloud-upload-outline" size={13} color={C.muted} />}
               {saveMark === 'done' && <Glyph name="cloud-check-outline" size={13} color={C.success} />}
             </View>
@@ -1386,7 +1388,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         </View>
         {!undoInModeRow && undoPair}
         {saveButton}
-        <Bar label="더보기" icon="dots-horizontal" active={panel === 'more'} onPress={() => { setPanel(panel === 'more' ? null : 'more'); setDrawRail(false); setRefRail(false); }} />
+        <Bar label={t("release.s0604")} icon="dots-horizontal" active={panel === 'more'} onPress={() => { setPanel(panel === 'more' ? null : 'more'); setDrawRail(false); setRefRail(false); }} />
       </View>
       {/* 모드(그리기·움직이기)와 보조(참고·레이어·문구)는 캔버스를 지키려고 한 줄에 선다.
           다만 둘이 폭을 넘으면 글자나 손가락 자리를 줄이지 않고 두 줄로 바꾼다 — 320dp 나 큰 글자에서 겹치던 자리다.
@@ -1396,7 +1398,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {/* 그리기·움직이기: 회색 바탕의 두 칸 선택(공모전 탭과 같은 모양, 2026-10-08). 자리·순서는 그대로다. */}
           <View onLayout={e => { const w = Math.ceil(e.nativeEvent.layout.width); if (w !== tabsW) setTabsW(w); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4, marginVertical: 2, marginLeft: 4, borderRadius: 22, backgroundColor: C.paper, boxShadow: '4px 6px 14px rgba(120, 100, 70, 0.12)' }}>
-          {([['draw', '그리기'], ['motion', '움직이기'], ['anim', '애니메이션']] as const).map(([key, title]) =>
+          {([['draw', t("ui.draw")], ['motion', t("ui.motion")], ['anim', t("ui.animation")]] as const).map(([key, title]) =>
             <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: tab === key }}
               onPress={() => switchTab(key)}
               hitSlop={{ top: 4, bottom: 4 }}
@@ -1428,7 +1430,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; if (w > 0 && h > 0 && (!stage || Math.round(w) !== stage.w || Math.round(h) !== stage.h)) setStage({ w: Math.round(w), h: Math.round(h) }); }}>
       {railMode && <View testID="조절대" style={{ width: RAIL_W, paddingLeft: 4, alignItems: 'flex-start', justifyContent: 'center', backgroundColor: C.bg }}>
         {showDrawAdjust && <View testID="조절대 내용" style={{ height: canvasSide ?? undefined, paddingVertical: 4, justifyContent: 'space-between' }}>
-          <VSlider testID="굵기 조절대" label="굵기" height={railTrack} a11yLabel={tool === 'eraser' ? '지우개 굵기' : '브러시 굵기'}
+          <VSlider testID="굵기 조절대" label={t("release.s0609")} height={railTrack} a11yLabel={tool === 'eraser' ? t("release.s0610") : t("release.s0611")}
             value={width} min={1} max={48} step={1} disabled={!sizable}
             onCommit={n => setWidth(n, true)}
             bubble={n => <RailBubble testID="굵기 말풍선">
@@ -1436,38 +1438,38 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               <Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>{Math.round(n)}</Text>
             </RailBubble>} />
           <View style={{ height: 20 }} />
-          <VSlider testID="불투명도 조절대" label="불투명도" height={railTrack} a11yLabel="브러시 불투명도"
+          <VSlider testID="불투명도 조절대" label={t("release.s0614")} height={railTrack} a11yLabel={t("release.s0615")}
             value={Math.round((effectiveBrush.opacity ?? 1) * 100)} min={10} max={100} step={5} disabled={!inkable}
             onCommit={n => changeBrush({ opacity: Math.max(.1, Math.min(1, n / 100)) }, true)}
             bubble={n => <RailBubble testID="불투명도 말풍선"><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>{Math.round(n)}%</Text></RailBubble>} />
         </View>}
         {tab === 'motion' && motionMoving && <View testID="조절대 내용" style={{ height: canvasSide ?? undefined, paddingVertical: 4, justifyContent: 'flex-start', gap: 20 }}>
-          <VSlider testID="세기 조절대" label="세기" height={railTrack} value={Math.round((scene.motion?.strength ?? .5) * 20)} min={1} max={20} step={1}
+          <VSlider testID="세기 조절대" label={t("release.s0618")} height={railTrack} value={Math.round((scene.motion?.strength ?? .5) * 20)} min={1} max={20} step={1}
             onCommit={n => scene.motion && setMotion({ ...scene.motion, strength: n / 20 })}
-            bubble={n => <RailBubble><Text numberOfLines={1} style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>{MOTION_WORDS(n / 20).replace('아주 ', '')}</Text></RailBubble>} />
-          <VSlider testID="속도 조절대" label="속도" height={railTrack} value={Math.round((scene.motion?.speed ?? .5) * 20)} min={0} max={20} step={1}
+            bubble={n => <RailBubble><Text numberOfLines={1} style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>{MOTION_WORDS(n / 20).replace(t("release.s0619") + " ", '')}</Text></RailBubble>} />
+          <VSlider testID="속도 조절대" label={t("release.s0621")} height={railTrack} value={Math.round((scene.motion?.speed ?? .5) * 20)} min={0} max={20} step={1}
             onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: n / 20 })}
-            bubble={n => <RailBubble><Text numberOfLines={1} style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>{MOTION_WORDS(n / 20).replace('아주 ', '')}</Text></RailBubble>} />
+            bubble={n => <RailBubble><Text numberOfLines={1} style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>{MOTION_WORDS(n / 20).replace(t("release.s0619") + " ", '')}</Text></RailBubble>} />
         </View>}
       </View>}
       {!railMode && <View testID="조절 줄" style={{ height: BAR_H, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 12, backgroundColor: C.bg }}>
         {showDrawAdjust && <>
-          <BarSlider testID="굵기 조절대" label="굵기" a11yLabel={tool === 'eraser' ? '지우개 굵기' : '브러시 굵기'}
+          <BarSlider testID="굵기 조절대" label={t("release.s0609")} a11yLabel={tool === 'eraser' ? t("release.s0610") : t("release.s0611")}
             value={width} min={1} max={48} step={1} disabled={!sizable}
             onCommit={n => setWidth(n, true)} show={n => String(Math.round(n))}
             lead={n => <View testID="굵기 점" style={{ width: Math.max(4, Math.min(14, dotFor(n))), height: Math.max(4, Math.min(14, dotFor(n))), borderRadius: 7, backgroundColor: tool === 'eraser' ? C.paper : color, borderWidth: 1, borderColor: C.lineStrong }} />} />
-          <BarSlider testID="불투명도 조절대" label="불투명도" a11yLabel="브러시 불투명도"
+          <BarSlider testID="불투명도 조절대" label={t("release.s0614")} a11yLabel={t("release.s0615")}
             value={Math.round((effectiveBrush.opacity ?? 1) * 100)} min={10} max={100} step={5} disabled={!inkable}
             onCommit={n => changeBrush({ opacity: Math.max(.1, Math.min(1, n / 100)) }, true)} show={n => Math.round(n) + '%'} />
         </>}
         {/* 움직이기: 세기·속도가 캔버스 바로 위(시안 D). 효과를 고르기 전에는 무엇을 하면 되는지만 말한다. */}
         {tab === 'motion' && (motionMoving ? <>
-          <BarSlider testID="세기 조절대" label="세기" value={scene.motion?.strength ?? .5} min={.05} max={1} step={.05}
+          <BarSlider testID="세기 조절대" label={t("release.s0618")} value={scene.motion?.strength ?? .5} min={.05} max={1} step={.05}
             onCommit={n => scene.motion && setMotion({ ...scene.motion, strength: Math.round(n * 20) / 20 })} show={MOTION_WORDS} />
-          <BarSlider testID="속도 조절대" label="속도" value={scene.motion?.speed ?? .5} min={0} max={1} step={.05}
+          <BarSlider testID="속도 조절대" label={t("release.s0621")} value={scene.motion?.speed ?? .5} min={0} max={1} step={.05}
             onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: Math.round(n * 20) / 20 })} show={MOTION_WORDS} />
-        </> : <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>효과를 고르면 여기서 세기·속도를 바꿔요</Text>)}
-        {tab === 'anim' && <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{animOn ? (animPlaying ? '미리 보는 중 — ■ 로 멈춰요' : `${(scene.frameIdx ?? 0) + 1}장 · 앞 장이 옅은 보라로 비쳐요`) : '시작하면 지금 그림이 1장이 돼요'}</Text>}
+        </> : <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{t("release.s0624")}</Text>)}
+        {tab === 'anim' && <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{animOn ? (animPlaying ? t("release.s0625") : t("release.d111", { v0: ((scene.frameIdx ?? 0) + 1) })) : t("release.s0626")}</Text>}
       </View>}
       {/* 캔버스 영역: 그리기 탭은 가운데, 움직이기 탭은 위(아래를 움직임 판이 쓴다).
           더보기 메뉴는 이 영역 안에 열리므로, 열린 동안만 아래 판(dock, zIndex 20)보다 위로 올린다 — 움직이기 탭에서
@@ -1484,12 +1486,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {/* 종이 경계: 얇은 선 + 옅은 그림자. 흰 종이와 작업면이 비슷한 밝기라 경계가 없으면 캔버스가 떠 보였다(45.37 실기기). */}
         <View ref={canvasRef} collapsable={false} style={canvasSide ? { width: canvasSide, height: canvasSide, overflow: 'hidden', backgroundColor: C.paper, borderRadius: 6, ...Paper.border, ...Paper.shadow } : { width: '100%', aspectRatio: 1, maxHeight: '100%', overflow: 'hidden' }}>
         {tab === 'draw' && animOn && <View testID="장 알약" style={{ position: 'absolute', left: 8, top: 8, zIndex: 5, flexDirection: 'row', alignItems: 'center', height: 36, paddingLeft: 12, borderRadius: 18, ...Clay.small }}>
-          <Text style={{ fontSize: 12, fontWeight: '800', color: C.pointInk }}>애니메이션</Text>
-          <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{` · ${(scene.frameIdx ?? 0) + 1} / ${scene.frames!.length}장`}</Text>
-          {([['앞 장', 'chevron-left', -1], ['다음 장', 'chevron-right', 1]] as const).map(([label, icon, by]) => { const to = (scene.frameIdx ?? 0) + by, off = to < 0 || to >= scene.frames!.length;
+          <Text style={{ fontSize: 12, fontWeight: '800', color: C.pointInk }}>{t("ui.animation")}</Text>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{t("release.d112", { v0: ((scene.frameIdx ?? 0) + 1), v1: (scene.frames!.length) })}</Text>
+          {([[t("release.s0630"), 'chevron-left', -1], [t("release.s0631"), 'chevron-right', 1]] as const).map(([label, icon, by]) => { const to = (scene.frameIdx ?? 0) + by, off = to < 0 || to >= scene.frames!.length;
             return <Pressable key={label} accessibilityRole="button" accessibilityLabel={label} disabled={off} onPress={() => pickFrame(to)} style={{ width: 34, height: 36, alignItems: 'center', justifyContent: 'center', opacity: off ? .3 : 1 }}><Glyph name={icon} size={18} color={C.ink} /></Pressable>; })}
         </View>}
-        <WebView ref={web} source={source} originWhitelist={['about:*']} javaScriptEnabled scrollEnabled={false} onShouldStartLoadWithRequest={r => r.url === 'about:blank'} onError={e => { unlock(); setInitialized(false); Alert.alert('그리기 화면을 열지 못했어요', userMessage(e.nativeEvent.description, '닫았다가 다시 열어 주세요.')); }} onMessage={event => {
+        <WebView ref={web} source={source} originWhitelist={['about:*']} javaScriptEnabled scrollEnabled={false} onShouldStartLoadWithRequest={r => r.url === 'about:blank'} onError={e => { unlock(); setInitialized(false); Alert.alert(t("release.s0632"), userMessage(e.nativeEvent.description, t("release.s0633"))); }} onMessage={event => {
           try {
             const m = JSON.parse(event.nativeEvent.data);
             if (m.type === 'probe' || m.type === 'trace') { console.log('SELPROBE ' + JSON.stringify(m)); return; }
@@ -1499,7 +1501,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             if (m.type === 'frameThumbs') setFrameThumbs(Object.fromEntries((m.thumbs ?? []).map((t: { id: string; data: string }) => [t.id, t.data])));
             if (m.type === 'layerThumbs') setThumbs(Object.fromEntries((m.thumbs ?? []).map((t: { id: string; data: string }) => [t.id, t.data])));
             if (m.type === 'blocked' && m.reason === 'hidden') setHiddenWarning(m.name ?? '');
-            if (m.type === 'selectionImage') { const waiting = keeping.current; keeping.current = null; waiting?.(m.data ?? null); if (!m.data) Alert.alert('보관하지 못했어요', '고른 부분을 읽지 못했어요. 다시 골라 주세요.'); }
+            if (m.type === 'selectionImage') { const waiting = keeping.current; keeping.current = null; waiting?.(m.data ?? null); if (!m.data) Alert.alert(t("release.s0551"), t("release.s0634")); }
             if (m.type === 'pivot' && scene.motion) {
               const patch = m.role === 'from' ? { fromX: m.x, fromY: m.y } : m.role === 'to' ? { toX: m.x, toY: m.y } : { pivotX: m.x, pivotY: m.y };
               const parts = (scene.motion.parts ?? []).map(p => p.id === m.id ? { ...p, ...patch } : p);
@@ -1508,17 +1510,17 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             if (m.type === 'partGuess' && m.found && scene.motion?.parts?.some(pt => pt.id === m.id && pt.pivotX === .5 && pt.pivotY === .5))
               setMotion({ ...scene.motion, parts: scene.motion.parts!.map(pt => pt.id === m.id ? { ...pt, pivotX: Number(m.x.toFixed(4)), pivotY: Number(m.y.toFixed(4)) } : pt) });
             if (m.type === 'zoom' && Number.isFinite(m.zoom)) setZoom(m.zoom);
-            if (m.type === 'fitted') { if (m.factor === 0) Alert.alert('칸 안에 다 들어가지 않아요', '그림을 줄여도 움직이는 동안 칸 밖으로 나가요. 세기를 줄여 주세요.'); else if (m.factor > 0 && m.factor < 1) setSizeOpen(false); }
+            if (m.type === 'fitted') { if (m.factor === 0) Alert.alert(t("release.s0635"), t("release.s0636")); else if (m.factor > 0 && m.factor < 1) setSizeOpen(false); }
             // 이미 고른 글씨를 한 번 더 누르면 내용 고치기.
             if (m.type === 'captionEdit') openCaption();
             if (m.type === 'sampled') { dropped.current = m.color ?? null; setDropper(d => d ? { ...d, color: m.color ?? null } : d); return; }
             if (m.type === 'picked') {
               // 읽은 것은 색 계열이다. 지금 쓰던 투명도는 그대로 둔다.
               if (m.color) pickColor(withAlpha(m.color, alphaOf(color)));
-              else Alert.alert('색이 없는 곳이에요', '그림이나 참고 사진이 보이는 곳을 눌러 주세요.');
+              else Alert.alert(t("release.s0637"), t("release.s0638"));
               setColorView('custom'); setPanel('color');
             }
-            if (m.type === 'error') { unlock(); Alert.alert('그리지 못했어요', userMessage(m.message)); }
+            if (m.type === 'error') { unlock(); Alert.alert(t("release.s0639"), userMessage(m.message)); }
             // 번호가 다른 저장 응답은 이미 포기한 요청의 뒤늦은 대답이다 — 지금 그림 대신 옛 그림을 쓰지 않도록 버린다.
             if (m.type === 'save' && inFlight.current && m.token === saveToken.current) {
               try {
@@ -1532,7 +1534,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                   const result = onSave(m, slot.dialogue, declare); setQA(result);
                 }
                 send({ type: 'saved', token: m.token }); unlock(); markSaved();
-                if (nextAction.current === 'complete' && blank) { Alert.alert('아직 빈 칸이에요', '선을 하나라도 그리면 완성할 수 있어요.'); return; }
+                if (nextAction.current === 'complete' && blank) { Alert.alert(t("release.s0640"), t("release.s0641")); return; }
                 if (action === 'manual') {
                   if (returnToReview && !blank) { onReturnToReview?.(); return; }
                   showSaved(blank ? 'blank' : 'done');
@@ -1543,10 +1545,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                 else if (action === 'complete') onComplete();
                 else if (action === 'reference') onSetReference();
                 else if (typeof action === 'number') onNavigate(action);
-                else if (action === 'share') onShare().catch(e => Alert.alert('공유하지 못했어요', userMessage(e)));
-              } catch (e) { send({ type: 'saveFailed', token: m.token }); setSaveMark(null); unlock(); Alert.alert('저장하지 못했어요', userMessage(e)); }
+                else if (action === 'share') onShare().catch(e => Alert.alert(t("release.s0642"), userMessage(e)));
+              } catch (e) { send({ type: 'saveFailed', token: m.token }); setSaveMark(null); unlock(); Alert.alert(t("release.s0643"), userMessage(e)); }
             }
-          } catch (e) { unlock(); Alert.alert('그리지 못했어요', userMessage(e)); }
+          } catch (e) { unlock(); Alert.alert(t("release.s0639"), userMessage(e)); }
         }} style={{ flex: 1, backgroundColor: C.paper }} />
         </View>
 
@@ -1556,18 +1558,18 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             width: 34, height: 34, borderRadius: 17, borderWidth: 3, borderColor: '#FFFFFF', backgroundColor: dropper.color ?? 'transparent', ...Elev[2] }} />
           <View testID="스포이드 미리보기" style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, minHeight: 36, borderRadius: 18, backgroundColor: '#171717C7' }}>
             <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: dropper.color ?? '#00000000', borderWidth: 1, borderColor: '#FFFFFFB3' }} />
-            <Text style={{ fontSize: 12, fontWeight: '800', color: '#FFFFFF' }}>{dropper.color ?? '색이 없는 곳'}</Text>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: '#FFFFFF' }}>{dropper.color ?? t("release.s0645")}</Text>
           </View>
         </View>}
         {/* 패널이 열린 동안의 캔버스: 누르면 패널만 닫힌다. 이 손가락은 WebView 에 닿지 않으므로 채우기·획·지우기·선택이 일어나지 않는다.
             확대·이동 값은 캔버스 안에 있으므로 패널을 여닫아도 그대로다. */}
-        {panelCovering && <Pressable testID="패널 닫기 막" accessibilityRole="button" accessibilityLabel="패널 닫고 그리기로"
+        {panelCovering && <Pressable testID="패널 닫기 막" accessibilityRole="button" accessibilityLabel={t("release.s0647")}
           onPress={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); setDrawRail(false); }}
           style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />}
         {/* 45.35: 굵기를 끄는 동안 캔버스 한가운데에 뜨던 검은 상자를 없앴다. 값은 왼쪽 조절대의
             손잡이 옆 말풍선이 말한다 — 고치는 중인 그림을 덮지 않는다. */}
         {/* 확대한 동안에만: 작은 배율 표시. 누르면 100%. 캔버스 위 빈 띠에 뜨고, 띠가 없는 짧은 화면에서만 캔버스 모서리에 걸린다. */}
-        {tab === 'draw' && zoom > 1.05 && <Pressable accessibilityRole="button" accessibilityLabel="원래 크기로 보기" onPress={resetZoom} hitSlop={8}
+        {tab === 'draw' && zoom > 1.05 && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0648")} onPress={resetZoom} hitSlop={8}
           style={({ pressed }) => ({ position: 'absolute', top: 8, right: 12, minHeight: 32, paddingHorizontal: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: pressed ? C.fill : C.floating, borderWidth: 1, borderColor: C.line })}>
           <Glyph name="magnify" size={14} color={C.muted} />
           <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{Math.round(zoom * 100)}%</Text>
@@ -1575,32 +1577,32 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {canvasMessage === 'zoomHint' && <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
             <Glyph name="gesture-spread" size={14} color={C.muted} />
-            <Text style={{ fontSize: 12, fontWeight: '600', color: C.muted }}>두 손가락으로 벌리면 크게 볼 수 있어요</Text>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: C.muted }}>{t("release.s0649")}</Text>
           </View>
         </View>}
         {/* 캔버스 위 알림 자리(45.2차): 한 번에 하나만. 급한 순서 — 저장 중(길어질 때만) > 숨긴 레이어 > 스포이드 > 표현 힌트 > 이전 칸 > 확대 안내.
             확대 배율(%)은 알림이 아니라 상태라서 이 자리를 쓰지 않고 오른쪽 위에 따로 선다. */}
-        {canvasMessage === 'saving' && <View accessibilityLabel="저장 중이라 잠시 그릴 수 없어요" pointerEvents="none" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingHorizontal: 12, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
+        {canvasMessage === 'saving' && <View accessibilityLabel={t("release.s0650")} pointerEvents="none" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingHorizontal: 12, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
           <Glyph name="cloud-upload-outline" size={14} color={C.muted} />
-          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}>저장 중이에요 · 잠시만요</Text>
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}>{t("release.s0651")}</Text>
         </View>}
         {/* 45.39: 저장 안내는 경고처럼 보이면 안 된다(사용자 지적). 흰 스티커 + 초록 체크 + 짙은 '다음 칸' 버튼. */}
         {/* 45.43 S7: 공통 부품 SaveToast(시안 WB2-States '저장 완료': 흰 알약 · 초록 체크 한 점 · 잉크 '다음 칸', 0.24초 올라옴). */}
         {canvasMessage === 'saved' && <View testID="저장 안내" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8 }}>
           <SaveToast slot={slot.number} done={savedNote === 'done'}
-            message={savedNote === 'done' ? String(slot.number).padStart(2, '0') + '번 칸 저장했어요' : '저장했어요 · 빈 칸은 완성으로 치지 않아요'}
-            nextLabel={completeTitle.includes('전체') ? '전체 보기' : '다음 칸'} nextA11y={completeTitle.includes('전체') ? '전체 보기로 가기' : '다음 칸으로 가기'}
+            message={savedNote === 'done' ? String(slot.number).padStart(2, '0') + t("release.s0653") : t("release.s0654")}
+            nextLabel={completeTitle.includes(t("ui.all")) ? t("release.s0655") : t("release.s0436")} nextA11y={completeTitle.includes(t("ui.all")) ? t("release.s0656") : t("release.s0657")}
             onNext={savedNote === 'done' ? () => { setSavedNote(null); onComplete(); } : undefined} />
         </View>}
         {canvasMessage === 'hidden' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.accentSoft, borderWidth: 1, borderColor: C.accentBorder }}>
           <Glyph name="eye-off-outline" size={16} color={C.accentInk} />
-          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.accentInk }}>'{layerLabel(hiddenWarning)}'이 숨겨져 있어요</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="숨긴 레이어 다시 보이기" onPress={() => { changeTransform(scene.activeLayerId, { visible: true }); setHiddenWarning(''); }} style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>보이기</Text></Pressable>
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.accentInk }}>'{layerLabel(hiddenWarning)}{t("release.s0658")}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0659")} onPress={() => { changeTransform(scene.activeLayerId, { visible: true }); setHiddenWarning(''); }} style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>{t("release.s0660")}</Text></Pressable>
         </View>}
         {canvasMessage === 'guide' && !!guideHint && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
           <Glyph name="lightbulb-on-outline" size={14} color={C.muted} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}><Text style={{ fontWeight: '800' }}>{guideHint.name}</Text> · {guideHint.hint}</Text>
-          <IconButton label="표현 힌트 닫기" icon="close" size={16} color={C.muted} onPress={() => { setGuideHintOpen(false); onGuideHintDone?.(); }} />
+          <IconButton label={t("release.s0661")} icon="close" size={16} color={C.muted} onPress={() => { setGuideHintOpen(false); onGuideHintDone?.(); }} />
         </View>}
         {/* 빈 칸: 이전 칸 그림에서 이어 그릴 수 있게 한 번 제안한다. 누를 때만 복사하고, 비어 있는 칸이라 잃을 것이 없다. */}
         {canvasMessage === 'copied' && <View testID="가져옴 안내" pointerEvents="none" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, alignItems: 'center' }}>
@@ -1610,13 +1612,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         </View>}
         {canvasMessage === 'previous' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 6, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
           <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: C.surface2, overflow: 'hidden' }}>
-            <Image accessibilityLabel="이전 칸 그림" source={{ uri: imageUri(previousImage!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+            <Image accessibilityLabel={t("release.s0663")} source={{ uri: imageUri(previousImage!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="이전 칸 그림으로 시작" onPress={() => { setContinueDismissed(true); copyPrevious(); }} style={{ flex: 1, minHeight: 48, justifyContent: 'center' }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>이전 칸 그림으로 시작</Text>
-            <Text style={{ fontSize: 11, color: C.muted }}>같은 캐릭터를 이어 그려요</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0664")} onPress={() => { setContinueDismissed(true); copyPrevious(); }} style={{ flex: 1, minHeight: 48, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{t("release.s0664")}</Text>
+            <Text style={{ fontSize: 11, color: C.muted }}>{t("release.s0665")}</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="이전 칸 그림 안 쓰기" onPress={() => setContinueDismissed(true)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0666")} onPress={() => setContinueDismissed(true)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             <Glyph name="close" size={18} color={C.muted} />
           </Pressable>
         </View>}
@@ -1627,48 +1629,48 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {/* 표현 가이드("무엇을 그릴까?")는 홈의 '표현 가이드'에서 고른다(44차). 캔버스 위에는 띄우지 않는다. */}
 
         {showCanon && !!canon && <>
-          <Pressable accessibilityRole="button" accessibilityLabel="캐릭터 기준 바깥 닫기" onPress={() => setShowCanon(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+          <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0667")} onPress={() => setShowCanon(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
           <View style={{ position: 'absolute', right: 8, top: 8, width: 208, padding: 10, borderRadius: C.radius.md, backgroundColor: '#FFFFFFF2', borderWidth: 1, borderColor: C.line, elevation: 10, gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, fontWeight: '700', color: C.ink }}>캐릭터 기준{canonName ? ' · ' + canonName : ''}</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel="캐릭터 기준 닫기" onPress={() => setShowCanon(false)} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+              <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, fontWeight: '700', color: C.ink }}>{t("ui.reference")}{canonName ? ' · ' + canonName : ''}</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0668")} onPress={() => setShowCanon(false)} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
                 <Glyph name="close" size={18} color={C.muted} />
               </Pressable>
             </View>
             <View style={{ height: 120, borderRadius: C.radius.sm, backgroundColor: C.bg, overflow: 'hidden' }}>
-              <Image accessibilityLabel="캐릭터 기준 그림" source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+              <Image accessibilityLabel={t("release.s0160")} source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
             </View>
             {canonLocked.trim().split(/[,·\n]+/).filter(Boolean).slice(0, 3).map(trait => <Text key={trait} numberOfLines={1} style={{ fontSize: 11, color: C.ink }}>· {trait.trim()}</Text>)}
           </View>
         </>}
         {refRail && !!selectedReference?.visible && <View pointerEvents="none" style={{ position: 'absolute', right: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F0FCEE', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 5 }}>
           <Glyph name="gesture-pinch" size={14} color={T.info} />
-          <Text style={{ fontSize: 10, color: T.info, fontWeight: '800' }}>옮기기 · 크기</Text>
+          <Text style={{ fontSize: 10, color: T.info, fontWeight: '800' }}>{t("release.s0669")}</Text>
         </View>}
 
         {canvasMessage === 'eyedrop' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 14, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
           <Glyph name="eyedropper-variant" size={18} color={C.ink} />
-          <Text style={{ flex: 1, fontSize: 12, fontWeight: '800', color: C.ink }}>캔버스에서 색을 누르세요</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="스포이드 취소" onPress={() => { send({ type: 'eyedrop', on: false }); setPanel('color'); }} style={{ minHeight: C.tap, paddingHorizontal: 12, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.muted }}>취소</Text></Pressable>
+          <Text style={{ flex: 1, fontSize: 12, fontWeight: '800', color: C.ink }}>{t("release.s0670")}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0671")} onPress={() => { send({ type: 'eyedrop', on: false }); setPanel('color'); }} style={{ minHeight: C.tap, paddingHorizontal: 12, justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.muted }}>{t("ui.cancel")}</Text></Pressable>
         </View>}
 
         {panel === 'more' && <View testID="더보기 배경" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: '#00000055' }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="더보기 바깥 닫기" onPress={() => { ease(); setPanel(null); }} style={{ flex: 1 }} />
+          <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0673")} onPress={() => { ease(); setPanel(null); }} style={{ flex: 1 }} />
           <View testID="더보기 메뉴" style={{ maxHeight: '78%', paddingBottom: 8, paddingHorizontal: 4, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: C.paper, overflow: 'hidden' }}>
-          <SheetHeader title={String(slot.number).padStart(2, '0') + '번 칸'} closeLabel="더보기 닫기" onClose={() => { ease(); setPanel(null); }} />
+          <SheetHeader title={String(slot.number).padStart(2, '0') + t("release.s0276")} closeLabel={t("release.s0675")} onClose={() => { ease(); setPanel(null); }} />
           <ScrollView showsVerticalScrollIndicator={false}>
-          <MenuPair left="이전 칸" right="다음 칸"
+          <MenuPair left={t("release.s0676")} right={t("release.s0436")}
             onLeft={slot.number > 1 ? () => { setPanel(null); save(slot.number - 1); } : undefined}
             onRight={slot.number < slotCount ? () => { setPanel(null); save(slot.number + 1); } : undefined} />
-          <MenuButton icon="image-plus" title="그림 가져오기" onPress={() => { setPanel(null); if (cutouts.length) setCutoutPicker(true); else void importDrawing(); }} />
-          {hasPrevious && !continueAvailable && <MenuButton icon="content-copy" title="이전 그림 복사" onPress={() => { setPanel(null); copyPrevious(); }} />}
+          <MenuButton icon="image-plus" title={t("release.s0348")} onPress={() => { setPanel(null); if (cutouts.length) setCutoutPicker(true); else void importDrawing(); }} />
+          {hasPrevious && !continueAvailable && <MenuButton icon="content-copy" title={t("release.s0546")} onPress={() => { setPanel(null); copyPrevious(); }} />}
           {/* 캐릭터 기준은 세트 전체의 일이라 참고 사진 줄에서 내려왔다(45.2차). 보드의 세트 메뉴와 같은 계열이다. */}
-          {!!canon && <MenuButton icon="account-star-outline" title={showCanon ? '캐릭터 기준 숨기기' : '캐릭터 기준 보기'} onPress={() => { setPanel(null); setShowCanon(!showCanon); }} />}
-          <MenuButton icon="bookmark-outline" title={canon ? '이 칸을 캐릭터 기준으로 바꾸기' : '이 칸을 캐릭터 기준으로'} onPress={() => { setPanel(null); setShowCanon(false); save('reference'); }} />
-          <MenuButton icon="resize" title="그림 전체 크기" onPress={() => { setPanel(null); setSizeOpen(true); }} />
-          <MenuButton icon="share-variant" title="이 칸 공유" onPress={() => { setPanel(null); save('share'); }} />
-          <MenuButton icon="clipboard-check-outline" title="이 칸 검사" onPress={() => { setPanel(null); setShowQA(true); }} />
-          <MenuButton danger icon="delete-outline" title="지금 레이어 비우기" onPress={() => { setPanel(null); Alert.alert('지금 레이어 비우기', '지금 고른 레이어의 그림이 지워져요. 되돌리기로 되살릴 수 있어요.', [{ text: '취소', style: 'cancel' }, { text: '비우기', style: 'destructive', onPress: () => send({ type: 'clear' }) }]); }} />
+          {!!canon && <MenuButton icon="account-star-outline" title={showCanon ? t("release.s0677") : t("release.s0678")} onPress={() => { setPanel(null); setShowCanon(!showCanon); }} />}
+          <MenuButton icon="bookmark-outline" title={canon ? t("release.s0679") : t("release.s0680")} onPress={() => { setPanel(null); setShowCanon(false); save('reference'); }} />
+          <MenuButton icon="resize" title={t("release.s0681")} onPress={() => { setPanel(null); setSizeOpen(true); }} />
+          <MenuButton icon="share-variant" title={t("release.s0682")} onPress={() => { setPanel(null); save('share'); }} />
+          <MenuButton icon="clipboard-check-outline" title={t("release.s0683")} onPress={() => { setPanel(null); setShowQA(true); }} />
+          <MenuButton danger icon="delete-outline" title={t("release.s0684")} onPress={() => { setPanel(null); Alert.alert(t("release.s0684"), t("release.s0685"), [{ text: t("ui.cancel"), style: 'cancel' }, { text: t("release.s0686"), style: 'destructive', onPress: () => send({ type: 'clear' }) }]); }} />
           </ScrollView>
           </View>
         </View>}
@@ -1693,19 +1695,19 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           onChange={setMotion} onRequestPro={onRequestPro}
           thumbs={thumbs} previousMotion={previousMotion ?? null} onFocusPart={layerId => send({ type: 'focusPart', layerId })} onFit={() => send({ type: 'fitMotion' })}
           onGuessPivot={(partId, layerId) => send({ type: 'partGuess', id: partId, layerId })}
-          onSplitLayer={() => { switchTab('draw'); selectTool('select'); Alert.alert('움직일 부분 나누기', '움직일 부분(팔·귀 등)을 손가락으로 감싸고, 아래에서 「새 레이어로 분리」를 눌러요. 그다음 움직이기 › 부분만 움직이기에서 그 레이어를 고르면 돼요.'); }} />
+          onSplitLayer={() => { switchTab('draw'); selectTool('select'); Alert.alert(t("release.s0688"), t("release.s0689")); }} />
         {moreDim}
       </View> : <View style={dock} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
         {scene.selection ? <View style={{ maxHeight: panelRoom(0.5) }}>
           {/* 명세 E08: 여기서 하는 일은 아직 임시다. 무엇이 임시인지 글로 말하고, 나가는 길은 취소·적용 둘뿐이다.
               머리는 다른 판과 같은 공통 머리다(45.36-R1 G7) — 다만 닫기 ×는 두지 않는다. 세 번째 출구가 되기 때문이다. */}
-          <SheetHeader title="고른 부분" />
-          <Text numberOfLines={2} accessibilityLabel="고른 부분은 적용해야 그림에 남아요" style={{ fontSize: 12, color: C.muted, paddingHorizontal: 16, marginTop: -6 }}>캔버스에서 끌어 옮기고, 아래에서 바꾼 뒤 적용해야 그림에 남아요.</Text>
+          <SheetHeader title={t("release.s0690")} />
+          <Text numberOfLines={2} accessibilityLabel={t("release.s0691")} style={{ fontSize: 12, color: C.muted, paddingHorizontal: 16, marginTop: -6 }}>{t("release.s0692")}</Text>
           {/* 판 높이가 정해져 있으므로 이 목록이 먼저 줄어야 아래 취소·적용이 밀려나지 않는다. */}
           <ScrollView style={{ flexShrink: 1, minHeight: 0 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 8, gap: 8 }}>
           {/* 옮기기는 캔버스에서 끌어서 한다. 여기에는 누르는 변형만 둔다. */}
           <View style={{ flexDirection: 'row', gap: 6 }}>
-            {([['작게', 'magnify-minus-outline', { scale: .9 }], ['크게', 'magnify-plus-outline', { scale: 1.1 }], ['왼쪽 회전', 'rotate-left', { rot: -15 }], ['오른쪽 회전', 'rotate-right', { rot: 15 }], ['좌우 반전', 'flip-horizontal', { flip: true }]] as const).map(([title, icon, change]) =>
+            {([[t("release.s0693"), 'magnify-minus-outline', { scale: .9 }], [t("release.s0694"), 'magnify-plus-outline', { scale: 1.1 }], [t("release.s0695"), 'rotate-left', { rot: -15 }], [t("release.s0696"), 'rotate-right', { rot: 15 }], [t("release.s0697"), 'flip-horizontal', { flip: true }]] as const).map(([title, icon, change]) =>
               <Pressable key={title} accessibilityRole="button" accessibilityLabel={title} onPress={() => send({ type: 'selectTransform', ...change })}
                 // 변형 도구는 '아이콘 도구' 역할이다 — 아래 도구 줄처럼 바탕·테두리 없이 아이콘과 이름, 누르는 동안만 회색(45.36-R1 G8).
                 style={({ pressed }) => ({ flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: C.radius.button, backgroundColor: pressed ? C.fill : 'transparent' })}>
@@ -1714,13 +1716,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               </Pressable>)}
           </View>
           <View style={{ flexDirection: 'row', gap: 6, paddingVertical: 2 }}>
-            <Minor title="내 그림으로 보관" onPress={() => void keepCutout()} />
-            <Minor title="새 레이어로 분리" onPress={() => send({ type: 'selectApply', toNewLayer: true })} />
+            <Minor title={t("release.s0698")} onPress={() => void keepCutout()} />
+            <Minor title={t("release.s0699")} onPress={() => send({ type: 'selectApply', toNewLayer: true })} />
           </View>
           </ScrollView>
           <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 8, paddingTop: 6, backgroundColor: C.paper }}>
-            <Pressable accessibilityRole="button" accessibilityLabel="선택 취소" onPress={() => { tap('button:선택 취소'); send({ type: 'selectCancel' }); }} style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>취소</Text></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="선택 적용" onPress={() => { tap('button:선택 적용'); send({ type: 'selectApply' }); }} style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 14, backgroundColor: pressed ? C.accentLine : C.accent, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 15, fontWeight: '800', color: C.accentInk }}>적용</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0700")} onPress={() => { tap('button:선택 취소'); send({ type: 'selectCancel' }); }} style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>{t("ui.cancel")}</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0702")} onPress={() => { tap('button:선택 적용'); send({ type: 'selectApply' }); }} style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 14, backgroundColor: pressed ? C.accentLine : C.accent, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 15, fontWeight: '800', color: C.accentInk }}>{t("release.s0704")}</Text></Pressable>
           </View>
         </View> : panel === 'color' ? <View testID="색상 패널" style={{ maxHeight: panelRoom(0.38, 0.45) + (typing ? 0 : BASE_H) }}><ColorPanel scrollable={!dropping} color={color} recent={palette} saved={userPalette} view={colorView} onView={setColorView} onPick={pickColor} onEyedrop={startEyedrop} eyedropHandlers={eyedropHandlers} onSave={onSaveUserColor} onForget={onRemoveUserColor} onClose={() => { ease(); setPanel(null); }} /></View>
         // 문구 창은 글씨 줄이 늘면(추천 대사·색·글씨) 낮은 화면에서 '문구 적용'이 잘렸다 — 창 안을 위아래로 밀 수 있게 한다(2026-10-28).
@@ -1728,66 +1730,66 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           {/* 미확정 변경은 '문구 적용'으로만 확정된다. 닫으면 고치던 글자는 버려지고 화면의 문구는 그대로 남는다.
               키보드가 올라오면 머리·지우기·아래 버튼을 접고 입력 한 줄(색 · 입력 · 키보드 닫기 · 적용)만 남긴다 —
               캔버스가 띠로 줄어 고치는 글씨가 잘리던 39차 P2. 입력칸은 같은 자리에 남아 포커스를 잃지 않는다. */}
-          {!typing && <SheetHeader title="문구" closeLabel="문구 닫기" onClose={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); }} />}
+          {!typing && <SheetHeader title={t("ui.caption")} closeLabel={t("release.s0706")} onClose={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); }} />}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: typing ? 8 : 16, paddingTop: typing ? 8 : 0, paddingBottom: 8 }}>
             {/* 지금 색을 보여 주기만 한다(45.10차). 색을 고르는 입구는 아래 '팔레트' 하나 — 같은 일을 하는 자리를 둘 두지 않는다. */}
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color, borderWidth: 2, borderColor: '#FFFFFF', ...{ shadowColor: '#000', shadowOpacity: .15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } } }} />
-            <TextInput accessibilityLabel="문구 내용" value={captionDraft} onChangeText={setCaptionDraft} multiline={false} autoFocus returnKeyType="done" onSubmitEditing={() => applyCaption(captionDraft)} placeholder="예: 고마워" placeholderTextColor={C.muted} style={{ flex: 1, fontSize: 17, height: C.tap, paddingVertical: 0, textAlignVertical: 'center', borderRadius: 14, paddingHorizontal: 14, backgroundColor: C.surface2, color: C.ink }} />
+            <TextInput accessibilityLabel={t("release.s0707")} value={captionDraft} onChangeText={setCaptionDraft} multiline={false} autoFocus returnKeyType="done" onSubmitEditing={() => applyCaption(captionDraft)} placeholder={t("release.s0708")} placeholderTextColor={C.muted} style={{ flex: 1, fontSize: 17, height: C.tap, paddingVertical: 0, textAlignVertical: 'center', borderRadius: 14, paddingHorizontal: 14, backgroundColor: C.surface2, color: C.ink }} />
             {/* 360dp 미만에서는 키보드 닫기 아이콘을 두지 않는다 — 입력칸이 70dp 까지 줄어 글자를 쓸 자리가 없었다(45.36-R1).
                 키보드는 안드로이드 뒤로 가기로 닫히고, 닫아도 적용·삭제되지 않는 것은 그대로다(명세 E07). */}
-            {typing && !narrow && <IconButton label="키보드 닫기" icon="keyboard-close" color={C.muted} size={20} onPress={() => Keyboard.dismiss()} />}
+            {typing && !narrow && <IconButton label={t("release.s0709")} icon="keyboard-close" color={C.muted} size={20} onPress={() => Keyboard.dismiss()} />}
             {/* 명세 E07: 키보드 바로 위에 취소·적용을 함께 둔다. 키보드를 닫는 것만으로는 적용도 삭제도 되지 않는다. */}
-            {typing && <Pressable accessibilityRole="button" accessibilityLabel="문구 취소" onPress={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); }}
+            {typing && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0710")} onPress={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); }}
               style={({ pressed }) => ({ minHeight: C.tap, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper, alignItems: 'center', justifyContent: 'center' })}>
-              <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>취소</Text>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>{t("ui.cancel")}</Text>
             </Pressable>}
-            {typing && <Pressable accessibilityRole="button" accessibilityLabel="문구 적용" onPress={() => applyCaption(captionDraft)}
+            {typing && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0711")} onPress={() => applyCaption(captionDraft)}
               style={({ pressed }) => ({ minHeight: C.tap, paddingHorizontal: 16, borderRadius: 14, backgroundColor: pressed ? C.accentLine : C.accent, alignItems: 'center', justifyContent: 'center' })}>
-              <Text style={{ fontSize: 15, fontWeight: '800', color: C.accentInk }}>적용</Text>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: C.accentInk }}>{t("release.s0704")}</Text>
             </Pressable>}
           </View>
           {/* 추천 대사(2026-10-28): 가이드에서 고른 대사가 있으면 그것부터, 없으면 자주 쓰는 대사. 누르면 입력칸에 들어가고 '적용'으로 확정한다. */}
           <ScrollView testID="추천 대사" horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: typing ? 8 : 16, paddingBottom: 8 }} style={{ flexGrow: 0, flexShrink: 0 }}>
             {[...new Set([guideExample?.line, ...popularLines()].filter((x): x is string => !!x))].map(x =>
-              <Pressable key={x} accessibilityRole="button" accessibilityLabel={'대사 ' + x} onPress={() => setCaptionDraft(x)}
+              <Pressable key={x} accessibilityRole="button" accessibilityLabel={t("say.title") + " " + x} onPress={() => setCaptionDraft(x)}
                 style={({ pressed }) => ({ minHeight: 36, paddingHorizontal: 12, borderRadius: 18, justifyContent: 'center', backgroundColor: pressed ? C.fill : captionDraft.trim() === x ? C.pointSoft : C.surface2 })}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: captionDraft.trim() === x ? C.pointInk : C.ink }}>{x}</Text>
               </Pressable>)}
           </ScrollView>
           {/* 문구 색: 최근 쓴 색을 바로 누르고, 더 고르려면 팔레트로 간다. 고르는 즉시 캔버스의 글씨에 반영된다(45.5차). */}
           {!typing && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 6 }}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>색</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{t("release.s0712")}</Text>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               {[color, ...palette.filter(c => c.toUpperCase() !== color.toUpperCase())].slice(0, 5).map(c =>
-                <Pressable key={c} accessibilityRole="button" accessibilityLabel={'문구 색 ' + c} accessibilityState={{ selected: c.toUpperCase() === color.toUpperCase() }}
+                <Pressable key={c} accessibilityRole="button" accessibilityLabel={t("release.s0713") + " " + c} accessibilityState={{ selected: c.toUpperCase() === color.toUpperCase() }}
                   onPress={() => setCaptionColor(c)} hitSlop={6}
                   style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c, borderWidth: c.toUpperCase() === color.toUpperCase() ? 2.5 : 1, borderColor: c.toUpperCase() === color.toUpperCase() ? C.ink : '#17171718' }} />)}
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="문구 색 고르기" accessibilityValue={{ text: '지금 ' + color.toUpperCase() }}
+            <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0714")} accessibilityValue={{ text: t("release.s0572") + " " + color.toUpperCase() }}
               onPress={() => { ease(); setCaptionOpen(false); setPanel('color'); }}
               style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? C.fill : C.surface2 })}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>팔레트</Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{t("release.s0715")}</Text>
             </Pressable>
           </View>}
           {/* 글씨체(45.6차): 이름이 아니라 '가' 한 글자로 성격을 보여 준다. 폰트 파일은 새로 넣지 않는다 — 기기에 있는 글꼴을 쓴다. */}
           {!typing && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>글씨</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{t("release.s0716")}</Text>
             <View style={{ flex: 1, flexDirection: 'row', gap: 6 }}>
               {CAPTION_STYLES.map(face => { const on = captionFace === face.key;
-                return <Pressable key={face.key} accessibilityRole="button" accessibilityLabel={'문구 글씨 ' + face.title} accessibilityState={{ selected: on }}
+                return <Pressable key={face.key} accessibilityRole="button" accessibilityLabel={t("release.s0717") + " " + face.title} accessibilityState={{ selected: on }}
                   onPress={() => changeCaptionFace(face.key)}
                   style={({ pressed }) => ({ flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
-                  <Text style={{ fontSize: 17, lineHeight: 22, fontWeight: face.key === 'thick' ? '900' : '700', fontFamily: face.key === 'serif' ? 'serif' : undefined, color: on ? C.ink : C.muted }}>가</Text>
+                  <Text style={{ fontSize: 17, lineHeight: 22, fontWeight: face.key === 'thick' ? '900' : '700', fontFamily: face.key === 'serif' ? 'serif' : undefined, color: on ? C.ink : C.muted }}>{t("release.s0718")}</Text>
                   <Text style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{face.title}</Text>
                 </Pressable>; })}
             </View>
           </View>}
           {/* 대사 배치(2026-10-28, 실제 이모티콘 레퍼런스): 한 줄 · 양옆 나눠 쓰기(응 … 응) · 세로 · 말풍선. */}
           {!typing && <View testID="문구 배치" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>배치</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{t("release.s0720")}</Text>
             <View style={{ flex: 1, flexDirection: 'row', gap: 6 }}>
               {CAPTION_LAYOUTS.map(lay => { const on = captionLayout === lay.key;
-                return <Pressable key={lay.key} accessibilityRole="button" accessibilityLabel={'문구 배치 ' + lay.title} accessibilityState={{ selected: on }}
+                return <Pressable key={lay.key} accessibilityRole="button" accessibilityLabel={t("release.s0719") + " " + lay.title} accessibilityState={{ selected: on }}
                   onPress={() => changeCaptionLayout(lay.key)}
                   style={({ pressed }) => ({ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
                   <Text style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{lay.title}</Text>
@@ -1795,22 +1797,22 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             </View>
           </View>}
           {!typing && !!(scene.caption?.text) && <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingBottom: 4 }}>
-            <Minor danger title="문구 지우기" onPress={() => { setCaptionDraft(''); applyCaption(''); }} />
+            <Minor danger title={t("release.s0721")} onPress={() => { setCaptionDraft(''); applyCaption(''); }} />
           </View>}
           {!typing && <View style={{ paddingHorizontal: 16, paddingBottom: 10, paddingTop: 6, backgroundColor: C.paper }}>
-            <Action primary title="문구 적용" onPress={() => applyCaption(captionDraft)} />
+            <Action primary title={t("release.s0711")} onPress={() => applyCaption(captionDraft)} />
           </View>}
         </ScrollView>
 
-        : panel === 'reference' && selectedReference ? <Sheet room={coverRoom()} title="참고 사진" onClose={() => { ease(); setPanel(null); }}>
+        : panel === 'reference' && selectedReference ? <Sheet room={coverRoom()} title={t("release.s0722")} onClose={() => { ease(); setPanel(null); }}>
           <View style={{ paddingHorizontal: 8, gap: 8 }}>
-          <Minor title="위치 초기화" onPress={() => { changeTransform(selectedReference.id, { x: 0, y: 0, scale: 1, rotation: 0 }); setPanel(null); }} />
-          <Minor title="참고 삭제" danger onPress={() => { const image = slot.referenceImages.find(i => i.path === selectedReference.path); if (image) removeReference(image.path, selectedReference.id); }} />
+          <Minor title={t("release.s0723")} onPress={() => { changeTransform(selectedReference.id, { x: 0, y: 0, scale: 1, rotation: 0 }); setPanel(null); }} />
+          <Minor title={t("release.s0557")} danger onPress={() => { const image = slot.referenceImages.find(i => i.path === selectedReference.path); if (image) removeReference(image.path, selectedReference.id); }} />
           </View>
         </Sheet> : <>
-        {drawRail && <SheetHeader title="레이어" closeLabel="레이어 닫기" onClose={() => { ease(); setDrawRail(false); }}
+        {drawRail && <SheetHeader title={t("release.s0595")} closeLabel={t("release.s0724")} onClose={() => { ease(); setDrawRail(false); }}
           right={scene.layers.filter(l => l.id.startsWith('draw-')).length < 4
-            ? <IconButton testID="레이어 추가" label="레이어 추가" icon="plus" size={22} color={C.ink} onPress={addDrawing} />
+            ? <IconButton testID="레이어 추가" label={t("release.s0725")} icon="plus" size={22} color={C.ink} onPress={addDrawing} />
             : undefined} />}
         {drawRail && <View style={{ maxHeight: Math.min(280, coverRoom()) }}>
           <ScrollView scrollEnabled={!layerDragging} showsVerticalScrollIndicator contentContainerStyle={{ paddingBottom: 8 }}>
@@ -1825,7 +1827,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               return <View style={{ paddingBottom: layerMenu === layer.id ? 6 : 0, borderBottomWidth: 1, borderColor: C.line, backgroundColor: active && !dragging ? C.accentSoft : 'transparent' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 4 }}>
                 {/* 고른다고 판이 닫히지 않는다 — 어느 장을 골랐는지 보고 이어서 순서·보임을 만질 수 있어야 한다. */}
-                <Pressable accessibilityRole="button" accessibilityLabel={`${name} 선택`} accessibilityState={{ selected: active }}
+                <Pressable accessibilityRole="button" accessibilityLabel={t("release.d113", { v0: (name) })} accessibilityState={{ selected: active }}
                   onPress={() => send({ type: 'select', id: layer.id })}
                   style={({ pressed }) => ({ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingLeft: 16, backgroundColor: pressed ? C.fill : 'transparent' })}>
                   <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, overflow: 'hidden', opacity: layer.visible ? 1 : .35 }}>
@@ -1834,56 +1836,56 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                   <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: active ? '800' : '600', color: layer.visible ? C.ink : C.muted }}>{name}</Text>
                   <View style={{ width: 18, alignItems: 'center' }}>{active ? <Glyph name="pencil" size={16} color={C.ink} /> : null}</View>
                 </Pressable>
-                <EyeToggle label={`${name} ${layer.visible ? '숨기기' : '보이기'}`} on={layer.visible} onPress={() => changeTransform(layer.id, { visible: !layer.visible })} />
+                <EyeToggle label={`${name} ${layer.visible ? t("release.x098") : t("release.s0660")}`} on={layer.visible} onPress={() => changeTransform(layer.id, { visible: !layer.visible })} />
                 {/* 손잡이: 누른 채 위아래로 끌면 차례가 바뀐다. 화면 읽기 사용자는 같은 자리에서 올리기·내리기 동작을 쓴다.
                     45.36 은 접근성 동작만 달아 두어, 보이는 손잡이를 끌어도 아무 일이 없었다(G14). */}
-                {scene.layers.length > 1 && <View {...handle} accessibilityRole="adjustable" accessibilityLabel={`${name} 순서 바꾸기`}
-                  accessibilityHint="누른 채 위아래로 끌어서 차례를 바꿔요"
+                {scene.layers.length > 1 && <View {...handle} accessibilityRole="adjustable" accessibilityLabel={t("release.d115", { v0: (name) })}
+                  accessibilityHint={t("release.s0726")}
                   accessibilityValue={{ min: 1, max: scene.layers.length, now: layerAt(layer.id) + 1 }}
                   accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
                   onAccessibilityAction={e => send({ type: 'moveLayer', id: layer.id, by: e.nativeEvent.actionName === 'increment' ? 1 : -1 })}
                   style={{ width: 44, height: C.tap, borderRadius: C.radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: dragging ? C.fill : 'transparent' }}>
                   <Glyph name="drag-horizontal-variant" size={21} color={dragging ? C.ink : C.muted} />
                 </View>}
-                <Pressable accessibilityRole="button" accessibilityLabel={`${name} 관리`} onPress={() => setLayerMenu(layerMenu === layer.id ? null : layer.id)} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={20} color={C.muted} /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={t("release.d116", { v0: (name) })} onPress={() => setLayerMenu(layerMenu === layer.id ? null : layer.id)} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={20} color={C.muted} /></Pressable>
               </View>
             {layerMenu === layer.id && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16 }}>
               {/* 겹치는 차례(45.7차): 위로/아래로 대신 '앞으로 보내기·뒤로 보내기' — 목록의 방향을 몰라도 결과가 그려진다. */}
-              {scene.layers.length > 1 && layerAt(layer.id) < scene.layers.length - 1 && <Minor title="앞으로 보내기" onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: 1 }); }} />}
-              {scene.layers.length > 1 && layerAt(layer.id) > 0 && <Minor title="뒤로 보내기" onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: -1 }); }} />}
-              <Minor title="이름 바꾸기" onPress={() => { setLayerMenu(null); setRenaming({ id: layer.id, name: layer.name }); }} />
-              {scene.layers.length < 4 && <Minor title="복제" onPress={() => { setLayerMenu(null); send({ type: 'duplicateLayer', id: layer.id }); }} />}
-              {scene.layers.length > 1 && <Minor danger title="지우기" onPress={() => { setLayerMenu(null); Alert.alert(name + ' 지우기', '이 레이어와 레이어에 준 부분 움직임이 함께 지워져요. 되돌리기로 되살릴 수 있어요.', [{ text: '취소', style: 'cancel' }, { text: '지우기', style: 'destructive', onPress: () => send({ type: 'removeLayer', id: layer.id }) }]); }} />}
+              {scene.layers.length > 1 && layerAt(layer.id) < scene.layers.length - 1 && <Minor title={t("release.s0727")} onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: 1 }); }} />}
+              {scene.layers.length > 1 && layerAt(layer.id) > 0 && <Minor title={t("release.s0728")} onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: -1 }); }} />}
+              <Minor title={t("ui.rename")} onPress={() => { setLayerMenu(null); setRenaming({ id: layer.id, name: layer.name }); }} />
+              {scene.layers.length < 4 && <Minor title={t("release.s0729")} onPress={() => { setLayerMenu(null); send({ type: 'duplicateLayer', id: layer.id }); }} />}
+              {scene.layers.length > 1 && <Minor danger title={t("release.s0534")} onPress={() => { setLayerMenu(null); Alert.alert(name + " " + t("release.s0534"), t("release.s0730"), [{ text: t("ui.cancel"), style: 'cancel' }, { text: t("release.s0534"), style: 'destructive', onPress: () => send({ type: 'removeLayer', id: layer.id }) }]); }} />}
             </View>}
             </View>;
             }} />
           </ScrollView>
         </View>}
-        {refRail && <SheetHeader title="참고" closeLabel="참고 닫기" onClose={() => { ease(); setRefRail(false); }} />}
+        {refRail && <SheetHeader title={t("release.s0596")} closeLabel={t("release.s0731")} onClose={() => { ease(); setRefRail(false); }} />}
         {refRail && BUILTIN_READY && <View style={{ paddingHorizontal: 12, paddingTop: 12 }}>
-          <Segmented dense value={refSource} onChange={next => { setRefSource(next); setRefBrowse(true); }} items={[{ key: 'mine', label: '내 사진', icon: 'image-outline' }, { key: 'builtin', label: '기본 레퍼런스', icon: 'human-handsup' }]} />
+          <Segmented dense value={refSource} onChange={next => { setRefSource(next); setRefBrowse(true); }} items={[{ key: 'mine', label: t("release.s0732"), icon: 'image-outline' }, { key: 'builtin', label: t("release.s0733"), icon: 'human-handsup' }]} />
         </View>}
         {refRail && refSource === 'builtin' && BUILTIN_READY && (refBrowse
           ? <BuiltinReferences maxHeight={Math.max(120, Math.min(260, coverRoom() - 110))} category={refCategory} onCategory={setRefCategory} onPick={pickBuiltinReference} />
           : <View style={{ paddingHorizontal: 12, paddingTop: 8, paddingBottom: 10, gap: 6 }}>
               <PoseStrip category={refCategory} index={poseIndex} count={BUILTIN_REFERENCES.placeholderCount} onIndex={movePose} />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>캔버스에서 위치·크기·진하기를 맞춰요</Text>
-                <Pressable accessibilityRole="button" accessibilityLabel="기본 레퍼런스 다시 찾기" onPress={() => { ease(); setRefBrowse(true); }}
+                <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{t("release.s0734")}</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0735")} onPress={() => { ease(); setRefBrowse(true); }}
                   style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? C.fill : C.surface2 })}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>다시 찾기</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{t("release.s0736")}</Text>
                 </Pressable>
               </View>
             </View>)}
         {refRail && (refSource === 'mine' || !BUILTIN_READY) && (scene.references.length > 0 || !!guideExample) && <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'flex-start', gap: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
-            <RailTile label="참고 사진 추가" caption="사진 추가" icon="plus" dashed onPress={() => void addReferences()} />
+            <RailTile label={t("release.s0737")} caption={t("release.s0738")} icon="plus" dashed onPress={() => void addReferences()} />
             {/* 참고 창을 닫았어도 고른 표현은 이 칸에 남아 있다 — 다시 열 자리가 없어 길이 끊기지 않게. */}
-            {!!guideExample && <RailTile label={refWindow === 'closed' ? '표현 예시 참고 자리 열기' : '표현 예시 참고 자리 닫기'} caption="표현 예시" icon="lightbulb-on-outline"
+            {!!guideExample && <RailTile label={refWindow === 'closed' ? t("release.s0739") : t("release.s0740")} caption={t("release.s0741")} icon="lightbulb-on-outline"
               selected={refWindow !== 'closed'} onPress={() => { ease(); setRefWindow(refWindow === 'closed' ? 'open' : 'closed'); }} />}
             {scene.references.map((ref, index) => {
               const image = slot.referenceImages.find(i => i.path === ref.path), active = ref.id === scene.activeReferenceId;
-              return <RailTile key={ref.id} label={`참고 ${index + 1} 선택`} caption={`참고 ${index + 1}`} image={image ? imageUri(image.path) : undefined} icon="image-outline" selected={active} faded={!ref.visible}
+              return <RailTile key={ref.id} label={t("release.d117", { v0: (index + 1) })} caption={t("release.d119", { v0: (index + 1) })} image={image ? imageUri(image.path) : undefined} icon="image-outline" selected={active} faded={!ref.visible}
                 // 타일을 누르는 것은 "이 참고로 작업하겠다"는 뜻이다: 고르면 캔버스에 바로 보인다(45.1차).
                 // 다시 누르면 선택만 풀고(보임 상태는 그대로), 숨기기는 눈 아이콘이 맡는다 — 앱이 이유 없이 다시 켜지 않는다.
                 onPress={() => { send(active ? { type: 'setActiveReference', id: null } : { type: 'toggleReference', id: ref.id }); setPanel(null); }} />;
@@ -1891,20 +1893,20 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           </ScrollView>
         </View>}
         {refRail && (refSource === 'mine' || !BUILTIN_READY) && scene.references.length === 0 && !guideExample &&
-          <EmptyState icon="image-outline" message="그림을 보며 따라 그릴 참고 사진을 추가해 보세요."
-            action={<Action primary compact title="참고 사진 추가" icon="plus" onPress={() => void addReferences()} />} />}
+          <EmptyState icon="image-outline" message={t("release.s0742")}
+            action={<Action primary compact title={t("release.s0737")} icon="plus" onPress={() => void addReferences()} />} />}
 
         {refRail && refSource === 'mine' && !!selectedReference && <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingBottom: 4, gap: 4 }}>
-          <EyeToggle label={`참고 ${selectedReference.visible ? '숨기기' : '보이기'}`} on={selectedReference.visible} onPress={() => send({ type: 'toggleReference', id: selectedReference.id })} />
+          <EyeToggle label={t("release.d119", { v0: (selectedReference.visible ? t("release.x098") : t("release.s0660")) })} on={selectedReference.visible} onPress={() => send({ type: 'toggleReference', id: selectedReference.id })} />
           <Glyph name="circle-opacity" size={16} color={C.muted} />
-          <View style={{ flex: 1 }}><Range testID="참고 진하기" label="진하기" value={selectedReference.opacity} min={.1} max={1} step={.05} onChange={opacity => changeTransform(selectedReference.id, { opacity: Math.round(opacity * 20) / 20 })} /></View>
-          <Pressable accessibilityRole="button" accessibilityLabel="참고 관리" onPress={() => setPanel(panel === 'reference' ? null : 'reference')} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={20} color={C.muted} /></Pressable>
+          <View style={{ flex: 1 }}><Range testID="참고 진하기" label={t("release.s0586")} value={selectedReference.opacity} min={.1} max={1} step={.05} onChange={opacity => changeTransform(selectedReference.id, { opacity: Math.round(opacity * 20) / 20 })} /></View>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0744")} onPress={() => setPanel(panel === 'reference' ? null : 'reference')} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={20} color={C.muted} /></Pressable>
         </View>}
 
         {/* 글씨를 고른 동안: 옮기기·크기는 캔버스에서 한다. 여기에는 내용 고치기와 끝내기만 둔다. */}
         {!drawRail && !!scene.captionPicked && <View style={{ flexDirection: 'row', gap: 8, marginHorizontal: 12, marginVertical: 8 }}>
-          <Minor title="문구 내용 고치기" onPress={openCaption} />
-          <Minor title="문구 선택 끝" onPress={() => { ease(); send({ type: 'captionPick', on: false }); }} />
+          <Minor title={t("release.s0745")} onPress={openCaption} />
+          <Minor title={t("release.s0746")} onPress={() => { ease(); send({ type: 'captionPick', on: false }); }} />
         </View>}
         </>}
         {moreDim}
@@ -1927,8 +1929,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             큰 둥근 카드와 굵은 외곽선을 걷고, 고른 칸만 옅은 노랑과 짧은 밑줄로 말한다. */}
         <View testID="빠른 브러시" style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingTop: 6 }}>
           {quickBrushes.map(key => { const b = brushInfo(key), on = tool === 'pen' && isBrushOn(key);
-            return <Pressable key={key} testID={'빠른 브러시 ' + b.title} accessibilityRole="button" accessibilityLabel={b.title}
-              accessibilityState={{ selected: on }} accessibilityHint={on ? '다시 누르면 세부 설정이 열려요' : undefined}
+            return <Pressable key={key} testID={t("release.s0747") + " " + b.title} accessibilityRole="button" accessibilityLabel={b.title}
+              accessibilityState={{ selected: on }} accessibilityHint={on ? t("release.s0748") : undefined}
               onPress={() => pickBrush(key)}
               style={({ pressed }) => ({ flex: 1, minHeight: 62, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: C.radius.button,
                 // 역할별 선택(2026-10-08 토스식): 브러시 = 옅은 노랑 면 · 도구 = 노랑 면. 테두리 없음.
@@ -1936,26 +1938,26 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               <Image accessibilityIgnoresInvertColors source={b.stroke} style={{ width: '76%', height: 20, tintColor: color }} resizeMode="contain" />
               <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{b.title}</Text>
             </Pressable>; })}
-          <Pressable accessibilityRole="button" accessibilityLabel="브러시 전체" accessibilityState={{ expanded: panel === 'brush' }}
+          <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0749")} accessibilityState={{ expanded: panel === 'brush' }}
             onPress={() => { ease(); setPanel('brush'); setBrushDetail(false); setBrushGroup(brushInfo(currentBrushKey).group); setDrawRail(false); setRefRail(false); setCaptionOpen(false); }}
             style={({ pressed }) => ({ width: 56, minHeight: 62, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: C.radius.button,
               backgroundColor: pressed ? C.fill : 'transparent' })}>
             <Glyph name="view-grid-outline" size={20} color={C.muted} />
-            <Text style={{ fontSize: 11, fontWeight: '600', color: C.muted }}>전체</Text>
+            <Text style={{ fontSize: 11, fontWeight: '600', color: C.muted }}>{t("ui.all")}</Text>
           </Pressable>
         </View>
         {/* ② 도구 네 칸과 지금 색. 색은 오른쪽 끝에 동그라미 하나로 선다(시안). */}
         <View testID="도구 줄" style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 8, paddingTop: 6 }}>
           {ALL_TOOLS.map(([key, title, icon, a11y]) => { const on = tool === key;
-            return <Pressable key={key} testID={'도구 ' + title} accessibilityRole="button" accessibilityLabel={a11y} accessibilityState={{ selected: on }}
+            return <Pressable key={key} testID={t("release.s0751") + " " + title} accessibilityRole="button" accessibilityLabel={a11y} accessibilityState={{ selected: on }}
               onPress={() => selectTool(key)}
               style={({ pressed }) => ({ flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: C.radius.button,
                 backgroundColor: on ? C.pointSoft : pressed ? C.fill : 'transparent', boxShadow: on ? `inset 0px 0px 0px 2px ${C.point}` : undefined })}>
               <Glyph name={icon} size={20} color={on ? C.point : C.muted} />
               <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{title}</Text>
             </Pressable>; })}
-          <Pressable testID="지금 색" accessibilityRole="button" accessibilityLabel="색" accessibilityValue={{ text: color.toUpperCase() }} accessibilityState={{ expanded: panel === 'color' }}
-            accessibilityHint="누르면 색을 골라요"
+          <Pressable testID="지금 색" accessibilityRole="button" accessibilityLabel={t("release.s0712")} accessibilityValue={{ text: color.toUpperCase() }} accessibilityState={{ expanded: panel === 'color' }}
+            accessibilityHint={t("release.s0753")}
             onPress={() => { ease(); setPanel(panel === 'color' ? null : 'color'); setDrawRail(false); setRefRail(false); setCaptionOpen(false); }}
             style={({ pressed }) => ({ width: 52, height: 52, alignItems: 'center', justifyContent: 'center', opacity: pressed ? .7 : 1 })}>
             <View testID="지금 색 고리" style={{ width: 36, height: 36, borderRadius: 18, padding: 3, backgroundColor: C.paper,
@@ -1971,45 +1973,45 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     {/* 브러시 창은 머리줄·캔버스·아래 줄을 모두 덮는 독립 창이다(승인 시안). */}
     {brushWindow}
 
-    {cutoutPicker && <Dialog title="그림 가져오기" onClose={() => setCutoutPicker(false)}>
+    {cutoutPicker && <Dialog title={t("release.s0348")} onClose={() => setCutoutPicker(false)}>
       {cutouts.map(cut => <View key={cut.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Pressable accessibilityRole="button" accessibilityLabel={cut.name + ' 넣기'} onPress={() => { setCutoutPicker(false); void useCutout(cut.id); }}
+        <Pressable accessibilityRole="button" accessibilityLabel={cut.name + " " + t("release.s0755")} onPress={() => { setCutoutPicker(false); void useCutout(cut.id); }}
           style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 56, paddingHorizontal: 8, borderRadius: C.radius.sm, borderWidth: 1, borderColor: C.line, backgroundColor: '#FFF' }}>
           <Image source={{ uri: imageUri(cut.path) }} style={{ width: 40, height: 40, borderRadius: 8 }} resizeMode="contain" />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: C.ink }}>{cut.name}</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={cut.name + ' 보관 지우기'} onPress={() => onForgetCutout(cut.id)} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><Glyph name="close" size={18} color={C.muted} /></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={cut.name + " " + t("release.s0756")} onPress={() => onForgetCutout(cut.id)} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><Glyph name="close" size={18} color={C.muted} /></Pressable>
       </View>)}
-      <Action title="사진에서 고르기" icon="image-outline" onPress={() => { setCutoutPicker(false); void importDrawing(); }} />
+      <Action title={t("release.s0757")} icon="image-outline" onPress={() => { setCutoutPicker(false); void importDrawing(); }} />
     </Dialog>}
-    {!!renaming && <Dialog title="레이어 이름" onClose={() => setRenaming(null)}>
-      <TextInput accessibilityLabel="레이어 이름" value={renaming.name} onChangeText={name => setRenaming({ ...renaming, name })} multiline={false} maxLength={12}
-        placeholder="예: 손" placeholderTextColor="#8E8E93"
+    {!!renaming && <Dialog title={t("release.s0758")} onClose={() => setRenaming(null)}>
+      <TextInput accessibilityLabel={t("release.s0758")} value={renaming.name} onChangeText={name => setRenaming({ ...renaming, name })} multiline={false} maxLength={12}
+        placeholder={t("release.s0759")} placeholderTextColor="#8E8E93"
         style={{ fontSize: 18, minHeight: C.tap, borderWidth: 1, borderColor: C.line, borderRadius: C.radius.sm, paddingHorizontal: 12, backgroundColor: '#FFF', color: C.ink }} />
-      <Action primary title="이름 바꾸기" onPress={() => { if (renaming.name.trim()) send({ type: 'renameLayer', id: renaming.id, name: renaming.name }); setRenaming(null); }} />
+      <Action primary title={t("ui.rename")} onPress={() => { if (renaming.name.trim()) send({ type: 'renameLayer', id: renaming.id, name: renaming.name }); setRenaming(null); }} />
     </Dialog>}
-    {proSheet && <Dialog title="PRO 효과는 저장되지 않아요" onClose={() => { setProSheet(false); pendingAction.current = null; }}>
-      <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>미리 본 PRO 효과는 PRO 에서만 저장돼요. 빼고 저장하면 그림과 무료 움직임은 그대로 남아요.</Text>
-      <Action primary title="PRO 알아보기" onPress={() => { setProSheet(false); onRequestPro(); }} />
-      <Action title="PRO 효과 빼고 저장" onPress={saveWithoutPro} />
+    {proSheet && <Dialog title={t("release.s0760")} onClose={() => { setProSheet(false); pendingAction.current = null; }}>
+      <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>{t("release.s0761")}</Text>
+      <Action primary title={t("release.s0762")} onPress={() => { setProSheet(false); onRequestPro(); }} />
+      <Action title={t("release.s0763")} onPress={saveWithoutPro} />
     </Dialog>}
-    {sizeOpen && <Dialog title="그림 전체 크기" onClose={() => setSizeOpen(false)}>
-      <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>{'모든 그림 레이어를 칸 가운데를 기준으로 함께 키우거나 줄여요. 레이어 사이 위치와 부분 움직임도 같이 맞춰져요. 참고 사진은 그대로예요.' + (scene.caption?.text?.trim() ? (sizeWithCaption ? ' 문구도 같은 배율로 바뀌어요.' : ' 문구는 그대로예요.') : '')}</Text>
-      {!!scene.caption?.text?.trim() && <Pressable accessibilityRole="switch" accessibilityLabel="문구도 함께" accessibilityState={{ checked: sizeWithCaption }} onPress={() => setSizeWithCaption(!sizeWithCaption)}
+    {sizeOpen && <Dialog title={t("release.s0681")} onClose={() => setSizeOpen(false)}>
+      <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>{t("release.s0764") + (scene.caption?.text?.trim() ? (sizeWithCaption ? " " + t("release.s0765") : " " + t("release.s0766")) : '')}</Text>
+      {!!scene.caption?.text?.trim() && <Pressable accessibilityRole="switch" accessibilityLabel={t("release.s0767")} accessibilityState={{ checked: sizeWithCaption }} onPress={() => setSizeWithCaption(!sizeWithCaption)}
         style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, gap: 10 }}>
-        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>문구도 함께</Text>
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>{t("release.s0767")}</Text>
         <Toggle on={sizeWithCaption} />
       </Pressable>}
-      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>두 손가락으로 화면을 키우는 것은 보기만 바뀌고, 이 기능은 저장되는 그림 크기가 바뀌어요. 되돌리기로 돌아갈 수 있어요.</Text>
+      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{t("release.s0768")}</Text>
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <View style={{ flex: 1 }}><Action icon="magnify-minus-outline" title="10% 작게" onPress={() => send({ type: 'scaleAll', factor: .9, withCaption: sizeWithCaption })} /></View>
-        <View style={{ flex: 1 }}><Action icon="magnify-plus-outline" title="10% 크게" onPress={() => send({ type: 'scaleAll', factor: 1 / .9, withCaption: sizeWithCaption })} /></View>
+        <View style={{ flex: 1 }}><Action icon="magnify-minus-outline" title={t("release.s0769")} onPress={() => send({ type: 'scaleAll', factor: .9, withCaption: sizeWithCaption })} /></View>
+        <View style={{ flex: 1 }}><Action icon="magnify-plus-outline" title={t("release.s0770")} onPress={() => send({ type: 'scaleAll', factor: 1 / .9, withCaption: sizeWithCaption })} /></View>
       </View>
-      {!!scene.motion && !!scene.clipped && <Action primary icon="fit-to-page-outline" title="칸 안에 맞추기" onPress={() => send({ type: 'fitMotion' })} />}
-      <Action title="닫기" onPress={() => setSizeOpen(false)} />
+      {!!scene.motion && !!scene.clipped && <Action primary icon="fit-to-page-outline" title={t("release.s0771")} onPress={() => send({ type: 'fitMotion' })} />}
+      <Action title={t("ui.close")} onPress={() => setSizeOpen(false)} />
     </Dialog>}
-    {showQA && <Dialog title="이 칸 검사" onClose={() => setShowQA(false)}>
-      {!qa ? <Text style={{ fontSize: 13, color: C.ink }}>아직 검사한 결과가 없어요.</Text> : qa.status === 'PASS' ? <Text style={{ fontSize: 15, fontWeight: '700', color: C.success }}>기본 검사를 모두 통과했어요.</Text>
+    {showQA && <Dialog title={t("release.s0683")} onClose={() => setShowQA(false)}>
+      {!qa ? <Text style={{ fontSize: 13, color: C.ink }}>{t("release.s0772")}</Text> : qa.status === 'PASS' ? <Text style={{ fontSize: 15, fontWeight: '700', color: C.success }}>{t("release.s0773")}</Text>
         : [...qa.checks, ...qa.consistency].filter(c => c.status !== 'PASS').map(c => <Text key={c.label} style={{ fontSize: 13, lineHeight: 19, color: c.status === 'FAIL' ? C.danger : C.ink }}>{c.label} · {c.detail}</Text>)}
       {(qa?.notes ?? []).map(note => <Text key={note} style={{ fontSize: 11, color: C.muted }}>{note}</Text>)}
     </Dialog>}
@@ -2043,7 +2045,7 @@ function BuiltinReferences({ maxHeight, category, onCategory, onPick }: { maxHei
   return <View style={{ paddingTop: 8, gap: 8 }}>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 12 }}>
       {BUILTIN_REFERENCES.categories.map(name => { const on = category === name;
-        return <Pressable key={name} accessibilityRole="button" accessibilityLabel={'기본 레퍼런스 ' + name} accessibilityState={{ selected: on }} onPress={() => setCategory(name)}
+        return <Pressable key={name} accessibilityRole="button" accessibilityLabel={t("release.s0733") + " " + name} accessibilityState={{ selected: on }} onPress={() => setCategory(name)}
           style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: on ? T.ink : T.surface2 }}>
           <Text style={{ fontSize: 13, fontWeight: on ? '700' : '600', color: on ? T.paper : T.muted }}>{name}</Text>
         </Pressable>; })}
@@ -2051,7 +2053,7 @@ function BuiltinReferences({ maxHeight, category, onCategory, onPick }: { maxHei
     {items.length
       ? <ScrollView testID="기본 레퍼런스 격자" nestedScrollEnabled showsVerticalScrollIndicator={false} style={{ maxHeight }} onLayout={e => { const w = Math.floor(e.nativeEvent.layout.width); if (w > 0 && w !== gridWidth) setGridWidth(w); }} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap, paddingHorizontal: 12, paddingBottom: 4 }}>
           {items.map(i =>
-            <Pressable key={category + i} testID="기본 레퍼런스 자리" accessibilityRole="button" accessibilityLabel={`${category} 기본 레퍼런스 ${i + 1}${BUILTIN_REFERENCES.ready ? '' : ' 준비 중'}`} onPress={() => onPick(i)}
+            <Pressable key={category + i} testID="기본 레퍼런스 자리" accessibilityRole="button" accessibilityLabel={t("release.d120", { v0: (category), v1: (i + 1), v2: (BUILTIN_REFERENCES.ready ? '' : " " + t("release.s0080")) })} onPress={() => onPick(i)}
               style={({ pressed }) => ({ width: cell, height: tall, borderRadius: 12, backgroundColor: pressed ? T.fill : T.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' })}>
               {pose
                 ? <Image accessibilityIgnoresInvertColors source={pose} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
@@ -2065,8 +2067,8 @@ function BuiltinReferences({ maxHeight, category, onCategory, onPick }: { maxHei
                 </>}
             </Pressable>)}
         </ScrollView>
-      : <Text style={{ paddingHorizontal: 12, paddingVertical: 16, fontSize: 12, color: T.muted }}>이 분류에는 아직 그림이 없어요</Text>}
-    <Text style={{ paddingHorizontal: 12, paddingBottom: 8, fontSize: 11, color: T.muted }}>{BUILTIN_REFERENCES.ready ? '누르면 캔버스에 참고로 깔려요' : '관절 인형 그림은 준비 중이에요'}</Text>
+      : <Text style={{ paddingHorizontal: 12, paddingVertical: 16, fontSize: 12, color: T.muted }}>{t("release.s0776")}</Text>}
+    <Text style={{ paddingHorizontal: 12, paddingBottom: 8, fontSize: 11, color: T.muted }}>{BUILTIN_REFERENCES.ready ? t("release.s0777") : t("release.s0778")}</Text>
   </View>;
 }
 function PoseStrip({ category, index, count, onIndex }: { category: string; index: number; count: number; onIndex: (next: number) => void }) {
@@ -2085,7 +2087,7 @@ function PoseStrip({ category, index, count, onIndex }: { category: string; inde
     </View>;
   });
   return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-    <View testID="자세 넘기기" accessibilityRole="adjustable" accessibilityLabel={category + ' 자세 넘기기'} accessibilityHint="좌우로 넘기면 다음·이전 자세를 봐요"
+    <View testID="자세 넘기기" accessibilityRole="adjustable" accessibilityLabel={category + " " + t("release.s0779")} accessibilityHint={t("release.s0780")}
       accessibilityValue={{ min: 1, max: count, now: index + 1 }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={e => onIndex(index + (e.nativeEvent.actionName === 'increment' ? 1 : -1))}
@@ -2130,11 +2132,11 @@ function GuideStrip({ title, hint, artwork, collapsed, onCollapse, onClose, onUn
     <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, paddingLeft: 12, paddingRight: 2, gap: 2 }}>
       <Glyph name="lightbulb-on-outline" size={15} color={T.muted} />
       <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, fontWeight: '800', color: T.ink, marginLeft: 4 }}>{title}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel={collapsed ? '표현 예시 펼치기' : '표현 예시 접기'} onPress={onCollapse}
+      <Pressable accessibilityRole="button" accessibilityLabel={collapsed ? t("release.s0782") : t("release.s0783")} onPress={onCollapse}
         style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }} hitSlop={2}>
         <Glyph name={collapsed ? 'chevron-down' : 'chevron-up'} size={18} color={T.muted} />
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="표현 예시 닫기" onPress={onClose}
+      <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0784")} onPress={onClose}
         style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }} hitSlop={2}>
         <Glyph name="close" size={17} color={T.muted} />
       </Pressable>
@@ -2142,13 +2144,13 @@ function GuideStrip({ title, hint, artwork, collapsed, onCollapse, onClose, onUn
     {/* 펼친 모습: 그림은 왼쪽에 작게, 할 말과 행동은 오른쪽에. 가로로 눕혀 세로 자리를 아낀다. */}
     {!collapsed && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingBottom: 10 }}>
       <View style={{ width: 96, height: 96, borderRadius: T.radius.sm, backgroundColor: T.surface2, overflow: 'hidden' }}>
-        <Image accessibilityIgnoresInvertColors accessibilityLabel={title + ' 예시 그림'} source={artwork} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+        <Image accessibilityIgnoresInvertColors accessibilityLabel={title + " " + t("release.s0785")} source={artwork} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
       </View>
       <View style={{ flex: 1, gap: 8 }}>
         <Text numberOfLines={3} style={{ fontSize: 13, lineHeight: 19, color: T.muted }}>{hint}</Text>
-        {!!onUnderlay && <Pressable accessibilityRole="button" accessibilityLabel="이 예시를 밑그림으로 넣기" onPress={onUnderlay}
+        {!!onUnderlay && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0786")} onPress={onUnderlay}
           style={({ pressed }) => ({ minHeight: T.tap, borderRadius: T.radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : T.surface2 })}>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: T.ink }}>밑그림으로 넣기</Text>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: T.ink }}>{t("release.s0787")}</Text>
         </Pressable>}
       </View>
     </View>}
@@ -2212,59 +2214,59 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
   const action = { flex: 1, minHeight: 44, flexDirection: 'row', gap: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center' } as const;
 
   return <View style={{ flexShrink: 1, minHeight: 0, paddingBottom: 8 }}>
-    <SheetHeader title="색상" closeLabel="팔레트 닫기" onClose={onClose} />
+    <SheetHeader title={t("release.s0788")} closeLabel={t("release.s0789")} onClose={onClose} />
     <View style={{ flexShrink: 1, minHeight: 0, paddingHorizontal: 16, gap: 8 }}>
-    <TabBar testID="색상 보기" value={view} onChange={onView} items={[{ key: 'custom', label: '직접 선택' }, { key: 'palette', label: '팔레트' }]} />
+    <TabBar testID="색상 보기" value={view} onChange={onView} items={[{ key: 'custom', label: t("release.s0791") }, { key: 'palette', label: t("release.s0715") }]} />
     <ScrollView testID="색 견본 스크롤" style={{ flexShrink: 1, minHeight: 0 }} scrollEnabled={scrollable} keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator contentContainerStyle={{ gap: 12, paddingTop: 4, paddingBottom: 16 }}>
     {/* 머리 한 줄: 지금 색 · 최근 쓴 색 · 스포이드 · 내 팔레트 저장 · 닫기. 두 갈래 어디에서나 같은 자리.
         최근 쓴 색이 가장 먼저다 — 한 번 누르면 그 색으로 돌아가 바로 그린다. 예전에는 따로 한 줄을 차지해 패널이 캔버스를
         더 가리고 팔레트 마지막 줄이 도구 줄 경계에서 잘렸다(43차 실기기). 직접 선택에서는 이 자리에 색 값이 보인다. */}
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48 }}>
-      {view === 'palette' && <Text style={{ fontSize: 12, fontWeight: '700', color: T.muted }}>최근</Text>}
-      {view === 'palette' && !recent.length && <Text style={{ flex: 1, fontSize: 12, color: T.muted }}>아직 쓴 색이 없어요</Text>}
+      {view === 'palette' && <Text style={{ fontSize: 12, fontWeight: '700', color: T.muted }}>{t("release.s0793")}</Text>}
+      {view === 'palette' && !recent.length && <Text style={{ flex: 1, fontSize: 12, color: T.muted }}>{t("release.s0794")}</Text>}
       {view === 'palette' && recent.length
         ? <ScrollView testID="최근 색" horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center', gap: 12, paddingHorizontal: 6, paddingVertical: 6 }}>
-            {recent.slice(0, 7).map(c => <Swatch round key={'r' + c} label={'최근 색 ' + c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
+            {recent.slice(0, 7).map(c => <Swatch round key={'r' + c} label={t("release.s0035") + " " + c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
           </ScrollView>
         : view === 'custom'
-          ? <TextInput accessibilityLabel="HEX 색 값" value={hex} onChangeText={typed} autoCapitalize="characters" autoCorrect={false} maxLength={9}
+          ? <TextInput accessibilityLabel={t("release.s0795")} value={hex} onChangeText={typed} autoCapitalize="characters" autoCorrect={false} maxLength={9}
               placeholder="#RRGGBB" placeholderTextColor="#8E8E93"
               // 값은 정보다. 색상환보다 눈에 세게 들어오지 않도록 바탕 없이 조용히 둔다(45.5차).
               style={{ flex: 1, height: 40, paddingHorizontal: 2, backgroundColor: 'transparent', fontSize: 13, fontWeight: '600', color: T.muted, letterSpacing: .4 }} />
-          : <Text accessibilityLabel="지금 색 값" style={{ flex: 1, fontSize: 13, fontWeight: '600', color: T.muted, letterSpacing: .4 }}>{color.toUpperCase()}</Text>}
+          : <Text accessibilityLabel={t("release.s0796")} style={{ flex: 1, fontSize: 13, fontWeight: '600', color: T.muted, letterSpacing: .4 }}>{color.toUpperCase()}</Text>}
       {/* 누르면 예전처럼 캔버스를 눌러 집고, 누른 채 캔버스로 끌면 끌리는 자리 색을 바로 집는다(45.4차). */}
-      <View {...eyedropHandlers} accessibilityRole="button" accessibilityLabel="스포이드" accessibilityHint="누른 채 그림 위로 끌면 그 자리 색을 집어요"
+      <View {...eyedropHandlers} accessibilityRole="button" accessibilityLabel={t("release.s0797")} accessibilityHint={t("release.s0798")}
         style={{ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', gap: 1 }}>
         <Glyph name="eyedropper-variant" size={19} color={T.ink} />
-        <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: T.muted }}>색 추출</Text>
+        <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: T.muted }}>{t("release.s0799")}</Text>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={kept ? '내 팔레트에 있음' : '내 팔레트에 저장'} disabled={kept} onPress={() => onSave(color)}
+      <Pressable accessibilityRole="button" accessibilityLabel={kept ? t("release.s0800") : t("release.s0801")} disabled={kept} onPress={() => onSave(color)}
         style={({ pressed }) => ({ width: T.tap, height: T.tap, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: 12, backgroundColor: pressed ? T.fill : 'transparent' })}>
         <Glyph name={kept ? 'check' : 'palette-swatch-outline'} size={19} color={kept ? T.success : T.ink} />
-        <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: kept ? T.success : T.muted }}>{kept ? '저장됨' : '색 저장'}</Text>
+        <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: kept ? T.success : T.muted }}>{kept ? t("release.s0603") : t("release.s0802")}</Text>
       </Pressable>
     </View>
     {/* 제목과 탭만 고정한다. 색 값·추출·견본·투명도는 작은 화면과 키보드 위에서도 함께 스크롤된다. */}
     {view === 'palette' ? <>
       {!!saved.length && <View style={{ gap: 4 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ flex: 1, fontSize: 11, fontWeight: '700', color: T.muted }}>내 팔레트 {saved.length}</Text>
-          {!!saved.length && <Pressable accessibilityRole="button" accessibilityLabel={tidy ? '내 팔레트 정리 끝' : '내 팔레트 정리'} onPress={() => setTidy(!tidy)} style={{ minHeight: 32, paddingHorizontal: 10, justifyContent: 'center' }}>
-            <Text style={{ fontSize: 11, fontWeight: '800', color: T.muted }}>{tidy ? '끝' : '정리'}</Text>
+          <Text style={{ flex: 1, fontSize: 11, fontWeight: '700', color: T.muted }}>{t("release.s0803") + " "}{saved.length}</Text>
+          {!!saved.length && <Pressable accessibilityRole="button" accessibilityLabel={tidy ? t("release.s0804") : t("release.s0805")} onPress={() => setTidy(!tidy)} style={{ minHeight: 32, paddingHorizontal: 10, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: T.muted }}>{tidy ? t("release.s0252") : t("release.s0421")}</Text>
           </Pressable>}
         </View>
         {saved.length ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 6, margin: -6 }}>
           {saved.map(c => tidy
-            ? <Pressable key={'u' + c} accessibilityRole="button" accessibilityLabel={'내 팔레트 ' + c + ' 지우기'} onPress={() => onForget(c)} hitSlop={6}
+            ? <Pressable key={'u' + c} accessibilityRole="button" accessibilityLabel={t("release.s0803") + " " + c + " " + t("release.s0534")} onPress={() => onForget(c)} hitSlop={6}
                 style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: c, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#00000033' }}>
                 <Glyph name="close" size={16} color={light(c) ? '#1B1B1D' : '#FFFFFF'} />
               </Pressable>
-            : <Swatch key={'u' + c} label={'내 팔레트 ' + c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
+            : <Swatch key={'u' + c} label={t("release.s0803") + " " + c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
         </View> : null}
       </View>}
       <View style={{ gap: 4 }}>
-        <Text style={{ fontSize: 11, fontWeight: '700', color: T.muted }}>기본 색</Text>
+        <Text style={{ fontSize: 11, fontWeight: '700', color: T.muted }}>{t("release.s0806")}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 6, margin: -6 }}>
           {swatches.map(c => <Swatch key={c} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
         </View>
@@ -2277,11 +2279,11 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <View style={{ flex: 1, minWidth: 0 }}><ColorArea color={color} onPick={(c, settle) => onPick(keepAlpha(c), settle)} /></View>
         <View testID="최근 색" style={{ width: 36 * 2 + 10, flexDirection: 'row', flexWrap: 'wrap', alignContent: 'flex-start', gap: 10 }}>
-          {[...recent.slice(0, 6).map(c => ['최근 색 ' + c, c] as const), ...swatches.filter(c => !recent.some(r => same(r, c))).map(c => ['기본 색 ' + c, c] as const)].slice(0, 6)
+          {[...recent.slice(0, 6).map(c => [t("release.s0035") + " " + c, c] as const), ...swatches.filter(c => !recent.some(r => same(r, c))).map(c => [t("release.s0806") + " " + c, c] as const)].slice(0, 6)
             .map(([label, c]) => <Swatch round key={label} label={label} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
         </View>
       </View>
-      <Range label="투명도" value={percent} min={5} max={100} step={1} onChange={n => channel('a', Math.round(n) * 2.55)} display={percent + '%'} />
+      <Range label={t("release.s0807")} value={percent} min={5} max={100} step={1} onChange={n => channel('a', Math.round(n) * 2.55)} display={percent + '%'} />
     </>}
     </ScrollView>
     </View>
@@ -2291,7 +2293,7 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
 // 같은 자리에 같은 색이 있어 손이 기억한다. 고른 것은 테두리와 체크 둘 다로 말한다: 테두리만으로는
 // 어두운 색 위에서 잘 보이지 않는다.
 function Swatch({ color, selected, onPress, size = 34, label, round }: { color: string; selected: boolean; onPress: () => void; size?: number; label?: string; round?: boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label ?? '색 ' + color} accessibilityState={{ selected }} onPress={onPress} hitSlop={6}
+  return <Pressable accessibilityRole="button" accessibilityLabel={label ?? t("release.s0712") + " " + color} accessibilityState={{ selected }} onPress={onPress} hitSlop={6}
     // 흰색·아주 밝은 색은 옅은 테두리로는 바탕과 구분되지 않아 빈칸처럼 보인다. 밝은 색에만 또렷한 선을 준다.
     style={{ width: size, height: size, borderRadius: round ? size / 2 : 9, backgroundColor: color, alignItems: 'center', justifyContent: 'center',
       borderWidth: selected ? 2.5 : 1, borderColor: selected ? T.ink : light(color) ? T.lineStrong : '#17171718' }}>
@@ -2350,7 +2352,7 @@ function ColorField({ color, onPick }: { color: string; onPick: (c: string, sett
     const sat = Math.max(0, Math.min(1, x / size.w)), val = Math.max(.04, Math.min(1, 1 - y / size.h));
     push(hsv(h, sat, val), settle);
   };
-  return <View accessibilityRole="adjustable" accessibilityLabel="색 사각판" accessibilityHint="누르거나 끌어서 선명함과 밝기를 골라요"
+  return <View accessibilityRole="adjustable" accessibilityLabel={t("release.s0808")} accessibilityHint={t("release.s0809")}
     accessibilityValue={{ text: color }}
     onLayout={e => { const w = Math.floor(e.nativeEvent.layout.width), hh = Math.floor(e.nativeEvent.layout.height); if (w > 0 && (w !== size.w || hh !== size.h)) setSize({ w, h: hh }); }}
     onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderTerminationRequest={() => false}
@@ -2369,8 +2371,8 @@ function HueBar({ color, onPick }: { color: string; onPick: (c: string, settle?:
   const push = useFramedPick(onPick);
   const at = (y: number, settle: boolean) => { if (height <= 0) return; push(hsv(Math.max(0, Math.min(1, y / height)) * 360, s || 1, v || 1), settle); };
   const top = useRef(0);   // 누를 때 막대의 화면 위치. 그다음부터는 pageY 만 쓴다(ColorField 와 같은 까닭).
-  return <View accessibilityRole="adjustable" accessibilityLabel="색 계열 막대" accessibilityHint="누르거나 끌어서 색 계열을 골라요"
-    accessibilityValue={{ text: Math.round(h) + '도' }}
+  return <View accessibilityRole="adjustable" accessibilityLabel={t("release.s0810")} accessibilityHint={t("release.s0811")}
+    accessibilityValue={{ text: Math.round(h) + t("release.s0812") }}
     onLayout={e => { const hh = Math.floor(e.nativeEvent.layout.height); if (hh > 0 && hh !== height) setHeight(hh); }}
     onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderTerminationRequest={() => false}
     onResponderGrant={e => { top.current = e.nativeEvent.pageY - e.nativeEvent.locationY; at(e.nativeEvent.pageY - top.current, false); }}

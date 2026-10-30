@@ -1,3 +1,4 @@
+import { t } from '../i18n/index';
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Image, Animated, type ImageSourcePropType } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -15,45 +16,45 @@ const C = T;
 // 묶음(등장·동작·강조)으로 나눠 보여 준다. id 는 저장에 남는 값이라 앞의 여섯은 그대로다.
 export type MotionGroup = '등장' | '동작' | '강조';
 export const MOTION_GROUPS: { id: MotionGroup; hint: string }[] = [
-  { id: '등장', hint: '화면 밖에서 나타나요' },
-  { id: '동작', hint: '몸짓으로 말해요' },
-  { id: '강조', hint: '감정을 크게 보여요' },
+  { id: '등장', hint: t("release.s0816") },
+  { id: '동작', hint: t("release.s0817") },
+  { id: '강조', hint: t("release.s0818") },
 ];
 export const PRESETS: { id: MotionPreset; label: string; hint: string; group: MotionGroup }[] = [
-  { id: 'pop', label: '뿅', hint: '작게 있다가 뿅 튀어나와요', group: '등장' },
-  { id: 'slide', label: '쓱', hint: '옆이나 위아래에서 쓱 들어와요', group: '등장' },
-  { id: 'peek', label: '빼꼼', hint: '아래에서 살짝 내밀었다 숨어요', group: '등장' },
-  { id: 'drop', label: '쿵', hint: '위에서 떨어져 착지해요', group: '등장' },
-  { id: 'vanish', label: '사라지기', hint: '있다가 쏙 사라져요', group: '등장' },
-  { id: 'bounce', label: '통통', hint: '뛰었다가 착지할 때 눌려요', group: '동작' },
-  { id: 'float', label: '둥실', hint: '부드럽게 위아래로 떠요', group: '동작' },
-  { id: 'tilt', label: '까딱', hint: '고개를 좌우로 까딱여요', group: '동작' },
-  { id: 'hop', label: '폴짝', hint: '움츠렸다 크게 뛰어요', group: '동작' },
-  { id: 'nod', label: '끄덕', hint: '두 번 끄덕여요', group: '동작' },
-  { id: 'bow', label: '꾸벅', hint: '꾸벅 숙였다 일어나요', group: '동작' },
-  { id: 'dance', label: '들썩', hint: '좌우로 들썩들썩 춤춰요', group: '동작' },
-  { id: 'sway', label: '살랑', hint: '발끝을 축으로 살랑 흔들려요', group: '동작' },
-  { id: 'spin', label: '빙글', hint: '한 바퀴 빙글 돌아요', group: '동작' },
-  { id: 'shake', label: '흔들기', hint: '좌우로 빠르게 흔들려요', group: '강조' },
-  { id: 'pulse', label: '두근거리기', hint: '커졌다 작아져요', group: '강조' },
-  { id: 'jitter', label: '부르르', hint: '제자리에서 작게 떨려요', group: '강조' },
-  { id: 'shiver', label: '덜덜', hint: '크게 덜덜 떨어요', group: '강조' },
-  { id: 'punch', label: '쾅', hint: '쾅 커졌다 돌아와요', group: '강조' },
-  { id: 'stretch', label: '쭈욱', hint: '말랑하게 늘었다 줄어요', group: '강조' },
+  { id: 'pop', label: t("release.s0819"), hint: t("release.s0820"), group: '등장' },
+  { id: 'slide', label: t("release.s0821"), hint: t("release.s0822"), group: '등장' },
+  { id: 'peek', label: t("release.s0823"), hint: t("release.s0824"), group: '등장' },
+  { id: 'drop', label: t("release.s0825"), hint: t("release.s0826"), group: '등장' },
+  { id: 'vanish', label: t("release.s0827"), hint: t("release.s0828"), group: '등장' },
+  { id: 'bounce', label: t("ui.bounce"), hint: t("release.s0829"), group: '동작' },
+  { id: 'float', label: t("release.s0830"), hint: t("release.s0831"), group: '동작' },
+  { id: 'tilt', label: t("release.s0832"), hint: t("release.s0833"), group: '동작' },
+  { id: 'hop', label: t("release.s0834"), hint: t("release.s0835"), group: '동작' },
+  { id: 'nod', label: t("release.s0836"), hint: t("release.s0837"), group: '동작' },
+  { id: 'bow', label: t("release.s0838"), hint: t("release.s0839"), group: '동작' },
+  { id: 'dance', label: t("release.s0840"), hint: t("release.s0841"), group: '동작' },
+  { id: 'sway', label: t("release.s0842"), hint: t("release.s0843"), group: '동작' },
+  { id: 'spin', label: t("release.s0844"), hint: t("release.s0845"), group: '동작' },
+  { id: 'shake', label: t("release.s0846"), hint: t("release.s0847"), group: '강조' },
+  { id: 'pulse', label: t("release.s0848"), hint: t("release.s0849"), group: '강조' },
+  { id: 'jitter', label: t("release.s0850"), hint: t("release.s0851"), group: '강조' },
+  { id: 'shiver', label: t("release.s0852"), hint: t("release.s0853"), group: '강조' },
+  { id: 'punch', label: t("release.s0854"), hint: t("release.s0855"), group: '강조' },
+  { id: 'stretch', label: t("release.s0856"), hint: t("release.s0857"), group: '강조' },
 ];
 export const DIRECTIONS: { id: MotionDirection; label: string }[] = [
-  { id: 'left', label: '왼쪽' }, { id: 'right', label: '오른쪽' }, { id: 'up', label: '위' }, { id: 'down', label: '아래' },
+  { id: 'left', label: t("release.s0858") }, { id: 'right', label: t("release.s0859") }, { id: 'up', label: t("release.s0860") }, { id: 'down', label: t("release.s0861") },
 ];
 export const PART_EFFECTS = [
-  { id: 'rotate' as const, label: '회전', unit: '°', min: 5, max: 60, step: 5, amount: 20 },
-  { id: 'move' as const, label: '이동', unit: '%', min: .01, max: .12, step: .01, amount: .04 },
-  { id: 'scale' as const, label: '크기', unit: '', min: .05, max: .4, step: .05, amount: .15 },
+  { id: 'rotate' as const, label: t("release.s0862"), unit: '°', min: 5, max: 60, step: 5, amount: 20 },
+  { id: 'move' as const, label: t("release.s0863"), unit: '%', min: .01, max: .12, step: .01, amount: .04 },
+  { id: 'scale' as const, label: t("release.s0183"), unit: '', min: .05, max: .4, step: .05, amount: .15 },
 ];
 
 // 시안은 슬라이더 오른쪽에 지금 값을 적는다: 30°, 보통.
 const words = (value: number, min: number, max: number) => {
   const at = (value - min) / (max - min || 1);
-  return at < .2 ? '아주 약하게' : at < .4 ? '약하게' : at < .6 ? '보통' : at < .8 ? '세게' : '아주 세게';
+  return at < .2 ? t("release.s0515") : at < .4 ? t("release.s0516") : at < .6 ? t("release.s0517") : at < .8 ? t("release.s0518") : t("release.s0519");
 };
 // 움직임 조절 줄. step 은 값이 실제로 바뀌는 칸이다 — 막대는 이 칸이 바뀔 때만 움직임을 다시 적용한다(45.37: 끄는 내내
 // 미리보기가 처음부터 다시 돌아 '뚝뚝' 끊겼다). fmt 가 있으면 끄는 동안의 값도 같은 글자로 보여 준다.
@@ -70,7 +71,8 @@ const Chip = ({ label, on, onPress, wide, a11y }: { label: string; on: boolean; 
   </Pressable>;
 
 // 레이어의 기본 이름("그림 1")은 칸 이름("01번 그림")과 헷갈린다. 저장된 이름은 그대로 두고 화면에서만 레이어로 부른다.
-export const layerLabel = (name: string) => name.replace(/^그림 (\d+)$/, '레이어 $1');
+export const layerLabel = (name: string) => name.replace(/^그림 (\d+)$/, t("release.s0864"));
+const motionGroupLabel = (group: MotionGroup) => ({ '등장': t('release.s0813'), '동작': t('release.s0814'), '강조': t('release.s0815') })[group];
 
 // 효과 견본. 이 칸의 그림이 그 효과대로 실제로 움직인다 — 이름만 보고 결과를 짐작하게 하지 않는다.
 // 45.39: 엔진과 **같은 식**(motion-math.ts)을 한 바퀴 24점으로 미리 계산해 네이티브 애니메이션으로 돌린다.
@@ -156,7 +158,7 @@ export function motionName(m: Motion): string {
   const steps = m.steps ?? [];
   const combo = steps.length ? MOTION_COMBOS.find(c => c.steps.length === steps.length && c.steps.every((st, i) => st.preset === steps[i].preset)) : undefined;
   const lead = steps.length ? (combo ? combo.label : steps.map(st => PRESETS.find(p => p.id === st.preset)?.label ?? st.preset).join(' → ')) : PRESETS.find(p => p.id === m.preset)?.label;
-  return [lead, m.parts?.length ? '부분 ' + m.parts.length : null, m.alternate ? '두 모습' : null, m.boil ? '떨림' : null].filter(Boolean).join(' · ');
+  return [lead, m.parts?.length ? t("release.s0865") + " " + m.parts.length : null, m.alternate ? t("release.s0046") : null, m.boil ? t("release.s0047") : null].filter(Boolean).join(' · ');
 }
 
 // 움직이기 화면. 결과(캔버스와 효과 견본)가 먼저이고 설정은 고른 다음에 나온다.
@@ -168,7 +170,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
   const set = (patch: Partial<Motion>) => onChange({ ...base, ...patch });
   const parts = base.parts ?? [];
   const drawLayers = layers.filter(l => l.id.startsWith('draw-'));
-  const nameOf = (layerId: string) => layerLabel(drawLayers.find(l => l.id === layerId)?.name ?? '레이어');
+  const nameOf = (layerId: string) => layerLabel(drawLayers.find(l => l.id === layerId)?.name ?? t("release.s0595"));
   const addPart = (layerId: string) => {
     const effect = PART_EFFECTS[0];
     const part: PartMotion = { id: 'part-' + Date.now().toString(36), layerId, effect: effect.id, pivotX: .5, pivotY: .5, amount: effect.amount, angle: 0, speed: .5, delay: 0 };
@@ -255,8 +257,8 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     const rows: typeof items[] = []; for (let i = 0; i < items.length; i += 4) rows.push(items.slice(i, i + 4));
     return { ...g, rows };
   });
-  const back = view === 'pose' ? { label: '부분 움직임으로 돌아가기', to: 'parts' as const, title: '두 모습 번갈아' }
-    : { label: '움직임 처음으로', to: 'basic' as const, title: view === 'parts' ? '부분만 움직이기' : view === 'steps' ? '단계로 잇기' : '보관한 움직임' };
+  const back = view === 'pose' ? { label: t("release.s0866"), to: 'parts' as const, title: t("release.s0867") }
+    : { label: t("release.s0868"), to: 'basic' as const, title: view === 'parts' ? t("ui.partOnly") : view === 'steps' ? t("release.s0869") : t("release.s0032") };
 
   return <View style={{ flex: 1 }}>
     {view !== 'basic' && <Pressable accessibilityRole="button" accessibilityLabel={back.label} onPress={() => setView(back.to)}
@@ -271,23 +273,23 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     {view === 'basic' ? <>
     {/* 없음 + 묶음 칩. '없음'은 전체 움직임만 뺀다(부분 움직임이 있으면 '전체 없음'). */}
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="움직임 없음" accessibilityHint={hasPro ? '전체 움직임만 빼요. 부분 움직임은 남아요' : undefined} accessibilityState={{ selected: !base.preset }}
+      <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0870")} accessibilityHint={hasPro ? t("release.s0871") : undefined} accessibilityState={{ selected: !base.preset }}
         onPress={() => { setTrialFrom(null); clearPreset(); }}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, borderRadius: 20, borderWidth: !base.preset ? 1 : 0, borderColor: C.accentBorder, backgroundColor: !base.preset ? C.accentSoft : pressed ? C.fillPressed : C.fill })}>
         <Glyph name="motion-pause-outline" size={16} color={C.ink} />
-        <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: !base.preset ? '800' : '600', color: C.ink }}>{hasPro ? '전체 없음' : '없음'}</Text>
+        <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: !base.preset ? '800' : '600', color: C.ink }}>{hasPro ? t("release.s0872") : t("release.s0873")}</Text>
       </Pressable>
       <View style={{ width: 1, height: 22, backgroundColor: C.line }} />
       {/* 부분 움직임 바로 가기(2026-10-15): 입구가 패널 맨 아래라 스크롤 7번이 들었다. 캔버스·조절 줄은 그대로 두고 이 칩 하나만 더한다(사용자 허용). */}
-      <Pressable accessibilityRole="button" accessibilityLabel="부분 움직임 바로 가기" accessibilityHint={pro ? '손·귀처럼 고른 레이어만 움직여요' : 'PRO 기능이에요. 누르면 PRO 안내가 떠요'} onPress={enterPro}
+      <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0874")} accessibilityHint={pro ? t("release.s0875") : t("release.s0876")} onPress={enterPro}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, borderRadius: 20, backgroundColor: parts.length ? C.pointSoft : pressed ? C.fillPressed : C.fill })}>
         <Glyph name="hand-back-right-outline" size={16} color={parts.length ? C.pointInk : C.muted} />
-        <Text style={{ fontSize: 13, fontWeight: parts.length ? '800' : '600', color: parts.length ? C.pointInk : C.muted }}>부분{parts.length ? ' ' + parts.length : ''}</Text>
+        <Text style={{ fontSize: 13, fontWeight: parts.length ? '800' : '600', color: parts.length ? C.pointInk : C.muted }}>{t("release.s0865")}{parts.length ? ' ' + parts.length : ''}</Text>
         {!pro && <ProTag />}
       </Pressable>
-      {([['combo', '조합'], ['all', '전체'], ...MOTION_GROUPS.map(g => [g.id, g.id])] as [MotionGroup | 'all' | 'combo', string][]).map(([id, label]) => {
+      {([['combo', t("release.s0877")], ['all', t("ui.all")], ...MOTION_GROUPS.map(g => [g.id, motionGroupLabel(g.id)])] as [MotionGroup | 'all' | 'combo', string][]).map(([id, label]) => {
         const on = group === id;
-        return <Pressable key={id} accessibilityRole="button" accessibilityLabel={'움직임 묶음 ' + label} accessibilityState={{ selected: on }} onPress={() => setGroup(id)}
+        return <Pressable key={id} accessibilityRole="button" accessibilityLabel={t("release.s0878") + " " + label} accessibilityState={{ selected: on }} onPress={() => setGroup(id)}
           style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 20, backgroundColor: on ? C.pointSoft : pressed ? C.fillPressed : C.fill })}>
           <Text style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{label}</Text>
         </Pressable>;
@@ -296,29 +298,29 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     {trying && <View testID="PRO 미리보기 안내" style={{ gap: 8, padding: 12, borderRadius: C.radius.md, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <ProTag />
-        <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>{trialCombo ?? PRESETS.find(p => p.id === base.preset)?.label} — 내 그림으로 미리 보는 중이에요(저장하면 PRO 안내가 떠요)</Text>
+        <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: C.ink }}>{trialCombo ?? PRESETS.find(p => p.id === base.preset)?.label} {t("release.s0880")}</Text>
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Pressable accessibilityRole="button" accessibilityLabel="PRO로 이 효과 쓰기" onPress={onRequestPro}
+        <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0881")} onPress={onRequestPro}
           style={({ pressed }) => ({ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: C.accent, opacity: pressed ? .85 : 1 })}>
-          <Text style={{ fontSize: 14, fontWeight: '800', color: C.accentInk }}>PRO로 쓰기</Text>
+          <Text style={{ fontSize: 14, fontWeight: '800', color: C.accentInk }}>{t("release.s0882")}</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="미리보기 끝내기" onPress={endTrial}
+        <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0883")} onPress={endTrial}
           style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper })}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>원래대로</Text>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{t("release.s0884")}</Text>
         </Pressable>
       </View>
     </View>}
     <View testID="움직임 격자" style={{ gap: 12 }}>
       {sections.map(g => <View key={g.id} style={{ gap: 6 }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, paddingHorizontal: 2 }}>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{g.id}</Text>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{motionGroupLabel(g.id)}</Text>
           <Text style={{ fontSize: 11, color: C.muted }}>{g.hint}</Text>
         </View>
         {g.rows.map((line, r) => <View key={r} style={{ flexDirection: 'row', gap: 6 }}>
           {line.map(p => {
             const on = base.preset === p.id, locked = !pro && isProPreset(p.id);
-            return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={p.label} accessibilityHint={locked ? 'PRO 효과예요. 누르면 내 그림으로 미리 볼 수 있어요' : p.hint} accessibilityState={{ selected: on }} onPress={() => pick(p.id)} style={card(on)}>
+            return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={p.label} accessibilityHint={locked ? t("release.s0886") : p.hint} accessibilityState={{ selected: on }} onPress={() => pick(p.id)} style={card(on)}>
               {locked && <View pointerEvents="none" style={{ position: 'absolute', top: 4, right: 4 }}><ProTag /></View>}
               <MotionSample preset={p.id} uri={sample} fallback={ASSET_SLOTS.motionExampleArtwork.source} active={on} size={48} direction={p.id === 'slide' ? base.direction : undefined} />
               <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{p.label}</Text>
@@ -332,7 +334,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     </View>
     {/* 쓱: 들어오는 쪽 */}
     {base.preset === 'slide' && <View style={{ gap: 6 }}>
-      <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>들어오는 쪽</Text>
+      <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{t("release.s0887")}</Text>
       <View style={{ flexDirection: 'row', gap: 6 }}>
         {DIRECTIONS.map(d => <Chip key={d.id} wide label={d.label} on={(base.direction ?? 'left') === d.id} onPress={() => set({ direction: d.id })} />)}
       </View>
@@ -340,13 +342,13 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     {/* 바로 쓰는 조합(2026-10-15) — 단계로 잇기의 시작점. 무료 사용자도 내 그림으로 미리 볼 수 있다. */}
     <View testID="동작 조합" style={{ gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, paddingHorizontal: 2 }}>
-        <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>조합</Text>
-        <Text style={{ fontSize: 11, color: C.muted }}>두 움직임을 이어서 · 고른 뒤 고쳐요</Text>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{t("release.s0877")}</Text>
+        <Text style={{ fontSize: 11, color: C.muted }}>{t("release.s0889")}</Text>
         {!pro && <ProTag />}
       </View>
       <View style={{ flexDirection: 'row', gap: 6 }}>
         {MOTION_COMBOS.map(c => { const on = !!base.steps?.length && base.steps.length === c.steps.length && base.steps.every((st, i) => st.preset === c.steps[i].preset);
-          return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={'조합 ' + c.label} accessibilityHint={pro ? c.hint : 'PRO 조합이에요. 누르면 내 그림으로 미리 볼 수 있어요'} accessibilityState={{ selected: on }} onPress={() => pickCombo(c)}
+          return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={t("release.s0877") + " " + c.label} accessibilityHint={pro ? c.hint : t("release.s0890")} accessibilityState={{ selected: on }} onPress={() => pickCombo(c)}
             style={({ pressed }) => ({ flex: 1, minHeight: 64, padding: 8, gap: 2, borderRadius: C.radius.md, justifyContent: 'center', backgroundColor: on ? C.pointSoft : pressed ? C.fillPressed : C.surface2, borderWidth: C.stroke, borderColor: on ? C.point : 'transparent' })}>
             <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '800', color: on ? C.pointInk : C.ink }}>{c.label}</Text>
             <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted }}>{c.hint}</Text>
@@ -356,12 +358,12 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     {/* 손그림 떨림(2026-10-14): 선이 장마다 살짝 다시 그려진 듯 떨린다. 위 효과와 함께 걸리고, 효과가 없어도 걸린다. 무료. */}
     <View testID="손그림 떨림" style={{ gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, paddingHorizontal: 2 }}>
-        <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>손그림 떨림</Text>
-        <Text style={{ fontSize: 11, color: C.muted }}>선이 살아 있는 듯 떨려요</Text>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{t("lesson.text026")}</Text>
+        <Text style={{ fontSize: 11, color: C.muted }}>{t("release.s0891")}</Text>
       </View>
       <View style={{ flexDirection: 'row', gap: 6 }}>
-        {([[0, '끔'], [1, '약하게'], [2, '보통'], [3, '강하게']] as const).map(([lv, label]) =>
-          <Chip key={lv} wide label={label} a11y={'손그림 떨림 ' + label} on={(base.boil ?? 0) === lv}
+        {([[0, t("release.s0588")], [1, t("release.s0516")], [2, t("release.s0517")], [3, t("release.s0892")]] as const).map(([lv, label]) =>
+          <Chip key={lv} wide label={label} a11y={t("lesson.text026") + " " + label} on={(base.boil ?? 0) === lv}
             onPress={() => { if (!lv && !base.preset && !hasPro) onChange(null); else set({ boil: lv ? lv : undefined }); }} />)}
       </View>
     </View>
@@ -371,85 +373,85 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       const locked = usesPro(previousMotion) && !pro;
       const name = motionName(previousMotion);
       // 따뜻한 제안 한 줄: 24칸을 만드는 동안 가장 자주 누르는 행동.
-      return <Pressable accessibilityRole="button" accessibilityLabel="직전 칸 움직임 다시 쓰기" onPress={() => locked ? onRequestPro() : onChange(previousMotion)} style={{ ...row, paddingHorizontal: 12, borderRadius: 14, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
+      return <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0893")} onPress={() => locked ? onRequestPro() : onChange(previousMotion)} style={{ ...row, paddingHorizontal: 12, borderRadius: 14, backgroundColor: C.warm, borderWidth: 1, borderColor: C.warmLine }}>
         <Glyph name="history" size={20} color={C.ink} />
-        <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>직전 칸 움직임 다시 쓰기{name ? ' · ' + name : ''}</Text>
+        <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>{t("release.s0893")}{name ? ' · ' + name : ''}</Text>
         {locked ? <ProTag /> : <Glyph name="plus" size={18} color={C.muted} />}
       </Pressable>;
     })()}
-    <Pressable accessibilityRole="button" accessibilityLabel="보관한 움직임" onPress={() => setView('shelf')} style={row}>
+    <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0032")} onPress={() => setView('shelf')} style={row}>
       <Glyph name="folder-outline" size={20} color={C.muted} />
-      <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '500', color: C.ink }}>보관한 움직임{savedMotions.length ? ` · ${savedMotions.length}개` : ''}</Text>
+      <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '500', color: C.ink }}>{t("release.s0032")}{savedMotions.length ? t("release.d123", { v0: (savedMotions.length) }) : ''}</Text>
       <Glyph name="chevron-right" size={20} color={C.faint} />
     </Pressable>
     </View>
 
     {/* 세기·속도는 45.39 부터 캔버스 바로 위 조절 줄에 있다(그리기의 굵기·불투명도와 같은 자리). */}
-    {moving && hasCaption && <Pressable accessibilityRole="switch" accessibilityLabel="글씨도 같이 움직이기" accessibilityState={{ checked: !!base.captionMoves }}
+    {moving && hasCaption && <Pressable accessibilityRole="switch" accessibilityLabel={t("release.s0894")} accessibilityState={{ checked: !!base.captionMoves }}
       onPress={() => set({ captionMoves: !base.captionMoves })} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, gap: 10 }}>
-      <Text style={{ flex: 1, fontSize: 13, color: C.ink }}>글씨도 같이 움직이기</Text>
+      <Text style={{ flex: 1, fontSize: 13, color: C.ink }}>{t("release.s0894")}</Text>
       <Toggle on={!!base.captionMoves} />
     </Pressable>}
     {clipped && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 14, backgroundColor: C.warningSoft }}>
       <Glyph name="crop" size={16} color={C.warning} />
-      <Text style={{ flex: 1, fontSize: 12, color: C.ink }}>움직이는 동안 그림이 칸 밖으로 나가요(빨간 띠). 세기를 줄이거나 그림을 칸 안에 맞춰 보세요.</Text>
-      {!!onFit && <Pressable accessibilityRole="button" accessibilityLabel="칸 안에 맞추기" onPress={onFit} style={{ paddingHorizontal: 10, minHeight: 36, borderRadius: 12, justifyContent: 'center', backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
-        <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>칸 안에 맞추기</Text>
+      <Text style={{ flex: 1, fontSize: 12, color: C.ink }}>{t("release.s0895")}</Text>
+      {!!onFit && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0771")} onPress={onFit} style={{ paddingHorizontal: 10, minHeight: 36, borderRadius: 12, justifyContent: 'center', backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }}>
+        <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{t("release.s0771")}</Text>
       </Pressable>}
     </View>}
 
     {/* 더 세밀하게: 한 줄뿐이라 제목이 필요 없다. PRO 표시는 작게 한 번(45.2차). */}
     <View style={{ gap: 6, paddingTop: 4 }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="단계로 잇기" onPress={enterSteps} style={row}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0869")} onPress={enterSteps} style={row}>
         <Glyph name="timeline-outline" size={20} color={C.ink} />
-        <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '600', color: C.ink }}>단계로 잇기{steps.length ? ` · ${steps.length}단계 · ${stepTotal(steps).toFixed(1)}초` : ''}</Text>
+        <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '600', color: C.ink }}>{t("release.s0869")}{steps.length ? t("release.d122", { v0: (steps.length), v1: (stepTotal(steps).toFixed(1)) }) : ''}</Text>
         {!pro && <ProTag />}
         <Glyph name="chevron-right" size={20} color={C.faint} />
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="부분만 움직이기" onPress={enterPro} style={row}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("ui.partOnly")} onPress={enterPro} style={row}>
         <Glyph name="hand-back-right-outline" size={20} color={C.ink} />
-        <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '600', color: C.ink }}>부분만 움직이기{parts.length ? ` · ${parts.length}개` : ''}{base.alternate ? ' · 두 모습' : ''}</Text>
+        <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '600', color: C.ink }}>{t("ui.partOnly")}{parts.length ? t("release.d123", { v0: (parts.length) }) : ''}{base.alternate ? " " + t("release.s0896") : ''}</Text>
         {!pro && <ProTag />}
         <Glyph name="chevron-right" size={20} color={C.faint} />
       </Pressable>
     </View>
     </> : view === 'steps' ? <>
-      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{`전체 그림의 효과를 순서대로 이어요(최대 ${STEP_LIMITS.maxSteps}단계 · 한 바퀴 ${STEP_LIMITS.maxTotal}초). 뿅·쓱·쿵은 들어와서 멈춘 자세로 다음 단계로 넘어가요. 빼꼼·사라지기는 이어 붙일 수 없어요.`}</Text>
-      {steps.map((st, index) => <View key={st.id} testID={'단계 ' + (index + 1)} style={{ gap: 8, padding: 10, borderRadius: C.radius.md, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }}>
+      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{t("release.d124", { v0: (STEP_LIMITS.maxSteps), v1: (STEP_LIMITS.maxTotal) })}</Text>
+      {steps.map((st, index) => <View key={st.id} testID={t("release.s0897") + " " + (index + 1)} style={{ gap: 8, padding: 10, borderRadius: C.radius.md, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={{ flex: 1, fontSize: 14, fontWeight: '800', color: C.ink }}>{`${index + 1}단계 · ${PRESETS.find(p => p.id === st.preset)?.label ?? st.preset}`}</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel={`${index + 1}단계 위로`} disabled={index === 0} onPress={() => moveStep(index, index - 1)} style={{ padding: 6, opacity: index === 0 ? .3 : 1 }}><Glyph name="chevron-up" size={20} color={C.ink} /></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={`${index + 1}단계 아래로`} disabled={index === steps.length - 1} onPress={() => moveStep(index, index + 1)} style={{ padding: 6, opacity: index === steps.length - 1 ? .3 : 1 }}><Glyph name="chevron-down" size={20} color={C.ink} /></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={`${index + 1}단계 빼기`} onPress={() => setSteps(steps.filter(x => x.id !== st.id))} style={{ padding: 6 }}><Glyph name="close" size={20} color={C.muted} /></Pressable>
+          <Text style={{ flex: 1, fontSize: 14, fontWeight: '800', color: C.ink }}>{t("release.d125", { v0: (index + 1), v1: (PRESETS.find(p => p.id === st.preset)?.label ?? st.preset) })}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("release.d126", { v0: (index + 1) })} disabled={index === 0} onPress={() => moveStep(index, index - 1)} style={{ padding: 6, opacity: index === 0 ? .3 : 1 }}><Glyph name="chevron-up" size={20} color={C.ink} /></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("release.d127", { v0: (index + 1) })} disabled={index === steps.length - 1} onPress={() => moveStep(index, index + 1)} style={{ padding: 6, opacity: index === steps.length - 1 ? .3 : 1 }}><Glyph name="chevron-down" size={20} color={C.ink} /></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("release.d128", { v0: (index + 1) })} onPress={() => setSteps(steps.filter(x => x.id !== st.id))} style={{ padding: 6 }}><Glyph name="close" size={20} color={C.muted} /></Pressable>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-          {PRESETS.filter(p => !STEP_EXCLUDED.includes(p.id)).map(p => <Chip key={p.id} label={p.label} a11y={`${index + 1}단계 ${p.label}`} on={st.preset === p.id} onPress={() => editStep(st.id, { preset: p.id })} />)}
+          {PRESETS.filter(p => !STEP_EXCLUDED.includes(p.id)).map(p => <Chip key={p.id} label={p.label} a11y={t("release.d129", { v0: (index + 1), v1: (p.label) })} on={st.preset === p.id} onPress={() => editStep(st.id, { preset: p.id })} />)}
         </ScrollView>
-        <Row label="길이" value={st.duration} min={STEP_LIMITS.minDuration} max={STEP_LIMITS.maxDuration} step={.1} fmt={n => n.toFixed(1) + '초'} onChange={n => editStep(st.id, { duration: Math.round(n * 10) / 10 })} />
+        <Row label={t("release.s0898")} value={st.duration} min={STEP_LIMITS.minDuration} max={STEP_LIMITS.maxDuration} step={.1} fmt={n => n.toFixed(1) + t("release.s0899")} onChange={n => editStep(st.id, { duration: Math.round(n * 10) / 10 })} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ fontSize: 13, color: C.ink, marginRight: 4 }}>반복</Text>
-          {Array.from({ length: STEP_LIMITS.maxRepeat }, (_, i) => i + 1).map(n => <Chip key={n} label={n + '번'} a11y={`${index + 1}단계 반복 ${n}번`} on={st.repeat === n} onPress={() => editStep(st.id, { repeat: n })} />)}
+          <Text style={{ fontSize: 13, color: C.ink, marginRight: 4 }}>{t("release.s0900")}</Text>
+          {Array.from({ length: STEP_LIMITS.maxRepeat }, (_, i) => i + 1).map(n => <Chip key={n} label={n + t("release.s0176")} a11y={t("release.d130", { v0: (index + 1), v1: (n) })} on={st.repeat === n} onPress={() => editStep(st.id, { repeat: n })} />)}
         </View>
       </View>)}
-      <Text testID="단계 한 바퀴" style={{ fontSize: 12, color: C.muted }}>{steps.length ? `한 바퀴 ${stepTotal(steps).toFixed(1)}초 / 최대 ${STEP_LIMITS.maxTotal}초` : '아직 단계가 없어요. 단계를 더하면 바로 미리 봐요.'}</Text>
-      {steps.length < STEP_LIMITS.maxSteps && stepRoom() >= STEP_LIMITS.minDuration && <Pressable accessibilityRole="button" accessibilityLabel="단계 더하기" onPress={addStep} style={row}>
+      <Text testID="단계 한 바퀴" style={{ fontSize: 12, color: C.muted }}>{steps.length ? t("release.d131", { v0: (stepTotal(steps).toFixed(1)), v1: (STEP_LIMITS.maxTotal) }) : t("release.s0902")}</Text>
+      {steps.length < STEP_LIMITS.maxSteps && stepRoom() >= STEP_LIMITS.minDuration && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0903")} onPress={addStep} style={row}>
         <Glyph name="plus" size={20} color={C.ink} />
-        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>단계 더하기</Text>
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>{t("release.s0903")}</Text>
       </Pressable>}
     </> : view === 'parts' ? <>
       {/* 2026-10-12: 무엇을 하는 화면인지 먼저 말한다 — ① 레이어 고르기 ② 회전·이동·크기 ③ 세기·속도. 부분을 하나라도 넣으면 한 줄로 줄인다. */}
       <View testID="부분 움직임 안내" style={{ gap: 8, padding: 12, borderRadius: C.radius.md, backgroundColor: C.surface2 }}>
-        <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{parts.length ? '부분을 눌러 움직임을 고쳐요' : '그림의 한 부분만 따로 움직여요'}</Text>
-        {!parts.length && ([['1', '움직일 레이어를 아래에서 골라요'], ['2', '회전 · 이동 · 크기 중 하나를 골라요'], ['3', '세기와 속도를 맞추면 끝']] as const).map(([n, text]) =>
+        <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{parts.length ? t("release.s0905") : t("release.s0906")}</Text>
+        {!parts.length && ([['1', t("release.s0907")], ['2', t("release.s0908")], ['3', t("release.s0909")]] as const).map(([n, text]) =>
           <View key={n} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 12, fontWeight: '800', color: C.accentInk }}>{n}</Text></View>
             <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: C.ink }}>{text}</Text>
           </View>)}
-        {drawLayers.length < 2 && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>팔·귀처럼 따로 움직일 곳은 레이어로 나뉘어 있어야 해요. 이미 한 장에 그렸다면 선택으로 감싸서 '새 레이어로 분리'를 누르면 돼요.</Text>}
-        {drawLayers.length < 2 && !!onSplitLayer && <Pressable testID="레이어로 나누러 가기" accessibilityRole="button" accessibilityLabel="움직일 부분을 레이어로 나누러 가기" onPress={onSplitLayer}
+        {drawLayers.length < 2 && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{t("release.s0910")}</Text>}
+        {drawLayers.length < 2 && !!onSplitLayer && <Pressable testID="레이어로 나누러 가기" accessibilityRole="button" accessibilityLabel={t("release.s0912")} onPress={onSplitLayer}
           style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderRadius: 22, alignSelf: 'flex-start', backgroundColor: pressed ? C.fillPressed : C.pointSoft })}>
           <Glyph name="selection-drag" size={18} color={C.pointInk} />
-          <Text style={{ fontSize: 13, fontWeight: '800', color: C.pointInk }}>움직일 부분 나누러 가기</Text>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.pointInk }}>{t("release.s0913")}</Text>
         </Pressable>}
       </View>
       {parts.map((part, index) => {
@@ -460,7 +462,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         return <View key={part.id} onLayout={e => { if (e.nativeEvent.layout.height > 0) setRowHeight(e.nativeEvent.layout.height); }}
           style={{ borderWidth: 1, borderColor: dragging || (dragFrom !== null && landing === index) ? C.accentBorder : C.line, borderRadius: C.radius.md, padding: 8, gap: 6, backgroundColor: dragging ? C.accentSoft : C.paper, opacity: dragging ? .9 : 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {parts.length > 1 && <View accessibilityRole="adjustable" accessibilityLabel={`${name} 순서 바꾸기`}
+            {parts.length > 1 && <View accessibilityRole="adjustable" accessibilityLabel={t("release.d115", { v0: (name) })}
               accessibilityValue={{ min: 1, max: parts.length, now: index + 1 }}
               accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
               onAccessibilityAction={e => movePart(index, index + (e.nativeEvent.actionName === 'increment' ? 1 : -1))}
@@ -472,7 +474,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
               style={{ width: 40, height: 48, alignItems: 'center', justifyContent: 'center' }}>
               <Glyph name="drag-horizontal-variant" size={20} color={dragging ? C.ink : C.muted} />
             </View>}
-            <Pressable accessibilityRole="button" accessibilityLabel={`${name} 움직이기`} accessibilityState={{ expanded: open }}
+            <Pressable accessibilityRole="button" accessibilityLabel={t("release.d132", { v0: (name) })} accessibilityState={{ expanded: open }}
               onPress={() => { const next = open ? null : part.id; setOpenPart(next); onFocusPart(next ? part.layerId : null); }}
               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: C.tap }}>
               <View style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: C.bg, overflow: 'hidden' }}>
@@ -482,16 +484,16 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
               <Text style={{ fontSize: 12, color: C.muted }}>{effect.label}</Text>
               <Glyph name={open ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
             </Pressable>
-            <Pressable accessibilityRole="switch" accessibilityLabel={`${name} ${part.off ? '켜기' : '끄기'}`} accessibilityState={{ checked: !part.off }} onPress={() => editPart(part.id, { off: part.off ? undefined : true })}
+            <Pressable accessibilityRole="switch" accessibilityLabel={`${name} ${part.off ? t("release.x120") : t("release.s0537")}`} accessibilityState={{ checked: !part.off }} onPress={() => editPart(part.id, { off: part.off ? undefined : true })}
               style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
               <Toggle on={!part.off} />
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={`${name} 부분 움직임 빼기`} onPress={() => dropPart(part.id)} style={{ width: 44, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("release.d134", { v0: (name) })} onPress={() => dropPart(part.id)} style={{ width: 44, height: 48, alignItems: 'center', justifyContent: 'center' }}>
               <Glyph name="close" size={18} color={C.muted} />
             </Pressable>
           </View>
           {open && <>
-            <Text style={{ fontSize: 12, fontWeight: '800', color: C.muted, paddingHorizontal: 2 }}>바로 쓰기</Text>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: C.muted, paddingHorizontal: 2 }}>{t("release.s0914")}</Text>
             <View testID="부분 출발점" style={{ flexDirection: 'row', gap: 6 }}>
               {PART_STARTERS.map(st => { const on = part.effect === st.effect && Math.abs(part.amount - st.amount) < 1e-6 && Math.abs(part.speed - st.speed) < 1e-6;
                 return <Chip key={st.id} wide label={st.label} a11y={`${name} ${st.label} — ${st.hint}`} on={on} onPress={() => editPart(part.id, { effect: st.effect, amount: st.amount, speed: st.speed, angle: st.angle, fromX: undefined, fromY: undefined, toX: undefined, toY: undefined })} />; })}
@@ -500,81 +502,81 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
               {PART_EFFECTS.map(e => <Chip key={e.id} wide label={e.label} on={part.effect === e.id} onPress={() => editPart(part.id, { effect: e.id, amount: e.amount })} />)}
             </View>
             {part.effect !== 'move' && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ flex: 1, fontSize: 12, lineHeight: 17, color: C.muted }}>{pivotPick === part.id && pivotRole === 'pivot' ? '캔버스에서 돌아갈 축(어깨·귀뿌리)을 눌러요' : `중심점(축)은 몸 쪽 끝으로 잡았어요 · 다르면 옮겨요`}</Text>
-              <Chip label={pivotPick === part.id && pivotRole === 'pivot' ? '그만' : '중심점 옮기기'} a11y={`${name} 중심점 옮기기`} on={pivotPick === part.id && pivotRole === 'pivot'} onPress={() => onPickPivot(pivotPick === part.id ? null : part.id)} />
+              <Text style={{ flex: 1, fontSize: 12, lineHeight: 17, color: C.muted }}>{pivotPick === part.id && pivotRole === 'pivot' ? t("release.s0916") : t("release.s0917")}</Text>
+              <Chip label={pivotPick === part.id && pivotRole === 'pivot' ? t("release.s0918") : t("release.s0919")} a11y={t("release.d135", { v0: (name) })} on={pivotPick === part.id && pivotRole === 'pivot'} onPress={() => onPickPivot(pivotPick === part.id ? null : part.id)} />
             </View>}
             <Row label={effect.label} value={part.amount} min={effect.min} max={effect.max} fmt={effect.id === 'rotate' ? n => Math.round(n) + '°' : undefined} onActive={setHolding} onChange={amount => editPart(part.id, { amount: Number(amount.toFixed(3)) })} />
-            <Row label="속도" value={part.speed} min={0} max={1} onActive={setHolding} onChange={speed => editPart(part.id, { speed: Math.round(speed * 20) / 20 })} />
-            <Pressable accessibilityRole="button" accessibilityLabel={`${name} 세부 조절`} accessibilityState={{ expanded: detail }} onPress={() => setDetailPart(detail ? null : part.id)}
+            <Row label={t("release.s0621")} value={part.speed} min={0} max={1} onActive={setHolding} onChange={speed => editPart(part.id, { speed: Math.round(speed * 20) / 20 })} />
+            <Pressable accessibilityRole="button" accessibilityLabel={t("release.d136", { v0: (name) })} accessibilityState={{ expanded: detail }} onPress={() => setDetailPart(detail ? null : part.id)}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 }}>
-              <Text style={{ flex: 1, fontSize: 12, fontWeight: '800', color: C.muted }}>세부 조절</Text>
+              <Text style={{ flex: 1, fontSize: 12, fontWeight: '800', color: C.muted }}>{t("release.s0920")}</Text>
               <Glyph name={detail ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
             </Pressable>
             {detail && <>
               {parts.length > 1 && <View style={{ flexDirection: 'row', gap: 6 }}>
-                <Chip wide label="앞으로" on={false} onPress={() => movePart(index, index - 1)} />
-                <Chip wide label="뒤로" on={false} onPress={() => movePart(index, index + 1)} />
+                <Chip wide label={t("release.s0921")} on={false} onPress={() => movePart(index, index - 1)} />
+                <Chip wide label={t("release.s0082")} on={false} onPress={() => movePart(index, index + 1)} />
               </View>}
               {part.effect === 'move' && <>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
-                  <Chip wide label={pivotPick === part.id && pivotRole === 'from' ? '캔버스를 누르세요' : '시작 위치'} on={pivotPick === part.id && pivotRole === 'from'} onPress={() => onPickPivot(pivotPick === part.id && pivotRole === 'from' ? null : part.id, 'from')} />
-                  <Chip wide label={pivotPick === part.id && pivotRole === 'to' ? '캔버스를 누르세요' : '끝 위치'} on={pivotPick === part.id && pivotRole === 'to'} onPress={() => onPickPivot(pivotPick === part.id && pivotRole === 'to' ? null : part.id, 'to')} />
+                  <Chip wide label={pivotPick === part.id && pivotRole === 'from' ? t("release.s0922") : t("release.s0923")} on={pivotPick === part.id && pivotRole === 'from'} onPress={() => onPickPivot(pivotPick === part.id && pivotRole === 'from' ? null : part.id, 'from')} />
+                  <Chip wide label={pivotPick === part.id && pivotRole === 'to' ? t("release.s0922") : t("release.s0924")} on={pivotPick === part.id && pivotRole === 'to'} onPress={() => onPickPivot(pivotPick === part.id && pivotRole === 'to' ? null : part.id, 'to')} />
                 </View>
                 {part.fromX === undefined || part.toX === undefined
-                  ? <Row label="방향" value={part.angle} min={0} max={350} step={10} fmt={n => Math.round(n) + '°'} onActive={setHolding} onChange={angle => editPart(part.id, { angle: Math.round(angle / 10) * 10 })} />
-                  : <Chip wide label="위치 지우기" on={false} onPress={() => editPart(part.id, { fromX: undefined, fromY: undefined, toX: undefined, toY: undefined })} />}
+                  ? <Row label={t("release.s0925")} value={part.angle} min={0} max={350} step={10} fmt={n => Math.round(n) + '°'} onActive={setHolding} onChange={angle => editPart(part.id, { angle: Math.round(angle / 10) * 10 })} />
+                  : <Chip wide label={t("release.s0926")} on={false} onPress={() => editPart(part.id, { fromX: undefined, fromY: undefined, toX: undefined, toY: undefined })} />}
               </>}
-              {part.effect === 'move' && <Chip wide label={pivotPick === part.id && pivotRole === 'pivot' ? '캔버스를 누르세요' : '중심점 옮기기'} on={pivotPick === part.id && pivotRole === 'pivot'} onPress={() => onPickPivot(pivotPick === part.id ? null : part.id)} />}
+              {part.effect === 'move' && <Chip wide label={pivotPick === part.id && pivotRole === 'pivot' ? t("release.s0922") : t("release.s0919")} on={pivotPick === part.id && pivotRole === 'pivot'} onPress={() => onPickPivot(pivotPick === part.id ? null : part.id)} />}
             </>}
           </>}
         </View>;
       })}
 
-      <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink, paddingHorizontal: 2, paddingTop: 4 }}>{parts.length ? '다른 부분도 움직이기' : '움직일 레이어 고르기'}</Text>
+      <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink, paddingHorizontal: 2, paddingTop: 4 }}>{parts.length ? t("release.s0927") : t("release.s0928")}</Text>
       <View style={{ gap: 6 }}>
-        {drawLayers.map(l => <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={`${layerLabel(l.name)} 부분 움직임 추가`} onPress={() => addPart(l.id)}
+        {drawLayers.map(l => <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={t("release.d137", { v0: (layerLabel(l.name)) })} onPress={() => addPart(l.id)}
           style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', gap: 10, paddingHorizontal: 10, borderRadius: C.radius.md, borderWidth: 1, borderColor: C.line, alignItems: 'center', backgroundColor: pressed ? C.fill : C.paper })}>
           <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: C.surface2, overflow: 'hidden' }}>
             {thumbs[l.id] ? <Image source={{ uri: thumbs[l.id] }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : null}
           </View>
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.ink }}>{layerLabel(l.name)}</Text>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>움직이기</Text>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{t("ui.motion")}</Text>
           <Glyph name="plus" size={18} color={C.ink} />
         </Pressable>)}
       </View>
 
       {parts.length > 1 && <>
-        <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink, paddingHorizontal: 2, paddingTop: 4 }}>여러 부분은 어떻게 움직일까요</Text>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink, paddingHorizontal: 2, paddingTop: 4 }}>{t("release.s0929")}</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Chip wide label="함께" on={(base.play ?? 'together') === 'together'} onPress={() => set({ play: 'together', parts: parts.map(p => ({ ...p, delay: 0 })) })} />
-          <Chip wide label="차례로" on={base.play === 'sequence'} onPress={() => set({ play: 'sequence', parts: parts.map((p, i) => ({ ...p, delay: Number((i * (base.stagger ?? .15)).toFixed(2)) })) })} />
+          <Chip wide label={t("release.s0930")} on={(base.play ?? 'together') === 'together'} onPress={() => set({ play: 'together', parts: parts.map(p => ({ ...p, delay: 0 })) })} />
+          <Chip wide label={t("release.s0931")} on={base.play === 'sequence'} onPress={() => set({ play: 'sequence', parts: parts.map((p, i) => ({ ...p, delay: Number((i * (base.stagger ?? .15)).toFixed(2)) })) })} />
         </View>
-        {base.play === 'sequence' && <Row label="시작 간격" value={base.stagger ?? .15} min={0} max={.6}
-          step={.05} fmt={n => n.toFixed(2) + '초'} onActive={setHolding}
+        {base.play === 'sequence' && <Row label={t("release.s0932")} value={base.stagger ?? .15} min={0} max={.6}
+          step={.05} fmt={n => n.toFixed(2) + t("release.s0899")} onActive={setHolding}
           onChange={stagger => { const step = Number(stagger.toFixed(2)); set({ stagger: step, parts: parts.map((p, i) => ({ ...p, delay: Number((i * step).toFixed(2)) })) }); }} />}
       </>}
 
-      <Pressable accessibilityRole="button" accessibilityLabel="두 모습 번갈아" onPress={() => setView('pose')} style={row}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0867")} onPress={() => setView('pose')} style={row}>
         <Glyph name="swap-horizontal" size={20} color={C.ink} />
-        <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>두 모습 번갈아</Text>
-        <Text style={{ fontSize: 12, color: C.muted }}>{base.alternate ? '켜짐' : '꺼짐'}</Text>
+        <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>{t("release.s0867")}</Text>
+        <Text style={{ fontSize: 12, color: C.muted }}>{base.alternate ? t("release.s0069") : t("release.s0070")}</Text>
         <Glyph name="chevron-right" size={20} color={C.muted} />
       </Pressable>
     </> : view === 'pose' ? <>
-      <Pressable accessibilityRole="switch" accessibilityLabel="두 모습 번갈아 켜기" accessibilityState={{ checked: !!base.alternate }}
+      <Pressable accessibilityRole="switch" accessibilityLabel={t("release.s0933")} accessibilityState={{ checked: !!base.alternate }}
         onPress={() => set({ alternate: base.alternate ? undefined : { poseB: drawLayers.slice(1).map(l => l.id), interval: .4 } })}
         style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, gap: 10 }}>
-        <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>두 모습 번갈아</Text>
+        <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>{t("release.s0867")}</Text>
         <Toggle on={!!base.alternate} />
       </Pressable>
       {!!base.alternate && <>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          {([['모습 1', drawLayers.filter(l => !base.alternate!.poseB.includes(l.id))],
-             ['모습 2', drawLayers.filter(l => base.alternate!.poseB.includes(l.id))]] as const).map(([title, members]) =>
+          {([[t("release.s0934"), drawLayers.filter(l => !base.alternate!.poseB.includes(l.id))],
+             [t("release.s0935"), drawLayers.filter(l => base.alternate!.poseB.includes(l.id))]] as const).map(([title, members]) =>
             <View key={title} style={{ flex: 1, gap: 4, padding: 8, borderRadius: C.radius.md, borderWidth: 1, borderColor: C.line, backgroundColor: '#FFF' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Text style={{ flex: 1, fontSize: 12, fontWeight: '800', color: C.ink }}>{title}</Text>
-                <Pressable accessibilityRole="button" accessibilityLabel={title + ' 고쳐 그리기'} disabled={!members.length} onPress={() => onEditPose(members.map(l => l.id))}
+                <Pressable accessibilityRole="button" accessibilityLabel={title + " " + t("release.s0936")} disabled={!members.length} onPress={() => onEditPose(members.map(l => l.id))}
                   style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center', opacity: members.length ? 1 : .3 }}>
                   <Glyph name="pencil-outline" size={16} color={C.muted} />
                 </Pressable>
@@ -585,38 +587,38 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {drawLayers.map(l => {
             const inB = base.alternate!.poseB.includes(l.id);
-            return <Chip key={l.id} label={`${layerLabel(l.name)} → 모습 ${inB ? 2 : 1}`} on={inB}
+            return <Chip key={l.id} label={t("release.d138", { v0: (layerLabel(l.name)), v1: (inB ? 2 : 1) })} on={inB}
               onPress={() => set({ alternate: { ...base.alternate!, poseB: inB ? base.alternate!.poseB.filter(x => x !== l.id) : [...base.alternate!.poseB, l.id] } })} />;
           })}
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="모습 1 복사해서 모습 2 만들기" onPress={onDuplicateForPose}
+        <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0937")} onPress={onDuplicateForPose}
           style={{ minHeight: 48, flexDirection: 'row', gap: 6, borderRadius: C.radius.sm, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center' }}>
           <Glyph name="content-copy" size={16} color={C.ink} />
-          <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>모습 1 복사해서 모습 2 만들기</Text>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{t("release.s0937")}</Text>
         </Pressable>
-        <Row label="간격" value={base.alternate.interval} min={.2} max={1.2} step={.1} fmt={n => n.toFixed(1) + '초'} onActive={setHolding} onChange={interval => set({ alternate: { ...base.alternate!, interval: Number(interval.toFixed(2)) } })} />
+        <Row label={t("release.s0938")} value={base.alternate.interval} min={.2} max={1.2} step={.1} fmt={n => n.toFixed(1) + t("release.s0899")} onActive={setHolding} onChange={interval => set({ alternate: { ...base.alternate!, interval: Number(interval.toFixed(2)) } })} />
       </>}
     </> : <View style={{ gap: 8 }}>
-      {!!motion && <Pressable accessibilityRole="button" accessibilityLabel="이 움직임 보관하기" onPress={onSaveMotion}
+      {!!motion && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0939")} onPress={onSaveMotion}
         style={{ minHeight: 48, flexDirection: 'row', gap: 6, borderRadius: C.radius.sm, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center' }}>
         <Glyph name="plus" size={16} color={C.ink} />
-        <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>이 움직임 보관하기</Text>
+        <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{t("release.s0939")}</Text>
       </Pressable>}
       {savedMotions.map(saved => {
         // 무료 사용자가 PRO 내용이 든 보관 움직임을 꺼내면, 넣고 난 뒤가 아니라 **누르는 순간** PRO 라고 알린다.
         const locked = usesPro(saved.motion) && !pro;
         return <View key={saved.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel={saved.name + ' 꺼내 쓰기'} onPress={() => locked ? onRequestPro() : onUseMotion(saved)}
+          <Pressable accessibilityRole="button" accessibilityLabel={saved.name + " " + t("release.s0940")} onPress={() => locked ? onRequestPro() : onUseMotion(saved)}
             style={{ flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderRadius: C.radius.sm, borderWidth: 1, borderColor: C.line }}>
             <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.ink }}>{saved.name}</Text>
             {locked && <ProTag />}
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={saved.name + ' 보관 지우기'} onPress={() => onForgetMotion(saved.id)} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable accessibilityRole="button" accessibilityLabel={saved.name + " " + t("release.s0756")} onPress={() => onForgetMotion(saved.id)} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
             <Glyph name="close" size={18} color={C.muted} />
           </Pressable>
         </View>;
       })}
-      {!savedMotions.length && <Text style={{ fontSize: 12, color: C.muted }}>아직 보관한 움직임이 없어요.</Text>}
+      {!savedMotions.length && <Text style={{ fontSize: 12, color: C.muted }}>{t("release.s0941")}</Text>}
     </View>}
     </ScrollView>
 

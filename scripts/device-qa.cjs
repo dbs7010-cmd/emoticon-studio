@@ -47,19 +47,20 @@ const DYNAMIC = new Set(['swatch', 'recentPrefix', 'saveMark']);
 function labelsMissingFromSource() {
   const { ko } = require('./load-ts.cjs').loader()('src/i18n/ko.ts');
   const source = ['App.tsx', 'src/painter/painter.tsx', 'src/painter/motion-panel.tsx', 'src/components/ui.tsx'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
-    .replace(/t\('([^']+)'\)/g, (call, key) => key in ko ? JSON.stringify(ko[key]) : call);
+    .replace(/t\((['"])([^'"]+)\1\)/g, (call, _quote, key) => key in ko ? JSON.stringify(ko[key]) : call);
+  const has = text => source.includes(JSON.stringify(text)) || source.includes("'" + text + "'");
   return Object.entries(L).filter(([key, label]) => {
-    if (key === 'swatch') return !source.includes("'색 ' + c");
-    if (key === 'recentPrefix') return !source.includes("'최근 색 ' + c");
-    if (key === 'saveMark') return !source.includes("'저장됨'");
+    if (key === 'swatch') return !(source.includes("'색 ' + c") || source.includes('"색" + " " + c'));
+    if (key === 'recentPrefix') return !(source.includes("'최근 색 ' + c") || source.includes('"최근 색" + " " + c'));
+    if (key === 'saveMark') return !has('저장됨');
     // 브러시 이름은 목록에서 '브러시 ' + 이름으로 조립된다. 접두사와 그 이름이 소스에 있으면 된다.
     // 45.34: 압정을 견본마다 겹쳐 두지 않고 '즐겨찾기 편집' 모드로 옮겼다(§6). 고정하는 자리는
     // 줄을 누른 뒤 뜨는 '1·2·3번 칸' 이므로, 확인할 것은 그 편집 길이 소스에 있는가다.
-    if (key === 'favPin') return !(source.includes("'즐겨찾기 편집'") && source.includes("'즐겨찾기에 넣기 '"));
+    if (key === 'favPin') return !(has('즐겨찾기 편집') && (has('즐겨찾기에 넣기 ') || has('즐겨찾기에 넣기')));
     if (key === 'brushVariant' || key === 'proBrush')
-      return !(source.includes("+ b.title") && source.includes("'브러시 '") && source.includes("'" + label.replace('브러시 ', '') + "'"));
+      return !(source.includes("+ b.title") && (has('브러시 ') || has('브러시')) && has(label.replace('브러시 ', '')));
     // 시트 제목이 모드에 따라 바뀌므로(브러시 / 즐겨찾기 편집) 닫기 이름을 따로 넘긴다.
-    if (key === 'brushClose') return !source.includes('closeLabel="브러시 닫기"');
+    if (key === 'brushClose') return !(source.includes('closeLabel="브러시 닫기"') || source.includes('closeLabel={"브러시 닫기"}'));
     return !(source.includes(`"${label}"`) || source.includes(`'${label}'`) || source.includes(`>${label}<`) || source.includes(`\`${label}\``) || new RegExp(`[\\['"]${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]`).test(source));
   }).map(([key, label]) => `${key}=${label}`);
 }

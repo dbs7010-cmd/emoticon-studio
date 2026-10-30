@@ -1,3 +1,4 @@
+import { t } from '../i18n/index';
 // 홈 맨 위 공지 배너(2026-10-14 시안 Z-Home · 사용자 확정: "둥근 테두리 없이 앱 가로 규격에 꽉 차게, 이미지 칸").
 // 화면 폭을 꽉 채운 가로 배너(390×130 비율)를 옆으로 넘긴다. 혼자서도 4초마다 다음 장으로 넘어가고, 손을 대면 잠시 멈춘다.
 // 동작 줄이기(접근성)를 켠 기기에서는 저절로 넘기지 않는다. 왼쪽 아래 점(지금 장은 길쭉한 보라)으로 몇 번째인지 보인다.
@@ -58,7 +59,7 @@ export function NoticeCarousel({ slides, guessWidth }: { slides: NoticeSlide[]; 
         </>}
       </Pressable>)}
     </ScrollView>
-    {slides.length > 1 && <View pointerEvents="none" accessible accessibilityLabel={`공지 ${slides.length}장 중 ${index + 1}번째`}
+    {slides.length > 1 && <View pointerEvents="none" accessible accessibilityLabel={t("release.d104", { v0: (slides.length), v1: (index + 1) })}
       style={{ position: 'absolute', left: 24, bottom: 12, flexDirection: 'row', gap: 4 }}>
       {slides.map((s, i) => <View key={s.key} style={{ width: i === index ? 16 : 6, height: 6, borderRadius: 3, backgroundColor: i === index ? T.point : 'rgba(25,31,40,0.28)' }} />)}
     </View>}

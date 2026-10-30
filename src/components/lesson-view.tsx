@@ -38,15 +38,15 @@ export function LessonView({ lesson, onBack, onAction }: { lesson: Lesson; onBac
     {/* 제목 · 한 줄 정보 */}
     <View style={{ gap: 4 }}>
       <Text accessibilityRole="header" style={{ fontSize: 20, lineHeight: 27, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{lesson.title}</Text>
-      <Text style={{ fontSize: 13, color: C.muted }}>{`${lesson.minutes}분 · ${lesson.steps.length}단계 · ${lesson.summary}`}</Text>
+      <Text style={{ fontSize: 13, color: C.muted }}>{t("release.d101", { v0: (lesson.minutes), v1: (lesson.steps.length), v2: (lesson.summary) })}</Text>
     </View>
     {/* 지금 단계 설명 */}
     {step ? <View style={{ gap: 6, padding: 16, borderRadius: 20, backgroundColor: C.surface2 }}>
       <Text style={{ fontSize: 13, fontWeight: '800', color: C.pointInk }}>{`${at + 1}. ${step.title}`}</Text>
       <Text style={{ fontSize: 15, lineHeight: 23, color: C.ink }}>{step.body}</Text>
-      {at < total - 1 && <Pressable accessibilityRole="button" accessibilityLabel="다음 단계" onPress={() => setAt(at + 1)}
+      {at < total - 1 && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0415")} onPress={() => setAt(at + 1)}
         style={{ alignSelf: 'flex-end', minHeight: 44, paddingHorizontal: 18, borderRadius: 22, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.pointSoft }}>
-        <Text style={{ fontSize: 14, fontWeight: '800', color: C.pointInk }}>{at === total - 2 ? '정리 보기' : '다음 단계'}</Text>
+        <Text style={{ fontSize: 14, fontWeight: '800', color: C.pointInk }}>{at === total - 2 ? t("release.s0416") : t("release.s0415")}</Text>
         <Glyph name="chevron-right" size={18} color={C.pointInk} />
       </Pressable>}
     </View> : <View testID="강좌 정리" style={{ gap: 12 }}>
@@ -59,18 +59,18 @@ export function LessonView({ lesson, onBack, onAction }: { lesson: Lesson; onBac
       </View>
       {!!lesson.tryIt && <Pressable accessibilityRole="button" accessibilityLabel={lesson.tryIt.label} onPress={() => onAction(lesson.tryIt!.action)}
         style={({ pressed }) => ({ minHeight: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', backgroundColor: C.accent, ...(pressed ? Clay.buttonPressed : Clay.button) })}>
-        <Text style={{ fontSize: 16, fontWeight: '800', color: C.accentInk }}>{`바로 해 보기 · ${lesson.tryIt.label}`}</Text>
+        <Text style={{ fontSize: 16, fontWeight: '800', color: C.accentInk }}>{t("release.d102", { v0: (lesson.tryIt.label) })}</Text>
       </Pressable>}
-      {!!lesson.youtube && <Pressable accessibilityRole="link" accessibilityLabel="유튜브에서 전체 영상 보기" onPress={() => Linking.openURL(lesson.youtube!).catch(() => {})}
+      {!!lesson.youtube && <Pressable accessibilityRole="link" accessibilityLabel={t("release.s0418")} onPress={() => Linking.openURL(lesson.youtube!).catch(() => {})}
         style={{ minHeight: 48, borderRadius: C.radius.card, alignItems: 'center', justifyContent: 'center', backgroundColor: C.fill }}>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>유튜브에서 전체 영상 보기</Text>
+        <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{t("release.s0418")}</Text>
       </Pressable>}
     </View>}
     {/* 단계 목록(챕터): 누르면 그 단계로 */}
     <View testID="강좌 단계 목록" accessible={false} style={{ gap: 2 }}>
-      <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink, marginBottom: 4 }}>목차</Text>
-      {[...lesson.steps.map(s => s.title), '정리'].map((title, i) => { const on = i === at;
-        return <Pressable key={i} accessibilityRole="button" accessibilityLabel={`${i + 1}단계 ${title}`} accessibilityState={{ selected: on }} onPress={() => setAt(i)}
+      <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink, marginBottom: 4 }}>{t("release.s0420")}</Text>
+      {[...lesson.steps.map(s => s.title), t("release.s0421")].map((title, i) => { const on = i === at;
+        return <Pressable key={i} accessibilityRole="button" accessibilityLabel={t("release.d129", { v0: (i + 1), v1: (title) })} accessibilityState={{ selected: on }} onPress={() => setAt(i)}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, paddingHorizontal: 12, borderRadius: 14, backgroundColor: on ? C.pointSoft : 'transparent' }}>
           <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? C.point : i < at ? C.fillPressed : C.fill }}>
             {i < at ? <Glyph name="check" size={16} color={C.ink} /> : <Text style={{ fontSize: 13, fontWeight: '800', color: on ? '#FFFFFF' : C.ink }}>{i + 1}</Text>}

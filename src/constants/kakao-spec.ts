@@ -1,3 +1,4 @@
+import { t } from '../i18n/index';
 // Read from Kakao's own creator guide on 2026-09-12, in a browser that runs the page's scripts —
 // not from a blog and not from memory.
 // Source: https://kakaoemoticonstudio.notion.site/emoticon           (멈춰있는 이모티콘)
@@ -14,7 +15,7 @@ export const SPEC_SOURCE = {
 } as const;
 
 export const KAKAO_STATIC_SPEC = {
-  profileLabel: '멈춰있는 이모티콘',
+  profileLabel: t("release.k00"),
   width: 360,
   height: 360,
   count: 32,
@@ -24,11 +25,11 @@ export const KAKAO_STATIC_SPEC = {
   policyStatus: 'VERIFIED' as 'UNVERIFIED' | 'VERIFIED',
   checkedAt: SPEC_SOURCE.readAt,
   officialUrl: SPEC_SOURCE.still,
-  note: '공식 가이드 기준: PNG 32개 · 360×360 · 150KB 이하 · 투명 배경. 제안에는 이모티콘 32개와 아이콘 1개가 필요해요. 출시에는 아이콘(78×78)과 공유 이미지(600×166), 대표 이미지 1개가 더 필요해요.',
+  note: t("release.k01"),
 } as const;
 
 export const KAKAO_ANIMATED_SPEC = {
-  profileLabel: '움직이는 이모티콘',
+  profileLabel: t("start.title2"),
   width: 360,
   height: 360,
   count: 24,
@@ -41,7 +42,7 @@ export const KAKAO_ANIMATED_SPEC = {
   policyStatus: 'VERIFIED' as 'UNVERIFIED' | 'VERIFIED',
   checkedAt: SPEC_SOURCE.readAt,
   officialUrl: SPEC_SOURCE.animated,
-  note: '공식 가이드 기준: WebP 24개 · 360×360 · 650KB 이하 · 24프레임 이하 · 4회 반복 · 투명 배경. 제안에는 움직이는 WebP 3개만 필수이고 나머지는 PNG로 낼 수 있어요.',
+  note: t("release.k03"),
 } as const;
 
 // 단계별 요구 — 공식 가이드 원문에서 그대로 옮겼다. 출시 기준을 제안에 그대로 적용하지 않는다.
@@ -54,21 +55,21 @@ export const KAKAO_ANIMATED_SPEC = {
 export const STAGES = {
   still: {
     proposal: { emoticons: 32, formats: ['PNG'], icon: true, share: false,
-      text: '제안: PNG 32개 + 아이콘 1개' },
+      text: t("release.k04") },
     release: { emoticons: 32, formats: ['PNG'], icon: true, share: true,
-      text: '출시: PNG 32개 + 아이콘 1개 + 공유 이미지 1개' },
+      text: t("release.k05") },
   },
   animated: {
     proposal: { emoticons: 24, animatedMin: 3, formats: ['WebP', 'PNG'], icon: true, share: false,
-      text: '제안: 24개 중 움직이는 WebP 3개는 필수, 나머지는 PNG 가능 + 아이콘 1개' },
+      text: t("release.k06") },
     release: { emoticons: 24, animatedMin: 24, formats: ['WebP'], icon: true, share: true,
-      text: '출시: WebP 24개 + 아이콘 1개 + 공유 이미지 1개' },
+      text: t("release.k07") },
   },
 } as const;
 
 // 가이드가 직접 정한 제작 도구 제한. 이 앱이 만든 WebP 가 규격을 맞추더라도 이 문장을 대신하지 않는다.
 export const WEBP_TOOL_RULE =
-  'WebP 파일을 제작할 때는 카카오에서 제공하는 전용 WebPAnimator만 사용해 주세요.';
+  t("release.k08");
 export const WEBP_ANIMATOR_URL = SPEC_SOURCE.webpAnimator;
 
 // Things the guide requires that this app does not make yet. The export screen says so rather
@@ -76,18 +77,18 @@ export const WEBP_ANIMATOR_URL = SPEC_SOURCE.webpAnimator;
 // 부가 이미지 — 원문 확인 2026-09-12. 각 항목의 근거를 함께 둔다. 모호한 것은 확정으로 적지 않는다.
 export const REQUIRED_EXTRAS = [
   {
-    id: 'icon', label: '아이콘 이미지', spec: 'PNG 1개 · 78×78 · 16KB 이하',
-    stage: '제안·출시', basis: '제안 목록에 "아이콘 이미지 : 1개", 상품 구성표에 78×78 / 16KB',
+    id: 'icon', label: t("release.s0189"), spec: t("release.k10"),
+    stage: t("release.k11"), basis: '제안 목록에 "아이콘 이미지 : 1개", 상품 구성표에 78×78 / 16KB',
     confirmed: true,
   },
   {
-    id: 'share', label: '공유 이미지', spec: 'PNG 1개 · 600×166 · 500KB 이하',
-    stage: '출시', basis: '상품 구성표에 있고 제안 목록에는 없다',
+    id: 'share', label: t("release.s0191"), spec: t("release.k14"),
+    stage: t("release.k15"), basis: '상품 구성표에 있고 제안 목록에는 없다',
     confirmed: true,
   },
   {
-    id: 'cover', label: '대표 이미지', spec: '이모티콘 이미지 중 1개 선택',
-    stage: '출시', basis: '"4. 대표 이미지 — 이모티콘 이미지 중 대표 이미지를 1개 선택해 주세요."',
+    id: 'cover', label: t("release.s0192"), spec: t("release.k18"),
+    stage: t("release.k15"), basis: '"4. 대표 이미지 — 이모티콘 이미지 중 대표 이미지를 1개 선택해 주세요."',
     confirmed: true,
   },
 ] as const;
@@ -107,8 +108,8 @@ export const WEBP_ANIMATOR_INPUT = {
 
 // Two rules from the guide that change how a picture is drawn, not just how it is saved.
 export const GUIDE_RULES = [
-  '텍스트에는 흰색 아웃라인을 넣어요. 다크모드 배경에서도 읽히게 하기 위한 규칙이에요.',
-  '움직이는 이모티콘은 마지막 프레임이 이모티콘샵과 키보드의 미리보기로 쓰여요. 대표하는 모습이 마지막에 오게 만들어요.',
+  t("release.k21"),
+  t("release.k22"),
 ] as const;
 
 // The submission file is WebP made with Kakao's own WebPAnimator, which this app does not write.

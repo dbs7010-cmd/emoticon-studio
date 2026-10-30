@@ -1,3 +1,4 @@
+import { t, lang, knownMessage } from '../i18n/index';
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, Image, Modal, Pressable, ScrollView, ActivityIndicator, Animated, type ImageSourcePropType } from 'react-native';
 import { ImtiIcon, IconSize, type IconName as ImtiName } from '../design/icons';
@@ -162,8 +163,8 @@ export function EmptyState(props: { icon: IconName; message: string; action: Rea
         <Text style={{ ...Type.bodySecondary, textAlign: 'center' }}>{body}</Text>
       </View>
       <Action primary title={actionLabel} onPress={onAction} icon="plus" />
-      {flow && <View testID="흐름 아이콘" accessible accessibilityLabel="그리기, 움직이기, 내보내기 순서" style={{ flexDirection: 'row', alignItems: 'center', gap: T.gap.sm }}>
-        {([['brush', '그리기'], ['motion', '움직이기'], ['export', '내보내기']] as const).map(([name, label], i) => <React.Fragment key={name}>
+      {flow && <View testID="흐름 아이콘" accessible accessibilityLabel={t("release.s0353")} style={{ flexDirection: 'row', alignItems: 'center', gap: T.gap.sm }}>
+        {([['brush', t("ui.draw")], ['motion', t("ui.motion")], ['export', t("ui.export")]] as const).map(([name, label], i) => <React.Fragment key={name}>
           {i > 0 && <ImtiIcon name="next" size={IconSize.meta} color={T.faint} />}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><ImtiIcon name={name} size={IconSize.meta} color={T.muted} /><Text style={{ ...Type.caption, color: T.muted }}>{label}</Text></View>
         </React.Fragment>)}
@@ -178,11 +179,14 @@ export function EmptyState(props: { icon: IconName; message: string; action: Rea
   </View>;
 }
 
-// 사용자에게 보여 줄 오류 문장. 우리가 쓴 한국어 문장은 그대로, 기술 오류(영문·코드·경로)는 일반 문장으로 바꾼다.
+// 사용자 오류는 현재 언어로 표시한다. 기술 오류·미번역 한국어는 현지어 안내로 대체한다.
 // 원문은 개발 로그로만 남긴다 — 화면에는 "Error:"·파일 경로·JSON 같은 말이 나오지 않는다.
-export function userMessage(error: unknown, fallback = '잠시 후 다시 시도해 주세요.'): string {
+export function userMessage(error: unknown, fallback = t("release.s0220")): string {
   const text = String((error as { message?: string })?.message ?? error ?? '').replace(/^(Error|TypeError|RangeError):\s*/, '').trim();
-  if (!/[가-힣]/.test(text) || /(undefined|null|TypeError|JSON|base64|file:|content:|\bat\s)/i.test(text)) {
+  const known = knownMessage(text);
+  if (known) return known;
+  const readable = lang() === 'ko' ? /[가-힣]/.test(text) : !/[가-힣]/.test(text) && /[\u3040-\u30ff\u3400-\u9fff]/.test(text);
+  if (!readable || /(undefined|null|TypeError|JSON|base64|file:|content:|\bat\s)/i.test(text)) {
     if (text) console.warn('[emoticon-studio]', text);
     return fallback;
   }
@@ -269,7 +273,7 @@ export function SheetHeader({ title, onClose, closeLabel, right, left, grab = fa
     {left}
     <Text numberOfLines={1} style={{ flex: 1, fontSize: 19, ...display, color: T.ink }}>{title}</Text>
     {right}
-    {onClose && <Pressable accessibilityRole="button" accessibilityLabel={closeLabel ?? title + ' 닫기'} onPress={onClose} hitSlop={2}
+    {onClose && <Pressable accessibilityRole="button" accessibilityLabel={closeLabel ?? title + " " + t("ui.close")} onPress={onClose} hitSlop={2}
       style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? T.fill : 'transparent' })}>
       <Glyph name="close" size={20} color={T.muted} />
     </Pressable>}
@@ -361,7 +365,7 @@ export function Range({ label, hideLabel, value, min, max, step, onChange, displ
       </View>
       <View pointerEvents="none" style={{ position: 'absolute', left: `${ratio * 100}%`, width: 22, height: 22, marginLeft: -11, borderRadius: 11, backgroundColor: '#FFF', boxShadow: live !== null ? '0px 0px 0px 4px rgba(91, 87, 217, 0.22), 0px 2px 6px rgba(25, 31, 40, 0.22)' : '0px 2px 6px rgba(25, 31, 40, 0.22)' }} />
     </View>
-    {!!shownText && <Text accessibilityLabel={label ? label + ' 값' : undefined} style={{ minWidth: 42, fontSize: 12, color: T.muted, textAlign: 'right' }}>{shownText}</Text>}
+    {!!shownText && <Text accessibilityLabel={label ? label + " " + t("release.s0435") : undefined} style={{ minWidth: 42, fontSize: 12, color: T.muted, textAlign: 'right' }}>{shownText}</Text>}
   </View>;
 }
 // ── 45.42 S3 공통 상태 부품 ────────────────────────────────────────────────────────────────
@@ -397,9 +401,9 @@ export function useMicro(kind: 'pop' | 'rise', play = true) {
 
 // 저장 알림: 흰 알약 + 초록 체크 + 칸 번호 + 잉크 '다음 칸'. 경고창처럼 보이지 않게 — 노랑·빨강을 쓰지 않는다.
 // done=false: 저장은 됐지만 완성으로 치지 않는 경우(빈 칸) — 초록 체크 대신 중립 저장 아이콘. nextA11y: 버튼을 읽는 이름(보이는 글자를 포함).
-export function SaveToast({ slot, onNext, nextLabel = '다음 칸', nextA11y, message, done = true }: { slot: number; onNext?: () => void; nextLabel?: string; nextA11y?: string; message?: string; done?: boolean }) {
+export function SaveToast({ slot, onNext, nextLabel = t("release.s0436"), nextA11y, message, done = true }: { slot: number; onNext?: () => void; nextLabel?: string; nextA11y?: string; message?: string; done?: boolean }) {
   const rise = useMicro('rise');
-  const text = message ?? `${slot}번 칸 저장됨`;
+  const text = message ?? t("release.d105", { v0: (slot) });
   return <Animated.View testID="저장 알림" accessibilityLiveRegion="polite" accessibilityLabel={text}
     style={[{ flexDirection: 'row', alignItems: 'center', gap: T.gap.sm, minHeight: T.tap, paddingLeft: T.gap.md, paddingRight: onNext ? 6 : T.gap.lg,
       borderRadius: 999, backgroundColor: T.paper, ...Card.border, ...Card.float }, rise]}>
@@ -414,7 +418,7 @@ export function SaveToast({ slot, onNext, nextLabel = '다음 칸', nextA11y, me
 
 // 완성 카드: 흰 카드 + 튀어 오르는 노란 체크 + 'N칸 완성!' + 작품 격자(children) + 노란 행동 하나.
 // 완성 B(시안 WB2-States '완료 B · White 유지', 사용자 확정): 흰 카드 · 튀어 오르는 노란 체크 옆에 'N칸 완성!' + 한 줄 · 작품 격자 · 노란 행동 하나.
-export function CompleteCard({ total, subtitle, children, actionLabel, actionIcon, onAction, testID = '완성 카드' }: { total: number; subtitle?: string; children?: React.ReactNode; actionLabel: string; actionIcon?: IconName; onAction: () => void; testID?: string }) {
+export function CompleteCard({ total, subtitle, children, actionLabel, actionIcon, onAction, testID = t("release.s0438") }: { total: number; subtitle?: string; children?: React.ReactNode; actionLabel: string; actionIcon?: IconName; onAction: () => void; testID?: string }) {
   const pop = useMicro('pop');
   return <View testID={testID} style={{ backgroundColor: T.paper, borderRadius: 24, padding: T.gap.xl, gap: T.gap.md }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: T.gap.md }}>
@@ -422,7 +426,7 @@ export function CompleteCard({ total, subtitle, children, actionLabel, actionIco
         <ImtiIcon name="check" size={IconSize.tool} />
       </Animated.View>
       <View style={{ flex: 1 }}>
-        <Text accessibilityRole="header" style={{ fontSize: 22, lineHeight: 28, fontWeight: '800', color: T.ink }}>{total}칸 완성!</Text>
+        <Text accessibilityRole="header" style={{ fontSize: 22, lineHeight: 28, fontWeight: '800', color: T.ink }}>{total}{t("release.s0440")}</Text>
         {!!subtitle && <Text numberOfLines={2} style={{ fontSize: 12, color: T.muted }}>{subtitle}</Text>}
       </View>
     </View>
@@ -433,13 +437,13 @@ export function CompleteCard({ total, subtitle, children, actionLabel, actionIco
 
 // PRO 배지(45.42): 보라 없이 잉크 테두리 + 반짝 아이콘 + 글자. 산 뒤(owned)에는 잉크 면 + 흰 글자로 '지금 PRO' 임을 구분한다.
 // 누를 수 있으면 누르는 자리는 48dp.
-export function ProBadge({ onPress, label = 'PRO 이용', text = 'PRO', owned }: { onPress?: () => void; label?: string; text?: string; owned?: boolean }) {
+export function ProBadge({ onPress, label = t("ui.proAccess"), text = 'PRO', owned }: { onPress?: () => void; label?: string; text?: string; owned?: boolean }) {
   const ink = T.ink;
   // 치수는 승인 시안 WB2-Home 값(45.43): 높이 26 · 둥글기 8 · 선 1.5 · 옆 9 · 사이 3.
   const face = <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height: 26, paddingHorizontal: 9, borderRadius: 13, backgroundColor: owned ? T.accent : T.accentSoft }}>
     <ImtiIcon name="pro" size={IconSize.meta} color={ink} /><Text style={{ fontSize: 12, fontWeight: '800', color: ink, letterSpacing: .3 }}>{text}</Text>
   </View>;
-  if (!onPress) return <View accessible accessibilityLabel={owned ? 'PRO 이용 중' : text}>{face}</View>;
+  if (!onPress) return <View accessible accessibilityLabel={owned ? t("release.s0441") : text}>{face}</View>;
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!owned }} onPress={onPress}
     style={({ pressed }) => ({ minHeight: T.tap, minWidth: T.tap, alignItems: 'center', justifyContent: 'center', transform: pressed ? [{ scale: .96 }] : [] })}>{face}</Pressable>;
 }
@@ -458,16 +462,16 @@ export function Dialog({ title, onClose, children }: { title: string; onClose: (
     <Pressable accessibilityElementsHidden importantForAccessibility="no" style={{ flex: 1 }} onPress={onClose} />
     <View accessibilityViewIsModal style={{ maxHeight: '86%', backgroundColor: C.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: T.gap.xl, paddingTop: 10, paddingBottom: 28, gap: T.gap.sm }}>
       <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: T.lineStrong }} />
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={styles.subtitle}>{title}</Text><Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={{ width: T.tap, height: T.tap, marginRight: -12, alignItems: 'center', justifyContent: 'center' }}><Glyph name="close" size={20} color={T.muted} /></Pressable></View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={styles.subtitle}>{title}</Text><Pressable accessibilityRole="button" accessibilityLabel={t("ui.close")} onPress={onClose} style={{ width: T.tap, height: T.tap, marginRight: -12, alignItems: 'center', justifyContent: 'center' }}><Glyph name="close" size={20} color={T.muted} /></Pressable></View>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 12 }}><View style={{ gap: 12 }}>{children}</View></ScrollView>
     </View>
   </View></Modal>;
 }
 export function Field({ label, value, onChangeText, multiline = true, flat = false }: { label: string; value: string; onChangeText: (s: string) => void; multiline?: boolean; flat?: boolean }) {
-  return <View style={{ gap: flat ? 2 : 6 }}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} multiline={multiline} style={[styles.input, multiline && { minHeight: 76, textAlignVertical: 'top' }, flat && { borderWidth: 0, backgroundColor: 'transparent', paddingHorizontal: 0, paddingVertical: 2, minHeight: 44 }, flat && multiline && { minHeight: 44 }]} placeholder={`${label} 입력`} placeholderTextColor={T.muted} /></View>;
+  return <View style={{ gap: flat ? 2 : 6 }}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} multiline={multiline} style={[styles.input, multiline && { minHeight: 76, textAlignVertical: 'top' }, flat && { borderWidth: 0, backgroundColor: 'transparent', paddingHorizontal: 0, paddingVertical: 2, minHeight: 44 }, flat && multiline && { minHeight: 44 }]} placeholder={t("release.d082", { v0: (label) })} placeholderTextColor={T.muted} /></View>;
 }
 export function Preview({ image, label, size = 140 }: { image?: LocalImage; label: string; size?: number }) {
-  return <View style={{ flex: 1, gap: 6 }}><Text style={styles.label}>{label}</Text><View style={{ height: size, backgroundColor: T.surface2, borderRadius: T.radius.md, justifyContent: 'center', overflow: 'hidden' }}>{image ? <Image accessibilityLabel={label} source={{ uri: imageUri(image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ textAlign: 'center', color: C.muted }}>이미지 없음</Text>}</View></View>;
+  return <View style={{ flex: 1, gap: 6 }}><Text style={styles.label}>{label}</Text><View style={{ height: size, backgroundColor: T.surface2, borderRadius: T.radius.md, justifyContent: 'center', overflow: 'hidden' }}>{image ? <Image accessibilityLabel={label} source={{ uri: imageUri(image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Text style={{ textAlign: 'center', color: C.muted }}>{t("release.s0443")}</Text>}</View></View>;
 }
 export const styles = StyleSheet.create({
   page: { padding: T.gap.lg, gap: T.gap.md, paddingBottom: 28, backgroundColor: C.bg },

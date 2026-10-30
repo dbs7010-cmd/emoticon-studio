@@ -26,9 +26,9 @@ type Props = {
   login: (provider: Provider) => Promise<void>;
   bakeHandoff: (project: Project) => Promise<{ handoff: HandoffFrames[]; failed: number[] }>;
 };
-const PROVIDERS: { id: Provider; label: string }[] = [{ id: 'kakao', label: '카카오로 로그인' }, { id: 'naver', label: '네이버로 로그인' }, { id: 'google', label: '구글로 로그인' }];
-const when = (iso?: string) => { if (!iso) return ''; const d = new Date(iso); return `${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
-const STATUS: Record<string, string> = { uploading: '올리는 중', received: '접수됨', rejected: '접수 안 됨', withdrawn: '철회함', expired: '만료', timeout: '확인 중' };
+const PROVIDERS: { id: Provider; label: string }[] = [{ id: 'kakao', label: t("ui.loginKakao") }, { id: 'naver', label: t("ui.loginNaver") }, { id: 'google', label: t("release.s0370") }];
+const when = (iso?: string) => { if (!iso) return ''; const d = new Date(iso); return t("release.d085", { v0: (d.getMonth() + 1), v1: (d.getDate()), v2: (String(d.getHours()).padStart(2, '0')), v3: (String(d.getMinutes()).padStart(2, '0')) }); };
+const STATUS: Record<string, string> = { uploading: t("release.s0371"), received: t("release.s0372"), rejected: t("release.s0373"), withdrawn: t("release.s0374"), expired: t("release.s0375"), timeout: t("release.s0376") };
 
 export function CloudScreen(p: Props) {
   const [uid, setUid] = useState<string | null>(null);
@@ -53,27 +53,27 @@ export function CloudScreen(p: Props) {
 
   const note = (projectId: string, patch: { ok: boolean; files: number; sent: number; error?: string }) =>
     p.commit(s => ({ ...s, cloudBackups: { ...(s.cloudBackups ?? {}), [projectId]: { at: new Date().toISOString(), ...patch } } }));
-  const doBackup = (project: Project) => p.task(`클라우드에 백업하는 중 · ${project.projectName}`, async () => {
+  const doBackup = (project: Project) => p.task(t("release.d086", { v0: (project.projectName) }), async () => {
     try { const r = await backupSet(p.cloud!, project, p.device); note(project.id, { ok: true, files: r.files, sent: r.sent }); setCloudSets(await listSets(p.cloud!)); }
     catch (e) { note(project.id, { ok: false, files: 0, sent: 0, error: String((e as Error).message ?? e).slice(0, 200) }); throw e; }
   });
-  const doRestore = (set: CloudSet) => p.task('클라우드에서 되살리는 중…', async () => {
+  const doRestore = (set: CloudSet) => p.task(t("release.s0377"), async () => {
     const r = await restoreSet(p.cloud!, set.id, p.projects);
     p.commit(s => ({ ...s, projects: [...s.projects, r.project] }));
-    Alert.alert('되살렸어요', `${r.project.projectName}(그림 ${r.images}개)${r.copy ? ' — 기기에 같은 세트가 있어 사본으로 넣었어요.' : ''}`);
+    Alert.alert(t("release.s0378"), t("release.d087", { v0: (r.project.projectName), v1: (r.images), v2: (r.copy ? " " + t("release.x035") : '') }));
   });
   const entryOf = (contestId: string) => (p.store.contestEntries ?? []).find(e => e.contestId === contestId);
   const saveEntry = (e: ContestEntry) => p.commit(s => ({ ...s, contestEntries: [...(s.contestEntries ?? []).filter(x => x.contestId !== e.contestId), e] }));
-  const doSubmit = (c: ContestInfo, project: Project) => p.task('세트 전체를 묶는 중…', async () => {
+  const doSubmit = (c: ContestInfo, project: Project) => p.task(t("release.s0379"), async () => {
     const outside = importedCuts(project);
-    if (outside.length) throw new Error(`앱에서 직접 그린 칸만 낼 수 있어요. ${outside.join(', ')}번 칸에 가져온 그림이 있어요 — 그 레이어를 지우거나 숨긴 뒤 다시 저장해 주세요.`);
+    if (outside.length) throw new Error(t("release.d088", { v0: (outside.join(', ')) }));
     const { handoff, failed } = await p.bakeHandoff(project);
-    if (failed.length) throw new Error(`${failed.join(', ')}번 칸의 움직임 프레임을 만들지 못했어요. 그 칸을 다시 저장한 뒤 내 주세요.`);
+    if (failed.length) throw new Error(t("release.d089", { v0: (failed.join(', ')) }));
     const pkg = contestPackage(project, handoff);
     const problem = precheck(pkg, c);
     if (problem) throw new Error(problem);
     const old = entryOf(c.id);
-    if (old && old.status === 'received') throw new Error(`이미 접수했어요(${old.receiptNo ?? ''}). 다른 세트로 바꾸려면 접수를 철회한 뒤 다시 내 주세요.`);
+    if (old && old.status === 'received') throw new Error(t("release.d090", { v0: (old.receiptNo ?? '') }));
     // 같은 공모전·같은 세트를 다시 내면 전에 쓴 제출 키를 그대로 — 끊긴 뒤 재시도해도 접수는 한 건이다.
     const key = old && old.projectId === project.id ? old.key : newSubmissionKey();
     saveEntry({ contestId: c.id, projectId: project.id, key, status: 'uploading', at: new Date().toISOString() });
@@ -95,8 +95,8 @@ export function CloudScreen(p: Props) {
   const body = <>
         {!p.cloud ? <View testID="클라우드 준비 중" style={{ gap: 10, paddingVertical: 14 }}>
           <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{t('ui.preparing')}</Text>
-          <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{p.part === 'contest' ? '공모전 접수는 서버를 연결한 뒤에 열려요.' : p.part === 'account' ? '로그인과 PRO 클라우드 백업은 서버를 연결한 뒤에 열려요.' : '로그인(카카오·네이버·구글), PRO 클라우드 백업, 공모전 접수는 서버를 연결한 뒤에 열려요.'} 지금은 아무것도 서버로 보내지 않아요.</Text>
-          {p.part !== 'contest' && muted('그동안 작품은 이 기기에 저장되고, 아래 전체 백업 만들기로 파일 백업을 앱 밖에 보관할 수 있어요.')}
+          <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink }}>{p.part === 'contest' ? t("release.s0381") : p.part === 'account' ? t("release.s0382") : t("release.s0383")} {t("release.s0384")}</Text>
+          {p.part !== 'contest' && muted(t("release.s0385"))}
         </View> : <>
           {show('account') && section(t('ui.account'), uid ? <>
             {/* 작가명(바꿀 수 없음)이 이름이고, 어느 회사로 로그인했는지는 그 아래 작게. */}
@@ -105,30 +105,30 @@ export function CloudScreen(p: Props) {
               <View style={{ width: 64, height: 64, borderRadius: C.radius.card, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' }}><ImtiIcon name="person" size={IconSize.tab} /></View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 {!!user?.artistName && <Text testID="내 작가명" numberOfLines={1} style={{ fontSize: 20, fontWeight: '800', color: C.ink, letterSpacing: -.4 }}>{user.artistName}</Text>}
-                <Text style={{ fontSize: user?.artistName ? 13 : 14, color: user?.artistName ? C.muted : C.ink }}>{`${({ kakao: '카카오', naver: '네이버', google: '구글' } as Record<string, string>)[uid.split(':')[0]] ?? '구글'} 로그인`}</Text>
+                <Text style={{ fontSize: user?.artistName ? 13 : 14, color: user?.artistName ? C.muted : C.ink }}>{t("release.d091", { v0: (({ kakao: t("release.x038"), naver: t("release.x039"), google: t("release.x040") } as Record<string, string>)[uid.split(':')[0]] ?? t("release.x040")) })}</Text>
               </View>
               {!!user?.pro.active && <View style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: C.pointSoft, justifyContent: 'center' }}>
                 <Text style={{ fontSize: 12, fontWeight: '800', color: C.pointInk }}>{user.pro.source === 'trial' ? t('ui.proTrial') : 'PRO'}</Text>
               </View>}
             </View>
-            {muted(user ? (user.pro.active ? `PRO(${user.pro.source === 'trial' ? '체험' : user.pro.source === 'store' && user.pro.verified ? '구매 확인됨' : '관리자 부여'}) · 클라우드 백업 ${(user.backupBytes / 1048576).toFixed(1)}MB 사용` : '무료 회원 — 개인 클라우드 백업은 PRO 전용이에요. 공모전은 참가할 수 있어요.') : '회원 정보를 불러오는 중…')}
+            {muted(user ? (user.pro.active ? t("release.d092", { v0: (user.pro.source === 'trial' ? t("release.x041") : user.pro.source === 'store' && user.pro.verified ? t("release.x042") : t("release.x043")), v1: ((user.backupBytes / 1048576).toFixed(1)) }) : t("release.s0387")) : t("release.s0388"))}
             <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1 }}><Action compact icon="logout" title={t('ui.logout')} onPress={() => void signOutAll(p.cloud!).then(refresh)} /></View>
-            <View style={{ flex: 1 }}><Action compact danger icon="account-remove-outline" title={t('ui.deleteAccount')} onPress={() => Alert.alert('탈퇴', '서버에 있는 클라우드 백업·회원 정보·공모전 접수가 지워져요. 이 기기 안 작품은 그대로예요.', [
-              { text: '취소', style: 'cancel' },
-              { text: '탈퇴', style: 'destructive', onPress: () => void p.task('탈퇴하는 중…', async () => { await deleteAccount(p.cloud!); await signOutAll(p.cloud!); await refresh(); }) },
+            <View style={{ flex: 1 }}><Action compact danger icon="account-remove-outline" title={t('ui.deleteAccount')} onPress={() => Alert.alert(t("ui.deletingAccount"), t("release.s0389"), [
+              { text: t("ui.cancel"), style: 'cancel' },
+              { text: t("ui.deletingAccount"), style: 'destructive', onPress: () => void p.task(t("release.s0390"), async () => { await deleteAccount(p.cloud!); await signOutAll(p.cloud!); await refresh(); }) },
             ])} /></View>
             </View>
           </> : <>
-            {PROVIDERS.map(x => <Action key={x.id} title={providerReady(p.extra, x.id) ? x.label : `${x.label} · 준비 중`} disabled={!providerReady(p.extra, x.id)}
-              onPress={() => void p.task('로그인하는 중…', async () => { await p.login(x.id); await refresh(); })} />)}
-            {muted('로그인하면 공모전 접수와 PRO 클라우드 백업을 쓸 수 있어요. 기기 안 작품은 로그인과 상관없이 그대로 있어요.')}
+            {PROVIDERS.map(x => <Action key={x.id} title={providerReady(p.extra, x.id) ? x.label : t("release.d093", { v0: (x.label) })} disabled={!providerReady(p.extra, x.id)}
+              onPress={() => void p.task(t("release.s0391"), async () => { await p.login(x.id); await refresh(); })} />)}
+            {muted(t("release.s0392"))}
           </>)}
           {show('account') && uid && section(t('ui.backupCloud'), user?.pro.active ? <>
             {live.map(project => { const n = p.store.cloudBackups?.[project.id]; return <View key={project.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{project.projectName}</Text>
-                <Text style={{ fontSize: 12, color: n && !n.ok ? C.danger : C.muted }}>{!n ? '아직 백업하지 않았어요' : n.ok ? `마지막 백업 ${when(n.at)} · 보낸 파일 ${n.sent}/${n.files}` : `실패 ${when(n.at)} · ${n.error ?? ''}`}</Text>
+                <Text style={{ fontSize: 12, color: n && !n.ok ? C.danger : C.muted }}>{!n ? t("release.s0393") : n.ok ? t("release.d094", { v0: (when(n.at)), v1: (n.sent), v2: (n.files) }) : t("release.d095", { v0: (when(n.at)), v1: (n.error ?? '') })}</Text>
               </View>
               <Action compact title={t('ui.backup')} onPress={() => void doBackup(project)} />
             </View>; })}
@@ -137,21 +137,21 @@ export function CloudScreen(p: Props) {
               <Text style={{ flex: 1, fontSize: 13, color: C.ink }}>{`${set.name} · ${when(new Date(set.updatedAt).toISOString())} · ${(set.bytes / 1048576).toFixed(1)}MB`}</Text>
               <Action compact title={t('ui.restoreShort')} onPress={() => void doRestore(set)} />
             </View>)}
-            {muted('바뀐 그림만 보내요. 되살리면 새 세트로 들어오고, 기기에 같은 세트가 있으면 덮어쓰지 않고 사본으로 넣어요.')}
-          </> : muted('PRO 전용이에요. 무료 회원에게는 개인 클라우드 저장 공간을 드리지 않아요.'))}
+            {muted(t("release.s0394"))}
+          </> : muted(t("release.s0395")))}
           {show('contest') && section(t('ui.contest'), <>
             {(contests ?? []).length === 0 && muted(contests ? t('ui.contestEmpty') : t('ui.loading'))}
             {(contests ?? []).map(c => { const e = entryOf(c.id); return <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={t('ui.contest') + ' ' + c.title} onPress={() => { setPicked(c); setEntrySet(null); setAgree(false); }}
               style={({ pressed }) => ({ padding: 14, borderRadius: 20, backgroundColor: picked?.id === c.id ? C.pointSoft : C.fill, borderWidth: picked?.id === c.id ? 2 : 0, borderColor: C.point, gap: 4, transform: pressed ? [{ scale: .98 }] : [] })}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: C.pointInk }}>{c.status === 'open' ? t('ui.receiving') : c.status === 'announced' ? t('ui.results') : t('ui.closed')}</Text>
               <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink }}>{c.title}</Text>
-              <Text style={{ fontSize: 12, color: C.muted }}>{`${c.status === 'open' ? t('ui.receiving') : c.status === 'announced' ? t('ui.results') : t('ui.closed')} · ${c.requirements.kind === 'still' ? '멈춰 있는' : '움직이는'} ${c.requirements.cuts}칸 세트${e ? ` · 내 접수: ${STATUS[e.status] ?? e.status}${e.receiptNo ? ' ' + e.receiptNo : ''}` : ''}`}</Text>
+              <Text style={{ fontSize: 12, color: C.muted }}>{t("release.d096", { v0: (c.status === 'open' ? t('ui.receiving') : c.status === 'announced' ? t('ui.results') : t('ui.closed')), v1: (c.requirements.kind === 'still' ? t("release.x044") : t("home.kindMoving")), v2: (c.requirements.cuts), v3: (e ? t("release.d158", { v0: (STATUS[e.status] ?? e.status), v1: (e.receiptNo ? ' ' + e.receiptNo : '') }) : '') })}</Text>
             </Pressable>; })}
             {picked && <View testID="공모전 자세히" style={{ gap: 8 }}>
               {!!picked.notice && <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>{picked.notice}</Text>}
               {!!picked.rules && <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{picked.rules}</Text>}
-              {picked.status === 'announced' && (picked.results ?? []).map(r => <Text key={r.receiptNo} style={{ fontSize: 13, color: C.ink }}>{`선정 · ${r.receiptNo} ${r.setName}`}</Text>)}
-              {picked.status === 'open' && (!uid ? muted('접수하려면 위에서 로그인해 주세요.') : <>
+              {picked.status === 'announced' && (picked.results ?? []).map(r => <Text key={r.receiptNo} style={{ fontSize: 13, color: C.ink }}>{t("release.d097", { v0: (r.receiptNo), v1: (r.setName) })}</Text>)}
+              {picked.status === 'open' && (!uid ? muted(t("release.s0397")) : <>
                 <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{t('ui.entrySet')}</Text>
                 {live.map(project => <Pressable key={project.id} accessibilityRole="radio" accessibilityLabel={t('ui.entrySet') + ' ' + project.projectName} accessibilityState={{ checked: entrySet === project.id }} onPress={() => setEntrySet(project.id)}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}>
@@ -160,12 +160,12 @@ export function CloudScreen(p: Props) {
                 <Pressable accessibilityRole="checkbox" accessibilityLabel={t('ui.agreeEntry')} accessibilityState={{ checked: agree }} onPress={() => setAgree(!agree)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}>
                   <Glyph name={agree ? 'checkbox-marked-outline' : 'checkbox-blank-outline'} size={20} color={agree ? C.point : C.muted} /><Text style={{ flex: 1, fontSize: 13, color: C.ink }}>{t('ui.submitAgree')}</Text>
                 </Pressable>
-                {progress !== null && <Text testID="제출 진행" style={{ fontSize: 13, color: C.ink }}>{`올리는 중 ${Math.round(progress * 100)}%`}</Text>}
+                {progress !== null && <Text testID="제출 진행" style={{ fontSize: 13, color: C.ink }}>{t("release.d098", { v0: (Math.round(progress * 100)) })}</Text>}
                 <Action primary title={t('ui.submitSet')} disabled={!entrySet || !agree || progress !== null} onPress={() => { const project = live.find(x => x.id === entrySet); if (project) void doSubmit(picked, project); }} />
                 {(() => { const e = entryOf(picked.id); if (!e) return null; return <Text testID="접수 상태" style={{ fontSize: 13, color: e.status === 'rejected' ? C.danger : C.ink }}>
-                  {e.status === 'received' ? `접수됐어요 · 접수번호 ${e.receiptNo}` : e.status === 'timeout' || e.status === 'uploading' ? '서버가 확인하는 중이에요. 잠시 뒤 다시 열어 확인해 주세요.' : e.status === 'rejected' ? `접수되지 않았어요 · ${e.reason ?? ''}` : STATUS[e.status] ?? e.status}
+                  {e.status === 'received' ? t("release.d099", { v0: (e.receiptNo ?? String(e.receiptNo)) }) : e.status === 'timeout' || e.status === 'uploading' ? t("release.s0400") : e.status === 'rejected' ? t("release.d100", { v0: (e.reason ?? '') }) : STATUS[e.status] ?? e.status}
                 </Text>; })()}
-                {!!entryOf(picked.id) && <Action compact title={t('ui.submissionStatus')} onPress={() => void p.task('확인하는 중…', async () => {
+                {!!entryOf(picked.id) && <Action compact title={t('ui.submissionStatus')} onPress={() => void p.task(t("artist.checking"), async () => {
                   const e = entryOf(picked.id)!, s = await submissionStatus(p.cloud!, picked.id, uid);
                   if (s) saveEntry({ ...e, status: s.status, receiptNo: s.receiptNo, reason: s.reason, at: new Date().toISOString() });
                 })} />}
@@ -179,8 +179,8 @@ export function CloudScreen(p: Props) {
   return <Modal visible={p.visible} animationType="slide" onRequestClose={p.onClose}><SafeAreaProvider>
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: 4 }}>
-        <Pressable accessibilityRole="button" accessibilityLabel="계정·클라우드 닫기" onPress={p.onClose} style={{ padding: 12 }}><Glyph name="close" size={22} color={C.ink} /></Pressable>
-        <Text style={{ fontSize: 18, fontWeight: '800', color: C.ink }}>계정 · 클라우드</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0401")} onPress={p.onClose} style={{ padding: 12 }}><Glyph name="close" size={22} color={C.ink} /></Pressable>
+        <Text style={{ fontSize: 18, fontWeight: '800', color: C.ink }}>{t("release.s0402")}</Text>
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>{body}</ScrollView>
     </SafeAreaView></SafeAreaProvider>
