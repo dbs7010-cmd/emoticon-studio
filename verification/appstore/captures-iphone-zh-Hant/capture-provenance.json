@@ -1,0 +1,32 @@
+{
+  "platform": "ios",
+  "locale": "zh-Hant",
+  "captureType": "device-screenshot",
+  "device": "real iPhone (1206x2622, Dynamic Island)",
+  "build": "TestFlight 1.0.0 (4)",
+  "matchesReleaseBuild": false,
+  "capturedAt": "2026-10-30",
+  "note": "Real iPhone captures by a tester on TestFlight build 4. Build 4 predates 127ad40 (export card redesign) and 8af249f (canvas pinch) — 05-export shows the old export buttons. Set name is the Japanese default in both languages (set was made while the app was in Japanese).",
+  "captures": [
+    {
+      "file": "01-draw.png",
+      "sha256": "6b758e3d05d04c4aa01e149bbdd2a04d8d8fcfb59619d94dee2ba53014a4e25d"
+    },
+    {
+      "file": "02-motion.png",
+      "sha256": "f38f84198a2df4d651f72bb3f25c2eeef3e276490887643003524628f1d75382"
+    },
+    {
+      "file": "03-board.png",
+      "sha256": "82e7030a4e61d7a23f22f8fa5d785435fb8830a2d44d6623455fa316515705ea"
+    },
+    {
+      "file": "04-lessons.png",
+      "sha256": "7b2eda45d5eb7fd8dda8d5093e81e1ea67d62968a0ff6cc5111e4e422c084505"
+    },
+    {
+      "file": "05-export.png",
+      "sha256": "12275a030518a8e5809f36513e85b10e2ad5ac48d6d33a430b4aaa0127a05b5d"
+    }
+  ]
+}
