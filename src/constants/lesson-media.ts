@@ -1,0 +1,37 @@
+// 만든 곳: scripts/lessons/media-index.cjs — 손으로 고치지 않는다.
+// 강좌 그림·영상의 언어판. 키는 assets/lessons 아래 한국어판 경로.
+export const LESSON_MEDIA: Record<'ja' | 'zh-Hant', Record<string, number>> = {
+  'ja': {
+    'brush-layer/step1.mp4': require('../../assets/lessons/brush-layer/ja/step1.mp4'),
+    'brush-layer/step2.mp4': require('../../assets/lessons/brush-layer/ja/step2.mp4'),
+    'brush-layer/step3.mp4': require('../../assets/lessons/brush-layer/ja/step3.mp4'),
+    'first-set/step1.mp4': require('../../assets/lessons/first-set/ja/step1.mp4'),
+    'first-set/step2.mp4': require('../../assets/lessons/first-set/ja/step2.mp4'),
+    'first-set/step3.mp4': require('../../assets/lessons/first-set/ja/step3.mp4'),
+    'first-set/step4.mp4': require('../../assets/lessons/first-set/ja/step4.mp4'),
+    'thumbs/animation.png': require('../../assets/lessons/thumbs/ja/animation.png'),
+    'thumbs/brush-layer.png': require('../../assets/lessons/thumbs/ja/brush-layer.png'),
+    'thumbs/character.png': require('../../assets/lessons/thumbs/ja/character.png'),
+    'thumbs/contest.png': require('../../assets/lessons/thumbs/ja/contest.png'),
+    'thumbs/export.png': require('../../assets/lessons/thumbs/ja/export.png'),
+    'thumbs/expressions.png': require('../../assets/lessons/thumbs/ja/expressions.png'),
+    'thumbs/first-set.png': require('../../assets/lessons/thumbs/ja/first-set.png'),
+    'thumbs/make-lesson.png': require('../../assets/lessons/thumbs/ja/make-lesson.png'),
+    'thumbs/motion.png': require('../../assets/lessons/thumbs/ja/motion.png'),
+    'thumbs/set-plan.png': require('../../assets/lessons/thumbs/ja/set-plan.png'),
+    'thumbs/speech.png': require('../../assets/lessons/thumbs/ja/speech.png'),
+  },
+  'zh-Hant': {
+    'thumbs/animation.png': require('../../assets/lessons/thumbs/zh-Hant/animation.png'),
+    'thumbs/brush-layer.png': require('../../assets/lessons/thumbs/zh-Hant/brush-layer.png'),
+    'thumbs/character.png': require('../../assets/lessons/thumbs/zh-Hant/character.png'),
+    'thumbs/contest.png': require('../../assets/lessons/thumbs/zh-Hant/contest.png'),
+    'thumbs/export.png': require('../../assets/lessons/thumbs/zh-Hant/export.png'),
+    'thumbs/expressions.png': require('../../assets/lessons/thumbs/zh-Hant/expressions.png'),
+    'thumbs/first-set.png': require('../../assets/lessons/thumbs/zh-Hant/first-set.png'),
+    'thumbs/make-lesson.png': require('../../assets/lessons/thumbs/zh-Hant/make-lesson.png'),
+    'thumbs/motion.png': require('../../assets/lessons/thumbs/zh-Hant/motion.png'),
+    'thumbs/set-plan.png': require('../../assets/lessons/thumbs/zh-Hant/set-plan.png'),
+    'thumbs/speech.png': require('../../assets/lessons/thumbs/zh-Hant/speech.png'),
+  },
+};
