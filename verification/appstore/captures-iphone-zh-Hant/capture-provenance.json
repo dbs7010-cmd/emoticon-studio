@@ -6,27 +6,27 @@
   "build": "TestFlight 1.0.0 (4)",
   "matchesReleaseBuild": false,
   "capturedAt": "2026-10-30",
-  "note": "Real iPhone captures by a tester on TestFlight build 4. Build 4 predates 127ad40 (export card redesign) and 8af249f (canvas pinch) — 05-export shows the old export buttons. Set name is the Japanese default in both languages (set was made while the app was in Japanese).",
+  "note": "Real iPhone captures by a tester on TestFlight build 4, retaken after renaming the set to 新的貼圖組. 05-export shows the pre-127ad40 buttons. 03-board still shows the one-time rename notice under the title.",
   "captures": [
     {
       "file": "01-draw.png",
-      "sha256": "6b758e3d05d04c4aa01e149bbdd2a04d8d8fcfb59619d94dee2ba53014a4e25d"
+      "sha256": "6215f4d79e7011289de45abdc1b6236ce2ea230b256b324a909093416eea8cf4"
     },
     {
       "file": "02-motion.png",
-      "sha256": "f38f84198a2df4d651f72bb3f25c2eeef3e276490887643003524628f1d75382"
+      "sha256": "135c77ded2303353d924f22281a449bac8b1ea251de82928a8481e5567c78f69"
     },
     {
       "file": "03-board.png",
-      "sha256": "82e7030a4e61d7a23f22f8fa5d785435fb8830a2d44d6623455fa316515705ea"
+      "sha256": "149f6e46726381b4c2f2d8098b5c8a6f5419e4326b8c5851438b3fe385369214"
     },
     {
       "file": "04-lessons.png",
-      "sha256": "7b2eda45d5eb7fd8dda8d5093e81e1ea67d62968a0ff6cc5111e4e422c084505"
+      "sha256": "0e3db2fd115811e6a9fb0b3096125883a57eb4249fcfcbe74b3ecbc608b5bcaa"
     },
     {
       "file": "05-export.png",
-      "sha256": "12275a030518a8e5809f36513e85b10e2ad5ac48d6d33a430b4aaa0127a05b5d"
+      "sha256": "5b717a138cdfc86c35afd2631475cc24cacf845614a89f73d0891ff9cdb3fd7a"
     }
   ]
 }
