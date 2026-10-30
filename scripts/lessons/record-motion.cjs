@@ -26,7 +26,7 @@ if (L) { P.motionTab = L.motionTab; P.drawTab = L.drawTab; }
 function chip(key, wait) {
   if (!L) return r.tap(...P[key], wait);
   const end = key in L.end;
-  r.swipe(end ? 900 : 200, 1581, end ? 200 : 900, 1581, 300, 800);
+  r.swipe(end ? 900 : 150, 1581, end ? 150 : 1000, 1581, 800, 800);   // 빠르게 밀면 처음 쪽으로는 안 밀렸다
   r.tap((end ? L.end : L.start)[key], 1581, wait);
 }
 // 녹화 전: 앱 데이터를 비운 뒤라 검수용 PRO 를 다시 켠다(부분 칩 → PRO 안내 → '결제 없이 검수용 PRO 켜기').

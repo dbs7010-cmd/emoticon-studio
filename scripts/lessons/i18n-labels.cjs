@@ -32,7 +32,7 @@ function sayWords(word) {
 }
 const cache = new Map();
 function all(label) {
-  if (LANG === 'ko' || !/[가-힣]/.test(label)) return [label];
+  if (LANG === 'ko' || !/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(label)) return [label];
   if (cache.has(label)) return cache.get(label);
   cache.set(label, []);   // 되부름 막기
   const out = new Set();
