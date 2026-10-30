@@ -272,17 +272,18 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
     <ScrollView style={{ flex: 1, minHeight: 0 }} keyboardShouldPersistTaps="handled" scrollEnabled={!holding && dragFrom === null} contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 20, gap: 10 }}>
     {view === 'basic' ? <>
     {/* 없음 + 묶음 칩. '없음'은 전체 움직임만 뺀다(부분 움직임이 있으면 '전체 없음'). */}
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }}>
+    {/* 칩 사이는 gap 대신 오른쪽 여백으로 띄운다(10-30): 일본어처럼 칩이 길어 줄이 화면을 넘으면 Android 에서 끝까지 밀리지 않아 마지막 묶음(しぐさ·強調)을 누를 수 없었다. */}
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingRight: 12 }}>
       <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0870")} accessibilityHint={hasPro ? t("release.s0871") : undefined} accessibilityState={{ selected: !base.preset }}
         onPress={() => { setTrialFrom(null); clearPreset(); }}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, borderRadius: 20, borderWidth: !base.preset ? 1 : 0, borderColor: C.accentBorder, backgroundColor: !base.preset ? C.accentSoft : pressed ? C.fillPressed : C.fill })}>
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, marginRight: 6, flexShrink: 0, borderRadius: 20, borderWidth: !base.preset ? 1 : 0, borderColor: C.accentBorder, backgroundColor: !base.preset ? C.accentSoft : pressed ? C.fillPressed : C.fill })}>
         <Glyph name="motion-pause-outline" size={16} color={C.ink} />
         <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: !base.preset ? '800' : '600', color: C.ink }}>{hasPro ? t("release.s0872") : t("release.s0873")}</Text>
       </Pressable>
-      <View style={{ width: 1, height: 22, backgroundColor: C.line }} />
+      <View style={{ width: 1, height: 22, marginRight: 6, backgroundColor: C.line }} />
       {/* 부분 움직임 바로 가기(2026-10-15): 입구가 패널 맨 아래라 스크롤 7번이 들었다. 캔버스·조절 줄은 그대로 두고 이 칩 하나만 더한다(사용자 허용). */}
       <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0874")} accessibilityHint={pro ? t("release.s0875") : t("release.s0876")} onPress={enterPro}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, borderRadius: 20, backgroundColor: parts.length ? C.pointSoft : pressed ? C.fillPressed : C.fill })}>
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, marginRight: 6, flexShrink: 0, borderRadius: 20, backgroundColor: parts.length ? C.pointSoft : pressed ? C.fillPressed : C.fill })}>
         <Glyph name="hand-back-right-outline" size={16} color={parts.length ? C.pointInk : C.muted} />
         <Text style={{ fontSize: 13, fontWeight: parts.length ? '800' : '600', color: parts.length ? C.pointInk : C.muted }}>{t("release.s0865")}{parts.length ? ' ' + parts.length : ''}</Text>
         {!pro && <ProTag />}
@@ -290,7 +291,7 @@ export function MotionPanel({ motion, layers, clipped, pro, sample, hasCaption, 
       {([['combo', t("release.s0877")], ['all', t("ui.all")], ...MOTION_GROUPS.map(g => [g.id, motionGroupLabel(g.id)])] as [MotionGroup | 'all' | 'combo', string][]).map(([id, label]) => {
         const on = group === id;
         return <Pressable key={id} accessibilityRole="button" accessibilityLabel={t("release.s0878") + " " + label} accessibilityState={{ selected: on }} onPress={() => setGroup(id)}
-          style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 20, backgroundColor: on ? C.pointSoft : pressed ? C.fillPressed : C.fill })}>
+          style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, marginRight: 6, flexShrink: 0, justifyContent: 'center', borderRadius: 20, backgroundColor: on ? C.pointSoft : pressed ? C.fillPressed : C.fill })}>
           <Text style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{label}</Text>
         </Pressable>;
       })}

@@ -14,10 +14,25 @@ const P = {
   layer2: [541, 2320], bounce: [868, 2088],
 };
 const u = require('./ui.cjs');
+// 언어마다 탭·칩 폭이 달라 자리를 따로 잰다(10-30 일본어 · 1080×2400 · 스크린샷으로 잼). 일본어 칩 줄은 화면보다 길어
+// しぐさ(동작)는 줄을 끝까지 밀어야 보인다 — 칩을 누르기 전에 줄을 처음이나 끝으로 민다.
+const LANG = process.env.LESSON_LANG || 'ko';
+const LOCAL = {
+  ja: { motionTab: [252, 268], drawTab: [104, 268], start: { chipPart: 347, chipCombo: 580, chipEnter: 975 }, end: { chipAction: 751 } },
+};
+const L = LOCAL[LANG];
+if (LANG !== 'ko' && !L) throw new Error('움직이기 녹화 자리를 아직 안 잰 언어: ' + LANG);
+if (L) { P.motionTab = L.motionTab; P.drawTab = L.drawTab; }
+function chip(key, wait) {
+  if (!L) return r.tap(...P[key], wait);
+  const end = key in L.end;
+  r.swipe(end ? 900 : 200, 1581, end ? 200 : 900, 1581, 300, 800);
+  r.tap((end ? L.end : L.start)[key], 1581, wait);
+}
 // 녹화 전: 앱 데이터를 비운 뒤라 검수용 PRO 를 다시 켠다(부분 칩 → PRO 안내 → '결제 없이 검수용 PRO 켜기').
 r.tap(...P.motionTab, 2000);
-r.tap(...P.chipPart, 2500);
-if (u.has('PRO 닫기')) { for (let i = 0; i < 5 && !u.has('결제 없이 검수용 PRO 켜기'); i++) r.swipe(540, 2000, 540, 900, 600, 1200); u.tap('결제 없이 검수용 PRO 켜기', 2500); r.tap(...P.chipPart, 2500); }
+chip('chipPart', 2500);
+if (u.has('PRO 닫기')) { for (let i = 0; i < 5 && !u.has('결제 없이 검수용 PRO 켜기'); i++) r.swipe(540, 2000, 540, 900, 600, 1200); u.tap('결제 없이 검수용 PRO 켜기', 2500); chip('chipPart', 2500); }
 r.tap(50, 1557, 1500);   // 부분만 움직이기 → 처음으로
 r.touches(true);
 r.tap(...P.drawTab, 1500);
@@ -26,9 +41,9 @@ r.tap(...P.drawTab, 1500);
 u.dismiss();
 r.start('mo1'); r.sleep(600);
 r.tap(...P.motionTab, 2000);
-r.tap(...P.chipEnter, 1200);
+chip('chipEnter', 1200);
 r.tap(...P.first, 3500);           // 뿅
-r.tap(...P.chipAction, 1200);
+chip('chipAction', 1200);
 r.tap(...P.first, 3500);           // 통통
 r.shot(path.join(r.RAW || 'C:/build-temp/lesson-raw', 'mo1-end.png')); r.stop(); r.pull('mo1');
 say('1 ' + r.cut('mo1', { from: 0.4, out: out(1), crop: [150, 1440] }) + 'B');
@@ -46,7 +61,7 @@ say('2 ' + r.cut('mo2', { from: 0.4, out: out(2), crop: [150, 1440] }) + 'B');
 // 3. 손그림 떨림 — 조합 묶음 아래 줄에서 보통
 u.dismiss();
 r.start('mo3'); r.sleep(600);
-r.tap(...P.chipCombo, 1500);
+chip('chipCombo', 1500);
 r.tap(...P.boilMid, 4000);
 r.shot(path.join(r.RAW || 'C:/build-temp/lesson-raw', 'mo3-end.png')); r.stop(); r.pull('mo3');
 say('3 ' + r.cut('mo3', { from: 0.4, out: out(3), crop: [150, 1440] }) + 'B');
@@ -54,7 +69,7 @@ say('3 ' + r.cut('mo3', { from: 0.4, out: out(3), crop: [150, 1440] }) + 'B');
 // 4. 부분만(PRO) — 부분 칩 → 레이어 2(하트) → 통통 튀기
 u.dismiss();
 r.start('mo4'); r.sleep(600);
-r.tap(...P.chipPart, 2000);
+chip('chipPart', 2000);
 r.tap(...P.layer2, 3000);
 r.tap(...P.bounce, 4500);
 r.shot(path.join(r.RAW || 'C:/build-temp/lesson-raw', 'mo4-end.png')); r.stop(); r.pull('mo4');
