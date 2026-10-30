@@ -10,6 +10,7 @@ import type { SegmentItem, ButtonVariant } from './ui';
 export * from './ui';
 type IconName = React.ComponentProps<typeof Glyph>['name'];
 export const T = { ...Base.T, surface2: '#F6F6F8', warm: '#F6F6F8', fill: '#F6F6F8', fillPressed: '#EFEDF3',
+  exportLine: { ink: '#17643A', fill: '#EAF8EF', pressed: '#DDF3E5', border: '#B9DFC8' },
   radius: { xs: 6, sm: 8, md: 10, lg: 12, xl: 16, chip: 8, button: 8, card: 12 } };
 const C = T;
 export const S = { ...Base.S, pressed: { backgroundColor: T.fill } } as const;
@@ -22,30 +23,41 @@ export const Clay = { card: { backgroundColor: T.paper, boxShadow: 'none' }, sma
   buttonPressed: { boxShadow: 'none', opacity: .82 }, nav: { backgroundColor: T.paper, boxShadow: 'none' } } as const;
 export const Pop = { border: { borderWidth: 1, borderColor: T.lineStrong }, shadow: { boxShadow: 'none' }, small: { boxShadow: 'none' }, pressed: { opacity: .8 } } as const;
 export const styles = StyleSheet.create({ ...Base.styles, card: { ...Base.styles.card, borderRadius: T.radius.card, boxShadow: 'none' } });
-export function Action({ title, onPress, disabled = false, primary = false, busy = false, danger = false, icon, variant, compact = false }: { title: string; onPress: () => void; disabled?: boolean; primary?: boolean; busy?: boolean; danger?: boolean; icon?: IconName; variant?: ButtonVariant; compact?: boolean }) {
+export function Action({ title, onPress, disabled = false, primary = false, busy = false, danger = false, icon, variant, compact = false, tone }: { title: string; onPress: () => void; disabled?: boolean; primary?: boolean; busy?: boolean; danger?: boolean; icon?: IconName; variant?: ButtonVariant; compact?: boolean; tone?: 'line' }) {
   const kind: ButtonVariant = variant ?? (primary ? 'primary' : danger ? 'danger' : 'secondary');
   const off = disabled || busy;
-  const tint = kind === 'primary' ? T.accentInk : kind === 'danger' ? T.danger : T.ink;
+  const tint = tone === 'line' ? T.exportLine.ink : kind === 'primary' ? T.accentInk : kind === 'danger' ? T.danger : T.ink;
   return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ disabled: off, busy }} disabled={off} onPress={onPress}
     style={({ pressed }) => {
       const big = kind === 'primary' && !compact;
       return {
-        minHeight: big ? 52 : T.tap, borderRadius: T.radius.button,
-        flexDirection: 'row', gap: T.gap.sm, alignItems: 'center', justifyContent: 'center', paddingHorizontal: kind === 'ghost' ? T.gap.sm : T.gap.lg,
-        backgroundColor: kind === 'primary' ? (off ? '#F6EDC6' : T.accent)
+        minHeight: big || tone === 'line' ? 52 : T.tap, borderRadius: T.radius.button,
+        flexDirection: 'row', gap: T.gap.sm, alignItems: 'center', justifyContent: 'center', paddingVertical: 12, paddingHorizontal: kind === 'ghost' ? T.gap.sm : T.gap.lg,
+        backgroundColor: tone === 'line' ? (pressed ? T.exportLine.pressed : T.exportLine.fill) : kind === 'primary' ? (off ? '#F6EDC6' : T.accent)
           : kind === 'danger' ? T.dangerSoft
           : kind === 'ghost' ? (pressed ? T.fill : 'transparent')
           : (pressed ? T.fillPressed : T.fill),
         // App-only flat button. Painter keeps the original Action from ./ui.
-        borderWidth: 0,
+        borderWidth: tone === 'line' ? 1 : 0, borderColor: tone === 'line' ? T.exportLine.border : 'transparent',
         ...(kind === 'primary' && !off ? (pressed ? Clay.buttonPressed : Clay.button) : null),
         opacity: off && kind !== 'primary' ? .5 : kind === 'danger' && pressed ? .8 : 1,
       };
     }}>
     {busy && <ActivityIndicator size="small" color={kind === 'primary' ? T.accentInk : T.muted} />}
     {!busy && !!icon && <Glyph name={icon} size={18} color={off && kind === 'primary' ? T.faint : tint} />}
-    <Text numberOfLines={1} style={{ ...Type.button, fontSize: kind === 'primary' && !compact ? 16 : 14, fontWeight: kind === 'primary' ? '800' : '700', color: off && kind === 'primary' ? T.faint : tint }}>{title}</Text>
+    <Text numberOfLines={2} style={{ ...Type.button, flexShrink: 1, textAlign: 'center', fontSize: kind === 'primary' && !compact ? 16 : 14, fontWeight: kind === 'primary' ? '800' : '700', color: off && kind === 'primary' ? T.faint : tint }}>{title}</Text>
   </Pressable>;
+}
+
+// Platform identity stays outside shared painter controls and export logic.
+export function ExportGroup({ platform, children }: { platform: 'Kakao' | 'LINE'; children: React.ReactNode }) {
+  const line = platform === 'LINE';
+  return <View testID={`export-platform-${platform}`} style={{ borderRadius: T.radius.card, borderWidth: 1, borderColor: line ? T.exportLine.border : T.line, backgroundColor: T.paper, overflow: 'hidden' }}>
+    <View style={{ paddingHorizontal: T.gap.lg, paddingVertical: 12, backgroundColor: line ? T.exportLine.fill : T.accentSoft, borderBottomWidth: 1, borderColor: line ? T.exportLine.border : T.line }}>
+      <Text accessibilityRole="header" style={{ fontSize: 16, fontWeight: '800', color: line ? T.exportLine.ink : T.ink }}>{platform}</Text>
+    </View>
+    <View style={{ padding: T.gap.lg, gap: T.gap.sm }}>{children}</View>
+  </View>;
 }
 
 // 아이콘만 있는 버튼. 보이는 아이콘은 작아도 누르는 자리는 48dp 다. 아이콘 둘레에 카드를 두르지 않는다.

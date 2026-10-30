@@ -8,7 +8,7 @@ import { t , sayLines } from './src/i18n/index';
 import { purchasesClosed, PURCHASES_CLOSED_NOTE } from './src/services/purchase-config';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
-import { Action, AssetSlot, CompleteCard, Dialog, Elev, EmptyState, Field, IconButton, ProBadge, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font, Card, Glyph, Clay } from './src/components/app-ui';
+import { Action, AssetSlot, CompleteCard, Dialog, Elev, EmptyState, ExportGroup, Field, IconButton, ProBadge, ProTag, Range, Segmented, StatusDot, STATUS_TONE, styles, T, Type, userMessage, Pop, Font, Card, Glyph, Clay } from './src/components/app-ui';
 import { Rise, HopStage, FillBar, Shine } from './src/components/motion-fx';
 import { ImtiIcon, IconSize, type IconName as ImtiName } from './src/design/icons';
 import { SpeechLine } from './src/components/speech-line';
@@ -1727,12 +1727,16 @@ function Studio() {
               </View>}
 
               {/* 4. 지금 할 일. 이 화면의 노란 버튼은 이것 하나다. */}
-              <Action primary title={t('export.make')} disabled={!!busy || !drawn.length} onPress={exportProject} />
-              {!!drawn.length && drawn.length < project.slots.length && <Text style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>{t("release.d066", { v0: (drawn.length) })}</Text>}
-              {!pro && !!adUnit && <Text testID="광고 안내" style={{ marginTop: -4, textAlign: 'center', fontSize: 12, color: C.muted }}>{t('export.adHint')}</Text>}
+              <ExportGroup platform="Kakao">
+                <Action primary title={t('export.make')} disabled={!!busy || !drawn.length} onPress={exportProject} />
+                {!!drawn.length && drawn.length < project.slots.length && <Text style={{ textAlign: 'center', fontSize: 13, lineHeight: 19, color: C.muted }}>{t("release.d066", { v0: (drawn.length) })}</Text>}
+                {!pro && !!adUnit && <Text testID="광고 안내" style={{ textAlign: 'center', fontSize: 13, lineHeight: 19, color: C.muted }}>{t('export.adHint')}</Text>}
+              </ExportGroup>
               {/* LINE 움직이는 스티커(2026-10-27): 카카오 묶음과 따로. 움직이는 칸 8개 이상일 때 만들 수 있다. */}
-              <Action title={t('export.line')} disabled={!!busy || !drawn.length} onPress={exportLine} />
-              <Action title={t('export.lineStill')} disabled={!!busy || !drawn.length} onPress={exportLineStill} />
+              <ExportGroup platform="LINE">
+                <Action tone="line" title={t('export.line')} disabled={!!busy || !drawn.length} onPress={exportLine} />
+                <Action tone="line" title={t('export.lineStill')} disabled={!!busy || !drawn.length} onPress={exportLineStill} />
+              </ExportGroup>
               {!!lastExport && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, borderRadius: 16, backgroundColor: T.successSoft }}>
                 <Glyph name="check-circle" size={20} color={colors.PASS} />
                 <Text style={{ flex: 1, fontSize: 13, fontWeight: '800', color: C.ink }}>{lastExport.count}{t("release.s0205")}</Text>

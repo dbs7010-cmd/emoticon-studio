@@ -246,6 +246,12 @@ const homeSections = () => {
     return out;
   };
   assert.deepEqual(exportOrder(), ['요약', '격자', '손볼 곳', '만들기', '제출 준비', '부가 이미지', '자세히'], '내보내기 차례');
+  const kakaoGroup = byTestID('export-platform-Kakao').find(n => n.type === 'View');
+  const lineGroup = byTestID('export-platform-LINE').find(n => n.type === 'View');
+  assert.ok(kakaoGroup && lineGroup, '카카오·LINE 목적지가 별도 영역으로 보인다');
+  assert.deepEqual(kakaoGroup.findAll(n => n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['파일 묶음 만들기'], '카카오 버튼은 카카오 영역 안에');
+  assert.deepEqual(lineGroup.findAll(n => n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['LINE 움직이는 스티커 파일 만들기', 'LINE 일반 스티커 파일 만들기'], 'LINE 두 형식은 같은 영역 안에');
+  assert.ok(lineGroup.findAll(n => n.type === 'Pressable').every(n => flat(n.props.style).backgroundColor === T.exportLine.fill), 'LINE 버튼은 초록 표면으로 구분');
   assert.equal(labelled('제안 기준으로 보기').length, 0, '제출 준비는 접혀 있다');
   assert.ok(texts().some(t => /가지 더 필요해요$/.test(t)), '접혀 있어도 덜 됐다는 사실은 보인다');
   assert.ok(!texts().some(t => t.includes('WebPAnimator')), 'WebP 설명은 기본 화면에 없다');
