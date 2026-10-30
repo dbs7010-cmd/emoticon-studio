@@ -58,6 +58,14 @@
       ],
       "expo-apple-authentication",
       [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["ko", "ja", "zh-Hant"]
+          }
+        }
+      ],
+      [
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-7942033735159248~3600454688",
