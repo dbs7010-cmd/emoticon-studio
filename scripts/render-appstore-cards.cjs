@@ -6,6 +6,14 @@ const localized=locale!=='ko',copy=localized?require('./localized-media-copy.jso
 if(localized&&!copy)throw Error('Unsupported media locale: '+locale);
 const root=path.resolve(__dirname,'..'),out=path.join(root,'dist/appstore-20261029',localized?locale:'');
 const final=process.argv.includes('--final');
+const deviceCompose=process.argv.includes('--compose-device-captures');
+if(deviceCompose&&(!localized||final))throw Error('Device composition is a separate localized build-4 review mode, not --final');
+const profileArg=process.argv.indexOf('--profile'),requestedProfile=profileArg<0?(deviceCompose?'iphone69':null):process.argv[profileArg+1];
+const captureBase=deviceCompose?path.join(root,'verification/appstore','captures-iphone-'+locale):path.join(root,'verification/appstore/captures',localized?locale:'');
+const captureNames=['01-draw.png','02-motion.png','03-board.png','04-lessons.png','05-export.png'];
+const captureDir=p=>deviceCompose?captureBase:path.join(captureBase,p.id);
+const captureFile=(p,i)=>path.join(captureDir(p),deviceCompose?captureNames[i]:`0${i+1}.png`);
+const cropFor=i=>[{y:500,h:1510},{y:350,h:1930},{y:locale==='zh-Hant'?580:360,h:locale==='zh-Hant'?1720:1770},{y:190,h:2070},{y:200,h:1690}][i];
 const cards=[
  {title:'내 그림으로,<br>나만의 이모티콘.',sub:'첫 표정부터 시작하는 나의 작은 작업실.',art:'draw',screen:'그리기 · 색칠한 콘',bg:'#faf8f1',tag:'그리기'},
  {title:'그리고, 톡.<br>움직임을 더해요.',sub:'그린 표정에 움직임을 고르고 미리 보세요.',art:'motion',screen:'움직이기 · 움직임 선택',bg:'#fff1c4',tag:'움직이기'},
@@ -14,7 +22,8 @@ const cards=[
  {title:'다 만들었다면,<br>파일로 꺼내요.',sub:'완성한 컷을 파일로 보관하고 공유해요.',art:'export',screen:'내보내기 · 파일 선택',bg:'#faf6e9',tag:'파일 내보내기'}
 ];
 if(localized)cards.forEach((c,i)=>Object.assign(c,{title:copy.titles[i],sub:copy.sub[i],tag:copy.tags[i],screen:copy.screens[i]}));
-const profiles=[{id:'iphone69',w:1290,h:2796},{id:'ipad13',w:2064,h:2752}];
+const profiles=[{id:'iphone69',w:1290,h:2796},{id:'ipad13',w:2064,h:2752}].filter(p=>!requestedProfile||p.id===requestedProfile);
+if(!profiles.length)throw Error('Unknown profile');
 const assetDir=path.join(out,'assets');fs.mkdirSync(assetDir,{recursive:true});
 for(const name of localized?[]:['malgun.ttf','malgunbd.ttf'])fs.copyFileSync('C:/Windows/Fonts/'+name,path.join(assetDir,name));
 // 최종본은 out/<기종>/ 에, 시안은 out/draft/<기종>/ 에 놓이므로 assets 까지의 깊이가 다르다. 캡처는 기종마다 01~05 로 이름이 같아 기종 폴더 이름을 붙여 복사한다(10-30 Claude).
@@ -29,12 +38,18 @@ function html(p,c,i,capture){
 }
 (async()=>{
  // Never silently turn placeholders or Android captures into a final iOS package.
- if(final&&localized)throw Error('Localized cards remain DRAFT until matching iOS captures are supplied.');
+ if(deviceCompose){
+  if(profiles.some(p=>p.id!=='iphone69'))throw Error('iPhone captures cannot stand in for iPad');
+  const v=JSON.parse(fs.readFileSync(path.join(captureBase,'capture-provenance.json')));
+  if(v.platform!=='ios'||v.locale!==locale||v.captureType!=='device-screenshot')throw Error('Actual matching iPhone captures required');
+  for(const name of captureNames){const f=path.join(captureBase,name),entry=v.captures?.find(x=>x.file===name);if(!entry||crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex')!==entry.sha256)throw Error('Capture hash mismatch: '+name);}
+ }
  if(final)for(const p of profiles){
-  const dir=path.join(root,'verification/appstore/captures',p.id),e=path.join(dir,'capture-provenance.json');
+  const dir=path.join(captureBase,p.id),e=path.join(dir,'capture-provenance.json');
   if(!fs.existsSync(e))throw Error('실제 iOS 화면 확인 기록 필요: '+e);
   const v=JSON.parse(fs.readFileSync(e));
   if(v.platform!=='ios'||v.matchesReleaseBuild!==true)throw Error('출시 iOS 화면과 일치 여부를 확인하세요.');
+  if(localized&&(v.locale!==locale||v.deviceClass!==(p.id==='ipad13'?'ipad':'iphone')||!(Number(v.buildNumber)>=5)))throw Error('Matching locale, actual device class, and release build 5 or later required.');
   for(let i=1;i<=5;i++)if(!fs.existsSync(path.join(dir,`0${i}.png`)))throw Error('캡처 누락: '+p.id+'/'+i);
  }
  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}),records=[];
@@ -42,19 +57,24 @@ function html(p,c,i,capture){
   const dir=path.join(out,final||localized?p.id:'draft/'+p.id);fs.mkdirSync(dir,{recursive:true});
   const page=await browser.newPage({viewport:{width:p.w/2,height:p.h/2},deviceScaleFactor:2});
   for(let i=0;i<cards.length;i++){
-   const capture=final?path.join(root,'verification/appstore/captures',p.id,`0${i+1}.png`):null;
+   const capture=final||deviceCompose?captureFile(p,i):null;
    const source=html(p,cards[i],i,capture),base=`0${i+1}`;
    fs.writeFileSync(path.join(dir,base+'.html'),source);
    await page.goto(require('node:url').pathToFileURL(path.join(dir,base+'.html')).href);await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(x=>x.decode()));});
+   if(deviceCompose){
+    const crop=cropFor(i);
+    await page.evaluate(crop=>{document.querySelector('.draft')?.remove();const host=document.querySelector('.screen'),img=host.querySelector('img'),r=host.getBoundingClientRect(),scale=Math.min(r.width/img.naturalWidth,r.height/crop.h),w=img.naturalWidth*scale,h=crop.h*scale,fullH=img.naturalHeight*scale;const viewport=document.createElement('div');viewport.style.cssText=`width:${w}px;height:${h}px;position:relative;overflow:hidden;flex-shrink:0;`;img.style.cssText=`position:absolute;left:0;top:${-crop.y*scale}px;width:${w}px;height:${fullH}px;max-width:none;object-fit:fill;border-radius:0;`;host.replaceChildren(viewport);viewport.append(img);},crop);
+    fs.writeFileSync(path.join(dir,base+'.html'),await page.content());
+   }
    if(localized)await page.locator('h1').evaluate(el=>{for(let n=parseFloat(getComputedStyle(el).fontSize);n>=38;n--){el.style.fontSize=n+'px';const r=document.createRange();r.selectNodeContents(el);if(new Set([...r.getClientRects()].filter(x=>x.width>0).map(x=>Math.round(x.top))).size<=2)return;}throw Error('Title overflow');});
    const valid=await page.evaluate(()=>[...document.querySelectorAll('h1,p,.tag')].every(x=>{const r=x.getBoundingClientRect();return r.x>=0&&r.right<=innerWidth&&r.bottom<=innerHeight}));
    if(!valid)throw Error('텍스트 잘림: '+p.id+'/'+base);
    const tmp=path.join(dir,base+'-render.png'),file=path.join(dir,base+'.png');
    await page.screenshot({path:tmp});
    cp.execFileSync(process.execPath,[path.join(root,'scripts/store-finalize.cjs'),tmp,file,String(p.w),String(p.h),'20000000']);fs.unlinkSync(tmp);
-   const buf=fs.readFileSync(file);records.push({file:path.relative(out,file).replaceAll('\\','/'),width:p.w,height:p.h,colorMode:'RGB',sha256:crypto.createHash('sha256').update(buf).digest('hex'),status:final?'composed-needs-visual-review':'DRAFT_MISSING_CAPTURE'});
+   const buf=fs.readFileSync(file);records.push({file:path.relative(out,file).replaceAll('\\','/'),width:p.w,height:p.h,colorMode:'RGB',sha256:crypto.createHash('sha256').update(buf).digest('hex'),captureSource:deviceCompose?path.relative(root,capture).replaceAll('\\','/'):null,captureCrop:deviceCompose?cropFor(i):null,captureBuild:deviceCompose?'TestFlight build 4, cropped to omit obsolete export buttons and rename notice':null,status:deviceCompose?'COMPOSED_BUILD4_CROPS_REVIEW_REQUIRED':final?'composed-needs-visual-review':'DRAFT_MISSING_CAPTURE'});
   }await page.close();
  } }finally{await browser.close();}
- fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify({status:final?'COMPOSED_REVIEW_REQUIRED':'DRAFT_NOT_FOR_UPLOAD',records},null,2));
- console.log('Rendered '+records.length+' RGB cards; status '+(final?'REVIEW_REQUIRED':'DRAFT_NOT_FOR_UPLOAD'));
+ fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify({status:deviceCompose?'COMPOSED_BUILD4_CROPS_REVIEW_REQUIRED':final?'COMPOSED_REVIEW_REQUIRED':'DRAFT_NOT_FOR_UPLOAD',records},null,2));
+ console.log('Rendered '+records.length+' RGB cards; status '+(deviceCompose?'BUILD4_CROPS_REVIEW_REQUIRED':final?'REVIEW_REQUIRED':'DRAFT_NOT_FOR_UPLOAD'));
 })().catch(e=>{console.error(e);process.exitCode=1;});

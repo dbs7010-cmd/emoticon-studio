@@ -46,4 +46,5 @@ async function main(){
  fs.writeFileSync(path.join(out,'index.html'),`<!doctype html><meta charset="utf-8"><title>emoti · JP / TW launch</title><style>body{font-family:Arial,sans-serif;background:#f7f5ef;padding:32px;color:#292621}section{display:flex;flex-wrap:wrap;gap:18px}img{width:240px}video{width:300px}a{color:#5544b7}</style><h1>emoti · 日本 / 台灣</h1><p>JA: images + 18s silent video. 繁體中文: DRAFT — Japanese capture replacement pending.</p>${['ja','zh-Hant'].map(l=>`<h2>${l}</h2><p><a href="${l}/captions.md">Captions</a></p><section>${records.filter(r=>r.locale===l&&r.file.endsWith('.png')).map(r=>`<a href="${r.file}"><img src="${r.file}"></a>`).join('')}</section>`).join('')}<h2>JA · 18 seconds</h2><video controls src="ja/reel-18s.mp4"></video>`);
  console.log('DONE: 10 images, Japanese 18s silent reel, captions, manifest. Traditional Chinese assets DRAFT.');
 }
-main().catch(e=>{console.error(e.stderr?.toString()||e);process.exit(1)});
+module.exports={render,shell,top,info,copy};
+if(require.main===module)main().catch(e=>{console.error(e.stderr?.toString()||e);process.exit(1)});
