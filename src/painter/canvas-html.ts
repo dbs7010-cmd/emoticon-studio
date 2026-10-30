@@ -238,6 +238,10 @@ window.__bench={tip:()=>({steady,lastRaw}),renders:()=>renderCount,
    sum:i=>{const {d}=px(i);let h=2166136261;for(let k=3;k<d.length;k+=4){h^=d[k]+(k&1023);h=Math.imul(h,16777619);}return h>>>0;},
    copies:()=>{const seen=new Set();for(const st of history.concat(future))for(const l of st.layers)if(l.copy)seen.add(l.copy);return {unique:seen.size,steps:history.length};},
    fillGap:(i,x,y)=>{const {d,w}=px(i),cx=Math.floor(x*RES);let gap=0;for(let yy=Math.floor(y*RES);yy>0;yy--){const k=(yy*w+cx)*4;if(d[k]<120&&d[k+3]>200)break;if(d[k+3]<250)gap++;}return gap;}};}};
+// 손가락을 끄는 동안(두 손가락 조절·고른 부분 옮기기·문구 끌기)은 화면을 한 프레임에 한 번만 다시 그린다 —
+// 휴대폰은 1초에 120~240번 움직임을 주는데, 1080 해상도 합성을 그때마다 하면 손을 따라가지 못하고 끊겼다(10-30 사용자 '잔렉').
+let renderQueued=false;
+function renderSoon(){if(renderQueued)return;renderQueued=true;(typeof requestAnimationFrame==='function'?requestAnimationFrame:f=>setTimeout(f,16))(()=>{renderQueued=false;render();});}
 function render(t){renderCount++;ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));if(t===undefined)drawOnion(ctx);(t===undefined?layers:layersAt(t)).forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});if(t===undefined)drawTip(ctx);drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
@@ -468,7 +472,7 @@ function canvasUnits(px){const r=canvas.getBoundingClientRect();return px*W/Math
 function cancelStrokeForGesture(){curveMid=null;curveCtl=null;tipPath=null;captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;strokeTool=null;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
 function beginMulti(){
  const ps=firstTwo();if(ps.length<2)return;const [a,b]=ps,mid=middle(a,b),ref=activeReference();
- if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,ids:[a.id,b.id],distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,didCheckpoint:false,capScale:caption?.scale||1,capRot:caption?.rot||0,angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};}
+ if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,ids:[a.id,b.id],distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,didCheckpoint:false,capScale:caption?.scale||1,capRot:caption?.rot||0,selScale:selection?.scale||1,selRot:selection?.rot||0,selDx:selection?.dx||0,selDy:selection?.dy||0,angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};}
  else multi.maxCount=Math.max(multi.maxCount,touches.size);
  suppressDraw=true;
 }
@@ -477,9 +481,11 @@ function applyMulti(){
  const pair=gesturePair();if(!pair)return;const [a,b]=pair,mid=middle(a,b),d=Math.max(1,distance(a,b)),move=Math.hypot(mid.x-multi.mid.x,mid.y-multi.mid.y),pinch=Math.abs(d-multi.distance);
  if(move>10||pinch>10)multi.moved=true;if(!multi.moved)return;
  // 고른 문구 위의 두 손가락: 벌리면 크기, 비틀면 회전(8° 안쪽 흔들림은 무시).
- if(captionPicked&&caption){if(!multi.didCheckpoint){checkpoint();multi.didCheckpoint=true;}caption.scale=Math.max(.4,Math.min(3,multi.capScale*(d/multi.distance)));let turn=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI-multi.angle;if(turn>180)turn-=360;if(turn<-180)turn+=360;caption.rot=Math.abs(turn)<8?multi.capRot:Math.round((multi.capRot+turn)*10)/10;dirty=true;render();state();return;}
+ if(captionPicked&&caption){if(!multi.didCheckpoint){checkpoint();multi.didCheckpoint=true;}caption.scale=Math.max(.4,Math.min(3,multi.capScale*(d/multi.distance)));let turn=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI-multi.angle;if(turn>180)turn-=360;if(turn<-180)turn+=360;caption.rot=Math.abs(turn)<8?multi.capRot:Math.round((multi.capRot+turn)*10)/10;dirty=true;renderSoon();return;}
+ // 고른 부분(가져온 그림 포함) 위의 두 손가락: 벌리면 크기, 비틀면 회전, 같이 끌면 옮기기. 적용을 눌러야 그림에 남는다(손잡이와 같다).
+ if(selection&&tool==='select'){selection.scale=Math.max(.2,Math.min(4,multi.selScale*(d/multi.distance)));let turn=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI-multi.angle;if(turn>180)turn-=360;if(turn<-180)turn+=360;selection.rot=Math.abs(turn)<8?multi.selRot:Math.round((multi.selRot+turn)*10)/10;selection.dx=multi.selDx+canvasUnits(mid.x-multi.mid.x);selection.dy=multi.selDy+canvasUnits(mid.y-multi.mid.y);dirty=true;renderSoon();return;}
  const ref=multi.refId&&references.find(l=>l.id===multi.refId&&l.visible);
- if(ref){if(!multi.didCheckpoint){checkpoint();multi.didCheckpoint=true;}ref.scale=Math.max(.1,Math.min(4,multi.refScale*(d/multi.distance)));ref.x=multi.refX+canvasUnits(mid.x-multi.mid.x);ref.y=multi.refY+canvasUnits(mid.y-multi.mid.y);dirty=true;render();state();return;}
+ if(ref){if(!multi.didCheckpoint){checkpoint();multi.didCheckpoint=true;}ref.scale=Math.max(.1,Math.min(4,multi.refScale*(d/multi.distance)));ref.x=multi.refX+canvasUnits(mid.x-multi.mid.x);ref.y=multi.refY+canvasUnits(mid.y-multi.mid.y);dirty=true;renderSoon();return;}
  const next=Math.max(1,Math.min(4,multi.zoom*(d/multi.distance)));zoom=next;size();const ratio=next/multi.zoom;viewport.scrollLeft=(multi.scrollLeft+multi.mid.x)*ratio-mid.x;viewport.scrollTop=(multi.scrollTop+multi.mid.y)*ratio-mid.y;send({type:'zoom',zoom});
 }
 function rgba(hex){let v=String(hex||'').replace('#','');if(v.length===3)v=v.split('').map(c=>c+c).join('');const n=parseInt(v.slice(0,6),16)||0,a=v.length>=8?parseInt(v.slice(6,8),16):255;return [n>>16&255,n>>8&255,n&255,Number.isFinite(a)?a:255];}
@@ -1150,12 +1156,12 @@ canvas.addEventListener('pointermove',e=>{
  if(captionHandle&&e.pointerId===pointer&&caption){const p1=point(e),h=captionHandle;
   if(!h.moved){checkpoint();h.moved=true;}
   caption.scale=Math.max(.4,Math.min(3,h.scale*Math.hypot(p1.x-h.cx,p1.y-h.cy)/h.reach));
-  dirty=true;render();return;}
+  dirty=true;renderSoon();return;}
  if(captionDrag&&e.pointerId===pointer&&caption){const p1=point(e);
   // 살짝 떨린 누름은 옮기기가 아니다. 움직이기 시작할 때 한 번만 되돌리기 지점을 남긴다.
   if(!captionDrag.moved){if(Math.hypot(p1.x-captionDrag.from.x,p1.y-captionDrag.from.y)<cssToCanvas(6))return;checkpoint();captionDrag.moved=true;}
   caption.dx=captionDrag.dx+(p1.x-captionDrag.from.x);caption.dy=captionDrag.dy+(p1.y-captionDrag.from.y);clampCaption();
-  dirty=true;render();return;}
+  dirty=true;renderSoon();return;}
  if(captionDismiss&&e.pointerId===pointer)return;
  if(tool==='select'&&e.pointerId===pointer){const p1=point(e);
   if(grabbing){
@@ -1167,10 +1173,10 @@ canvas.addEventListener('pointermove',e=>{
     const reach=Math.hypot(p1.x-cx,p1.y-cy)/(grabbing.reach||1);
     selection.scale=Math.max(.2,Math.min(4,grabbing.scale*reach));
    }
-   dirty=true;render();return;
+   dirty=true;renderSoon();return;
   }
-  if(dragging){selection.dx=dragging.dx+(p1.x-dragging.from.x);selection.dy=dragging.dy+(p1.y-dragging.from.y);dirty=true;render();return;}
-  if(marquee){marquee.x1=p1.x;marquee.y1=p1.y;render();return;}}
+  if(dragging){selection.dx=dragging.dx+(p1.x-dragging.from.x);selection.dy=dragging.dy+(p1.y-dragging.from.y);dirty=true;renderSoon();return;}
+  if(marquee){marquee.x1=p1.x;marquee.y1=p1.y;renderSoon();return;}}
  if(!active||e.pointerId!==pointer)return;e.preventDefault();const l=activeDraw();if(!l)return;
  // 휴대폰은 화면을 한 번 그릴 동안 모은 터치(120~240Hz)를 함께 준다. 모두 이어야 빠른 획이 각지지 않는다(2026-10-28).
  const evs=(e.getCoalescedEvents&&e.getCoalescedEvents())||[];
@@ -1410,7 +1416,7 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
 canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
 function pngLater(c){if(!c.toBlob)return Promise.resolve(c.toDataURL('image/png'));return new Promise(res=>c.toBlob(b=>{if(!b){res(c.toDataURL('image/png'));return;}const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>res(c.toDataURL('image/png'));r.readAsDataURL(b);},'image/png'));}
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('이미지를 열 수 없습니다.'));i.src=src;});}
-async function loadLayer(l){const b=bitmap();if(l.data){const i=await image(l.data),scale=Math.min(W/i.width,H/i.height),w=i.width*scale,h=i.height*scale;b.getContext('2d').drawImage(i,(W-w)/2,(H-h)/2,w,h);}return {...defaults(l.id,l.name),...l,bitmap:b,data:undefined};}
+async function loadLayer(l){const b=bitmap();let fit=null;if(l.data){const i=await image(l.data),scale=Math.min(W/i.width,H/i.height),w=i.width*scale,h=i.height*scale;fit={x:(W-w)/2,y:(H-h)/2,w,h};b.getContext('2d').drawImage(i,fit.x,fit.y,w,h);}const out={...defaults(l.id,l.name),...l,bitmap:b,data:undefined};if(fit)Object.defineProperty(out,'fit',{value:fit,enumerable:false});return out;}
 function metrics(c){const g=c.getContext('2d',{willReadFrequently:true}),w=c.width,h=c.height,d=g.getImageData(0,0,w,h).data;let n=0,xs=0,ys=0,minX=w,minY=h,maxX=0,maxY=0,r=0,green=0,b=0,transparent=false;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=(y*w+x)*4;if(d[k+3]<255)transparent=true;if(d[k+3]>16){n++;xs+=x;ys+=y;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);r+=d[k];green+=d[k+1];b+=d[k+2];}}return {coverage:n/(w*h),centerX:n?xs/n/w:.5,centerY:n?ys/n/h:.5,width:n?(maxX-minX+1)/w:0,height:n?(maxY-minY+1)/h:0,color:n?[r/n/255,green/n/255,b/n/255]:[0,0,0],transparent};}
 async function command(m){try{
  // 조용한 자동저장이 도는 동안에도 **다음 획의 준비**는 받아야 한다. 아래 명령은 그림(레이어 비트맵)을
@@ -1474,7 +1480,10 @@ async function command(m){try{
    if(layers.length>=4){send({type:'error',message:'그림은 4장까지예요.'});}
    else{checkpoint();const id=nextLayerId();
     const added=await loadLayer({...defaults(id,layerName(id)),data:m.data,imported:true});   // 밖에서 가져온 그림 표시(공모전·체험단 제출 점검)
-    layers.push(added);selectDrawLayer(id);dirty=true;render();state();}
+    layers.push(added);selectDrawLayer(id);dirty=true;
+    // 사용자가 고른 그림은 들여오자마자 '고른 부분'으로 띄운다 — 손가락 둘로 크기·각도를 맞추고 적용하면 된다(10-30).
+    if(m.place&&added.fit){const f=added.fit;tool='select';marquee={x0:f.x,y0:f.y,x1:f.x+f.w,y1:f.y+f.h};liftSelection();}
+    render();state();}
  }
  if(m.type==='addLayer'){if(layers.length<4){checkpoint();
    const wanted=typeof m.id==='string'&&m.id&&!layers.some(l=>l.id===m.id)?m.id:nextLayerId();

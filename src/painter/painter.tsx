@@ -994,7 +994,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   async function importDrawing() {
     if (inFlight.current) return;
     inFlight.current = true; setBusy(true); setPanel(null);
-    try { const data = await onImportDrawing(); if (data) send({ type: 'importDrawing', data }); }
+    // 가져온 그림은 캔버스에서 바로 '고른 부분'이 된다 — 선택 도구로 맞춰 두어야 손가락 둘로 크기를 바꾸고 적용할 수 있다.
+    try { const data = await onImportDrawing(); if (data) { send({ type: 'importDrawing', data, place: true }); if (tool !== 'select') { setTool('select'); setPanel(null); onToolChange?.('select'); } } }
     catch (e) { Alert.alert(t("release.s0549"), userMessage(e)); }
     finally { unlock(); }
   }
@@ -1003,7 +1004,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   async function useCutout(id: string) {
     if (inFlight.current) return;
     inFlight.current = true; setBusy(true);
-    try { const data = await onUseCutout(id); if (data) send({ type: 'importDrawing', data }); }
+    try { const data = await onUseCutout(id); if (data) { send({ type: 'importDrawing', data, place: true }); if (tool !== 'select') { setTool('select'); setPanel(null); onToolChange?.('select'); } } }
     catch (e) { Alert.alert(t("release.s0549"), userMessage(e)); }
     finally { unlock(); }
   }

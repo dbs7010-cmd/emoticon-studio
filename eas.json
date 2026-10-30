@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 12.0.0"
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -19,7 +20,6 @@
       "channel": "preview"
     },
     "production": {
-      "channel": "production",
       "autoIncrement": true,
       "ios": {
         "resourceClass": "default"
@@ -41,7 +41,10 @@
   "submit": {
     "production": {
       "ios": {
-        "ascAppId": "6828042160"
+        "ascAppId": "6828042160",
+        "ascApiKeyPath": "C:/Users/민건/keys/AuthKey_2F9J92CL93.p8",
+        "ascApiKeyId": "2F9J92CL93",
+        "ascApiKeyIssuerId": "fd972ef3-769d-4ce6-b1f7-6773f6d2c284"
       }
     }
   }
