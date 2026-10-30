@@ -1591,7 +1591,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {canvasMessage === 'saved' && <View testID="저장 안내" style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8 }}>
           <SaveToast slot={slot.number} done={savedNote === 'done'}
             message={savedNote === 'done' ? String(slot.number).padStart(2, '0') + t("release.s0653") : t("release.s0654")}
-            nextLabel={completeTitle.includes(t("ui.all")) ? t("release.s0655") : t("release.s0436")} nextA11y={completeTitle.includes(t("ui.all")) ? t("release.s0656") : t("release.s0657")}
+            nextLabel={completeTitle === t("release.s0323") ? t("release.s0655") : t("release.s0436")} nextA11y={completeTitle === t("release.s0323") ? t("release.s0656") : t("release.s0657")}
             onNext={savedNote === 'done' ? () => { setSavedNote(null); onComplete(); } : undefined} />
         </View>}
         {canvasMessage === 'hidden' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 12, paddingRight: 2, borderRadius: 18, backgroundColor: C.accentSoft, borderWidth: 1, borderColor: C.accentBorder }}>
