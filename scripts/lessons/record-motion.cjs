@@ -19,6 +19,8 @@ const u = require('./ui.cjs');
 const LANG = process.env.LESSON_LANG || 'ko';
 const LOCAL = {
   ja: { motionTab: [252, 268], drawTab: [104, 268], start: { chipPart: 347, chipCombo: 580, chipEnter: 975 }, end: { chipAction: 751 } },
+  // 번체: 탭 한 줄. 강좌 녹화 때는 '없음' 칩이 '無' 하나라 처음 쪽 칩이 왼쪽에 있다(녹화 영상에서 잼).
+  'zh-Hant': { motionTab: [253, 268], drawTab: [105, 268], start: { chipPart: 340, chipCombo: 492, chipEnter: 812 }, end: { chipAction: 768 } },
 };
 const L = LOCAL[LANG];
 if (LANG !== 'ko' && !L) throw new Error('움직이기 녹화 자리를 아직 안 잰 언어: ' + LANG);
