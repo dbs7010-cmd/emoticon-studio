@@ -2,7 +2,7 @@
 // 준비: record-motion.cjs 직후(02번 칸, 움직이기 탭, 통통 + 레이어 2 하트 부분 움직임). 애니메이션 탭은 미리보기가 멈춰 있어 이름으로 누른다.
 const path = require('path');
 const r = require('./rec.cjs'), u = require('./ui.cjs'), corn = require('./corn-codex.cjs');
-const out = n => path.join(__dirname, '..', '..', 'assets', 'lessons', 'animation', `step${n}.mp4`);
+const out = n => r.langOut(path.join(__dirname, '..', '..', 'assets', 'lessons', 'animation', `step${n}.mp4`));
 const say = t => console.log('  ' + t);
 const C = corn.COLOR, EYE = [.6, .5];   // 오른쪽 눈(corn-trace 눈 획의 가운데)
 r.tap(50, 1557, 1200);                  // 부분만 움직이기에 있으면 처음으로

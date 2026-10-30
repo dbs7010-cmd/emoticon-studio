@@ -3,7 +3,7 @@
 // 준비: record-brush-layer.cjs 직후(02번 칸, 색칠한 콘 + 레이어 2 하트, 그리기 화면, 움직임 없음 · 세기·속도 보통), 검수용 PRO 켬(step4).
 const path = require('path');
 const r = require('./rec.cjs');
-const out = n => path.join(__dirname, '..', '..', 'assets', 'lessons', 'motion', `step${n}.mp4`);
+const out = n => r.langOut(path.join(__dirname, '..', '..', 'assets', 'lessons', 'motion', `step${n}.mp4`));
 const say = t => console.log('  ' + t);
 // 묶음 칩 줄(y 1581 · 새 세트 첫 화면 캡처로 잼 — 효과 칸 미리보기가 움직여 덤프가 안 된다)과 효과 칸(첫 칸 155,1836) · 위 막대(세기 174~523, 속도 700~1049 — 막대를 누른 자리로 바로 간다)
 const P = {

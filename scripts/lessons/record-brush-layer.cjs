@@ -3,7 +3,7 @@
 // 원본처럼 칠한다: 주황 알갱이 점 · 살구 볼 · 노랑 몸·손·발 · 초록 새싹 둘과 아래 잎 둘(2026-10-29 '칠하다 말았어' 지적).
 const path = require('path');
 const r = require('./rec.cjs'), u = require('./ui.cjs'), corn = require('./corn-codex.cjs');
-const out = n => path.join(__dirname, '..', '..', 'assets', 'lessons', 'brush-layer', `step${n}.mp4`);
+const out = n => r.langOut(path.join(__dirname, '..', '..', 'assets', 'lessons', 'brush-layer', `step${n}.mp4`));
 const say = t => console.log('  ' + t);
 const S = corn.SPOT, C = corn.COLOR, at = ([x, y]) => corn.at(x, y);
 r.touches(true);

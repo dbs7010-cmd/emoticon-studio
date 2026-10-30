@@ -140,6 +140,8 @@ export const zhHant: Record<Key, string> = {
   "ui.caption": "文字",
   "ui.motion": "加上動作",
   "ui.animation": "逐格動畫",
+  "ui.tabMotion": "動作",
+  "ui.tabAnim": "逐格動畫",
   "ui.draw": "繪圖",
 
   "lesson.text000": "免費 · App 使用方式",

@@ -2,7 +2,7 @@
 // 준비: record-animation.cjs 직후(02번 칸 애니메이션 탭, 재생 중). 보드로 나와 시작한다.
 const path = require('path');
 const r = require('./rec.cjs'), u = require('./ui.cjs');
-const out = n => path.join(__dirname, '..', '..', 'assets', 'lessons', 'export', `step${n}.mp4`);
+const out = n => r.langOut(path.join(__dirname, '..', '..', 'assets', 'lessons', 'export', `step${n}.mp4`));
 const say = t => console.log('  ' + t);
 // node record-export.cjs 2 → 2단계부터(녹화가 비었을 때 이어 찍기, 화면은 내보내기에 있어야 한다)
 const from = +(process.argv[2] || 1);

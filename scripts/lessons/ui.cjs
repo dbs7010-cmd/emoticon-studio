@@ -1,6 +1,9 @@
 // 강좌 녹화용 화면 조작(2026-10-28, v24 화면). 좌표 대신 접근성 이름으로 누른다 — 화면 배치가 바뀌어도 녹화 대본이 그대로 돈다.
 //   const u = require('./ui.cjs'); u.tap('새 세트 만들기'); u.waitFor('저장');
 const r = require('./rec.cjs');
+const { all, L } = require('./i18n-labels.cjs');
+// 시스템 창(앱 응답 없음 · 알림 확인)의 버튼은 기기 언어를 따른다.
+const SYSTEM = { Wait: ['Wait', '待機', '等待'], OK: ['OK', '確定'] };
 
 // 지금 화면의 노드(이름 · 글자 · 위치). uiautomator 덤프를 바로 읽는다.
 function nodes() {
@@ -23,7 +26,9 @@ function nodes() {
   return out;
 }
 function find(label, { exact = true } = {}) {
-  const hit = nodes().filter(n => n.w > 0 && n.h > 0 && (exact ? n.desc === label || n.text === label : n.desc.includes(label) || n.text.includes(label)));
+  // 대본은 한국어 이름을 쓰고, 일본어·번체 녹화(LESSON_LANG)에서는 그 언어의 후보 이름 중 화면에 있는 것을 누른다.
+  const names = SYSTEM[label] || all(label);
+  const hit = nodes().filter(n => n.w > 0 && n.h > 0 && names.some(l => exact ? n.desc === l || n.text === l : n.desc.includes(l) || n.text.includes(l)));
   return hit[0] || null;
 }
 function tap(label, wait = 900, opts) {
@@ -40,6 +45,9 @@ function waitFor(label, ms = 15000, opts) {
 // 녹화 전 처음 상태: 앱 데이터를 비우고(에뮬레이터 전용) 첫 화면의 '시작하기'까지 지난 빈 홈.
 function fresh() {
   r.adb(['shell', 'pm', 'clear', 'com.emoticonstudio.app']);
+  // 일본어·번체 녹화는 앱 언어만 바꾼다(에뮬레이터 시스템 언어는 그대로). 비운 뒤에도 다시 넣는다.
+  const lang = process.env.LESSON_LANG || 'ko';
+  r.adb(['shell', 'cmd', 'locale', 'set-app-locales', 'com.emoticonstudio.app', '--locales', { ko: 'ko-KR', ja: 'ja-JP', 'zh-Hant': 'zh-TW' }[lang]]);
   r.adb(['shell', 'monkey', '-p', 'com.emoticonstudio.app', '-c', 'android.intent.category.LAUNCHER', '1'], { stdio: 'ignore' });
   // 첫 화면은 그림이 계속 움직여 화면 읽기(uiautomator)가 멈춰 있는 순간을 못 잡는다 — 시간으로 기다린 뒤 '시작하기' 자리를 누른다.
   // 데이터를 비운 첫 실행은 그림 엔진 준비로 시작 화면이 늦게(에뮬레이터 1분 가까이) 뜰 때가 있다 — 될 때까지 누르고 확인한다.
@@ -51,4 +59,4 @@ function fresh() {
 }
 // 에뮬레이터가 느릴 때 뜨는 '저장이 늦어지고 있어요' 알림을 닫는다(화면 읽기가 안 되면 그냥 넘어간다).
 function dismiss() { try { if (has('저장이 늦어지고 있어요')) { tap('OK', 1200); return true; } } catch { /* 화면이 움직이는 중 */ } return false; }
-module.exports = { nodes, find, tap, has, waitFor, fresh, dismiss };
+module.exports = { nodes, find, tap, has, waitFor, fresh, dismiss, L };

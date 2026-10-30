@@ -20,7 +20,8 @@ const SPOT = {
 const COLOR = { line: '#765044', body: '#FFD15C', leaf: '#65C47A', grain: '#FFAA4D', cheek: '#FF8C69', heart: '#E94F4F' };
 // 팔레트에서 색 고르기(색 칸 → 없으면 팔레트 펼치기)
 function color(hex) {
-  u.tap('색, ' + u.nodes().find(n => n.desc.startsWith('색, #')).desc.slice(3), 1200);
+  const swatch = u.L('색') + ', ';   // 색 칸 이름은 '색, #RRGGBB'(기기 언어의 '색')
+  u.tap(swatch + u.nodes().find(n => n.desc.startsWith(swatch + '#')).desc.slice(swatch.length), 1200);
   if (!u.has('색 ' + hex)) u.tap('팔레트', 1000);
   u.tap('색 ' + hex, 900);
   if (u.has('팔레트 닫기')) u.tap('팔레트 닫기', 900);

@@ -1398,7 +1398,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {/* 그리기·움직이기: 회색 바탕의 두 칸 선택(공모전 탭과 같은 모양, 2026-10-08). 자리·순서는 그대로다. */}
           <View onLayout={e => { const w = Math.ceil(e.nativeEvent.layout.width); if (w !== tabsW) setTabsW(w); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4, marginVertical: 2, marginLeft: 4, borderRadius: 22, backgroundColor: C.paper, boxShadow: '4px 6px 14px rgba(120, 100, 70, 0.12)' }}>
-          {([['draw', t("ui.draw")], ['motion', t("ui.motion")], ['anim', t("ui.animation")]] as const).map(([key, title]) =>
+          {([['draw', t("ui.draw")], ['motion', t("ui.tabMotion")], ['anim', t("ui.tabAnim")]] as const).map(([key, title]) =>
             <Pressable key={key} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: tab === key }}
               onPress={() => switchTab(key)}
               hitSlop={{ top: 4, bottom: 4 }}

@@ -144,6 +144,9 @@ export const ko = {
   "ui.caption": "문구",
   "ui.motion": "움직이기",
   "ui.animation": "애니메이션",
+  // 그리기 화면 위 탭(10-30): 일본어는 긴 이름이면 탭 옆 도구 줄이 아래로 밀려 캔버스 자리가 한국어판과 달라진다 — 짧은 이름을 따로 둔다.
+  "ui.tabMotion": "움직이기",
+  "ui.tabAnim": "애니메이션",
   "ui.draw": "그리기",
 
   "lesson.text000": "무료 · 앱 사용법",

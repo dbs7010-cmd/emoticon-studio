@@ -13,8 +13,11 @@ fs.mkdirSync(RAW, { recursive: true });
 const adb = (args, opts = {}) => execFileSync(ADB, ['-s', SERIAL, ...args], { maxBuffer: 64 << 20, ...opts });
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 let rec = null;
+// 일본어·번체 녹화(LESSON_LANG)는 같은 강좌 폴더 아래 언어 폴더에 둔다(assets/lessons/motion/ja/step1.mp4). 한국어는 지금 자리 그대로.
+const lang = process.env.LESSON_LANG || 'ko';
+function langOut(file) { if (lang === 'ko') return file; const dir = path.join(path.dirname(file), lang); fs.mkdirSync(dir, { recursive: true }); return path.join(dir, path.basename(file)); }
 module.exports = {
-  adb, sleep, FFMPEG,
+  adb, sleep, FFMPEG, langOut,
   touches(on) { adb(['shell', 'settings', 'put', 'system', 'show_touches', on ? '1' : '0']); },
   start(name, seconds = 150) {
     adb(['shell', 'rm', '-f', `/sdcard/${name}.mp4`]);

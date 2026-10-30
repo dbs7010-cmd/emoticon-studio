@@ -2,7 +2,7 @@
 // 준비: record-export.cjs 까지 찍은 세트(02번 칸에 색칠한 콘 · 완성, 다음 빈 칸 03). 어느 화면에서 시작해도 홈으로 나온다.
 const path = require('path');
 const r = require('./rec.cjs'), u = require('./ui.cjs');
-const out = n => path.join(__dirname, '..', '..', 'assets', 'lessons', 'speech', `step${n}.mp4`);
+const out = n => r.langOut(path.join(__dirname, '..', '..', 'assets', 'lessons', 'speech', `step${n}.mp4`));
 const say = t => console.log('  ' + t);
 for (let i = 0; i < 5 && !u.has('표현 가이드'); i++) {
   if (u.has('그리기 닫기')) u.tap('그리기 닫기', 2500);

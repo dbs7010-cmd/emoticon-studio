@@ -3,7 +3,7 @@
 // 실행: node scripts/lessons/record-first-set.cjs  → assets/lessons/first-set/step1~4.mp4
 const path = require('path');
 const r = require('./rec.cjs'), u = require('./ui.cjs'), corn = require('./corn-codex.cjs');
-const out = n => path.join(__dirname, '..', '..', 'assets', 'lessons', 'first-set', `step${n}.mp4`);
+const out = n => r.langOut(path.join(__dirname, '..', '..', 'assets', 'lessons', 'first-set', `step${n}.mp4`));
 const say = t => console.log('  ' + t);
 u.fresh();
 r.touches(true);
@@ -19,7 +19,14 @@ say('1 ' + r.cut('fs1', { from: 0.5, out: out(1), crop: [840, 1440] }) + 'B');
 // 2. 그리기 — 갈색 · 굵기 8로 지금 Codex 콘을 큰 윤곽부터(예전 콘 선 그림은 쓰지 않는다)
 r.start('fs2'); r.sleep(600);
 corn.color(corn.COLOR.line);
-r.tap(230, 396, 900);   // 굵기 막대(153~521, 1~48) 8 자리
+// 굵기 막대(153~521, 1~48)를 눌러 8 로. 막대 높이는 언어마다 다르다 — 일본어는 탭 이름이 길어 도구 줄이 한 줄 내려간다(y 396 → 525).
+// 그래서 막대를 이름으로 찾고, 누른 뒤 숫자를 읽어 맞춘다.
+for (let i = 0, x = 230, bar = u.find('브러시 굵기'); i < 4; i++) {
+  r.tap(x, bar.y, 900);
+  const v = Number((u.nodes().find(n => /^\d+$/.test(n.text) && n.x < 120 && Math.abs(n.y - bar.y) < 60) || {}).text);
+  if (v === 8 || !v) break;
+  x += Math.round((8 - v) * bar.w / 47);
+}
 r.sleep(2500);           // 칸을 막 연 뒤 엔진이 준비되기 전 획은 빠졌다 — 잠깐 두고 그린다
 corn.draw();
 r.sleep(1000);
