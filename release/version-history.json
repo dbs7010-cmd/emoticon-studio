@@ -102,10 +102,10 @@
       "commit": "2967628",
       "sha256": "2591793a4f9f4b14db94781facc089c8650659fdcce3abfed27827ece09da9d6",
       "builtAt": "2026-10-30T17:00:33.755Z",
-      "status": "ready-not-uploaded",
+      "status": "owner-reported-upload-validation-blocked",
       "releaseCheck": "PASS",
       "mediaCheck": "115 active files PASS",
-      "note": "Local artifact only. Add to released only after owner confirms actual upload."
+      "note": "Owner reported uploading the supplied file and a Play AD_ID validation error. Archived vc25 contains AD_ID; exact uploaded/other active artifact not verified in Console. Not published."
     }
   ]
 }

@@ -1,0 +1,11 @@
+{
+  "apkSha256": "5b8c4f537829b39067237ec6cf42709ca1953ab0893575574dbe5b8db590da07",
+  "jsBundleBytes": 4690364,
+  "versionCode": 25,
+  "internalReview": true,
+  "platform": "android",
+  "device": "emulator-5554 / emoti_promo_x86",
+  "androidVersion": "14",
+  "sourceCommit": "9d66011",
+  "storeUpload": false
+}
