@@ -1,0 +1,7 @@
+{
+  "package": "com.emoticonstudio.app",
+  "manifestVersionCode": 26,
+  "configVersionCode": 26,
+  "adIdPermission": true,
+  "billingPermission": true
+}

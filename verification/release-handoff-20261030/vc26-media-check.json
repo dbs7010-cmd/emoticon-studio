@@ -1,0 +1,1046 @@
+{
+  "status": "PASS",
+  "bundle": "C:\\Dev\\emoticon-studio\\dist\\releases\\vc26-20261031\\emoti-1.0.0-vc26-a4ca905.aab",
+  "bundleSha256": "db4bcfd174c99465754381165de1c327afd6ad4d9b4f0fb37ba24b0e877b7ff9",
+  "mediaCount": 115,
+  "videos": 63,
+  "pngs": 52,
+  "failed": [],
+  "records": [
+    {
+      "source": "assets/lessons/animation/cover.png",
+      "sha256": "f22ff2e9af80dbc741634634a0188eea5c630c4e4c9c6556235320e2d2072b6d",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_animation_cover.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/animation/ja/step1.mp4",
+      "sha256": "a47210d794990707b31eecd3c53b612ea3371892034c4ab606af7271b0452757",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_ja_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/animation/ja/step2.mp4",
+      "sha256": "4c9e438b8e0b4c552821bef353c14dde13dc095fd59a4eda5253e62a42d14966",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_ja_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/animation/ja/step3.mp4",
+      "sha256": "bb35fafeee69213ca0d510e7a07234766c852ac9d734447b35569086a0e82888",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_ja_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/animation/ja/step4.mp4",
+      "sha256": "2e40e1253b7f0accbdd852ff993108d8caf4815e402e22d0207270a70433ce60",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_ja_step4.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/animation/step1.mp4",
+      "sha256": "1cfd0951aea9912c4ef1137b801e6c36c45a65caf80255a61d60677b3bae9ff8",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/animation/step2.mp4",
+      "sha256": "ded1af9bd9cfb7f3a3b6badefc25b99da9240d7c7281696f4e66ff066f0fc825",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/animation/step3.mp4",
+      "sha256": "f565d3d7f4a29af74969c0cb0a1735309fd4376b2b01abd895b058a7e31705dc",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/animation/step4.mp4",
+      "sha256": "516bd196b103ef15e9104597ea4a3649c78102a845a51b604822562545cc2906",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_step4.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/animation/zh-Hant/step1.mp4",
+      "sha256": "91d4a8b6a1ce109523e58027d6f8e2cff7ee6dbd8d26717f6f2d58f3665f743d",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_zhhant_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/animation/zh-Hant/step2.mp4",
+      "sha256": "8b85b2c96028a05cb77f2f8041573d5c2e4358b2d34e11deb34a8dcfa7c41a65",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_zhhant_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/animation/zh-Hant/step3.mp4",
+      "sha256": "c5ca91853e47db1552636e0838eb9d2c68eddf0d5d434ea036c6ecbffb4cca85",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_zhhant_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/animation/zh-Hant/step4.mp4",
+      "sha256": "40238725b3960ce0b4cc0b471d51fd38129c57f322510471725c215b6b90fd96",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_animation_zhhant_step4.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/brush-layer/cover.png",
+      "sha256": "fa4eaa8eb4d3722515bd9e87b4bd3b730097f09e526186eb125f0fc0f7d5c3b2",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_brushlayer_cover.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/brush-layer/ja/step1.mp4",
+      "sha256": "467758cb67b2603cecedeb13e3ac0ad01c13b3dbe879d900c23c4a220cef0169",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_brushlayer_ja_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/brush-layer/ja/step2.mp4",
+      "sha256": "f6bf1bbed213d7ddc23696b21b9159a76cd2edf5814123e84b6e1c7f2655473f",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_brushlayer_ja_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/brush-layer/ja/step3.mp4",
+      "sha256": "953c2ad20d7e24c6f44509ce2adcb6b1bf75418ac54a0bb26cbf8e9c8ec76017",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_brushlayer_ja_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/brush-layer/ja/step4.png",
+      "sha256": "0cf66217b37e489d5071d2a7f43eef81ca9ad531d6a5413d5c51b24dcf156f25",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_brushlayer_ja_step4.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/brush-layer/step1.mp4",
+      "sha256": "a2cddacc82b66ea426704f36c24b774b44208336f9c583288537138a7227c687",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_brushlayer_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/brush-layer/step2.mp4",
+      "sha256": "6b3ddbb8dd56b628df5ab3d4e7fe23b21283f50c995ee31595783775e48c1360",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_brushlayer_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/brush-layer/step3.mp4",
+      "sha256": "5002ef8dc4d8083482a92101f826e88fa043ed5dda138eb370e5bfd0c8610a47",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_brushlayer_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/brush-layer/step4.png",
+      "sha256": "ac55cda142813336c71d75c180e4eb108bf949aee59a60567ead9c0a5e965183",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_brushlayer_step4.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/brush-layer/zh-Hant/step1.mp4",
+      "sha256": "3d68963d016706c0ebf9dbbf9add3f1ad864a7a1c32f0b95818ec015ed8831fb",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_brushlayer_zhhant_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/brush-layer/zh-Hant/step2.mp4",
+      "sha256": "5716cfc98809c5bea35dc99a5ec3a9d087c65cab3e796aa2548dc2c6e22d1839",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_brushlayer_zhhant_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/brush-layer/zh-Hant/step3.mp4",
+      "sha256": "b6f67ccca52103490c2c3ce6222faf25aa7740e7b025b7ef34753fab091d2e01",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_brushlayer_zhhant_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/brush-layer/zh-Hant/step4.png",
+      "sha256": "abe085324638e362fc2dc70d3acd7213234773053a6fe340a2a67128e8c91f44",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_brushlayer_zhhant_step4.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/character/step1.png",
+      "sha256": "2544969d14e13ef21ced2b4615639f263fd814bd05b755b91d3fade5dd36cfa7",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_character_step1.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/character/step2.png",
+      "sha256": "2acde875421c9036ac8cdfefea3b94e8f7baf7285b6cb663e7dde9e02f83ee98",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_character_step2.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/character/step3.png",
+      "sha256": "f6e16b2baf80ca8665c481a13a25ea05db1d761874f4b20c3f408b64177f34e3",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_character_step3.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/export/ja/step1.mp4",
+      "sha256": "3c8b2ee6ba3870d7419219bfd1f8b56b5556f75ae1938c65cc825800d5f89f57",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_export_ja_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/export/ja/step2.mp4",
+      "sha256": "fabaa01b5732a7d2d575e128dcd9331fb4988b0bdb5cb8bc12875de86e649b1e",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_export_ja_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/export/ja/step3.mp4",
+      "sha256": "be99b85ee3ece07b9dca3ea04dbc21117f87db9b226bce0d514afa5a73d26380",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_export_ja_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/export/step1.mp4",
+      "sha256": "ff2e656ccff748ad4650a7b90335438aaa6d5b454d64a8c84634907f13590204",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_export_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/export/step2.mp4",
+      "sha256": "6625105eefa384f96f745906530023c2b2bed36c08650b041d553f2564039380",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_export_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/export/step3.mp4",
+      "sha256": "4e206d42216d2192e49d6f4918244e460d7e39f1a4d16f974230484e8ecf6774",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_export_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/export/zh-Hant/step1.mp4",
+      "sha256": "88b65be6abb7bd813eb2c715a5cbaabbe30d8548b6ce554ad9d930b0786810cd",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_export_zhhant_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/export/zh-Hant/step2.mp4",
+      "sha256": "4ab6b61cfd81a2537578b455d12b090d36021685e5a9caeadfc8ea0a40c8da5b",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_export_zhhant_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/export/zh-Hant/step3.mp4",
+      "sha256": "717d0cab07387b8a7f27b0f8caf851f63add0e5487d491126852478bfe89effc",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_export_zhhant_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/expressions/step1.png",
+      "sha256": "f8d4e2f1009800641c568fecb27dfaa4f10b5e84a0cf4442fb51b1ee23538731",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_expressions_step1.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/expressions/step3.png",
+      "sha256": "48fe9d97533ca9d3b6cbdb160221d29dead80395d0e6c4c8cd330b6f78410f90",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_expressions_step3.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/first-set/cover.png",
+      "sha256": "94a7e22ea3476165fbfb7a32733b8d61aaed5f5e716ae9c269be367f2c8ecac7",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_firstset_cover.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/first-set/ja/step1.mp4",
+      "sha256": "b4775906e4c4711d9988909fc8a93c09d2b6cedb7682326411faacf6d1318de7",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_ja_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/first-set/ja/step2.mp4",
+      "sha256": "272667b2949f43721e52821b3cb6631e724c2af9a37a0c4f0fe380f27cdeac9e",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_ja_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/first-set/ja/step3.mp4",
+      "sha256": "97afbb49e883c09d9285efda30bbbade2e51fd26d7d342967042b61802831f8e",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_ja_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/first-set/ja/step4.mp4",
+      "sha256": "c34806e0e1b93ca594707008acd35b3acaac1332fe6a69a2d4e6d854eeab6cb8",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_ja_step4.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/first-set/step1.mp4",
+      "sha256": "3ffeea218df48d29727bec7f980ca0afbd06f290dd75cfb29f58b3272f2266ac",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/first-set/step2.mp4",
+      "sha256": "96ee0bad9123154a699dcc9d5a41eccb34209edba447fbed2eb9877f4682ee1a",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/first-set/step3.mp4",
+      "sha256": "6935595bcab845cb7a9de825ae29900be3c182a9cc53300eb2c22c384f30961b",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/first-set/step4.mp4",
+      "sha256": "526ede061f281f2012aeb16ff2c11a4937af5a5c3010a76baa54ff48c392aaa4",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_step4.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/first-set/zh-Hant/step1.mp4",
+      "sha256": "1dd0dbc79a684a6ae1b0a1be1fba8b50ddf64aff885b417b132fedc340c08023",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_zhhant_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/first-set/zh-Hant/step2.mp4",
+      "sha256": "156849de6b6775f097bf65e282aa10d27a183baf2025d02601106c309dbe8822",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_zhhant_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/first-set/zh-Hant/step3.mp4",
+      "sha256": "be798901074616e8449f441f8419fd3938c86af0e9a92e5cf7238e33f6f6b7e4",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_zhhant_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/first-set/zh-Hant/step4.mp4",
+      "sha256": "92838eb6b828f518021f3739323cbeaff9095ce2a07f7df38ab5836ba2f4e39b",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_firstset_zhhant_step4.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/make-lesson/ja/step2.png",
+      "sha256": "46616d1c89ef41b227e57ef9a4d7b5c5860ce257d64c6a4d68f0efb463888a36",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_makelesson_ja_step2.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/make-lesson/ja/step3.png",
+      "sha256": "4b8d98e68f076e6c8f7ae63065658b48045be747362c151d86219997e75b42a6",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_makelesson_ja_step3.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/make-lesson/step2.png",
+      "sha256": "e2a46ae74684b5919c8560e2295245017c421110f9043726885e0344579d8481",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_makelesson_step2.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/make-lesson/step3.png",
+      "sha256": "d604732d4acbd3d36e8da9a4e19223c320df6f029bacedd53d8185382d993dd1",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_makelesson_step3.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/make-lesson/zh-Hant/step2.png",
+      "sha256": "31137739128b1f8919db12d754ac678211ab6d8952837087179e2aaaf9ca101f",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_makelesson_zhhant_step2.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/make-lesson/zh-Hant/step3.png",
+      "sha256": "5e2c9092932848d1d6fb313b08187e0027d35ae18c38e7d6ef4f8808124f4f65",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_makelesson_zhhant_step3.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/motion/cover.png",
+      "sha256": "4b017a35b5229135b3eb2a02b6d6b740dbb0682cbaf7f1f6eebe87ba10d546ce",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_motion_cover.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/motion/ja/step1.mp4",
+      "sha256": "2244374d4e5d0b02026839212649f9612ad36a0058ac815d60d949a30c4f4586",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_ja_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/motion/ja/step2.mp4",
+      "sha256": "4c85f60debb0a1210cccdfcd2dd151bee1348b520fdf51f6318086888924713d",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_ja_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/motion/ja/step3.mp4",
+      "sha256": "43d1226329b0e413c96a2fc63982a964e0e734af094f34691e0ddb3712f490f7",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_ja_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/motion/ja/step4.mp4",
+      "sha256": "92f27ede4d592e7aa907daf745968ad71fcd0c3925183cf6b789bbc6a8d68c4e",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_ja_step4.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/motion/step1.mp4",
+      "sha256": "869f3d8c9964d867c47f11cd61b3567dabfc00032c26e0171d308237fe9399c0",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/motion/step2.mp4",
+      "sha256": "58b31da4010196a5c6e3c75419e4dbf5a2aa00a0a9c41e961a202435bac74ee5",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/motion/step3.mp4",
+      "sha256": "5fbd8c682a417a3d8213d18aa00a4124e839db049c30b7939cbdcdd9744620dc",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/motion/step4.mp4",
+      "sha256": "314cfc335f43246d3d8d381c8029cbcdc48fac749e8831dafce65a966c0eafc7",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_step4.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/motion/zh-Hant/step1.mp4",
+      "sha256": "09d7380f4da37493b861937a182451c18bf21a4204689f64197caec6356f2294",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_zhhant_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/motion/zh-Hant/step2.mp4",
+      "sha256": "bb05e39fca3bc99685b12c751611f02626410eb380ba9da1a29af4f91c501d79",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_zhhant_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/motion/zh-Hant/step3.mp4",
+      "sha256": "062043ef0a42d3b4b69c1fda5cd846294b73f31cf263d7a9a7d14d3a52a7aff2",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_zhhant_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/motion/zh-Hant/step4.mp4",
+      "sha256": "ee3a576ad8fb86eb1fef2c0c0b584d1b1e77a8279547cfb366578830edbd9a7c",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_motion_zhhant_step4.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/set-plan/step1.png",
+      "sha256": "c8a046b61bd421104f210708293e98fbd77b44495c2804ef2ddd2017a3ca2c2c",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_setplan_step1.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/speech/ja/step1.mp4",
+      "sha256": "cae2ccf27b998fcf5eca35aa6c1048f470a5d0a4e202835bd748339960770a44",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_speech_ja_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/speech/ja/step2.mp4",
+      "sha256": "aab1a3b75a6bee13d03dd95452199251a00f35cde3642dfe7e45746b2b081032",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_speech_ja_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/speech/ja/step3.mp4",
+      "sha256": "4424fdf90694e981fe8b496a96b022e2936c9616d7c7b1c92e6414149d3d5f51",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_speech_ja_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/speech/step1.mp4",
+      "sha256": "486e323dc4a591be176821107294fa9b52d86e41b084d46f135c1473fb1cf6b3",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_speech_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/speech/step2.mp4",
+      "sha256": "3536150facffff2063583bea83bc4741e0122e0469bfd62bebf7454b4a592130",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_speech_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/speech/step3.mp4",
+      "sha256": "a55ae959604ee3f4c9c12e47c36c19a9973c9c241d58a2d7ffa179a0f86c511b",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_speech_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/speech/zh-Hant/step1.mp4",
+      "sha256": "c682112d677652d0cf658887398c5d19af05a05ed66c852398c9182e65cf989a",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_speech_zhhant_step1.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/speech/zh-Hant/step2.mp4",
+      "sha256": "6496f6e93532406046cecca0a13605da02321eb166f637fbfb625d94a5379f1a",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_speech_zhhant_step2.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/speech/zh-Hant/step3.mp4",
+      "sha256": "d7ef450252e2e015109555ced98d73c57a07618546b3c39f2ffdc145d2683361",
+      "bundleEntries": [
+        "base/res/raw/assets_lessons_speech_zhhant_step3.mp4"
+      ],
+      "status": "PASS",
+      "comparison": "byte-identical"
+    },
+    {
+      "source": "assets/lessons/thumbs/animation.png",
+      "sha256": "9cc7e93ab4e85f195f466ea2070c98143dca1adc71167784200bc4b495b2b010",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_animation.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/brush-layer.png",
+      "sha256": "6a4bbfc415ee05873bfccebfa3d55f7f2eae0cd9c9427c4f7bd1da50a36e0317",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_brushlayer.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/character.png",
+      "sha256": "94f104180775c9c8f9581543a0b90ae883c31620b1bc5994e0e5e8051dbdcb79",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_character.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/contest.png",
+      "sha256": "a42ab312e45d0e95b59e67c1a2c500e6042f78e69871597e2189b5bb125b3fd1",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_contest.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/export.png",
+      "sha256": "49dccfe5e0be04058da10c82b8ffcca695da084a9e26df78144052d50d428c4e",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_export.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/expressions.png",
+      "sha256": "87e10748aa531fa0d94ebf02f3cf4a180e9b981c322e524fe17f0699794b2d35",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_expressions.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/first-set.png",
+      "sha256": "f56819d860951a2ce0044d88ff6ece63e9f5c56a4ec8f85737c2ea3db6774f98",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_firstset.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/ja/animation.png",
+      "sha256": "0bcee53d7552b3c768bf3caaabcc441ca3e80d279efdfc7bcbabf33a16342209",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_ja_animation.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/ja/brush-layer.png",
+      "sha256": "8f9d036e5272acf350653f62eb0108b0325a00a6083f24dbaf284b2da750ed43",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_ja_brushlayer.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/ja/character.png",
+      "sha256": "d41fcdb924e44d8d096d3a55c88364609fcba7f848a454354fdd01c58b1215b8",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_ja_character.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/ja/contest.png",
+      "sha256": "d1c5dec66eef341bf2d8fd32265d42b7f3a49392aac8685ce1e9591bd8d52795",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_ja_contest.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/ja/export.png",
+      "sha256": "27a88768a6f578437c450e1451a68ebf5a14ebc4cbdaca059efcc037d9f8e036",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_ja_export.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/ja/expressions.png",
+      "sha256": "95f265a688771ef1beee651629be4fd9a6e00dcc61c6ab5c9925c0a986e41c83",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_ja_expressions.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/ja/first-set.png",
+      "sha256": "296683905fbae352434bedffb9484ba687d3888fc2f637fd1b9f701df631b70a",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_ja_firstset.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/ja/make-lesson.png",
+      "sha256": "4482662ce6a7b6cceadaf52cd0f2084d14a85832ad89d93914f3c3a0b8013ab1",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_ja_makelesson.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/ja/motion.png",
+      "sha256": "953c56da444dfa4ac5714e9ec4a114c15a0e0fb6daf6c6ed06452c29a0bfc7e1",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_ja_motion.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/ja/set-plan.png",
+      "sha256": "832a72ecff5e146e330219817645b7c7483fe206dca8f20b62adfd96774c6fd1",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_ja_setplan.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/ja/speech.png",
+      "sha256": "5f735560ae73410507eb106e4f6b4c3d3784bcf56bf96c098765e226d30f1079",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_ja_speech.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/make-lesson.png",
+      "sha256": "e96b4e392cdfadc870296b9d15a65c7fbfa5c159e51e38130b5cfd62098ced89",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_makelesson.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/motion.png",
+      "sha256": "99306cf8a6ebf15c53c904996e2a8eaac76ba0b9bb528c9c6a040532b9676c64",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_motion.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/set-plan.png",
+      "sha256": "df182d89ed847e363ef8579b4b63d6b4b5cd7bd3164d22e3924afa6da2f9e8ae",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_setplan.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/speech.png",
+      "sha256": "0393d5e8d752699306fba6f3dcc98c8f6e0e6dcb1349c735b4b8134dcb24cfc8",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_speech.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/zh-Hant/animation.png",
+      "sha256": "93831bd5cdcae36746ef4e55b0ded0a76b61e1e72babeee771406fa6742f9da7",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_zhhant_animation.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/zh-Hant/brush-layer.png",
+      "sha256": "1f14b0e92c2c24422954c92d871ab1a3228e9f144fd2a91e4635e579b28213c8",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_zhhant_brushlayer.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/zh-Hant/character.png",
+      "sha256": "6523127ec2b8afe35594268549066f71544232f183e08585cbced63bf2ead66a",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_zhhant_character.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/zh-Hant/contest.png",
+      "sha256": "a4e3e51fdad0d255d33f2234c4e2000113d4494ee013a9f43a46e2ee95c45b07",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_zhhant_contest.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/zh-Hant/export.png",
+      "sha256": "60da6b01af46060dce503fad6c31c5cec9ed1045acc61c9cad06706380b73565",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_zhhant_export.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/zh-Hant/expressions.png",
+      "sha256": "5c5a3d4d694ccaa7d77053c5612be433c08426acf115cf1e16f2cc509142d564",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_zhhant_expressions.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/zh-Hant/first-set.png",
+      "sha256": "2c7bbca085aaf7a4910fcf439977c70b44a337de3ad2e1394a3e150033a686d0",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_zhhant_firstset.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/zh-Hant/make-lesson.png",
+      "sha256": "82d35ad57f3e92ad0a14e7a748c116dc2baf0fc50e6a6c876b802663d82f2f3d",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_zhhant_makelesson.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/zh-Hant/motion.png",
+      "sha256": "cf4761b2af0b75a33c8fc83a0e12362310a9bbfe03047d798d8e8e1b8576c8b6",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_zhhant_motion.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/zh-Hant/set-plan.png",
+      "sha256": "0bfb609d14145d365b3b4546b5c98a6c2d742987cdf6cc4ff8e757d710d50f5f",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_zhhant_setplan.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    },
+    {
+      "source": "assets/lessons/thumbs/zh-Hant/speech.png",
+      "sha256": "821d14a420f7d5b4b3431f224d5b89ae2a0111255313d28474ca6cf535454c51",
+      "bundleEntries": [
+        "base/res/drawable-mdpi-v4/assets_lessons_thumbs_zhhant_speech.png"
+      ],
+      "status": "PASS",
+      "comparison": "pixels-identical-android-png-reencoding"
+    }
+  ]
+}

@@ -102,10 +102,22 @@
       "commit": "2967628",
       "sha256": "2591793a4f9f4b14db94781facc089c8650659fdcce3abfed27827ece09da9d6",
       "builtAt": "2026-10-30T17:00:33.755Z",
-      "status": "ready-not-uploaded",
+      "status": "superseded-use-vc26",
       "releaseCheck": "PASS",
       "mediaCheck": "115 active files PASS",
-      "note": "Owner clarified that vc25 has NOT been uploaded. Previous AD_ID screenshot must not be attributed to vc25. Archived vc25 contains AD_ID; ready for owner upload, not published."
+      "note": "A different version 25 already exists in Play. Do not upload or reuse this local vc25; use verified vc26."
+    },
+    {
+      "versionCode": 26,
+      "versionName": "1.0.0",
+      "file": "dist/releases/vc26-20261031/emoti-1.0.0-vc26-a4ca905.aab",
+      "commit": "a4ca905",
+      "sha256": "db4bcfd174c99465754381165de1c327afd6ad4d9b4f0fb37ba24b0e877b7ff9",
+      "status": "ready-not-uploaded",
+      "releaseCheck": "PASS",
+      "manifestVersionCode": 26,
+      "adIdPermission": true,
+      "mediaCheck": "115 active files PASS"
     }
   ]
 }
