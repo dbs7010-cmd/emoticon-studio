@@ -1,0 +1,125 @@
+{
+  "status": "RENDERED_NEEDS_PIXEL_VALIDATION",
+  "records": [
+    {
+      "locale": "ja",
+      "file": "C:\\Dev\\emoticon-studio\\dist\\구글스토어-업로드용-일본-대만\\일본어\\03-휴대전화-스크린샷\\01.png",
+      "capture": "C:\\Dev\\emoticon-studio\\verification\\play-phone-20261031\\ja\\01-draw.png",
+      "captureSha256": "7f822aba5a1316e81b6284ba29adf39e4d083c5c0e139a76041b30197e6a9307",
+      "checks": {
+        "text": "emoti\n01 / 05\n描く\n自分の絵で、\n自分だけのスタンプ。\n\n最初の表情からはじめる、小さなアトリエ。\n\n自分の絵、自分だけのスタンプ。",
+        "font": "Yu Gothic",
+        "fontCmapCoverage": "PASS",
+        "textBounds": "PASS"
+      }
+    },
+    {
+      "locale": "ja",
+      "file": "C:\\Dev\\emoticon-studio\\dist\\구글스토어-업로드용-일본-대만\\일본어\\03-휴대전화-스크린샷\\02.png",
+      "capture": "C:\\Dev\\emoticon-studio\\verification\\play-phone-20261031\\ja\\02-motion.png",
+      "captureSha256": "1a49e5661d21c4b9865b218ed3fe79fd0e4a6fb9f2954c9d71e875736b2f2421",
+      "checks": {
+        "text": "emoti\n02 / 05\n動かす\n描いたら、タップ。\n動きをプラス。\n\n描いた絵に動きを選んで、すぐプレビュー。\n\n自分の絵、自分だけのスタンプ。",
+        "font": "Yu Gothic",
+        "fontCmapCoverage": "PASS",
+        "textBounds": "PASS"
+      }
+    },
+    {
+      "locale": "ja",
+      "file": "C:\\Dev\\emoticon-studio\\dist\\구글스토어-업로드용-일본-대만\\일본어\\03-휴대전화-스크린샷\\03.png",
+      "capture": "C:\\Dev\\emoticon-studio\\verification\\play-phone-20261031\\ja\\03-set.png",
+      "captureSha256": "44289b24639a2aea6853f78da649f1e507cf4114cb311ad4476535a81d7a2f00",
+      "checks": {
+        "text": "emoti\n03 / 05\nセットを作る\n1コマずつ集めて、\n1セットに。\n\nあいさつも、ありがとうも。表情を重ねよう。\n\n自分の絵、自分だけのスタンプ。",
+        "font": "Yu Gothic",
+        "fontCmapCoverage": "PASS",
+        "textBounds": "PASS"
+      }
+    },
+    {
+      "locale": "ja",
+      "file": "C:\\Dev\\emoticon-studio\\dist\\구글스토어-업로드용-일본-대만\\일본어\\03-휴대전화-스크린샷\\04.png",
+      "capture": "C:\\Dev\\emoticon-studio\\verification\\play-phone-20261031\\ja\\04-guide.png",
+      "captureSha256": "d06f5f6b08c4938d1f478237552a869a9c97d388e776f581efd81b70c2706193",
+      "checks": {
+        "text": "emoti\n04 / 05\n講座・表現のヒント\nはじめてでも、\n少しずつ。\n\n迷ったときは、講座と表現サンプルへ。\n\n自分の絵、自分だけのスタンプ。",
+        "font": "Yu Gothic",
+        "fontCmapCoverage": "PASS",
+        "textBounds": "PASS"
+      }
+    },
+    {
+      "locale": "ja",
+      "file": "C:\\Dev\\emoticon-studio\\dist\\구글스토어-업로드용-일본-대만\\일본어\\03-휴대전화-스크린샷\\05.png",
+      "capture": "C:\\Dev\\emoticon-studio\\verification\\play-phone-20261031\\ja\\05-export.png",
+      "captureSha256": "e6720a77b73d78374eb5ba49ac50febbe437c202549053ca8e0fa322a9b26efd",
+      "checks": {
+        "text": "emoti\n05 / 05\n書き出す\nできあがったら、\nファイルに。\n\n完成した絵を、ファイルで保存・共有。\n\n自分の絵、自分だけのスタンプ。",
+        "font": "Yu Gothic",
+        "fontCmapCoverage": "PASS",
+        "textBounds": "PASS"
+      }
+    },
+    {
+      "locale": "zh-Hant",
+      "file": "C:\\Dev\\emoticon-studio\\dist\\구글스토어-업로드용-일본-대만\\대만-번체\\03-휴대전화-스크린샷\\01.png",
+      "capture": "C:\\Dev\\emoticon-studio\\verification\\play-phone-20261031\\zh-Hant\\01-draw.png",
+      "captureSha256": "9f2b6b22c2f4ff844f8630a25143fd40b05c99a08029b8cf8e3f5d6c0f5ee8d9",
+      "checks": {
+        "text": "emoti\n01 / 05\n繪圖\n用自己的畫，\n做自己的貼圖。\n\n從第一個表情開始，打造小小工作室。\n\n我的畫，我的專屬貼圖。",
+        "font": "Microsoft JhengHei",
+        "fontCmapCoverage": "PASS",
+        "textBounds": "PASS"
+      }
+    },
+    {
+      "locale": "zh-Hant",
+      "file": "C:\\Dev\\emoticon-studio\\dist\\구글스토어-업로드용-일본-대만\\대만-번체\\03-휴대전화-스크린샷\\02.png",
+      "capture": "C:\\Dev\\emoticon-studio\\verification\\play-phone-20261031\\zh-Hant\\02-motion.png",
+      "captureSha256": "4205bee3ecd5aaf35da55f58d48aafcd478d0eee57da07521c8ee0c543cd97fa",
+      "checks": {
+        "text": "emoti\n02 / 05\n動作\n畫好了，輕點一下。\n加上動作。\n\n替畫好的圖選動作，立即預覽。\n\n我的畫，我的專屬貼圖。",
+        "font": "Microsoft JhengHei",
+        "fontCmapCoverage": "PASS",
+        "textBounds": "PASS"
+      }
+    },
+    {
+      "locale": "zh-Hant",
+      "file": "C:\\Dev\\emoticon-studio\\dist\\구글스토어-업로드용-일본-대만\\대만-번체\\03-휴대전화-스크린샷\\03.png",
+      "capture": "C:\\Dev\\emoticon-studio\\verification\\play-phone-20261031\\zh-Hant\\03-set.png",
+      "captureSha256": "c3c4e0c9c943a6081f5eda4b18ef20992acbc871fe0a182f19374dfc89878a06",
+      "checks": {
+        "text": "emoti\n03 / 05\n製作整組貼圖\n一格一格收集，\n組成一組貼圖。\n\n招呼、感謝、加油，把表情慢慢收集起來。\n\n我的畫，我的專屬貼圖。",
+        "font": "Microsoft JhengHei",
+        "fontCmapCoverage": "PASS",
+        "textBounds": "PASS"
+      }
+    },
+    {
+      "locale": "zh-Hant",
+      "file": "C:\\Dev\\emoticon-studio\\dist\\구글스토어-업로드용-일본-대만\\대만-번체\\03-휴대전화-스크린샷\\04.png",
+      "capture": "C:\\Dev\\emoticon-studio\\verification\\play-phone-20261031\\zh-Hant\\04-guide.png",
+      "captureSha256": "619a41366b48a971f727a626da223d3eb1f740467658c99bbbfc6ceb27e3fa18",
+      "checks": {
+        "text": "emoti\n04 / 05\n課程・表情參考\n第一次也沒關係，\n慢慢來。\n\n卡關時，看看課程與表情範例。\n\n我的畫，我的專屬貼圖。",
+        "font": "Microsoft JhengHei",
+        "fontCmapCoverage": "PASS",
+        "textBounds": "PASS"
+      }
+    },
+    {
+      "locale": "zh-Hant",
+      "file": "C:\\Dev\\emoticon-studio\\dist\\구글스토어-업로드용-일본-대만\\대만-번체\\03-휴대전화-스크린샷\\05.png",
+      "capture": "C:\\Dev\\emoticon-studio\\verification\\play-phone-20261031\\zh-Hant\\05-export.png",
+      "captureSha256": "b905be02b1968e63c2bdb1e34a4ade65445c3c6db344cc5219b2a4f7a18da43a",
+      "checks": {
+        "text": "emoti\n05 / 05\n匯出檔案\n完成之後，\n匯出成檔案。\n\n將完成的圖片匯出，保存或分享。\n\n我的畫，我的專屬貼圖。",
+        "font": "Microsoft JhengHei",
+        "fontCmapCoverage": "PASS",
+        "textBounds": "PASS"
+      }
+    }
+  ]
+}

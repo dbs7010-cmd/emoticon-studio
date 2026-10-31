@@ -1,0 +1,348 @@
+{
+  "status": "READY_NOT_UPLOADED",
+  "totalPngs": 34,
+  "records": [
+    {
+      "file": "일본어/01-앱아이콘.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "bytes": 154432,
+      "sha256": "213a1931009b35201dc30cb1400e33ad81486fb5664917e1e8a075f2b3a8fa5e"
+    },
+    {
+      "file": "일본어/02-그래픽이미지.png",
+      "size": [
+        1024,
+        500
+      ],
+      "mode": "RGB",
+      "bytes": 173878,
+      "sha256": "b8101f637295587fda5cf315d35d402636dcf4ec370fdadaf62a3a4081e604ae"
+    },
+    {
+      "file": "일본어/03-휴대전화-스크린샷/01.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 346465,
+      "sha256": "411b836ef54cbcc0e4728f05018b95a4755f2ef0803f5b5560cd419dc880da7c"
+    },
+    {
+      "file": "일본어/03-휴대전화-스크린샷/02.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 317412,
+      "sha256": "2ee36c48a5ec2cd01f26814ca0752c5845f1d17febb0e473a00281a6c1a9a5d0"
+    },
+    {
+      "file": "일본어/03-휴대전화-스크린샷/03.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 281511,
+      "sha256": "61124abb0c2b0e002fbece5f7b74d477e5f9c28dd8039b65e4b6f8c4e36cfd70"
+    },
+    {
+      "file": "일본어/03-휴대전화-스크린샷/04.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 291771,
+      "sha256": "fb6833adbc459bd1dadc9b5fbddae5c8f6a46f80f27de74176083ce77e831d40"
+    },
+    {
+      "file": "일본어/03-휴대전화-스크린샷/05.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 156122,
+      "sha256": "d0bef6d5eb48bf1557bb7156fa5b7b292679be6537409cddaeee21176b5b4e63"
+    },
+    {
+      "file": "일본어/04-7인치-태블릿/01-home.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 196799,
+      "sha256": "f139736bba5c79cfc002306d76a56a925d3653f668ee02d6c6307d0645e3b1f4"
+    },
+    {
+      "file": "일본어/04-7인치-태블릿/02-board.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 228472,
+      "sha256": "016f7eda3fb0e4ff86f6ab6335146c0797632bb00f9de2ee75750caa9f90a646"
+    },
+    {
+      "file": "일본어/04-7인치-태블릿/03-draw.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 452634,
+      "sha256": "ce5ef7a26dfbf55b6754e71a71f35ec46565919e94ecd5919cdef8efa98a41ce"
+    },
+    {
+      "file": "일본어/04-7인치-태블릿/04-lessons.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 380801,
+      "sha256": "8e7d33bf17f05505be8ad1a5690ec5ff5351bb21def41ebdd957bc33cb22cb74"
+    },
+    {
+      "file": "일본어/04-7인치-태블릿/05-export.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 205945,
+      "sha256": "679aa511091cdf76e5b15e890b02c07edce49c9f3b647ea47e60d4dfebc0bdf0"
+    },
+    {
+      "file": "일본어/05-10인치-태블릿/01-home.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "bytes": 238739,
+      "sha256": "a9121d2c2dbcde7e760898cf30492fbe83636e031d6e6e16aff4ec845fcd751f"
+    },
+    {
+      "file": "일본어/05-10인치-태블릿/02-board.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "bytes": 288427,
+      "sha256": "b062f53d75a1296be6b201b176872d26ae5f66a39ccae848e7c525627bd1d00f"
+    },
+    {
+      "file": "일본어/05-10인치-태블릿/03-draw.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "bytes": 652690,
+      "sha256": "8d55c9b00df0e5d9311fd290a38f71ab5481f5d51adfdcacdb7ecb28c491c3da"
+    },
+    {
+      "file": "일본어/05-10인치-태블릿/04-lessons.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "bytes": 637815,
+      "sha256": "3211036f98427d46f754526674fab9f54f048af96aaf4eef9aa6431784eac5e0"
+    },
+    {
+      "file": "일본어/05-10인치-태블릿/05-export.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "bytes": 262617,
+      "sha256": "1424cdf159a81ade849d4d5dc0816ccb0fcae68d10d6ae3855f3bc60b32322b6"
+    },
+    {
+      "file": "대만-번체/01-앱아이콘.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "bytes": 154432,
+      "sha256": "213a1931009b35201dc30cb1400e33ad81486fb5664917e1e8a075f2b3a8fa5e"
+    },
+    {
+      "file": "대만-번체/02-그래픽이미지.png",
+      "size": [
+        1024,
+        500
+      ],
+      "mode": "RGB",
+      "bytes": 168436,
+      "sha256": "61365ac1c84c4ab3b20d16f94fb7fbf32fceca253c546df14d25c964d63856bb"
+    },
+    {
+      "file": "대만-번체/03-휴대전화-스크린샷/01.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 337171,
+      "sha256": "037e844e16acbe63d2db386dc4f7a2b36f3f3d93bdb03346ede0860cae68d475"
+    },
+    {
+      "file": "대만-번체/03-휴대전화-스크린샷/02.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 297752,
+      "sha256": "b9bda08c0589db9e15f91a82aa58e0750cb2ee6139c470022245916341d3cf21"
+    },
+    {
+      "file": "대만-번체/03-휴대전화-스크린샷/03.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 279995,
+      "sha256": "7c75ef092cf8751fcf72aef382f129802f256728f358dd7705fe8c3e2b4a000b"
+    },
+    {
+      "file": "대만-번체/03-휴대전화-스크린샷/04.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 285976,
+      "sha256": "0577f0d210007c73cdc89b54a79789283140637221058a5e4d47a786bfbd175b"
+    },
+    {
+      "file": "대만-번체/03-휴대전화-스크린샷/05.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 134534,
+      "sha256": "93fb06fe05fa91c634546d2d9712c828602d4f68522c513106ccd8bd63edd753"
+    },
+    {
+      "file": "대만-번체/04-7인치-태블릿/01-home.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 191443,
+      "sha256": "3d9209d614a83b9ddeccc70d4d09662816384b3b5bf129ce13f5bb8d670a8b56"
+    },
+    {
+      "file": "대만-번체/04-7인치-태블릿/02-board.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 234223,
+      "sha256": "d3973c435653a8b7b75f1fc5e9edff6b52b0cafda15ca9dd9bcc7bc50706d0ec"
+    },
+    {
+      "file": "대만-번체/04-7인치-태블릿/03-draw.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 455579,
+      "sha256": "3a151a63899f9eb47588d3de689060b510f6f7b703009bad2281891b3d2e0f69"
+    },
+    {
+      "file": "대만-번체/04-7인치-태블릿/04-lessons.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 374723,
+      "sha256": "a5aa51657b12bcead03ddd3b0d4c5501c78f8acbb3638e593ae1dbef12d3b629"
+    },
+    {
+      "file": "대만-번체/04-7인치-태블릿/05-export.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "bytes": 193270,
+      "sha256": "c7e4fd3ff081579622cf07ce144cef96f3b390bf0280f28990f4ecd2fe930e58"
+    },
+    {
+      "file": "대만-번체/05-10인치-태블릿/01-home.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "bytes": 233031,
+      "sha256": "f582820f83add0f357de2c19bad2bda1fec59b378dd6620f2f019f1d018851ae"
+    },
+    {
+      "file": "대만-번체/05-10인치-태블릿/02-board.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "bytes": 294355,
+      "sha256": "80f463d886ebe2c80c5554c6f883b2b92dd12c773b1c6dd0627c228168036b01"
+    },
+    {
+      "file": "대만-번체/05-10인치-태블릿/03-draw.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "bytes": 655575,
+      "sha256": "8299d03e53c787b6db29afb8a60975620cc3549625c529e1f25cb58647bd99c6"
+    },
+    {
+      "file": "대만-번체/05-10인치-태블릿/04-lessons.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "bytes": 621317,
+      "sha256": "2b700f610f23a1019e91efbb9aa7fab930d95f13212b7fa72022b4a1e3066302"
+    },
+    {
+      "file": "대만-번체/05-10인치-태블릿/05-export.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "bytes": 247232,
+      "sha256": "f6d2f38c207ff52a8a65c9961d507ceae884e527d716d246e559d28a10a8f2ea"
+    }
+  ],
+  "visualReview": "PASS: 10 phone cards and two feature graphics reviewed; tablet sets reused from reviewed native captures",
+  "destination": "dist/구글스토어-업로드용-일본-대만"
+}

@@ -1,0 +1,17 @@
+{
+  "platform": "android",
+  "captureType": "actual native phone emulator",
+  "dimensions": [
+    1080,
+    1920
+  ],
+  "densityDpi": 420,
+  "apkVersionCode": 25,
+  "internalReview": true,
+  "apkSha256": "5b8c4f537829b39067237ec6cf42709ca1953ab0893575574dbe5b8db590da07",
+  "releaseUiMatches": "git diff 9d66011..a4ca905 -- App.tsx src assets/lessons empty; Android version changes only",
+  "locales": [
+    "ja",
+    "zh-Hant"
+  ]
+}
