@@ -1,0 +1,23 @@
+{
+  "bundleId": "com.emoticonstudio.app",
+  "version": "1.0.0",
+  "build": "7",
+  "nonExemptEncryption": false,
+  "sha256": "d8c30e962d9f6269caeb4e6fcc18287669682353d9ed3de4ed148b130c772350",
+  "configFiles": [
+    "Payload/emoti.app/EXConstants.bundle/app.config",
+    "Payload/emoti.app/Expo.plist"
+  ],
+  "bundleFiles": [
+    "Payload/emoti.app/main.jsbundle"
+  ],
+  "internalReview": false,
+  "purchases": "release",
+  "receiptEndpointPresent": true,
+  "loginProviders": [
+    "google",
+    "kakao",
+    "naver"
+  ],
+  "jsBundleBytes": 5623012
+}
