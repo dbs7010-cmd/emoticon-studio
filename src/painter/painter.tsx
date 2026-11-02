@@ -1967,6 +1967,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               {scene.layers.length > 1 && layerAt(layer.id) < scene.layers.length - 1 && <Minor title={t("release.s0727")} onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: 1 }); }} />}
               {scene.layers.length > 1 && layerAt(layer.id) > 0 && <Minor title={t("release.s0728")} onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: -1 }); }} />}
               <Minor title={t("ui.rename")} onPress={() => { setLayerMenu(null); setRenaming({ id: layer.id, name: layer.name }); }} />
+              {/* 섞기(2026-11-03, 대표: 레이어 블렌딩): 그림 위에 겹치는 방식. 메뉴는 닫지 않아 바로 비교해 볼 수 있다. */}
+              <View testID="레이어 섞기" style={{ width: '100%', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingVertical: 4 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted, marginRight: 2 }}>{t('blend.title')}</Text>
+                {BLENDS.map(k => { const on = (layer.blend ?? 'normal') === k; return <Pressable key={k} accessibilityRole="button" accessibilityLabel={t('blend.title') + ' ' + t(`blend.${k}`)} accessibilityState={{ selected: on }} onPress={() => send({ type: 'transform', id: layer.id, blend: k })}
+                  style={{ minHeight: 36, paddingHorizontal: 10, borderRadius: 18, justifyContent: 'center', backgroundColor: on ? C.accentSoft : C.surface2 }}>
+                  <Text style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: C.ink }}>{t(`blend.${k}`)}</Text></Pressable>; })}
+              </View>
               {scene.layers.length < 4 && <Minor title={t("release.s0729")} onPress={() => { setLayerMenu(null); send({ type: 'duplicateLayer', id: layer.id }); }} />}
               {scene.layers.length > 1 && <Minor danger title={t("release.s0534")} onPress={() => { setLayerMenu(null); Alert.alert(name + " " + t("release.s0534"), t("release.s0730"), [{ text: t("ui.cancel"), style: 'cancel' }, { text: t("release.s0534"), style: 'destructive', onPress: () => send({ type: 'removeLayer', id: layer.id }) }]); }} />}
             </View>}
@@ -2530,6 +2537,7 @@ function Step({ label, sign, onPress }: { label: string; sign: string; onPress: 
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4} style={{ width: 40, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, fontWeight: '800', color: T.muted }}>{sign}</Text></Pressable>;
 }
 // 보조 행동(secondary). 흰 표면 + 옅은 선 하나. 위험한 일만 옅은 빨강.
+const BLENDS = ['normal', 'multiply', 'screen', 'overlay', 'add', 'darken', 'lighten'] as const;
 function Minor({ title, onPress, danger }: { title: string; onPress: () => void; danger?: boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} hitSlop={{ top: 2, bottom: 2 }} style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderWidth: danger ? 0 : 1, borderColor: T.line, backgroundColor: danger ? T.dangerSoft : pressed ? T.fill : T.paper, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 13, fontWeight: '700', color: danger ? T.danger : T.ink }}>{title}</Text></Pressable>;
 }

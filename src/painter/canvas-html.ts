@@ -9,6 +9,8 @@ export const canvasHtml = `<!doctype html><html lang="ko"><head><meta name="view
 const canvas=document.getElementById('drawing'),surface=document.getElementById('surface'),viewport=document.getElementById('viewport'),ctx=canvas.getContext('2d');   // 화면용 — 픽셀을 읽지 않는다. willReadFrequently 는 GPU 그리기를 꺼서 뺐다(2026-10-28)
 const W=canvas.width,H=canvas.height;
 let tool='pen',brush='pen',color='#242424',penWidth=5,eraserWidth=20,zoom=1,active=false,last=null,pointer=null,history=[],future=[],dirty=false,loading=false,saving=false,layers=[],references=[],activeLayerId='draw-1',activeDrawLayerId='draw-1',activeReferenceId=null,strokePending=false,pendingFill=null,steady=null,caption=null,selection=null,marquee=null,dragging=null,grabbing=null,focusLayerId=null,pivotPick=null,pivotRole='pivot',motion=null,playing=false,playStart=0,rafId=null,smoothing=true,captionPicked=false,captionDrag=null,captionHandle=null,captionDismiss=false,probe=false,capBase=null,capPreviewing=false,shapeKind='rect',shapeFill=false,shapeDrag=null;
+// 포인터 붙잡기가 실패해도(이미 떨어진 펜 등) 획은 그대로 시작한다.
+function capture(e){try{canvas.setPointerCapture(e.pointerId);}catch(_){}}
 const touches=new Map();let multi=null,suppressDraw=false;
 // S펜·애플펜슬(2026-11-03): 펜을 쓴 지 1분 안에는 손가락·손바닥이 선을 긋지 않는다(두 손가락 확대·되돌리기는 그대로).
 // 펜으로 긋는 중에 손바닥이 닿아도 그 선을 지우지 않고, 손가락으로 긋던 선은 펜이 닿으면 펜에 자리를 내준다.
@@ -42,7 +44,9 @@ function setRes(r){r=Math.max(1,Math.min(4,Math.round(Number(r))||1));if(r===RES
  canvas.width=W*RES;canvas.height=H*RES;if(RES!==1)ctx.setTransform(RES,0,0,RES,0,0);
  for(const k in paperMasks)delete paperMasks[k];grainMask=null;coarseMask=null;wetShown=null;clearBoil();extentCache=null;history=[];future=[];}
 function copyOf(b){const c=bitmap();c.getContext('2d').drawImage(b,0,0,W,H);return c;}
-function meta(l){return Object.assign({id:l.id,name:l.name,visible:l.visible,opacity:l.opacity,x:l.x,y:l.y,scale:l.scale,rotation:l.rotation},l.imported?{imported:true}:{});}
+// 레이어 섞기(2026-11-03): 보통이 아니면 그 이름만 저장한다. 캔버스 2D 의 합성 방식 그대로라 내보내기·움직임 GIF 에도 같게 나온다.
+const BLEND={multiply:'multiply',screen:'screen',overlay:'overlay',add:'lighter',darken:'darken',lighten:'lighten'};
+function meta(l){return Object.assign({id:l.id,name:l.name,visible:l.visible,opacity:l.opacity,x:l.x,y:l.y,scale:l.scale,rotation:l.rotation},l.imported?{imported:true}:{},l.blend&&BLEND[l.blend]?{blend:l.blend}:{});}
 function trace(what,extra){if(!probe)return;send(Object.assign({type:'trace',t:Math.round(performance.now()),what:what,has:!!selection,dx:selection?Math.round(selection.dx):null,dy:selection?Math.round(selection.dy):null},extra||{}));}
 function state(){syncFrame();sweepCopies();sweepLayers();send({type:'state',frames:frames?frames.map(f=>({id:f.id,duration:f.duration})):null,frameIdx,onion,undo:history.length>0,redo:future.length>0,dirty,smoothing,captionPicked,picking,preset,brushOpacity,stabilizer,activeHidden:!!(activeDraw()&&!activeDraw().visible),activeLayerId,activeReferenceId,caption:savedCaption(),motion,pivotPick,pivotRole,selection:selection&&{box:selection.box,dx:selection.dx,dy:selection.dy,scale:selection.scale,rot:selection.rot,flip:selection.flip},loop:Number(loopSeconds().toFixed(3)),clipped:motionClips(),playing,layers:layers.map(meta),references:references.map(l=>({...meta(l),path:l.path}))});}
 // The words live in the exported picture, not in a separate text tool: one system font, centred,
@@ -206,7 +210,7 @@ function checkpoint(preserveFuture=false){if(saving)editedDuringSave=true;histor
 const MAX_COPIES=24;
 function trimHistory(){if(RES===1)return;const count=()=>{const seen=new Set();for(const st of history.concat(future))for(const l of st.layers)if(l.copy)seen.add(l.copy);return seen.size;};
  while(history.length>1&&count()>MAX_COPIES)history.shift();}
-function composite(g,l,d){if(!l.visible||(d&&d.hidden))return;g.save();g.globalAlpha=l.opacity;if(d){g.translate(d.px+d.dx,d.py+d.dy);g.rotate(d.rot*Math.PI/180);g.scale(d.sx,d.sy);g.translate(-d.px,-d.py);if(d.part){const q=d.part;g.translate(q.px+q.dx,q.py+q.dy);g.rotate(q.rot*Math.PI/180);g.scale(q.sx,q.sy);g.translate(-q.px,-q.py);}}g.translate(W/2+l.x,H/2+l.y);g.rotate(l.rotation*Math.PI/180);g.scale(l.scale,l.scale);g.drawImage(d&&d.boilK!=null?boiled(l,d.boilK):l.bitmap,-W/2,-H/2,W,H);g.restore();}
+function composite(g,l,d){if(!l.visible||(d&&d.hidden))return;g.save();g.globalAlpha=l.opacity;if(l.blend&&BLEND[l.blend])g.globalCompositeOperation=BLEND[l.blend];if(d){g.translate(d.px+d.dx,d.py+d.dy);g.rotate(d.rot*Math.PI/180);g.scale(d.sx,d.sy);g.translate(-d.px,-d.py);if(d.part){const q=d.part;g.translate(q.px+q.dx,q.py+q.dy);g.rotate(q.rot*Math.PI/180);g.scale(q.sx,q.sy);g.translate(-q.px,-q.py);}}g.translate(W/2+l.x,H/2+l.y);g.rotate(l.rotation*Math.PI/180);g.scale(l.scale,l.scale);g.drawImage(d&&d.boilK!=null?boiled(l,d.boilK):l.bitmap,-W/2,-H/2,W,H);g.restore();}
 // ── 손그림 떨림(boil, 2026-10-14) ──────────────────────────────────────────────────────────────
 // 그림을 고치지 않는다. 장마다 세 가지 '살짝 비튼 사본' 중 하나를 번갈아 보여 줘, 선이 다시 그려진 듯 떨린다.
 // 비트는 법: 가로 띠마다 x 를, 세로 띠마다 y 를 부드러운 물결(사인 둘의 합)만큼 민다. 장(k)마다 물결의 위상이 다르다.
@@ -232,7 +236,7 @@ function drawOnion(g){
  if(!animOn()||!onion||frameIdx<1||playing)return;
  // 앞 장 그림은 그리는 동안 바뀌지 않으므로 한 장에 한 번만 만든다(2026-11-03). 예전에는 획이 움직일 때마다 1080 캔버스를
  // 새로 만들어(24장 측정 227개 ≈ 1GB) 메모리 한도와 획 끊김의 원인이 됐다. 장·레이어·그림 번호(__rev)가 같으면 다시 쓴다.
- const prev=frames[frameIdx-1].layers,key=prev.map(l=>l.id+':'+(l.bitmap.__rev||0)+':'+l.visible+':'+l.opacity+':'+l.x+':'+l.y+':'+l.scale+':'+l.rotation).join('|')+'#'+frames[frameIdx-1].id;
+ const prev=frames[frameIdx-1].layers,key=prev.map(l=>l.id+':'+(l.bitmap.__rev||0)+':'+l.visible+':'+l.opacity+':'+l.x+':'+l.y+':'+l.scale+':'+l.rotation+':'+(l.blend||'')).join('|')+'#'+frames[frameIdx-1].id;
  if(!onionBuf||onionBuf.width!==W*RES){onionBuf=bitmap();onionKey='';}
  if(onionKey!==key){const cg=onionBuf.getContext('2d');cg.save();cg.setTransform(1,0,0,1,0,0);cg.clearRect(0,0,onionBuf.width,onionBuf.height);cg.restore();
   prev.forEach(l=>composite(cg,l));cg.save();cg.globalCompositeOperation='source-in';cg.fillStyle='#5B57D9';cg.fillRect(0,0,W,H);cg.restore();onionKey=key;}
@@ -1178,7 +1182,7 @@ canvas.addEventListener('pointerdown',e=>{
  // 글자 밖을 누르면 선택이 끝나고 그 손가락은 그림을 그리지 않는다. 움직이기 미리보기 중·중심점 고르기 중에는 건드리지 않는다.
  if(caption&&caption.text.trim()&&!playing&&!pivotPick&&!capPreviewing){const p0=point(e);
   const onHandle=captionPicked&&onCaptionHandle(p0),onText=!onHandle&&onCaption(p0);
-  if(onHandle||onText||captionPicked){e.preventDefault();canvas.setPointerCapture(e.pointerId);pointer=e.pointerId;
+  if(onHandle||onText||captionPicked){e.preventDefault();capture(e);pointer=e.pointerId;
    if(onHandle){const hp=handlePoint();captionHandle={cx:hp.cx,cy:hp.cy,reach:Math.max(1,Math.hypot(p0.x-hp.cx,p0.y-hp.cy)),scale:caption.scale||1,moved:false};return;}
    if(onText){captionDrag={from:p0,dx:caption.dx||0,dy:caption.dy||0,wasPicked:captionPicked,moved:false};if(!captionPicked){if(selection)applySelection(false,'captionPick');captionPicked=true;render();state();}return;}
    captionPicked=false;captionDismiss=true;render();state();return;
@@ -1187,7 +1191,7 @@ canvas.addEventListener('pointerdown',e=>{
  if(e.pointerType==='touch'&&!pivotPick&&penRecent())return;
  const l=activeDraw();
  if(!l||!l.visible){if(l)send({type:'blocked',reason:'hidden',id:l.id,name:l.name});return;}
- e.preventDefault();canvas.setPointerCapture(e.pointerId);pointer=e.pointerId;
+ e.preventDefault();capture(e);pointer=e.pointerId;
  if(tool==='fill'){pendingFill={clientX:e.clientX,clientY:e.clientY,...point(e)};return;}
  if(tool==='shape'&&!pivotPick){const p0=point(e);shapeDrag={from:p0,to:p0,moved:false};return;}
  if(pivotPick){const p0=point(e);send({type:'pivot',id:pivotPick,x:Number((p0.x/W).toFixed(3)),y:Number((p0.y/H).toFixed(3)),role:pivotRole});return;}
@@ -1535,7 +1539,7 @@ async function command(m){try{
  if(m.type==='toggleReference'){
    const target=references.find(l=>l.id===m.id);if(target){checkpoint();const turnOff=target.visible&&activeReferenceId===target.id;references.forEach(l=>l.visible=false);if(turnOff){activeReferenceId=null;}else{target.visible=true;activeReferenceId=target.id;}render();state();}
  }
- if(m.type==='transform'){const l=[...layers,...references].find(l=>l.id===(m.id||activeLayerId));if(l){checkpoint();extentCache=null;for(const k of ['x','y','rotation'])if(Number.isFinite(m[k]))l[k]=m[k];if(Number.isFinite(m.scale))l.scale=Math.max(.1,Math.min(4,m.scale));if(Number.isFinite(m.opacity))l.opacity=Math.max(0,Math.min(1,m.opacity));if(typeof m.visible==='boolean')l.visible=m.visible;render();state();}}
+ if(m.type==='transform'){const l=[...layers,...references].find(l=>l.id===(m.id||activeLayerId));if(l){checkpoint();extentCache=null;for(const k of ['x','y','rotation'])if(Number.isFinite(m[k]))l[k]=m[k];if(Number.isFinite(m.scale))l.scale=Math.max(.1,Math.min(4,m.scale));if(Number.isFinite(m.opacity))l.opacity=Math.max(0,Math.min(1,m.opacity));if(typeof m.visible==='boolean')l.visible=m.visible;if(typeof m.blend==='string'){if(BLEND[m.blend])l.blend=m.blend;else delete l.blend;}render();state();}}
  if(m.type==='addReferences'){const added=await Promise.all(m.references.map(l=>loadLayer(l)));checkpoint();references.push(...added);if(!activeReferenceId&&added[0]){references.forEach(l=>l.visible=false);added[0].visible=true;activeReferenceId=added[0].id;}render();state();}
  if(m.type==='removeReference'){const index=references.findIndex(l=>l.id===m.id);if(index>=0){checkpoint();const removed=references[index];references.splice(index,1);if(activeReferenceId===removed.id)activeReferenceId=null;render();state();}}
  if(m.type==='undo')undo();
@@ -1556,7 +1560,7 @@ async function command(m){try{
    if(!src){}
    else if(layers.length>=4){send({type:'error',message:'그림은 4장까지예요. 한 장을 지우고 다시 해 주세요.'});}
    else{checkpoint();const id=nextLayerId();
-    const copy={...defaults(id,layerName(id)),...(src.imported?{imported:true}:{}),bitmap:asLayer(copyOf(src.bitmap))};
+    const copy={...defaults(id,layerName(id)),...(src.imported?{imported:true}:{}),...(src.blend?{blend:src.blend}:{}),bitmap:asLayer(copyOf(src.bitmap))};
     layers.push(copy);selectDrawLayer(id);dirty=true;render();
     send({type:'duplicated',id});state();}
  }

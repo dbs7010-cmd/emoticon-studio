@@ -1880,4 +1880,13 @@ export const zhHant: Record<Key, string> = {
   "brushFine.hard": "用力才變粗",
   "brushFine.even": "標準",
   "brushFine.note": "筆壓只在使用 S Pen、Apple Pencil 時有效。線條修正設為 0 時，手的抖動也會保留。",
+  // 레이어 섞기(2026-11-03)
+  "blend.title": "混合",
+  "blend.normal": "一般",
+  "blend.multiply": "色彩增值",
+  "blend.screen": "濾色",
+  "blend.overlay": "覆蓋",
+  "blend.add": "相加",
+  "blend.darken": "變暗",
+  "blend.lighten": "變亮",
 };

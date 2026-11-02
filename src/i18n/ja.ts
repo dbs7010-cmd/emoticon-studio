@@ -1880,4 +1880,13 @@ export const ja: Record<Key, string> = {
   "brushFine.hard": "強く押すと太く",
   "brushFine.even": "標準",
   "brushFine.note": "筆圧はSペン・Apple Pencilで描くときだけ使われます。手ぶれ補正を0にすると手の揺れもそのまま残ります。",
+  // 레이어 섞기(2026-11-03)
+  "blend.title": "描画モード",
+  "blend.normal": "通常",
+  "blend.multiply": "乗算",
+  "blend.screen": "スクリーン",
+  "blend.overlay": "オーバーレイ",
+  "blend.add": "加算",
+  "blend.darken": "比較(暗)",
+  "blend.lighten": "比較(明)",
 };
