@@ -1283,6 +1283,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const studio = (tab === 'motion' || tab === 'anim') && !studioBig && windowHeight >= 720;
   const motionHeight = studio ? Math.max(300, Math.round(windowHeight * .6))
     : Math.max(250, Math.min(Math.round(windowHeight * .55), Math.round(canvasArea - (canvasSide ?? canvasArea)) + BASE_H));
+  // 스튜디오에서는 판이 캔버스 영역 아래를 덮으므로, 판 위에 남는 높이만큼 캔버스를 줄여 가리지 않게 한다.
+  const frameSide = studio && canvasSide ? Math.max(140, Math.min(canvasSide, Math.floor(canvasArea - (motionHeight - BASE_H) - CANVAS_GAP * 2))) : canvasSide;
   // 패널 표면: 흰 표면 + 위쪽 24 둥글기 + 옅은 선 하나. 떠 있는 표면이지만 캔버스 위 그림자는 두지 않는다(그림이 흐려 보인다).
   const raised = dockOpen || tab !== 'draw';
   // 색을 고를 때는 도구 줄 자리까지 쓴다. 캔버스를 더 가리지 않고 색 선택 영역을 확보한다.
@@ -1546,7 +1548,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {/* 캔버스 틀: 네이티브 WebView 는 크기 지정을 무시하고 영역 전체를 채워, 캔버스가 위에 붙고 아래에 빈 띠가 남았다(40차 실기기 bounds 0,381–1080,1882).
             정사각 틀로 감싸 잘라 두면 WebView 가 틀만큼만 차지하고, 그리기 탭에서는 영역 가운데·움직이기 탭에서는 위에 선다. */}
         {/* 종이 경계: 얇은 선 + 옅은 그림자. 흰 종이와 작업면이 비슷한 밝기라 경계가 없으면 캔버스가 떠 보였다(45.37 실기기). */}
-        <View ref={canvasRef} collapsable={false} style={canvasSide ? { width: canvasSide, height: canvasSide, overflow: 'hidden', backgroundColor: C.paper, borderRadius: 6, ...Paper.border, ...Paper.shadow } : { width: '100%', aspectRatio: 1, maxHeight: '100%', overflow: 'hidden' }}>
+        <View ref={canvasRef} collapsable={false} style={canvasSide ? { width: frameSide, height: frameSide, overflow: 'hidden', backgroundColor: C.paper, borderRadius: 6, ...Paper.border, ...Paper.shadow } : { width: '100%', aspectRatio: 1, maxHeight: '100%', overflow: 'hidden' }}>
         {tab !== 'draw' && windowHeight >= 720 && <View style={{ position: 'absolute', right: 6, top: 6, zIndex: 6 }}>
           <IconButton testID="캔버스 크기 바꾸기" label={studioBig ? t('studio.small') : t('studio.big')} icon={studioBig ? 'arrow-collapse' : 'arrow-expand'} size={20} color={C.ink} onPress={() => { ease(); setStudioBig(!studioBig); }} />
         </View>}
