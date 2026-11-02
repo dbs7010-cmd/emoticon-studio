@@ -1877,5 +1877,7 @@ export const ko = {
   // 움직이기·애니 스튜디오(2026-11-03)
   "studio.small": "캔버스 작게 보고 판 넓게",
   "studio.big": "캔버스 크게 보기",
+  // 확대 되돌리기(2026-11-03)
+  "zoom.reset": "100%로",
 } as const;
 export type Key = keyof typeof ko;

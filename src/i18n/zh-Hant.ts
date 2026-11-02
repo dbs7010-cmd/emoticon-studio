@@ -1870,4 +1870,6 @@ export const zhHant: Record<Key, string> = {
   // 움직이기·애니 스튜디오(2026-11-03)
   "studio.small": "縮小畫布、放大面板",
   "studio.big": "放大畫布",
+  // 확대 되돌리기(2026-11-03)
+  "zoom.reset": "回到 100%",
 };

@@ -226,7 +226,7 @@ const saved = async (dirty = true) => {
   assert.equal(labelled('원래 크기로 보기').length, 0, '100% 에서는 배율 표시가 없다');
   await message({ type: 'zoom', zoom: 1.5 });
   assert.equal(labelled('원래 크기로 보기').length, 1, '확대하면 작은 배율 표시가 뜬다');
-  assert.equal(labelled('원래 크기로 보기')[0].findAll(n => n.type === 'Text' && String(n.children?.join('')) === '150%').length, 1, '배율은 150% 처럼 보인다');
+  assert.equal(labelled('원래 크기로 보기')[0].findAll(n => n.type === 'Text' && String(n.children?.join('')).startsWith('150%')).length, 1, '배율은 150% 처럼 보이고 100%로 돌아가는 단추라고 적혀 있다');
   await press('원래 크기로 보기');
   assert.deepEqual(lastCommand('zoom'), { type: 'zoom', zoom: 1 }, '누르면 캔버스가 100% 로 돌아간다');
   assert.equal(labelled('원래 크기로 보기').length, 0, '100% 로 돌아오면 표시가 사라진다');

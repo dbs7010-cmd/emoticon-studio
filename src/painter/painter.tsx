@@ -964,9 +964,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     setSaveMark('saving');
     const token = ++saveToken.current;
     if (slowTimer.current) clearTimeout(slowTimer.current);
-    slowTimer.current = setTimeout(() => setSlowSave(true), 1500);
+    // 2026-11-03(대표: '저장 늦어진다' 알림이 짜증): 조용한 자동저장에는 띄우지 않고, 직접 누른 저장만 4초 넘게 걸릴 때 알린다.
+    if (action !== 'stay') slowTimer.current = setTimeout(() => setSlowSave(true), 4000);
     timeout.current = setTimeout(() => { send({ type: 'saveFailed', token }); setSaveMark(null); unlock(); Alert.alert(t("release.s0538"), t("release.s0539")); }, 20000);
-    send({ type: 'save', gif: !!scene.motion || (scene.frames?.length ?? 0) > 1, token });
+    send({ type: 'save', gif: !!scene.motion || (scene.frames?.length ?? 0) > 1, token, quiet: action === 'stay' });
   }
   saveRef.current = save;
   // Copying is always something the user asks for, and it is always a separate document:
@@ -1639,9 +1640,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             손잡이 옆 말풍선이 말한다 — 고치는 중인 그림을 덮지 않는다. */}
         {/* 확대한 동안에만: 작은 배율 표시. 누르면 100%. 캔버스 위 빈 띠에 뜨고, 띠가 없는 짧은 화면에서만 캔버스 모서리에 걸린다. */}
         {tab === 'draw' && zoom > 1.05 && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0648")} onPress={resetZoom} hitSlop={8}
-          style={({ pressed }) => ({ position: 'absolute', top: 8, right: 12, minHeight: 32, paddingHorizontal: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: pressed ? C.fill : C.floating, borderWidth: 1, borderColor: C.line })}>
-          <Glyph name="magnify" size={14} color={C.muted} />
-          <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{Math.round(zoom * 100)}%</Text>
+          style={({ pressed }) => ({ position: 'absolute', top: 8, right: 12, zIndex: 8, minHeight: 40, paddingHorizontal: 14, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: pressed ? C.pointSoft : C.floating, borderWidth: 1.5, borderColor: C.point })}>
+          {/* 2026-11-03(대표): 배율 숫자만 있어 누르는 단추인 줄 몰랐다 — '100%로'를 함께 쓴다. */}
+          <Glyph name="fit-to-screen-outline" size={16} color={C.point} />
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{Math.round(zoom * 100)}% · {t('zoom.reset')}</Text>
         </Pressable>}
         {canvasMessage === 'zoomHint' && <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>

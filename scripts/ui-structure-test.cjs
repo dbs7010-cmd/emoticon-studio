@@ -182,7 +182,7 @@ const homeSections = () => {
   await press('브러시 전체');
   await message({ type: 'zoom', zoom: 2 });
   assert.equal(labelled('원래 크기로 보기').length, 1, '확대 중에만 배율 표시');
-  assert.ok(texts().includes('200%'), '배율은 숫자로 말한다');
+  assert.ok(texts().some(x => x.startsWith('200%')), '배율은 숫자로 말한다(뒤에 100%로)');
   assert.equal(flat(labelled('원래 크기로 보기')[0].props.style).right, 12, '배율은 알림 자리가 아니라 오른쪽 위에 따로 선다');
   await message({ type: 'zoom', zoom: 1 });
   // 끝난 경고가 하나뿐인 알림 자리를 계속 차지하지 않는다(45.2 검증에서 발견).

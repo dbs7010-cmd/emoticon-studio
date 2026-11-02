@@ -697,10 +697,9 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   const notice = () => shown().some(t => t.includes('저장 중이에요'));
   await autosave();
   assert.equal(notice(), false, '보통 저장에서는 캔버스에 아무 말도 하지 않는다');
-  assert.equal(pending(1500) > 0, true, '길어질 때를 대비한 알림이 예약돼 있다');
-  await act(async () => { fire(1500); });
-  assert.ok(notice(), '저장이 길어지면 지금 그릴 수 없는 이유를 캔버스에 적는다');
-  assert.equal(labelled('저장 중이라 잠시 그릴 수 없어요').length + tree.root.findAll(n => n.props.accessibilityLabel === '저장 중이라 잠시 그릴 수 없어요').length > 0, true, '읽어 주는 이름도 붙는다');
+  // 2026-11-03(대표: '저장 늦어짐' 알림이 짜증): 조용한 자동저장은 그리기를 막지 않으므로 알리지 않는다. 직접 누른 저장만 4초 뒤 알린다.
+  await act(async () => { fire(4000); });
+  assert.equal(notice(), false, '자동저장이 길어져도 캔버스에 알림을 띄우지 않는다');
   // 응답이 끝내 오지 않으면 시간초과가 잠금을 풀고, 무슨 일이 있었는지 알려 준다.
   const beforeAlerts = alerts.length;
   await act(async () => { fire(20000); });

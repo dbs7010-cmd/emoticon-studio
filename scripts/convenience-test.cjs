@@ -154,7 +154,7 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   const zoomCommands = sent().filter(m => m.type === 'zoom').length;
   await act(async () => veil()[0].props.onPress());
   assert.equal(sent().filter(m => m.type === 'zoom').length, zoomCommands, '패널을 여닫아도 확대 값을 건드리지 않는다');
-  assert.ok(texts().includes('200%'), '돌아와도 같은 배율');
+  assert.ok(texts().some(x => x.startsWith('200%')), '돌아와도 같은 배율');
   await message({ type: 'zoom', zoom: 1 });
 
   // ── 4. SV 사각: 고른 색이 캔버스로 가고, 칸을 옮겨도 최근 색으로 남는다 ────────────────────────

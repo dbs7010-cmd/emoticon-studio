@@ -208,6 +208,20 @@ const tick = () => new Promise(resolve => setTimeout(resolve, 5));
   await command({ type: 'captionPreview', end: true });
   assert.equal(onScreen(), before.text, '닫으면 다시 원래 문구');
 
+  // 조용한 자동저장 중에도 그린다(2026-11-03): 저장은 시작 순간의 그림을 찍고, 그 사이 그린 획은 다음 저장 몫으로 dirty 가 남는다.
+  const pastSave = stacks().past;
+  await command({ type: 'save', token: 77, quiet: true });
+  stroke(200, 200);
+  assert.equal(stacks().past, pastSave + 1, '자동저장 중에도 획이 들어간다');
+  await command({ type: 'saved', token: 77 });
+  assert.equal(state().dirty, true, '저장 중에 그린 획은 저장되지 않은 것으로 남는다');
+  await command({ type: 'save', token: 78 });
+  const pastManual = stacks().past;
+  stroke(220, 220);
+  assert.equal(stacks().past, pastManual, '직접 누른 저장 중에는 예전처럼 막는다');
+  await command({ type: 'saved', token: 78 });
+  assert.equal(state().dirty, false, '그 사이 아무것도 안 그렸으면 저장 완료로 깨끗하다');
+
   // 움직임 세기·속도 끄는 동안(2026-11-03): 미리보기만 바뀌고 되돌리기는 손을 뗄 때 한 번, 되돌리면 끄기 전 값.
   await command({ type: 'motion', motion: { version: 1, preset: 'bounce', speed: .5, strength: .5 } });
   const pastLive = stacks().past;

@@ -198,7 +198,7 @@ function captionFrom(c,prev){if(!c||!String(c.text||'').trim())return null;const
   ...['dx','dy','scale','rot'].reduce((o,k)=>Number.isFinite(c[k])?Object.assign(o,{[k]:c[k]}):o,{})};}
 function endCaptionPreview(){if(!capPreviewing)return;caption=capBase;capBase=null;capPreviewing=false;if(!(caption&&caption.text.trim()))captionPicked=false;}
 const savedCaption=()=>capPreviewing?capBase:caption;
-function checkpoint(preserveFuture=false){history.push(snapshot());if(history.length>40)history.shift();if(!preserveFuture)future=[];trimHistory();dirty=true;}
+function checkpoint(preserveFuture=false){if(saving)editedDuringSave=true;history.push(snapshot());if(history.length>40)history.shift();if(!preserveFuture)future=[];trimHistory();dirty=true;}
 // 고해상도 기록은 서로 다른 사본 수로 묶는다(1080 사본 하나 ≈ 4.7MB, 24개 ≈ 113MB). 넘치면 가장 오래된 단계부터 버린다.
 const MAX_COPIES=24;
 function trimHistory(){if(RES===1)return;const count=()=>{const seen=new Set();for(const st of history.concat(future))for(const l of st.layers)if(l.copy)seen.add(l.copy);return seen.size;};
@@ -235,7 +235,7 @@ function drawOnion(g){
   prev.forEach(l=>composite(cg,l));cg.save();cg.globalCompositeOperation='source-in';cg.fillStyle='#5B57D9';cg.fillRect(0,0,W,H);cg.restore();onionKey=key;}
  g.save();g.globalAlpha=.32;g.drawImage(onionBuf,0,0,W,H);g.restore();
 }
-var onionBuf=null,onionKey='',liveMotionBase=null;
+var onionBuf=null,onionKey='',liveMotionBase=null,saveQuiet=false,editedDuringSave=false;
 function useFrame(i){syncFrame();frameIdx=Math.max(0,Math.min(frames.length-1,i));layers=frames[frameIdx].layers;if(!layers.some(l=>l.id===activeLayerId))activeLayerId=layers[0]?.id||'';activeDrawLayerId=activeLayerId;history=[];future=[];extentCache=null;clearBoil();}
 var boilCache=new Map(),BOIL_FPS=8,boilMid=null;
 // 떨림 사본을 버릴 때 메모리도 바로 돌려준다(WebKit 은 GC 전까지 캔버스 메모리를 센다).
@@ -1145,7 +1145,8 @@ function finishMulti(){
  multi=null;suppressDraw=false;state();
 }
 canvas.addEventListener('pointerdown',e=>{
- if(loading||saving)return;
+ // 조용한 자동저장(quiet)은 그림을 저장 시작 순간에 이미 찍었으므로 그 동안에도 계속 그린다(2026-11-03). 직접 누른 저장만 막는다.
+ if(loading||(saving&&!saveQuiet))return;
  if(e.pointerType==='touch'){
    touches.set(e.pointerId,touchPoint(e));
    if(touches.size>=2){e.preventDefault();pendingFill=null;pointer=null;cancelStrokeForGesture();beginMulti();return;}
@@ -1634,7 +1635,7 @@ async function command(m){try{
  if(m.type==='stop'){stopPlaying();render();state();}
  if(m.type==='lineFrames'){const was=playing;stopPlaying();send({type:'lineFrames',id:m.id,line:buildLineFrames(m.spec)});if(was)startPlaying();else{render();state();}}
  if(m.type==='frames'){const was=playing;stopPlaying();send({type:'frames',id:m.id,gif:buildLoop(m.fps,!!m.sheets)});if(was)startPlaying();else{render();state();}}
- if(m.type==='save'){const previewCap=capPreviewing?caption:undefined;if(capPreviewing)caption=capBase;dry();if(selection)applySelection(false,'save');syncFrame();saving=true;saveToken=m.token===undefined?null:m.token;const token=saveToken,wasDirty=dirty;const first=animOn()?frames[0].layers:layers;const out=docCanvas(),g=out.getContext('2d');g.imageSmoothingQuality='high';first.forEach(l=>composite(g,l));drawCaption(g);
+ if(m.type==='save'){saveQuiet=!!m.quiet;editedDuringSave=false;const previewCap=capPreviewing?caption:undefined;if(capPreviewing)caption=capBase;dry();if(selection)applySelection(false,'save');syncFrame();saving=true;saveToken=m.token===undefined?null:m.token;const token=saveToken,wasDirty=dirty;const first=animOn()?frames[0].layers:layers;const out=docCanvas(),g=out.getContext('2d');g.imageSmoothingQuality='high';first.forEach(l=>composite(g,l));drawCaption(g);
    // PNG 로 바꾸는 일은 toBlob 으로 브라우저가 따로 한다(2026-10-28) — 1080 장 여러 장을 바꾸는 동안에도 그리는 손이 멈칫하지 않는다.
    // 부르는 순간의 그림을 찍으므로, 아래 png() 를 모두 한꺼번에(기다리기 전에) 불러 저장본이 한 순간의 상태가 되게 한다.
    const outUrl=pngLater(out),met=metrics(out),gif=(m.gif&&(motion||animOn()))?buildLoop(12,false):undefined,cap=caption,mo=motion,act=activeLayerId;if(previewCap!==undefined){caption=previewCap;render();} // 저장본엔 확정된 문구만, 화면엔 미리보기 그대로
@@ -1655,8 +1656,8 @@ async function command(m){try{
  if(m.type==='onion'){onion=m.on!==false;render();state();}
  if(m.type==='frameThumbs'&&animOn()){syncFrame();const size=m.size||64;send({type:'frameThumbs',thumbs:frames.map(f=>({id:f.id,data:flatOf(f.layers,size).toDataURL('image/png')}))});}
  // 번호가 다른 응답(먼저 보낸 저장의 뒤늦은 대답)은 흘려보낸다. 지금 저장의 대답만 상태를 바꾼다.
- if(m.type==='saved'){if(stale(m))return;saving=false;saveToken=null;dirty=false;state();}
- if(m.type==='saveFailed'){if(stale(m))return;saving=false;saveToken=null;state();}
+ if(m.type==='saved'){if(stale(m))return;saving=false;saveToken=null;dirty=editedDuringSave;editedDuringSave=false;state();}
+ if(m.type==='saveFailed'){if(stale(m))return;saving=false;saveToken=null;editedDuringSave=false;state();}
  if(m.type==='probe'){probe=!!m.on;return;}
  if(m.type==='paper'){surface.classList.toggle('paper',!!m.on);return;}
  if(m.type==='analyze'){const i=await image(m.data),c=document.createElement('canvas');const scale=Math.min(1,720/Math.max(i.width,i.height));c.width=Math.max(1,Math.round(i.width*scale));c.height=Math.max(1,Math.round(i.height*scale));c.getContext('2d').drawImage(i,0,0,c.width,c.height);send({type:'analysis',id:m.id,metrics:metrics(c)});}

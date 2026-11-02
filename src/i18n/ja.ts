@@ -1870,4 +1870,6 @@ export const ja: Record<Key, string> = {
   // 움직이기·애니 스튜디오(2026-11-03)
   "studio.small": "キャンバスを小さくしてパネルを広く",
   "studio.big": "キャンバスを大きく表示",
+  // 확대 되돌리기(2026-11-03)
+  "zoom.reset": "100%に",
 };
