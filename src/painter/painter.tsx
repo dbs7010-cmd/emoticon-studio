@@ -19,6 +19,7 @@ import { imageUri } from '../services/storage';
 import { CAPTION_LAYOUTS, CAPTION_STYLES } from '../types';
 import { fontChoices, fontOf } from '../design/font-list';
 import { fontData, fontsFor } from '../design/fonts';
+import { FONT_SAMPLES } from '../design/font-samples';
 import { popularLines } from '../i18n/index';
 import type { BrushSettings, Caption, CaptionLayout, CaptionStyle, LayerTransform, LocalImage, Motion, PainterExport, QA, SavedMotion, Slot } from '../types';
 
@@ -578,6 +579,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [captionFace, setFace] = useState<CaptionStyle>(sessionCaptionFace);
   // 대사 배치(2026-10-28): 한 줄 · 양옆 · 세로 · 말풍선. 고른 즉시 캔버스 글씨에 반영된다.
   const [captionLayout, setCaptionLayout] = useState<CaptionLayout>('line');
+  // 문구 판의 탭(2026-11-03): 빈 칸이면 추천 대사부터, 고치는 중이면 글씨부터.
+  const [captionTab, setCaptionTab] = useState<'say' | 'font' | 'color' | 'layout'>('say');
   const setCaptionFace = (next: CaptionStyle) => { sessionCaptionFace = next; setFace(next); };
   // 참고 줄의 두 갈래: 내 사진 / 기본 레퍼런스(관절 인형 — 에셋 들어오기 전에는 준비 중 자리표시).
   const [refSource, setRefSource] = useState<'mine' | 'builtin'>('mine');
@@ -989,6 +992,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     setCaptionDraft(current?.text ?? ''); setCaptionPlace(current?.place ?? 'top');
     if (current?.style) setCaptionFace(current.style);
     setCaptionLayout(current?.layout ?? 'line');
+    setCaptionTab(current?.text ? 'font' : 'say');
     ease(); setDrawRail(false); setRefRail(false); setPanel('caption'); setCaptionOpen(true);
   }
   // 문구 색(45.5차): 지금까지 문구 패널의 동그라미는 '지금 색'을 보여 주기만 했다. 이제 누르면 실제로 바뀐다.
@@ -1768,92 +1772,84 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0702")} onPress={() => { tap('button:선택 적용'); send({ type: 'selectApply' }); }} style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 14, backgroundColor: pressed ? C.accentLine : C.accent, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 15, fontWeight: '800', color: C.accentInk }}>{t("release.s0704")}</Text></Pressable>
           </View>
         </View> : panel === 'color' ? <View testID="색상 패널" style={{ maxHeight: panelRoom(0.38, 0.45) + (typing ? 0 : BASE_H) }}><ColorPanel scrollable={!dropping} color={color} recent={palette} saved={userPalette} view={colorView} onView={setColorView} onPick={pickColor} onEyedrop={startEyedrop} eyedropHandlers={eyedropHandlers} onSave={onSaveUserColor} onForget={onRemoveUserColor} onClose={() => { ease(); setPanel(null); }} /></View>
-        // 문구 창은 글씨 줄이 늘면(추천 대사·색·글씨) 낮은 화면에서 '문구 적용'이 잘렸다 — 창 안을 위아래로 밀 수 있게 한다(2026-10-28).
-        : panel === 'caption' ? <ScrollView keyboardShouldPersistTaps="handled" style={{ backgroundColor: C.paper, maxHeight: panelRoom(0.5), flexGrow: 0 }}>
-          {/* 미확정 변경은 '문구 적용'으로만 확정된다. 닫으면 고치던 글자는 버려지고 화면의 문구는 그대로 남는다.
-              키보드가 올라오면 머리·지우기·아래 버튼을 접고 입력 한 줄(색 · 입력 · 키보드 닫기 · 적용)만 남긴다 —
-              캔버스가 띠로 줄어 고치는 글씨가 잘리던 39차 P2. 입력칸은 같은 자리에 남아 포커스를 잃지 않는다. */}
-          {!typing && <SheetHeader title={t("ui.caption")} closeLabel={t("release.s0706")} onClose={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); }} />}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: typing ? 8 : 16, paddingTop: typing ? 8 : 0, paddingBottom: 8 }}>
-            {/* 지금 색을 보여 주기만 한다(45.10차). 색을 고르는 입구는 아래 '팔레트' 하나 — 같은 일을 하는 자리를 둘 두지 않는다. */}
-            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color, borderWidth: 2, borderColor: '#FFFFFF', ...{ shadowColor: '#000', shadowOpacity: .15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } } }} />
+        // 문구 판(2026-11-03 개편, 대표: 키보드에 가려 색·글씨·배치가 안 보이고 줄이 많아 어디에 뭐가 있는지 모르겠다).
+        // 언제나 세 줄: ① 입력 + 취소·적용 ② 탭(추천 · 글씨 · 색 · 배치) ③ 고른 탭의 한 줄. 키보드가 올라와도 세 줄이 그대로 보이고,
+        // 고르는 즉시 캔버스에 미리 보인다(문구 실시간 반영). 글씨 탭은 실제 폰트 모양 견본 카드로 보여 준다.
+        : panel === 'caption' ? <View testID="문구 판" style={{ backgroundColor: C.paper, paddingTop: 8, paddingBottom: 8, gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12 }}>
             <TextInput accessibilityLabel={t("release.s0707")} value={captionDraft} onChangeText={setCaptionDraft} multiline={false} autoFocus returnKeyType="done" onSubmitEditing={() => applyCaption(captionDraft)} placeholder={t("release.s0708")} placeholderTextColor={C.muted} style={{ flex: 1, fontSize: 17, height: C.tap, paddingVertical: 0, textAlignVertical: 'center', borderRadius: 14, paddingHorizontal: 14, backgroundColor: C.surface2, color: C.ink }} />
-            {/* 360dp 미만에서는 키보드 닫기 아이콘을 두지 않는다 — 입력칸이 70dp 까지 줄어 글자를 쓸 자리가 없었다(45.36-R1).
-                키보드는 안드로이드 뒤로 가기로 닫히고, 닫아도 적용·삭제되지 않는 것은 그대로다(명세 E07). */}
+            {/* 키보드만 내리고 판은 그대로(캔버스를 크게 보며 탭을 고른다). 360dp 미만에서는 입력칸 자리를 위해 두지 않는다(45.36-R1). */}
             {typing && !narrow && <IconButton label={t("release.s0709")} icon="keyboard-close" color={C.muted} size={20} onPress={() => Keyboard.dismiss()} />}
-            {/* 명세 E07: 키보드 바로 위에 취소·적용을 함께 둔다. 키보드를 닫는 것만으로는 적용도 삭제도 되지 않는다. */}
-            {typing && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0710")} onPress={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); }}
-              style={({ pressed }) => ({ minHeight: C.tap, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper, alignItems: 'center', justifyContent: 'center' })}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0706")} onPress={() => { ease(); Keyboard.dismiss(); setPanel(null); setCaptionOpen(false); }}
+              style={({ pressed }) => ({ minHeight: C.tap, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : C.paper, alignItems: 'center', justifyContent: 'center' })}>
               <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>{t("ui.cancel")}</Text>
-            </Pressable>}
-            {typing && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0711")} onPress={() => applyCaption(captionDraft)}
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0711")} onPress={() => applyCaption(captionDraft)}
               style={({ pressed }) => ({ minHeight: C.tap, paddingHorizontal: 16, borderRadius: 14, backgroundColor: pressed ? C.accentLine : C.accent, alignItems: 'center', justifyContent: 'center' })}>
               <Text style={{ fontSize: 15, fontWeight: '800', color: C.accentInk }}>{t("release.s0704")}</Text>
-            </Pressable>}
-          </View>
-          {/* 추천 대사(2026-10-28): 가이드에서 고른 대사가 있으면 그것부터, 없으면 자주 쓰는 대사. 누르면 입력칸에 들어가고 '적용'으로 확정한다. */}
-          <ScrollView testID="추천 대사" horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: typing ? 8 : 16, paddingBottom: 8 }} style={{ flexGrow: 0, flexShrink: 0 }}>
-            {[...new Set([guideExample?.line, ...popularLines()].filter((x): x is string => !!x))].map(x =>
-              <Pressable key={x} accessibilityRole="button" accessibilityLabel={t("say.title") + " " + x} onPress={() => setCaptionDraft(x)}
-                style={({ pressed }) => ({ minHeight: 36, paddingHorizontal: 12, borderRadius: 18, justifyContent: 'center', backgroundColor: pressed ? C.fill : captionDraft.trim() === x ? C.pointSoft : C.surface2 })}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: captionDraft.trim() === x ? C.pointInk : C.ink }}>{x}</Text>
-              </Pressable>)}
-          </ScrollView>
-          {/* 문구 색: 최근 쓴 색을 바로 누르고, 더 고르려면 팔레트로 간다. 고르는 즉시 캔버스의 글씨에 반영된다(45.5차). */}
-          {!typing && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 6 }}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{t("release.s0712")}</Text>
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {[color, ...palette.filter(c => c.toUpperCase() !== color.toUpperCase())].slice(0, 5).map(c =>
-                <Pressable key={c} accessibilityRole="button" accessibilityLabel={t("release.s0713") + " " + c} accessibilityState={{ selected: c.toUpperCase() === color.toUpperCase() }}
-                  onPress={() => setCaptionColor(c)} hitSlop={6}
-                  style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c, borderWidth: c.toUpperCase() === color.toUpperCase() ? 2.5 : 1, borderColor: c.toUpperCase() === color.toUpperCase() ? C.ink : '#17171718' }} />)}
-            </View>
-            <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0714")} accessibilityValue={{ text: t("release.s0572") + " " + color.toUpperCase() }}
-              onPress={() => { ease(); setCaptionOpen(false); setPanel('color'); }}
-              style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? C.fill : C.surface2 })}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{t("release.s0715")}</Text>
             </Pressable>
-          </View>}
-          {/* 글씨체(45.6차): 이름이 아니라 '가' 한 글자로 성격을 보여 준다. 폰트 파일은 새로 넣지 않는다 — 기기에 있는 글꼴을 쓴다. */}
-          {!typing && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{t("release.s0716")}</Text>
-            {/* 2026-11-03: 기기 글꼴 셋 뒤에 손글씨 폰트(지금 앱 언어). 줄이 넘치면 옆으로 민다. 손글씨는 이름만 — 모양은 캔버스 실시간 미리보기로 본다. */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flex: 1 }} contentContainerStyle={{ gap: 6 }}>
+          </View>
+          <View testID="문구 탭" accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 12 }}>
+            {([['say', t('captionTab.say')], ['font', t("release.s0716")], ['color', t("release.s0712")], ['layout', t("release.s0720")]] as const).map(([key, title]) => { const on = captionTab === key;
+              return <Pressable key={key} testID={'문구 탭 ' + key} accessibilityRole="tab" accessibilityLabel={title} accessibilityState={{ selected: on }} onPress={() => setCaptionTab(key)}
+                style={({ pressed }) => ({ flex: 1, minHeight: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, backgroundColor: on ? C.pointSoft : pressed ? C.fill : C.surface2 })}>
+                {key === 'color' && <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: color, borderWidth: 1, borderColor: '#17171730' }} />}
+                <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{title}</Text>
+              </Pressable>; })}
+          </View>
+          <ScrollView testID={'문구 줄 ' + captionTab} horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0 }}
+            contentContainerStyle={{ gap: 6, paddingHorizontal: 12, alignItems: 'center', minHeight: 64 }}>
+            {/* 추천 대사(2026-10-28): 가이드에서 고른 대사가 있으면 그것부터, 없으면 자주 쓰는 대사. 누르면 입력칸에 들어가고 '적용'으로 확정한다. */}
+            {captionTab === 'say' && [...new Set([guideExample?.line, ...popularLines()].filter((x): x is string => !!x))].map(x =>
+              <Pressable key={x} accessibilityRole="button" accessibilityLabel={t("say.title") + " " + x} onPress={() => setCaptionDraft(x)}
+                style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, justifyContent: 'center', backgroundColor: pressed ? C.fill : captionDraft.trim() === x ? C.pointSoft : C.surface2 })}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: captionDraft.trim() === x ? C.pointInk : C.ink }}>{x}</Text>
+              </Pressable>)}
+            {/* 글씨: 기기 글꼴 셋 + 지금 앱 언어의 손글씨(견본 그림). PRO 폰트는 브러시와 같은 규칙. */}
+            {captionTab === 'font' && <>
               {CAPTION_STYLES.map(face => { const on = captionFace === face.key;
                 return <Pressable key={face.key} accessibilityRole="button" accessibilityLabel={t("release.s0717") + " " + face.title} accessibilityState={{ selected: on }}
                   onPress={() => changeCaptionFace(face.key)}
-                  style={({ pressed }) => ({ minWidth: 76, minHeight: 44, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
-                  <Text style={{ fontSize: 17, lineHeight: 22, fontWeight: face.key === 'thick' ? '900' : '700', fontFamily: face.key === 'serif' ? 'serif' : undefined, color: on ? C.ink : C.muted }}>{t("release.s0718")}</Text>
-                  <Text style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{face.title}</Text>
+                  style={({ pressed }) => ({ width: 84, height: 60, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 2, borderWidth: on ? 2 : 0, borderColor: C.point, backgroundColor: on ? C.pointSoft : pressed ? C.fill : C.surface2 })}>
+                  <Text style={{ fontSize: 20, lineHeight: 24, fontWeight: face.key === 'thick' ? '900' : '700', fontFamily: face.key === 'serif' ? 'serif' : undefined, color: C.ink }}>{t("release.s0718")}</Text>
+                  <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{face.title}</Text>
                 </Pressable>; })}
-              {fontChoices(captionFace).map(font => { const on = captionFace === font.key, locked = font.pro && !pro;
+              {fontChoices(captionFace).map(font => { const on = captionFace === font.key;
                 return <Pressable key={font.key} testID={'문구 폰트 ' + font.key} accessibilityRole="button" accessibilityLabel={t("release.s0717") + " " + font.title + (font.pro ? ' PRO' : '')} accessibilityState={{ selected: on }}
                   onPress={() => void pickCaptionFont(font.key)}
-                  style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
-                  <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.ink : locked ? C.muted : C.ink }}>{font.title}</Text>
-                  {font.pro && <ProTag />}
+                  style={({ pressed }) => ({ width: 96, height: 60, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: on ? 2 : 0, borderColor: C.point, backgroundColor: on ? C.pointSoft : pressed ? C.fill : C.surface2 })}>
+                  {FONT_SAMPLES[font.key] ? <Image accessibilityIgnoresInvertColors source={FONT_SAMPLES[font.key]} style={{ width: 84, height: 30, tintColor: C.ink }} resizeMode="contain" />
+                    : <Text style={{ fontSize: 16, color: C.ink }}>{font.title}</Text>}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Text numberOfLines={1} style={{ maxWidth: font.pro ? 56 : 88, fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.muted }}>{font.title}</Text>
+                    {font.pro && <Text style={{ fontSize: 9, fontWeight: '900', color: C.pointInk }}>PRO</Text>}
+                  </View>
                 </Pressable>; })}
-            </ScrollView>
-          </View>}
-          {/* 대사 배치(2026-10-28, 실제 이모티콘 레퍼런스): 한 줄 · 양옆 나눠 쓰기(응 … 응) · 세로 · 말풍선. */}
-          {!typing && <View testID="문구 배치" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{t("release.s0720")}</Text>
-            <View style={{ flex: 1, flexDirection: 'row', gap: 6 }}>
+            </>}
+            {/* 색: 최근 쓴 색을 바로 누르고, 더 고르려면 팔레트로 간다. 고르는 즉시 캔버스의 글씨에 반영된다(45.5차). */}
+            {captionTab === 'color' && <>
+              {[color, ...palette.filter(c => c.toUpperCase() !== color.toUpperCase())].slice(0, 8).map(c =>
+                <Pressable key={c} accessibilityRole="button" accessibilityLabel={t("release.s0713") + " " + c} accessibilityState={{ selected: c.toUpperCase() === color.toUpperCase() }}
+                  onPress={() => setCaptionColor(c)} hitSlop={4}
+                  style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c, borderWidth: c.toUpperCase() === color.toUpperCase() ? 3 : 1, borderColor: c.toUpperCase() === color.toUpperCase() ? C.ink : '#17171718' }} />)}
+              <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0714")} accessibilityValue={{ text: t("release.s0572") + " " + color.toUpperCase() }}
+                onPress={() => { ease(); Keyboard.dismiss(); setCaptionOpen(false); setPanel('color'); }}
+                style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 22, justifyContent: 'center', backgroundColor: pressed ? C.fill : C.surface2 })}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{t("release.s0715")}</Text>
+              </Pressable>
+            </>}
+            {/* 배치(2026-10-28, 실제 이모티콘 레퍼런스): 한 줄 · 양옆 나눠 쓰기(응 … 응) · 세로 · 말풍선. 끝에 문구 지우기. */}
+            {captionTab === 'layout' && <>
               {CAPTION_LAYOUTS.map(lay => { const on = captionLayout === lay.key;
                 return <Pressable key={lay.key} accessibilityRole="button" accessibilityLabel={t("release.s0719") + " " + lay.title} accessibilityState={{ selected: on }}
                   onPress={() => changeCaptionLayout(lay.key)}
-                  style={({ pressed }) => ({ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
-                  <Text style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{lay.title}</Text>
+                  style={({ pressed }) => ({ minWidth: 76, minHeight: 48, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center', borderRadius: 14, borderWidth: on ? 2 : 0, borderColor: C.point, backgroundColor: on ? C.pointSoft : pressed ? C.fill : C.surface2 })}>
+                  <Text style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.pointInk : C.ink }}>{lay.title}</Text>
                 </Pressable>; })}
-            </View>
-          </View>}
-          {!typing && !!(scene.caption?.text) && <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingBottom: 4 }}>
-            <Minor danger title={t("release.s0721")} onPress={() => { setCaptionDraft(''); applyCaption(''); }} />
-          </View>}
-          {!typing && <View style={{ paddingHorizontal: 16, paddingBottom: 10, paddingTop: 6, backgroundColor: C.paper }}>
-            <Action primary title={t("release.s0711")} onPress={() => applyCaption(captionDraft)} />
-          </View>}
-        </ScrollView>
+              {!!(scene.caption?.text) && <Minor danger title={t("release.s0721")} onPress={() => { setCaptionDraft(''); applyCaption(''); }} />}
+            </>}
+          </ScrollView>
+        </View>
 
         // 도형 판(2026-11-03): 모양을 누르면 판이 닫히고 바로 캔버스를 끌어 그린다. 선만/채우기는 판을 닫지 않는다.
         : panel === 'shape' ? <View testID="도형 패널" style={{ backgroundColor: C.paper, paddingBottom: 10 }}>

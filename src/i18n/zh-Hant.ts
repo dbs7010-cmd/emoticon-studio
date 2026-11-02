@@ -1847,4 +1847,6 @@ export const zhHant: Record<Key, string> = {
   // 오픈소스 고지(2026-11-03)
   "oss.title": "開放原始碼授權",
   "oss.fonts": "文字的手寫字型以 SIL Open Font License 1.1 發布。以下列出各字型的著作權與授權全文。",
+  // 문구 판 탭(2026-11-03)
+  "captionTab.say": "推薦",
 };

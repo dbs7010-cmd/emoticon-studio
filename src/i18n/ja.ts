@@ -1847,4 +1847,6 @@ export const ja: Record<Key, string> = {
   // 오픈소스 고지(2026-11-03)
   "oss.title": "オープンソースライセンス",
   "oss.fonts": "文字入れの手書きフォントは SIL Open Font License 1.1 で配布されているフォントです。各フォントの著作権とライセンス全文を下に記載します。",
+  // 문구 판 탭(2026-11-03)
+  "captionTab.say": "おすすめ",
 };

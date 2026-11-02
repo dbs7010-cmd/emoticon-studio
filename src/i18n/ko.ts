@@ -1854,5 +1854,7 @@ export const ko = {
   // 오픈소스 고지(2026-11-03)
   "oss.title": "오픈소스 라이선스",
   "oss.fonts": "문구 손글씨 폰트는 SIL Open Font License 1.1 로 배포된 폰트예요. 각 폰트의 저작권과 라이선스 전문을 아래에 적어요.",
+  // 문구 판 탭(2026-11-03)
+  "captionTab.say": "추천",
 } as const;
 export type Key = keyof typeof ko;

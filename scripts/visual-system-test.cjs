@@ -324,15 +324,16 @@ async function ready() {
   assert.equal(labelled('선 보정').length, 1, '세부 설정으로 들어가면 선 보정이 나온다');
   await press('브러시 닫기');
 
-  // ── 6. 문구: 키보드가 올라오면 입력 한 줄(머리·지우기·큰 적용 버튼 접힘) ──────────────────────
+  // ── 6. 문구(2026-11-03 개편): 키보드가 올라와도 세 줄(입력·닫기·적용 / 탭 / 고른 탭 한 줄)이 그대로 보인다 ─────────
   scene = { ...scene, caption: { text: '고마워', place: 'bottom', color: '#242424' } }; await message(scene);
   await press('문구');
-  assert.equal(labelled('문구 닫기').length, 1, '평소에는 머리와 닫기가 있다');
+  assert.equal(labelled('문구 닫기').length, 1, '닫기는 입력 줄 안에 하나');
   await act(async () => { for (const fn of keyboardListeners.keyboardDidShow || []) fn({ endCoordinates: { height: 320 } }); });
-  assert.equal(labelled('문구 닫기').length, 0, '키보드가 올라오면 머리를 접는다');
-  assert.equal(labelled('문구 지우기').length, 0, '지우기도 접는다');
+  assert.equal(labelled('문구 닫기').length, 1, '키보드가 올라와도 닫기가 그대로');
   assert.equal(labelled('문구 적용').length, 1, '적용은 입력 줄 안에 하나');
   assert.equal(labelled('키보드 닫기').length, 1);
+  for (const tab of ['추천', '글씨', '색', '배치']) assert.equal(tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityRole === 'tab' && n.props.accessibilityLabel === tab).length, 1, tab + ' 탭이 키보드 위에서도 보인다');
+  assert.equal(labelled('문구 지우기').length, 0, '지우기는 배치 탭 안에만');
   const input = tree.root.findAll(n => n.type === 'TextInput' && n.props.accessibilityLabel === '문구 내용')[0];
   assert.ok(input, '입력칸은 같은 자리에 남는다(포커스 유지)');
   await act(async () => { for (const fn of keyboardListeners.keyboardDidHide || []) fn({}); });

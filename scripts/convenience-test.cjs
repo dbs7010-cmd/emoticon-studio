@@ -266,6 +266,8 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   scene = { ...scene, caption: { text: '고마워', place: 'bottom', color: '#242424' } };
   await message(scene);
   await press('문구');
+  // 2026-11-03: 색은 문구 판의 '색' 탭 한 줄에 있다.
+  await act(async () => tree.root.findAll(n => n.type === 'Pressable' && n.props.accessibilityRole === 'tab' && n.props.accessibilityLabel === '색')[0].props.onPress());
   const swatch = tree.root.findAll(n => n.type === 'Pressable' && /^문구 색 #/.test(n.props.accessibilityLabel ?? ''))[0];
   assert.ok(swatch, '문구 자리에서 색을 고를 수 있다');
   await act(async () => swatch.props.onPress());
@@ -481,10 +483,10 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   await ready();
   await press('문구');
   await act(async () => (keyboardListeners.keyboardDidShow || []).forEach(fn => fn({ endCoordinates: { height: 320 } })));
-  assert.equal(labelled('문구 취소').length, 1, '키보드 위에 취소가 있다');
+  assert.equal(labelled('문구 닫기').length, 1, '키보드 위에 취소(닫기)가 있다 — 2026-11-03 입력 줄의 닫기 하나로');
   assert.equal(labelled('문구 적용').length, 1, '키보드 위에 적용이 있다');
   assert.equal(labelled('키보드 닫기').length, 1, '키보드 닫기는 따로 남는다');
-  await press('문구 취소');
+  await press('문구 닫기');
   assert.equal(labelled('문구 적용').length, 0, '취소하면 문구 편집이 닫힌다');
 
   await act(async () => tree.unmount());
