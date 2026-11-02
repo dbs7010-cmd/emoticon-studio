@@ -119,6 +119,20 @@
       "adIdPermission": true,
       "mediaCheck": "115 active files PASS",
       "note": "Owner reported Google Play production release passed (2026-11-02). Kept in prepared; released list holds console-verified uploads."
+    },
+    {
+      "versionCode": 27,
+      "versionName": "1.0.0",
+      "file": "dist/releases/vc27-20261103/emoti-1.0.0-vc27-2d9c04f.aab",
+      "commit": "2d9c04f",
+      "sha256": "c250f0abd358bbcd62fd6a2764df9d932b9c84a133151a3dd718259eaab061f1",
+      "builtAt": "2026-11-03",
+      "status": "ready-not-uploaded",
+      "releaseCheck": "PASS",
+      "manifestVersionCode": 27,
+      "adIdPermission": true,
+      "mediaCheck": "63 lesson videos + 18 caption fonts byte-identical; lesson PNG pixel check not run",
+      "note": "Live caption preview, iPhone marker stroke memory fix, shapes, handwriting fonts, backup list, lesson card, OSS license screen. Device QA pending."
     }
   ]
 }
