@@ -1909,11 +1909,11 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             : undefined} />}
         {drawRail && <View style={{ maxHeight: Math.min(280, coverRoom()) }}>
           <ScrollView scrollEnabled={!layerDragging} showsVerticalScrollIndicator contentContainerStyle={{ paddingBottom: 8 }}>
-            {/* 목록은 scene.layers 차례 그대로다(아래로 갈수록 앞). 그래서 아래로 한 칸 끌면 '앞으로 한 칸'(by +1)이다.
-                엔진은 한 번에 한 칸만 옮기므로 끈 칸 수만큼 한 칸씩 보낸다 — 엔진은 건드리지 않는다. */}
-            <DragList ids={scene.layers.map(l => l.id)} rowH={LAYER_ROW_H}
+            {/* 엔진은 한 번에 한 칸만 옮기므로 끈 칸 수만큼 한 칸씩 보낸다 — 엔진은 건드리지 않는다. */}
+            {/* 2026-11-03(대표): 목록은 그림처럼 위가 앞(위에 그린 레이어), 아래가 뒤다 — 예전에는 거꾸로였다. 그래서 목록에서 아래로 끌면 뒤로(by −1). */}
+            <DragList ids={[...scene.layers].reverse().map(l => l.id)} rowH={LAYER_ROW_H}
               onDragging={on => { setLayerDragging(on); if (on) setLayerMenu(null); }}
-              onMove={(id, steps) => { for (let i = 0; i < Math.abs(steps); i++) send({ type: 'moveLayer', id, by: Math.sign(steps) }); }}
+              onMove={(id, steps) => { for (let i = 0; i < Math.abs(steps); i++) send({ type: 'moveLayer', id, by: -Math.sign(steps) }); }}
               renderRow={(id, index, handle, dragging) => {
               const layer = scene.layers.find(l => l.id === id)!;
               const active = layer.id === scene.activeLayerId, name = layerLabel(layer.name);

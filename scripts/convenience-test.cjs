@@ -336,7 +336,8 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   assert.equal(labelled('앞으로 보내기').length, 0, '맨 앞에서는 더 앞으로 가지 않는다');
   await press('레이어 1 관리');
   // 45.36-R1 G14: 줄 끝 손잡이(≡)를 **손가락으로 끌어서** 차례를 바꾼다. 45.36 에는 접근성 동작만 있어 끌어도 아무 일이 없었다.
-  // 지금 차례는 [그림 2, 그림 1] — 그림 1 은 아래 줄이다. 한 줄 높이(57)만큼 위로 끌면 뒤로 한 칸(by −1).
+  // 2026-11-03(대표): 목록은 위가 앞(위에 그린 레이어), 아래가 뒤. 그림 1 을 앞으로 보냈으므로 그림 1 이 맨 위 줄이다.
+  // 한 줄 높이(57)만큼 아래로 끌면 뒤로 한 칸(by −1), 위로 끌면 앞으로 한 칸(by +1).
   const grip = () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityLabel === '레이어 1 순서 바꾸기')[0];
   assert.ok(grip() && typeof grip().props.onResponderMove === 'function', '손잡이는 끌 수 있다(응답 함수가 붙어 있다)');
   const drag = async dy => {
@@ -346,30 +347,30 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   };
   const moves = () => sent().filter(m => m.type === 'moveLayer').length;
   // 줄 차례를 화면에서 읽는다(접근성 이름 '… 선택' 의 차례).
-  const rowOrder = () => tree.root.findAll(n => n.type === 'Pressable' && / 선택$/.test(n.props.accessibilityLabel ?? '') && /^레이어 \d/.test(n.props.accessibilityLabel)).map(n => n.props.accessibilityLabel.replace(' 선택', ''));
-  assert.deepEqual(rowOrder(), ['레이어 2', '레이어 1'], '지금 차례: 그림 2 가 위, 그림 1 이 아래');
+  const rowOrder = () => tree.root.findAll(n => n.type === 'Pressable' && / 선택$/.test(n.props.accessibilityLabel ?? '') && /^레이어 \d/.test(n.props.accessibilityLabel)).map(n => n.props.accessibilityLabel.replace(/ 선택$/, ''));
+  assert.deepEqual(rowOrder(), ['레이어 1', '레이어 2'], '지금 차례: 앞에 있는 그림 1 이 위, 그림 2 가 아래');
   let movedBefore = moves();
-  await drag(-12);
+  await drag(12);
   assert.equal(moves(), movedBefore, '반 줄도 안 되게 끌면 차례를 바꾸지 않는다');
-  await drag(-57);
+  await drag(57);
   assert.equal(moves(), movedBefore + 1, '한 줄 끌면 한 번 옮긴다');
-  assert.deepEqual(lastCommand('moveLayer'), { type: 'moveLayer', id: 'draw-1', by: -1 }, '위로 끌면 뒤로 한 칸');
+  assert.deepEqual(lastCommand('moveLayer'), { type: 'moveLayer', id: 'draw-1', by: -1 }, '아래로 끌면 뒤로 한 칸');
   // 45.37: 엔진이 새 차례를 돌려주기 전에도 화면은 이미 새 차례다 — 옛 자리로 튀었다 돌아오는 깜빡임이 없다.
-  assert.deepEqual(rowOrder(), ['레이어 1', '레이어 2'], '놓자마자 화면 차례가 바뀐다(엔진 응답 전)');
+  assert.deepEqual(rowOrder(), ['레이어 2', '레이어 1'], '놓자마자 화면 차례가 바뀐다(엔진 응답 전)');
   scene = { ...scene, layers: [scene.layers[1], scene.layers[0]] };
   await message(scene);
-  assert.deepEqual(rowOrder(), ['레이어 1', '레이어 2'], '엔진이 돌려준 차례와 같다');
+  assert.deepEqual(rowOrder(), ['레이어 2', '레이어 1'], '엔진이 돌려준 차례와 같다');
   movedBefore = moves();
-  await drag(-600);
-  assert.equal(moves(), movedBefore, '맨 위 줄은 더 위로 끌리지 않는다');
   await drag(600);
+  assert.equal(moves(), movedBefore, '맨 아래 줄은 더 아래로 끌리지 않는다');
+  await drag(-600);
   assert.equal(moves(), movedBefore + 1, '목록 끝을 넘어 끌어도 갈 수 있는 칸(1)만큼만 옮긴다');
-  assert.deepEqual(lastCommand('moveLayer'), { type: 'moveLayer', id: 'draw-1', by: 1 }, '아래로 끌면 앞으로 한 칸');
+  assert.deepEqual(lastCommand('moveLayer'), { type: 'moveLayer', id: 'draw-1', by: 1 }, '위로 끌면 앞으로 한 칸');
   scene = { ...scene, layers: [scene.layers[1], scene.layers[0]] };
   await message(scene);
   movedBefore = moves();
-  await drag(300);
-  assert.equal(moves(), movedBefore, '맨 아래 줄은 더 아래로 끌리지 않는다');
+  await drag(-300);
+  assert.equal(moves(), movedBefore, '맨 위 줄은 더 위로 끌리지 않는다');
   await press('레이어');
   // ── 15. 45.10 기존 저장본 보존: 장이 여럿인 옛 칸은 그대로 열리고, 부분 움직임이 가리키는 장도 그대로 ──
   await press('그리기 닫기');
