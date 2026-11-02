@@ -37,11 +37,11 @@ function docData(b){if(RES===1||b.width===W)return b.getContext('2d',{willReadFr
  const c=docCanvas(),g=c.getContext('2d',{willReadFrequently:true});g.imageSmoothingQuality='high';g.drawImage(b,0,0,W,H);return g.getImageData(0,0,W,H).data;}
 function setRes(r){r=Math.max(1,Math.min(4,Math.round(Number(r))||1));if(r===RES)return;RES=r;
  canvas.width=W*RES;canvas.height=H*RES;if(RES!==1)ctx.setTransform(RES,0,0,RES,0,0);
- for(const k in paperMasks)delete paperMasks[k];grainMask=null;coarseMask=null;wetShown=null;boilCache.clear();extentCache=null;history=[];future=[];}
+ for(const k in paperMasks)delete paperMasks[k];grainMask=null;coarseMask=null;wetShown=null;clearBoil();extentCache=null;history=[];future=[];}
 function copyOf(b){const c=bitmap();c.getContext('2d').drawImage(b,0,0,W,H);return c;}
 function meta(l){return Object.assign({id:l.id,name:l.name,visible:l.visible,opacity:l.opacity,x:l.x,y:l.y,scale:l.scale,rotation:l.rotation},l.imported?{imported:true}:{});}
 function trace(what,extra){if(!probe)return;send(Object.assign({type:'trace',t:Math.round(performance.now()),what:what,has:!!selection,dx:selection?Math.round(selection.dx):null,dy:selection?Math.round(selection.dy):null},extra||{}));}
-function state(){syncFrame();sweepCopies();send({type:'state',frames:frames?frames.map(f=>({id:f.id,duration:f.duration})):null,frameIdx,onion,undo:history.length>0,redo:future.length>0,dirty,smoothing,captionPicked,picking,preset,brushOpacity,stabilizer,activeHidden:!!(activeDraw()&&!activeDraw().visible),activeLayerId,activeReferenceId,caption:savedCaption(),motion,pivotPick,pivotRole,selection:selection&&{box:selection.box,dx:selection.dx,dy:selection.dy,scale:selection.scale,rot:selection.rot,flip:selection.flip},loop:Number(loopSeconds().toFixed(3)),clipped:motionClips(),playing,layers:layers.map(meta),references:references.map(l=>({...meta(l),path:l.path}))});}
+function state(){syncFrame();sweepCopies();sweepLayers();send({type:'state',frames:frames?frames.map(f=>({id:f.id,duration:f.duration})):null,frameIdx,onion,undo:history.length>0,redo:future.length>0,dirty,smoothing,captionPicked,picking,preset,brushOpacity,stabilizer,activeHidden:!!(activeDraw()&&!activeDraw().visible),activeLayerId,activeReferenceId,caption:savedCaption(),motion,pivotPick,pivotRole,selection:selection&&{box:selection.box,dx:selection.dx,dy:selection.dy,scale:selection.scale,rot:selection.rot,flip:selection.flip},loop:Number(loopSeconds().toFixed(3)),clipped:motionClips(),playing,layers:layers.map(meta),references:references.map(l=>({...meta(l),path:l.path}))});}
 // The words live in the exported picture, not in a separate text tool: one system font, centred,
 // shrunk until it fits, with a light outline so it stays readable over the drawing.
 //
@@ -184,9 +184,13 @@ function snapLayer(l,prev){
 // 아이폰 획 사라짐(2026-11-02, 테스터: 아이폰·마커): WebKit 은 버린 캔버스의 메모리를 GC 전까지 세고, 한도를 넘으면 새 캔버스가 그려지지 않는다.
 // 되돌리기 기록에서 빠진 사본은 바로 0×0 으로 줄여 메모리를 돌려준다. state() 가 매번 정리한다.
 var copies;function keepCopy(c){(copies=copies||new Set()).add(c);return c;}
+// 장(애니메이션)·되돌리기·다시 열기로 버려진 레이어 그림도 바로 0×0 으로 돌려준다(2026-11-03 측정: 24장×2레이어에 1080 캔버스 277개 ≈ 1.3GB).
+// 지금 레이어·참고 그림·모든 장의 레이어에 없는 것만 지운다. 저장 PNG 는 부르는 순간 찍히므로(toBlob) 그 뒤에 지워도 된다.
+var layerSet;function asLayer(b){(layerSet=layerSet||new Set()).add(b);return b;}
+function sweepLayers(){if(!layerSet||!layerSet.size)return;const live=new Set();layers.concat(references).forEach(l=>live.add(l.bitmap));if(frames)frames.forEach(fr=>fr.layers.forEach(l=>live.add(l.bitmap)));for(const b of layerSet)if(!live.has(b)){b.width=0;b.height=0;layerSet.delete(b);}}
 function sweepCopies(){if(!copies||!copies.size)return;const live=new Set();for(const st of history.concat(future))for(const l of st.layers)if(l.copy)live.add(l.copy);for(const c of copies)if(!live.has(c)){c.width=0;c.height=0;copies.delete(c);}}
 function snapshot(){const cap=savedCaption();return {layers:layers.map(l=>snapLayer(l,history[history.length-1])),references:references.map(l=>({...l})),activeLayerId,activeDrawLayerId,activeReferenceId,caption:cap&&{...cap},motion:motion&&JSON.parse(JSON.stringify(motion)),selection:selection&&{...selection,bitmap:copyOf(selection.bitmap)}};}
-function restore(s){trace('restore:before');extentCache=null;layers=s.layers.map(l=>{let b;if(l.copy)b=copyOf(l.copy);else{b=bitmap();b.getContext('2d').putImageData(l.pixels,0,0);}return {...meta(l),bitmap:b};});references=s.references;activeLayerId=s.activeLayerId;activeDrawLayerId=s.activeDrawLayerId||layers[0]?.id||'';activeReferenceId=s.activeReferenceId||null;caption=s.caption||null;motion=s.motion||null;selection=s.selection||null;render();state();trace('restore:after');}
+function restore(s){trace('restore:before');extentCache=null;layers=s.layers.map(l=>{let b;if(l.copy)b=copyOf(l.copy);else{b=bitmap();b.getContext('2d').putImageData(l.pixels,0,0);}return {...meta(l),bitmap:asLayer(b)};});references=s.references;activeLayerId=s.activeLayerId;activeDrawLayerId=s.activeDrawLayerId||layers[0]?.id||'';activeReferenceId=s.activeReferenceId||null;caption=s.caption||null;motion=s.motion||null;selection=s.selection||null;render();state();trace('restore:after');}
 function captionFrom(c,prev){if(!c||!String(c.text||'').trim())return null;const face=typeof c.style==='string'&&/^[a-z0-9]{2,20}$/.test(c.style)?c.style:(prev&&prev.style)||'basic';
  return {...(prev||{}),text:c.text,place:c.place==='top'?'top':'bottom',color:c.color||prev?.color||'#242424',style:face,
   // 대사 배치(2026-10-28)와, 화면이 함께 보낸 자리·크기·회전. 보내지 않은 값은 지금 문구의 것을 그대로 둔다.
@@ -217,18 +221,25 @@ function layersAt(t){return animOn()?frameAtTime(t).layers:layers;}
 // 내보내기 한 장의 길이: 장 시간들의 최대공약수(0.1초 단위). 그래야 장이 바뀌는 순간이 프레임 경계와 맞는다.
 function animStep(){const g=(a,b)=>b?g(b,a%b):a;let d=0;for(const f of frames)d=g(d,Math.max(1,Math.round(f.duration*10)));return Math.max(1,d)/10;}
 function transformMotion(){return !!(motion&&(motion.preset||(motion.steps&&motion.steps.length)||(motion.parts&&motion.parts.length)||motion.alternate||motion.boil));}
-function cloneLayers(src){return src.map(l=>{const b=bitmap();b.getContext('2d').drawImage(l.bitmap,0,0,W,H);return Object.assign({},l,{bitmap:b});});}
-function blankLayers(src){return src.map(l=>Object.assign({},l,{bitmap:bitmap()}));}
+function cloneLayers(src){return src.map(l=>{const b=asLayer(bitmap());b.getContext('2d').drawImage(l.bitmap,0,0,W,H);return Object.assign({},l,{bitmap:b});});}
+function blankLayers(src){return src.map(l=>Object.assign({},l,{bitmap:asLayer(bitmap())}));}
 function flatOf(list,size){if(!size){const c=bitmap(),g=c.getContext('2d');list.forEach(l=>composite(g,l));return c;}const c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d');g.imageSmoothingQuality='high';g.scale(size/W,size/H);list.forEach(l=>composite(g,l));return c;}
 // 앞 장 비춰 보기: 앞 장을 옅은 보라 한 색으로 깐다(지금 장 선과 헷갈리지 않게). 재생 중·첫 장에서는 그리지 않는다.
 function drawOnion(g){
  if(!animOn()||!onion||frameIdx<1||playing)return;
- const c=flatOf(frames[frameIdx-1].layers),cg=c.getContext('2d');
- cg.globalCompositeOperation='source-in';cg.fillStyle='#5B57D9';cg.fillRect(0,0,W,H);
- g.save();g.globalAlpha=.32;g.drawImage(c,0,0,W,H);g.restore();
+ // 앞 장 그림은 그리는 동안 바뀌지 않으므로 한 장에 한 번만 만든다(2026-11-03). 예전에는 획이 움직일 때마다 1080 캔버스를
+ // 새로 만들어(24장 측정 227개 ≈ 1GB) 메모리 한도와 획 끊김의 원인이 됐다. 장·레이어·그림 번호(__rev)가 같으면 다시 쓴다.
+ const prev=frames[frameIdx-1].layers,key=prev.map(l=>l.id+':'+(l.bitmap.__rev||0)+':'+l.visible+':'+l.opacity+':'+l.x+':'+l.y+':'+l.scale+':'+l.rotation).join('|')+'#'+frames[frameIdx-1].id;
+ if(!onionBuf||onionBuf.width!==W*RES){onionBuf=bitmap();onionKey='';}
+ if(onionKey!==key){const cg=onionBuf.getContext('2d');cg.save();cg.setTransform(1,0,0,1,0,0);cg.clearRect(0,0,onionBuf.width,onionBuf.height);cg.restore();
+  prev.forEach(l=>composite(cg,l));cg.save();cg.globalCompositeOperation='source-in';cg.fillStyle='#5B57D9';cg.fillRect(0,0,W,H);cg.restore();onionKey=key;}
+ g.save();g.globalAlpha=.32;g.drawImage(onionBuf,0,0,W,H);g.restore();
 }
-function useFrame(i){syncFrame();frameIdx=Math.max(0,Math.min(frames.length-1,i));layers=frames[frameIdx].layers;if(!layers.some(l=>l.id===activeLayerId))activeLayerId=layers[0]?.id||'';activeDrawLayerId=activeLayerId;history=[];future=[];extentCache=null;boilCache.clear();}
-var boilCache=new Map(),BOIL_FPS=8;
+var onionBuf=null,onionKey='';
+function useFrame(i){syncFrame();frameIdx=Math.max(0,Math.min(frames.length-1,i));layers=frames[frameIdx].layers;if(!layers.some(l=>l.id===activeLayerId))activeLayerId=layers[0]?.id||'';activeDrawLayerId=activeLayerId;history=[];future=[];extentCache=null;clearBoil();}
+var boilCache=new Map(),BOIL_FPS=8,boilMid=null;
+// 떨림 사본을 버릴 때 메모리도 바로 돌려준다(WebKit 은 GC 전까지 캔버스 메모리를 센다).
+function clearBoil(){for(const v of boilCache.values())if(v.out){v.out.width=0;v.out.height=0;}boilCache.clear();}
 function boilSteps(L){return 3*Math.max(1,Math.round(L*BOIL_FPS/3));}
 function boilAt(t){if(!motion||!motion.boil)return null;const L=loopSeconds(),n=boilSteps(L),u=((t/L)%1+1)%1;return Math.floor(u*n)%3;}
 function boiled(l,k){
@@ -236,9 +247,10 @@ function boiled(l,k){
  const amp=[0,1,1.8,2.8][motion.boil]*W/360,band=Math.max(2,Math.round(3*W/360));
  const ph=[[0,1.7],[2.1,4.4],[4.2,.9]][k];
  const wave=(v,a,b)=>amp*(.65*Math.sin(v/(W*.11)+a)+.35*Math.sin(v/(W*.047)+b));
- const mid=bitmap(),mg=mid.getContext('2d');
+ // 중간 버퍼는 하나를 같이 쓰고, 같은 자리의 옛 사본은 새로 만들지 않고 지워서 다시 쓴다(2026-11-03: 재생 4초에 1080 캔버스 36개 → 사본 수만큼).
+ if(!boilMid||boilMid.width!==W*RES)boilMid=bitmap();const mid=boilMid,mg=mid.getContext('2d');mg.save();mg.setTransform(1,0,0,1,0,0);mg.clearRect(0,0,mid.width,mid.height);mg.restore();
  for(let y=0;y<H;y+=band)mg.drawImage(l.bitmap,0,y*RES,W*RES,band*RES,wave(y,ph[0],ph[1]),y,W,band);
- const out=bitmap(),og=out.getContext('2d');
+ const out=c&&c.out&&c.out.width===W*RES?c.out:bitmap(),og=out.getContext('2d');og.save();og.setTransform(1,0,0,1,0,0);og.clearRect(0,0,out.width,out.height);og.restore();
  for(let x=0;x<W;x+=band)og.drawImage(mid,x*RES,0,band*RES,H*RES,x,wave(x,ph[1],ph[0]),band,H);
  boilCache.set(key,{src:l.bitmap,out});return out;
 }
@@ -695,7 +707,7 @@ function inkBox(bitmap){
 // image stack. Colours are counted, not guessed: if a set uses more than the 255 a GIF allows,
 // the least used are merged into their nearest neighbour and that fact is reported.
 function now(){return (typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();}
-function startPlaying(){if(playing)return;playing=true;extentCache=null;boilCache.clear();playStart=now();const step=()=>{if(!playing)return;render((now()-playStart)/1000%loopSeconds());rafId=requestAnimationFrame(step);};rafId=requestAnimationFrame(step);state();}
+function startPlaying(){if(playing)return;playing=true;extentCache=null;clearBoil();playStart=now();const step=()=>{if(!playing)return;render((now()-playStart)/1000%loopSeconds());rafId=requestAnimationFrame(step);};rafId=requestAnimationFrame(step);state();}
 function stopPlaying(){if(!playing)return;playing=false;if(rafId)cancelAnimationFrame(rafId);rafId=null;}
 function quantize(frames){
  // Anything below this alpha becomes the transparent index, which is how a sticker keeps its
@@ -825,7 +837,7 @@ function encodeWebp(frames,delayMs,loops,quality){
 // wantSheets: 공식 도구(WebPAnimator)에 넣을 360x360 PNG 프레임. 컷 하나당 최대 24장이라
 // 다리를 건너오는 양이 크다. 그래서 실제로 필요할 때(내보낼 때)만 만든다.
 function buildLoop(fps,wantSheets){
- boilCache.clear();syncFrame();
+ clearBoil();syncFrame();
  fps=Math.max(6,Math.min(24,fps||12));
  const L=loopSeconds();
  if(animOn()&&!transformMotion())fps=Math.min(24,1/animStep());
@@ -853,7 +865,7 @@ function buildLoop(fps,wantSheets){
 // spec: {w,h,count} — 한 바퀴를 count 장으로 고르게 나눠 W×H 로 그린 뒤 w×h 칸 가운데에 비율대로 줄여 넣는다(투명 바탕).
 // count 가 0 이면 한 바퀴 길이로 정한다(초당 약 12장, 5~20장). still=true 면 첫 장 하나만(탭 그림용).
 function buildLineFrames(spec){
- boilCache.clear();syncFrame();
+ clearBoil();syncFrame();
  const L=loopSeconds(),count=spec.still?1:spec.count>0?Math.max(1,Math.min(20,spec.count|0)):Math.max(5,Math.min(20,Math.round(L*12)));
  // pad: 바깥 여백(px). LINE 일반 스티커는 그림과 테두리 사이 약 10px 를 권한다.
  const pad=Math.max(0,spec.pad|0),k=Math.min((spec.w-2*pad)/W,(spec.h-2*pad)/H),dw=W*k,dh=H*k,ox=(spec.w-dw)/2,oy=(spec.h-dh)/2;
@@ -1461,7 +1473,7 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
 canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
 function pngLater(c){if(!c.toBlob)return Promise.resolve(c.toDataURL('image/png'));return new Promise(res=>c.toBlob(b=>{if(!b){res(c.toDataURL('image/png'));return;}const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>res(c.toDataURL('image/png'));r.readAsDataURL(b);},'image/png'));}
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('이미지를 열 수 없습니다.'));i.src=src;});}
-async function loadLayer(l){const b=bitmap();let fit=null;if(l.data){const i=await image(l.data),scale=Math.min(W/i.width,H/i.height),w=i.width*scale,h=i.height*scale;fit={x:(W-w)/2,y:(H-h)/2,w,h};b.getContext('2d').drawImage(i,fit.x,fit.y,w,h);}const out={...defaults(l.id,l.name),...l,bitmap:b,data:undefined};if(fit)Object.defineProperty(out,'fit',{value:fit,enumerable:false});return out;}
+async function loadLayer(l){const b=bitmap();let fit=null;if(l.data){const i=await image(l.data),scale=Math.min(W/i.width,H/i.height),w=i.width*scale,h=i.height*scale;fit={x:(W-w)/2,y:(H-h)/2,w,h};b.getContext('2d').drawImage(i,fit.x,fit.y,w,h);}const out={...defaults(l.id,l.name),...l,bitmap:asLayer(b),data:undefined};if(fit)Object.defineProperty(out,'fit',{value:fit,enumerable:false});return out;}
 function metrics(c){const g=c.getContext('2d',{willReadFrequently:true}),w=c.width,h=c.height,d=g.getImageData(0,0,w,h).data;let n=0,xs=0,ys=0,minX=w,minY=h,maxX=0,maxY=0,r=0,green=0,b=0,transparent=false;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=(y*w+x)*4;if(d[k+3]<255)transparent=true;if(d[k+3]>16){n++;xs+=x;ys+=y;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);r+=d[k];green+=d[k+1];b+=d[k+2];}}return {coverage:n/(w*h),centerX:n?xs/n/w:.5,centerY:n?ys/n/h:.5,width:n?(maxX-minX+1)/w:0,height:n?(maxY-minY+1)/h:0,color:n?[r/n/255,green/n/255,b/n/255]:[0,0,0],transparent};}
 async function command(m){try{
  // 조용한 자동저장이 도는 동안에도 **다음 획의 준비**는 받아야 한다. 아래 명령은 그림(레이어 비트맵)을
@@ -1523,7 +1535,7 @@ async function command(m){try{
    if(!src){}
    else if(layers.length>=4){send({type:'error',message:'그림은 4장까지예요. 한 장을 지우고 다시 해 주세요.'});}
    else{checkpoint();const id=nextLayerId();
-    const copy={...defaults(id,layerName(id)),...(src.imported?{imported:true}:{}),bitmap:copyOf(src.bitmap)};
+    const copy={...defaults(id,layerName(id)),...(src.imported?{imported:true}:{}),bitmap:asLayer(copyOf(src.bitmap))};
     layers.push(copy);selectDrawLayer(id);dirty=true;render();
     send({type:'duplicated',id});state();}
  }
@@ -1538,7 +1550,7 @@ async function command(m){try{
  }
  if(m.type==='addLayer'){if(layers.length<4){checkpoint();
    const wanted=typeof m.id==='string'&&m.id&&!layers.some(l=>l.id===m.id)?m.id:nextLayerId();
-   const l={...defaults(wanted,wanted===m.id&&m.name?m.name:layerName(wanted)),bitmap:bitmap()};
+   const l={...defaults(wanted,wanted===m.id&&m.name?m.name:layerName(wanted)),bitmap:asLayer(bitmap())};
    layers.push(l);selectDrawLayer(l.id);render();state();}}
  if(m.type==='moveLayer'){
    const i=layers.findIndex(l=>l.id===m.id);
@@ -1614,7 +1626,7 @@ async function command(m){try{
  }
  if(m.type==='scaleAll'){if(scaleAll(Number(m.factor),!!m.withCaption))dirty=true;render(playing?(now()-playStart)/1000:undefined);state();send({type:'scaled',factor:Number(m.factor)});}
  if(m.type==='fitMotion'){const f=fitMotion();if(f>0&&f<1)dirty=true;render(playing?(now()-playStart)/1000:undefined);state();send({type:'fitted',factor:f});}
- if(m.type==='motion'){checkpoint();motion=m.motion||null;boilCache.clear();dirty=true;extentCache=null;if(!motion)stopPlaying();render(playing?(now()-playStart)/1000:undefined);state();}
+ if(m.type==='motion'){checkpoint();motion=m.motion||null;clearBoil();dirty=true;extentCache=null;if(!motion)stopPlaying();render(playing?(now()-playStart)/1000:undefined);state();}
  if(m.type==='play'){startPlaying();}
  if(m.type==='stop'){stopPlaying();render();state();}
  if(m.type==='lineFrames'){const was=playing;stopPlaying();send({type:'lineFrames',id:m.id,line:buildLineFrames(m.spec)});if(was)startPlaying();else{render();state();}}

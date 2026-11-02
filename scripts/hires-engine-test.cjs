@@ -207,6 +207,28 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
       assert.ok(await alphaAt(.6 * 360, .9 * 360) > 200, '마커 뒤 펜 획은 진하게 그대로');
     }
 
+    // 8-3b) 애니메이션·떨림 메모리(2026-11-03): 앞 장 비춰 보기는 한 장만 만들어 다시 쓰고, 떨림 사본·버려진 레이어는 바로 반납한다.
+    //       (수정 전 24장×2레이어 측정 1080 캔버스 277개 ≈ 1.3GB → 51개)
+    {
+      await cmd({ type: 'init', res: 3, layers: [{ id: 'draw-1', name: '그림 1' }, { id: 'draw-2', name: '그림 2' }], activeLayerId: 'draw-1', penWidth: 6, color: '#000000', brush: { preset: null, opacity: 1, stabilizer: 'light', smoothing: false } });
+      await page.waitForTimeout(100);
+      await cmd({ type: 'tool', tool: 'pen' });
+      await page.evaluate(() => { window.__made = window.__made || []; });
+      const big = () => page.evaluate(() => window.__made.filter(c => c.width >= 1000).length);
+      await cmd({ type: 'animStart' });
+      for (let i = 0; i < 6; i++) { await cmd({ type: 'frameAdd' }); await cmd({ type: 'onion', on: true }); await stroke(line(.1, .1 + i * .1, .8, .15 + i * .1, 6), 2); }
+      const animBig = await big();
+      assert.ok(animBig <= 8 * 2 + 24 + 6, '8장×2레이어 + 되돌리기 상한 안(' + animBig + ')');
+      await cmd({ type: 'animOff' });
+      await cmd({ type: 'motion', motion: { version: 1, preset: 'bounce', speed: .5, strength: .5, boil: 2 } });
+      await cmd({ type: 'play' }); await page.waitForTimeout(1500); await cmd({ type: 'stop' });
+      await cmd({ type: 'motion', motion: { version: 1, preset: 'bounce', speed: .6, strength: .5, boil: 3 } });
+      await cmd({ type: 'play' }); await page.waitForTimeout(1500); await cmd({ type: 'stop' });
+      const boilBig = await big();
+      assert.ok(boilBig <= 2 + 24 + 7 + 6, '떨림을 바꿔 다시 재생해도 사본은 3장×레이어 + 버퍼 1개(' + boilBig + ')');
+      await cmd({ type: 'motion', motion: null });
+    }
+
     // 8-4) 도형(2026-11-03): 끈 상자대로 지금 색·굵기로 찍히고, 되돌리기 한 번이면 빠진다. 톡 누르면 가운데 크기.
     {
       await cmd({ type: 'init', res: 3, layers: [{ id: 'draw-1', name: '그림 1' }], activeLayerId: 'draw-1', penWidth: 6, color: '#E04040', brush: { preset: null, opacity: 1, stabilizer: 'light', smoothing: false } });
