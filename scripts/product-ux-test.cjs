@@ -166,7 +166,13 @@ const saved = async (dirty = true) => {
   assert.equal(ranges('진하기').length, 0, '진하기는 처음에 접혀 있다');
   await press('세부 설정');
   await nudge('진하기', 'decrement', 4);
-  await press('보정 강');
+  // 2026-11-03: 선 보정·필압은 단계 버튼이 아니라 0~100 막대다.
+  await nudge('선 보정', 'increment', 6);
+  assert.ok(lastCommand('brushSettings').stabAmount > 35, '선 보정 막대가 엔진에 연속값으로 간다');
+  await nudge('필압 세기', 'decrement', 4);
+  assert.ok(lastCommand('brushSettings').pressure < 100, '필압 세기도 엔진에 간다');
+  await nudge('필압 곡선', 'increment', 2);
+  assert.ok(lastCommand('brushSettings').pressureCurve > 0, '필압 곡선도 엔진에 간다');
   noPaywall('브러시 설정(진하기·보정)');
   collect();
   // 45.35 §4: 도구 창을 열고 닫아도 **캔버스와 아래 줄의 높이는 그대로다**. 브러시 창은 화면 전체를
@@ -347,9 +353,9 @@ const saved = async (dirty = true) => {
   assert.ok(afterInit().some(m => m.type === 'brushSettings' && m.preset === 'pencil2'), '새 칸: 선 종류(연필) 유지');
   assert.ok(afterInit().some(m => m.type === 'tool' && m.tool === 'eraser'), '새 칸: 고른 도구(지우개) 유지');
   assert.ok(labelled('지우개')[0].props.accessibilityState.selected, '새 칸: 도구 줄도 지우개');
-  assert.equal(lastCommand('brushSettings').stabilizer, 'strong', '새 칸: 선 보정 유지');
+  assert.ok(lastCommand('brushSettings').stabAmount > 35, '새 칸: 선 보정 유지');
   const onDisk = loadStore().store.projects[0].brush;
-  assert.deepEqual([onDisk.preset, onDisk.width, onDisk.eraserWidth, onDisk.stabilizer], ['pencil2', 24, 40, 'strong'], '설정은 세트에 저장된다');
+  assert.deepEqual([onDisk.preset, onDisk.width, onDisk.eraserWidth, onDisk.stabAmount > 35, onDisk.pressure < 100, onDisk.pressureCurve > 0], ['pencil2', 24, 40, true, true, true], '설정은 세트에 저장된다');
 
   // 빈 칸에서 이전 그림으로 시작: 한 번 누르면 된다(비어 있는 칸이라 확인창 없음).
   assert.equal(labelled('이전 칸 그림으로 시작').length, 1, '빈 다음 칸이 이전 칸 그림으로 시작을 제안한다');
@@ -437,7 +443,7 @@ const saved = async (dirty = true) => {
   init = await ready();
   assert.equal(init.penWidth, 24, '재시작 뒤에도 굵기 유지');
   assert.ok(afterInit().some(m => m.type === 'brushSettings' && m.preset === 'pencil2'), '재시작 뒤에도 선 종류 유지');
-  assert.equal(lastCommand('brushSettings').stabilizer, 'strong', '재시작 뒤에도 선 보정 유지');
+  assert.ok(lastCommand('brushSettings').stabAmount > 35 && lastCommand('brushSettings').pressureCurve > 0, '재시작 뒤에도 선 보정·필압 곡선 유지');
   // 짧은 화면(캔버스 영역 360×353): 굵기 조절은 캔버스 안에 들어가고, 움직이기 패널이 캔버스를 절반 넘게 덮지 않는다.
   const area = tree.root.findAll(n => n.type === 'View' && n.props.testID === '캔버스 영역')[0];
   await act(async () => area.props.onLayout({ nativeEvent: { layout: { width: 360, height: 353 } } }));

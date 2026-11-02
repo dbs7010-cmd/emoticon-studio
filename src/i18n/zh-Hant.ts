@@ -1872,4 +1872,12 @@ export const zhHant: Record<Key, string> = {
   "studio.big": "放大畫布",
   // 확대 되돌리기(2026-11-03)
   "zoom.reset": "回到 100%",
+  // 붓 세부 조절(2026-11-03)
+  "brushFine.off": "關閉",
+  "brushFine.pressure": "筆壓強度",
+  "brushFine.curve": "筆壓曲線",
+  "brushFine.soft": "輕按也變粗",
+  "brushFine.hard": "用力才變粗",
+  "brushFine.even": "標準",
+  "brushFine.note": "筆壓只在使用 S Pen、Apple Pencil 時有效。線條修正設為 0 時，手的抖動也會保留。",
 };

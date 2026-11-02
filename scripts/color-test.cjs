@@ -205,10 +205,11 @@ async function openPainter() {
   await nudge('진하기', 'decrement', 50);
   assert.equal(brushCmd().opacity, .5, '브러시 진하기 50%');
   assert.ok(!(loadStore().store.projects[0].brush?.opacity === .5), '진하기를 끄는 동안에는 매번 저장하지 않는다');
-  await press('보정 강');
-  assert.deepEqual([brushCmd().stabilizer, brushCmd().smoothing], ['strong', true], '선 보정 강');
+  // 2026-11-03: 선 보정은 0~100 막대. 35(약)에서 55 올리면 90(예전 강).
+  await nudge('선 보정', 'increment', 55);
+  assert.deepEqual([brushCmd().stabilizer, brushCmd().smoothing, brushCmd().stabAmount], ['strong', true, 90], '선 보정 90');
   await sleep(800);
-  assert.deepEqual(loadStore().store.projects[0].brush, { preset: 'crayon', opacity: .5, stabilizer: 'strong' }, '브러시 설정이 프로젝트에 저장된다');
+  assert.deepEqual(loadStore().store.projects[0].brush, { preset: 'crayon', opacity: .5, stabilizer: 'strong', stabAmount: 90 }, '브러시 설정이 프로젝트에 저장된다');
   await press('브러시 닫기');
   // 45.28: 지금 쓰는 브러시는 빠른 선택 줄에서 노랑으로 읽힌다 — 도구 줄 아이콘이 대신 말하지 않는다.
   {
@@ -266,13 +267,11 @@ async function openPainter() {
   assert.equal(range('진하기').length, 1, '무료: 세부 설정을 펼치면 진하기 막대');
   await nudge('진하기', 'increment', 10);
   assert.equal(brushCmd().opacity, .6, '무료: 진하기를 바꾼다');
-  await press('보정 중');
-  assert.equal(brushCmd().stabilizer, 'medium', '무료: 선 보정 중');
-  await press('선 보정');
-  assert.equal(brushCmd().smoothing, false, '무료: 선 보정 끄기');
-  assert.equal(labelled('보정 약').length, 0, '꺼져 있으면 단계는 숨는다');
-  await press('선 보정');
-  assert.equal(brushCmd().smoothing, true, '무료: 다시 켜기');
+  // 선 보정 막대: 0 이면 끔, 올리면 다시 켜진다(무료).
+  await nudge('선 보정', 'decrement', 100);
+  assert.deepEqual([brushCmd().smoothing, brushCmd().stabAmount], [false, 0], '무료: 선 보정 끄기');
+  await nudge('선 보정', 'increment', 65);
+  assert.deepEqual([brushCmd().smoothing, brushCmd().stabilizer], [true, 'medium'], '무료: 다시 켜고 중간 세기');
   await press('브러시 닫기');
   await press('색');
   // 패널은 승인 보드대로 SV 사각 + 색상 막대로 열린다. 기본 색 견본 격자는 '팔레트' 갈래에 그대로 있다.

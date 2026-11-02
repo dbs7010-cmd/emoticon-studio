@@ -118,7 +118,10 @@ export type BrushSettings = { preset?: 'ink' | 'soft' | 'grain' | 'marker' | 'ca
   // 45.31(무료 10 + PRO 20). 위 이름은 하나도 지우지 않는다 — 저장된 작품이 그대로 그려져야 한다.
   | 'inknatural' | 'brushpen2' | 'pencil2' | 'colorpencil' | 'opaque' | 'marker2' | 'flat'
   | 'inkrough' | 'bristle' | 'ballpen' | 'pastel' | 'charcoal' | 'pencilside' | 'grainshade'
-  | 'pointil' | 'spray' | 'dryflat' | 'wash' | 'wateredge' | 'oilpastel' | 'parallelpen' | 'glowpen'; opacity?: number; stabilizer?: 'off' | 'light' | 'medium' | 'strong'; base?: 'pen' | 'brush' | 'pencil'; width?: number; eraserWidth?: number };
+  | 'pointil' | 'spray' | 'dryflat' | 'wash' | 'wateredge' | 'oilpastel' | 'parallelpen' | 'glowpen'; opacity?: number; stabilizer?: 'off' | 'light' | 'medium' | 'strong';
+  // 세부 조절(2026-11-03, 대표: 약하게 해도 보정이 들어간다 · 다른 앱처럼 세밀하게): 선 보정 0~100(0 = 끔), 필압 세기 0~100, 필압 곡선 −50~50.
+  // 없으면 예전 값(선 보정은 stabilizer 단계, 필압 100, 곡선 0)과 같다.
+  stabAmount?: number; pressure?: number; pressureCurve?: number; base?: 'pen' | 'brush' | 'pencil'; width?: number; eraserWidth?: number };
 // Only a store receipt may set this. `source` exists so a hand written file cannot claim PRO.
 export type Entitlement = {
   // 라이선스 테스터·내부 테스트 구매로 열린 이용권. 화면이 그렇게 말하기 위한 표시다.

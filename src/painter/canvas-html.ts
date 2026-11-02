@@ -3,13 +3,16 @@ import { MOTION_MATH_JS, LONG_MOTION_PRESETS, ENTRANCE_REST, ENTRANCE_EXIT } fro
 
 // Local-only Painter engine. Reference images are preview layers and never enter final export.
 export const canvasHtml = `<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>
-*{box-sizing:border-box}body{margin:0;background:#F4F4F5;font-family:system-ui;overflow:hidden}#viewport{height:100vh;overflow:auto;touch-action:none;overscroll-behavior:none}#surface{position:relative;background-color:#FFFFFF;margin:auto}#surface.paper{background-color:#FFFFFF;background-image:radial-gradient(#00000006 1px,transparent 1px);background-size:9px 9px}canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+*{box-sizing:border-box}body{margin:0;background:#F4F4F5;font-family:system-ui;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}#viewport{height:100vh;overflow:auto;touch-action:none;overscroll-behavior:none}#surface{position:relative;background-color:#FFFFFF;margin:auto}#surface.paper{background-color:#FFFFFF;background-image:radial-gradient(#00000006 1px,transparent 1px);background-size:9px 9px}canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 </style></head><body><div id="viewport"><div id="surface"><canvas id="drawing" width="${SPEC.width}" height="${SPEC.height}"></canvas></div></div><script>
 (function(){
 const canvas=document.getElementById('drawing'),surface=document.getElementById('surface'),viewport=document.getElementById('viewport'),ctx=canvas.getContext('2d');   // 화면용 — 픽셀을 읽지 않는다. willReadFrequently 는 GPU 그리기를 꺼서 뺐다(2026-10-28)
 const W=canvas.width,H=canvas.height;
 let tool='pen',brush='pen',color='#242424',penWidth=5,eraserWidth=20,zoom=1,active=false,last=null,pointer=null,history=[],future=[],dirty=false,loading=false,saving=false,layers=[],references=[],activeLayerId='draw-1',activeDrawLayerId='draw-1',activeReferenceId=null,strokePending=false,pendingFill=null,steady=null,caption=null,selection=null,marquee=null,dragging=null,grabbing=null,focusLayerId=null,pivotPick=null,pivotRole='pivot',motion=null,playing=false,playStart=0,rafId=null,smoothing=true,captionPicked=false,captionDrag=null,captionHandle=null,captionDismiss=false,probe=false,capBase=null,capPreviewing=false,shapeKind='rect',shapeFill=false,shapeDrag=null;
 const touches=new Map();let multi=null,suppressDraw=false;
+// S펜·애플펜슬(2026-11-03): 펜을 쓴 지 1분 안에는 손가락·손바닥이 선을 긋지 않는다(두 손가락 확대·되돌리기는 그대로).
+// 펜으로 긋는 중에 손바닥이 닿아도 그 선을 지우지 않고, 손가락으로 긋던 선은 펜이 닿으면 펜에 자리를 내준다.
+let penAt=0,strokeType=null;const penRecent=()=>penAt>0&&Date.now()-penAt<60000;
 // 저장 요청 번호. 화면이 보낸 번호를 그대로 돌려주고, 그 번호의 응답만 받는다 — 늦게 온 응답이 다음 저장을 끝내 버리지 않게.
 let saveToken=null;
 function send(m){window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify(m));}
@@ -442,24 +445,32 @@ function curveTo(l,p){
  curveMid=m;curveCtl=p;}
 function curveFlush(l){if(l&&curveMid&&curveCtl&&Math.hypot(curveCtl.x-curveMid.x,curveCtl.y-curveMid.y)>.01)inkSegment(l,curveMid,curveCtl);curveMid=null;curveCtl=null;}
 const stamp=e=>Number.isFinite(e&&e.timeStamp)&&e.timeStamp>0?e.timeStamp:(typeof performance!=='undefined'?performance.now():Date.now());
-function stabilize(raw,ts){const S=STAB[stabilizer]||STAB.light,dt=Math.max(1,Math.min(100,ts-euro.t))/1000;euro.t=ts;
+// 선 보정 0~100(2026-11-03). 35·65·90 이 예전 약·중·강과 같고, 35 아래는 빠르게 풀려 1 이면 거의 손 그대로다.
+function stabParams(){if(stabAmt===null)return STAB[stabilizer]||STAB.light;const t=Math.max(1,Math.min(100,stabAmt));
+ return {min:t<35?2*Math.pow(15,(35-t)/35):2*Math.pow(2,-(t-35)/30),beta:Math.max(.02,.0517-.000333*t)};}
+function stabilize(raw,ts){const S=stabParams(),dt=Math.max(1,Math.min(100,ts-euro.t))/1000;euro.t=ts;
  const al=fc=>1/(1+1/(2*Math.PI*fc*dt)),ad=al(.5);
  euro.dx+=ad*((raw.x-euro.x)/dt-euro.dx);euro.dy+=ad*((raw.y-euro.y)/dt-euro.dy);euro.x=raw.x;euro.y=raw.y;
  const a=al(S.min+S.beta*Math.hypot(euro.dx,euro.dy));
  return {x:steady.x+(raw.x-steady.x)*a,y:steady.y+(raw.y-steady.y)*a};}
-let preset=null,brushOpacity=1,stabilizer='light',strokeLen=0,lastRaw=null,lastPressure=null;
+let preset=null,brushOpacity=1,stabilizer='light',stabAmt=null,pressureK=1,pressureGamma=1,strokeLen=0,lastRaw=null,lastPressure=null;
 const PENCIL_ALPHA=.55;
-function applyBrush(m){preset=m.preset&&PRESETS[m.preset]?m.preset:null;const o=Number(m.opacity);brushOpacity=Number.isFinite(o)?Math.max(.05,Math.min(1,o)):1;stabilizer=STAB[m.stabilizer]?m.stabilizer:'light';if(typeof m.smoothing==='boolean')smoothing=m.smoothing;if(typeof m.pressure==='boolean')pressureOn=m.pressure;}
+function applyBrush(m){preset=m.preset&&PRESETS[m.preset]?m.preset:null;const o=Number(m.opacity);brushOpacity=Number.isFinite(o)?Math.max(.05,Math.min(1,o)):1;stabilizer=STAB[m.stabilizer]?m.stabilizer:'light';if(typeof m.smoothing==='boolean')smoothing=m.smoothing;if(typeof m.pressure==='boolean')pressureOn=m.pressure;
+ const sa=Number(m.stabAmount);if(m.stabAmount!=null&&Number.isFinite(sa)){stabAmt=Math.max(0,Math.min(100,sa));if(stabAmt<=0)smoothing=false;}
+ if(typeof m.pressure==='number'&&Number.isFinite(m.pressure))pressureK=Math.max(0,Math.min(1,m.pressure/100));
+ const pc=Number(m.pressureCurve);if(m.pressureCurve!=null&&Number.isFinite(pc))pressureGamma=Math.pow(2,Math.max(-50,Math.min(50,pc))/50);}
 // 필압 자리. 스타일러스(pointerType 'pen')의 0~1 값만 받는다. 지금 프리셋에는 pressure 반응이 없어 항상 기본값을 돌려준다 —
 // 손가락·마우스의 체감은 바뀌지 않는다. 0·undefined·범위 밖 값은 없는 것으로 본다.
 function validPressure(p){return Number.isFinite(p)&&p>0&&p<=1?p:null;}
+// 필압 곡선: 음수 = 살살 눌러도 굵게, 양수 = 꾹 눌러야 굵게.
+function curved(p){return pressureGamma===1?p:Math.pow(p,pressureGamma);}
 function penPressure(e){return e&&e.pointerType==='pen'?validPressure(e.pressure):null;}
 // S펜 필압(2026-10-28): 스타일러스일 때만 굵기가 누르는 힘을 따른다(보통 힘 ≈ 정한 굵기, 0.25~1.5배). 손가락·마우스는 그대로.
 // 획 전체를 다시 긋는 브러시(테두리·평행선)는 굵기가 획 전체에서 같아야 해 제외한다. pressure:false 로 끌 수 있다.
 let pressureOn=true;
-function pressureScale(pressure,settings){const p=validPressure(pressure);if(p===null||!pressureOn||(settings&&(settings.outline||settings.repath)))return 1;return Math.max(.25,Math.min(1.5,.5+p));}
+function pressureScale(pressure,settings){const p=validPressure(pressure);if(p===null||!pressureOn||pressureK<=0||(settings&&(settings.outline||settings.repath)))return 1;return Math.max(.25,Math.min(1.5,1+pressureK*(curved(p)-.5)));}
 function computeBrushWidth(base,pressure,settings){return base*pressureScale(pressure,settings);}
-function computeBrushAlpha(base,pressure,settings){const p=validPressure(pressure);if(p===null||!settings||!settings.pressure)return base;return base*Math.max(.1,Math.min(1,p*1.25));}
+function computeBrushAlpha(base,pressure,settings){const p=validPressure(pressure);if(p===null||!settings||!settings.pressure||!pressureOn||pressureK<=0)return base;return base*Math.max(.1,Math.min(1,1-pressureK+pressureK*curved(p)*1.25));}
 function activePreset(){return liveTool()!=='eraser'&&preset?PRESETS[preset]:null;}
 function solid(hex){const p=rgba(hex);return '#'+[p[0],p[1],p[2]].map(n=>n.toString(16).padStart(2,'0')).join('');}
 function css(hex){const p=rgba(hex);return p[3]>=255?solid(hex):'rgba('+p[0]+','+p[1]+','+p[2]+','+(p[3]/255).toFixed(3)+')';}
@@ -1156,9 +1167,10 @@ canvas.addEventListener('pointerdown',e=>{
  if(loading||(saving&&!saveQuiet))return;
  if(e.pointerType==='touch'){
    touches.set(e.pointerId,touchPoint(e));
-   if(touches.size>=2){e.preventDefault();pendingFill=null;pointer=null;cancelStrokeForGesture();beginMulti();return;}
+   if(touches.size>=2){if(active&&strokeType==='pen')return;e.preventDefault();pendingFill=null;pointer=null;cancelStrokeForGesture();beginMulti();return;}
    if(suppressDraw)return;
  }
+ if(e.pointerType==='pen'){penAt=Date.now();if(active&&strokeType!=='pen')cancelStrokeForGesture();}
  if(active)return;
  // 스포이드: 보이는 그림(참고·그림·문구)에서 한 점의 색을 읽는다. 선택 점선 같은 화면 표시는 섞지 않는다. 숨긴 그림을 골라 두었어도 막지 않는다.
  if(picking){e.preventDefault();const p0=point(e),sx=Math.max(0,Math.min(W-1,Math.floor(p0.x))),sy=Math.max(0,Math.min(H-1,Math.floor(p0.y)));const out=bitmap(),pg=out.getContext('2d',{willReadFrequently:true});references.forEach(r=>composite(pg,r));layers.forEach(x=>composite(pg,x));drawCaption(pg);const px=pickAt(pg,sx,sy);picking=false;send({type:'picked',color:px[3]<8?null:'#'+[px[0],px[1],px[2]].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase(),x:sx,y:sy});state();return;}
@@ -1172,6 +1184,7 @@ canvas.addEventListener('pointerdown',e=>{
    captionPicked=false;captionDismiss=true;render();state();return;
   }
  }
+ if(e.pointerType==='touch'&&!pivotPick&&penRecent())return;
  const l=activeDraw();
  if(!l||!l.visible){if(l)send({type:'blocked',reason:'hidden',id:l.id,name:l.name});return;}
  e.preventDefault();canvas.setPointerCapture(e.pointerId);pointer=e.pointerId;
@@ -1194,7 +1207,7 @@ canvas.addEventListener('pointerdown',e=>{
    if(inside){dragging={from:p0,dx:selection.dx,dy:selection.dy};return;}
    applySelection(false,'pointerdown-outside');}
   marquee={x0:p0.x,y0:p0.y,x1:p0.x,y1:p0.y};render();return;}
- usedColors.add(solid(color));checkpoint(true);strokePending=true;active=true;last=point(e);steady=last;curveMid=null;curveCtl=null;euro={t:stamp(e),x:last.x,y:last.y,dx:0,dy:0};
+ usedColors.add(solid(color));checkpoint(true);strokePending=true;active=true;strokeType=e.pointerType;last=point(e);steady=last;curveMid=null;curveCtl=null;euro={t:stamp(e),x:last.x,y:last.y,dx:0,dy:0};
  strokeTool=tool;                      // 이 획은 끝까지 이 도구로 그린다
  const P0=activePreset();lastPressure=penPressure(e);strokeLen=0;lastRaw=last;strokePath=[];
  strokeSeed=(Date.now()^Math.round(last.x*7919)^Math.round(last.y*104729))>>>0;resetRand();strokeSpeed=0;lastMoveAt=stamp(e);

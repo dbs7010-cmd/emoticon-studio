@@ -1879,5 +1879,13 @@ export const ko = {
   "studio.big": "캔버스 크게 보기",
   // 확대 되돌리기(2026-11-03)
   "zoom.reset": "100%로",
+  // 붓 세부 조절(2026-11-03)
+  "brushFine.off": "끔",
+  "brushFine.pressure": "필압 세기",
+  "brushFine.curve": "필압 곡선",
+  "brushFine.soft": "살살 눌러도 굵게",
+  "brushFine.hard": "꾹 눌러야 굵게",
+  "brushFine.even": "보통",
+  "brushFine.note": "필압은 S펜·애플펜슬로 그릴 때만 쓰여요. 선 보정을 0으로 두면 손 떨림도 그대로 남아요.",
 } as const;
 export type Key = keyof typeof ko;

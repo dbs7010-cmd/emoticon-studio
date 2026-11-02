@@ -258,7 +258,7 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
     // 이미 고른 카드를 다시 누르면 세부 설정이 열린다.
     await press('연필');
     assert.equal(byTestID('브러시 목록').length, 1, '고른 카드를 다시 누르면 설정이 열린다');
-    assert.equal(labelled('선 보정').length, 1, '세부 설정이 펼쳐져 있다');
+    assert.equal(tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '선 보정').length, 1, '세부 설정이 펼쳐져 있다');
     await press('브러시 닫기');
   }
 

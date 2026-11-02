@@ -431,12 +431,17 @@ function DragList({ ids, rowH, onMove, onDragging, renderRow }: {
 const ALL_TOOLS: [Tool, string, IconName, string][] = [['pen', t("release.s0346"), 'fountain-pen-tip', t("release.s0523")], ['eraser', t("release.s0347"), 'eraser', t("release.s0347")], ['fill', t("release.s0524"), 'format-color-fill', t("release.s0524")], ['select', t("release.s0525"), 'select-drag', t("release.s0525")], ['shape', t('shape.tool'), 'shape-outline', t('shape.tool')]];
 const STAB_LEVELS = [['light', t("release.s0526")], ['medium', t("release.s0527")], ['strong', t("release.s0528")]] as const;
 // 저장된 브러시 설정을 믿지 않고 한 칸씩 읽는다. 낯선 값은 없는 것으로 본다.
+const num = (n: unknown, lo: number, hi: number) => typeof n === 'number' && Number.isFinite(n) ? Math.max(lo, Math.min(hi, Math.round(n))) : undefined;
+// 예전 단계 → 0~100. 단계만 저장된 사람은 같은 느낌에서 시작한다.
+const STAB_AMOUNT = { off: 0, light: 35, medium: 65, strong: 90 } as const;
+const stabLevelOf = (n: number): 'off' | 'light' | 'medium' | 'strong' => n <= 0 ? 'off' : n < 50 ? 'light' : n < 80 ? 'medium' : 'strong';
 function cleanBrush(b?: BrushSettings): BrushSettings {
   const size = (n: unknown) => typeof n === 'number' && Number.isFinite(n) ? Math.max(1, Math.min(48, Math.round(n))) : undefined;
   return {
     preset: b?.preset && (CATALOG.some(p => p.preset === b.preset) || b.preset in RETIRED) ? b.preset : undefined,
     opacity: typeof b?.opacity === 'number' && Number.isFinite(b.opacity) ? Math.max(.05, Math.min(1, b.opacity)) : undefined,
     stabilizer: b?.stabilizer && ['off', 'light', 'medium', 'strong'].includes(b.stabilizer) ? b.stabilizer : undefined,
+    stabAmount: num(b?.stabAmount, 0, 100), pressure: num(b?.pressure, 0, 100), pressureCurve: num(b?.pressureCurve, -50, 50),
     base: b?.base && BRUSHES.some(x => x.key === b.base) ? b.base : undefined,
     width: size(b?.width),
     eraserWidth: size(b?.eraserWidth),
@@ -764,6 +769,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [colorView, setColorView] = useState<'palette' | 'custom'>('custom');
   // PRO 브러시. 저장된 값은 PRO 가 끝나도 지우지 않고, 효력만 무료 범위(프리셋 없음 · 진하기 100% · 보정 끔/약)로 돌린다.
   const [brushPrefs, setBrushPrefs] = useState<BrushSettings>(() => cleanBrush(brushSettings));
+  // 막대를 놓을 때 부르는 changeBrush({}) 가 끌기 전 값으로 저장하지 않게 최신 값을 따로 든다.
+  const brushLatest = useRef(brushPrefs);
   const brushSave = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (brushSave.current) clearTimeout(brushSave.current); }, []);
   // 진하기와 선 보정은 무료다(드로잉 앱의 기본 조절). 고급 브러시 네 가지만 PRO 이고, PRO 가 끝나면 효력만 기본 선으로 돌린다.
@@ -771,10 +778,14 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     preset: pro ? brushPrefs.preset : (brushPrefs.preset && FREE_PRESETS.has(brushPrefs.preset) ? brushPrefs.preset : undefined),
     opacity: brushPrefs.opacity ?? 1,
     stabilizer: brushPrefs.stabilizer ?? 'light',
+    stabAmount: brushPrefs.stabAmount ?? STAB_AMOUNT[brushPrefs.stabilizer ?? 'light'],
+    pressure: brushPrefs.pressure ?? 100,
+    pressureCurve: brushPrefs.pressureCurve ?? 0,
   };
   // 막대를 끄는 동안에는 저장 파일을 매번 쓰지 않는다. 손이 멈추면 한 번 남긴다.
   function changeBrush(patch: Partial<BrushSettings>, settle = true) {
-    const next = { ...brushPrefs, ...patch };
+    const next = { ...brushLatest.current, ...patch };
+    brushLatest.current = next;
     setBrushPrefs(next);
     if (brushSave.current) clearTimeout(brushSave.current);
     if (settle) onBrushSettings(next); else brushSave.current = setTimeout(() => onBrushSettings(next), 700);
@@ -816,7 +827,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const brushKey = JSON.stringify(effectiveBrush);
   useEffect(() => {
     if (!initialized) return;
-    send({ type: 'brushSettings', preset: effectiveBrush.preset ?? null, opacity: effectiveBrush.opacity, stabilizer: effectiveBrush.stabilizer === 'off' ? 'light' : effectiveBrush.stabilizer, smoothing: effectiveBrush.stabilizer !== 'off' });
+    send({ type: 'brushSettings', preset: effectiveBrush.preset ?? null, opacity: effectiveBrush.opacity, stabilizer: effectiveBrush.stabilizer === 'off' ? 'light' : effectiveBrush.stabilizer, smoothing: effectiveBrush.stabAmount > 0, stabAmount: effectiveBrush.stabAmount, pressure: effectiveBrush.pressure, pressureCurve: effectiveBrush.pressureCurve });
   }, [initialized, brushKey]);
   // 스포이드는 캔버스를 보고 눌러야 하므로 패널을 내린다. 색을 읽으면 패널이 직접 선택으로 다시 올라온다.
   // 기본 레퍼런스를 고르면 큰 격자는 물러난다. 그림이 들어오면(ready) 여기서 기존 참고 레이어 흐름으로 넘긴다 — 지금은 자리표시라 접기만 한다.
@@ -1261,16 +1272,14 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <Image accessibilityIgnoresInvertColors accessibilityLabel={t("release.s0589")} source={brushInfo(currentBrushKey).stroke} style={{ width: '100%', height: 28, tintColor: color }} resizeMode="contain" />
         </View>
         <Range label={t("release.s0586")} value={Math.round(effectiveBrush.opacity * 100)} min={5} max={100} step={1} onChange={n => changeBrush({ opacity: Math.round(n) / 100 }, false)} onActive={a => { if (a === false) changeBrush({ opacity: effectiveBrush.opacity }, true); }} display={Math.round(effectiveBrush.opacity * 100) + '%'} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Pressable accessibilityRole="switch" accessibilityLabel={t("release.s0590")} accessibilityState={{ checked: stab !== 'off' }} onPress={() => changeBrush({ stabilizer: stab === 'off' ? 'light' : 'off' })}
-            style={{ minHeight: C.tap, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 2 }}>
-            <Switch on={stab !== 'off'} />
-            <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink }}>{t("release.s0590")}</Text>
-          </Pressable>
-          {stab !== 'off' && <View style={{ flex: 1 }}>
-            <Segmented dense value={stab} onChange={level => changeBrush({ stabilizer: level })} items={STAB_LEVELS.map(([level, name]) => ({ key: level, label: name, a11y: t("release.s0591") + " " + name }))} />
-          </View>}
-        </View>
+        {/* 2026-11-03: 선 보정은 0~100 한 막대(0 = 끔). 필압은 S펜·애플펜슬에서만 쓰인다 — 세기(굵기가 힘을 얼마나 따를지)와 곡선(가볍게 눌러도 굵게 ↔ 세게 눌러야 굵게). */}
+        <Range label={t("release.s0590")} value={effectiveBrush.stabAmount} min={0} max={100} step={1} format={n => n <= 0 ? t('brushFine.off') : String(Math.round(n))} display={effectiveBrush.stabAmount <= 0 ? t('brushFine.off') : String(effectiveBrush.stabAmount)}
+          onChange={n => changeBrush({ stabAmount: Math.round(n), stabilizer: stabLevelOf(Math.round(n)) }, false)} onActive={a => { if (a === false) changeBrush({}, true); }} />
+        <Range label={t('brushFine.pressure')} value={effectiveBrush.pressure} min={0} max={100} step={1} format={n => n <= 0 ? t('brushFine.off') : String(Math.round(n))} display={effectiveBrush.pressure <= 0 ? t('brushFine.off') : String(effectiveBrush.pressure)}
+          onChange={n => changeBrush({ pressure: Math.round(n) }, false)} onActive={a => { if (a === false) changeBrush({}, true); }} />
+        <Range label={t('brushFine.curve')} value={effectiveBrush.pressureCurve} min={-50} max={50} step={1} format={n => n < -10 ? t('brushFine.soft') : n > 10 ? t('brushFine.hard') : t('brushFine.even')} display={effectiveBrush.pressureCurve < -10 ? t('brushFine.soft') : effectiveBrush.pressureCurve > 10 ? t('brushFine.hard') : t('brushFine.even')}
+          onChange={n => changeBrush({ pressureCurve: Math.round(n) }, false)} onActive={a => { if (a === false) changeBrush({}, true); }} />
+        <Text style={{ fontSize: 11, lineHeight: 16, color: C.muted }}>{t('brushFine.note')}</Text>
       </ScrollView>}
     </View>
   </View>;

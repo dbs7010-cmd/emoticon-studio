@@ -319,9 +319,9 @@ async function ready() {
   // 고른 줄만 옅은 노랑이고, 노랑인 줄은 많아야 하나다.
   const litRows = listRows.filter(r => r.st.backgroundColor === T.accentSoft);
   assert.ok(litRows.length <= 1, '목록의 노랑은 고른 줄 하나뿐: ' + litRows.length);
-  assert.equal(labelled('선 보정').length, 0, '진하기·보정은 세부 설정 화면 안');
+  assert.equal(tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '선 보정').length, 0, '진하기·보정은 세부 설정 화면 안');
   await press('세부 설정');
-  assert.equal(labelled('선 보정').length, 1, '세부 설정으로 들어가면 선 보정이 나온다');
+  assert.equal(tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '선 보정').length, 1, '세부 설정으로 들어가면 선 보정이 나온다');
   await press('브러시 닫기');
 
   // ── 6. 문구(2026-11-03 개편): 키보드가 올라와도 세 줄(입력·닫기·적용 / 탭 / 고른 탭 한 줄)이 그대로 보인다 ─────────

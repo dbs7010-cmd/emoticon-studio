@@ -1872,4 +1872,12 @@ export const ja: Record<Key, string> = {
   "studio.big": "キャンバスを大きく表示",
   // 확대 되돌리기(2026-11-03)
   "zoom.reset": "100%に",
+  // 붓 세부 조절(2026-11-03)
+  "brushFine.off": "オフ",
+  "brushFine.pressure": "筆圧の強さ",
+  "brushFine.curve": "筆圧カーブ",
+  "brushFine.soft": "軽く押しても太く",
+  "brushFine.hard": "強く押すと太く",
+  "brushFine.even": "標準",
+  "brushFine.note": "筆圧はSペン・Apple Pencilで描くときだけ使われます。手ぶれ補正を0にすると手の揺れもそのまま残ります。",
 };
