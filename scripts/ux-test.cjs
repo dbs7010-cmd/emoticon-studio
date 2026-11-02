@@ -1334,7 +1334,12 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  const panelBox=tree.root.findAll(n=>n.type==='View'&&typeof styleOf(n).height==='number'&&styleOf(n).flexShrink===0).map(n=>styleOf(n));
  assert.equal(panelBox.length,1,'움직임 패널의 높이가 하나로 못 박혀 있다: '+JSON.stringify(panelBox));
  assert.equal(panelBox[0].flexShrink,0,'그리고 줄어들지 않는다 — 줄어들면 화면 밖으로 밀린다');
- assert.ok(panelBox[0].height<=Math.round(844*.55),'큰 화면에서도 패널이 화면의 절반 남짓을 넘지 않는다: '+panelBox[0].height);
+ // 2026-11-03 스튜디오: 움직이기는 기본으로 캔버스를 작게·판을 넓게(화면의 60%). 단추로 예전 배치(절반 남짓)로 돌아간다.
+ assert.ok(panelBox[0].height<=Math.round(844*.6),'스튜디오에서도 판은 화면의 60%를 넘지 않는다: '+panelBox[0].height);
+ await press('캔버스 크게 보기');
+ const bigBox=tree.root.findAll(n=>n.type==='View'&&typeof styleOf(n).height==='number'&&styleOf(n).flexShrink===0).map(n=>styleOf(n));
+ assert.ok(bigBox[0].height<=Math.round(844*.55),'크게 보기에서는 예전처럼 판이 화면의 절반 남짓을 넘지 않는다: '+bigBox[0].height);
+ await press('캔버스 작게 보고 판 넓게');
   await press('그리기');
   await press('그리기 닫기');await saved(false);
   // 보드: 격자가 먼저이고, 아래 고정 줄에는 지금 할 일만 있다. 아무것도 완성하지 않았으면 내보내기는 아직 없다.

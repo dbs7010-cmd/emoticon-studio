@@ -1867,4 +1867,7 @@ export const zhHant: Record<Key, string> = {
   "dock.right": "右",
   "dock.body": "粗細・不透明度（動作中為強度・速度）調整列的位置。長按調整列名稱附近即可隨時更改。",
   "dock.hint": "長按可更改調整列位置",
+  // 움직이기·애니 스튜디오(2026-11-03)
+  "studio.small": "縮小畫布、放大面板",
+  "studio.big": "放大畫布",
 };

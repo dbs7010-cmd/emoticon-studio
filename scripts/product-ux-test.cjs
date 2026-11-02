@@ -451,6 +451,9 @@ const saved = async (dirty = true) => {
   assert.ok(24 + 20 + (19 + band[0].props.style.height) * 2 <= 353, '짧은 화면에서도 기둥이 캔버스 영역 안에 든다');
   assert.notEqual(band[0].props.style.position, 'absolute', '캔버스 위에 겹치지 않는다');
   await press('움직이기');
+  // 2026-11-03 스튜디오(캔버스 작게·판 넓게)는 세로 720dp 이상 화면에서만 켜진다. 이 검사는 창은 크고 캔버스 영역만 짧게 흉내 내므로
+  // 예전 배치(크게 보기)로 돌려 같은 기준을 잰다. 실제 짧은 화면은 스튜디오가 꺼져 같은 배치다.
+  if (labelled('캔버스 크게 보기').length) await press('캔버스 크게 보기');
   const motionBox = tree.root.findAll(n => n.type === 'View' && Array.isArray(n.props.style) && n.props.style.some(s => s && typeof s.height === 'number' && s.flexShrink === 0))[0];
   const motionHeight = Object.assign({}, ...motionBox.props.style).height;
   const overlap = Math.max(0, motionHeight - BASE_H) / 353;

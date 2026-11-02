@@ -246,6 +246,10 @@ const heights = [568, 640, 720, 800, 900, 1000];
     await press('문구 닫기');
     // 움직이기: 캔버스를 위로 붙이고 패널은 아래 — 가리는 비율.
     await press('움직이기');
+    // 2026-11-03 스튜디오: 실제 화면에서는 판이 커진 만큼 캔버스 영역이 줄어든다(가리지 않는다). 이 표는 영역 크기를 고정해 흉내 내므로
+    // 겹침 비율은 예전 배치(크게 보기)로 잰다. 스튜디오 단추가 있는지만 따로 본다.
+    if (height >= 720) assert.equal(labelled('캔버스 크게 보기').length, 1, tag + ': 움직이기는 스튜디오(작게 보기)로 시작하고 크게 보기 단추가 있다');
+    if (labelled('캔버스 크게 보기').length) await press('캔버스 크게 보기');
     const motion = dockHeight().height;
     row.motion = +(Math.max(0, motion - BASE_H - (area.height - side)) / side).toFixed(2);
     assert.ok(row.motion < .45, tag + ': 움직이기 패널이 캔버스를 45% 넘게 덮지 않는다: ' + row.motion);

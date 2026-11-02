@@ -1276,7 +1276,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const dockOpen = !!scene.selection || (!!panel && panel !== 'more' && panel !== 'brush') || drawRail || refRail || !!scene.captionPicked;
   // 움직이기 탭에서는 캔버스를 위로 붙이고, 패널은 캔버스 아래 남는 자리(+ 기본 도구 줄 자리)를 쓴다 — 미리보기를 가리지 않는다.
   // 남는 자리가 작은 화면에서만 최소 높이만큼 캔버스 아래쪽에 겹친다.
-  const motionHeight = Math.max(250, Math.min(Math.round(windowHeight * .55), Math.round(canvasArea - (canvasSide ?? canvasArea)) + BASE_H));
+  // 움직이기·애니메이션 스튜디오(2026-11-03, 대표 제안 — 보고 후 결정): 움직임만 볼 때는 캔버스를 작게 두고 아래 판을 넓게 쓴다.
+  // 캔버스 위 단추로 언제든 원래 크기(예전 배치)로 돌아간다. 그리기 탭은 그대로.
+  const [studioBig, setStudioBig] = useState(false);
+  // 짧은 화면(세로 720dp 미만)은 판을 더 키우면 캔버스가 가려지므로 예전 배치 그대로 둔다.
+  const studio = (tab === 'motion' || tab === 'anim') && !studioBig && windowHeight >= 720;
+  const motionHeight = studio ? Math.max(300, Math.round(windowHeight * .6))
+    : Math.max(250, Math.min(Math.round(windowHeight * .55), Math.round(canvasArea - (canvasSide ?? canvasArea)) + BASE_H));
   // 패널 표면: 흰 표면 + 위쪽 24 둥글기 + 옅은 선 하나. 떠 있는 표면이지만 캔버스 위 그림자는 두지 않는다(그림이 흐려 보인다).
   const raised = dockOpen || tab !== 'draw';
   // 색을 고를 때는 도구 줄 자리까지 쓴다. 캔버스를 더 가리지 않고 색 선택 영역을 확보한다.
@@ -1541,6 +1547,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             정사각 틀로 감싸 잘라 두면 WebView 가 틀만큼만 차지하고, 그리기 탭에서는 영역 가운데·움직이기 탭에서는 위에 선다. */}
         {/* 종이 경계: 얇은 선 + 옅은 그림자. 흰 종이와 작업면이 비슷한 밝기라 경계가 없으면 캔버스가 떠 보였다(45.37 실기기). */}
         <View ref={canvasRef} collapsable={false} style={canvasSide ? { width: canvasSide, height: canvasSide, overflow: 'hidden', backgroundColor: C.paper, borderRadius: 6, ...Paper.border, ...Paper.shadow } : { width: '100%', aspectRatio: 1, maxHeight: '100%', overflow: 'hidden' }}>
+        {tab !== 'draw' && windowHeight >= 720 && <View style={{ position: 'absolute', right: 6, top: 6, zIndex: 6 }}>
+          <IconButton testID="캔버스 크기 바꾸기" label={studioBig ? t('studio.small') : t('studio.big')} icon={studioBig ? 'arrow-collapse' : 'arrow-expand'} size={20} color={C.ink} onPress={() => { ease(); setStudioBig(!studioBig); }} />
+        </View>}
         {tab === 'draw' && animOn && <View testID="장 알약" style={{ position: 'absolute', left: 8, top: 8, zIndex: 5, flexDirection: 'row', alignItems: 'center', height: 36, paddingLeft: 12, borderRadius: 18, ...Clay.small }}>
           <Text style={{ fontSize: 12, fontWeight: '800', color: C.pointInk }}>{t("ui.animation")}</Text>
           <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{t("release.d112", { v0: ((scene.frameIdx ?? 0) + 1), v1: (scene.frames!.length) })}</Text>
