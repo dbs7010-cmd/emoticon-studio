@@ -92,7 +92,9 @@ type Props = {
   returnToReview?: boolean;
   onReturnToReview?: () => void;
   onSetReference: () => void;
-  onCopyPrevious: () => Promise<CopiedWork | null>;
+  onCopyPrevious: (n?: number) => Promise<CopiedWork | null>;
+  // 그림이 있는 다른 칸들(2026-11-03): 아무 칸 그림이나 골라 가져온다.
+  drawnCuts?: { number: number; image: LocalImage }[];
   onColorUsed: (color: string) => void;
   onClose: () => void;
   // 애니메이션 탭의 "강좌에서 배워요": 저장하고 닫은 뒤 첫 화면 강좌 탭으로 간다.
@@ -449,7 +451,7 @@ const swatches = [
 // 기본 레퍼런스 32칸은 아직 칸별 자료도 고르는 동작도 없다(자리표시뿐).
 // 명세 E05: 미완성 격자를 사용자 화면에 보이지 않는다. 자료는 그대로 두고 화면에서만 감춘다.
 const BUILTIN_READY: boolean = BUILTIN_REFERENCES.enabled && BUILTIN_REFERENCES.ready;
-export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, returnToReview, onReturnToReview, onSetReference, onCopyPrevious, onColorUsed, onClose, onOpenLessons, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
+export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, drawnCuts = [], previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, returnToReview, onReturnToReview, onSetReference, onCopyPrevious, onColorUsed, onClose, onOpenLessons, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<SaveAction>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
@@ -593,6 +595,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 레이어 줄을 끄는 동안 목록 스크롤을 멈춘다 — 스크롤이 손가락을 가로채면 끌던 줄이 공중에 멈춘다(45.37).
   const [layerDragging, setLayerDragging] = useState(false);
   const [cutoutPicker, setCutoutPicker] = useState(false);
+  const [cutPicker, setCutPicker] = useState(false);
   const [hiddenWarning, setHiddenWarning] = useState('');
   // 저장 버튼 뒤의 짧은 안내(45.38). 'done' 이면 '다음 칸' 으로 이어 갈 수 있고, 'blank' 면 빈 칸은 완성이 아니라고 말한다.
   // 4초 뒤 스스로 걷힌다 — 캔버스 위에는 한 번에 한 가지만 말한다(canvasMessage).
@@ -965,12 +968,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   saveRef.current = save;
   // Copying is always something the user asks for, and it is always a separate document:
   // the canvas decodes fresh bitmaps, so editing the copy cannot reach the cut it came from.
-  function copyPrevious() {
+  function copyPrevious(from?: number) {
     if (inFlight.current) return;
     const run = async () => {
       inFlight.current = true; setBusy(true);
       try {
-        const copied = await onCopyPrevious();
+        const copied = await onCopyPrevious(from);
         if (!copied) { Alert.alert(t("release.s0540"), t("release.s0541")); return; }
         // 가져온 칸에 문구가 없으면 지금 문구(가이드에서 고른 대사)를 지우지 않는다(2026-10-29).
         send({ type: 'copyWork', layers: copied.layers, caption: copied.caption ?? scene.caption ?? null });
@@ -1711,6 +1714,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             onRight={slot.number < slotCount ? () => { setPanel(null); save(slot.number + 1); } : undefined} />
           <MenuButton icon="image-plus" title={t("release.s0348")} onPress={() => { setPanel(null); if (cutouts.length) setCutoutPicker(true); else void importDrawing(); }} />
           {hasPrevious && !continueAvailable && <MenuButton icon="content-copy" title={t("release.s0546")} onPress={() => { setPanel(null); copyPrevious(); }} />}
+          {drawnCuts.length > 0 && <MenuButton icon="view-grid-plus-outline" title={t('cutCopy.title')} onPress={() => { setPanel(null); setCutPicker(true); }} />}
           {/* 캐릭터 기준은 세트 전체의 일이라 참고 사진 줄에서 내려왔다(45.2차). 보드의 세트 메뉴와 같은 계열이다. */}
           {!!canon && <MenuButton icon="account-star-outline" title={showCanon ? t("release.s0677") : t("release.s0678")} onPress={() => { setPanel(null); setShowCanon(!showCanon); }} />}
           {/* 2026-11-03(대표): 대표 캐릭터가 이미 있으면 '보기'만 둔다 — '이 칸으로 바꾸기'는 없앴다(바꾸려면 세트 메뉴 › 대표 캐릭터). */}
@@ -2044,6 +2048,18 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     {/* 브러시 창은 머리줄·캔버스·아래 줄을 모두 덮는 독립 창이다(승인 시안). */}
     {brushWindow}
 
+    {/* 세트의 다른 칸 그림 가져오기(2026-11-03): 칸 번호와 완성 그림을 보고 고른다. 가져오면 지금 칸의 그림·문구가 그 칸 것으로 바뀐다(되돌리기 가능). */}
+    {cutPicker && <Dialog title={t('cutCopy.title')} onClose={() => setCutPicker(false)}>
+      <Text style={{ fontSize: 13, lineHeight: 19, color: C.muted }}>{t('cutCopy.body')}</Text>
+      <View testID="칸 그림 고르기" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {drawnCuts.map(cut => <Pressable key={cut.number} accessibilityRole="button" accessibilityLabel={t('cutCopy.pick', { n: String(cut.number).padStart(2, '0') })}
+          onPress={() => { setCutPicker(false); copyPrevious(cut.number); }}
+          style={({ pressed }) => ({ width: 76, alignItems: 'center', gap: 4, padding: 4, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : '#FFF' })}>
+          <Image source={{ uri: imageUri(cut.image.path) }} style={{ width: 64, height: 64, borderRadius: 8, backgroundColor: C.surface2 }} resizeMode="contain" />
+          <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{String(cut.number).padStart(2, '0')}</Text>
+        </Pressable>)}
+      </View>
+    </Dialog>}
     {cutoutPicker && <Dialog title={t("release.s0348")} onClose={() => setCutoutPicker(false)}>
       {cutouts.map(cut => <View key={cut.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Pressable accessibilityRole="button" accessibilityLabel={cut.name + " " + t("release.s0755")} onPress={() => { setCutoutPicker(false); void useCutout(cut.id); }}

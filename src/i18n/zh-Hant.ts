@@ -1849,4 +1849,8 @@ export const zhHant: Record<Key, string> = {
   "oss.fonts": "文字的手寫字型以 SIL Open Font License 1.1 發布。以下列出各字型的著作權與授權全文。",
   // 문구 판 탭(2026-11-03)
   "captionTab.say": "推薦",
+  // 다른 칸 그림 가져오기(2026-11-03)
+  "cutCopy.title": "帶入其他格的圖",
+  "cutCopy.body": "把選好那一格的圖和文字帶入這一格。目前的圖會被取代，可以用復原回來。",
+  "cutCopy.pick": "帶入第 {n} 格的圖",
 };

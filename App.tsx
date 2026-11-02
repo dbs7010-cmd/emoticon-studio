@@ -470,10 +470,11 @@ function Studio() {
     updateProject(p => ({ ...p, canon: { ...p.canon, image: latest.finalImage } }));
     setNotice(t("release.s0021"));
   }
-  async function copyPreviousWork(): Promise<CopiedWork | null> {
+  // n 을 주면 그 칸(2026-11-03, 대표: 1번·2번… 세트의 아무 칸 그림을 가져오고 싶다), 없으면 직전에 그린 칸.
+  async function copyPreviousWork(n?: number): Promise<CopiedWork | null> {
     const latest = current.current?.projects.find(p => p.id === projectId);
     if (!latest || slotNumber === null) return null;
-    const source = previousDrawn(latest, slotNumber);
+    const source = n === undefined ? previousDrawn(latest, slotNumber) : latest.slots.find(s => s.number === n && s.number !== slotNumber);
     if (!source?.work) return null;
     const layers = await Promise.all(source.work.layers.map(async ({ image, ...rest }) => ({ ...rest, data: image ? await dataUrl(image) : undefined })));
     return { layers, caption: source.work.caption, motion: source.motion ?? null };
@@ -2171,6 +2172,7 @@ function Studio() {
       onBrushSettings={brush => { try { changeProject(project.id, p => ({ ...p, brush })); } catch (e) { setNotice(t("release.s0322") + " " + userMessage(e)); } }}
       completeTitle={nextUnfinished(project, slot.number) === null ? t("release.s0323") : t("release.s0324")}
       hasPrevious={!!previousDrawn(project, slot.number)}
+      drawnCuts={project.slots.filter(s => s.number !== slot.number && s.finalImage && s.work).map(s => ({ number: s.number, image: s.finalImage! }))}
       previousImage={previousDrawn(project, slot.number)?.finalImage}
       pro={pro}
       onRequestPro={() => setProSheet(true)}

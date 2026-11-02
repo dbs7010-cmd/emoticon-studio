@@ -1849,4 +1849,8 @@ export const ja: Record<Key, string> = {
   "oss.fonts": "文字入れの手書きフォントは SIL Open Font License 1.1 で配布されているフォントです。各フォントの著作権とライセンス全文を下に記載します。",
   // 문구 판 탭(2026-11-03)
   "captionTab.say": "おすすめ",
+  // 다른 칸 그림 가져오기(2026-11-03)
+  "cutCopy.title": "他のコマの絵を取り込む",
+  "cutCopy.body": "選んだコマの絵と文字をこのコマに取り込みます。今の絵は置き換わり、元に戻すで戻せます。",
+  "cutCopy.pick": "{n}番のコマの絵を取り込む",
 };

@@ -496,6 +496,18 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.deepEqual(fresh().slots[0].work.layers.map(l=>l.image.path),fresh().slots[0].work.layers.map(l=>l.image.path));
  assert.ok(fresh().slots[1].work.layers.every(l=>!fresh().slots[0].work.layers.some(o=>o.image.path===l.image.path)),'the copy shares no pixel file with the original');
 
+ // ── 2026-11-03: any drawn cut can be brought in by number, not only the previous one ─────────
+ await press('더보기');
+ assert.equal(labelled('다른 칸 그림 가져오기').length,1,'the set menu offers to bring in another cut');
+ await press('다른 칸 그림 가져오기');
+ assert.equal(labelled('01번 칸 그림 가져오기').length,1,'drawn cuts are listed by number');
+ assert.equal(labelled('02번 칸 그림 가져오기').length,0,'but not the cut being drawn');
+ const copiesBefore=sent().filter(m=>m.type==='copyWork').length;
+ await press('01번 칸 그림 가져오기');
+ await answer('복사'); // 이 칸에 이미 그림이 있으면 덮어쓰기를 묻는다
+ await act(async()=>{});
+ assert.equal(sent().filter(m=>m.type==='copyWork').length,copiesBefore+1,'picking a cut copies its work in');
+
  // ── Words go into the exported picture, and nowhere else ────────────────────────────────────
  await press('문구');
  await act(async()=>tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='문구 내용')[0].props.onChangeText('고마워요'));
