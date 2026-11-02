@@ -978,6 +978,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       try {
         const copied = await onCopyPrevious(from);
         if (!copied) { Alert.alert(t("release.s0540"), t("release.s0541")); return; }
+        // 가져온 칸 문구가 손글씨 폰트면 그 폰트를 먼저 캔버스에 싣는다(2026-11-03 에뮬레이터: 기본 글꼴로 보였다).
+        for (const f of await fontsFor(copied.caption?.style)) send({ type: 'font', key: f.key, data: f.data });
         // 가져온 칸에 문구가 없으면 지금 문구(가이드에서 고른 대사)를 지우지 않는다(2026-10-29).
         send({ type: 'copyWork', layers: copied.layers, caption: copied.caption ?? scene.caption ?? null });
         // 2026-10-15 세트 반복 단축: 이 칸에 아직 움직임이 없으면 **가져온 칸의 움직임도 함께** 넣는다(덮어쓰지 않는다).
