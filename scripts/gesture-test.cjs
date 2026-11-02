@@ -208,5 +208,17 @@ const tick = () => new Promise(resolve => setTimeout(resolve, 5));
   await command({ type: 'captionPreview', end: true });
   assert.equal(onScreen(), before.text, '닫으면 다시 원래 문구');
 
-  console.log('PASS: live caption preview (screen only, no undo step, autosave keeps the confirmed words, close restores, apply is one undo step), one-finger stroke, two-finger tap undo, three-finger tap redo across staggered lifts, drag is not a tap, three consecutive undo+redo steps restore every state in order, new stroke clears redo, reference move/pinch, caption: tap selects (no stroke, no undo step), tap again asks to edit, jitter is not a move, drag moves the words, handle drag scales, two-finger pinch scales (cap 3) and twist rotates, soft bounds keep the centre on the canvas, tapping elsewhere ends the selection without drawing, saved caption equals the on-canvas one. DOM shimmed; Android touch delivery still requires device test.');
+  // 움직임 세기·속도 끄는 동안(2026-11-03): 미리보기만 바뀌고 되돌리기는 손을 뗄 때 한 번, 되돌리면 끄기 전 값.
+  await command({ type: 'motion', motion: { version: 1, preset: 'bounce', speed: .5, strength: .5 } });
+  const pastLive = stacks().past;
+  for (const v of [.52, .61, .74]) await command({ type: 'motionLive', strength: v });
+  assert.equal(stacks().past, pastLive, '끄는 동안은 되돌리기 기록이 늘지 않는다');
+  assert.equal(state().motion.strength, .5, '끄는 동안의 값은 화면 상태로 올라가지 않는다(앱의 값은 손을 뗄 때만)');
+  await command({ type: 'motion', motion: { version: 1, preset: 'bounce', speed: .5, strength: .74 } });
+  assert.equal(stacks().past, pastLive + 1, '손을 떼면 되돌리기 한 번');
+  await command({ type: 'undo' });
+  assert.equal(state().motion.strength, .5, '되돌리면 끄기 전 세기');
+  await command({ type: 'motion', motion: null });
+
+  console.log('PASS: live motion strength/speed (no undo step while dragging, one on release), live caption preview (screen only, no undo step, autosave keeps the confirmed words, close restores, apply is one undo step), one-finger stroke, two-finger tap undo, three-finger tap redo across staggered lifts, drag is not a tap, three consecutive undo+redo steps restore every state in order, new stroke clears redo, reference move/pinch, caption: tap selects (no stroke, no undo step), tap again asks to edit, jitter is not a move, drag moves the words, handle drag scales, two-finger pinch scales (cap 3) and twist rotates, soft bounds keep the centre on the canvas, tapping elsewhere ends the selection without drawing, saved caption equals the on-canvas one. DOM shimmed; Android touch delivery still requires device test.');
 })().catch(e => { console.error(e); process.exitCode = 1; });

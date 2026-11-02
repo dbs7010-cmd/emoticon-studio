@@ -216,6 +216,7 @@ const QUICK_DEFAULT: BrushKey[] = ['pen', 'pencil2', 'marker2'];
 // 조절대가 폭을 먹어 정사각 캔버스가 작았다 — 390×844 에서 298 → 374dp, 360×640 에서 268 → 318dp.
 // 두 탭이 같은 자리·같은 모양을 쓴다: 그리기 = 굵기·불투명도, 움직이기 = 세기·속도(시안 D).
 export const BAR_H = 44;
+const onNextFrame: (f: () => void) => unknown = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : f => setTimeout(f, 16);
 // 움직임 세기·속도를 말로(움직임 판의 예전 조절 줄과 같은 말).
 const MOTION_WORDS = (r: number) => r < .2 ? t("release.s0515") : r < .4 ? t("release.s0516") : r < .6 ? t("release.s0517") : r < .8 ? t("release.s0518") : t("release.s0519");
 // 캔버스 둘레 여백. 종이 가장자리가 화면 끝에 붙어 잘린 듯 보이지 않을 만큼만 둔다(45.37: 10 → 45.39: 8).
@@ -225,9 +226,10 @@ const BAR_KNOB = 24;
 const pct = (r: number) => (Math.max(0, Math.min(1, r)) * 100).toFixed(2) + '%' as `${number}%`;
 // 가로 조절 막대. 끄는 동안은 이 부품 안 값(live)으로 손잡이와 글자만 따라오고, **손을 뗄 때 한 번** 반영한다(45.35 세로 조절대와 같은 원리 —
 // 끄는 내내 엔진·설정 저장을 부르면 끊긴다). 좌표는 누를 때 막대의 화면 위치(pageX − locationX)를 잡고 그다음부터 화면 좌표만 쓴다.
-function BarSlider({ label, value, min, max, step = 1, onCommit, show, lead, disabled, testID, a11yLabel }: {
+// onLive(2026-11-03, 움직임 세기·속도): 끄는 동안 화면 한 프레임에 한 번 값을 알려 미리보기가 손을 따라온다. 손잡이는 칸에 붙지 않고 손가락을 그대로 따라간다.
+function BarSlider({ label, value, min, max, step = 1, onCommit, onLive, show, lead, disabled, testID, a11yLabel }: {
   label: string; value: number; min: number; max: number; step?: number;
-  onCommit: (n: number) => void; show: (n: number) => string; lead?: (n: number) => React.ReactNode;
+  onCommit: (n: number) => void; onLive?: (n: number) => void; show: (n: number) => string; lead?: (n: number) => React.ReactNode;
   disabled?: boolean; testID?: string; a11yLabel?: string;
 }) {
   const [live, setLive] = useState<number | null>(null);
@@ -240,11 +242,14 @@ function BarSlider({ label, value, min, max, step = 1, onCommit, show, lead, dis
   const quantize = (n: number) => Math.max(min, Math.min(max, Number((Math.round(n / step) * step).toFixed(4))));
   const at = (pageX: number) => {
     if (w <= BAR_KNOB) return;
-    const next = quantize(min + Math.max(0, Math.min(1, (pageX - origin.current - BAR_KNOB / 2) / (w - BAR_KNOB))) * span);
-    liveRef.current = next; setLive(next);
+    const raw = min + Math.max(0, Math.min(1, (pageX - origin.current - BAR_KNOB / 2) / (w - BAR_KNOB))) * span;
+    liveRef.current = quantize(raw); setLive(onLive ? raw : liveRef.current);
+    if (onLive && !liveTick.current) { liveTick.current = true; onNextFrame(() => { liveTick.current = false; if (liveRef.current !== null && liveRef.current !== liveSent.current) { liveSent.current = liveRef.current; onLive(liveRef.current); } }); }
   };
-  const settle = () => { if (liveRef.current !== null) onCommit(liveRef.current); liveRef.current = null; setLive(null); };
-  const nudge = (by: number) => onCommit(quantize(value + by * step));
+  const liveTick = useRef(false), liveSent = useRef<number | null>(null);
+  const settle = () => { if (liveRef.current !== null) onCommit(liveRef.current); liveRef.current = null; liveSent.current = null; setLive(null); };
+  // 화면 읽기 한 걸음: 고운 막대(onLive)는 칸이 작으니 범위의 1/20 씩 움직인다.
+  const nudge = (by: number) => onCommit(quantize(value + by * (onLive ? Math.max(step, span / 20) : step)));
   return <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6, height: BAR_H, opacity: disabled ? .45 : 1 }}>
     <View style={{ minWidth: 40, alignItems: 'flex-start' }}>
       <Text numberOfLines={1} style={{ fontSize: 11, lineHeight: 14, fontWeight: '700', color: T.muted }}>{label}</Text>
@@ -290,9 +295,9 @@ const railTrackOf = (area: number) => Math.max(RAIL_TRACK_MIN, Math.min(RAIL_TRA
 // 남아 떠도는 표시가 없다.
 const RAIL_BUBBLE_X = RAIL_HANDLE_W, RAIL_BUBBLE_H = 22, RAIL_BUBBLE_W = 44;
 // 0~1 을 퍼센트 글자로. 자리를 비율로 잡아야 첫 그림부터 맞고, 레이아웃을 재기 전에도 비어 보이지 않는다.
-function VSlider({ label, value, min, max, step = 1, onCommit, bubble, disabled, testID, a11yLabel, height: track }: {
+function VSlider({ label, value, min, max, step = 1, onCommit, onLive, bubble, disabled, testID, a11yLabel, height: track }: {
   label: string; value: number; min: number; max: number; step?: number;
-  onCommit: (n: number) => void; bubble: (n: number) => React.ReactNode;
+  onCommit: (n: number) => void; onLive?: (n: number) => void; bubble: (n: number) => React.ReactNode;
   disabled?: boolean; testID?: string; a11yLabel?: string; height: number;
 }) {
   // 끄는 동안의 값. null 이면 위에서 내려온 값을 그대로 보여 준다.
@@ -308,12 +313,15 @@ function VSlider({ label, value, min, max, step = 1, onCommit, bubble, disabled,
   // 위로 갈수록 큰 값. 손잡이의 가운데가 손가락을 따라온다.
   const at = (pageY: number) => {
     if (h <= 0) return;
-    const next = quantize(min + (1 - Math.max(0, Math.min(1, (pageY - pageTop.current - RAIL_HANDLE_H / 2) / travel))) * span);
-    liveRef.current = next;
-    setLive(next);
+    const raw = min + (1 - Math.max(0, Math.min(1, (pageY - pageTop.current - RAIL_HANDLE_H / 2) / travel))) * span;
+    liveRef.current = quantize(raw);
+    setLive(onLive ? raw : liveRef.current);
+    if (onLive && !liveTick.current) { liveTick.current = true; onNextFrame(() => { liveTick.current = false; if (liveRef.current !== null && liveRef.current !== liveSent.current) { liveSent.current = liveRef.current; onLive(liveRef.current); } }); }
   };
-  const settle = () => { if (liveRef.current !== null) onCommit(liveRef.current); liveRef.current = null; setLive(null); };
-  const nudge = (by: number) => onCommit(quantize(value + by * step));
+  const liveTick = useRef(false), liveSent = useRef<number | null>(null);
+  const settle = () => { if (liveRef.current !== null) onCommit(liveRef.current); liveRef.current = null; liveSent.current = null; setLive(null); };
+  // 화면 읽기 한 걸음: 고운 막대(onLive)는 칸이 작으니 범위의 1/20 씩 움직인다.
+  const nudge = (by: number) => onCommit(quantize(value + by * (onLive ? Math.max(step, span / 20) : step)));
   return <View style={{ width: RAIL_W - 8, height: track + RAIL_LABEL_H }}>
     <Text numberOfLines={1} style={{ height: RAIL_LABEL_H, fontSize: 10, lineHeight: 14, fontWeight: '700', letterSpacing: -.2, color: disabled ? T.faint : T.muted }}>{label}</Text>
     <View testID={testID} accessibilityRole="adjustable" accessibilityLabel={a11yLabel ?? label}
@@ -1479,12 +1487,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             bubble={n => <RailBubble testID="불투명도 말풍선"><Text style={{ fontSize: 11, fontWeight: '800', color: C.ink }}>{Math.round(n)}%</Text></RailBubble>} />
         </View>}
         {tab === 'motion' && motionMoving && <View testID="조절대 내용" style={{ height: canvasSide ?? undefined, paddingVertical: 4, justifyContent: 'flex-start', gap: 20 }}>
-          <VSlider testID="세기 조절대" label={t("release.s0618")} height={railTrack} value={Math.round((scene.motion?.strength ?? .5) * 20)} min={1} max={20} step={1}
-            onCommit={n => scene.motion && setMotion({ ...scene.motion, strength: n / 20 })}
-            bubble={n => <RailBubble><Text numberOfLines={1} style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>{MOTION_WORDS(n / 20).replace(t("release.s0619") + " ", '')}</Text></RailBubble>} />
-          <VSlider testID="속도 조절대" label={t("release.s0621")} height={railTrack} value={Math.round((scene.motion?.speed ?? .5) * 20)} min={0} max={20} step={1}
-            onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: n / 20 })}
-            bubble={n => <RailBubble><Text numberOfLines={1} style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>{MOTION_WORDS(n / 20).replace(t("release.s0619") + " ", '')}</Text></RailBubble>} />
+          <VSlider testID="세기 조절대" label={t("release.s0618")} height={railTrack} value={Math.round((scene.motion?.strength ?? .5) * 100)} min={5} max={100} step={1}
+            onCommit={n => scene.motion && setMotion({ ...scene.motion, strength: n / 100 })} onLive={n => send({ type: 'motionLive', strength: n / 100 })}
+            bubble={n => <RailBubble><Text numberOfLines={1} style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>{MOTION_WORDS(n / 100).replace(t("release.s0619") + " ", '')}</Text></RailBubble>} />
+          <VSlider testID="속도 조절대" label={t("release.s0621")} height={railTrack} value={Math.round((scene.motion?.speed ?? .5) * 100)} min={0} max={100} step={1}
+            onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: n / 100 })} onLive={n => send({ type: 'motionLive', speed: n / 100 })}
+            bubble={n => <RailBubble><Text numberOfLines={1} style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>{MOTION_WORDS(n / 100).replace(t("release.s0619") + " ", '')}</Text></RailBubble>} />
         </View>}
       </View>}
       {!railMode && <View testID="조절 줄" style={{ height: BAR_H, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 12, backgroundColor: C.bg }}>
@@ -1499,10 +1507,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         </>}
         {/* 움직이기: 세기·속도가 캔버스 바로 위(시안 D). 효과를 고르기 전에는 무엇을 하면 되는지만 말한다. */}
         {tab === 'motion' && (motionMoving ? <>
-          <BarSlider testID="세기 조절대" label={t("release.s0618")} value={scene.motion?.strength ?? .5} min={.05} max={1} step={.05}
-            onCommit={n => scene.motion && setMotion({ ...scene.motion, strength: Math.round(n * 20) / 20 })} show={MOTION_WORDS} />
-          <BarSlider testID="속도 조절대" label={t("release.s0621")} value={scene.motion?.speed ?? .5} min={0} max={1} step={.05}
-            onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: Math.round(n * 20) / 20 })} show={MOTION_WORDS} />
+          <BarSlider testID="세기 조절대" label={t("release.s0618")} value={scene.motion?.strength ?? .5} min={.05} max={1} step={.01}
+            onCommit={n => scene.motion && setMotion({ ...scene.motion, strength: Math.round(n * 100) / 100 })} onLive={n => send({ type: 'motionLive', strength: n })} show={MOTION_WORDS} />
+          <BarSlider testID="속도 조절대" label={t("release.s0621")} value={scene.motion?.speed ?? .5} min={0} max={1} step={.01}
+            onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: Math.round(n * 100) / 100 })} onLive={n => send({ type: 'motionLive', speed: n })} show={MOTION_WORDS} />
         </> : <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{t("release.s0624")}</Text>)}
         {tab === 'anim' && <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{animOn ? (animPlaying ? t("release.s0625") : t("release.d111", { v0: ((scene.frameIdx ?? 0) + 1) })) : t("release.s0626")}</Text>}
       </View>}

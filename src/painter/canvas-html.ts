@@ -235,7 +235,7 @@ function drawOnion(g){
   prev.forEach(l=>composite(cg,l));cg.save();cg.globalCompositeOperation='source-in';cg.fillStyle='#5B57D9';cg.fillRect(0,0,W,H);cg.restore();onionKey=key;}
  g.save();g.globalAlpha=.32;g.drawImage(onionBuf,0,0,W,H);g.restore();
 }
-var onionBuf=null,onionKey='';
+var onionBuf=null,onionKey='',liveMotionBase=null;
 function useFrame(i){syncFrame();frameIdx=Math.max(0,Math.min(frames.length-1,i));layers=frames[frameIdx].layers;if(!layers.some(l=>l.id===activeLayerId))activeLayerId=layers[0]?.id||'';activeDrawLayerId=activeLayerId;history=[];future=[];extentCache=null;clearBoil();}
 var boilCache=new Map(),BOIL_FPS=8,boilMid=null;
 // 떨림 사본을 버릴 때 메모리도 바로 돌려준다(WebKit 은 GC 전까지 캔버스 메모리를 센다).
@@ -1480,10 +1480,10 @@ async function command(m){try{
  // 건드리지 않고 '다음에 무엇으로 그릴지'만 정하므로 저장 결과를 흐트러뜨리지 않는다.
  // 이걸 버리면 지우개 → 펜 전환이 조용히 사라져 다음 획이 지워진다(45.34에서 픽셀로 재현).
  // 저장은 시작할 때 선택을 이미 확정하므로(applySelection) 저장 중 'tool' 이 그림을 바꿀 일은 없다.
- const SAFE_WHILE_SAVING=['saved','saveFailed','analyze','save','tool','shape','font','brush','brushSettings','color','width'];
+ const SAFE_WHILE_SAVING=['saved','saveFailed','analyze','save','tool','shape','font','motionLive','brush','brushSettings','color','width'];
  if(saving&&!SAFE_WHILE_SAVING.includes(m.type))return;
  // 문구 미리보기 중에 그림·문구를 바꾸는 명령이 오면 먼저 원래 문구로 돌린다 — 확정('caption')도 원래 문구 위에서 한 번의 되돌리기가 된다.
- if(capPreviewing&&!['captionPreview','save','saved','saveFailed','tool','shape','font','brush','brushSettings','color','width','smooth','analyze'].includes(m.type))endCaptionPreview();
+ if(capPreviewing&&!['captionPreview','save','saved','saveFailed','tool','shape','font','motionLive','brush','brushSettings','color','width','smooth','analyze'].includes(m.type))endCaptionPreview();
  if(m.type==='init'){
    loading=true;const input=m.layers||[{...defaults('draw-1','그림 1'),data:m.drawing}];
    // 문구 폰트는 첫 그림 전에 올린다 — 저장·움직임 굽기가 기기 글꼴로 먼저 찍히지 않게.
@@ -1626,7 +1626,10 @@ async function command(m){try{
  }
  if(m.type==='scaleAll'){if(scaleAll(Number(m.factor),!!m.withCaption))dirty=true;render(playing?(now()-playStart)/1000:undefined);state();send({type:'scaled',factor:Number(m.factor)});}
  if(m.type==='fitMotion'){const f=fitMotion();if(f>0&&f<1)dirty=true;render(playing?(now()-playStart)/1000:undefined);state();send({type:'fitted',factor:f});}
- if(m.type==='motion'){checkpoint();motion=m.motion||null;clearBoil();dirty=true;extentCache=null;if(!motion)stopPlaying();render(playing?(now()-playStart)/1000:undefined);state();}
+ // 세기·속도를 끄는 동안(2026-11-03, 대표: 손을 떼야 반영돼 렉·순간이동처럼 느껴짐): 되돌리기에 남기지 않고 재생 중인 움직임에 바로 반영한다.
+ // 손을 떼면 앱이 보내는 'motion' 이 끄기 전 값 위에서 한 번의 되돌리기로 확정한다.
+ if(m.type==='motionLive'){if(!motion)return;if(!liveMotionBase)liveMotionBase=JSON.parse(JSON.stringify(motion));const o={};if(Number.isFinite(m.speed))o.speed=Math.max(0,Math.min(1,m.speed));if(Number.isFinite(m.strength))o.strength=Math.max(0,Math.min(1,m.strength));motion={...motion,...o};extentCache=null;if(!playing)render();return;}
+ if(m.type==='motion'){if(liveMotionBase){motion=liveMotionBase;liveMotionBase=null;}checkpoint();motion=m.motion||null;clearBoil();dirty=true;extentCache=null;if(!motion)stopPlaying();render(playing?(now()-playStart)/1000:undefined);state();}
  if(m.type==='play'){startPlaying();}
  if(m.type==='stop'){stopPlaying();render();state();}
  if(m.type==='lineFrames'){const was=playing;stopPlaying();send({type:'lineFrames',id:m.id,line:buildLineFrames(m.spec)});if(was)startPlaying();else{render();state();}}
