@@ -884,7 +884,14 @@ function buildLineFrames(spec){
  const turned=out.slice(best).concat(out.slice(0,best));
  return {loop:Number(L.toFixed(3)),count,sheets:turned.map(o=>o.url)};
 }
+// 반투명 칠(마커 55% 등)은 GIF 에 반투명이 없어 128 밑은 통째로 빠지고 그 위는 원색으로 진해져 깨져 보였다(2026-11-03, 대표: 채팅에서 써 보기).
+// 반쯤 보이는 픽셀(알파 24~199)은 흰 바탕에 섞어 불투명으로, 거의 다 찬 픽셀(200 이상)은 제 색 그대로, 24 밑은 투명 — 밝은 채팅 바탕에서 화면과 같은 색으로 보인다.
+// 원본 장(WebP·PNG 장에도 쓰인다)은 건드리지 않고 GIF 용 사본에만 한다.
+function matteFrames(frames){return frames.map(src=>{const c=document.createElement('canvas');c.width=src.width;c.height=src.height;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(src,0,0);const img=g.getImageData(0,0,c.width,c.height),d=img.data;
+ for(let i=0;i<d.length;i+=4){const a=d[i+3];if(a===255)continue;if(a<24){d[i+3]=0;continue;}if(a>=200){d[i+3]=255;continue;}const k=a/255;d[i]=Math.round(d[i]*k+255*(1-k));d[i+1]=Math.round(d[i+1]*k+255*(1-k));d[i+2]=Math.round(d[i+2]*k+255*(1-k));d[i+3]=255;}
+ g.putImageData(img,0,0);return c;});}
 function encodeGif(frames,delayHundredths){
+ frames=matteFrames(frames);
  const {palette,dropped}=quantize(frames);
  const bytes=[];
  const put=(...v)=>{for(const x of v)bytes.push(x&255);};
