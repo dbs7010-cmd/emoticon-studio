@@ -113,11 +113,12 @@
       "file": "dist/releases/vc26-20261031/emoti-1.0.0-vc26-a4ca905.aab",
       "commit": "a4ca905",
       "sha256": "db4bcfd174c99465754381165de1c327afd6ad4d9b4f0fb37ba24b0e877b7ff9",
-      "status": "ready-not-uploaded",
+      "status": "production-released",
       "releaseCheck": "PASS",
       "manifestVersionCode": 26,
       "adIdPermission": true,
-      "mediaCheck": "115 active files PASS"
+      "mediaCheck": "115 active files PASS",
+      "note": "Owner reported Google Play production release passed (2026-11-02). Kept in prepared; released list holds console-verified uploads."
     }
   ]
 }
