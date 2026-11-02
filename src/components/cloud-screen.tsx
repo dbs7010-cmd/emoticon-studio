@@ -40,6 +40,13 @@ export function CloudScreen(p: Props) {
   const [agree, setAgree] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
   const live = p.projects.filter(x => !x.deletedAt);
+  // 클라우드 백업 목록 정리(2026-11-03, 대표: 세트가 늘면 백업 줄이 길게 늘어져 지저분했다).
+  // 백업이 필요한 세트(한 번도 안 했거나 실패했거나 그 뒤에 고친 세트)를 위로, 같으면 최근에 고친 순. 처음엔 세 줄만 보이고 나머지는 '더 보기'.
+  const [allSets, setAllSets] = useState(false), [allCloud, setAllCloud] = useState(false);
+  const needsBackup = (project: Project) => { const n = p.store.cloudBackups?.[project.id]; return !n || !n.ok || n.at < project.updatedAt; };
+  const backupOrder = [...live].sort((a, b) => Number(needsBackup(b)) - Number(needsBackup(a)) || b.updatedAt.localeCompare(a.updatedAt));
+  const pending = backupOrder.filter(needsBackup);
+  const FOLD = 3;
 
   const refresh = async () => {
     if (!p.cloud) return;
@@ -56,6 +63,16 @@ export function CloudScreen(p: Props) {
   const doBackup = (project: Project) => p.task(t("release.d086", { v0: (project.projectName) }), async () => {
     try { const r = await backupSet(p.cloud!, project, p.device); note(project.id, { ok: true, files: r.files, sent: r.sent }); setCloudSets(await listSets(p.cloud!)); }
     catch (e) { note(project.id, { ok: false, files: 0, sent: 0, error: String((e as Error).message ?? e).slice(0, 200) }); throw e; }
+  });
+  // 필요한 세트를 한 번에 차례로 백업한다. 하나가 실패해도 나머지는 계속하고, 실패한 세트는 그 줄에 이유가 남는다.
+  const doBackupAll = () => p.task(t('backup.allRunning', { n: pending.length }), async () => {
+    let failed = 0;
+    for (const project of pending) {
+      try { const r = await backupSet(p.cloud!, project, p.device); note(project.id, { ok: true, files: r.files, sent: r.sent }); }
+      catch (e) { failed++; note(project.id, { ok: false, files: 0, sent: 0, error: String((e as Error).message ?? e).slice(0, 200) }); }
+    }
+    setCloudSets(await listSets(p.cloud!));
+    if (failed) throw new Error(t('backup.allFailed', { n: failed }));
   });
   const doRestore = (set: CloudSet) => p.task(t("release.s0377"), async () => {
     const r = await restoreSet(p.cloud!, set.id, p.projects);
@@ -90,6 +107,12 @@ export function CloudScreen(p: Props) {
     : { gap: 10, paddingVertical: 14, borderBottomWidth: 1, borderColor: C.line }}>
     <Text style={{ fontSize: p.inline ? 17 : 16, fontWeight: '800', color: C.ink }}>{title}</Text>{children}</View>;
   const show = (part: 'contest' | 'account') => !p.part || p.part === part;
+  // 접힌 목록의 '더 보기 / 접기' 한 줄(가운데, 손가락 높이 44).
+  const fold = (id: string, open: boolean, rest: number, onPress: () => void) => <Pressable testID={id} accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={onPress}
+    style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: 12, backgroundColor: pressed ? C.fill : 'transparent' })}>
+    <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted }}>{open ? t('backup.less') : t('backup.more', { n: rest })}</Text>
+    <Glyph name={open ? 'chevron-up' : 'chevron-down'} size={16} color={C.muted} />
+  </Pressable>;
   const muted = (text: string) => <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{text}</Text>;
 
   const body = <>
@@ -125,18 +148,25 @@ export function CloudScreen(p: Props) {
             {muted(t("release.s0392"))}
           </>)}
           {show('account') && uid && section(t('ui.backupCloud'), user?.pro.active ? <>
-            {live.map(project => { const n = p.store.cloudBackups?.[project.id]; return <View key={project.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View testID="백업 요약" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: C.muted }}>{pending.length ? t('backup.summary', { n: live.length, m: pending.length }) : t('backup.allDone', { n: live.length })}</Text>
+              {pending.length > 1 && <Action compact primary title={t('backup.all')} onPress={() => void doBackupAll()} />}
+            </View>
+            {(allSets ? backupOrder : backupOrder.slice(0, FOLD)).map(project => { const n = p.store.cloudBackups?.[project.id]; return <View key={project.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{project.projectName}</Text>
-                <Text style={{ fontSize: 12, color: n && !n.ok ? C.danger : C.muted }}>{!n ? t("release.s0393") : n.ok ? t("release.d094", { v0: (when(n.at)), v1: (n.sent), v2: (n.files) }) : t("release.d095", { v0: (when(n.at)), v1: (n.error ?? '') })}</Text>
+                <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{project.projectName}</Text>
+                <Text numberOfLines={2} style={{ fontSize: 12, color: n && !n.ok ? C.danger : C.muted }}>{!n ? t("release.s0393") : n.ok ? t("release.d094", { v0: (when(n.at)), v1: (n.sent), v2: (n.files) }) : t("release.d095", { v0: (when(n.at)), v1: (n.error ?? '') })}</Text>
               </View>
-              <Action compact title={t('ui.backup')} onPress={() => void doBackup(project)} />
+              <Action compact title={needsBackup(project) ? t('ui.backup') : t('backup.again')} onPress={() => void doBackup(project)} />
             </View>; })}
+            {backupOrder.length > FOLD && fold('백업 더 보기', allSets, backupOrder.length - FOLD, () => setAllSets(!allSets))}
             <Text style={{ fontSize: 13, fontWeight: '700', color: C.ink, marginTop: 6 }}>{t('ui.cloudSets')}</Text>
-            {(cloudSets ?? []).map(set => <View key={set.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ flex: 1, fontSize: 13, color: C.ink }}>{`${set.name} · ${when(new Date(set.updatedAt).toISOString())} · ${(set.bytes / 1048576).toFixed(1)}MB`}</Text>
+            {(cloudSets ?? []).length === 0 && muted(cloudSets ? t('backup.cloudEmpty') : t('ui.loading'))}
+            {(allCloud ? cloudSets ?? [] : (cloudSets ?? []).slice(0, FOLD)).map(set => <View key={set.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text numberOfLines={2} style={{ flex: 1, fontSize: 13, color: C.ink }}>{`${set.name} · ${when(new Date(set.updatedAt).toISOString())} · ${(set.bytes / 1048576).toFixed(1)}MB`}</Text>
               <Action compact title={t('ui.restoreShort')} onPress={() => void doRestore(set)} />
             </View>)}
+            {(cloudSets ?? []).length > FOLD && fold('클라우드 더 보기', allCloud, (cloudSets ?? []).length - FOLD, () => setAllCloud(!allCloud))}
             {muted(t("release.s0394"))}
           </> : muted(t("release.s0395")))}
           {show('contest') && section(t('ui.contest'), <>

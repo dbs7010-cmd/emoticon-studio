@@ -33,7 +33,7 @@ exports.loader = function (given = {}) {
       if (!resolved) throw new Error('Cannot resolve ' + base);
       // 그림·글꼴은 번들러가 하듯 '손잡이'로 돌려준다. 예전에는 TS 로 읽으려다 빈 객체가 되어
       // 어느 파일인지 알 수 없었다. 경로가 남아야 검토 렌더가 진짜 그림을 붙일 수 있다.
-      if (/\.(png|jpg|jpeg|gif|webp|svg|ttf|otf|mp4)$/i.test(resolved)) {
+      if (/\.(png|jpg|jpeg|gif|webp|svg|ttf|otf|woff2|mp4)$/i.test(resolved)) {
         if (!cache.has(resolved)) cache.set(resolved, { exports: { __asset: resolved } });
         return cache.get(resolved).exports;
       }

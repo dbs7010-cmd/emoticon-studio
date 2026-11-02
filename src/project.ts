@@ -2,6 +2,7 @@ import { t } from './i18n/index';
 import { KAKAO_STATIC_SPEC as SPEC } from './constants/kakao-spec';
 import { MOTION_PRESETS, type PainterWork, ANIM_FREE_FRAMES, ANIM_MAX_FRAMES } from './types';
 import { isProPreset, STEP_EXCLUDED, STEP_LIMITS } from './motion-math';
+import { FONT_KEYS } from './design/font-list';
 import type { Check, LocalImage, Motion, Project, Slot, Store } from './types';
 
 // Home and export share these issues. Missing cuts belong to progress, not defects.
@@ -188,7 +189,7 @@ export function parseStore(raw: string): Store {
         const caption = s.work.caption;
         if (caption !== undefined && (typeof caption.text !== 'string' || !['top', 'bottom'].includes(caption.place) || typeof caption.color !== 'string')) throw new Error(t("release.s0995"));
         // 글씨체는 선택 항목이다(45.6차): 없으면 기본, 있으면 아는 값이어야 한다. 옛 저장본은 이 줄을 그냥 지나간다.
-        if (caption?.style !== undefined && !['basic', 'serif', 'thick'].includes(caption.style)) throw new Error(t("release.s0995"));
+        if (caption?.style !== undefined && !['basic', 'serif', 'thick', ...FONT_KEYS].includes(caption.style)) throw new Error(t("release.s0995"));
         if (s.work.frames !== undefined) {
           const fr = s.work.frames;
           if (!Array.isArray(fr) || fr.length < 2 || fr.length > ANIM_MAX_FRAMES) throw new Error(t("release.s0996"));

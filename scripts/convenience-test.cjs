@@ -127,9 +127,12 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   for (const [open, close] of openers) {
     await press(open);
     assert.equal(veil().length, 1, open + ': 캔버스에 닫기 막이 생긴다');
-    const before = sent().length;
+    // 문구 입력 미리보기를 거두는 'captionPreview end' 만 예외다 — 그림에 닿는 명령이 아니다(2026-11-02).
+    const drawing = () => sent().filter(m => m.type !== 'captionPreview').length;
+    const before = drawing();
     await act(async () => veil()[0].props.onPress());
-    assert.equal(sent().length, before, open + ': 닫는 손가락은 캔버스에 아무 명령도 보내지 않는다');
+    assert.equal(drawing(), before, open + ': 닫는 손가락은 캔버스에 아무 명령도 보내지 않는다');
+    if (open === '문구') assert.deepEqual(sent().at(-1), { type: 'captionPreview', end: true }, '문구: 닫으면 입력 미리보기만 거둔다');
     assert.equal(veil().length, 0, open + ': 막이 사라지고 그리기로 돌아온다');
     if (close) assert.equal(labelled(close).length, 0, open + ': 패널이 닫혔다');
   }
@@ -209,13 +212,13 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   const quick = () => byTestID('빠른 브러시')[0];
   assert.equal(labelled('문구').length, 1, '문구 입구는 하나');
   assert.equal(top().findAll(n => n.props.accessibilityLabel === '문구').length, 0, '문구는 아래 도구 줄에 없다');
-  // 45.35 승인 시안: 도구 네 칸 + 오른쪽 끝의 지금 색 동그라미가 한 줄이다.
+  // 45.35 승인 시안: 도구 칸 + 오른쪽 끝의 지금 색 동그라미가 한 줄이다. 2026-11-03 도형이 다섯 번째 칸으로 들어왔다(줄 높이 그대로).
   assert.deepEqual(top().findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel).map(n => n.props.accessibilityLabel),
-    ['그리기 도구 펜', '지우개', '채우기', '선택', '색'], '아래 줄: 도구 네 칸 + 지금 색');
+    ['그리기 도구 펜', '지우개', '채우기', '선택', '도형', '색'], '아래 줄: 도구 다섯 칸 + 지금 색');
   assert.deepEqual(quick().findAll(n => n.type === 'Pressable').map(n => n.props.accessibilityLabel), ['기본 펜', '연필', '마커', '브러시 전체'], '빠른 브러시 셋 + 전체');
   const cell = label => top().findAll(n => n.type === 'Pressable' && n.props.accessibilityLabel === label)[0];
   assert.equal(styleOf(cell('그리기 도구 펜')).flex, styleOf(cell('지우개')).flex, '네 칸이 같은 폭으로 선다');
-  for (const name of ['그리기 도구 펜', '지우개', '채우기', '선택']) assert.ok((styleOf(cell(name)).minHeight ?? 0) >= 44, name + ': 손가락 자리는 그대로');
+  for (const name of ['그리기 도구 펜', '지우개', '채우기', '선택', '도형']) assert.ok((styleOf(cell(name)).minHeight ?? 0) >= 44, name + ': 손가락 자리는 그대로');
 
   // ── 9. 도구를 열고 닫아도 캔버스는 제자리 ───────────────────────────────────────────────────
   const canvasBox = () => {

@@ -11,7 +11,8 @@ export type WorkLayer = LayerTransform & { image?: LocalImage };
 // 가운데에 놓인다 — 그래서 이 값들이 없던 저장 데이터도 그대로 열린다.
 // 문구 글씨체(45.6차). 폰트 파일을 새로 넣지 않고 기기에 이미 있는 글꼴과 테두리 굵기로 세 가지 성격을 만든다.
 // 저장에는 선택 항목으로만 들어간다 — 이 값이 없는 예전 저장본은 'basic' 으로 열리고, 옮겨 심는 작업(migration)이 필요 없다.
-export type CaptionStyle = 'basic' | 'serif' | 'thick';
+// 2026-11-03: 기기 글꼴 셋 + 손글씨 폰트 key(src/design/font-list.ts). 저장본 검사는 두 목록을 함께 본다.
+export type CaptionStyle = 'basic' | 'serif' | 'thick' | (string & {});
 export const CAPTION_STYLES: { key: CaptionStyle; title: string }[] = [
   { key: 'basic', title: t("release.p00") }, { key: 'serif', title: t("release.p01") }, { key: 'thick', title: t("release.p02") },
 ];

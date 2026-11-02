@@ -38,6 +38,7 @@
     "@types/react": "~19.2.2",
     "react-dom": "19.2.3",
     "react-test-renderer": "19.2.3",
+    "subset-font": "^2.9.0",
     "typescript": "~6.0.3"
   },
   "scripts": {

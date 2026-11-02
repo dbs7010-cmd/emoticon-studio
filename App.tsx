@@ -26,6 +26,8 @@ import { isFullBackup, restoreFullBackup, writeFullBackup } from './src/services
 import { CloudScreen } from './src/components/cloud-screen';
 import { TabBar, type HomeTab } from './src/components/tab-bar';
 import { NoticeCarousel, type NoticeSlide } from './src/components/notice-carousel';
+import { FONT_COPYRIGHTS, OFL_TEXT } from './src/design/font-licenses';
+import { fontOf } from './src/design/font-list';
 import { ChatSim } from './src/components/chat-sim';
 import { GUIDEBOOK } from './src/constants/guidebook';
 import { LESSONS, LESSON_GROUPS, type LessonAction } from './src/constants/lessons';
@@ -130,6 +132,8 @@ function Studio() {
   // 명세 H03: 새 세트는 이름을 확인하고 만든다. 이 값이 있는 동안에도 저장소는 그대로다 — '만들기'를 눌러야 세트가 생긴다.
   const [newSetName, setNewSetName] = useState<string | null>(null);
   const [manageId, setManageId] = useState<string | null>(null), [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // 오픈소스 고지(2026-11-03): 문구 손글씨 폰트의 저작권과 OFL 전문.
+  const [ossOpen, setOssOpen] = useState(false);
   const [trashOpen, setTrashOpen] = useState(false), [confirmPurgeId, setConfirmPurgeId] = useState<string | null>(null);
   // 세트 관리의 이름 칸, 전체 작업의 검색·분류·정렬(45.38).
   const [managedName, setManagedName] = useState('');
@@ -933,6 +937,8 @@ function Studio() {
   // 홈은 프로젝트 관리 화면이 아니라 시작 화면이다(45.5차): 가장 최근 세트 하나만 두고, 나머지는 전체 작업에서 관리한다.
   const HOME_RECENT = 1;
   // 강좌 끝의 '바로 해 보기'. 강좌가 가리키는 화면으로 바로 보낸다.
+  // 가이드북·표현 가이드의 '강좌 보러 가기': 홈 화면으로 돌아가 아래 탭의 강좌를 연다.
+  function openClasses() { setBookOpen(null); setGuideCard(null); setHomeView('home'); setHomeTab('class'); }
   function runLessonAction(a: LessonAction) {
     const latest = sortedProjects[0];
     setHomeView('home');
@@ -1035,6 +1041,10 @@ function Studio() {
       <Pressable accessibilityRole="button" accessibilityLabel={t('ui.contact')} accessibilityState={{ disabled: !supportEmail }} disabled={!supportEmail}
         onPress={() => void openSupport()} style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Text style={{ flex: 1, color: C.ink }}>{t('ui.contact')}</Text><Text style={{ color: C.muted }}>{supportEmail ? t("release.s0081") : t("release.s0080")}</Text>
+      </Pressable>
+      <Pressable testID="오픈소스 라이선스" accessibilityRole="button" accessibilityLabel={t('oss.title')} onPress={() => { setSettings(false); setOssOpen(true); }}
+        style={{ minHeight: T.tap, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Text style={{ flex: 1, color: C.ink }}>{t('oss.title')}</Text><Glyph name="chevron-right" size={18} color={C.faint} />
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={t('ui.proAccess')} onPress={() => { setSettings(false); setProSheet(true); }}
         style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderColor: C.line, backgroundColor: pressed ? T.fill : 'transparent' })}>
@@ -1163,6 +1173,7 @@ function Studio() {
                 </Pressable>}
               </View>}
             </View>; })}
+          <LessonBanner onPress={openClasses} />
         </> : !project && homeView === 'guide' ? <>
           {/* 표현 가이드(44차): "무엇을 그릴까?". 분류 → 표현 카드(그림 자리 · 이름 · 짧은 몸짓 힌트). 긴 설명·대화형·생성 없음.
               "어떻게 그릴까?"는 그리기 화면 › 참고 › 기본 레퍼런스가 맡는다. */}
@@ -1279,6 +1290,7 @@ function Studio() {
                 </View>
               : <Text style={{ paddingVertical: 24, textAlign: 'center', fontSize: 13, color: C.muted }}>{t("release.s0132")}</Text>;
           })()}
+          {!guideCard && <LessonBanner onPress={openClasses} />}
         </> : !project ? <>
           {/* 2026-10-08 토스식 개편(캔버스 T-Home, 사용자 확인): 회색 바탕 + 흰 카드. 글자를 줄이고 한눈에 —
               ① 이어 그리기 카드(세트 이름 · n/32 · 네 칸 · 막대 · 노란 버튼 하나) ② 공지 한 줄(공모전·알림) ③ 제안까지 세 칸(아이콘 + 두 마디) ④ 내 세트 한 줄.
@@ -1996,6 +2008,14 @@ function Studio() {
         <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: C.ink }}>{t('ui.newSetDefault')}</Text>
       </Pressable>
     </Dialog>}
+    {ossOpen && <Dialog title={t('oss.title')} onClose={() => setOssOpen(false)}>
+      <Text style={{ fontSize: 13, lineHeight: 20, color: C.ink }}>{t('oss.fonts')}</Text>
+      {FONT_COPYRIGHTS.map(f => <View key={f.key} style={{ gap: 2 }}>
+        <Text style={{ fontSize: 14, fontWeight: '800', color: C.ink }}>{fontOf(f.key)?.title ?? f.key}</Text>
+        <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{f.copyright}</Text>
+      </View>)}
+      <Text selectable style={{ fontSize: 11, lineHeight: 16, color: C.muted }}>{OFL_TEXT}</Text>
+    </Dialog>}
     {trashOpen && !pendingPurge && <Dialog title={t('ui.trash')} onClose={() => setTrashOpen(false)}>
       <Text style={styles.muted}>{t("release.s0278") + " "}{TRASH_DAYS}{t("release.s0279")}</Text>
       {!trashed.length && <Text style={{ fontSize: 13, color: C.muted }}>{t("release.s0280")}</Text>}
@@ -2270,6 +2290,22 @@ const CORN_ART: Record<string, ImageSourcePropType> = {
   heart: require('./assets/mascot/corn-heart.png'), shy: require('./assets/mascot/corn-shy.png'),
   goguma: require('./assets/mascot/goguma-wave.png'), kong: require('./assets/mascot/kong-cheer.png'),
 };
+// 강좌로 가는 그림 카드(2026-11-03, 대표: 가이드북·표현 가이드 아래에 '잘 모르겠으면 강좌'). 홈 공지처럼 꽉 찬 카드에 콘(Codex 그림).
+function LessonBanner({ onPress }: { onPress: () => void }) {
+  return <Pressable testID="강좌로 가기" accessibilityRole="button" accessibilityLabel={t('lessonBanner.title')} accessibilityHint={t('lessonBanner.go')} onPress={onPress}
+    style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 112, marginTop: 8, paddingLeft: 18, paddingRight: 10, borderRadius: T.radius.card, overflow: 'hidden',
+      backgroundColor: C.accentSoft, transform: pressed ? [{ scale: .98 }] : [] })}>
+    <View style={{ flex: 1, gap: 4, paddingVertical: 16 }}>
+      <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink, letterSpacing: -.3 }}>{t('lessonBanner.title')}</Text>
+      <Text style={{ fontSize: 13, lineHeight: 19, color: C.ink }}>{t('lessonBanner.body')}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 4 }}>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{t('lessonBanner.go')}</Text>
+        <Glyph name="chevron-right" size={16} color={C.ink} />
+      </View>
+    </View>
+    <Image accessibilityIgnoresInvertColors source={CORN_ART.cheer} style={{ width: 96, height: 96 }} resizeMode="contain" />
+  </Pressable>;
+}
 function IntroCanvas({ id, size, lift }: { id: string; size: number; lift?: Animated.Value }) {
   const art = CORN_ART[id] ?? guideFigure(id);
   return <View style={{ width: size, height: size, borderRadius: 10, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>

@@ -489,11 +489,16 @@ const saved = async (dirty = true) => {
   const bench = async run => { const t0 = taps, d0 = drags, a0 = alerts.length, m0 = seen.length; await run(); return { taps: taps - t0, drags: drags - d0, modals: alerts.length - a0 }; };
   await openSet('새 이모티콘 세트');
   await act(async () => tiles().find(t => t.props.testID === 'slot-4').props.onPress()); await ready();
+  // 2026-11-03(대표): 즐겨찾기 밖에서도 설정 — 목록에서 지금 쓰는 브러시(연필)를 다시 누르면 그 브러시의 세부 설정이 열린다.
+  await press('브러시 전체'); await press('브러시 연필');
+  assert.ok(tree.root.findAll(n => n.props.accessibilityLabel === '브러시 목록으로').length > 0, '지금 브러시를 다시 누르면 세부 설정');
+  assert.equal(lastCommand('brushSettings').preset, 'pencil2', '설정을 여는 것만으로 브러시는 바뀌지 않는다');
+  await press('브러시 목록으로'); await press('브러시 닫기');
   const flowA = await bench(async () => {
     await press('이전 칸 그림으로 시작'); await act(async () => {});
     scene = { ...scene, dirty: true, undo: true }; await message(scene);
     // 목록이 열리면 아래 즐겨찾기 줄이 접히므로(45.34 §6) 목록 쪽 이름으로 고른다.
-    await press('브러시 전체'); await press('브러시 연필');   // 고르면 선택판이 스스로 닫힌다(45.25)
+    await press('브러시 전체'); await press('브러시 색연필');   // 다른 브러시를 고르면 선택판이 스스로 닫힌다(45.25)
     await dragSize('브러시 굵기', 400, 390);
     await press('색'); await press('최근 색 #54A9E8');
     await press('문구');

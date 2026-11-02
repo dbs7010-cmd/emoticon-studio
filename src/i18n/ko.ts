@@ -1824,5 +1824,35 @@ export const ko = {
   "release.p46": "이번 테스트 버전에서는 PRO 구매가 아직 열리지 않았어요. 무료 기능을 모두 쓸 수 있어요.",
   "release.p47": " · {v0}까지",
   "release.p48": "PRO 이용 중{v0}",
+  // 도형 도구(2026-11-03)
+  "shape.tool": "도형",
+  "shape.title": "도형",
+  "shape.line": "직선",
+  "shape.rect": "네모",
+  "shape.ellipse": "동그라미",
+  "shape.triangle": "세모",
+  "shape.star": "별",
+  "shape.heart": "하트",
+  "shape.stroke": "선만",
+  "shape.fill": "채우기",
+  "shape.hint": "캔버스를 끌어서 그려요 · 톡 누르면 가운데 크기로 놓여요",
+  // 클라우드 백업 목록 정리(2026-11-03)
+  "backup.summary": "세트 {n}개 · 백업이 필요한 세트 {m}개",
+  "backup.allDone": "세트 {n}개 모두 백업돼 있어요",
+  "backup.all": "모두 백업",
+  "backup.allRunning": "세트 {n}개 백업하는 중",
+  "backup.allFailed": "세트 {n}개는 백업하지 못했어요. 그 줄의 이유를 보고 다시 눌러 주세요.",
+  "backup.again": "다시",
+  "backup.more": "{n}개 더 보기",
+  "backup.less": "접기",
+  "backup.cloudEmpty": "아직 클라우드에 올린 세트가 없어요",
+  "brush.tapAgain": "다시 누르면 설정",
+  // 강좌로 가는 그림 카드(2026-11-03)
+  "lessonBanner.title": "잘 모르겠으면 강좌를 봐요",
+  "lessonBanner.body": "콘이 처음부터 완성까지 영상으로 따라 하게 알려 줘요",
+  "lessonBanner.go": "강좌 보러 가기",
+  // 오픈소스 고지(2026-11-03)
+  "oss.title": "오픈소스 라이선스",
+  "oss.fonts": "문구 손글씨 폰트는 SIL Open Font License 1.1 로 배포된 폰트예요. 각 폰트의 저작권과 라이선스 전문을 아래에 적어요.",
 } as const;
 export type Key = keyof typeof ko;

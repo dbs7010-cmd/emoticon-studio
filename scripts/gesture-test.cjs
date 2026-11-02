@@ -7,7 +7,7 @@ const { canvasHtml } = loader()('src/painter/canvas-html.ts');
 // Test-only probe into the closure; the shipped script is otherwise untouched.
 const source = canvasHtml.split('<script>')[1].split('</script>')[0].replace(
   "window.addEventListener('resize',size);",
-  "window.__stacks=()=>({past:history.length,future:future.length});window.addEventListener('resize',size);");
+  "window.__stacks=()=>({past:history.length,future:future.length});window.__onScreen=()=>caption&&caption.text;window.addEventListener('resize',size);");
 
 // Each context records the stroke marks drawn into it, so undo/redo restore a verifiable canvas identity.
 function context2d() {
@@ -183,5 +183,30 @@ const tick = () => new Promise(resolve => setTimeout(resolve, 5));
   assert.deepEqual(messages.filter(m => m.type === 'save').at(-1).caption, onCanvas, '저장 값 = 캔버스에서 옮기고 키우고 돌린 값');
   await command({ type: 'saved' });
 
-  console.log('PASS: one-finger stroke, two-finger tap undo, three-finger tap redo across staggered lifts, drag is not a tap, three consecutive undo+redo steps restore every state in order, new stroke clears redo, reference move/pinch, caption: tap selects (no stroke, no undo step), tap again asks to edit, jitter is not a move, drag moves the words, handle drag scales, two-finger pinch scales (cap 3) and twist rotates, soft bounds keep the centre on the canvas, tapping elsewhere ends the selection without drawing, saved caption equals the on-canvas one. DOM shimmed; Android touch delivery still requires device test.');
+  // 문구 실시간 반영(2026-11-02): 입력 중 미리보기는 화면에만 보이고 되돌리기·상태·저장에는 남지 않는다.
+  const onScreen = () => sandbox.window.__onScreen();
+  const before = cap(), pastPreview = stacks().past;
+  await command({ type: 'captionPreview', caption: { ...before, text: '안녕하세' } });
+  await command({ type: 'captionPreview', caption: { ...before, text: '안녕하세요' } });
+  assert.equal(onScreen(), '안녕하세요', '치는 글자가 바로 캔버스에 보인다');
+  assert.equal(stacks().past, pastPreview, '미리보기는 되돌리기 기록을 만들지 않는다');
+  await command({ type: 'save' });
+  assert.equal(messages.filter(m => m.type === 'save').at(-1).caption.text, before.text, '확정 전 자동저장은 원래 문구를 저장한다');
+  await command({ type: 'saved' });
+  assert.equal(onScreen(), '안녕하세요', '저장 뒤에도 미리보기는 화면에 남는다');
+  await command({ type: 'captionPreview', end: true });
+  assert.equal(onScreen(), before.text, '그냥 닫으면 원래 문구로 돌아간다');
+  assert.deepEqual(state().caption, before, '화면 상태도 원래 문구');
+  await command({ type: 'captionPreview', caption: { ...before, text: '고마워' } });
+  await command({ type: 'caption', caption: { ...before, text: '고마워' } });
+  assert.equal(onScreen(), '고마워', '적용하면 확정된다');
+  assert.equal(stacks().past, pastPreview + 1, '확정은 되돌리기 한 번');
+  await command({ type: 'undo' });
+  assert.equal(onScreen(), before.text, '되돌리면 미리보기 전 문구로');
+  await command({ type: 'captionPreview', caption: null });
+  assert.equal(onScreen(), null, '입력을 다 지우면 화면에서도 사라진다');
+  await command({ type: 'captionPreview', end: true });
+  assert.equal(onScreen(), before.text, '닫으면 다시 원래 문구');
+
+  console.log('PASS: live caption preview (screen only, no undo step, autosave keeps the confirmed words, close restores, apply is one undo step), one-finger stroke, two-finger tap undo, three-finger tap redo across staggered lifts, drag is not a tap, three consecutive undo+redo steps restore every state in order, new stroke clears redo, reference move/pinch, caption: tap selects (no stroke, no undo step), tap again asks to edit, jitter is not a move, drag moves the words, handle drag scales, two-finger pinch scales (cap 3) and twist rotates, soft bounds keep the centre on the canvas, tapping elsewhere ends the selection without drawing, saved caption equals the on-canvas one. DOM shimmed; Android touch delivery still requires device test.');
 })().catch(e => { console.error(e); process.exitCode = 1; });

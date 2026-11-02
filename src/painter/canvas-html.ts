@@ -8,7 +8,7 @@ export const canvasHtml = `<!doctype html><html lang="ko"><head><meta name="view
 (function(){
 const canvas=document.getElementById('drawing'),surface=document.getElementById('surface'),viewport=document.getElementById('viewport'),ctx=canvas.getContext('2d');   // 화면용 — 픽셀을 읽지 않는다. willReadFrequently 는 GPU 그리기를 꺼서 뺐다(2026-10-28)
 const W=canvas.width,H=canvas.height;
-let tool='pen',brush='pen',color='#242424',penWidth=5,eraserWidth=20,zoom=1,active=false,last=null,pointer=null,history=[],future=[],dirty=false,loading=false,saving=false,layers=[],references=[],activeLayerId='draw-1',activeDrawLayerId='draw-1',activeReferenceId=null,strokePending=false,pendingFill=null,steady=null,caption=null,selection=null,marquee=null,dragging=null,grabbing=null,focusLayerId=null,pivotPick=null,pivotRole='pivot',motion=null,playing=false,playStart=0,rafId=null,smoothing=true,captionPicked=false,captionDrag=null,captionHandle=null,captionDismiss=false,probe=false;
+let tool='pen',brush='pen',color='#242424',penWidth=5,eraserWidth=20,zoom=1,active=false,last=null,pointer=null,history=[],future=[],dirty=false,loading=false,saving=false,layers=[],references=[],activeLayerId='draw-1',activeDrawLayerId='draw-1',activeReferenceId=null,strokePending=false,pendingFill=null,steady=null,caption=null,selection=null,marquee=null,dragging=null,grabbing=null,focusLayerId=null,pivotPick=null,pivotRole='pivot',motion=null,playing=false,playStart=0,rafId=null,smoothing=true,captionPicked=false,captionDrag=null,captionHandle=null,captionDismiss=false,probe=false,capBase=null,capPreviewing=false,shapeKind='rect',shapeFill=false,shapeDrag=null;
 const touches=new Map();let multi=null,suppressDraw=false;
 // 저장 요청 번호. 화면이 보낸 번호를 그대로 돌려주고, 그 번호의 응답만 받는다 — 늦게 온 응답이 다음 저장을 끝내 버리지 않게.
 let saveToken=null;
@@ -41,7 +41,7 @@ function setRes(r){r=Math.max(1,Math.min(4,Math.round(Number(r))||1));if(r===RES
 function copyOf(b){const c=bitmap();c.getContext('2d').drawImage(b,0,0,W,H);return c;}
 function meta(l){return Object.assign({id:l.id,name:l.name,visible:l.visible,opacity:l.opacity,x:l.x,y:l.y,scale:l.scale,rotation:l.rotation},l.imported?{imported:true}:{});}
 function trace(what,extra){if(!probe)return;send(Object.assign({type:'trace',t:Math.round(performance.now()),what:what,has:!!selection,dx:selection?Math.round(selection.dx):null,dy:selection?Math.round(selection.dy):null},extra||{}));}
-function state(){syncFrame();send({type:'state',frames:frames?frames.map(f=>({id:f.id,duration:f.duration})):null,frameIdx,onion,undo:history.length>0,redo:future.length>0,dirty,smoothing,captionPicked,picking,preset,brushOpacity,stabilizer,activeHidden:!!(activeDraw()&&!activeDraw().visible),activeLayerId,activeReferenceId,caption,motion,pivotPick,pivotRole,selection:selection&&{box:selection.box,dx:selection.dx,dy:selection.dy,scale:selection.scale,rot:selection.rot,flip:selection.flip},loop:Number(loopSeconds().toFixed(3)),clipped:motionClips(),playing,layers:layers.map(meta),references:references.map(l=>({...meta(l),path:l.path}))});}
+function state(){syncFrame();sweepCopies();send({type:'state',frames:frames?frames.map(f=>({id:f.id,duration:f.duration})):null,frameIdx,onion,undo:history.length>0,redo:future.length>0,dirty,smoothing,captionPicked,picking,preset,brushOpacity,stabilizer,activeHidden:!!(activeDraw()&&!activeDraw().visible),activeLayerId,activeReferenceId,caption:savedCaption(),motion,pivotPick,pivotRole,selection:selection&&{box:selection.box,dx:selection.dx,dy:selection.dy,scale:selection.scale,rot:selection.rot,flip:selection.flip},loop:Number(loopSeconds().toFixed(3)),clipped:motionClips(),playing,layers:layers.map(meta),references:references.map(l=>({...meta(l),path:l.path}))});}
 // The words live in the exported picture, not in a separate text tool: one system font, centred,
 // shrunk until it fits, with a light outline so it stays readable over the drawing.
 //
@@ -49,7 +49,12 @@ function state(){syncFrame();send({type:'state',frames:frames?frames.map(f=>({id
 // 옮기거나 키우거나 돌린 값이 dx·dy·scale·rot 에 쌓인다. 없으면 예전처럼 위/아래 가운데에 놓인다 —
 // 그래서 예전에 저장한 작품이 그대로 열린다.
 // 글씨 성격(45.6차): 기기에 이미 있는 글꼴만 쓴다 — 기본(고딕)·또박(명조)·도톰(더 굵고 테두리도 두껍게).
+// 손글씨 폰트(2026-11-03): 앱이 init·'font' 로 실어 준 WOFF2 를 FontFace 로 올린다. 아직 없거나 그 글자가 없으면 기기 글꼴로 그린다.
+const fontsLoaded=new Set();
+async function loadFont(key,data){if(!key||!data||fontsLoaded.has(key)||typeof FontFace==='undefined')return;try{const bin=atob(data),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+ const face=new FontFace('emoti-'+key,buf.buffer);await face.load();document.fonts.add(face);fontsLoaded.add(key);}catch(e){send({type:'fontFailed',key,message:String(e&&e.message||e)});}}
 function capFace(){const s=caption&&caption.style;
+ if(s&&s!=='basic'&&s!=='serif'&&s!=='thick')return {w:'400',f:'"emoti-'+s+'", system-ui, sans-serif',o:.22,bold:0};
  if(s==='serif')return {w:'700',f:'serif',o:.22,bold:0};
  // bold: 글자 획을 얼마나 덧댈지(글자 크기 대비). 기기에 900 굵기가 없어도 이 값 때문에 확실히 굵어진다.
  if(s==='thick')return {w:'800',f:'system-ui, sans-serif',o:.24,bold:.05};
@@ -175,9 +180,20 @@ function selectDrawLayer(id){const target=layers.find(l=>l.id===id)||layers[0];i
 function snapLayer(l,prev){
  if(RES===1)return {...meta(l),pixels:l.bitmap.getContext('2d').getImageData(0,0,W,H)};
  const b=l.bitmap,old=prev&&prev.layers.find(x=>x.src===b&&x.rev===b.__rev);
- return {...meta(l),copy:old?old.copy:copyOf(b),src:b,rev:b.__rev};}
-function snapshot(){return {layers:layers.map(l=>snapLayer(l,history[history.length-1])),references:references.map(l=>({...l})),activeLayerId,activeDrawLayerId,activeReferenceId,caption:caption&&{...caption},motion:motion&&JSON.parse(JSON.stringify(motion)),selection:selection&&{...selection,bitmap:copyOf(selection.bitmap)}};}
+ return {...meta(l),copy:old?old.copy:keepCopy(copyOf(b)),src:b,rev:b.__rev};}
+// 아이폰 획 사라짐(2026-11-02, 테스터: 아이폰·마커): WebKit 은 버린 캔버스의 메모리를 GC 전까지 세고, 한도를 넘으면 새 캔버스가 그려지지 않는다.
+// 되돌리기 기록에서 빠진 사본은 바로 0×0 으로 줄여 메모리를 돌려준다. state() 가 매번 정리한다.
+var copies;function keepCopy(c){(copies=copies||new Set()).add(c);return c;}
+function sweepCopies(){if(!copies||!copies.size)return;const live=new Set();for(const st of history.concat(future))for(const l of st.layers)if(l.copy)live.add(l.copy);for(const c of copies)if(!live.has(c)){c.width=0;c.height=0;copies.delete(c);}}
+function snapshot(){const cap=savedCaption();return {layers:layers.map(l=>snapLayer(l,history[history.length-1])),references:references.map(l=>({...l})),activeLayerId,activeDrawLayerId,activeReferenceId,caption:cap&&{...cap},motion:motion&&JSON.parse(JSON.stringify(motion)),selection:selection&&{...selection,bitmap:copyOf(selection.bitmap)}};}
 function restore(s){trace('restore:before');extentCache=null;layers=s.layers.map(l=>{let b;if(l.copy)b=copyOf(l.copy);else{b=bitmap();b.getContext('2d').putImageData(l.pixels,0,0);}return {...meta(l),bitmap:b};});references=s.references;activeLayerId=s.activeLayerId;activeDrawLayerId=s.activeDrawLayerId||layers[0]?.id||'';activeReferenceId=s.activeReferenceId||null;caption=s.caption||null;motion=s.motion||null;selection=s.selection||null;render();state();trace('restore:after');}
+function captionFrom(c,prev){if(!c||!String(c.text||'').trim())return null;const face=typeof c.style==='string'&&/^[a-z0-9]{2,20}$/.test(c.style)?c.style:(prev&&prev.style)||'basic';
+ return {...(prev||{}),text:c.text,place:c.place==='top'?'top':'bottom',color:c.color||prev?.color||'#242424',style:face,
+  // 대사 배치(2026-10-28)와, 화면이 함께 보낸 자리·크기·회전. 보내지 않은 값은 지금 문구의 것을 그대로 둔다.
+  layout:['line','split','vertical','bubble'].indexOf(c.layout)>=0?c.layout:(prev&&prev.layout)||'line',
+  ...['dx','dy','scale','rot'].reduce((o,k)=>Number.isFinite(c[k])?Object.assign(o,{[k]:c[k]}):o,{})};}
+function endCaptionPreview(){if(!capPreviewing)return;caption=capBase;capBase=null;capPreviewing=false;if(!(caption&&caption.text.trim()))captionPicked=false;}
+const savedCaption=()=>capPreviewing?capBase:caption;
 function checkpoint(preserveFuture=false){history.push(snapshot());if(history.length>40)history.shift();if(!preserveFuture)future=[];trimHistory();dirty=true;}
 // 고해상도 기록은 서로 다른 사본 수로 묶는다(1080 사본 하나 ≈ 4.7MB, 24개 ≈ 113MB). 넘치면 가장 오래된 단계부터 버린다.
 const MAX_COPIES=24;
@@ -242,10 +258,31 @@ window.__bench={tip:()=>({steady,lastRaw}),renders:()=>renderCount,
 // 휴대폰은 1초에 120~240번 움직임을 주는데, 1080 해상도 합성을 그때마다 하면 손을 따라가지 못하고 끊겼다(10-30 사용자 '잔렉').
 let renderQueued=false;
 function renderSoon(){if(renderQueued)return;renderQueued=true;(typeof requestAnimationFrame==='function'?requestAnimationFrame:f=>setTimeout(f,16))(()=>{renderQueued=false;render();});}
-function render(t){renderCount++;ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));if(t===undefined)drawOnion(ctx);(t===undefined?layers:layersAt(t)).forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});if(t===undefined)drawTip(ctx);drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
+function render(t){renderCount++;ctx.clearRect(0,0,W,H);references.forEach(l=>composite(ctx,l));if(t===undefined)drawOnion(ctx);(t===undefined?layers:layersAt(t)).forEach(l=>{const d=t===undefined?null:deltaFor(l,t);composite(ctx,l,d);if(wet&&l.id===wetLayer)composite(ctx,{...l,bitmap:wetView(),opacity:l.opacity*wetAlpha},d);});if(t===undefined){drawTip(ctx);drawShapePreview(ctx);}drawSelection(ctx);drawFocus(ctx);drawTrail(ctx);drawPivot(ctx);if(t!==undefined)drawExtent(ctx);drawCaption(ctx,t===undefined||!motion||!motion.captionMoves?null:wholeDelta(t));selectionOutline(ctx);captionOutline(ctx);}
 function size(){const n=Math.max(160,Math.min(window.innerWidth,window.innerHeight))*zoom;surface.style.width=n+'px';surface.style.height=n+'px';}
 function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
 function local(p,l){const x=p.x-W/2-l.x,y=p.y-H/2-l.y,a=-l.rotation*Math.PI/180;return {x:(x*Math.cos(a)-y*Math.sin(a))/l.scale+W/2,y:(x*Math.sin(a)+y*Math.cos(a))/l.scale+H/2};}
+// 도형(2026-11-03, 테스터 의견 '그림이 서툴러도'): 끌어 그린 상자 안에 직선·네모·동그라미·세모·별·하트. 지금 색·지금 굵기로 고른 그림 레이어에 찍는다.
+const SHAPES=['line','rect','ellipse','triangle','star','heart'];
+function shapePath(g,kind,a,b){const x0=Math.min(a.x,b.x),y0=Math.min(a.y,b.y),w=Math.abs(b.x-a.x),h=Math.abs(b.y-a.y),cx=x0+w/2,cy=y0+h/2;g.beginPath();
+ if(kind==='line'){g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);return;}
+ if(kind==='ellipse'){g.ellipse(cx,cy,Math.max(.5,w/2),Math.max(.5,h/2),0,0,Math.PI*2);return;}
+ if(kind==='triangle'){g.moveTo(cx,y0);g.lineTo(x0+w,y0+h);g.lineTo(x0,y0+h);g.closePath();return;}
+ // 별은 꼭짓점이 상자에 꼭 맞게(가로 ±cos18°, 세로 -1…cos36°)
+ if(kind==='star'){for(let i=0;i<10;i++){const r=i%2?.45:1,an=-Math.PI/2+i*Math.PI/5,x=cx+Math.cos(an)*r/.951*w/2,y=y0+(Math.sin(an)*r+1)/1.809*h;i?g.lineTo(x,y):g.moveTo(x,y);}g.closePath();return;}
+ if(kind==='heart'){g.moveTo(cx,y0+h*.3);g.bezierCurveTo(cx,y0,x0,y0,x0,y0+h*.32);g.bezierCurveTo(x0,y0+h*.62,cx,y0+h*.8,cx,y0+h);g.bezierCurveTo(cx,y0+h*.8,x0+w,y0+h*.62,x0+w,y0+h*.32);g.bezierCurveTo(x0+w,y0,cx,y0,cx,y0+h*.3);g.closePath();return;}
+ g.rect(x0,y0,w,h);}
+// 끈 거리가 짧으면(톡) 가운데 크기 도형을 그 자리에 놓는다. 직선은 가로로.
+function shapeBox(d){const far=Math.hypot(d.to.x-d.from.x,d.to.y-d.from.y)>=cssToCanvas(8);if(far)return [d.from,d.to];const r=W*.14;
+ return shapeKind==='line'?[{x:d.from.x-r,y:d.from.y},{x:d.from.x+r,y:d.from.y}]:[{x:d.from.x-r,y:d.from.y-r},{x:d.from.x+r,y:d.from.y+r}];}
+function paintShape(g,a,b,lw){g.lineWidth=lw;g.lineCap='round';g.lineJoin='round';g.strokeStyle=color;g.fillStyle=color;g.globalCompositeOperation='source-over';g.globalAlpha=1;if(g.setLineDash)g.setLineDash([]);
+ shapePath(g,shapeKind,a,b);if(shapeFill&&shapeKind!=='line')g.fill();else g.stroke();}
+function drawShapePreview(g){if(!shapeDrag||!shapeDrag.moved)return;const [a,b]=shapeBox(shapeDrag);g.save();paintShape(g,a,b,penWidth);g.restore();}
+function commitShape(d){const l=activeDraw();if(!l)return;const [a,b]=shapeBox(d);checkpoint();
+ const g=l.bitmap.getContext('2d');g.save();
+ // 문서 좌표 → 레이어 좌표(local 의 역): 옮기고·키우고·돌린 레이어에도 화면에 보인 그 자리에 찍힌다.
+ g.translate(W/2,H/2);g.scale(1/l.scale,1/l.scale);g.rotate(-l.rotation*Math.PI/180);g.translate(-W/2-l.x,-H/2-l.y);
+ paintShape(g,a,b,penWidth);g.restore();extentCache=null;dirty=true;usedColors.add(solid(color));}
 function style(g){const T=liveTool();g.globalCompositeOperation=T==='eraser'?'destination-out':'source-over';g.globalAlpha=T==='eraser'?1:(brush==='pencil'&&wet)?1:brush==='brush'?0.85:brush==='pencil'?0.55:1;g.lineWidth=T==='eraser'?eraserWidth:(brush==='brush'?penWidth*1.4:penWidth)*pressureScale(lastPressure,null);g.strokeStyle=solid(color);g.fillStyle=solid(color);g.lineCap='round';g.lineJoin='round';const P=activePreset();if(P){g.globalAlpha=1;g.lineWidth=computeBrushWidth(penWidth*P.width,lastPressure,P)*(P.taper?Math.min(1,.3+.7*strokeLen/P.taper):1);g.lineCap=P.cap||'round';
   // 점선 펜만 점 간격을 건다. 프리셋이 없는 기본 펜·붓·연필은 이 줄을 지나지 않는다 — 예전 획이 한 픽셀도 바뀌지 않게.
   if(P.dash){g.setLineDash([Math.max(.6,g.lineWidth*.22),Math.max(1,g.lineWidth*P.dash)]);g.lineDashOffset=-strokeLen;}else g.setLineDash([]);}}
@@ -433,6 +470,11 @@ function dry(){if(!wet)return;{const P=activePreset();if(P&&P.rim)poolEdge(wet,P
 // 그리는 동안 보이는 결과 저장되는 결이 같다.
 let grainMask=null,coarseMask=null,wetShown=null;
 function makeMask(density,minR,spread){const c=bitmap(),m=c.getContext('2d');m.fillStyle='#000';for(let i=0;i<W*H*density;i++){m.globalAlpha=.45+Math.random()*.4;m.beginPath();m.arc(Math.random()*W,Math.random()*H,minR+Math.random()*spread,0,Math.PI*2);m.fill();}return c;}
+// 젖은 획 버퍼는 한 장을 계속 쓴다 — 획마다 1080 캔버스를 새로 만들면 아이폰에서 메모리 한도에 닿아 획이 사라졌다.
+let wetPool=null;function wetBuffer(){if(!wetPool||wetPool.width!==W*RES)wetPool=bitmap();const g=wetPool.getContext('2d');
+ // 새 캔버스와 같은 상태로 돌려 놓는다(지난 획의 투명도·합성·점선·그림자가 남지 않게).
+ g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,wetPool.width,wetPool.height);g.setTransform(RES,0,0,RES,0,0);
+ g.globalAlpha=1;g.globalCompositeOperation='source-over';if(g.setLineDash)g.setLineDash([]);g.lineDashOffset=0;g.shadowBlur=0;g.shadowColor='rgba(0,0,0,0)';if('filter' in g)g.filter='none';return wetPool;}
 function wetView(){const P=activePreset();
  if(!wet||!P)return wet;
  const D=P.dab;
@@ -469,7 +511,7 @@ function firstTwo(){return points().slice(0,2);}
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function middle(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
 function canvasUnits(px){const r=canvas.getBoundingClientRect();return px*W/Math.max(1,r.width);}
-function cancelStrokeForGesture(){curveMid=null;curveCtl=null;tipPath=null;captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;strokeTool=null;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
+function cancelStrokeForGesture(){shapeDrag=null;curveMid=null;curveCtl=null;tipPath=null;captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;strokeTool=null;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
 function beginMulti(){
  const ps=firstTwo();if(ps.length<2)return;const [a,b]=ps,mid=middle(a,b),ref=activeReference();
  if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,ids:[a.id,b.id],distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,didCheckpoint:false,capScale:caption?.scale||1,capRot:caption?.rot||0,selScale:selection?.scale||1,selRot:selection?.rot||0,selDx:selection?.dx||0,selDy:selection?.dy||0,angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};}
@@ -481,7 +523,7 @@ function applyMulti(){
  const pair=gesturePair();if(!pair)return;const [a,b]=pair,mid=middle(a,b),d=Math.max(1,distance(a,b)),move=Math.hypot(mid.x-multi.mid.x,mid.y-multi.mid.y),pinch=Math.abs(d-multi.distance);
  if(move>10||pinch>10)multi.moved=true;if(!multi.moved)return;
  // 고른 문구 위의 두 손가락: 벌리면 크기, 비틀면 회전(8° 안쪽 흔들림은 무시).
- if(captionPicked&&caption){if(!multi.didCheckpoint){checkpoint();multi.didCheckpoint=true;}caption.scale=Math.max(.4,Math.min(3,multi.capScale*(d/multi.distance)));let turn=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI-multi.angle;if(turn>180)turn-=360;if(turn<-180)turn+=360;caption.rot=Math.abs(turn)<8?multi.capRot:Math.round((multi.capRot+turn)*10)/10;dirty=true;renderSoon();return;}
+ if(captionPicked&&caption&&!capPreviewing){if(!multi.didCheckpoint){checkpoint();multi.didCheckpoint=true;}caption.scale=Math.max(.4,Math.min(3,multi.capScale*(d/multi.distance)));let turn=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI-multi.angle;if(turn>180)turn-=360;if(turn<-180)turn+=360;caption.rot=Math.abs(turn)<8?multi.capRot:Math.round((multi.capRot+turn)*10)/10;dirty=true;renderSoon();return;}
  // 고른 부분(가져온 그림 포함) 위의 두 손가락: 벌리면 크기, 비틀면 회전, 같이 끌면 옮기기. 적용을 눌러야 그림에 남는다(손잡이와 같다).
  if(selection&&tool==='select'){selection.scale=Math.max(.2,Math.min(4,multi.selScale*(d/multi.distance)));let turn=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI-multi.angle;if(turn>180)turn-=360;if(turn<-180)turn+=360;selection.rot=Math.abs(turn)<8?multi.selRot:Math.round((multi.selRot+turn)*10)/10;selection.dx=multi.selDx+canvasUnits(mid.x-multi.mid.x);selection.dy=multi.selDy+canvasUnits(mid.y-multi.mid.y);dirty=true;renderSoon();return;}
  const ref=multi.refId&&references.find(l=>l.id===multi.refId&&l.visible);
@@ -1102,7 +1144,7 @@ canvas.addEventListener('pointerdown',e=>{
  if(picking){e.preventDefault();const p0=point(e),sx=Math.max(0,Math.min(W-1,Math.floor(p0.x))),sy=Math.max(0,Math.min(H-1,Math.floor(p0.y)));const out=bitmap(),pg=out.getContext('2d',{willReadFrequently:true});references.forEach(r=>composite(pg,r));layers.forEach(x=>composite(pg,x));drawCaption(pg);const px=pickAt(pg,sx,sy);picking=false;send({type:'picked',color:px[3]<8?null:'#'+[px[0],px[1],px[2]].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase(),x:sx,y:sy});state();return;}
  // 문구는 캔버스 위의 물건이다: 글자를 누르면 고르고 그대로 끌어 옮긴다. 고른 뒤 손잡이를 끌면 크기,
  // 글자 밖을 누르면 선택이 끝나고 그 손가락은 그림을 그리지 않는다. 움직이기 미리보기 중·중심점 고르기 중에는 건드리지 않는다.
- if(caption&&caption.text.trim()&&!playing&&!pivotPick){const p0=point(e);
+ if(caption&&caption.text.trim()&&!playing&&!pivotPick&&!capPreviewing){const p0=point(e);
   const onHandle=captionPicked&&onCaptionHandle(p0),onText=!onHandle&&onCaption(p0);
   if(onHandle||onText||captionPicked){e.preventDefault();canvas.setPointerCapture(e.pointerId);pointer=e.pointerId;
    if(onHandle){const hp=handlePoint();captionHandle={cx:hp.cx,cy:hp.cy,reach:Math.max(1,Math.hypot(p0.x-hp.cx,p0.y-hp.cy)),scale:caption.scale||1,moved:false};return;}
@@ -1114,6 +1156,7 @@ canvas.addEventListener('pointerdown',e=>{
  if(!l||!l.visible){if(l)send({type:'blocked',reason:'hidden',id:l.id,name:l.name});return;}
  e.preventDefault();canvas.setPointerCapture(e.pointerId);pointer=e.pointerId;
  if(tool==='fill'){pendingFill={clientX:e.clientX,clientY:e.clientY,...point(e)};return;}
+ if(tool==='shape'&&!pivotPick){const p0=point(e);shapeDrag={from:p0,to:p0,moved:false};return;}
  if(pivotPick){const p0=point(e);send({type:'pivot',id:pivotPick,x:Number((p0.x/W).toFixed(3)),y:Number((p0.y/H).toFixed(3)),role:pivotRole});return;}
  if(tool==='select'){const p0=point(e);trace('pointerdown',{x:Math.round(p0.x),y:Math.round(p0.y)});
   if(selection){const cx=selection.box.x+selection.box.w/2+selection.dx,cy=selection.box.y+selection.box.h/2+selection.dy;
@@ -1137,7 +1180,7 @@ canvas.addEventListener('pointerdown',e=>{
  strokeSeed=(Date.now()^Math.round(last.x*7919)^Math.round(last.y*104729))>>>0;resetRand();strokeSpeed=0;lastMoveAt=stamp(e);
  dabAng=null;tapDot=null;ribbonLen=0;
  const soft=(strokeTool!=='eraser'&&!P0&&brush==='pencil')?PENCIL_ALPHA:1;
- wetAlpha=strokeTool==='eraser'?1:computeBrushAlpha(inkAlpha()*brushOpacity*(P0?P0.alpha:1)*soft,lastPressure,P0);wet=(P0||wetAlpha<1)?bitmap():null;wetLayer=wet?l.id:null;
+ wetAlpha=strokeTool==='eraser'?1:computeBrushAlpha(inkAlpha()*brushOpacity*(P0?P0.alpha:1)*soft,lastPressure,P0);wet=(P0||wetAlpha<1)?wetBuffer():null;wetLayer=wet?l.id:null;
  const p=local(last,l),g=(wet||l.bitmap).getContext('2d');style(g);
  if(P0&&P0.outline){strokePath=[p];drawOutline(g);}
  else if(P0&&P0.repath){strokePath=[p];redrawStroke(g,P0);}
@@ -1152,6 +1195,7 @@ canvas.addEventListener('pointerdown',e=>{
 canvas.addEventListener('pointermove',e=>{
  if(e.pointerType==='touch'&&touches.has(e.pointerId)){const old=touches.get(e.pointerId);touches.set(e.pointerId,{...old,x:e.clientX,y:e.clientY});}
  if(multi&&touches.size>=2){e.preventDefault();multi.maxCount=Math.max(multi.maxCount,touches.size);applyMulti();return;}
+ if(shapeDrag&&e.pointerId===pointer){e.preventDefault();shapeDrag.to=point(e);if(!shapeDrag.moved&&Math.hypot(shapeDrag.to.x-shapeDrag.from.x,shapeDrag.to.y-shapeDrag.from.y)>=cssToCanvas(8))shapeDrag.moved=true;renderSoon();return;}
  if(pendingFill&&e.pointerId===pointer){const moved=Math.hypot(e.clientX-pendingFill.clientX,e.clientY-pendingFill.clientY);if(moved>16)pendingFill=null;return;}
  if(captionHandle&&e.pointerId===pointer&&caption){const p1=point(e),h=captionHandle;
   if(!h.moved){checkpoint();h.moved=true;}
@@ -1390,6 +1434,7 @@ function end(e){if(tool==='select')trace(e.type==='pointercancel'?'pointercancel
  if(captionDismiss){captionDismiss=false;pointer=null;return;}
  // 이미 고른 문구를 움직이지 않고 한 번 더 누르면 내용 고치기.
  if(captionDrag){const d=captionDrag;captionDrag=null;pointer=null;if(!d.moved&&d.wasPicked)send({type:'captionEdit'});state();return;}
+ if(shapeDrag){const d=shapeDrag;shapeDrag=null;pointer=null;if(e.type!=='pointercancel'||d.moved)commitShape(d);render();state();return;}
  if(pendingFill){const spot=pendingFill;pendingFill=null;pointer=null;fillAt(spot);state();return;}
  if(tool==='select'){pointer=null;if(grabbing){grabbing=null;state();return;}if(dragging){dragging=null;state();return;}if(marquee){liftSelection();}return;}
  if(active){
@@ -1423,16 +1468,22 @@ async function command(m){try{
  // 건드리지 않고 '다음에 무엇으로 그릴지'만 정하므로 저장 결과를 흐트러뜨리지 않는다.
  // 이걸 버리면 지우개 → 펜 전환이 조용히 사라져 다음 획이 지워진다(45.34에서 픽셀로 재현).
  // 저장은 시작할 때 선택을 이미 확정하므로(applySelection) 저장 중 'tool' 이 그림을 바꿀 일은 없다.
- const SAFE_WHILE_SAVING=['saved','saveFailed','analyze','save','tool','brush','brushSettings','color','width'];
+ const SAFE_WHILE_SAVING=['saved','saveFailed','analyze','save','tool','shape','font','brush','brushSettings','color','width'];
  if(saving&&!SAFE_WHILE_SAVING.includes(m.type))return;
+ // 문구 미리보기 중에 그림·문구를 바꾸는 명령이 오면 먼저 원래 문구로 돌린다 — 확정('caption')도 원래 문구 위에서 한 번의 되돌리기가 된다.
+ if(capPreviewing&&!['captionPreview','save','saved','saveFailed','tool','shape','font','brush','brushSettings','color','width','smooth','analyze'].includes(m.type))endCaptionPreview();
  if(m.type==='init'){
    loading=true;const input=m.layers||[{...defaults('draw-1','그림 1'),data:m.drawing}];
+   // 문구 폰트는 첫 그림 전에 올린다 — 저장·움직임 굽기가 기기 글꼴로 먼저 찍히지 않게.
+   if(Array.isArray(m.fonts))await Promise.all(m.fonts.map(x=>loadFont(x&&x.key,x&&x.data)));
    if(m.color)color=m.color;if(m.brush)applyBrush(m.brush);if(Number.isFinite(m.penWidth))penWidth=m.penWidth;if(Number.isFinite(m.eraserWidth))eraserWidth=m.eraserWidth;
    if(m.res!==undefined)setRes(m.res);
    layers=await Promise.all(input.map(l=>loadLayer(l)));frames=null;frameIdx=0;
    if(Array.isArray(m.frames)&&m.frames.length>1){frames=await Promise.all(m.frames.map(async f=>({id:f.id,duration:f.duration,layers:await Promise.all(f.layers.map(l=>loadLayer(l)))})));layers=frames[0].layers;}
    references=await Promise.all((m.references||[]).map(l=>loadLayer(l)));activeLayerId=m.activeLayerId||'draw-1';if(!layers.some(l=>l.id===activeLayerId))activeLayerId=layers[0]?.id||'';activeDrawLayerId=activeLayerId;activeReferenceId=null;wet=null;wetLayer=null;picking=false;caption=m.caption||null;motion=m.motion||motion;history=[];future=[];dirty=false;loading=false;render();state();send({type:'initialized',id:m.id});
  }
+ if(m.type==='font'){await loadFont(m.key,m.data);render();}
+ if(m.type==='shape'){if(SHAPES.includes(m.kind))shapeKind=m.kind;shapeFill=!!m.fill;}
  if(m.type==='tool'){if(selection&&m.tool!=='select')applySelection(false,'toolChange:'+m.tool);tool=m.tool;}
  if(m.type==='brush')brush=m.brush;
  if(m.type==='color')color=m.color;
@@ -1528,11 +1579,9 @@ async function command(m){try{
  }
  if(m.type==='smooth'){smoothing=m.on!==false;state();}
  if(m.type==='clear'){const l=activeDraw();if(l){checkpoint();l.bitmap.getContext('2d').clearRect(0,0,W,H);render();state();}}
- if(m.type==='caption'){checkpoint();const face=['basic','serif','thick'].indexOf(m.caption&&m.caption.style)>=0?m.caption.style:(caption&&caption.style)||'basic';
-  caption=m.caption&&m.caption.text.trim()?{...(caption||{}),text:m.caption.text,place:m.caption.place==='top'?'top':'bottom',color:m.caption.color||caption?.color||'#242424',style:face,
-   // 대사 배치(2026-10-28)와, 화면이 함께 보낸 자리·크기·회전. 보내지 않은 값은 지금 문구의 것을 그대로 둔다.
-   layout:['line','split','vertical','bubble'].indexOf(m.caption.layout)>=0?m.caption.layout:(caption&&caption.layout)||'line',
-   ...['dx','dy','scale','rot'].reduce((o,k)=>Number.isFinite(m.caption[k])?Object.assign(o,{[k]:m.caption[k]}):o,{})}:null;dirty=true;render();state();}
+ if(m.type==='caption'){checkpoint();caption=captionFrom(m.caption,caption);dirty=true;render();state();}
+ // 입력 중 미리보기(2026-11-02): 글자를 치는 대로 캔버스에 보이되 되돌리기·저장·화면 상태에는 들어가지 않는다. end 면 원래 문구로.
+ if(m.type==='captionPreview'){if(m.end){endCaptionPreview();render();state();}else{if(!capPreviewing){capBase=caption&&{...caption};capPreviewing=true;}caption=captionFrom(m.caption,capBase);render();}}
  // An explicit copy of another cut. Every bitmap is decoded fresh here, so editing or clearing
  // the copy can never reach back into the drawing it came from.
  if(m.type==='copyWork'){
@@ -1570,10 +1619,10 @@ async function command(m){try{
  if(m.type==='stop'){stopPlaying();render();state();}
  if(m.type==='lineFrames'){const was=playing;stopPlaying();send({type:'lineFrames',id:m.id,line:buildLineFrames(m.spec)});if(was)startPlaying();else{render();state();}}
  if(m.type==='frames'){const was=playing;stopPlaying();send({type:'frames',id:m.id,gif:buildLoop(m.fps,!!m.sheets)});if(was)startPlaying();else{render();state();}}
- if(m.type==='save'){dry();if(selection)applySelection(false,'save');syncFrame();saving=true;saveToken=m.token===undefined?null:m.token;const token=saveToken,wasDirty=dirty;const first=animOn()?frames[0].layers:layers;const out=docCanvas(),g=out.getContext('2d');g.imageSmoothingQuality='high';first.forEach(l=>composite(g,l));drawCaption(g);
+ if(m.type==='save'){const previewCap=capPreviewing?caption:undefined;if(capPreviewing)caption=capBase;dry();if(selection)applySelection(false,'save');syncFrame();saving=true;saveToken=m.token===undefined?null:m.token;const token=saveToken,wasDirty=dirty;const first=animOn()?frames[0].layers:layers;const out=docCanvas(),g=out.getContext('2d');g.imageSmoothingQuality='high';first.forEach(l=>composite(g,l));drawCaption(g);
    // PNG 로 바꾸는 일은 toBlob 으로 브라우저가 따로 한다(2026-10-28) — 1080 장 여러 장을 바꾸는 동안에도 그리는 손이 멈칫하지 않는다.
    // 부르는 순간의 그림을 찍으므로, 아래 png() 를 모두 한꺼번에(기다리기 전에) 불러 저장본이 한 순간의 상태가 되게 한다.
-   const outUrl=pngLater(out),met=metrics(out),gif=(m.gif&&(motion||animOn()))?buildLoop(12,false):undefined,cap=caption,mo=motion,act=activeLayerId;
+   const outUrl=pngLater(out),met=metrics(out),gif=(m.gif&&(motion||animOn()))?buildLoop(12,false):undefined,cap=caption,mo=motion,act=activeLayerId;if(previewCap!==undefined){caption=previewCap;render();} // 저장본엔 확정된 문구만, 화면엔 미리보기 그대로
    const layerJobs=first.map(l=>({...meta(l),data:pngLater(l.bitmap)}));
    const frameJobs=animOn()?frames.map((f,i)=>({id:f.id,duration:f.duration,layers:i===0?null:f.layers.map(l=>({...meta(l),data:pngLater(l.bitmap)}))})):undefined;
    const refs=references.map(l=>({...meta(l),path:l.path}));

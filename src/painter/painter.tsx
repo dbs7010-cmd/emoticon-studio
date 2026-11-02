@@ -17,6 +17,8 @@ import { isProPreset } from '../motion-math';
 import { dataUrl } from '../services/images';
 import { imageUri } from '../services/storage';
 import { CAPTION_LAYOUTS, CAPTION_STYLES } from '../types';
+import { fontChoices, fontOf } from '../design/font-list';
+import { fontData, fontsFor } from '../design/fonts';
 import { popularLines } from '../i18n/index';
 import type { BrushSettings, Caption, CaptionLayout, CaptionStyle, LayerTransform, LocalImage, Motion, PainterExport, QA, SavedMotion, Slot } from '../types';
 
@@ -111,9 +113,13 @@ type Props = {
 type SaveAction = 'stay' | 'manual' | 'close' | 'share' | 'complete' | 'reference' | 'motion' | number;
 // 새로 넣는 문구는 캐릭터 위에 작게(2026-10-29) — 실제 카카오 이모티콘처럼 대사는 몸을 덮지 않는다. 가이드 대사와 같은 0.7배.
 const NEW_CAPTION = { scale: .7 };
-export type Tool = 'pen' | 'fill' | 'eraser' | 'select';
+export type Tool = 'pen' | 'fill' | 'eraser' | 'select' | 'shape';
+// 도형 도구(2026-11-03): 고른 모양·채우기는 앱이 켜져 있는 동안 칸을 옮겨도 이어진다(문구 글씨체와 같은 방식).
+export type ShapeKind = 'line' | 'rect' | 'ellipse' | 'triangle' | 'star' | 'heart';
+const SHAPE_KINDS: [ShapeKind, IconName][] = [['line', 'vector-line'], ['rect', 'square-outline'], ['ellipse', 'circle-outline'], ['triangle', 'triangle-outline'], ['star', 'star-outline'], ['heart', 'heart-outline']];
+let sessionShape: { kind: ShapeKind; fill: boolean } = { kind: 'rect', fill: false };
 type Brush = 'pen' | 'brush' | 'pencil';
-type Panel = 'color' | 'width' | 'brush' | 'reference' | 'more' | 'caption' | null;
+type Panel = 'color' | 'width' | 'brush' | 'reference' | 'more' | 'caption' | 'shape' | null;
 // 캔버스 아래 기본 도구 줄의 높이. **늘 같은 높이다** — 어떤 도구 창을 열고 닫아도 캔버스의
 // 크기·자리·배율이 달라지지 않는다(45.35 §4). 45.34 는 브러시 목록이 열리면 즐겨찾기 줄을
 // 접어 이 높이를 줄였는데, 그러면 여는 순간 캔버스가 커졌다가 닫으면 작아진다. 목록이 이제
@@ -409,7 +415,7 @@ function DragList({ ids, rowH, onMove, onDragging, renderRow }: {
       </Animated.View>; })}
   </View>;
 }
-const ALL_TOOLS: [Tool, string, IconName, string][] = [['pen', t("release.s0346"), 'fountain-pen-tip', t("release.s0523")], ['eraser', t("release.s0347"), 'eraser', t("release.s0347")], ['fill', t("release.s0524"), 'format-color-fill', t("release.s0524")], ['select', t("release.s0525"), 'select-drag', t("release.s0525")]];
+const ALL_TOOLS: [Tool, string, IconName, string][] = [['pen', t("release.s0346"), 'fountain-pen-tip', t("release.s0523")], ['eraser', t("release.s0347"), 'eraser', t("release.s0347")], ['fill', t("release.s0524"), 'format-color-fill', t("release.s0524")], ['select', t("release.s0525"), 'select-drag', t("release.s0525")], ['shape', t('shape.tool'), 'shape-outline', t('shape.tool')]];
 const STAB_LEVELS = [['light', t("release.s0526")], ['medium', t("release.s0527")], ['strong', t("release.s0528")]] as const;
 // 저장된 브러시 설정을 믿지 않고 한 칸씩 읽는다. 낯선 값은 없는 것으로 본다.
 function cleanBrush(b?: BrushSettings): BrushSettings {
@@ -593,7 +599,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 조절대가 실제로 뜻을 갖는 때. 채우기·선택·글씨 손질·스포이드 중에는 바꿀 것이 없으므로 비활성으로 둔다 —
   // 자리는 그대로 남아 화면이 흔들리지 않고, 글자는 읽을 수 있을 만큼만 옅다.
   const editing = !scene.captionPicked && !scene.selection && !scene.picking;
-  const sizable = (tool === 'pen' || tool === 'eraser') && editing;
+  // 도형도 지금 펜 굵기로 그린다(2026-11-03) — 굵기 막대를 켠다.
+  const sizable = (tool === 'pen' || tool === 'eraser' || tool === 'shape') && editing;
   const inkable = tool === 'pen' && editing;
   // 말풍선 안의 원. 굵기를 눈으로 가늠하게 하되 말풍선 크기는 바뀌지 않도록 4~12 안에 둔다.
   const dotFor = (n: number) => Math.max(4, Math.min(12, Math.round(3 + n * 9 / 48)));
@@ -700,7 +707,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       // 저장된 움직임도 함께 보낸다. 빠뜨리면 다시 연 칸의 캔버스에 움직임이 없고, 그 상태로 저장하는 순간
       // 저장 파일의 움직임과 움직이는 파일이 조용히 지워진다(재실행 뒤 '저장'만 눌러도).
       // res 3: 장을 1080×1080 으로 그린다(문서 좌표·저장 값은 360 그대로, 완성본·카카오 출력도 360). 화면에서 선이 또렷하다(2026-10-28).
-      if (!canceled) send({ type: 'init', res: 3, layers: decodedLayers, frames: decodedFrames, references: decodedRefs, activeLayerId: slot.work?.activeLayerId, caption: firstCaption, motion: slot.motion ?? null, color, penWidth, eraserWidth });
+      // 문구 손글씨 폰트(2026-11-03)는 init 에 함께 — 캔버스가 첫 그림 전에 올린다.
+      const fonts = await fontsFor(firstCaption?.style);
+      if (!canceled) send({ type: 'init', res: 3, fonts, layers: decodedLayers, frames: decodedFrames, references: decodedRefs, activeLayerId: slot.work?.activeLayerId, caption: firstCaption, motion: slot.motion ?? null, color, penWidth, eraserWidth });
     })().catch(e => Alert.alert(t("release.s0530"), userMessage(e)));
     return () => { canceled = true; };
   }, [ready]);
@@ -708,11 +717,16 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 한 번 누르면 그 도구를 고르고, **이미 고른 도구를 다시 누르면 그 도구의 설정**을 연다(브러시 → 브러시, 지우개 → 크기).
   // 설정이 없는 도구(채우기·선택)는 다시 눌러도 그대로다.
   // 지우개 크기는 캔버스 가장자리 굵기 조절로 바꾸므로 지우개에는 따로 여는 시트가 없다.
-  const settingsOf = (value: Tool): Panel => value === 'pen' ? 'brush' : null;
+  const settingsOf = (value: Tool): Panel => value === 'pen' ? 'brush' : value === 'shape' ? 'shape' : null;
   function selectTool(value: Tool) {
     setDrawRail(false); setRefRail(false);
     if (value === tool) { const own = settingsOf(value); if (own) { ease(); setPanel(panel === own ? null : own); } return; }
-    setTool(value); setPanel(null); send({ type: 'tool', tool: value }); onToolChange?.(value);
+    // 도형은 처음 고를 때 모양 판을 함께 연다 — 무엇을 그릴지 고른 뒤 바로 캔버스를 끈다.
+    setTool(value); setPanel(value === 'shape' ? 'shape' : null); send({ type: 'tool', tool: value }); onToolChange?.(value);
+  }
+  const [shape, setShapeState] = useState(sessionShape);
+  function changeShape(next: Partial<typeof sessionShape>) {
+    const merged = { ...shape, ...next }; sessionShape = merged; setShapeState(merged); send({ type: 'shape', ...merged });
   }
   // 선 종류(펜·붓·연필)를 고르면 고급 브러시에서 내려온다 — 둘이 동시에 켜져 있지 않다. 시트는 열어 둔 채 굵기를 이어서 고른다.
   function selectBrush(value: Brush) {
@@ -765,8 +779,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   }
   // 전체 목록에서 고르면: 그 브러시로 그리고 목록을 닫는다.
   // **즐겨찾기는 건드리지 않는다**(45.31) — 한 번 썼다고 고정해 둔 칸이 밀려나면 안 된다.
+  // 2026-11-03(대표): 즐겨찾기에 없는 브러시도 설정할 수 있게 — 이미 고른 줄을 다시 누르면 그 브러시의 세부 설정으로 간다.
   function pickFromAll(key: BrushKey) {
     const b = brushInfo(key);
+    if (tool === 'pen' && isBrushOn(key)) { ease(); setBrushDetail(true); return; }
     if (b.pro && !pro) { onRequestPro(); return; }
     if (b.preset) { changeBrush({ preset: b.preset }); }
     else { changeBrush({ preset: undefined, base: b.base }); setBrush(b.base!); send({ type: 'brush', brush: b.base! }); }
@@ -879,7 +895,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   function setMotion(motion: Motion | null) { send({ type: 'motion', motion }); if (motion && tab === 'motion') send({ type: 'play' }); }
   useEffect(() => { if (initialized) send({ type: 'paper', on: paperTexture }); }, [paperTexture, initialized]);
   // 굵기·색은 init 에 실려 간다. 선 종류와 도구는 캔버스가 준비된 뒤 한 번 맞춘다.
-  useEffect(() => { if (!initialized) return; if (brush !== 'pen') send({ type: 'brush', brush }); if (tool !== 'pen') send({ type: 'tool', tool }); }, [initialized]);
+  useEffect(() => { if (!initialized) return; if (brush !== 'pen') send({ type: 'brush', brush }); send({ type: 'shape', ...shape }); if (tool !== 'pen') send({ type: 'tool', tool }); }, [initialized]);
   useEffect(() => { if (initialized && PROBE) send({ type: 'probe', on: true }); }, [initialized]);
   useEffect(() => { if ((drawRail || tab === 'motion') && initialized) send({ type: 'layerThumbs', size: 72 }); }, [drawRail, tab, initialized, scene.dirty, scene.layers.length]);
   // 작업실에서 그림으로 시작한 세트. 캔버스가 준비된 다음 한 번만 들여오고, 쓴 표시를 남겨
@@ -977,10 +993,27 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     setCaptionFace(next);
     if (scene.caption?.text) send({ type: 'caption', caption: { ...scene.caption, style: next } });
   }
+  // 손글씨 폰트: 파일을 캔버스에 먼저 싣고 고른다. PRO 폰트는 브러시와 같은 규칙 — 무료 사용자는 PRO 안내로.
+  async function pickCaptionFont(key: string) {
+    const font = fontOf(key);
+    if (!font) return;
+    if (font.pro && !pro) { onRequestPro(); return; }
+    try { const p = fontData(key); if (p) send({ type: 'font', key, data: await p }); } catch { /* 못 읽으면 기기 글꼴로 그린다 */ }
+    changeCaptionFace(key);
+  }
   function changeCaptionLayout(next: CaptionLayout) {
     setCaptionLayout(next);
     if (scene.caption?.text) send({ type: 'caption', caption: { ...scene.caption, layout: next } });
   }
+  // 문구 실시간 반영(2026-11-02, 테스터 의견): 입력칸이 열려 있는 동안 치는 글자·자리·글씨체·배치를 캔버스에 바로 보인다.
+  // 미리보기는 되돌리기·저장에 남지 않는다 — '적용'(또는 저장)이 한 번에 확정하고, 그냥 닫으면 원래 문구로 돌아간다.
+  const previewing = useRef(false);
+  useEffect(() => {
+    if (!captionOpen) { if (previewing.current) send({ type: 'captionPreview', end: true }); previewing.current = false; return; }
+    previewing.current = true;
+    const text = captionDraft.trim();
+    send({ type: 'captionPreview', caption: text ? { ...(scene.caption ?? NEW_CAPTION), text, place: captionPlace, color, style: captionFace, layout: captionLayout } : null });
+  }, [captionOpen, captionDraft, captionPlace, captionFace, captionLayout, color, scene.caption]);
   function applyCaption(text: string) {
     const clean = text.trim();
     // 글자만 바꾸면 옮겨 둔 자리·크기·회전은 그대로 둔다(가이드에서 위쪽 작게 놓인 대사를 고쳐도 그 자리에 남는다).
@@ -1173,7 +1206,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               {/* 이름 칸 — 견본과 겹치지 않는 제 자리를 갖는다. */}
               <View style={{ width: 96 }}>
                 <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: on ? '800' : '700', color: C.ink }}>{b.title}</Text>
-                {fav >= 0 && <Text style={{ fontSize: 11, color: C.muted }}>{t("release.s0583") + " "}{fav + 1}{t("release.s0176")}</Text>}
+                {on && !favEdit ? <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted }}>{t('brush.tapAgain')}</Text>
+                  : fav >= 0 && <Text style={{ fontSize: 11, color: C.muted }}>{t("release.s0583") + " "}{fav + 1}{t("release.s0176")}</Text>}
               </View>
               {/* 견본 칸 — 남은 가로폭을 전부 쓴다. 실제 브러시 엔진이 낸 획이다. */}
               <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
@@ -1183,7 +1217,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               {/* 표시 자리는 고르든 말든 같은 너비다 — 고를 때 줄 안이 밀리지 않는다. */}
               <View style={{ width: 24, alignItems: 'center', justifyContent: 'center' }}>
                 {favEdit ? <Glyph name={fav >= 0 ? 'pin' : 'pin-outline'} size={18} color={fav >= 0 ? C.ink : C.muted} />
-                  : on ? <Glyph name="check" size={20} color={C.ink} /> : null}
+                  : on ? <Glyph name="tune-variant" size={20} color={C.ink} /> : null}
               </View>
             </Pressable>; })}
         </ScrollView>
@@ -1775,15 +1809,23 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           {/* 글씨체(45.6차): 이름이 아니라 '가' 한 글자로 성격을 보여 준다. 폰트 파일은 새로 넣지 않는다 — 기기에 있는 글꼴을 쓴다. */}
           {!typing && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
             <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{t("release.s0716")}</Text>
-            <View style={{ flex: 1, flexDirection: 'row', gap: 6 }}>
+            {/* 2026-11-03: 기기 글꼴 셋 뒤에 손글씨 폰트(지금 앱 언어). 줄이 넘치면 옆으로 민다. 손글씨는 이름만 — 모양은 캔버스 실시간 미리보기로 본다. */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flex: 1 }} contentContainerStyle={{ gap: 6 }}>
               {CAPTION_STYLES.map(face => { const on = captionFace === face.key;
                 return <Pressable key={face.key} accessibilityRole="button" accessibilityLabel={t("release.s0717") + " " + face.title} accessibilityState={{ selected: on }}
                   onPress={() => changeCaptionFace(face.key)}
-                  style={({ pressed }) => ({ flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
+                  style={({ pressed }) => ({ minWidth: 76, minHeight: 44, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
                   <Text style={{ fontSize: 17, lineHeight: 22, fontWeight: face.key === 'thick' ? '900' : '700', fontFamily: face.key === 'serif' ? 'serif' : undefined, color: on ? C.ink : C.muted }}>{t("release.s0718")}</Text>
                   <Text style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{face.title}</Text>
                 </Pressable>; })}
-            </View>
+              {fontChoices(captionFace).map(font => { const on = captionFace === font.key, locked = font.pro && !pro;
+                return <Pressable key={font.key} testID={'문구 폰트 ' + font.key} accessibilityRole="button" accessibilityLabel={t("release.s0717") + " " + font.title + (font.pro ? ' PRO' : '')} accessibilityState={{ selected: on }}
+                  onPress={() => void pickCaptionFont(font.key)}
+                  style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
+                  <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.ink : locked ? C.muted : C.ink }}>{font.title}</Text>
+                  {font.pro && <ProTag />}
+                </Pressable>; })}
+            </ScrollView>
           </View>}
           {/* 대사 배치(2026-10-28, 실제 이모티콘 레퍼런스): 한 줄 · 양옆 나눠 쓰기(응 … 응) · 세로 · 말풍선. */}
           {!typing && <View testID="문구 배치" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
@@ -1804,6 +1846,29 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             <Action primary title={t("release.s0711")} onPress={() => applyCaption(captionDraft)} />
           </View>}
         </ScrollView>
+
+        // 도형 판(2026-11-03): 모양을 누르면 판이 닫히고 바로 캔버스를 끌어 그린다. 선만/채우기는 판을 닫지 않는다.
+        : panel === 'shape' ? <View testID="도형 패널" style={{ backgroundColor: C.paper, paddingBottom: 10 }}>
+          <SheetHeader title={t('shape.title')} closeLabel={t('shape.title') + ' ' + t('ui.close')} onClose={() => { ease(); setPanel(null); }} />
+          <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 12 }}>
+            {SHAPE_KINDS.map(([kind, icon]) => { const on = shape.kind === kind;
+              return <Pressable key={kind} testID={'도형 ' + kind} accessibilityRole="button" accessibilityLabel={t(('shape.' + kind) as 'shape.rect')} accessibilityState={{ selected: on }}
+                onPress={() => { changeShape({ kind }); ease(); setPanel(null); }}
+                style={({ pressed }) => ({ flex: 1, minHeight: 58, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: 12, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
+                <Glyph name={icon} size={22} color={on ? C.ink : C.muted} />
+                <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{t(('shape.' + kind) as 'shape.rect')}</Text>
+              </Pressable>; })}
+          </View>
+          <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 12, paddingTop: 8 }}>
+            {([[false, t('shape.stroke')], [true, t('shape.fill')]] as const).map(([fill, title]) => { const on = shape.fill === fill, off = shape.kind === 'line' && fill;
+              return <Pressable key={String(fill)} testID={'도형 ' + (fill ? '채우기' : '선만')} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: on, disabled: off }} disabled={off}
+                onPress={() => changeShape({ fill })}
+                style={({ pressed }) => ({ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, opacity: off ? .4 : 1, backgroundColor: on ? C.accentSoft : pressed ? C.fill : C.surface2 })}>
+                <Text style={{ fontSize: 13, fontWeight: on ? '800' : '600', color: on ? C.ink : C.muted }}>{title}</Text>
+              </Pressable>; })}
+          </View>
+          <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted, paddingHorizontal: 16, paddingTop: 8 }}>{t('shape.hint')}</Text>
+        </View>
 
         : panel === 'reference' && selectedReference ? <Sheet room={coverRoom()} title={t("release.s0722")} onClose={() => { ease(); setPanel(null); }}>
           <View style={{ paddingHorizontal: 8, gap: 8 }}>

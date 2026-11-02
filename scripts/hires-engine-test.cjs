@@ -177,6 +177,74 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
       assert.equal(plain.caption.layout, 'line', '배치를 안 주면 한 줄(예전 그대로)');
     }
 
+    // 8-3) 아이폰 마커 획 사라짐(2026-11-02, 테스터: 아이폰·마커): 젖은 획 버퍼를 한 장만 쓰고, 기록에서 빠진 사본은 바로 0×0 으로 돌려준다.
+    //      WebKit 은 버린 캔버스를 GC 전까지 메모리 한도에 세므로, 살아 있는 1080 캔버스 수가 그은 획 수에 비례하면 안 된다.
+    {
+      await page.evaluate(() => { const make = document.createElement.bind(document); window.__made = []; document.createElement = (t, o) => { const e = make(t, o); if (String(t).toLowerCase() === 'canvas') window.__made.push(e); return e; }; });
+      await cmd({ type: 'init', res: 3, layers: [{ id: 'draw-1', name: '그림 1' }], activeLayerId: 'draw-1', penWidth: 10, color: '#3060C0', brush: { preset: 'marker2', opacity: 1, stabilizer: 'light', smoothing: true } });
+      await page.waitForTimeout(100);
+      await cmd({ type: 'tool', tool: 'pen' });
+      const big = () => page.evaluate(() => window.__made.filter(c => c.width >= 1000).length);
+      const startMade = await page.evaluate(() => window.__made.length);
+      for (let i = 0; i < 60; i++) await stroke(line(.08 + (i % 30) * .028, .3 + Math.floor(i / 30) * .3, .08 + (i % 30) * .028, .45 + Math.floor(i / 30) * .3, 4), 2);
+      await cmd({ type: 'save', token: 31 }); await cmd({ type: 'saved', token: 31 });
+      await page.waitForTimeout(80);
+      assert.ok(await alphaAt(.08 * 360, .38 * 360) > 0 && await alphaAt((.08 + 29 * .028) * 360, .68 * 360) > 0, '마커 획이 저장 뒤에도 남아 있다(첫 획·마지막 획)');
+      const liveBig = await big(), made = await page.evaluate(n => window.__made.length - n, startMade);
+      assert.ok(liveBig <= 24 + 6, '살아 있는 1080 캔버스는 사본 상한 + 몇 장(' + liveBig + ', 60획 동안 새로 만든 캔버스 ' + made + ')');
+      // 정리한 뒤에도 되돌리기·다시 하기가 정상이다.
+      const before = await alphaAt((.08 + 29 * .028) * 360, .68 * 360);
+      await cmd({ type: 'undo' });
+      assert.equal(await alphaAt((.08 + 29 * .028) * 360, .68 * 360), 0, '되돌리면 마지막 마커 획이 빠진다');
+      await cmd({ type: 'redo' });
+      assert.equal(await alphaAt((.08 + 29 * .028) * 360, .68 * 360), before, '다시 하면 돌아온다');
+      for (let i = 0; i < 20; i++) await cmd({ type: 'undo' });
+      assert.ok(await alphaAt(.08 * 360, .38 * 360) > 0, '여러 번 되돌려도 남은 단계의 그림은 그대로');
+      // 마커 다음 펜 획: 재사용한 버퍼의 투명도·합성이 남지 않는다.
+      await cmd({ type: 'brushSettings', preset: null, opacity: 1 });
+      await cmd({ type: 'color', color: '#000000' });
+      await stroke(line(.5, .9, .7, .9, 6));
+      assert.ok(await alphaAt(.6 * 360, .9 * 360) > 200, '마커 뒤 펜 획은 진하게 그대로');
+    }
+
+    // 8-4) 도형(2026-11-03): 끈 상자대로 지금 색·굵기로 찍히고, 되돌리기 한 번이면 빠진다. 톡 누르면 가운데 크기.
+    {
+      await cmd({ type: 'init', res: 3, layers: [{ id: 'draw-1', name: '그림 1' }], activeLayerId: 'draw-1', penWidth: 6, color: '#E04040', brush: { preset: null, opacity: 1, stabilizer: 'light', smoothing: false } });
+      await page.waitForTimeout(100);
+      await cmd({ type: 'shape', kind: 'rect', fill: false }); await cmd({ type: 'tool', tool: 'shape' });
+      await stroke(line(100 / 360, 100 / 360, 200 / 360, 180 / 360, 8));
+      assert.ok(await alphaAt(100, 140) > 200 && await alphaAt(200, 140) > 200 && await alphaAt(150, 100) > 200, '네모: 네 변이 그려진다');
+      assert.equal(await alphaAt(150, 140), 0, '네모(선만): 안은 비어 있다');
+      assert.deepEqual((await page.evaluate(() => window.__bench.hires().rgbaAt(0, 100, 140))).slice(0, 3), [224, 64, 64], '지금 색으로');
+      await cmd({ type: 'undo' });
+      assert.equal(await alphaAt(100, 140), 0, '되돌리기 한 번이면 도형이 빠진다');
+      await cmd({ type: 'shape', kind: 'ellipse', fill: true });
+      await stroke(line(60 / 360, 220 / 360, 160 / 360, 320 / 360, 8));
+      assert.ok(await alphaAt(110, 270) > 250, '채운 동그라미: 가운데가 찬다');
+      assert.equal(await alphaAt(62, 222), 0, '채운 동그라미: 상자 모서리는 비어 있다');
+      await cmd({ type: 'shape', kind: 'heart', fill: true });
+      await stroke([[.75, .25], [.75, .25]]);
+      assert.ok(await alphaAt(.75 * 360, .27 * 360) > 250, '톡: 누른 자리에 가운데 크기 하트');
+      assert.equal(await alphaAt(.75 * 360, .25 * 360 - .14 * 360 + 2), 0, '하트 위 가운데는 오목하다');
+      await cmd({ type: 'shape', kind: 'line', fill: true });
+      await stroke(line(.1, .9, .5, .9, 6));
+      assert.ok(await alphaAt(.3 * 360, .9 * 360) > 200, '직선은 채우기를 골라도 선으로');
+      for (const kind of ['triangle', 'star']) { await cmd({ type: 'shape', kind, fill: true }); await stroke(line(.55, .55, .85, .85, 6)); assert.ok(await alphaAt(.7 * 360, .72 * 360) > 250, kind + ': 가운데가 찬다'); await cmd({ type: 'undo' }); }
+      await cmd({ type: 'tool', tool: 'pen' });
+    }
+
+    // 8-5) 손글씨 폰트(2026-11-03): init 에 실은 WOFF2 로 문구를 그린다 — 기본 글꼴과 다른 픽셀, 저장 값에 폰트 key.
+    {
+      const woff = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'assets', 'fonts', 'gaegu.woff2')).toString('base64');
+      const shot = async (style, fonts) => { await cmd({ type: 'init', res: 3, fonts, layers: [{ id: 'draw-1', name: '그림 1' }], activeLayerId: 'draw-1', caption: { text: '고마워요', place: 'top', color: '#242424', style, scale: 1 } }); await cmd({ type: 'save', token: 41 }); const r = await last('save'); await cmd({ type: 'saved', token: 41 }); return r; };
+      const plain = await shot('basic'), hand = await shot('gaegu', [{ key: 'gaegu', data: woff }]);
+      assert.equal(hand.caption.style, 'gaegu', '저장 값에 폰트 key');
+      assert.notEqual(hand.data, plain.data, '손글씨 폰트는 기본 글꼴과 다르게 그려진다');
+      assert.ok(await page.evaluate(() => [...document.fonts].some(f => f.family.replace(/"/g, '') === 'emoti-gaegu' && f.status === 'loaded')), 'FontFace 가 올라가 있다');
+      await cmd({ type: 'font', key: 'nofont', data: 'AAAA' });
+      assert.ok((await last('fontFailed'))?.key === 'nofont', '깨진 폰트는 알리고 그대로 그린다');
+    }
+
     // 9) 1배(res 1)로 다시 열면 예전과 같은 360 장이다(앱이 res 를 주지 않는 경우).
     await cmd({ type: 'init', res: 1, layers: [{ id: 'draw-1', name: '그림 1' }], activeLayerId: 'draw-1' });
     await page.waitForTimeout(100);

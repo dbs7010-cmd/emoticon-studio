@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { canvasHtml } from '../painter/canvas-html';
 import { dataUrl } from '../services/images';
+import { fontsFor } from '../design/fonts';
 import type { Caption, Motion, MotionLoop, PainterWork } from '../types';
 
 // sheets 를 켜면 공식 도구에 넣을 360x360 PNG 프레임까지 함께 돌려준다. 양이 크므로 내보낼 때만 켠다.
@@ -30,12 +31,14 @@ export const MotionBaker = forwardRef<Baker>(function MotionBaker(_, ref) {
       const layers = await decode(work.layers);
       // 애니메이션 장도 함께 보낸다(첫 장 = layers).
       const frames = work.frames && work.frames.length > 1 ? await Promise.all(work.frames.map(async (f, i) => ({ id: f.id, duration: f.duration, layers: i === 0 ? layers : await decode(f.layers) }))) : undefined;
+      // 문구 손글씨 폰트도 실어 보낸다 — 움직이는 파일의 글씨가 화면과 같은 폰트로 찍힌다(2026-11-03).
+      const fonts = await fontsFor(work.caption?.style);
       const id = ++sequence.current;
       return new Promise<T>((resolve, reject) => {
         const timer = setTimeout(() => { pending.current.delete(id); reject(new Error(t("release.s0423"))); }, 60000);
         pending.current.set(id, { stage: 'init', sheets, spec, resolve, reject, timer });
         // LINE 은 고해상도 장(1080)에서 바로 줄여 만든다(res 3) — 360 을 거쳐 늘리면 370×320 칸에서 선이 뭉갠다. 카카오(360)는 예전 그대로 1배.
-        send({ type: 'init', id, res: spec ? 3 : 1, layers, frames, references: [], activeLayerId: work.activeLayerId, caption: work.caption ?? null, motion });
+        send({ type: 'init', id, res: spec ? 3 : 1, fonts, layers, frames, references: [], activeLayerId: work.activeLayerId, caption: work.caption ?? null, motion });
       });
   }
 
