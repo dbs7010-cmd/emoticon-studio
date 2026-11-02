@@ -1713,7 +1713,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           {hasPrevious && !continueAvailable && <MenuButton icon="content-copy" title={t("release.s0546")} onPress={() => { setPanel(null); copyPrevious(); }} />}
           {/* 캐릭터 기준은 세트 전체의 일이라 참고 사진 줄에서 내려왔다(45.2차). 보드의 세트 메뉴와 같은 계열이다. */}
           {!!canon && <MenuButton icon="account-star-outline" title={showCanon ? t("release.s0677") : t("release.s0678")} onPress={() => { setPanel(null); setShowCanon(!showCanon); }} />}
-          <MenuButton icon="bookmark-outline" title={canon ? t("release.s0679") : t("release.s0680")} onPress={() => { setPanel(null); setShowCanon(false); save('reference'); }} />
+          {/* 2026-11-03(대표): 대표 캐릭터가 이미 있으면 '보기'만 둔다 — '이 칸으로 바꾸기'는 없앴다(바꾸려면 세트 메뉴 › 대표 캐릭터). */}
+          {!canon && <MenuButton icon="bookmark-outline" title={t("release.s0680")} onPress={() => { setPanel(null); setShowCanon(false); save('reference'); }} />}
           <MenuButton icon="resize" title={t("release.s0681")} onPress={() => { setPanel(null); setSizeOpen(true); }} />
           <MenuButton icon="share-variant" title={t("release.s0682")} onPress={() => { setPanel(null); save('share'); }} />
           <MenuButton icon="clipboard-check-outline" title={t("release.s0683")} onPress={() => { setPanel(null); setShowQA(true); }} />

@@ -544,7 +544,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  // ── Make this cut the set reference: a snapshot, not a live link ────────────────────────────
  // 45.2: the set-wide reference lives in the set menu (더보기); the 참고 rail is only for pictures to look at.
  await press('더보기');
- await press('이 칸을 캐릭터 기준으로');
+ await press('대표 캐릭터 설정');
  await saved();
  const chosen=fresh().slots[1].finalImage.path;
  assert.equal(fresh().canon.image.path,chosen,'the chosen picture becomes the set reference');
@@ -554,13 +554,13 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.notEqual(fresh().slots[1].finalImage.path,chosen,'because the cut moved on to a new file');
  assert.ok(files.has(localFile(chosen).uri),'and the snapshot file is kept');
  await press('참고');
- assert.equal(labelled('캐릭터 기준 보기').length,0,'the 참고 rail does not repeat the set reference entry');
+ assert.equal(labelled('대표 캐릭터 보기').length,0,'the 참고 rail does not repeat the set reference entry');
  await press('참고');
  await press('더보기');
- assert.equal(labelled('캐릭터 기준 보기').length,1,'the character reference has one entry, in the set menu');
- await press('캐릭터 기준 보기');
- assert.equal(tree.root.findAll(n=>n.type==='Image'&&n.props.accessibilityLabel==='캐릭터 기준 그림').length,1,'and shows as a picture');
- await press('캐릭터 기준 닫기');
+ assert.equal(labelled('대표 캐릭터 보기').length,1,'the character reference has one entry, in the set menu');
+ await press('대표 캐릭터 보기');
+ assert.equal(tree.root.findAll(n=>n.type==='Image'&&n.props.accessibilityLabel==='대표 캐릭터 그림').length,1,'and shows as a picture');
+ await press('대표 캐릭터 닫기');
 
  // ── Re-editing a finished cut puts it back to 작업 중 ───────────────────────────────────────
  await press('더보기');
@@ -834,8 +834,8 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await openSet('이전 프로젝트');
  assert.equal(tiles()[0].props.accessibilityLabel,'슬롯 1 완성','a store written before 완성 existed still reads as finished');
  assert.ok((tree.root.findAll(n=>n.props.testID==='보드 진행'&&n.props.accessibilityLabel)[0]?.props.accessibilityLabel??'').includes('중 1칸 완성'));
- await press('세트 메뉴');await press('캐릭터 기준 · 세트 이름');
- assert.equal(tree.root.findAll(n=>n.type==='Image'&&n.props.accessibilityLabel==='캐릭터 기준 그림').length,1,'its reference picture is still there');
+ await press('세트 메뉴');await press('대표 캐릭터 · 세트 이름');
+ assert.equal(tree.root.findAll(n=>n.type==='Image'&&n.props.accessibilityLabel==='대표 캐릭터 그림').length,1,'its reference picture is still there');
  assert.ok(shown().some(t=>t==='성격 · 성격 유지'),'and the notes it once asked for are kept, read-only');
  for(const gone of ['성격','말투','감정','상황','포즈/행동','구도','꼭 유지할 특징'])assert.equal(tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel===gone).length,0,gone+' is no longer asked for');
  assert.equal(tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel==='세트 이름').length,1,'renaming the set is still possible');
@@ -893,7 +893,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  assert.equal(labelled('기획 보기').length,0,'the legacy planning card is no longer a separate entry on the canvas (its data is kept, see above)');
  await press('그리기 닫기');await saved(false);
 
- await press('세트 메뉴');await press('캐릭터 기준 · 세트 이름');
+ await press('세트 메뉴');await press('대표 캐릭터 · 세트 이름');
  // The set reference can be swapped for an outside picture, or taken down entirely, and neither
  // is allowed to delete a file one of the cuts is still using.
  const keptByACut=loadStore().store.projects.find(x=>x.id===p.id).slots[0].finalImage.path;
@@ -902,11 +902,11 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  await act(async()=>{});
  assert.equal(loadStore().store.projects.find(x=>x.id===p.id).canon.image.path,'image-new.png','an outside picture replaces the set reference');
  assert.equal(files.has(localFile(keptByACut).uri),true,'and the old one stays because a cut still points at it');
- await press('캐릭터 기준 내리기');
+ await press('대표 캐릭터 내리기');
  assert.equal(loadStore().store.projects.find(x=>x.id===p.id).canon.image,undefined,'the set reference can be taken down');
  assert.equal(files.has(localFile('image-new.png').uri),false,'and a picture nothing points at any more is cleaned up');
  assert.equal(files.has(localFile(keptByACut).uri),true,'while the drawing itself is never touched');
- assert.equal(labelled('캐릭터 기준 내리기').length,0,'with nothing to take down, the action is gone');
+ assert.equal(labelled('대표 캐릭터 내리기').length,0,'with nothing to take down, the action is gone');
  await press('뒤로');
  assert.equal(labelled('세트 참고').length,0,'and the board stops showing a reference that is not there');
  await press('뒤로');

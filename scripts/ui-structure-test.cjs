@@ -170,7 +170,7 @@ const homeSections = () => {
     await press(rail);
   }
   await press('참고');
-  assert.equal(labelled('캐릭터 기준 보기').length + labelled('이 칸을 캐릭터 기준으로').length, 0, '참고 줄은 볼 그림만 다룬다');
+  assert.equal(labelled('대표 캐릭터 보기').length + labelled('대표 캐릭터 설정').length, 0, '참고 줄은 볼 그림만 다룬다');
   await press('참고');
   await press('선택');
   // 조절(45.39: 캔버스 위 조절 줄)은 늘 같은 자리를 지킨다 — 도구를 바꿀 때마다 사라지면 화면이 흔들린다.
