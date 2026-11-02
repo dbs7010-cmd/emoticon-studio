@@ -1866,5 +1866,13 @@ export const ko = {
   "layerSize.smaller": "작게",
   "layerSize.bigger": "크게",
   "layerSize.reset": "원래대로",
+  // 조절대 자리(2026-11-03)
+  "dock.title": "조절대 자리",
+  "dock.top": "위",
+  "dock.bottom": "아래",
+  "dock.left": "왼쪽",
+  "dock.right": "오른쪽",
+  "dock.body": "굵기·불투명도(움직이기에서는 세기·속도) 조절대를 둘 자리예요. 조절대 이름 쪽을 꾹 누르면 언제든 바꿀 수 있어요.",
+  "dock.hint": "꾹 누르면 조절대 자리를 바꿔요",
 } as const;
 export type Key = keyof typeof ko;

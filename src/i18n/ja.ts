@@ -1859,4 +1859,12 @@ export const ja: Record<Key, string> = {
   "layerSize.smaller": "小さく",
   "layerSize.bigger": "大きく",
   "layerSize.reset": "元に戻す",
+  // 조절대 자리(2026-11-03)
+  "dock.title": "調整バーの位置",
+  "dock.top": "上",
+  "dock.bottom": "下",
+  "dock.left": "左",
+  "dock.right": "右",
+  "dock.body": "太さ・不透明度（動きでは強さ・速さ）の調整バーを置く場所です。バーの名前のあたりを長押しすると、いつでも変えられます。",
+  "dock.hint": "長押しで調整バーの位置を変更",
 };

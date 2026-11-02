@@ -1859,4 +1859,12 @@ export const zhHant: Record<Key, string> = {
   "layerSize.smaller": "縮小",
   "layerSize.bigger": "放大",
   "layerSize.reset": "還原",
+  // 조절대 자리(2026-11-03)
+  "dock.title": "調整列位置",
+  "dock.top": "上",
+  "dock.bottom": "下",
+  "dock.left": "左",
+  "dock.right": "右",
+  "dock.body": "粗細・不透明度（動作中為強度・速度）調整列的位置。長按調整列名稱附近即可隨時更改。",
+  "dock.hint": "長按可更改調整列位置",
 };

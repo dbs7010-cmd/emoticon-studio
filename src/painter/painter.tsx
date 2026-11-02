@@ -21,7 +21,7 @@ import { fontChoices, fontOf } from '../design/font-list';
 import { fontData, fontsFor } from '../design/fonts';
 import { FONT_SAMPLES } from '../design/font-samples';
 import { popularLines } from '../i18n/index';
-import type { BrushSettings, Caption, CaptionLayout, CaptionStyle, LayerTransform, LocalImage, Motion, PainterExport, QA, SavedMotion, Slot } from '../types';
+import type { AdjustDock, BrushSettings, Caption, CaptionLayout, CaptionStyle, LayerTransform, LocalImage, Motion, PainterExport, QA, SavedMotion, Slot } from '../types';
 
 import { AnimPanel } from './anim-panel';
 type Scene = {
@@ -65,6 +65,8 @@ type Props = {
   onFavoriteBrushes?: (keys: string[]) => void;
   onBrushSettings: (settings: BrushSettings) => void;
   paperTexture: boolean;
+  adjustDock?: AdjustDock;
+  onAdjustDock?: (dock: AdjustDock) => void;
   completeTitle: string;
   hasPrevious: boolean;
   previousImage?: LocalImage;
@@ -451,7 +453,7 @@ const swatches = [
 // 기본 레퍼런스 32칸은 아직 칸별 자료도 고르는 동작도 없다(자리표시뿐).
 // 명세 E05: 미완성 격자를 사용자 화면에 보이지 않는다. 자료는 그대로 두고 화면에서만 감춘다.
 const BUILTIN_READY: boolean = BUILTIN_REFERENCES.enabled && BUILTIN_REFERENCES.ready;
-export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, drawnCuts = [], previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, returnToReview, onReturnToReview, onSetReference, onCopyPrevious, onColorUsed, onClose, onOpenLessons, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
+export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, drawnCuts = [], adjustDock, onAdjustDock, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, returnToReview, onReturnToReview, onSetReference, onCopyPrevious, onColorUsed, onClose, onOpenLessons, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<SaveAction>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
@@ -1323,7 +1325,10 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 폭에 비해 세로가 아주 짧은 화면(분할 화면 · 큰 글자로 도구가 커진 경우 등)에서만 rail 이 이긴다. 같으면 bar.
   const sideBar = stage ? Math.floor(Math.min(stage.w, stage.h - BAR_H) - CANVAS_GAP * 2) : 0;
   const sideRail = stage ? Math.floor(Math.min(stage.w - RAIL_W, stage.h) - CANVAS_GAP * 2) : 0;
-  const railMode = !!stage && sideRail > sideBar;
+  // 조절대 자리(2026-11-03): 사용자가 꾹 눌러 고른 자리가 있으면 그 자리, 없으면 더 큰 캔버스를 주는 쪽.
+  const railMode = adjustDock ? adjustDock === 'left' || adjustDock === 'right' : !!stage && sideRail > sideBar;
+  const dockFlip = adjustDock === 'bottom' || adjustDock === 'right';
+  const [dockPicker, setDockPicker] = useState(false);
   const railTrack = railTrackOf(canvasSide ?? 200);
   const showDrawAdjust = tab === 'draw' && !typing && !panel && !drawRail && !refRail && !scene.selection;
   const motionMoving = !!(scene.motion?.preset || scene.motion?.parts?.length || scene.motion?.alternate || scene.motion?.steps?.length || scene.motion?.boil);
@@ -1477,9 +1482,9 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         onUnderlay={onImportGuideExample ? () => void insertGuideUnderlay() : undefined} />}
       {/* 조절 줄 + 캔버스(45.39). 조절 줄은 **두 탭 모두 같은 자리·같은 높이**를 차지한다 — 탭을 오가도 정사각 캔버스 크기가 같다.
           내용이 없을 때(패널·선택 중, 움직임을 고르기 전)도 자리는 남긴다. */}
-      <View testID="작업면" style={{ flex: 1, flexDirection: railMode ? 'row' : 'column', backgroundColor: C.bg }}
+      <View testID="작업면" style={{ flex: 1, flexDirection: railMode ? (dockFlip ? 'row-reverse' : 'row') : (dockFlip ? 'column-reverse' : 'column'), backgroundColor: C.bg }}
         onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; if (w > 0 && h > 0 && (!stage || Math.round(w) !== stage.w || Math.round(h) !== stage.h)) setStage({ w: Math.round(w), h: Math.round(h) }); }}>
-      {railMode && <View testID="조절대" style={{ width: RAIL_W, paddingLeft: 4, alignItems: 'flex-start', justifyContent: 'center', backgroundColor: C.bg }}>
+      {railMode && <Pressable testID="조절대" accessibilityHint={t('dock.hint')} onLongPress={() => setDockPicker(true)} delayLongPress={450} style={{ width: RAIL_W, paddingLeft: 4, alignItems: 'flex-start', justifyContent: 'center', backgroundColor: C.bg }}>
         {showDrawAdjust && <View testID="조절대 내용" style={{ height: canvasSide ?? undefined, paddingVertical: 4, justifyContent: 'space-between' }}>
           <VSlider testID="굵기 조절대" label={t("release.s0609")} height={railTrack} a11yLabel={tool === 'eraser' ? t("release.s0610") : t("release.s0611")}
             value={width} min={1} max={48} step={1} disabled={!sizable}
@@ -1502,8 +1507,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: n / 100 })} onLive={n => send({ type: 'motionLive', speed: n / 100 })}
             bubble={n => <RailBubble><Text numberOfLines={1} style={{ fontSize: 10, fontWeight: '800', color: C.ink }}>{MOTION_WORDS(n / 100).replace(t("release.s0619") + " ", '')}</Text></RailBubble>} />
         </View>}
-      </View>}
-      {!railMode && <View testID="조절 줄" style={{ height: BAR_H, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 12, backgroundColor: C.bg }}>
+      </Pressable>}
+      {!railMode && <Pressable testID="조절 줄" accessibilityHint={t('dock.hint')} onLongPress={() => setDockPicker(true)} delayLongPress={450} style={{ height: BAR_H, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 12, backgroundColor: C.bg }}>
         {showDrawAdjust && <>
           <BarSlider testID="굵기 조절대" label={t("release.s0609")} a11yLabel={tool === 'eraser' ? t("release.s0610") : t("release.s0611")}
             value={width} min={1} max={48} step={1} disabled={!sizable}
@@ -1521,7 +1526,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             onCommit={n => scene.motion && setMotion({ ...scene.motion, speed: Math.round(n * 100) / 100 })} onLive={n => send({ type: 'motionLive', speed: n })} show={MOTION_WORDS} />
         </> : <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{t("release.s0624")}</Text>)}
         {tab === 'anim' && <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: C.muted }}>{animOn ? (animPlaying ? t("release.s0625") : t("release.d111", { v0: ((scene.frameIdx ?? 0) + 1) })) : t("release.s0626")}</Text>}
-      </View>}
+      </Pressable>}
       {/* 캔버스 영역: 그리기 탭은 가운데, 움직이기 탭은 위(아래를 움직임 판이 쓴다).
           더보기 메뉴는 이 영역 안에 열리므로, 열린 동안만 아래 판(dock, zIndex 20)보다 위로 올린다 — 움직이기 탭에서
           판이 메뉴 아래쪽(그림 전체 크기·공유·검사)을 덮어 누를 수 없었다(2026-10-06 에뮬레이터). */}
@@ -2058,6 +2063,19 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     {brushWindow}
 
     {/* 세트의 다른 칸 그림 가져오기(2026-11-03): 칸 번호와 완성 그림을 보고 고른다. 가져오면 지금 칸의 그림·문구가 그 칸 것으로 바뀐다(되돌리기 가능). */}
+    {/* 조절대 자리 고르기(2026-11-03): 조절 줄·조절대를 꾹 누르면 연다. '자동'은 화면에 맞춰 더 큰 캔버스를 주는 쪽. */}
+    {dockPicker && <Dialog title={t('dock.title')} onClose={() => setDockPicker(false)}>
+      <View testID="조절대 자리" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {([['top', 'arrow-up-bold-box-outline'], ['bottom', 'arrow-down-bold-box-outline'], ['left', 'arrow-left-bold-box-outline'], ['right', 'arrow-right-bold-box-outline']] as const).map(([dock, icon]) => { const on = adjustDock === dock;
+          return <Pressable key={dock} accessibilityRole="button" accessibilityLabel={t('dock.' + dock as 'dock.top')} accessibilityState={{ selected: on }}
+            onPress={() => { ease(); onAdjustDock?.(dock); setDockPicker(false); }}
+            style={({ pressed }) => ({ width: '47%', minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, borderWidth: on ? 2 : 1, borderColor: on ? C.point : C.line, backgroundColor: on ? C.pointSoft : pressed ? C.fill : '#FFF' })}>
+            <Glyph name={icon} size={22} color={on ? C.point : C.ink} />
+            <Text style={{ fontSize: 14, fontWeight: on ? '800' : '600', color: C.ink }}>{t('dock.' + dock as 'dock.top')}</Text>
+          </Pressable>; })}
+      </View>
+      <Text style={{ fontSize: 12, lineHeight: 18, color: C.muted }}>{t('dock.body')}</Text>
+    </Dialog>}
     {cutPicker && <Dialog title={t('cutCopy.title')} onClose={() => setCutPicker(false)}>
       <Text style={{ fontSize: 13, lineHeight: 19, color: C.muted }}>{t('cutCopy.body')}</Text>
       <View testID="칸 그림 고르기" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
