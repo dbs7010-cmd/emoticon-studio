@@ -2330,6 +2330,7 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
   const quick = (c: string) => { onPick(c); onClose(); };
   const [hex, setHex] = useState(color);
   const [tidy, setTidy] = useState(false);
+  const [holding, setHolding] = useState(false);
   // 바깥(스포이드·HEX·최근 색)에서 색이 바뀌면 입력칸과 밝기 막대가 따라온다.
   useEffect(() => { setHex(color); }, [color]);
   const same = (a: string, b: string) => a.toUpperCase() === b.toUpperCase();
@@ -2346,7 +2347,7 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
     <SheetHeader title={t("release.s0788")} closeLabel={t("release.s0789")} onClose={onClose} />
     <View style={{ flexShrink: 1, minHeight: 0, paddingHorizontal: 16, gap: 8 }}>
     <TabBar testID="색상 보기" value={view} onChange={onView} items={[{ key: 'custom', label: t("release.s0791") }, { key: 'palette', label: t("release.s0715") }]} />
-    <ScrollView testID="색 견본 스크롤" style={{ flexShrink: 1, minHeight: 0 }} scrollEnabled={scrollable} keyboardShouldPersistTaps="handled"
+    <ScrollView testID="색 견본 스크롤" style={{ flexShrink: 1, minHeight: 0 }} scrollEnabled={scrollable && !holding} keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator contentContainerStyle={{ gap: 12, paddingTop: 4, paddingBottom: 16 }}>
     {/* 머리 한 줄: 지금 색 · 최근 쓴 색 · 스포이드 · 내 팔레트 저장 · 닫기. 두 갈래 어디에서나 같은 자리.
         최근 쓴 색이 가장 먼저다 — 한 번 누르면 그 색으로 돌아가 바로 그린다. 예전에는 따로 한 줄을 차지해 패널이 캔버스를
@@ -2406,7 +2407,7 @@ function ColorPanel({ color, recent, saved, view, onView, onPick, onEyedrop, eye
       {/* 승인 시안: 사각판 · 세로 막대 · **오른쪽 색 견본 두 줄 세 칸**. 최근 쓴 색이 먼저이고, 모자라면 기본 색으로 채운다 —
           처음 연 사람에게도 빈칸이 아니라 바로 고를 색이 있다. 예전에는 판 아래 가로 줄이라 판 경계에서 잘렸다(45.36-R1 G13). */}
       <View style={{ flexDirection: 'row', gap: 12 }}>
-        <View style={{ flex: 1, minWidth: 0 }}><ColorArea color={color} onPick={(c, settle) => onPick(keepAlpha(c), settle)} /></View>
+        <View style={{ flex: 1, minWidth: 0 }}><ColorArea color={color} onPick={(c, settle) => onPick(keepAlpha(c), settle)} onHold={setHolding} /></View>
         <View testID="최근 색" style={{ width: 36 * 2 + 10, flexDirection: 'row', flexWrap: 'wrap', alignContent: 'flex-start', gap: 10 }}>
           {[...recent.slice(0, 6).map(c => [t("release.s0035") + " " + c, c] as const), ...swatches.filter(c => !recent.some(r => same(r, c))).map(c => [t("release.s0806") + " " + c, c] as const)].slice(0, 6)
             .map(([label, c]) => <Swatch round key={label} label={label} color={c} size={36} selected={same(c, color)} onPress={() => quick(c)} />)}
@@ -2461,13 +2462,14 @@ function useFramedPick(onPick: (c: string, settle?: boolean) => void) {
     if (!pending.current) { pending.current = true; nextFrame(flush); }
   };
 }
-function ColorArea({ color, onPick }: { color: string; onPick: (c: string, settle?: boolean) => void }) {
+// onHold(2026-11-03, 대표: 색을 끌어 고를 수 없고 콕콕 찍어야 했다): 끄는 동안 바깥 스크롤을 멈춰 손가락을 판이 계속 받는다.
+function ColorArea({ color, onPick, onHold }: { color: string; onPick: (c: string, settle?: boolean) => void; onHold?: (on: boolean) => void }) {
   return <View style={{ flexDirection: 'row', gap: 10 }}>
-    <View style={{ flex: 1 }}><ColorField color={color} onPick={onPick} /></View>
-    <HueBar color={color} onPick={onPick} />
+    <View style={{ flex: 1 }}><ColorField color={color} onPick={onPick} onHold={onHold} /></View>
+    <HueBar color={color} onPick={onPick} onHold={onHold} />
   </View>;
 }
-function ColorField({ color, onPick }: { color: string; onPick: (c: string, settle?: boolean) => void }) {
+function ColorField({ color, onPick, onHold }: { color: string; onPick: (c: string, settle?: boolean) => void; onHold?: (on: boolean) => void }) {
   const [size, setSize] = useState({ w: 0, h: FIELD_H });
   // 누를 때 판의 화면 위치를 잡고(pageX − locationX), 그다음부터는 화면 좌표만 쓴다 — 조절대와 같은 방식(45.36-R1 G19).
   // 손가락이 판 밖으로 나가도 가장자리 값에서 멈추고 튀지 않는다.
@@ -2485,16 +2487,16 @@ function ColorField({ color, onPick }: { color: string; onPick: (c: string, sett
     accessibilityValue={{ text: color }}
     onLayout={e => { const w = Math.floor(e.nativeEvent.layout.width), hh = Math.floor(e.nativeEvent.layout.height); if (w > 0 && (w !== size.w || hh !== size.h)) setSize({ w, h: hh }); }}
     onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderTerminationRequest={() => false}
-    onResponderGrant={e => { grab(e); at(...local(e), false); }}
+    onResponderGrant={e => { onHold?.(true); grab(e); at(...local(e), false); }}
     onResponderMove={e => at(...local(e), false)}
-    onResponderRelease={e => at(...local(e), true)}
+    onResponderRelease={e => { at(...local(e), true); onHold?.(false); }} onResponderTerminate={() => onHold?.(false)}
     style={{ height: FIELD_H, borderRadius: T.radius.sm, overflow: 'hidden', borderWidth: 1, borderColor: T.line, backgroundColor: hsv(h, 1, 1) }}>
     <Image accessibilityIgnoresInvertColors source={SAT_MASK} resizeMode="stretch" style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} />
     <Image accessibilityIgnoresInvertColors source={VAL_MASK} resizeMode="stretch" style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} />
     <Knob color={color} left={pct(s)} top={pct(1 - v)} />
   </View>;
 }
-function HueBar({ color, onPick }: { color: string; onPick: (c: string, settle?: boolean) => void }) {
+function HueBar({ color, onPick, onHold }: { color: string; onPick: (c: string, settle?: boolean) => void; onHold?: (on: boolean) => void }) {
   const [height, setHeight] = useState(FIELD_H);
   const { h, s, v } = hsvOf(color);
   const push = useFramedPick(onPick);
@@ -2504,9 +2506,9 @@ function HueBar({ color, onPick }: { color: string; onPick: (c: string, settle?:
     accessibilityValue={{ text: Math.round(h) + t("release.s0812") }}
     onLayout={e => { const hh = Math.floor(e.nativeEvent.layout.height); if (hh > 0 && hh !== height) setHeight(hh); }}
     onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderTerminationRequest={() => false}
-    onResponderGrant={e => { top.current = e.nativeEvent.pageY - e.nativeEvent.locationY; at(e.nativeEvent.pageY - top.current, false); }}
+    onResponderGrant={e => { onHold?.(true); top.current = e.nativeEvent.pageY - e.nativeEvent.locationY; at(e.nativeEvent.pageY - top.current, false); }}
     onResponderMove={e => at(e.nativeEvent.pageY - top.current, false)}
-    onResponderRelease={e => at(e.nativeEvent.pageY - top.current, true)}
+    onResponderRelease={e => { at(e.nativeEvent.pageY - top.current, true); onHold?.(false); }} onResponderTerminate={() => onHold?.(false)}
     style={{ width: HUE_W, height: FIELD_H, alignItems: 'center' }}>
     <View pointerEvents="none" style={{ width: HUE_BAR_W, height: '100%', borderRadius: HUE_BAR_W / 2, overflow: 'hidden', borderWidth: 1, borderColor: T.line }}>
       <Image accessibilityIgnoresInvertColors source={HUE_MASK} resizeMode="stretch" style={{ width: '100%', height: '100%' }} />
