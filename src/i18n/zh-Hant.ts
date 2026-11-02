@@ -1853,4 +1853,10 @@ export const zhHant: Record<Key, string> = {
   "cutCopy.title": "帶入其他格的圖",
   "cutCopy.body": "把選好那一格的圖和文字帶入這一格。目前的圖會被取代，可以用復原回來。",
   "cutCopy.pick": "帶入第 {n} 格的圖",
+  // 레이어 크기(2026-11-03)
+  "layerSize.open": "調整{name}大小",
+  "layerSize.title": "大小",
+  "layerSize.smaller": "縮小",
+  "layerSize.bigger": "放大",
+  "layerSize.reset": "還原",
 };

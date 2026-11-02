@@ -1853,4 +1853,10 @@ export const ja: Record<Key, string> = {
   "cutCopy.title": "他のコマの絵を取り込む",
   "cutCopy.body": "選んだコマの絵と文字をこのコマに取り込みます。今の絵は置き換わり、元に戻すで戻せます。",
   "cutCopy.pick": "{n}番のコマの絵を取り込む",
+  // 레이어 크기(2026-11-03)
+  "layerSize.open": "{name}のサイズ調整",
+  "layerSize.title": "サイズ",
+  "layerSize.smaller": "小さく",
+  "layerSize.bigger": "大きく",
+  "layerSize.reset": "元に戻す",
 };

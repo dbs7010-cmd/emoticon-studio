@@ -489,6 +489,19 @@ const styleOf = n => Object.assign({}, ...[n.props.style].flat(9).filter(Boolean
   await press('문구 닫기');
   assert.equal(labelled('문구 적용').length, 0, '취소하면 문구 편집이 닫힌다');
 
+  // 2026-11-03: 크기는 레이어 줄에서(지금 레이어의 크기 단추 → 작게/크게/원래대로). 더보기의 '그림 전체 크기'는 없앴다.
+  await press('더보기');
+  assert.equal(labelled('그림 전체 크기').length, 0, '더보기에 그림 전체 크기가 없다');
+  await press('더보기 닫기');
+  await press('레이어');
+  const sizeBtn = tree.root.findAll(n => n.type === 'Pressable' && / 크기 조절$/.test(n.props.accessibilityLabel ?? ''));
+  assert.equal(sizeBtn.length, 1, '지금 레이어에만 크기 단추');
+  await act(async () => sizeBtn[0].props.onPress());
+  await press('크게');
+  const grown = lastCommand('transform');
+  assert.ok(grown.scale > 1.1 && grown.scale < 1.12, '크게 = 한 번에 약 11% (' + grown.scale + ')');
+  await press('레이어');
+
   await act(async () => tree.unmount());
   console.log('PASS: convenience — 새 칸 한 장·옛 다중 장 저장본과 부분 움직임 참조 보존, 레이어 차례 앞으로/뒤로·손잡이 끌기(양 끝 멈춤), 빠른 도구 아이콘만(접근성 이름 유지)·고른 상태 노랑, 문구 글씨체 셋 적용·옛 저장본 호환, 문구 입구 위 한 곳·아래 줄은 브러시/색 + 빠른 모드 셋, 패널 여닫기에도 캔버스 자리 불변, 브러시 카드의 실제 획 견본, 문구 색 즉시 반영·키보드 정리, 패널을 닫는 첫 터치가 그림에 닿지 않음(브러시·색·문구·레이어·채우기·지우개), 패널 여닫기 후 확대 유지, SV 사각 선택과 최근 색, 스포이드 끌어 집기(미리보기·확정·도구 복귀·패널 복귀), 기본 레퍼런스 자세 넘기기(다음·이전·양 끝 멈춤·획 없음)와 다시 찾기, 선택 → 움직이기에서 그림 보존. Native/WebView mocked.');
   process.exit(0);

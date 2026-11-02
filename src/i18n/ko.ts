@@ -1860,5 +1860,11 @@ export const ko = {
   "cutCopy.title": "다른 칸 그림 가져오기",
   "cutCopy.body": "고른 칸의 그림·문구를 이 칸으로 가져와요. 지금 그림은 바뀌고, 되돌리기로 돌아올 수 있어요.",
   "cutCopy.pick": "{n}번 칸 그림 가져오기",
+  // 레이어 크기(2026-11-03)
+  "layerSize.open": "{name} 크기 조절",
+  "layerSize.title": "크기",
+  "layerSize.smaller": "작게",
+  "layerSize.bigger": "크게",
+  "layerSize.reset": "원래대로",
 } as const;
 export type Key = keyof typeof ko;

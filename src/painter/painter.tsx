@@ -596,6 +596,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const [layerDragging, setLayerDragging] = useState(false);
   const [cutoutPicker, setCutoutPicker] = useState(false);
   const [cutPicker, setCutPicker] = useState(false);
+  const [layerSize, setLayerSize] = useState<string | null>(null);
   const [hiddenWarning, setHiddenWarning] = useState('');
   // 저장 버튼 뒤의 짧은 안내(45.38). 'done' 이면 '다음 칸' 으로 이어 갈 수 있고, 'blank' 면 빈 칸은 완성이 아니라고 말한다.
   // 4초 뒤 스스로 걷힌다 — 캔버스 위에는 한 번에 한 가지만 말한다(canvasMessage).
@@ -1719,7 +1720,6 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           {!!canon && <MenuButton icon="account-star-outline" title={showCanon ? t("release.s0677") : t("release.s0678")} onPress={() => { setPanel(null); setShowCanon(!showCanon); }} />}
           {/* 2026-11-03(대표): 대표 캐릭터가 이미 있으면 '보기'만 둔다 — '이 칸으로 바꾸기'는 없앴다(바꾸려면 세트 메뉴 › 대표 캐릭터). */}
           {!canon && <MenuButton icon="bookmark-outline" title={t("release.s0680")} onPress={() => { setPanel(null); setShowCanon(false); save('reference'); }} />}
-          <MenuButton icon="resize" title={t("release.s0681")} onPress={() => { setPanel(null); setSizeOpen(true); }} />
           <MenuButton icon="share-variant" title={t("release.s0682")} onPress={() => { setPanel(null); save('share'); }} />
           <MenuButton icon="clipboard-check-outline" title={t("release.s0683")} onPress={() => { setPanel(null); setShowQA(true); }} />
           <MenuButton danger icon="delete-outline" title={t("release.s0684")} onPress={() => { setPanel(null); Alert.alert(t("release.s0684"), t("release.s0685"), [{ text: t("ui.cancel"), style: 'cancel' }, { text: t("release.s0686"), style: 'destructive', onPress: () => send({ type: 'clear' }) }]); }} />
@@ -1911,6 +1911,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                   <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: active ? '800' : '600', color: layer.visible ? C.ink : C.muted }}>{name}</Text>
                   <View style={{ width: 18, alignItems: 'center' }}>{active ? <Glyph name="pencil" size={16} color={C.ink} /> : null}</View>
                 </Pressable>
+                {/* 크기(2026-11-03, 대표): 더보기의 '그림 전체 크기'는 판이 캔버스를 가렸다 — 레이어 줄에서 그 레이어만 키우고 줄인다(되돌리기 가능). */}
+                {active && <IconButton label={t('layerSize.open', { name })} icon="resize" size={20} color={layerSize === layer.id ? C.point : C.muted} onPress={() => setLayerSize(layerSize === layer.id ? null : layer.id)} />}
                 <EyeToggle label={`${name} ${layer.visible ? t("release.x098") : t("release.s0660")}`} on={layer.visible} onPress={() => changeTransform(layer.id, { visible: !layer.visible })} />
                 {/* 손잡이: 누른 채 위아래로 끌면 차례가 바뀐다. 화면 읽기 사용자는 같은 자리에서 올리기·내리기 동작을 쓴다.
                     45.36 은 접근성 동작만 달아 두어, 보이는 손잡이를 끌어도 아무 일이 없었다(G14). */}
@@ -1924,6 +1926,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                 </View>}
                 <Pressable accessibilityRole="button" accessibilityLabel={t("release.d116", { v0: (name) })} onPress={() => setLayerMenu(layerMenu === layer.id ? null : layer.id)} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={20} color={C.muted} /></Pressable>
               </View>
+            {layerSize === layer.id && <View testID="레이어 크기" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{t('layerSize.title')}</Text>
+              <IconButton label={t('layerSize.smaller')} icon="minus" size={20} color={C.ink} onPress={() => changeTransform(layer.id, { scale: Math.max(.1, Math.round(layer.scale * .9 * 100) / 100) })} />
+              <Text accessibilityLabel={t('layerSize.title') + ' ' + Math.round(layer.scale * 100) + '%'} style={{ minWidth: 48, textAlign: 'center', fontSize: 14, fontWeight: '800', color: C.ink }}>{Math.round(layer.scale * 100)}%</Text>
+              <IconButton label={t('layerSize.bigger')} icon="plus" size={20} color={C.ink} onPress={() => changeTransform(layer.id, { scale: Math.min(4, Math.round(layer.scale / .9 * 100) / 100) })} />
+              {layer.scale !== 1 && <Minor title={t('layerSize.reset')} onPress={() => changeTransform(layer.id, { scale: 1 })} />}
+            </View>}
             {layerMenu === layer.id && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16 }}>
               {/* 겹치는 차례(45.7차): 위로/아래로 대신 '앞으로 보내기·뒤로 보내기' — 목록의 방향을 몰라도 결과가 그려진다. */}
               {scene.layers.length > 1 && layerAt(layer.id) < scene.layers.length - 1 && <Minor title={t("release.s0727")} onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: 1 }); }} />}
