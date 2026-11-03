@@ -1890,4 +1890,8 @@ export const ja: Record<Key, string> = {
   "blend.darken": "比較(暗)",
   "blend.lighten": "比較(明)",
   "layerSize.hint": "キャンバス上で1本指で移動、2本指で拡大・縮小できます。",
+  // 레이어 맞추기·판 손잡이(2026-11-04)
+  "layerSize.gesture": "1本指で移動・2本指で拡大縮小",
+  "layerSize.done": "レイヤー調整を終える",
+  "panelGrip.label": "パネルの大きさ — ドラッグでキャンバスとパネルの大きさを変更",
 };

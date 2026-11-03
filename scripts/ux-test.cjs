@@ -24,7 +24,7 @@ global.setInterval = (fn, ms) => { if (ms === 40000) { timers.push(fn); return {
 // 저장이 길어질 때의 알림(1.5초)과 저장 시간초과(20초)는 손으로 돌린다 — 실제로 기다리지 않고 그 순간을 만든다(45.13차).
 const held = [];
 const realSetTimeout = global.setTimeout, realClearTimeout = global.clearTimeout;
-global.setTimeout = (fn, ms) => { if (ms === 1500 || ms === 20000) { const handle = { ms }; held.push({ handle, fn, ms }); return handle; } return realSetTimeout(fn, ms); };
+global.setTimeout = (fn, ms) => { if (ms === 1500 || ms === 20000 || ms === 60000) { const handle = { ms }; held.push({ handle, fn, ms }); return handle; } return realSetTimeout(fn, ms); };
 global.clearTimeout = handle => { const i = held.findIndex(h => h.handle === handle); if (i >= 0) { held.splice(i, 1); return; } return realClearTimeout(handle); };
 const pending = ms => held.filter(h => h.ms === ms).length;
 const fire = ms => { let i = -1; held.forEach((h, k) => { if (h.ms === ms) i = k; }); if (i < 0) return false; const [h] = held.splice(i, 1); h.fn(); return true; };
@@ -704,12 +704,13 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   // 2026-11-03(대표: '저장 늦어짐' 알림이 짜증): 조용한 자동저장은 그리기를 막지 않으므로 알리지 않는다. 직접 누른 저장만 4초 뒤 알린다.
   await act(async () => { fire(4000); });
   assert.equal(notice(), false, '자동저장이 길어져도 캔버스에 알림을 띄우지 않는다');
-  // 응답이 끝내 오지 않으면 시간초과가 잠금을 풀고, 무슨 일이 있었는지 알려 준다.
+  // 2026-11-04(대표 실기기: 움직이기 자동저장이 20초를 넘겨 창이 떴다): 자동저장은 60초까지 기다리고, 넘어도 창 없이 접는다.
   const beforeAlerts = alerts.length;
   await act(async () => { fire(20000); });
-  assert.ok(alerts.length > beforeAlerts, '시간초과를 알린다');
-  const late = alerts.at(-1);
-  assert.ok(String(late.message || '').includes('닫기'), '무엇을 누르면 다시 저장되는지 알려 준다: ' + JSON.stringify(late));
+  assert.equal(lastSent().type, 'save', '자동저장은 20초에 접지 않는다(움직임 GIF 굽기가 길 수 있다)');
+  // 60초짜리 타이머가 여럿일 수 있다(자동저장 주기 등) — 저장을 접을 때까지 차례로 쏜다.
+  for (let i = 0; i < 4 && lastSent().type !== 'saveFailed'; i++) await act(async () => { fire(60000); });
+  assert.equal(alerts.length, beforeAlerts, '자동저장 시간초과에는 창을 띄우지 않는다');
   assert.equal(notice(), false, '잠금이 풀리면 캔버스 알림도 걷힌다');
   assert.equal(lastSent().type, 'saveFailed', '캔버스에도 이번 저장을 접었다고 알린다');
   assert.equal(lastSent().token, lastCommand('save').token, '접는 것도 그 요청 번호로만 한다');

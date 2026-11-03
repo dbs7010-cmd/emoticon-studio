@@ -14,7 +14,7 @@ const DURATIONS = [.1, .2, .3, .5, .8, 1] as const;
 
 type Props = {
   frames: { id: string; duration: number }[] | null; index: number; onion: boolean; pro: boolean; playing: boolean;
-  thumbs: Record<string, string>; hint: string | null; onContentHeight?: (h: number) => void;
+  thumbs: Record<string, string>; hint: string | null;
   onStart: () => void; onLessons?: () => void; onSelect: (i: number) => void; onAdd: () => void; onDelete: (i: number) => void;
   onDuration: (i: number, d: number) => void; onMove: (from: number, to: number) => void; onOnion: (on: boolean) => void;
   onOff: () => void; onDraw: () => void; onPlay: (on: boolean) => void; onRequestPro: () => void;
@@ -28,7 +28,7 @@ export function AnimPanel(p: Props) {
     <Text style={{ flex: 1, fontSize: 11, color: C.muted }}>{t("release.d140", { v0: (ANIM_MAX_FRAMES) })}</Text>
   </View>;
   // 장이 없을 때: 설명 한 줄 · 시작 버튼 하나 · 초보를 위한 강좌 길(2026-10-15 사용자: 묶음 고르기는 두지 않는다).
-  if (!p.frames) return <ScrollView testID="애니메이션 시작" onContentSizeChange={(_, h) => p.onContentHeight?.(h)} contentContainerStyle={{ padding: 16, gap: 14 }}>
+  if (!p.frames) return <ScrollView testID="애니메이션 시작" style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 14 }}>
     {head}
     <Text style={{ fontSize: 14, lineHeight: 21, color: C.ink, paddingHorizontal: 2 }}>{t("release.s0942")}</Text>
     <Text style={{ fontSize: 13, lineHeight: 19, color: C.muted, paddingHorizontal: 2, marginTop: -8 }}>{t("release.s0943")}</Text>
@@ -46,7 +46,7 @@ export function AnimPanel(p: Props) {
 
   const cur = p.frames[p.index];
   const canAdd = n < limit;
-  return <ScrollView testID="애니메이션 장" onContentSizeChange={(_, h) => p.onContentHeight?.(h)} contentContainerStyle={{ padding: 16, paddingTop: 12, gap: 12 }}>
+  return <ScrollView testID="애니메이션 장" style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: 12, gap: 12 }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <View style={{ flex: 1 }}>{head}</View>
       <Pressable accessibilityRole="button" accessibilityLabel={p.playing ? t("release.s0947") : t("release.s0948")} onPress={() => p.onPlay(!p.playing)}

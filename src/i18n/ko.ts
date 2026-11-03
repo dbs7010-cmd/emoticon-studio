@@ -1897,5 +1897,9 @@ export const ko = {
   "blend.darken": "어둡게",
   "blend.lighten": "밝게",
   "layerSize.hint": "캔버스에서 한 손가락으로 옮기고, 두 손가락으로 크기를 바꿔요.",
+  // 레이어 맞추기·판 손잡이(2026-11-04)
+  "layerSize.gesture": "한 손가락 옮기기 · 두 손가락 크기",
+  "layerSize.done": "레이어 맞추기 끝내기",
+  "panelGrip.label": "판 크기 — 끌어서 캔버스와 판의 크기를 바꿔요",
 } as const;
 export type Key = keyof typeof ko;

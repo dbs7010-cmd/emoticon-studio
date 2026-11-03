@@ -1890,4 +1890,8 @@ export const zhHant: Record<Key, string> = {
   "blend.darken": "變暗",
   "blend.lighten": "變亮",
   "layerSize.hint": "在畫布上用一指移動、兩指縮放。",
+  // 레이어 맞추기·판 손잡이(2026-11-04)
+  "layerSize.gesture": "一指移動・兩指縮放",
+  "layerSize.done": "結束圖層調整",
+  "panelGrip.label": "面板大小 — 拖曳以調整畫布與面板大小",
 };
