@@ -137,15 +137,15 @@
     {
       "versionCode": 28,
       "versionName": "1.0.0",
-      "file": "dist/releases/vc28-20261104/emoti-1.0.0-vc28-4aa5dcf.aab",
-      "commit": "4aa5dcf",
-      "sha256": "b5acd9ad9cb1d86f3aa264d01b74129e969b40790c2d5e62b2e3a4c445550a26",
+      "file": "dist/releases/vc28-20261104/emoti-1.0.0-vc28-f8c2a7f.aab",
+      "commit": "f8c2a7f",
+      "sha256": "851789c201a2dbc7e0169c776aee3594cbe9bc623c79fda55d95b2347c4b0ef8",
       "builtAt": "2026-11-04",
       "status": "ready-not-uploaded",
       "releaseCheck": "PASS",
       "manifestVersionCode": 28,
       "signingCertificateKind": "upload",
-      "note": "Owner device feedback round 11-03~04 (pressure sliders, palm rejection, layer blend/adjust, motion panel, quiet autosave). Device-checked on S24 Ultra test app except S Pen pressure/blend not yet confirmed. Upload by owner."
+      "note": "Rebuilt 2026-11-04 before upload to include beginner/expert modes, layer opacity, alpha lock, view rotation, line taper, delta saves (f8c2a7f). Earlier vc28 build 4aa5dcf (sha b5acd9ad…) moved to superseded/ — do not upload it. New-in-this-build features not yet device-checked."
     }
   ]
 }
