@@ -463,11 +463,12 @@ function stabilize(raw,ts){const S=stabParams(),dt=Math.max(1,Math.min(100,ts-eu
  euro.dx+=ad*((raw.x-euro.x)/dt-euro.dx);euro.dy+=ad*((raw.y-euro.y)/dt-euro.dy);euro.x=raw.x;euro.y=raw.y;
  const a=al(S.min+S.beta*Math.hypot(euro.dx,euro.dy));
  return {x:steady.x+(raw.x-steady.x)*a,y:steady.y+(raw.y-steady.y)*a};}
-let preset=null,brushOpacity=1,stabilizer='light',stabAmt=null,pressureK=1,pressureGamma=1,strokeLen=0,lastRaw=null,lastPressure=null;
+let preset=null,brushOpacity=1,stabilizer='light',stabAmt=null,pressureK=1,pressureGamma=1,pressureFloor=.25,strokeLen=0,lastRaw=null,lastPressure=null;
 const PENCIL_ALPHA=.55;
 function applyBrush(m){preset=m.preset&&PRESETS[m.preset]?m.preset:null;const o=Number(m.opacity);brushOpacity=Number.isFinite(o)?Math.max(.05,Math.min(1,o)):1;stabilizer=STAB[m.stabilizer]?m.stabilizer:'light';if(typeof m.smoothing==='boolean')smoothing=m.smoothing;if(typeof m.pressure==='boolean')pressureOn=m.pressure;
  const sa=Number(m.stabAmount);if(m.stabAmount!=null&&Number.isFinite(sa)){stabAmt=Math.max(0,Math.min(100,sa));if(stabAmt<=0)smoothing=false;}
  if(typeof m.pressure==='number'&&Number.isFinite(m.pressure))pressureK=Math.max(0,Math.min(1,m.pressure/100));
+ const pm=Number(m.pressureMin);if(m.pressureMin!=null&&Number.isFinite(pm))pressureFloor=Math.max(.05,Math.min(1,pm/100));
  const pc=Number(m.pressureCurve);if(m.pressureCurve!=null&&Number.isFinite(pc))pressureGamma=Math.pow(2,Math.max(-50,Math.min(50,pc))/50);}
 // 필압 자리. 스타일러스(pointerType 'pen')의 0~1 값만 받는다. 지금 프리셋에는 pressure 반응이 없어 항상 기본값을 돌려준다 —
 // 손가락·마우스의 체감은 바뀌지 않는다. 0·undefined·범위 밖 값은 없는 것으로 본다.
@@ -478,7 +479,7 @@ function penPressure(e){return e&&e.pointerType==='pen'?validPressure(e.pressure
 // S펜 필압(2026-10-28): 스타일러스일 때만 굵기가 누르는 힘을 따른다(보통 힘 ≈ 정한 굵기, 0.25~1.5배). 손가락·마우스는 그대로.
 // 획 전체를 다시 긋는 브러시(테두리·평행선)는 굵기가 획 전체에서 같아야 해 제외한다. pressure:false 로 끌 수 있다.
 let pressureOn=true;
-function pressureScale(pressure,settings){const p=validPressure(pressure);if(p===null||!pressureOn||pressureK<=0||(settings&&(settings.outline||settings.repath)))return 1;return Math.max(.25,Math.min(1.5,1+pressureK*(curved(p)-.5)));}
+function pressureScale(pressure,settings){const p=validPressure(pressure);if(p===null||!pressureOn||pressureK<=0||(settings&&(settings.outline||settings.repath)))return 1;return Math.max(pressureFloor,Math.min(1.5,1+pressureK*(curved(p)-.5)));}
 function computeBrushWidth(base,pressure,settings){return base*pressureScale(pressure,settings);}
 function computeBrushAlpha(base,pressure,settings){const p=validPressure(pressure);if(p===null||!settings||!settings.pressure||!pressureOn||pressureK<=0)return base;return base*Math.max(.1,Math.min(1,1-pressureK+pressureK*curved(p)*1.25));}
 function activePreset(){return liveTool()!=='eraser'&&preset?PRESETS[preset]:null;}
@@ -547,20 +548,22 @@ function canvasUnits(px){const r=canvas.getBoundingClientRect();return px*W/Math
 function cancelStrokeForGesture(){layerDrag=null;shapeDrag=null;curveMid=null;curveCtl=null;tipPath=null;captionDrag=null;captionHandle=null;captionDismiss=false;grabbing=null;if(!active)return;wet=null;wetLayer=null;active=false;strokeTool=null;pointer=null;strokePending=false;steady=null;if(history.length){const previous=history.pop();restore(previous);}}
 function beginMulti(){
  const ps=firstTwo();if(ps.length<2)return;const [a,b]=ps,mid=middle(a,b),adj=adjustLayer(),ref=adj||activeReference();
- if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,ids:[a.id,b.id],distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,didCheckpoint:false,capScale:caption?.scale||1,capRot:caption?.rot||0,selScale:selection?.scale||1,selRot:selection?.rot||0,selDx:selection?.dx||0,selDy:selection?.dy||0,angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};}
+ if(!multi){multi={started:Date.now(),maxCount:touches.size,moved:false,ids:[a.id,b.id],distance:Math.max(1,distance(a,b)),mid,zoom,scrollLeft:viewport.scrollLeft,scrollTop:viewport.scrollTop,refId:ref?.id||null,refX:ref?.x||0,refY:ref?.y||0,refScale:ref?.scale||1,refRot:ref?.rotation||0,adjusting:!!adj,didCheckpoint:false,capScale:caption?.scale||1,capRot:caption?.rot||0,selScale:selection?.scale||1,selRot:selection?.rot||0,selDx:selection?.dx||0,selDy:selection?.dy||0,angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};}
  else multi.maxCount=Math.max(multi.maxCount,touches.size);
  suppressDraw=true;
 }
 function gesturePair(){if(!multi)return null;const a=touches.get(multi.ids[0]),b=touches.get(multi.ids[1]);return a&&b?[a,b]:null;}
 function applyMulti(){
  const pair=gesturePair();if(!pair)return;const [a,b]=pair,mid=middle(a,b),d=Math.max(1,distance(a,b)),move=Math.hypot(mid.x-multi.mid.x,mid.y-multi.mid.y),pinch=Math.abs(d-multi.distance);
- if(move>10||pinch>10)multi.moved=true;if(!multi.moved)return;
+ // 제자리에서 비틀기만 해도 움직임이다(레이어 맞추기 회전, 2026-11-04).
+ let twist=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI-multi.angle;if(twist>180)twist-=360;if(twist<-180)twist+=360;
+ if(move>10||pinch>10||Math.abs(twist)>8)multi.moved=true;if(!multi.moved)return;
  // 고른 문구 위의 두 손가락: 벌리면 크기, 비틀면 회전(8° 안쪽 흔들림은 무시).
  if(captionPicked&&caption&&!capPreviewing){if(!multi.didCheckpoint){checkpoint();multi.didCheckpoint=true;}caption.scale=Math.max(.4,Math.min(3,multi.capScale*(d/multi.distance)));let turn=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI-multi.angle;if(turn>180)turn-=360;if(turn<-180)turn+=360;caption.rot=Math.abs(turn)<8?multi.capRot:Math.round((multi.capRot+turn)*10)/10;dirty=true;renderSoon();return;}
  // 고른 부분(가져온 그림 포함) 위의 두 손가락: 벌리면 크기, 비틀면 회전, 같이 끌면 옮기기. 적용을 눌러야 그림에 남는다(손잡이와 같다).
  if(selection&&tool==='select'){selection.scale=Math.max(.2,Math.min(4,multi.selScale*(d/multi.distance)));let turn=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI-multi.angle;if(turn>180)turn-=360;if(turn<-180)turn+=360;selection.rot=Math.abs(turn)<8?multi.selRot:Math.round((multi.selRot+turn)*10)/10;selection.dx=multi.selDx+canvasUnits(mid.x-multi.mid.x);selection.dy=multi.selDy+canvasUnits(mid.y-multi.mid.y);dirty=true;renderSoon();return;}
  const ref=multi.refId&&(references.find(l=>l.id===multi.refId&&l.visible)||layers.find(l=>l.id===multi.refId&&l.visible));
- if(ref){if(!multi.didCheckpoint){checkpoint();multi.didCheckpoint=true;}ref.scale=Math.max(.1,Math.min(4,multi.refScale*(d/multi.distance)));ref.x=multi.refX+canvasUnits(mid.x-multi.mid.x);ref.y=multi.refY+canvasUnits(mid.y-multi.mid.y);dirty=true;renderSoon();return;}
+ if(ref){if(!multi.didCheckpoint){checkpoint();multi.didCheckpoint=true;}ref.scale=Math.max(.1,Math.min(4,multi.refScale*(d/multi.distance)));if(multi.adjusting){let turn=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI-multi.angle;if(turn>180)turn-=360;if(turn<-180)turn+=360;ref.rotation=Math.abs(turn)<8?multi.refRot:Math.round((multi.refRot+turn)*10)/10;}ref.x=multi.refX+canvasUnits(mid.x-multi.mid.x);ref.y=multi.refY+canvasUnits(mid.y-multi.mid.y);dirty=true;renderSoon();return;}
  const next=Math.max(1,Math.min(4,multi.zoom*(d/multi.distance)));zoom=next;size();const ratio=next/multi.zoom;viewport.scrollLeft=(multi.scrollLeft+multi.mid.x)*ratio-mid.x;viewport.scrollTop=(multi.scrollTop+multi.mid.y)*ratio-mid.y;send({type:'zoom',zoom});
 }
 function rgba(hex){let v=String(hex||'').replace('#','');if(v.length===3)v=v.split('').map(c=>c+c).join('');const n=parseInt(v.slice(0,6),16)||0,a=v.length>=8?parseInt(v.slice(6,8),16):255;return [n>>16&255,n>>8&255,n&255,Number.isFinite(a)?a:255];}

@@ -111,6 +111,17 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
     });
     const scaled = await layerOf('draw-2');
     assert.ok(scaled.scale > 1.6, '두 손가락으로 벌리면 레이어가 커진다: ' + scaled.scale);
+    // 두 손가락 비틀기 → 회전(8° 안쪽 흔들림은 무시).
+    await page.evaluate(async () => {
+      const c = document.getElementById('drawing'), r = c.getBoundingClientRect();
+      const ev = (t, id, x, y) => c.dispatchEvent(new PointerEvent(t, { pointerId: id, pointerType: 'touch', bubbles: true, cancelable: true, clientX: r.left + x * r.width, clientY: r.top + y * r.height }));
+      ev('pointerdown', 43, .4, .5); ev('pointerdown', 44, .6, .5);
+      for (let i = 1; i <= 10; i++) { const a = i * Math.PI / 60; ev('pointermove', 43, .5 - .1 * Math.cos(a), .5 - .1 * Math.sin(a)); ev('pointermove', 44, .5 + .1 * Math.cos(a), .5 + .1 * Math.sin(a)); await new Promise(res => setTimeout(res, 8)); }
+      ev('pointerup', 43, .4, .5); ev('pointerup', 44, .6, .5);
+    });
+    const turned = await layerOf('draw-2');
+    assert.ok(turned.rotation > 20 && turned.rotation < 40, '두 손가락으로 비틀면 레이어가 돈다: ' + turned.rotation);
+    await cmd({ type: 'undo' });
     await cmd({ type: 'undo' });
     assert.ok((await layerOf('draw-2')).scale < 1.05, '되돌리면 크기도 돌아온다');
     await cmd({ type: 'adjustLayer', id: null });

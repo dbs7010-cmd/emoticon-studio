@@ -1891,7 +1891,9 @@ export const zhHant: Record<Key, string> = {
   "blend.lighten": "變亮",
   "layerSize.hint": "在畫布上用一指移動、兩指縮放。",
   // 레이어 맞추기·판 손잡이(2026-11-04)
-  "layerSize.gesture": "一指移動・兩指縮放",
+  "layerSize.gesture": "一指移動・兩指縮放・旋轉",
   "layerSize.done": "結束圖層調整",
-  "panelGrip.label": "面板大小 — 拖曳以調整畫布與面板大小",
+  "panelGrip.label": "面板大小 — 拖曳調整，點兩下恢復預設",
+  "brushFine.min": "最細粗細",
+  "brushFine.graph": "左輕→右重，越往上越粗",
 };

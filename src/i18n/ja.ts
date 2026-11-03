@@ -1891,7 +1891,9 @@ export const ja: Record<Key, string> = {
   "blend.lighten": "比較(明)",
   "layerSize.hint": "キャンバス上で1本指で移動、2本指で拡大・縮小できます。",
   // 레이어 맞추기·판 손잡이(2026-11-04)
-  "layerSize.gesture": "1本指で移動・2本指で拡大縮小",
+  "layerSize.gesture": "1本指で移動・2本指で拡大縮小・回転",
   "layerSize.done": "レイヤー調整を終える",
-  "panelGrip.label": "パネルの大きさ — ドラッグでキャンバスとパネルの大きさを変更",
+  "panelGrip.label": "パネルの大きさ — ドラッグで変更、ダブルタップで標準に",
+  "brushFine.min": "最も細い太さ",
+  "brushFine.graph": "左が弱く→右が強く、上ほど太く",
 };

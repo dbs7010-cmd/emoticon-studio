@@ -2193,6 +2193,8 @@ function Studio() {
       paperTexture={store?.paperTexture === true}
       adjustDock={store?.adjustDock}
       onAdjustDock={dock => { try { commit(st => ({ ...st, adjustDock: dock })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
+      motionPanel={store?.motionPanel}
+      onMotionPanel={height => { try { commit(st => ({ ...st, motionPanel: Math.round(height) })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
       savedMotions={store?.savedMotions ?? []}
       onSaveMotion={saveMotion}
       onForgetMotion={forgetMotion}

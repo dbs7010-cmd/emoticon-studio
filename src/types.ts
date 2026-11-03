@@ -122,7 +122,9 @@ export type BrushSettings = { preset?: 'ink' | 'soft' | 'grain' | 'marker' | 'ca
   | 'pointil' | 'spray' | 'dryflat' | 'wash' | 'wateredge' | 'oilpastel' | 'parallelpen' | 'glowpen'; opacity?: number; stabilizer?: 'off' | 'light' | 'medium' | 'strong';
   // 세부 조절(2026-11-03, 대표: 약하게 해도 보정이 들어간다 · 다른 앱처럼 세밀하게): 선 보정 0~100(0 = 끔), 필압 세기 0~100, 필압 곡선 −50~50.
   // 없으면 예전 값(선 보정은 stabilizer 단계, 필압 100, 곡선 0)과 같다.
-  stabAmount?: number; pressure?: number; pressureCurve?: number; base?: 'pen' | 'brush' | 'pencil'; width?: number; eraserWidth?: number };
+  stabAmount?: number; pressure?: number; pressureCurve?: number;
+  // 필압 최소 굵기(정한 굵기의 %, 5~100, 기본 25 — 2026-11-04).
+  pressureMin?: number; base?: 'pen' | 'brush' | 'pencil'; width?: number; eraserWidth?: number };
 // Only a store receipt may set this. `source` exists so a hand written file cannot claim PRO.
 export type Entitlement = {
   // 라이선스 테스터·내부 테스트 구매로 열린 이용권. 화면이 그렇게 말하기 위한 표시다.
@@ -139,7 +141,9 @@ export type Cutout = { id: string; name: string; image: LocalImage };
 export type AdjustDock = 'top' | 'bottom' | 'left' | 'right';
 export type Store = { version: 1; revision: number; projects: Project[]; introDone?: boolean; palette?: string[]; userPalette?: string[]; entitlement?: Entitlement; reviewUnlock?: boolean; paperTexture?: boolean;
   // 굵기·불투명도(움직이기: 세기·속도) 조절대 자리(2026-11-03, 대표: 꾹 눌러 위·아래·왼쪽·오른쪽으로). 없으면 화면에 맞춰 자동.
-  adjustDock?: AdjustDock; savedMotions?: SavedMotion[]; cutouts?: Cutout[];
+  adjustDock?: AdjustDock;
+  // 움직이기·애니메이션 판 높이(dp, 판 손잡이로 고른 것, 2026-11-04). 없으면 화면에 맞춘 기본값.
+  motionPanel?: number; savedMotions?: SavedMotion[]; cutouts?: Cutout[];
   // 즐겨찾기 세 칸. **사용자가 직접 고정한다** — 다른 브러시를 썼다고 저절로 바뀌지 않는다(45.31).
   // 없으면 기본값(기본 펜·연필·마커)으로 연다. 예전 저장본에는 이 칸이 없고, 그대로 읽힌다.
   favoriteBrushes?: string[];

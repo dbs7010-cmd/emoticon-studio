@@ -1,3 +1,4 @@
+import Svg, { Path } from 'react-native-svg';
 import { t } from '../i18n/index';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, AppState, BackHandler, LayoutAnimation, Modal, View, Text, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, UIManager } from 'react-native';
@@ -67,6 +68,8 @@ type Props = {
   paperTexture: boolean;
   adjustDock?: AdjustDock;
   onAdjustDock?: (dock: AdjustDock) => void;
+  motionPanel?: number;
+  onMotionPanel?: (height: number) => void;
   completeTitle: string;
   hasPrevious: boolean;
   previousImage?: LocalImage;
@@ -451,7 +454,7 @@ function cleanBrush(b?: BrushSettings): BrushSettings {
     preset: b?.preset && (CATALOG.some(p => p.preset === b.preset) || b.preset in RETIRED) ? b.preset : undefined,
     opacity: typeof b?.opacity === 'number' && Number.isFinite(b.opacity) ? Math.max(.05, Math.min(1, b.opacity)) : undefined,
     stabilizer: b?.stabilizer && ['off', 'light', 'medium', 'strong'].includes(b.stabilizer) ? b.stabilizer : undefined,
-    stabAmount: num(b?.stabAmount, 0, 100), pressure: num(b?.pressure, 0, 100), pressureCurve: num(b?.pressureCurve, -50, 50),
+    stabAmount: num(b?.stabAmount, 0, 100), pressure: num(b?.pressure, 0, 100), pressureCurve: num(b?.pressureCurve, -50, 50), pressureMin: num(b?.pressureMin, 5, 100),
     base: b?.base && BRUSHES.some(x => x.key === b.base) ? b.base : undefined,
     width: size(b?.width),
     eraserWidth: size(b?.eraserWidth),
@@ -468,7 +471,7 @@ const swatches = [
 // 기본 레퍼런스 32칸은 아직 칸별 자료도 고르는 동작도 없다(자리표시뿐).
 // 명세 E05: 미완성 격자를 사용자 화면에 보이지 않는다. 자료는 그대로 두고 화면에서만 감춘다.
 const BUILTIN_READY: boolean = BUILTIN_REFERENCES.enabled && BUILTIN_REFERENCES.ready;
-export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, drawnCuts = [], adjustDock, onAdjustDock, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, returnToReview, onReturnToReview, onSetReference, onCopyPrevious, onColorUsed, onClose, onOpenLessons, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
+export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, drawnCuts = [], adjustDock, onAdjustDock, motionPanel, onMotionPanel, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, returnToReview, onReturnToReview, onSetReference, onCopyPrevious, onColorUsed, onClose, onOpenLessons, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<SaveAction>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
@@ -791,6 +794,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     stabAmount: brushPrefs.stabAmount ?? STAB_AMOUNT[brushPrefs.stabilizer ?? 'light'],
     pressure: brushPrefs.pressure ?? 100,
     pressureCurve: brushPrefs.pressureCurve ?? 0,
+    pressureMin: brushPrefs.pressureMin ?? 25,
   };
   // 막대를 끄는 동안에는 저장 파일을 매번 쓰지 않는다. 손이 멈추면 한 번 남긴다.
   function changeBrush(patch: Partial<BrushSettings>, settle = true) {
@@ -837,7 +841,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const brushKey = JSON.stringify(effectiveBrush);
   useEffect(() => {
     if (!initialized) return;
-    send({ type: 'brushSettings', preset: effectiveBrush.preset ?? null, opacity: effectiveBrush.opacity, stabilizer: effectiveBrush.stabilizer === 'off' ? 'light' : effectiveBrush.stabilizer, smoothing: effectiveBrush.stabAmount > 0, stabAmount: effectiveBrush.stabAmount, pressure: effectiveBrush.pressure, pressureCurve: effectiveBrush.pressureCurve });
+    send({ type: 'brushSettings', preset: effectiveBrush.preset ?? null, opacity: effectiveBrush.opacity, stabilizer: effectiveBrush.stabilizer === 'off' ? 'light' : effectiveBrush.stabilizer, smoothing: effectiveBrush.stabAmount > 0, stabAmount: effectiveBrush.stabAmount, pressure: effectiveBrush.pressure, pressureCurve: effectiveBrush.pressureCurve, pressureMin: effectiveBrush.pressureMin });
   }, [initialized, brushKey]);
   // 스포이드는 캔버스를 보고 눌러야 하므로 패널을 내린다. 색을 읽으면 패널이 직접 선택으로 다시 올라온다.
   // 기본 레퍼런스를 고르면 큰 격자는 물러난다. 그림이 들어오면(ready) 여기서 기존 참고 레이어 흐름으로 넘긴다 — 지금은 자리표시라 접기만 한다.
@@ -976,6 +980,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     proHandled.current = true;
     save(pendingAction.current ?? 'stay');
   }
+  const lastGifAt = useRef(0);
   function save(action: SaveAction = 'stay') {
     if (inFlight.current) { if (quiet.current && action !== 'stay') queued.current = action; return; }
     if (!initialized) { if (action === 'close') onClose(); return; }
@@ -998,7 +1003,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     // 2026-11-04 대표 실기기: 움직이기 탭 자동저장(GIF 굽기 포함)이 20초를 넘어 '저장이 늦어지고 있어요' 창이 떴다.
     // 자동저장은 60초까지 기다리고, 넘어도 창 없이 접어 다음 자동저장이 다시 한다. 창은 직접 누른 저장에만.
     timeout.current = setTimeout(() => { send({ type: 'saveFailed', token }); setSaveMark(null); unlock(); if (action !== 'stay') Alert.alert(t("release.s0538"), t("release.s0539")); }, action === 'stay' ? 60000 : 20000);
-    send({ type: 'save', gif: !!scene.motion || (scene.frames?.length ?? 0) > 1, token, quiet: action === 'stay' });
+    // 2026-11-04: 움직이는 칸의 GIF 굽기는 무겁다(자동저장이 20초를 넘겼다). 자동저장은 그림만 매번 남기고 GIF 는 90초에 한 번만,
+    // 닫기·완성·이동처럼 칸을 떠나는 저장은 늘 굽는다(떠날 때 파일이 늘 지금 그림과 같다).
+    const moving = !!scene.motion || (scene.frames?.length ?? 0) > 1;
+    const gif = moving && (action !== 'stay' || Date.now() - lastGifAt.current > 90000);
+    if (gif) lastGifAt.current = Date.now();
+    send({ type: 'save', gif, token, quiet: action === 'stay' });
   }
   saveRef.current = save;
   // Copying is always something the user asks for, and it is always a separate document:
@@ -1297,8 +1307,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           onChange={n => changeBrush({ stabAmount: Math.round(n), stabilizer: stabLevelOf(Math.round(n)) }, false)} onActive={a => { if (a === false) changeBrush({}, true); }} />
         <Range label={t('brushFine.pressure')} value={effectiveBrush.pressure} min={0} max={100} step={1} format={n => n <= 0 ? t('brushFine.off') : String(Math.round(n))} display={effectiveBrush.pressure <= 0 ? t('brushFine.off') : String(effectiveBrush.pressure)}
           onChange={n => changeBrush({ pressure: Math.round(n) }, false)} onActive={a => { if (a === false) changeBrush({}, true); }} />
+        {/* 가장 살살 눌렀을 때의 굵기(정한 굵기의 %). 너무 가늘게 끊기는 선을 막는다(2026-11-04). */}
+        <Range label={t('brushFine.min')} value={effectiveBrush.pressureMin} min={5} max={100} step={1} format={n => Math.round(n) + '%'} display={effectiveBrush.pressureMin + '%'}
+          onChange={n => changeBrush({ pressureMin: Math.round(n) }, false)} onActive={a => { if (a === false) changeBrush({}, true); }} />
         <Range label={t('brushFine.curve')} value={effectiveBrush.pressureCurve} min={-50} max={50} step={1} format={n => n < -10 ? t('brushFine.soft') : n > 10 ? t('brushFine.hard') : t('brushFine.even')} display={effectiveBrush.pressureCurve < -10 ? t('brushFine.soft') : effectiveBrush.pressureCurve > 10 ? t('brushFine.hard') : t('brushFine.even')}
           onChange={n => changeBrush({ pressureCurve: Math.round(n) }, false)} onActive={a => { if (a === false) changeBrush({}, true); }} />
+        <PressureCurve curve={effectiveBrush.pressureCurve} strength={effectiveBrush.pressure} min={effectiveBrush.pressureMin} />
         <Text style={{ fontSize: 11, lineHeight: 16, color: C.muted }}>{t('brushFine.note')}</Text>
       </ScrollView>}
     </View>
@@ -1312,21 +1326,24 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   // 판은 필요한 만큼만(움직이기는 설정 목록이 쓸 만한 높이, 애니메이션은 내용 높이) 차지하고, 캔버스는 판 위에 남는 자리에서
   // 가장 크게, 그 자리 가운데에 선다. 판이 캔버스를 덮는 일은 없다 — 판이 너무 크면 판이 줄어든다(캔버스 최소 180).
   // 2026-11-04 2차(대표 녹화: 움직이기·애니메이션 캔버스 크기가 서로 다르다 / 판 위 손잡이로 창 크기를 바꾸고 싶다):
-  // 두 탭이 같은 판 높이를 쓰고(같은 캔버스), 판 맨 위 손잡이를 끌어 높이를 바꾼다. 고른 높이는 이 그림을 닫을 때까지 간다.
-  const [panelPick, setPanelPick] = useState<number | null>(null);
+  // 두 탭이 같은 판 높이를 쓰고(같은 캔버스), 판 맨 위 손잡이를 끌어 높이를 바꾼다. 고른 높이는 앱에 남아 다음에도 같다.
+  const [panelPick, setPanelPick] = useState<number | null>(typeof motionPanel === 'number' && Number.isFinite(motionPanel) && motionPanel > 0 ? motionPanel : null);
   const motionTab = tab === 'motion' || tab === 'anim';
   const panelDefault = Math.round(Math.min(380, Math.max(280, windowHeight * .36)));
   const panelMax = canvasArea > 0 ? canvasArea + BASE_H - 160 - CANVAS_GAP * 2 : 9999;
   const motionHeight = Math.max(200, Math.min(panelPick ?? panelDefault, panelMax));
-  const panelGrab = useRef({ y: 0, h: 0, next: 0, tick: false });
+  const panelGrab = useRef({ y: 0, h: 0, next: 0, tick: false, tapAt: 0 });
   const panelGrip = <View testID="판 크기 손잡이" accessibilityRole="adjustable" accessibilityLabel={t('panelGrip.label')}
     accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
     onAccessibilityAction={e => setPanelPick(Math.round(motionHeight + (e.nativeEvent.actionName === 'increment' ? 40 : -40)))}
     onStartShouldSetResponder={() => true} onResponderTerminationRequest={() => false}
-    onResponderGrant={e => { panelGrab.current = { y: e.nativeEvent.pageY, h: motionHeight, next: motionHeight, tick: false }; }}
+    onResponderGrant={e => { panelGrab.current = { ...panelGrab.current, y: e.nativeEvent.pageY, h: motionHeight, next: motionHeight, tick: false }; }}
     onResponderMove={e => { const g = panelGrab.current; g.next = Math.round(g.h - (e.nativeEvent.pageY - g.y));
       if (!g.tick) { g.tick = true; onNextFrame(() => { g.tick = false; setPanelPick(g.next); }); } }}
-    onResponderRelease={() => setPanelPick(Math.max(200, Math.min(panelGrab.current.next, panelMax)))}
+    // 손잡이를 두 번 톡 치면 기본 크기로 돌아간다(저장값 0 = 기본).
+    onResponderRelease={() => { const g = panelGrab.current, now = Date.now();
+      if (Math.abs(g.next - g.h) < 4) { if (now - g.tapAt < 350) { g.tapAt = 0; ease(); setPanelPick(null); onMotionPanel?.(0); } else g.tapAt = now; return; }
+      const h = Math.max(200, Math.min(g.next, panelMax)); setPanelPick(h); onMotionPanel?.(h); }}
     style={{ height: 24, alignItems: 'center', justifyContent: 'center' }}>
     <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: C.lineStrong }} />
   </View>;
@@ -1602,7 +1619,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
           <IconButton label={t('layerSize.smaller')} icon="minus" size={20} color={C.ink} onPress={() => changeTransform(adjusting.id, { scale: Math.max(.1, Math.round(adjusting.scale * .9 * 100) / 100) })} />
           <Text accessibilityLabel={t('layerSize.title') + ' ' + Math.round(adjusting.scale * 100) + '%'} style={{ minWidth: 44, textAlign: 'center', fontSize: 13, fontWeight: '800', color: C.ink }}>{Math.round(adjusting.scale * 100)}%</Text>
           <IconButton label={t('layerSize.bigger')} icon="plus" size={20} color={C.ink} onPress={() => changeTransform(adjusting.id, { scale: Math.min(4, Math.round(adjusting.scale / .9 * 100) / 100) })} />
-          {(adjusting.scale !== 1 || adjusting.x !== 0 || adjusting.y !== 0) && <IconButton label={t('layerSize.reset')} icon="restore" size={20} color={C.ink} onPress={() => changeTransform(adjusting.id, { scale: 1, x: 0, y: 0 })} />}
+          {(adjusting.scale !== 1 || adjusting.x !== 0 || adjusting.y !== 0 || adjusting.rotation !== 0) && <IconButton label={t('layerSize.reset')} icon="restore" size={20} color={C.ink} onPress={() => changeTransform(adjusting.id, { scale: 1, x: 0, y: 0, rotation: 0 })} />}
           <Pressable accessibilityRole="button" accessibilityLabel={t('layerSize.done')} onPress={() => { ease(); setLayerSize(null); }}
             style={{ height: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: C.accent }}>
             <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{t('ui.done')}</Text>
@@ -2576,6 +2593,17 @@ function Step({ label, sign, onPress }: { label: string; sign: string; onPress: 
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4} style={{ width: 40, height: T.tap, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, fontWeight: '800', color: T.muted }}>{sign}</Text></Pressable>;
 }
 // 보조 행동(secondary). 흰 표면 + 옅은 선 하나. 위험한 일만 옅은 빨강.
+// 필압 곡선 미리보기: 가로 = 누르는 힘, 세로 = 굵기. 엔진(pressureScale)과 같은 식으로 그린다.
+function PressureCurve({ curve, strength, min }: { curve: number; strength: number; min: number }) {
+  const W = 120, H = 44, k = strength / 100, gamma = Math.pow(2, curve / 50), lo = Math.max(.05, min / 100);
+  const y = (p: number) => { const s = Math.max(lo, Math.min(1.5, 1 + k * (Math.pow(p, gamma) - .5))); return H - 2 - (s - lo) / (1.5 - lo) * (H - 4); };
+  let d = '';
+  for (let i = 0; i <= 24; i++) { const p = Math.max(.01, i / 24); d += (i ? 'L' : 'M') + (2 + (i / 24) * (W - 4)).toFixed(1) + ' ' + y(p).toFixed(1); }
+  return <View accessible accessibilityLabel={t('brushFine.graph')} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+    <Svg width={W} height={H} style={{ borderRadius: 8, backgroundColor: C.surface2 }}><Path d={d} stroke={C.point} strokeWidth={2.5} fill="none" strokeLinecap="round" /></Svg>
+    <Text style={{ flex: 1, fontSize: 11, lineHeight: 15, color: C.muted }}>{t('brushFine.graph')}</Text>
+  </View>;
+}
 const BLENDS = ['normal', 'multiply', 'screen', 'overlay', 'add', 'darken', 'lighten'] as const;
 function Minor({ title, onPress, danger }: { title: string; onPress: () => void; danger?: boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} hitSlop={{ top: 2, bottom: 2 }} style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderWidth: danger ? 0 : 1, borderColor: T.line, backgroundColor: danger ? T.dangerSoft : pressed ? T.fill : T.paper, alignItems: 'center', justifyContent: 'center' })}><Text style={{ fontSize: 13, fontWeight: '700', color: danger ? T.danger : T.ink }}>{title}</Text></Pressable>;
