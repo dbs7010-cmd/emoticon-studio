@@ -1896,4 +1896,13 @@ export const zhHant: Record<Key, string> = {
   "panelGrip.label": "面板大小 — 拖曳調整，點兩下恢復預設",
   "brushFine.min": "最細粗細",
   "brushFine.graph": "左輕→右重，越往上越粗",
+  // 초보자·전문가 모드, 레이어 불투명도·알파 잠금(2026-11-04)
+  "mode.toExpert": "開啟專家模式(顯示所有細節調整)",
+  "mode.toBeginner": "切換到新手模式(只保留必要調整)",
+  "mode.expertHint": "筆壓、線條收尾等細節調整會在專家模式中顯示。",
+  "mode.turnOn": "開啟專家模式",
+  "layerOpacity.title": "圖層不透明度",
+  "alphaLock.on": "鎖定透明像素",
+  "alphaLock.off": "解除透明像素鎖定",
+  "brushFine.taper": "起筆變細",
 };

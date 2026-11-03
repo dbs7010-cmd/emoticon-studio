@@ -1896,4 +1896,13 @@ export const ja: Record<Key, string> = {
   "panelGrip.label": "パネルの大きさ — ドラッグで変更、ダブルタップで標準に",
   "brushFine.min": "最も細い太さ",
   "brushFine.graph": "左が弱く→右が強く、上ほど太く",
+  // 초보자·전문가 모드, 레이어 불투명도·알파 잠금(2026-11-04)
+  "mode.toExpert": "エキスパートモードをオン(細かい調整をすべて表示)",
+  "mode.toBeginner": "初心者モードへ(必要な調整だけ)",
+  "mode.expertHint": "筆圧・線の入り抜きなどの細かい調整はエキスパートモードで表示されます。",
+  "mode.turnOn": "エキスパートモードをオン",
+  "layerOpacity.title": "レイヤーの不透明度",
+  "alphaLock.on": "透明部分を保護",
+  "alphaLock.off": "透明部分の保護を解除",
+  "brushFine.taper": "入りを細く",
 };

@@ -131,11 +131,20 @@ export function saveSubmitLoop(data: string): LocalImage {
   const height = 1 + (bytes[27] | (bytes[28] << 8) | (bytes[29] << 16));
   return { path: file.name, width, height };
 }
-export function savePainterWork(payload: PainterExport, references: LocalImage[]): { finalImage: LocalImage; work: PainterWork } {
-  const layers = payload.layers.map(({ data, ...transform }) => {
-    const { metrics: _compositeMetrics, ...image } = saveDrawing(data, payload.metrics);
+export function savePainterWork(payload: PainterExport, references: LocalImage[], previous?: PainterWork): { finalImage: LocalImage; work: PainterWork } {
+  // 바뀌지 않은 레이어(same)는 지난 저장의 파일을 그대로 가리킨다. 찾지 못하면 저장을 멈춘다 — 빈 장으로 덮어쓰지 않는다.
+  const fileOf = ({ data, same, ...transform }: PainterExport['layers'][number], frameId?: string) => {
+    if (same && !data) {
+      const list = frameId ? previous?.frames?.find(f => f.id === frameId)?.layers : previous?.layers;
+      const image = list?.find(l => l.id === transform.id)?.image;
+      if (!image) throw new Error('바뀌지 않은 레이어의 지난 파일을 찾지 못했습니다.');
+      return { ...transform, image };
+    }
+    if (!data) throw new Error('레이어 그림이 비어 있습니다.');
+    const { metrics: _m, ...image } = saveDrawing(data, payload.metrics);
     return { ...transform, image };
-  });
+  };
+  const layers = payload.layers.map(l => fileOf(l));
   const refs = payload.references.map(({ path, ...transform }) => {
     const image = references.find(i => i.path === path);
     if (!image) throw new Error('참고 이미지 정보를 찾지 못했습니다.');
@@ -144,6 +153,6 @@ export function savePainterWork(payload: PainterExport, references: LocalImage[]
   const caption = payload.caption?.text.trim() ? payload.caption : undefined;
   // 애니메이션 장: 첫 장은 위에서 저장한 layers 를 그대로 가리키고(파일 중복 없음), 나머지 장은 레이어마다 파일로 남긴다.
   const frames = payload.frames && payload.frames.length > 1 ? payload.frames.map(f => ({ id: f.id, duration: f.duration,
-    layers: f.layers === null ? layers : f.layers.map(({ data, ...transform }) => { const { metrics: _m, ...image } = saveDrawing(data, payload.metrics); return { ...transform, image }; }) })) : undefined;
+    layers: f.layers === null ? layers : f.layers.map(l => fileOf(l, f.id)) })) : undefined;
   return { finalImage: saveDrawing(payload.data, payload.metrics), work: { version: 1, activeLayerId: payload.activeLayerId, layers, references: refs, caption, ...(frames ? { frames } : {}) } };
 }

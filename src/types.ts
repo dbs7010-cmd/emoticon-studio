@@ -5,7 +5,7 @@ export type Metrics = { coverage: number; centerX: number; centerY: number; widt
 export type LocalImage = { path: string; width: number; height: number; metrics?: Metrics };
 // imported: 앱 밖 그림(사진·다른 앱 그림·예시 그림)을 '그림 가져오기'로 들인 레이어(2026-10-21). 공모전·체험단 제출은 앱에서 직접 그린 칸만 받는다.
 export type LayerBlend = 'normal' | 'multiply' | 'screen' | 'overlay' | 'add' | 'darken' | 'lighten';
-export type LayerTransform = { id: string; name: string; visible: boolean; opacity: number; x: number; y: number; scale: number; rotation: number; imported?: boolean; blend?: LayerBlend };
+export type LayerTransform = { id: string; name: string; visible: boolean; opacity: number; x: number; y: number; scale: number; rotation: number; imported?: boolean; blend?: LayerBlend; lock?: boolean };
 export type WorkLayer = LayerTransform & { image?: LocalImage };
 // Editable text that is drawn into the exported image. Absent means no words at all, the default.
 // dx·dy·scale·rot 은 사용자가 손가락으로 옮기고 키우고 돌린 값이다. 없으면 예전처럼 위/아래
@@ -33,7 +33,9 @@ export type MotionLoop = { count: number; fps: number; loop: number; delayMs: nu
   webp?: string | null; webpBytes?: number;
   // 공식 도구에 넣을 360×360 PNG 프레임. 순서가 재생 순서다.
   sheets?: string[] };
-export type PainterExport = { frames?: { id: string; duration: number; layers: (LayerTransform & { data: string })[] | null }[]; data: string; metrics: Metrics; layers: (LayerTransform & { data: string })[]; references: (LayerTransform & { path: string })[]; activeLayerId: string; caption?: Caption; motion?: Motion | null; gif?: MotionLoop };
+// 레이어 data 가 없고 same 이면 지난 저장의 같은 레이어 파일을 그대로 쓴다(2026-11-04).
+export type PainterLayerOut = LayerTransform & { data?: string; same?: boolean };
+export type PainterExport = { frames?: { id: string; duration: number; layers: PainterLayerOut[] | null }[]; data: string; metrics: Metrics; layers: PainterLayerOut[]; references: (LayerTransform & { path: string })[]; activeLayerId: string; caption?: Caption; motion?: Motion | null; gif?: MotionLoop };
 // Motion is stored beside the drawing, never baked into it: editing a cut keeps its movement,
 // and a cut with no motion is exactly the still cut it always was.
 // 45.34: 셋에서 여섯으로. 기존 셋의 id 는 그대로 둔다 — 저장된 칸이 읽히지 않으면 안 된다.
@@ -124,7 +126,9 @@ export type BrushSettings = { preset?: 'ink' | 'soft' | 'grain' | 'marker' | 'ca
   // 없으면 예전 값(선 보정은 stabilizer 단계, 필압 100, 곡선 0)과 같다.
   stabAmount?: number; pressure?: number; pressureCurve?: number;
   // 필압 최소 굵기(정한 굵기의 %, 5~100, 기본 25 — 2026-11-04).
-  pressureMin?: number; base?: 'pen' | 'brush' | 'pencil'; width?: number; eraserWidth?: number };
+  pressureMin?: number;
+  // 선 시작 가늘게(0~100, 0 = 끔, 2026-11-04).
+  taper?: number; base?: 'pen' | 'brush' | 'pencil'; width?: number; eraserWidth?: number };
 // Only a store receipt may set this. `source` exists so a hand written file cannot claim PRO.
 export type Entitlement = {
   // 라이선스 테스터·내부 테스트 구매로 열린 이용권. 화면이 그렇게 말하기 위한 표시다.
@@ -143,7 +147,9 @@ export type Store = { version: 1; revision: number; projects: Project[]; introDo
   // 굵기·불투명도(움직이기: 세기·속도) 조절대 자리(2026-11-03, 대표: 꾹 눌러 위·아래·왼쪽·오른쪽으로). 없으면 화면에 맞춰 자동.
   adjustDock?: AdjustDock;
   // 움직이기·애니메이션 판 높이(dp, 판 손잡이로 고른 것, 2026-11-04). 없으면 화면에 맞춘 기본값.
-  motionPanel?: number; savedMotions?: SavedMotion[]; cutouts?: Cutout[];
+  motionPanel?: number;
+  // 전문가 모드(2026-11-04): 켜면 필압 세부·레이어 섞기/불투명도/알파 잠금·캔버스 회전이 보인다. 없으면 초보자 모드.
+  expertMode?: boolean; savedMotions?: SavedMotion[]; cutouts?: Cutout[];
   // 즐겨찾기 세 칸. **사용자가 직접 고정한다** — 다른 브러시를 썼다고 저절로 바뀌지 않는다(45.31).
   // 없으면 기본값(기본 펜·연필·마커)으로 연다. 예전 저장본에는 이 칸이 없고, 그대로 읽힌다.
   favoriteBrushes?: string[];

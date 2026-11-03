@@ -70,6 +70,8 @@ type Props = {
   onAdjustDock?: (dock: AdjustDock) => void;
   motionPanel?: number;
   onMotionPanel?: (height: number) => void;
+  expert?: boolean;
+  onExpert?: (on: boolean) => void;
   completeTitle: string;
   hasPrevious: boolean;
   previousImage?: LocalImage;
@@ -454,7 +456,7 @@ function cleanBrush(b?: BrushSettings): BrushSettings {
     preset: b?.preset && (CATALOG.some(p => p.preset === b.preset) || b.preset in RETIRED) ? b.preset : undefined,
     opacity: typeof b?.opacity === 'number' && Number.isFinite(b.opacity) ? Math.max(.05, Math.min(1, b.opacity)) : undefined,
     stabilizer: b?.stabilizer && ['off', 'light', 'medium', 'strong'].includes(b.stabilizer) ? b.stabilizer : undefined,
-    stabAmount: num(b?.stabAmount, 0, 100), pressure: num(b?.pressure, 0, 100), pressureCurve: num(b?.pressureCurve, -50, 50), pressureMin: num(b?.pressureMin, 5, 100),
+    stabAmount: num(b?.stabAmount, 0, 100), pressure: num(b?.pressure, 0, 100), pressureCurve: num(b?.pressureCurve, -50, 50), pressureMin: num(b?.pressureMin, 5, 100), taper: num(b?.taper, 0, 100),
     base: b?.base && BRUSHES.some(x => x.key === b.base) ? b.base : undefined,
     width: size(b?.width),
     eraserWidth: size(b?.eraserWidth),
@@ -471,7 +473,7 @@ const swatches = [
 // 기본 레퍼런스 32칸은 아직 칸별 자료도 고르는 동작도 없다(자리표시뿐).
 // 명세 E05: 미완성 격자를 사용자 화면에 보이지 않는다. 자료는 그대로 두고 화면에서만 감춘다.
 const BUILTIN_READY: boolean = BUILTIN_REFERENCES.enabled && BUILTIN_REFERENCES.ready;
-export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, drawnCuts = [], adjustDock, onAdjustDock, motionPanel, onMotionPanel, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, returnToReview, onReturnToReview, onSetReference, onCopyPrevious, onColorUsed, onClose, onOpenLessons, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
+export function Painter({ slot, slotCount, setName, canon, canonName, canonLocked, palette, userPalette, onSaveUserColor, onRemoveUserColor, brushSettings, onBrushSettings, favoriteBrushes, onFavoriteBrushes, paperTexture, completeTitle, hasPrevious, drawnCuts = [], adjustDock, onAdjustDock, motionPanel, onMotionPanel, expert = false, onExpert, previousImage, pro, onRequestPro, previousMotion, initialTool, onToolChange, guideHint, onGuideHintDone, guideExample, guideExampleMode, onImportGuideExample, savedMotions, onSaveMotion, onForgetMotion, onSave, onComplete, returnToReview, onReturnToReview, onSetReference, onCopyPrevious, onColorUsed, onClose, onOpenLessons, onNavigate, onAddReferences, onImportDrawing, initialImport, onInitialImportUsed, cutouts, onKeepCutout, onUseCutout, onForgetCutout, onRemoveReference, onShare }: Props) {
   const web = useRef<WebView>(null), inFlight = useRef(false), nextAction = useRef<SaveAction>('stay');
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false), [initialized, setInitialized] = useState(false), [busy, setBusy] = useState(false);
@@ -535,7 +537,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const dropped = useRef<string | null>(null);
   const zoomHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (zoomHintTimer.current) clearTimeout(zoomHintTimer.current); }, []);
-  const resetZoom = () => { setZoom(1); send({ type: 'zoom', zoom: 1 }); };
+  const [viewRot, setViewRot] = useState(0);
+  const resetZoom = () => { setZoom(1); setViewRot(0); send({ type: 'zoom', zoom: 1 }); };
   const [panel, setPanel] = useState<Panel>(null), [drawRail, setDrawRail] = useState(false), [refRail, setRefRail] = useState(false);
   // 기본 레퍼런스는 찾는 동안에만 큰 격자를 연다. 고르면 접히고 캔버스에서 맞춘다(44.2차).
   const [refBrowse, setRefBrowse] = useState(true);
@@ -795,6 +798,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     pressure: brushPrefs.pressure ?? 100,
     pressureCurve: brushPrefs.pressureCurve ?? 0,
     pressureMin: brushPrefs.pressureMin ?? 25,
+    taper: brushPrefs.taper ?? 0,
   };
   // 막대를 끄는 동안에는 저장 파일을 매번 쓰지 않는다. 손이 멈추면 한 번 남긴다.
   function changeBrush(patch: Partial<BrushSettings>, settle = true) {
@@ -841,7 +845,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const brushKey = JSON.stringify(effectiveBrush);
   useEffect(() => {
     if (!initialized) return;
-    send({ type: 'brushSettings', preset: effectiveBrush.preset ?? null, opacity: effectiveBrush.opacity, stabilizer: effectiveBrush.stabilizer === 'off' ? 'light' : effectiveBrush.stabilizer, smoothing: effectiveBrush.stabAmount > 0, stabAmount: effectiveBrush.stabAmount, pressure: effectiveBrush.pressure, pressureCurve: effectiveBrush.pressureCurve, pressureMin: effectiveBrush.pressureMin });
+    send({ type: 'brushSettings', preset: effectiveBrush.preset ?? null, opacity: effectiveBrush.opacity, stabilizer: effectiveBrush.stabilizer === 'off' ? 'light' : effectiveBrush.stabilizer, smoothing: effectiveBrush.stabAmount > 0, stabAmount: effectiveBrush.stabAmount, pressure: effectiveBrush.pressure, pressureCurve: effectiveBrush.pressureCurve, pressureMin: effectiveBrush.pressureMin, taper: effectiveBrush.taper });
   }, [initialized, brushKey]);
   // 스포이드는 캔버스를 보고 눌러야 하므로 패널을 내린다. 색을 읽으면 패널이 직접 선택으로 다시 올라온다.
   // 기본 레퍼런스를 고르면 큰 격자는 물러난다. 그림이 들어오면(ready) 여기서 기존 참고 레이어 흐름으로 넘긴다 — 지금은 자리표시라 접기만 한다.
@@ -918,6 +922,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     send({ type: next === 'motion' ? 'play' : 'stop' }); setAnimPlaying(false);
   }
   // 레이어 크기 줄이 열려 있으면 캔버스의 한 손가락은 그 레이어 옮기기, 두 손가락은 크기다(획을 긋지 않는다).
+  // 보기 회전은 전문가 모드의 그리기 탭에서만 켠다(초보자는 두 손가락이 확대·이동만).
+  useEffect(() => { if (initialized) send({ type: 'viewRotate', on: expert && tab === 'draw' }); }, [expert, tab, initialized]);
   // 바뀔 때만 보낸다(엔진은 다시 열 때마다 꺼진 상태로 시작한다).
   const adjustSent = useRef<string | null>(null);
   useEffect(() => { if (!initialized) { adjustSent.current = null; return; } const id = tab === 'draw' && layerSize && scene.layers.some(l => l.id === layerSize) ? layerSize : null; if (id !== adjustSent.current) { adjustSent.current = id; send({ type: 'adjustLayer', id }); } }, [layerSize, tab, initialized, scene.layers]);
@@ -981,6 +987,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     save(pendingAction.current ?? 'stay');
   }
   const lastGifAt = useRef(0);
+  const lastStateRaw = useRef('');
+  const layerOpacityLive = useRef<number | null>(null);
   function save(action: SaveAction = 'stay') {
     if (inFlight.current) { if (quiet.current && action !== 'stay') queued.current = action; return; }
     if (!initialized) { if (action === 'close') onClose(); return; }
@@ -1305,6 +1313,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {/* 2026-11-03: 선 보정은 0~100 한 막대(0 = 끔). 필압은 S펜·애플펜슬에서만 쓰인다 — 세기(굵기가 힘을 얼마나 따를지)와 곡선(가볍게 눌러도 굵게 ↔ 세게 눌러야 굵게). */}
         <Range label={t("release.s0590")} value={effectiveBrush.stabAmount} min={0} max={100} step={1} format={n => n <= 0 ? t('brushFine.off') : String(Math.round(n))} display={effectiveBrush.stabAmount <= 0 ? t('brushFine.off') : String(effectiveBrush.stabAmount)}
           onChange={n => changeBrush({ stabAmount: Math.round(n), stabilizer: stabLevelOf(Math.round(n)) }, false)} onActive={a => { if (a === false) changeBrush({}, true); }} />
+        {expert ? <>
         <Range label={t('brushFine.pressure')} value={effectiveBrush.pressure} min={0} max={100} step={1} format={n => n <= 0 ? t('brushFine.off') : String(Math.round(n))} display={effectiveBrush.pressure <= 0 ? t('brushFine.off') : String(effectiveBrush.pressure)}
           onChange={n => changeBrush({ pressure: Math.round(n) }, false)} onActive={a => { if (a === false) changeBrush({}, true); }} />
         {/* 가장 살살 눌렀을 때의 굵기(정한 굵기의 %). 너무 가늘게 끊기는 선을 막는다(2026-11-04). */}
@@ -1313,6 +1322,13 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         <Range label={t('brushFine.curve')} value={effectiveBrush.pressureCurve} min={-50} max={50} step={1} format={n => n < -10 ? t('brushFine.soft') : n > 10 ? t('brushFine.hard') : t('brushFine.even')} display={effectiveBrush.pressureCurve < -10 ? t('brushFine.soft') : effectiveBrush.pressureCurve > 10 ? t('brushFine.hard') : t('brushFine.even')}
           onChange={n => changeBrush({ pressureCurve: Math.round(n) }, false)} onActive={a => { if (a === false) changeBrush({}, true); }} />
         <PressureCurve curve={effectiveBrush.pressureCurve} strength={effectiveBrush.pressure} min={effectiveBrush.pressureMin} />
+        {/* 선 시작 가늘게(2026-11-04, 평가 4번): 획 첫머리가 정한 길이만큼 가늘게 시작한다(손가락·펜 모두). 0 = 끔. */}
+        <Range label={t('brushFine.taper')} value={effectiveBrush.taper} min={0} max={100} step={1} format={n => n <= 0 ? t('brushFine.off') : String(Math.round(n))} display={effectiveBrush.taper <= 0 ? t('brushFine.off') : String(effectiveBrush.taper)}
+          onChange={n => changeBrush({ taper: Math.round(n) }, false)} onActive={a => { if (a === false) changeBrush({}, true); }} />
+        </> : <View style={{ gap: 8, padding: 12, borderRadius: C.radius.button, backgroundColor: C.surface2 }}>
+          <Text style={{ fontSize: 12, lineHeight: 17, color: C.muted }}>{t('mode.expertHint')}</Text>
+          <Minor title={t('mode.turnOn')} onPress={() => onExpert?.(true)} />
+        </View>}
         <Text style={{ fontSize: 11, lineHeight: 16, color: C.muted }}>{t('brushFine.note')}</Text>
       </ScrollView>}
     </View>
@@ -1637,7 +1653,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             if (m.type === 'probe' || m.type === 'trace') { console.log('SELPROBE ' + JSON.stringify(m)); return; }
             if (m.type === 'ready') setReady(true);
             if (m.type === 'initialized') setInitialized(true);
-            if (m.type === 'state') setScene(m);
+            // 2026-11-04(평가 1번): 엔진은 바뀔 때마다 상태 전체를 보낸다. 글자가 똑같으면 화면 전체를 다시 그리지 않는다(잔렉).
+            if (m.type === 'state') { const raw = event.nativeEvent.data; if (raw !== lastStateRaw.current) { lastStateRaw.current = raw; setScene(m); } }
             if (m.type === 'frameThumbs') setFrameThumbs(Object.fromEntries((m.thumbs ?? []).map((t: { id: string; data: string }) => [t.id, t.data])));
             if (m.type === 'layerThumbs') setThumbs(Object.fromEntries((m.thumbs ?? []).map((t: { id: string; data: string }) => [t.id, t.data])));
             if (m.type === 'blocked' && m.reason === 'hidden') setHiddenWarning(m.name ?? '');
@@ -1649,7 +1666,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             }
             if (m.type === 'partGuess' && m.found && scene.motion?.parts?.some(pt => pt.id === m.id && pt.pivotX === .5 && pt.pivotY === .5))
               setMotion({ ...scene.motion, parts: scene.motion.parts!.map(pt => pt.id === m.id ? { ...pt, pivotX: Number(m.x.toFixed(4)), pivotY: Number(m.y.toFixed(4)) } : pt) });
-            if (m.type === 'zoom' && Number.isFinite(m.zoom)) setZoom(m.zoom);
+            if (m.type === 'zoom' && Number.isFinite(m.zoom)) { setZoom(m.zoom); setViewRot(Number.isFinite(m.rot) ? m.rot : 0); }
             if (m.type === 'fitted') { if (m.factor === 0) Alert.alert(t("release.s0635"), t("release.s0636")); else if (m.factor > 0 && m.factor < 1) setSizeOpen(false); }
             // 이미 고른 글씨를 한 번 더 누르면 내용 고치기.
             if (m.type === 'captionEdit') openCaption();
@@ -1709,11 +1726,11 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {/* 45.35: 굵기를 끄는 동안 캔버스 한가운데에 뜨던 검은 상자를 없앴다. 값은 왼쪽 조절대의
             손잡이 옆 말풍선이 말한다 — 고치는 중인 그림을 덮지 않는다. */}
         {/* 확대한 동안에만: 작은 배율 표시. 누르면 100%. 캔버스 위 빈 띠에 뜨고, 띠가 없는 짧은 화면에서만 캔버스 모서리에 걸린다. */}
-        {tab === 'draw' && zoom > 1.05 && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0648")} onPress={resetZoom} hitSlop={8}
+        {tab === 'draw' && (zoom > 1.05 || viewRot !== 0) && <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0648")} onPress={resetZoom} hitSlop={8}
           style={({ pressed }) => ({ position: 'absolute', top: 8, right: 12, zIndex: 8, minHeight: 40, paddingHorizontal: 14, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: pressed ? C.pointSoft : C.floating, borderWidth: 1.5, borderColor: C.point })}>
           {/* 2026-11-03(대표): 배율 숫자만 있어 누르는 단추인 줄 몰랐다 — '100%로'를 함께 쓴다. */}
           <Glyph name="fit-to-screen-outline" size={16} color={C.point} />
-          <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{Math.round(zoom * 100)}% · {t('zoom.reset')}</Text>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: C.ink }}>{Math.round(zoom * 100)}%{viewRot ? ` · ${viewRot}°` : ''} · {t('zoom.reset')}</Text>
         </Pressable>}
         {canvasMessage === 'zoomHint' && <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: C.floating, borderWidth: 1, borderColor: C.line }}>
@@ -1805,6 +1822,8 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             onRight={slot.number < slotCount ? () => { setPanel(null); save(slot.number + 1); } : undefined} />
           <MenuButton icon="image-plus" title={t("release.s0348")} onPress={() => { setPanel(null); if (cutouts.length) setCutoutPicker(true); else void importDrawing(); }} />
           {hasPrevious && !continueAvailable && <MenuButton icon="content-copy" title={t("release.s0546")} onPress={() => { setPanel(null); copyPrevious(); }} />}
+          {/* 초보자·전문가 모드(2026-11-04): 처음에는 꼭 필요한 조절만, 켜면 세부 조절이 모두 나온다. */}
+          <MenuButton icon="tune-variant" title={expert ? t('mode.toBeginner') : t('mode.toExpert')} onPress={() => { ease(); setPanel(null); onExpert?.(!expert); }} />
           {drawnCuts.length > 0 && <MenuButton icon="view-grid-plus-outline" title={t('cutCopy.title')} onPress={() => { setPanel(null); setCutPicker(true); }} />}
           {/* 캐릭터 기준은 세트 전체의 일이라 참고 사진 줄에서 내려왔다(45.2차). 보드의 세트 메뉴와 같은 계열이다. */}
           {!!canon && <MenuButton icon="account-star-outline" title={showCanon ? t("release.s0677") : t("release.s0678")} onPress={() => { setPanel(null); setShowCanon(!showCanon); }} />}
@@ -2023,13 +2042,19 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               {scene.layers.length > 1 && layerAt(layer.id) < scene.layers.length - 1 && <Minor title={t("release.s0727")} onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: 1 }); }} />}
               {scene.layers.length > 1 && layerAt(layer.id) > 0 && <Minor title={t("release.s0728")} onPress={() => { setLayerMenu(null); send({ type: 'moveLayer', id: layer.id, by: -1 }); }} />}
               <Minor title={t("ui.rename")} onPress={() => { setLayerMenu(null); setRenaming({ id: layer.id, name: layer.name }); }} />
-              {/* 섞기(2026-11-03, 대표: 레이어 블렌딩): 그림 위에 겹치는 방식. 메뉴는 닫지 않아 바로 비교해 볼 수 있다. */}
-              <View testID="레이어 섞기" style={{ width: '100%', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingVertical: 4 }}>
+              {/* 전문가 모드: 불투명도(끄는 동안 미리보기, 놓을 때 한 번 기록) · 알파 잠금(칠한 자리 안에만) · 섞기. */}
+              {expert && <View testID="레이어 불투명도" style={{ width: '100%' }}>
+                <Range label={t('layerOpacity.title')} value={Math.round(layer.opacity * 100)} min={0} max={100} step={1} format={n => Math.round(n) + '%'} display={Math.round(layer.opacity * 100) + '%'}
+                  onChange={n => { layerOpacityLive.current = n; send({ type: 'transform', id: layer.id, opacity: n / 100, live: true }); }}
+                  onActive={a => { if (a === false && layerOpacityLive.current != null) { changeTransform(layer.id, { opacity: Math.round(layerOpacityLive.current) / 100 }); layerOpacityLive.current = null; } }} />
+              </View>}
+              {expert && <Minor title={layer.lock ? t('alphaLock.off') : t('alphaLock.on')} onPress={() => send({ type: 'transform', id: layer.id, lock: !layer.lock })} />}
+              {expert && <View testID="레이어 섞기" style={{ width: '100%', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingVertical: 4 }}>
                 <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted, marginRight: 2 }}>{t('blend.title')}</Text>
                 {BLENDS.map(k => { const on = (layer.blend ?? 'normal') === k; return <Pressable key={k} accessibilityRole="button" accessibilityLabel={t('blend.title') + ' ' + t(`blend.${k}`)} accessibilityState={{ selected: on }} onPress={() => send({ type: 'transform', id: layer.id, blend: k })}
                   style={{ minHeight: 36, paddingHorizontal: 10, borderRadius: 18, justifyContent: 'center', backgroundColor: on ? C.accentSoft : C.surface2 }}>
                   <Text style={{ fontSize: 12, fontWeight: on ? '800' : '600', color: C.ink }}>{t(`blend.${k}`)}</Text></Pressable>; })}
-              </View>
+              </View>}
               {scene.layers.length < 4 && <Minor title={t("release.s0729")} onPress={() => { setLayerMenu(null); send({ type: 'duplicateLayer', id: layer.id }); }} />}
               {scene.layers.length > 1 && <Minor danger title={t("release.s0534")} onPress={() => { setLayerMenu(null); Alert.alert(name + " " + t("release.s0534"), t("release.s0730"), [{ text: t("ui.cancel"), style: 'cancel' }, { text: t("release.s0534"), style: 'destructive', onPress: () => send({ type: 'removeLayer', id: layer.id }) }]); }} />}
             </View>}

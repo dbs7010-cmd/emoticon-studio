@@ -172,6 +172,10 @@ const saved = async (dirty = true) => {
   // 2026-11-03: 선 보정·필압은 단계 버튼이 아니라 0~100 막대다.
   await nudge('선 보정', 'increment', 6);
   assert.ok(lastCommand('brushSettings').stabAmount > 35, '선 보정 막대가 엔진에 연속값으로 간다');
+  // 2026-11-04 초보자·전문가 모드: 처음(초보자)에는 필압 세부 막대가 없고, 안내 단추로 전문가 모드를 켠다.
+  assert.equal(ranges('필압 세기').length, 0, '초보자 모드에는 필압 세부 막대가 없다');
+  await press('전문가 모드 켜기');
+  assert.equal(ranges('필압 세기').length, 1, '전문가 모드를 켜면 필압 세부 막대가 나온다');
   await nudge('필압 세기', 'decrement', 4);
   assert.ok(lastCommand('brushSettings').pressure < 100, '필압 세기도 엔진에 간다');
   await nudge('필압 곡선', 'increment', 2);

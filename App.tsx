@@ -2194,6 +2194,8 @@ function Studio() {
       adjustDock={store?.adjustDock}
       onAdjustDock={dock => { try { commit(st => ({ ...st, adjustDock: dock })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
       motionPanel={store?.motionPanel}
+      expert={!!store?.expertMode}
+      onExpert={on => { try { commit(st => ({ ...st, expertMode: on })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
       onMotionPanel={height => { try { commit(st => ({ ...st, motionPanel: Math.round(height) })); } catch { /* 저장 실패는 배너가 말한다 */ } }}
       savedMotions={store?.savedMotions ?? []}
       onSaveMotion={saveMotion}
@@ -2220,7 +2222,7 @@ function Studio() {
       onRemoveReference={path => { changeProject(project.id, p => ({ ...p, slots: p.slots.map(s => s.number !== slot.number ? s : ({ ...s, referenceImages: s.referenceImages.filter(image => image.path !== path), work: s.work ? { ...s.work, references: s.work.references.filter(reference => reference.image?.path !== path), activeLayerId: s.work.activeLayerId.startsWith('ref-') && s.work.references.some(reference => reference.id === s.work!.activeLayerId && reference.image?.path === path) ? 'draw-1' : s.work.activeLayerId } : undefined })) })); }}
       onSave={(payload, dialogue, complete) => {
         const latest = current.current!.projects.find(p => p.id === project.id)!.slots.find(s => s.number === slot.number)!;
-        const { finalImage, work } = savePainterWork(payload, latest.referenceImages);
+        const { finalImage, work } = savePainterWork(payload, latest.referenceImages, latest.work);
         // The moving file is only rebuilt when the painter sent one, so a still cut stays still
         // and a failed encode never replaces a good loop with nothing.
         const motion = payload.motion ?? undefined;

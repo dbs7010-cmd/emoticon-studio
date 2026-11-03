@@ -126,6 +126,57 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
     assert.ok((await layerOf('draw-2')).scale < 1.05, '되돌리면 크기도 돌아온다');
     await cmd({ type: 'adjustLayer', id: null });
 
+    // 6) 저장: 바뀐 장만 보낸다. 앱이 '저장됨'을 알려 준 상태 그대로인 장은 same, 실패하면 다음엔 전부(2026-11-04).
+    const saveOf = async token => { await cmd({ type: 'save', token }); await page.waitForFunction(t => window.messages.some(m => m.type === 'save' && m.token === t), token); return page.evaluate(t => window.messages.find(m => m.type === 'save' && m.token === t), token); };
+    const first = await saveOf(101);
+    assert.ok(first.layers.every(l => typeof l.data === 'string' && !l.same), '처음 저장은 모든 장을 보낸다');
+    await cmd({ type: 'saved', token: 101 });
+    const second = await saveOf(102);
+    assert.ok(second.layers.every(l => l.same && !l.data), '바뀐 게 없으면 장 그림을 다시 보내지 않는다');
+    await cmd({ type: 'saved', token: 102 });
+    await stroke(line(.2, .1, .4, .1), { type: 'pen', id: 50 });
+    const third = await saveOf(103);
+    const active = (await last('state')).activeLayerId;
+    assert.ok(third.layers.find(l => l.id === active).data, '그린 장은 다시 보낸다');
+    await cmd({ type: 'saveFailed', token: 103 });
+    const fourth = await saveOf(104);
+    assert.ok(fourth.layers.every(l => typeof l.data === 'string'), '저장이 실패한 뒤에는 모든 장을 다시 보낸다');
+    await cmd({ type: 'saved', token: 104 });
+
+    // 7) 알파 잠금: 잠긴 장은 이미 칠한 자리 안에만 칠해진다.
+    await cmd({ type: 'tool', tool: 'pen' }); await cmd({ type: 'brushSettings', preset: null, opacity: 1, stabilizer: 'light', smoothing: false, taper: 0 });
+    await cmd({ type: 'transform', id: active, lock: true });
+    assert.equal((await last('state')).layers.find(l => l.id === active).lock, true, '잠금이 레이어 정보에 남는다');
+    await cmd({ type: 'color', color: '#FF00FF' });
+    await stroke(line(.05, .9, .95, .9), { type: 'pen', id: 51 });
+    assert.ok((await pixel(.5, .9))[3] < 10, '잠긴 장의 빈 자리에는 칠해지지 않는다');
+    await cmd({ type: 'transform', id: active, lock: false });
+
+    // 8) 선 시작 가늘게: 획 첫머리가 끝보다 가늘다.
+    await cmd({ type: 'color', color: '#202020' });
+    await cmd({ type: 'brushSettings', preset: null, opacity: 1, stabilizer: 'light', smoothing: false, taper: 100 });
+    await stroke(line(.9, .55, .9, .98, 40), { type: 'touch', id: 52 }).catch(() => {});
+    await stroke(line(.95, .55, .95, .98, 40), { type: 'pen', id: 53, pressure: .5 });
+    const widthAt = y => page.evaluate(y => { const c = document.getElementById('drawing'), g = c.getContext('2d'), w = Math.round(.04 * c.width), px = Math.round(.95 * c.width); const d = g.getImageData(px - w, Math.round(y * c.height), w * 2, 1).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 128) n++; return n; }, y);
+    const head = await widthAt(.565), tail = await widthAt(.9);
+    assert.ok(head < tail * .7, '선 첫머리가 가늘다: ' + head + ' < ' + tail);
+
+    // 9) 보기 회전: 회전한 화면에서도 손가락 자리에 그려진다.
+    await cmd({ type: 'brushSettings', preset: null, opacity: 1, stabilizer: 'light', smoothing: false, taper: 0 });
+    await cmd({ type: 'viewRotate', on: true });
+    await page.evaluate(async () => {
+      const c = document.getElementById('drawing'), r = c.getBoundingClientRect();
+      const ev = (t, id, x, y) => c.dispatchEvent(new PointerEvent(t, { pointerId: id, pointerType: 'touch', bubbles: true, cancelable: true, clientX: r.left + x * r.width, clientY: r.top + y * r.height }));
+      ev('pointerdown', 61, .4, .5); ev('pointerdown', 62, .6, .5);
+      for (let i = 1; i <= 15; i++) { const a = i * Math.PI / 30; ev('pointermove', 61, .5 - .1 * Math.cos(a), .5 - .1 * Math.sin(a)); ev('pointermove', 62, .5 + .1 * Math.cos(a), .5 + .1 * Math.sin(a)); await new Promise(res => setTimeout(res, 8)); }
+      ev('pointerup', 61, .4, .5); ev('pointerup', 62, .6, .5);
+    });
+    const rotated = await last('zoom');
+    assert.equal(rotated.rot, 90, '두 손가락으로 90° 가까이 돌리면 90° 에 붙는다: ' + rotated.rot);
+    await cmd({ type: 'zoom', zoom: 1 });
+    assert.equal((await last('zoom')).rot, 0, '100%로 누르면 회전도 돌아온다');
+    await cmd({ type: 'viewRotate', on: false });
+
     assert.deepEqual(errors, [], '페이지 오류 없음');
     console.log('pen-blend-test PASS');
   } finally { await browser.close(); }

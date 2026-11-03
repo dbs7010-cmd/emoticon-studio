@@ -1903,5 +1903,14 @@ export const ko = {
   "panelGrip.label": "판 크기 — 끌어서 캔버스와 판의 크기를 바꿔요. 두 번 톡 치면 기본 크기",
   "brushFine.min": "가장 가는 굵기",
   "brushFine.graph": "왼쪽 살살 → 오른쪽 꾹, 위로 갈수록 굵게",
+  // 초보자·전문가 모드, 레이어 불투명도·알파 잠금(2026-11-04)
+  "mode.toExpert": "전문가 모드 켜기(세부 조절 모두 보기)",
+  "mode.toBeginner": "초보자 모드로(꼭 필요한 조절만)",
+  "mode.expertHint": "필압·선 끝 같은 세부 조절은 전문가 모드에서 보여요.",
+  "mode.turnOn": "전문가 모드 켜기",
+  "layerOpacity.title": "레이어 불투명도",
+  "alphaLock.on": "알파 잠금(칠한 곳만)",
+  "alphaLock.off": "알파 잠금 풀기",
+  "brushFine.taper": "선 시작 가늘게",
 } as const;
 export type Key = keyof typeof ko;

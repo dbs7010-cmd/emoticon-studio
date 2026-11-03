@@ -87,7 +87,7 @@ const message=async m=>{await act(async()=>tree.root.findByType('WebView').props
 const sent=()=>commands.map(s=>JSON.parse(s.slice(s.indexOf('(')+1,s.lastIndexOf(');true;'))));
 const lastCommand=type=>sent().filter(m=>m.type===type).at(-1);
 // 탭·레이어 크기 줄에 따라 자동으로 가는 보기 전용·레이어 맞추기 알림(2026-11-04)은 '마지막 명령'에서 뺀다.
-const lastSent=()=>sent().filter(m=>m.type!=='viewOnly'&&m.type!=='adjustLayer').at(-1);
+const lastSent=()=>sent().filter(m=>m.type!=='viewOnly'&&m.type!=='adjustLayer'&&m.type!=='viewRotate').at(-1);
 // Answer the last confirmation the way a person would tap it.
 const answer=async text=>{const box=alerts.at(-1);assert.ok(box,'an alert was shown');const button=(box.buttons||[]).find(b=>b.text===text);assert.ok(button,'alert offers '+text+' — got '+JSON.stringify(box));await act(async()=>button.onPress&&button.onPress());};
 const init=async()=>{
