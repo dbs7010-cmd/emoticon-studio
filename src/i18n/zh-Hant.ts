@@ -1889,4 +1889,5 @@ export const zhHant: Record<Key, string> = {
   "blend.add": "相加",
   "blend.darken": "變暗",
   "blend.lighten": "變亮",
+  "layerSize.hint": "在畫布上用一指移動、兩指縮放。",
 };

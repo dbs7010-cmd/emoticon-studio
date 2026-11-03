@@ -1896,5 +1896,6 @@ export const ko = {
   "blend.add": "더하기",
   "blend.darken": "어둡게",
   "blend.lighten": "밝게",
+  "layerSize.hint": "캔버스에서 한 손가락으로 옮기고, 두 손가락으로 크기를 바꿔요.",
 } as const;
 export type Key = keyof typeof ko;

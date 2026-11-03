@@ -84,7 +84,10 @@ const dragSize = async (label, want) => {
   drags++;
   const y = atWidth(want);
   await act(async () => node().props.onLayout({ nativeEvent: { layout: { width: SIZE_BAR, height: 44 } } }));
-  await act(async () => node().props.onResponderGrant({ nativeEvent: { pageX: BAR_LEFT, locationX: 0 } }));
+  // 2026-11-04: 막대는 손잡이에서 잡고 움직인 만큼만 바뀐다. 지금 손잡이 자리(비율)에서 잡아 원하는 자리까지 끈다.
+  const v = node().props.accessibilityValue, knob = 12 + Math.max(0, Math.min(1, (v.now - v.min) / ((v.max - v.min) || 1))) * (SIZE_BAR - 24);
+  assert.ok(node().props.onStartShouldSetResponder({ nativeEvent: { locationX: knob } }), '손잡이에서 잡는다');
+  await act(async () => node().props.onResponderGrant({ nativeEvent: { pageX: BAR_LEFT + knob, locationX: knob } }));
   await act(async () => node().props.onResponderMove({ nativeEvent: { pageX: BAR_LEFT + y, locationX: 7 } }));
   const during = bubbleText('굵기 조절대 값');
   await act(async () => node().props.onResponderRelease({ nativeEvent: { pageX: BAR_LEFT + y, locationX: 7 } }));
@@ -457,13 +460,14 @@ const saved = async (dirty = true) => {
   assert.ok(24 + 20 + (19 + band[0].props.style.height) * 2 <= 353, '짧은 화면에서도 기둥이 캔버스 영역 안에 든다');
   assert.notEqual(band[0].props.style.position, 'absolute', '캔버스 위에 겹치지 않는다');
   await press('움직이기');
-  // 2026-11-03 스튜디오(캔버스 작게·판 넓게)는 세로 720dp 이상 화면에서만 켜진다. 이 검사는 창은 크고 캔버스 영역만 짧게 흉내 내므로
-  // 예전 배치(크게 보기)로 돌려 같은 기준을 잰다. 실제 짧은 화면은 스튜디오가 꺼져 같은 배치다.
-  if (labelled('캔버스 크게 보기').length) await press('캔버스 크게 보기');
+  // 2026-11-04(대표 실기기): 판은 캔버스를 덮지 않는다 — 판 위에 남는 자리에 캔버스가 줄어들어 통째로 보인다.
   const motionBox = tree.root.findAll(n => n.type === 'View' && Array.isArray(n.props.style) && n.props.style.some(s => s && typeof s.height === 'number' && s.flexShrink === 0))[0];
   const motionHeight = Object.assign({}, ...motionBox.props.style).height;
-  const overlap = Math.max(0, motionHeight - BASE_H) / 353;
-  assert.ok(overlap < .4, '짧은 화면에서 움직이기 패널이 캔버스를 40% 넘게 덮지 않는다: ' + Math.round(overlap * 100) + '%');
+  const frame = tree.root.findAll(n => n.type === 'View' && n.props.style && !Array.isArray(n.props.style) && n.props.style.overflow === 'hidden' && n.props.style.borderRadius === 6 && typeof n.props.style.width === 'number')[0];
+  assert.ok(frame, '캔버스 틀이 있다');
+  const room = 353 - Math.max(0, motionHeight - BASE_H);
+  assert.ok(frame.props.style.width + 16 <= room + .5, '짧은 화면에서도 움직이기 판이 캔버스를 덮지 않는다: 틀 ' + frame.props.style.width + ', 남는 자리 ' + room);
+  assert.ok(frame.props.style.width >= 150, '그래도 캔버스는 움직임을 볼 만큼 크다: ' + frame.props.style.width);
   await press('그리기');
   // 최근 색: 한 번 고른 색은 다음부터 맨 위에서 한 번에. 기본 색 견본은 '팔레트' 갈래에 있다(45.28차).
   await press('색');

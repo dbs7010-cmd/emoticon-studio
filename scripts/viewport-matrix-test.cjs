@@ -246,13 +246,15 @@ const heights = [568, 640, 720, 800, 900, 1000];
     await press('문구 닫기');
     // 움직이기: 캔버스를 위로 붙이고 패널은 아래 — 가리는 비율.
     await press('움직이기');
-    // 2026-11-03 스튜디오: 실제 화면에서는 판이 커진 만큼 캔버스 영역이 줄어든다(가리지 않는다). 이 표는 영역 크기를 고정해 흉내 내므로
-    // 겹침 비율은 예전 배치(크게 보기)로 잰다. 스튜디오 단추가 있는지만 따로 본다.
-    if (height >= 720) assert.equal(labelled('캔버스 크게 보기').length, 1, tag + ': 움직이기는 스튜디오(작게 보기)로 시작하고 크게 보기 단추가 있다');
-    if (labelled('캔버스 크게 보기').length) await press('캔버스 크게 보기');
+    // 2026-11-04(대표 실기기: 스튜디오는 캔버스가 작고 가려진다 → 없앰): 판은 캔버스를 덮지 않는다. 캔버스는 판 위에 남는 자리에서 가장 크게.
+    assert.equal(labelled('캔버스 크게 보기').length, 0, tag + ': 캔버스 크기 바꾸기 단추는 없다');
     const motion = dockHeight().height;
-    row.motion = +(Math.max(0, motion - BASE_H - (area.height - side)) / side).toFixed(2);
-    assert.ok(row.motion < .45, tag + ': 움직이기 패널이 캔버스를 45% 넘게 덮지 않는다: ' + row.motion);
+    const frame = tree.root.findAll(n => n.type === 'View' && n.props.style && !Array.isArray(n.props.style) && n.props.style.overflow === 'hidden' && n.props.style.borderRadius === 6 && typeof n.props.style.width === 'number')[0];
+    const room = area.height - Math.max(0, motion - BASE_H);
+    row.motion = +(Math.max(0, frame.props.style.width + CANVAS_GAP * 2 - room) / frame.props.style.width).toFixed(2);
+    row.motionCanvas = frame.props.style.width;
+    assert.ok(row.motion <= .01, tag + ': 움직이기 판이 캔버스를 덮지 않는다: 틀 ' + frame.props.style.width + ', 남는 자리 ' + room);
+    assert.ok(frame.props.style.width >= Math.min(150, side), tag + ': 움직이기 캔버스는 볼 만큼 크다: ' + frame.props.style.width);
     // 45.28: 완성은 머리줄 하나뿐이다 — 움직이기 탭의 큰 완성 줄은 없앴다(두 개가 아니다).
     assert.equal(labelled('저장').length, 1, tag + ': 움직이기에서도 완성 버튼은 머리줄에 하나');
     // 겹침이 아니라 경계로 본다: 설정 목록은 줄어드는 스크롤이고(flex:1·minHeight:0),

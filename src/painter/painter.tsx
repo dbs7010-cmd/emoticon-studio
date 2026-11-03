@@ -228,6 +228,8 @@ const MOTION_WORDS = (r: number) => r < .2 ? t("release.s0515") : r < .4 ? t("re
 export const CANVAS_GAP = 8;
 // 손잡이 지름. 홈의 양 끝을 손잡이 반만큼 들여 두어 끝에서 잘리지 않는다.
 const BAR_KNOB = 24;
+// 조절대 손잡이를 잡는 둘레(손잡이 가운데에서 이만큼 안쪽에서 시작한 손가락만 잡는다).
+const SLIDER_GRAB = 28;
 const pct = (r: number) => (Math.max(0, Math.min(1, r)) * 100).toFixed(2) + '%' as `${number}%`;
 // 가로 조절 막대. 끄는 동안은 이 부품 안 값(live)으로 손잡이와 글자만 따라오고, **손을 뗄 때 한 번** 반영한다(45.35 세로 조절대와 같은 원리 —
 // 끄는 내내 엔진·설정 저장을 부르면 끊긴다). 좌표는 누를 때 막대의 화면 위치(pageX − locationX)를 잡고 그다음부터 화면 좌표만 쓴다.
@@ -245,9 +247,12 @@ function BarSlider({ label, value, min, max, step = 1, onCommit, onLive, show, l
   const span = max - min || 1;
   const ratio = Math.max(0, Math.min(1, (shown - min) / span));
   const quantize = (n: number) => Math.max(min, Math.min(max, Number((Math.round(n / step) * step).toFixed(4))));
+  // 2026-11-04 대표 실기기: 손잡이(흰색)를 누르지 않았는데 값이 바뀐다 → 손잡이 둘레(GRAB)에서 시작한 손가락만 잡고,
+  // 누른 자리로 튀지 않게 잡은 순간의 값에서 움직인 만큼만 바꾼다. 지나가는 손가락(onMove)은 잡지 않는다.
+  const grabRatio = useRef(0);
   const at = (pageX: number) => {
     if (w <= BAR_KNOB) return;
-    const raw = min + Math.max(0, Math.min(1, (pageX - origin.current - BAR_KNOB / 2) / (w - BAR_KNOB))) * span;
+    const raw = min + Math.max(0, Math.min(1, grabRatio.current + (pageX - origin.current) / (w - BAR_KNOB))) * span;
     liveRef.current = quantize(raw); setLive(onLive ? raw : liveRef.current);
     if (onLive && !liveTick.current) { liveTick.current = true; onNextFrame(() => { liveTick.current = false; if (liveRef.current !== null && liveRef.current !== liveSent.current) { liveSent.current = liveRef.current; onLive(liveRef.current); } }); }
   };
@@ -269,15 +274,19 @@ function BarSlider({ label, value, min, max, step = 1, onCommit, onLive, show, l
       accessibilityHint={disabled ? undefined : t("release.s0520")}
       onAccessibilityAction={e => { if (disabled) return; if (e.nativeEvent.actionName === 'increment') nudge(1); if (e.nativeEvent.actionName === 'decrement') nudge(-1); }}
       onLayout={e => { const n = Math.round(e.nativeEvent.layout.width); if (n > 0 && n !== w) setW(n); }}
-      onStartShouldSetResponder={() => !disabled} onMoveShouldSetResponder={() => !disabled} onResponderTerminationRequest={() => false}
-      onResponderGrant={e => { origin.current = e.nativeEvent.pageX - e.nativeEvent.locationX; at(e.nativeEvent.pageX); }}
+      onStartShouldSetResponder={e => !disabled && Math.abs(e.nativeEvent.locationX - (BAR_KNOB / 2 + ratio * Math.max(0, w - BAR_KNOB))) <= SLIDER_GRAB}
+      onMoveShouldSetResponder={() => false} onResponderTerminationRequest={() => false}
+      onResponderGrant={e => { origin.current = e.nativeEvent.pageX; grabRatio.current = ratio; }}
       onResponderMove={e => at(e.nativeEvent.pageX)}
       onResponderRelease={settle} onResponderTerminate={settle}
       style={{ flex: 1, height: BAR_H, justifyContent: 'center' }}>
       <View pointerEvents="none" style={{ marginHorizontal: BAR_KNOB / 2, height: 6, borderRadius: 3, backgroundColor: T.surface2 }}>
         <View style={{ width: pct(ratio), height: '100%', borderRadius: 3, backgroundColor: disabled ? T.lineStrong : T.point }} />
-        <View style={{ position: 'absolute', left: pct(ratio), top: -(BAR_KNOB - 6) / 2, width: BAR_KNOB, height: BAR_KNOB, marginLeft: -BAR_KNOB / 2, borderRadius: BAR_KNOB / 2,
-          backgroundColor: T.paper, boxShadow: live !== null ? '0px 0px 0px 4px rgba(91, 87, 217, 0.22), 0px 2px 6px rgba(25, 31, 40, 0.22)' : '0px 2px 6px rgba(25, 31, 40, 0.22)' }} />
+        {/* 손잡이는 옆 기둥(VSlider)과 같은 흰 캡슐 + 잉크 표시를 눕힌 것(2026-11-04 대표: 위쪽만 모양이 달랐다). */}
+        <View style={{ position: 'absolute', left: pct(ratio), top: -(RAIL_HANDLE_W - 6) / 2, width: RAIL_HANDLE_H, height: RAIL_HANDLE_W, marginLeft: -RAIL_HANDLE_H / 2, borderRadius: RAIL_HANDLE_W / 2,
+          alignItems: 'center', justifyContent: 'center', backgroundColor: T.paper, borderWidth: 1, borderColor: live !== null ? T.ink : T.lineStrong, ...Elev[1] }}>
+          <View style={{ width: 12, height: 2, borderRadius: 1, backgroundColor: disabled ? T.faint : T.ink }} />
+        </View>
       </View>
     </View>
   </View>;
@@ -316,9 +325,11 @@ function VSlider({ label, value, min, max, step = 1, onCommit, onLive, bubble, d
   const ratio = Math.max(0, Math.min(1, (shown - min) / span));
   const quantize = (n: number) => Math.max(min, Math.min(max, Math.round(n / step) * step));
   // 위로 갈수록 큰 값. 손잡이의 가운데가 손가락을 따라온다.
+  // 가로 막대와 같은 약속: 손잡이 둘레에서 시작한 손가락만, 움직인 만큼만(2026-11-04).
+  const grabRatio = useRef(0);
   const at = (pageY: number) => {
     if (h <= 0) return;
-    const raw = min + (1 - Math.max(0, Math.min(1, (pageY - pageTop.current - RAIL_HANDLE_H / 2) / travel))) * span;
+    const raw = min + Math.max(0, Math.min(1, grabRatio.current - (pageY - pageTop.current) / travel)) * span;
     liveRef.current = quantize(raw);
     setLive(onLive ? raw : liveRef.current);
     if (onLive && !liveTick.current) { liveTick.current = true; onNextFrame(() => { liveTick.current = false; if (liveRef.current !== null && liveRef.current !== liveSent.current) { liveSent.current = liveRef.current; onLive(liveRef.current); } }); }
@@ -335,11 +346,10 @@ function VSlider({ label, value, min, max, step = 1, onCommit, onLive, bubble, d
       accessibilityHint={disabled ? undefined : t("release.s0521")}
       onAccessibilityAction={e => { if (disabled) return; if (e.nativeEvent.actionName === 'increment') nudge(1); if (e.nativeEvent.actionName === 'decrement') nudge(-1); }}
       onLayout={e => { const n = Math.round(e.nativeEvent.layout.height); if (n > 0 && n !== h) setH(n); }}
-      onStartShouldSetResponder={() => !disabled} onMoveShouldSetResponder={() => !disabled} onResponderTerminationRequest={() => false}
-      // 기준점은 **누르는 그 이벤트 안에서** 잡는다: 홈의 화면 위치 = pageY − locationY.
-      // 둘이 같은 이벤트의 같은 좌표계라 Modal·상태바·안전 영역 차이가 끼어들지 않고, 비동기 측정을 기다리지도 않는다.
-      // 그다음부터는 pageY 만 쓴다 — locationY 는 손가락이 홈 밖으로 나가거나 닿은 대상이 바뀌면 튄다(45.36-R1 G19).
-      onResponderGrant={e => { pageTop.current = e.nativeEvent.pageY - e.nativeEvent.locationY; at(e.nativeEvent.pageY); }}
+      onStartShouldSetResponder={e => !disabled && Math.abs(e.nativeEvent.locationY - (RAIL_HANDLE_H / 2 + (1 - ratio) * travel)) <= SLIDER_GRAB}
+      onMoveShouldSetResponder={() => false} onResponderTerminationRequest={() => false}
+      // 잡은 순간의 pageY 와 값에서 시작한다. 그다음부터는 pageY 만 쓴다 — locationY 는 손가락이 홈 밖으로 나가면 튄다(45.36-R1 G19).
+      onResponderGrant={e => { pageTop.current = e.nativeEvent.pageY; grabRatio.current = ratio; }}
       onResponderMove={e => at(e.nativeEvent.pageY)}
       onResponderRelease={settle} onResponderTerminate={settle}
       style={{ height: track }}>
@@ -903,6 +913,12 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
     // 움직이기는 들어가면 바로 재생한다. 애니메이션은 장을 고치는 곳이라 멈춘 채 열고, ▶ 로 미리 본다.
     send({ type: next === 'motion' ? 'play' : 'stop' }); setAnimPlaying(false);
   }
+  // 레이어 크기 줄이 열려 있으면 캔버스의 한 손가락은 그 레이어 옮기기, 두 손가락은 크기다(획을 긋지 않는다).
+  // 바뀔 때만 보낸다(엔진은 다시 열 때마다 꺼진 상태로 시작한다).
+  const adjustSent = useRef<string | null>(null);
+  useEffect(() => { if (!initialized) { adjustSent.current = null; return; } const id = tab === 'draw' && drawRail && layerSize ? layerSize : null; if (id !== adjustSent.current) { adjustSent.current = id; send({ type: 'adjustLayer', id }); } }, [layerSize, drawRail, tab, initialized]);
+  // 움직이기·애니메이션 탭에서는 캔버스가 보기 전용이다(엔진이 한 손가락 획을 시작하지 않는다).
+  useEffect(() => { if (initialized) send({ type: 'viewOnly', on: tab !== 'draw' }); }, [tab, initialized]);
   // ── 애니메이션 ──
   const animOn = (scene.frames?.length ?? 0) > 1;
   function startAnim() { send({ type: 'animStart', duration: .3 }); setAnimHint(t("release.s0531")); }
@@ -1288,15 +1304,16 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
   const dockOpen = !!scene.selection || (!!panel && panel !== 'more' && panel !== 'brush') || drawRail || refRail || !!scene.captionPicked;
   // 움직이기 탭에서는 캔버스를 위로 붙이고, 패널은 캔버스 아래 남는 자리(+ 기본 도구 줄 자리)를 쓴다 — 미리보기를 가리지 않는다.
   // 남는 자리가 작은 화면에서만 최소 높이만큼 캔버스 아래쪽에 겹친다.
-  // 움직이기·애니메이션 스튜디오(2026-11-03, 대표 제안 — 보고 후 결정): 움직임만 볼 때는 캔버스를 작게 두고 아래 판을 넓게 쓴다.
-  // 캔버스 위 단추로 언제든 원래 크기(예전 배치)로 돌아간다. 그리기 탭은 그대로.
-  const [studioBig, setStudioBig] = useState(false);
-  // 짧은 화면(세로 720dp 미만)은 판을 더 키우면 캔버스가 가려지므로 예전 배치 그대로 둔다.
-  const studio = (tab === 'motion' || tab === 'anim') && !studioBig && windowHeight >= 720;
-  const motionHeight = studio ? Math.max(300, Math.round(windowHeight * .6))
-    : Math.max(250, Math.min(Math.round(windowHeight * .55), Math.round(canvasArea - (canvasSide ?? canvasArea)) + BASE_H));
-  // 스튜디오에서는 판이 캔버스 영역 아래를 덮으므로, 판 위에 남는 높이만큼 캔버스를 줄여 가리지 않게 한다.
-  const frameSide = studio && canvasSide ? Math.max(140, Math.min(canvasSide, Math.floor(canvasArea - (motionHeight - BASE_H) - CANVAS_GAP * 2))) : canvasSide;
+  // 움직이기·애니메이션(2026-11-04 대표 실기기: 스튜디오는 캔버스가 너무 작고 가려진다 → 없앰): 움직임이 보이는 게 먼저다.
+  // 판은 필요한 만큼만(움직이기는 설정 목록이 쓸 만한 높이, 애니메이션은 내용 높이) 차지하고, 캔버스는 판 위에 남는 자리에서
+  // 가장 크게, 그 자리 가운데에 선다. 판이 캔버스를 덮는 일은 없다 — 판이 너무 크면 판이 줄어든다(캔버스 최소 180).
+  const [animContentH, setAnimContentH] = useState(0);
+  const motionTab = tab === 'motion' || tab === 'anim';
+  const panelWant = tab === 'anim' ? (animContentH > 0 ? animContentH + 4 : 240) : Math.round(Math.min(420, Math.max(300, windowHeight * .4)));
+  const motionHeight = canvasArea > 0 ? Math.max(180, Math.min(panelWant, canvasArea + BASE_H - 180 - CANVAS_GAP * 2)) : panelWant;
+  // 판 위에 남는 높이(캔버스 영역은 아래 도구 줄 자리 위에서 끝나고, 판은 화면 맨 아래부터 덮는다).
+  const motionRoom = Math.max(0, canvasArea - Math.max(0, motionHeight - BASE_H));
+  const frameSide = motionTab && canvasSide ? Math.max(120, Math.min(canvasSide, Math.floor(motionRoom - CANVAS_GAP * 2))) : canvasSide;
   // 패널 표면: 흰 표면 + 위쪽 24 둥글기 + 옅은 선 하나. 떠 있는 표면이지만 캔버스 위 그림자는 두지 않는다(그림이 흐려 보인다).
   const raised = dockOpen || tab !== 'draw';
   // 색을 고를 때는 도구 줄 자리까지 쓴다. 캔버스를 더 가리지 않고 색 선택 영역을 확보한다.
@@ -1550,7 +1567,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       {/* 캔버스 영역: 그리기 탭은 가운데, 움직이기 탭은 위(아래를 움직임 판이 쓴다).
           더보기 메뉴는 이 영역 안에 열리므로, 열린 동안만 아래 판(dock, zIndex 20)보다 위로 올린다 — 움직이기 탭에서
           판이 메뉴 아래쪽(그림 전체 크기·공유·검사)을 덮어 누를 수 없었다(2026-10-06 에뮬레이터). */}
-      <View testID="캔버스 영역" pointerEvents="box-none" style={{ flex: 1, padding: CANVAS_GAP, alignItems: 'center', justifyContent: tab !== 'draw' ? 'flex-start' : 'center', backgroundColor: C.bg, zIndex: panel === 'more' ? 30 : 0 }}
+      <View testID="캔버스 영역" pointerEvents="box-none" style={{ flex: 1, padding: CANVAS_GAP, alignItems: 'center', justifyContent: 'center', paddingBottom: motionTab ? CANVAS_GAP + Math.max(0, motionHeight - BASE_H) : CANVAS_GAP, backgroundColor: C.bg, zIndex: panel === 'more' ? 30 : 0 }}
         onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; const side = Math.floor(Math.min(w, h) - CANVAS_GAP * 2); if (side > 0 && side !== canvasSide) setCanvasSide(side); if (h > 0 && Math.round(h) !== canvasArea) setCanvasArea(Math.round(h)); if (w > 0 && Math.round(w) !== canvasWide) setCanvasWide(Math.round(w)); }}>
         {/* 캔버스 바깥 여백의 손가락(45.39): 두 손가락 톡 = 되돌리기, 세 손가락 톡 = 다시 실행. 캔버스 안(엔진)과 같은 약속이다 —
             작은 화면에서 종이 안에만 두 손가락을 올리기 불편하다는 신고. 캔버스 뒤에 깔려 있어 캔버스 위 손가락은 엔진이 받는다. */}
@@ -1561,9 +1578,6 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
             정사각 틀로 감싸 잘라 두면 WebView 가 틀만큼만 차지하고, 그리기 탭에서는 영역 가운데·움직이기 탭에서는 위에 선다. */}
         {/* 종이 경계: 얇은 선 + 옅은 그림자. 흰 종이와 작업면이 비슷한 밝기라 경계가 없으면 캔버스가 떠 보였다(45.37 실기기). */}
         <View ref={canvasRef} collapsable={false} style={canvasSide ? { width: frameSide, height: frameSide, overflow: 'hidden', backgroundColor: C.paper, borderRadius: 6, ...Paper.border, ...Paper.shadow } : { width: '100%', aspectRatio: 1, maxHeight: '100%', overflow: 'hidden' }}>
-        {tab !== 'draw' && windowHeight >= 720 && <View style={{ position: 'absolute', right: 6, top: 6, zIndex: 6 }}>
-          <IconButton testID="캔버스 크기 바꾸기" label={studioBig ? t('studio.small') : t('studio.big')} icon={studioBig ? 'arrow-collapse' : 'arrow-expand'} size={20} color={C.ink} onPress={() => { ease(); setStudioBig(!studioBig); }} />
-        </View>}
         {tab === 'draw' && animOn && <View testID="장 알약" style={{ position: 'absolute', left: 8, top: 8, zIndex: 5, flexDirection: 'row', alignItems: 'center', height: 36, paddingLeft: 12, borderRadius: 18, ...Clay.small }}>
           <Text style={{ fontSize: 12, fontWeight: '800', color: C.pointInk }}>{t("ui.animation")}</Text>
           <Text style={{ fontSize: 12, fontWeight: '800', color: C.ink }}>{t("release.d112", { v0: ((scene.frameIdx ?? 0) + 1), v1: (scene.frames!.length) })}</Text>
@@ -1760,7 +1774,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
 
       {tab === 'anim' ? <View testID="애니메이션 판" style={[dock, { height: motionHeight, flexShrink: 0 }]} pointerEvents={busy || !initialized ? 'none' : 'auto'}>
         <AnimPanel frames={animOn ? scene.frames! : null} index={scene.frameIdx ?? 0} onion={scene.onion !== false} pro={pro} playing={animPlaying}
-          thumbs={frameThumbs} hint={animHint}
+          thumbs={frameThumbs} hint={animHint} onContentHeight={h => { if (Math.abs(h - animContentH) > 2) setAnimContentH(Math.round(h)); }}
           onStart={startAnim} onLessons={onOpenLessons ? () => { onOpenLessons(); save('close'); } : undefined} onSelect={pickFrame} onAdd={() => { setAnimPlaying(false); send({ type: 'frameAdd' }); }} onDelete={deleteFrame}
           onDuration={(i, d) => send({ type: 'frameDuration', index: i, duration: d })} onMove={(a, b) => send({ type: 'frameMove', from: a, to: b })}
           onOnion={on => send({ type: 'onion', on })} onOff={animOff} onDraw={() => { setAnimHint(null); switchTab('draw'); }} onPlay={playAnim} onRequestPro={onRequestPro} />
@@ -1955,12 +1969,14 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
                 </View>}
                 <Pressable accessibilityRole="button" accessibilityLabel={t("release.d116", { v0: (name) })} onPress={() => setLayerMenu(layerMenu === layer.id ? null : layer.id)} style={{ width: C.tap, height: C.tap, alignItems: 'center', justifyContent: 'center' }}><Glyph name="dots-horizontal" size={20} color={C.muted} /></Pressable>
               </View>
-            {layerSize === layer.id && <View testID="레이어 크기" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
+            {layerSize === layer.id && <View testID="레이어 크기" style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
               <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted }}>{t('layerSize.title')}</Text>
               <IconButton label={t('layerSize.smaller')} icon="minus" size={20} color={C.ink} onPress={() => changeTransform(layer.id, { scale: Math.max(.1, Math.round(layer.scale * .9 * 100) / 100) })} />
               <Text accessibilityLabel={t('layerSize.title') + ' ' + Math.round(layer.scale * 100) + '%'} style={{ minWidth: 48, textAlign: 'center', fontSize: 14, fontWeight: '800', color: C.ink }}>{Math.round(layer.scale * 100)}%</Text>
               <IconButton label={t('layerSize.bigger')} icon="plus" size={20} color={C.ink} onPress={() => changeTransform(layer.id, { scale: Math.min(4, Math.round(layer.scale / .9 * 100) / 100) })} />
-              {layer.scale !== 1 && <Minor title={t('layerSize.reset')} onPress={() => changeTransform(layer.id, { scale: 1 })} />}
+              {(layer.scale !== 1 || layer.x !== 0 || layer.y !== 0) && <Minor title={t('layerSize.reset')} onPress={() => changeTransform(layer.id, { scale: 1, x: 0, y: 0 })} />}
+              {/* 2026-11-04: 이 줄이 열려 있는 동안 캔버스에서 바로 손으로 맞춘다(엔진 adjustLayer). */}
+              <Text style={{ width: '100%', fontSize: 12, color: C.muted }}>{t('layerSize.hint')}</Text>
             </View>}
             {layerMenu === layer.id && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16 }}>
               {/* 겹치는 차례(45.7차): 위로/아래로 대신 '앞으로 보내기·뒤로 보내기' — 목록의 방향을 몰라도 결과가 그려진다. */}

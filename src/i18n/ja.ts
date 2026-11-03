@@ -1889,4 +1889,5 @@ export const ja: Record<Key, string> = {
   "blend.add": "加算",
   "blend.darken": "比較(暗)",
   "blend.lighten": "比較(明)",
+  "layerSize.hint": "キャンバス上で1本指で移動、2本指で拡大・縮小できます。",
 };

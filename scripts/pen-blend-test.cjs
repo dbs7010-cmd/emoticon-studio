@@ -24,7 +24,7 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
       for (const p of pts.slice(1)) { ev('pointermove', p); await new Promise(res => setTimeout(res, 8)); }
       if (up) ev('pointerup', pts[pts.length - 1]);
     }, { pts, id, type, pressure, up });
-    const lift = (p, id) => page.evaluate(({ p, id }) => { const c = document.getElementById('drawing'), r = c.getBoundingClientRect(); c.dispatchEvent(new PointerEvent('pointerup', { pointerId: id, pointerType: 'pen', bubbles: true, clientX: r.left + p[0] * r.width, clientY: r.top + p[1] * r.height })); }, { p, id });
+    const lift = (p, id, type = 'pen') => page.evaluate(({ p, id, type }) => { const c = document.getElementById('drawing'), r = c.getBoundingClientRect(); c.dispatchEvent(new PointerEvent('pointerup', { pointerId: id, pointerType: type, bubbles: true, clientX: r.left + p[0] * r.width, clientY: r.top + p[1] * r.height })); }, { p, id, type });
     const line = (x1, y1, x2, y2, n = 30) => Array.from({ length: n + 1 }, (_, i) => [x1 + (x2 - x1) * i / n, y1 + (y2 - y1) * i / n]);
     // 화면 캔버스(합성 결과)의 한 점.
     const pixel = (x, y) => page.evaluate(({ x, y }) => { const c = document.getElementById('drawing'); return [...c.getContext('2d').getImageData(Math.round(x * c.width), Math.round(y * c.height), 1, 1).data]; }, { x, y });
@@ -69,6 +69,7 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
     await stroke([[.9, .95], [.92, .95]], { type: 'touch', id: 3, up: false });
     await stroke([[.8, .95], [.82, .95]], { type: 'touch', id: 4, up: false });
     await lift([.5, .85], 8);
+    await lift([.92, .95], 3, 'touch'); await lift([.82, .95], 4, 'touch');
     assert.ok((await pixel(.3, .85))[3] > 200, '손바닥이 닿아도 펜 선이 지워지지 않는다');
 
     // 3) 필압
@@ -83,6 +84,36 @@ const { canvasHtml } = loader({})('src/painter/canvas-html.ts');
     assert.ok(fullHard > full * 1.5, '필압 100: 세게 누르면 확실히 굵다');
     assert.ok(Math.abs(flatSoft - flatHard) <= 2, '필압 0: 힘과 상관없이 같은 굵기');
     assert.ok(curvedUp < curvedFlat, '곡선을 올리면 같은 힘에서 가늘다');
+
+    // 4) 움직이기·애니메이션 탭은 보기 전용: 한 손가락은 선을 긋지 않는다(2026-11-04 잔렉).
+    // 펜을 쓴 지 1분 안이라 손가락은 어차피 막히므로, 여기서는 펜으로 확인한다.
+    await cmd({ type: 'color', color: '#20A040' });
+    await cmd({ type: 'viewOnly', on: true });
+    await stroke(line(.1, .97, .9, .97), { type: 'pen', id: 30 });
+    assert.ok((await pixel(.5, .97))[3] < 10, '보기 전용에서는 펜도 선을 긋지 않는다');
+    await cmd({ type: 'viewOnly', on: false });
+    await stroke(line(.1, .97, .9, .97), { type: 'pen', id: 31 });
+    assert.ok((await pixel(.5, .97))[3] > 200, '보기 전용을 끄면 다시 그린다');
+
+    // 5) 레이어 크기 줄이 열려 있으면 한 손가락은 그 레이어 옮기기, 두 손가락은 크기(2026-11-04).
+    const layerOf = async id => (await last('state')).layers.find(l => l.id === id);
+    await cmd({ type: 'adjustLayer', id: 'draw-2' });
+    await stroke(line(.5, .5, .6, .5, 10), { type: 'pen', id: 32 });
+    const moved = await layerOf('draw-2');
+    assert.ok(moved.x > 25 && Math.abs(moved.y) < 3, '한 손가락(펜)으로 끌면 레이어가 그만큼 옮겨진다: ' + moved.x);
+    // 두 손가락 벌리기 → 크기가 커진다.
+    await page.evaluate(async () => {
+      const c = document.getElementById('drawing'), r = c.getBoundingClientRect();
+      const ev = (t, id, x, y) => c.dispatchEvent(new PointerEvent(t, { pointerId: id, pointerType: 'touch', bubbles: true, cancelable: true, clientX: r.left + x * r.width, clientY: r.top + y * r.height }));
+      ev('pointerdown', 41, .4, .5); ev('pointerdown', 42, .6, .5);
+      for (let i = 1; i <= 10; i++) { ev('pointermove', 41, .4 - i * .01, .5); ev('pointermove', 42, .6 + i * .01, .5); await new Promise(res => setTimeout(res, 8)); }
+      ev('pointerup', 41, .3, .5); ev('pointerup', 42, .7, .5);
+    });
+    const scaled = await layerOf('draw-2');
+    assert.ok(scaled.scale > 1.6, '두 손가락으로 벌리면 레이어가 커진다: ' + scaled.scale);
+    await cmd({ type: 'undo' });
+    assert.ok((await layerOf('draw-2')).scale < 1.05, '되돌리면 크기도 돌아온다');
+    await cmd({ type: 'adjustLayer', id: null });
 
     assert.deepEqual(errors, [], '페이지 오류 없음');
     console.log('pen-blend-test PASS');

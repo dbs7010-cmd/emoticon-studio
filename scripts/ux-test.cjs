@@ -86,7 +86,8 @@ const tiles=()=>tree.root.findAll(n=>n.type==='Pressable'&&/^slot-\d+$/.test(n.p
 const message=async m=>{await act(async()=>tree.root.findByType('WebView').props.onMessage({nativeEvent:{data:JSON.stringify(m)}}));};
 const sent=()=>commands.map(s=>JSON.parse(s.slice(s.indexOf('(')+1,s.lastIndexOf(');true;'))));
 const lastCommand=type=>sent().filter(m=>m.type===type).at(-1);
-const lastSent=()=>sent().at(-1);
+// 탭·레이어 크기 줄에 따라 자동으로 가는 보기 전용·레이어 맞추기 알림(2026-11-04)은 '마지막 명령'에서 뺀다.
+const lastSent=()=>sent().filter(m=>m.type!=='viewOnly'&&m.type!=='adjustLayer').at(-1);
 // Answer the last confirmation the way a person would tap it.
 const answer=async text=>{const box=alerts.at(-1);assert.ok(box,'an alert was shown');const button=(box.buttons||[]).find(b=>b.text===text);assert.ok(button,'alert offers '+text+' — got '+JSON.stringify(box));await act(async()=>button.onPress&&button.onPress());};
 const init=async()=>{
@@ -171,22 +172,26 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   assert.ok(speed, '속도 조절이 있다');
   assert.deepEqual(speed.props.accessibilityValue, { min: 0, max: 1, now: .5 }, '읽어 주는 값이 지금 값과 같다');
   await act(async () => speed.props.onLayout({ nativeEvent: { layout: { width: 200 } } }));
-  // 왼쪽 끝, 4분의 1, 가운데, 오른쪽 끝: 닿은 자리가 값이 된다.
-  // 누르고 떼는 실제 순서로 짚는다. 막대는 매번 새로 찾는다 — 값이 바뀌면 다시 그려지기 때문이다.
-  // 막대는 화면 x=40 에 있다(pageX = 40 + locationX).
+  // 2026-11-04(대표 실기기: 손잡이를 안 눌렀는데 값이 바뀐다): 막대는 **손잡이 둘레에서 시작한 손가락만** 잡고,
+  // 누른 자리로 튀지 않고 **움직인 만큼만** 바꾼다. 지나가는 손가락(onMove)은 잡지 않는다.
+  // 막대는 화면 x=40 에 있다(pageX = 40 + locationX). 폭 200, 손잡이 들임 12 → 0.5 의 손잡이 가운데는 x=100.
   const speedBar = () => tree.root.findAll(n => n.type === 'View' && n.props.accessibilityRole === 'adjustable' && n.props.accessibilityLabel === '속도')[0];
-  const tapAt = async x => {
-   await act(async () => speedBar().props.onResponderGrant({ nativeEvent: { pageX: 40 + x, locationX: x } }));
-   await act(async () => speedBar().props.onResponderRelease({ nativeEvent: { pageX: 40 + x, locationX: x } }));
-  };
-  // 45.39 조절 줄: 손잡이(24dp)가 끝에서 잘리지 않게 홈 양 끝을 12dp 들였다 — 0 은 x=12, 1 은 x=188(폭 200).
-  for (const [x, expected] of [[0, 0], [56, .25], [100, .5], [200, 1]]) {
-   await tapAt(x);
-   const got = lastCommand('motion').motion.speed;
-   assert.equal(got, expected, `${x}px 에서 ${expected} 이 되어야 한다, got ${got}`);
-  }
-  // 폭 밖으로 끌어도 범위를 넘지 않는다. 끄는 동안 locationX 가 엉뚱해도(손가락이 막대 밖) 화면 좌표로 잰다.
-  // 끄는 동안 같은 값(최대)을 여러 번 보내지 않는다 — 매 이벤트마다 보내 미리보기가 처음부터 다시 돌던 것이 45.37 의 '끊김'이다.
+  const grabs = x => speedBar().props.onStartShouldSetResponder({ nativeEvent: { locationX: x, pageX: 40 + x } });
+  assert.equal(grabs(0), false, '손잡이에서 먼 왼쪽 끝은 잡지 않는다');
+  assert.equal(grabs(200), false, '오른쪽 끝도 잡지 않는다');
+  assert.equal(grabs(100), true, '손잡이(가운데)는 잡는다');
+  assert.equal(grabs(120), true, '손잡이 둘레 손가락 폭 안도 잡는다');
+  assert.equal(speedBar().props.onMoveShouldSetResponder({ nativeEvent: {} }), false, '지나가는 손가락은 잡지 않는다');
+  const before = sent().filter(m => m.type === 'motion').length;
+  await act(async () => speedBar().props.onResponderGrant({ nativeEvent: { pageX: 40 + 120, locationX: 120 } }));
+  await act(async () => speedBar().props.onResponderRelease({ nativeEvent: { pageX: 40 + 120, locationX: 120 } }));
+  assert.equal(sent().filter(m => m.type === 'motion').length, before, '손잡이를 눌렀다 떼기만 하면 값이 튀지 않는다');
+  // 움직인 만큼: 44dp = 홈(176)의 1/4 → 0.5 + 0.25.
+  await act(async () => speedBar().props.onResponderGrant({ nativeEvent: { pageX: 140, locationX: 100 } }));
+  await act(async () => speedBar().props.onResponderMove({ nativeEvent: { pageX: 184, locationX: 3 } }));
+  await act(async () => speedBar().props.onResponderRelease({ nativeEvent: { pageX: 184, locationX: 3 } }));
+  assert.equal(lastCommand('motion').motion.speed, .75, '움직인 만큼(4분의 1) 바뀐다');
+  // 폭 밖으로 끌어도 범위를 넘지 않는다. 끄는 동안 같은 값(최대)을 여러 번 보내지 않는다(45.37 의 '끊김').
   await act(async () => speedBar().props.onResponderGrant({ nativeEvent: { pageX: 40 + 100, locationX: 100 } }));
   const beforeDrag = sent().filter(m => m.type === 'motion').length;
   for (const px of [300, 600, 900]) await act(async () => speedBar().props.onResponderMove({ nativeEvent: { pageX: 40 + px, locationX: 3 } }));
@@ -194,11 +199,11 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   assert.equal(lastCommand('motion').motion.speed, 1, '오른쪽으로 더 끌어도 최대에서 멈춘다');
   assert.ok(sent().filter(m => m.type === 'motion').length - beforeDrag <= 1, '끄는 동안 같은 최대값을 여러 번 보내지 않는다');
   await act(async () => speedBar().props.onResponderGrant({ nativeEvent: { pageX: 40 + 100, locationX: 100 } }));
-  await act(async () => speedBar().props.onResponderMove({ nativeEvent: { pageX: 40 - 40, locationX: 3 } }));
-  await act(async () => speedBar().props.onResponderRelease({ nativeEvent: { pageX: 40 - 40, locationX: 3 } }));
+  await act(async () => speedBar().props.onResponderMove({ nativeEvent: { pageX: 40 - 140, locationX: 3 } }));
+  await act(async () => speedBar().props.onResponderRelease({ nativeEvent: { pageX: 40 - 140, locationX: 3 } }));
   assert.equal(lastCommand('motion').motion.speed, 0, '왼쪽도 마찬가지다');
-  // 화면 읽기 프로그램은 자리를 짚지 않고 한 칸씩 올리고 내린다. 그 요청이 실제로 값을 바꿔야 한다.
   await act(async () => speedBar().props.onResponderGrant({ nativeEvent: { pageX: 140, locationX: 100 } }));
+  await act(async () => speedBar().props.onResponderMove({ nativeEvent: { pageX: 140, locationX: 100 } }));
   await act(async () => speedBar().props.onResponderRelease({ nativeEvent: { pageX: 140, locationX: 100 } }));
   assert.equal(lastCommand('motion').motion.speed, .5, '가운데에서 시작한다');
   assert.deepEqual(speed.props.accessibilityActions, [{ name: 'increment' }, { name: 'decrement' }], '올리기와 내리기를 내놓는다');
@@ -213,8 +218,7 @@ const autosave=async()=>{await act(async()=>{appState.forEach(fn=>fn('background
   await act(async () => speed.props.onResponderRelease({ nativeEvent: {} }));
 
   // 세로 스크롤과의 다툼: 슬라이더는 자기 위에서 시작한 손가락만 잡는다.
-  assert.equal(speed.props.onStartShouldSetResponder(), true, '자기 위에서 시작한 손가락은 잡는다');
-  assert.equal(typeof speed.props.onMoveShouldSetResponder, 'function', '끌기도 받는다');
+  assert.equal(speedBar().props.onStartShouldSetResponder({ nativeEvent: { locationX: 100 } }), true, '자기 손잡이에서 시작한 손가락은 잡는다');
   // 45.39: 세기·속도는 스크롤되는 움직임 판이 아니라 캔버스 위 조절 줄에 있다 — 스크롤과 다툴 자리가 없다.
   const bar = tree.root.findAll(n => n.props.testID === '조절 줄')[0];
   assert.ok(bar && bar.findAll(n => n.props.accessibilityLabel === '속도' && n.props.accessibilityRole === 'adjustable').length === 1, '속도 조절은 캔버스 위 조절 줄에 있다');
@@ -1283,7 +1287,7 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
   assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 미리보기').length,0,'캔버스 한가운데 검은 미리보기 상자는 없다 at '+width+'dp');
   assert.equal(tree.root.findAll(n=>n.props.testID==='굵기 띠').length,0,'캔버스 가장자리 굵기 띠도 없다 at '+width+'dp');
   // 손잡이는 레이아웃을 재기 전에도 비율 자리에 있다 — 처음 한 번 비어 보이지 않는다.
-  assert.ok(styleOf(sizer().findAll(n=>n.type==='View'&&styleOf(n).borderRadius===12)[0]).left.endsWith('%'),'굵기 손잡이가 처음부터 비율 자리에 있다 at '+width+'dp');
+  assert.ok(styleOf(sizer().findAll(n=>n.type==='View'&&styleOf(n).borderRadius===10)[0]).left.endsWith('%'),'굵기 손잡이가 처음부터 비율 자리에 있다 at '+width+'dp');
   // 빠른 선택 줄: 카드 셋 + 전체 입구.
   const quick=tree.root.findAll(n=>n.props.testID==='빠른 브러시')[0];
   assert.ok(quick,'빠른 브러시 줄이 있다 at '+width+'dp');
@@ -1333,12 +1337,9 @@ assert.equal(floating.length,0,'패널이 캔버스 위에 떠 있지 않다: '+
  const panelBox=tree.root.findAll(n=>n.type==='View'&&typeof styleOf(n).height==='number'&&styleOf(n).flexShrink===0).map(n=>styleOf(n));
  assert.equal(panelBox.length,1,'움직임 패널의 높이가 하나로 못 박혀 있다: '+JSON.stringify(panelBox));
  assert.equal(panelBox[0].flexShrink,0,'그리고 줄어들지 않는다 — 줄어들면 화면 밖으로 밀린다');
- // 2026-11-03 스튜디오: 움직이기는 기본으로 캔버스를 작게·판을 넓게(화면의 60%). 단추로 예전 배치(절반 남짓)로 돌아간다.
- assert.ok(panelBox[0].height<=Math.round(844*.6),'스튜디오에서도 판은 화면의 60%를 넘지 않는다: '+panelBox[0].height);
- await press('캔버스 크게 보기');
- const bigBox=tree.root.findAll(n=>n.type==='View'&&typeof styleOf(n).height==='number'&&styleOf(n).flexShrink===0).map(n=>styleOf(n));
- assert.ok(bigBox[0].height<=Math.round(844*.55),'크게 보기에서는 예전처럼 판이 화면의 절반 남짓을 넘지 않는다: '+bigBox[0].height);
- await press('캔버스 작게 보고 판 넓게');
+ // 2026-11-04(대표 실기기): 스튜디오(작은 캔버스)는 없앴다. 판은 쓸 만한 높이(300~420)까지만, 화면의 절반을 넘지 않는다.
+ assert.ok(panelBox[0].height<=Math.round(844*.5),'움직이기 판은 화면의 절반을 넘지 않는다: '+panelBox[0].height);
+ assert.equal(labelled('캔버스 크게 보기').length,0,'캔버스 크기 바꾸기 단추는 없다');
   await press('그리기');
   await press('그리기 닫기');await saved(false);
   // 보드: 격자가 먼저이고, 아래 고정 줄에는 지금 할 일만 있다. 아무것도 완성하지 않았으면 내보내기는 아직 없다.
