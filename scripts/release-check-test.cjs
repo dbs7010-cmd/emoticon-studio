@@ -92,7 +92,7 @@ try {
   };
   const bundleEntries = (appConfig, extra = []) => [
     ['BundleConfig.pb', Buffer.from('cfg')],
-    ['base/manifest/AndroidManifest.xml', Buffer.from(' package com.emoticonstudio.app   com.android.vending.BILLING')],
+    ['base/manifest/AndroidManifest.xml', Buffer.from(' package com.emoticonstudio.app   com.android.vending.BILLING   com.google.android.gms.permission.AD_ID')],
     ['base/assets/app.config', Buffer.from(JSON.stringify(appConfig)), true],
     ['base/assets/index.android.bundle', Buffer.from('var __BUNDLE_START_TIME__'), true],
     ['base/dex/classes.dex', Buffer.from('dex\nexpo/modules/iap/ExpoIapModule'), true],

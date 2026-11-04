@@ -178,6 +178,8 @@ function checkArtifact(info, expectedConfig) {
   r('app_bundle', info.isBundle, info.isBundle ? 'Android App Bundle(BundleConfig.pb · base 모듈)' : 'AAB 구조가 아니에요');
   r('application_id_in_bundle', !!info.manifest && info.manifest.includes(EXPECTED_APPLICATION_ID), `매니페스트 패키지 ${EXPECTED_APPLICATION_ID}`);
   r('billing_permission', !!info.manifest && info.manifest.includes('com.android.vending.BILLING'), 'com.android.vending.BILLING 권한');
+  // 광고 ID 권한(2026-11-04): Play 의 광고 ID 선언이 '사용함'이라 출시 매니페스트에 AD_ID 가 없으면 Play 가 출시를 막는다(오류). AdMob 이 넣어 주는 값을 지운 플러그인이 생기면 여기서 걸린다.
+  r('ad_id_permission', !!info.manifest && info.manifest.includes('com.google.android.gms.permission.AD_ID'), 'com.google.android.gms.permission.AD_ID 권한(Play 광고 ID 선언과 일치)');
   r('no_overlay_permission', !!info.manifest && !info.manifest.includes('android.permission.SYSTEM_ALERT_WINDOW'), '출시 매니페스트에 SYSTEM_ALERT_WINDOW 없음');
   r('release_js_bundle', info.jsBundleBytes > 0, `index.android.bundle ${info.jsBundleBytes} bytes`);
   r('expo_iap_native', info.iap, 'expo-iap 네이티브 모듈(dex 에 expo/modules/iap)');
