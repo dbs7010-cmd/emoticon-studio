@@ -1,0 +1,28 @@
+
+No complete App Store Connect credentials, skipping TestFlight setup
+
+ASC App ID:                 6828042160
+Project ID:                 a4193f92-def9-45b1-be97-ea939f971512
+App Store Connect API Key:  
+    Key ID    :  2F9J92CL93
+    Key Source:  local
+    Key Path  :  C:/Users/민건/keys/AuthKey_2F9J92CL93.p8
+Build:                      
+    Build ID    :  2aa1aeb2-1a3d-4fcf-9f99-12b07f6e839c
+    Build Date  :  2026. 11. 4. 오후 4:31:19
+    App Version :  1.0.0
+    Build number:  8
+
+- Scheduling iOS submission
+✔ Scheduled iOS submission
+
+Submission details: https://expo.dev/accounts/usunge/projects/emoticon-studio/submissions/eb2ea94a-943b-433f-9619-7cd20613d2f4
+
+Waiting for submission to complete. You can press Ctrl+C to exit.
+- Submitting
+✔ Submitted your app to Apple App Store Connect!
+
+Your binary has been successfully uploaded to App Store Connect!
+- It is now being processed by Apple - you will receive an email when the processing finishes.
+- It usually takes about 5-10 minutes depending on how busy Apple servers are.
+- When it's done, you can see your build here: https://appstoreconnect.apple.com/apps/6828042160/testflight/ios

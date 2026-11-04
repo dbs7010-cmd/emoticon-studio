@@ -1,0 +1,53 @@
+Resolved "production" environment for the build. Learn more: https://docs.expo.dev/eas/environment-variables/#setting-the-environment-for-your-builds
+Environment variables with visibility "Plain text" and "Sensitive" loaded from the "production" environment on EAS: EMOTICON_FIREBASE_CONFIG, EMOTICON_LOGIN, EMOTICON_RECEIPT_ENDPOINT.
+
+- Incrementing buildNumber from 7 to 8.
+✔ Incremented buildNumber from 7 to 8.
+
+
+ios.buildNumber field in app config is ignored when version source is set to remote, but this value will still be in the manifest available via expo-constants. It's recommended to remove this value from app config.
+✔ Using remote iOS credentials (Expo server)
+
+Distribution Certificate is not validated for non-interactive builds.
+Skipping Provisioning Profile validation on Apple Servers because we aren't authenticated.
+
+Project Credentials Configuration
+
+Project                   @usunge/emoticon-studio
+Bundle Identifier         com.emoticonstudio.app
+                          
+App Store Configuration   
+                          
+Distribution Certificate  
+Serial Number             46ED72B8C69F7D129572D6504719291D
+Expiration Date           Sat, 30 Oct 2027 20:51:25 GMT+0900
+Apple Team                D73V77X8M6 
+Updated                   4 days ago
+                          
+Provisioning Profile      
+Developer Portal ID       NWGSP23AG6
+Status                    active
+Expiration                Sat, 30 Oct 2027 20:51:25 GMT+0900
+Apple Team                D73V77X8M6 
+Updated                   4 days ago
+                          
+All credentials are ready to build @usunge/emoticon-studio (com.emoticonstudio.app)
+
+
+Compressing project files and uploading to EAS Build. Learn more: https://expo.fyi/eas-build-archive
+- Compressing project files
+- Uploading to EAS Build (0 / 131 MB)
+✔ Uploaded to EAS 5s
+- Computing project fingerprint
+⌛️ Computing the project fingerprint is taking longer than expected...
+⏩ To skip this step, set the environment variable: EAS_SKIP_AUTO_FINGERPRINT=1
+✔ Computed project fingerprint
+
+See logs: https://expo.dev/accounts/usunge/projects/emoticon-studio/builds/2aa1aeb2-1a3d-4fcf-9f99-12b07f6e839c
+
+Waiting for build to complete. You can press Ctrl+C to exit.
+- Waiting for build to complete.
+✔ Build finished
+
+🍏 iOS app:
+https://expo.dev/artifacts/eas/wLxVHnRQmJBLJMbaKhXiLAWY-dULtxF81pL9NKcrsWs.ipa
