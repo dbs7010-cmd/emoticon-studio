@@ -9,7 +9,7 @@ git worktree add -q --detach $wt origin/main
 try {
   Copy-Item $src (Join-Path $wt 'privacy/index.html') -Force
   git -C $wt add privacy/index.html
-  git -C $wt commit -q -m "privacy: 2026-10-28 revision - Google AdMob rewarded ads for free Android users (ad ID processed by Google)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  git -C $wt commit -q -m "privacy: 2026-11-04 revision - Apple sign-in on iPhone/iPad and App Store purchase check" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   git -C $wt push -q origin HEAD:main
   Write-Host '게시했어요. 1~2분 뒤 https://dbs7010-cmd.github.io/emoticon-studio/privacy/ 에 반영돼요.' -ForegroundColor Green
 } finally {
