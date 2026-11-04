@@ -92,6 +92,13 @@
       "sha256": "3d668a060185e8b4b6732486d8b740fb417e492eebe71d4007e7b82e08e7719c",
       "uploaded": "2026-10-19",
       "source": "사용자 보고(내부 테스트 트랙, 2026-10-19 21:35 내부 테스터에게 제공됨). 결제 열림·PRO 체험 꺼짐 — 결제 확인용"
+    },
+    {
+      "versionCode": 28,
+      "versionName": "1.0.0",
+      "uploadedAt": "2026-11-04",
+      "track": "production (submitted for review)",
+      "aabSha256": "851789c201a2dbc7e0169c776aee3594cbe9bc623c79fda55d95b2347c4b0ef8"
     }
   ],
   "prepared": [
@@ -141,11 +148,11 @@
       "commit": "f8c2a7f",
       "sha256": "851789c201a2dbc7e0169c776aee3594cbe9bc623c79fda55d95b2347c4b0ef8",
       "builtAt": "2026-11-04",
-      "status": "ready-not-uploaded",
+      "status": "submitted-production",
       "releaseCheck": "PASS",
       "manifestVersionCode": 28,
       "signingCertificateKind": "upload",
-      "note": "Rebuilt 2026-11-04 before upload to include beginner/expert modes, layer opacity, alpha lock, view rotation, line taper, delta saves (f8c2a7f). Earlier vc28 build 4aa5dcf (sha b5acd9ad…) moved to superseded/ — do not upload it. New-in-this-build features not yet device-checked."
+      "note": "Rebuilt 2026-11-04 before upload to include beginner/expert modes, layer opacity, alpha lock, view rotation, line taper, delta saves (f8c2a7f). Earlier vc28 build 4aa5dcf (sha b5acd9ad…) moved to superseded/ — do not upload it. New-in-this-build features not yet device-checked. | 2026-11-04: owner submitted to Google Play production (Play showed an AD_ID error caused by an older artifact in another track; vc28 manifest has AD_ID)."
     }
   ]
 }
