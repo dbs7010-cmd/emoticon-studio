@@ -1905,4 +1905,5 @@ export const zhHant: Record<Key, string> = {
   "alphaLock.on": "鎖定透明像素",
   "alphaLock.off": "解除透明像素鎖定",
   "brushFine.taper": "起筆變細",
+  "ui.deleteAccountLink": "刪除帳號",
 };

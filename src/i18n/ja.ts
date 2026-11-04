@@ -1905,4 +1905,5 @@ export const ja: Record<Key, string> = {
   "alphaLock.on": "透明部分を保護",
   "alphaLock.off": "透明部分の保護を解除",
   "brushFine.taper": "入りを細く",
+  "ui.deleteAccountLink": "退会する",
 };

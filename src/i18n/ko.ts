@@ -1912,5 +1912,6 @@ export const ko = {
   "alphaLock.on": "알파 잠금(칠한 곳만)",
   "alphaLock.off": "알파 잠금 풀기",
   "brushFine.taper": "선 시작 가늘게",
+  "ui.deleteAccountLink": "회원 탈퇴",
 } as const;
 export type Key = keyof typeof ko;

@@ -135,13 +135,15 @@ export function CloudScreen(p: Props) {
               </View>}
             </View>
             {muted(user ? (user.pro.active ? t("release.d092", { v0: (user.pro.source === 'trial' ? t("release.x041") : user.pro.source === 'store' && user.pro.verified ? t("release.x042") : t("release.x043")), v1: ((user.backupBytes / 1048576).toFixed(1)) }) : t("release.s0387")) : t("release.s0388"))}
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1 }}><Action compact icon="logout" title={t('ui.logout')} onPress={() => void signOutAll(p.cloud!).then(refresh)} /></View>
-            <View style={{ flex: 1 }}><Action compact danger icon="account-remove-outline" title={t('ui.deleteAccount')} onPress={() => Alert.alert(t("ui.deletingAccount"), t("release.s0389"), [
-              { text: t("ui.cancel"), style: 'cancel' },
-              { text: t("ui.deletingAccount"), style: 'destructive', onPress: () => void p.task(t("release.s0390"), async () => { await deleteAccount(p.cloud!); await signOutAll(p.cloud!); await refresh(); }) },
-            ])} /></View>
-            </View>
+            <Action compact icon="logout" title={t('ui.logout')} onPress={() => void signOutAll(p.cloud!).then(refresh)} />
+            {/* 2026-11-04(대표: 탈퇴가 너무 대놓고 있다): 큰 빨간 단추 대신 아래 작은 글자 링크. 누르면 지금처럼 한 번 더 묻는다(Apple 5.1.1(v) — 찾을 수 있으면 된다). */}
+            <Pressable testID="회원 탈퇴" accessibilityRole="button" accessibilityLabel={t('ui.deleteAccount')} hitSlop={10} style={{ alignSelf: 'flex-end', paddingVertical: 6 }}
+              onPress={() => Alert.alert(t("ui.deletingAccount"), t("release.s0389"), [
+                { text: t("ui.cancel"), style: 'cancel' },
+                { text: t("ui.deletingAccount"), style: 'destructive', onPress: () => void p.task(t("release.s0390"), async () => { await deleteAccount(p.cloud!); await signOutAll(p.cloud!); await refresh(); }) },
+              ])}>
+              <Text style={{ fontSize: 12, color: T.faint, textDecorationLine: 'underline' }}>{t('ui.deleteAccountLink')}</Text>
+            </Pressable>
           </> : <>
             {PROVIDERS.map(x => <Action key={x.id} title={providerReady(p.extra, x.id) ? x.label : t("release.d093", { v0: (x.label) })} disabled={!providerReady(p.extra, x.id)}
               onPress={() => void p.task(t("release.s0391"), async () => { await p.login(x.id); await refresh(); })} />)}
