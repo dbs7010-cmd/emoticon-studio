@@ -43,8 +43,8 @@ export function NoticeCarousel({ slides, guessWidth }: { slides: NoticeSlide[]; 
       onMomentumScrollEnd={e => { held.current = false; setIndex(Math.round(e.nativeEvent.contentOffset.x / width)); }}>
       {slides.map(s => <Pressable key={s.key} testID={s.testID} accessibilityRole="button" accessibilityLabel={s.label} onPress={s.onPress}
         style={({ pressed }) => ({ width, height, minHeight: 112, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 24, paddingRight: 20, paddingBottom: 6, backgroundColor: s.tone, opacity: pressed ? .9 : 1 })}>
-        {s.image ? <Image source={s.image} style={{ position: 'absolute', left: 0, top: 0, width, height }} resizeMode="cover" accessibilityIgnoresInvertColors /> : s.backdrop ? <>
-          <Image source={s.backdrop} style={{ position: 'absolute', left: 0, top: 0, width, height }} resizeMode="cover" accessibilityIgnoresInvertColors />
+        {s.image ? <Image resizeMethod="resize" source={s.image} style={{ position: 'absolute', left: 0, top: 0, width, height }} resizeMode="cover" accessibilityIgnoresInvertColors /> : s.backdrop ? <>
+          <Image resizeMethod="resize" source={s.backdrop} style={{ position: 'absolute', left: 0, top: 0, width, height }} resizeMode="cover" accessibilityIgnoresInvertColors />
           <View style={{ width: width * .56, gap: 2 }}>
             <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '800', color: s.kickerColor ?? T.yellowInk }}>{s.kicker}</Text>
             <Text numberOfLines={2} style={{ fontSize: 20, lineHeight: 27, fontWeight: '900', color: T.ink, letterSpacing: -.4 }}>{s.title}</Text>

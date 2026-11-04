@@ -38,7 +38,7 @@ function useLoop(ms: number) {
   return v;
 }
 const CORN = { wave: require('../../assets/mascot/corn-wave.png'), goguma: require('../../assets/mascot/goguma-cheer.png'), kong: require('../../assets/mascot/kong-wave.png') };
-const Corn = ({ s, pose }: { s: number; pose: keyof typeof CORN }) => <Image accessibilityIgnoresInvertColors source={CORN[pose]} style={{ width: s, height: s }} resizeMode="contain" />;
+const Corn = ({ s, pose }: { s: number; pose: keyof typeof CORN }) => <Image resizeMethod="resize" accessibilityIgnoresInvertColors source={CORN[pose]} style={{ width: s, height: s }} resizeMode="contain" />;
 function MovingSet({ size }: { size: number }) {
   const a = useLoop(900), b = useLoop(1300), c = useLoop(1800);
   const cell = (size - 56 - 12) / 2, art = Math.round(cell * .62);

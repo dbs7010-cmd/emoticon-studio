@@ -1434,7 +1434,7 @@ function Studio() {
                 return <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={t('ui.lessons') + ' ' + l.title} onPress={() => { setLessonId(l.id); setHomeView('lesson'); }}
                   style={({ pressed }) => ({ gap: 10, opacity: pressed ? .85 : 1 })}>
                   <View style={{ aspectRatio: 16 / 9, borderRadius: T.radius.card, overflow: 'hidden', backgroundColor: C.surface2 }}>
-                    <Image accessibilityIgnoresInvertColors source={l.thumb} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    <Image resizeMethod="resize" accessibilityIgnoresInvertColors source={l.thumb} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                     <View style={{ position: 'absolute', right: 8, bottom: 8, height: 22, paddingHorizontal: 7, borderRadius: 6, backgroundColor: 'rgba(25,31,40,0.78)', justifyContent: 'center' }}>
                       <Text style={{ fontSize: 12, fontWeight: '700', color: '#FFFFFF' }}>{t("release.d045", { v0: (l.minutes) })}</Text>
                     </View>
@@ -1488,7 +1488,7 @@ function Studio() {
             return <>
               <View style={{ flexDirection: 'row', gap: T.gap.md, alignItems: 'center' }}>
                 <View style={{ width: 116, height: 116, borderRadius: T.radius.lg, backgroundColor: project.canon.image ? C.bg : C.paper, borderWidth: 1, borderStyle: project.canon.image ? 'solid' : 'dashed', borderColor: C.line, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  {project.canon.image ? <Image accessibilityLabel={t("release.s0160")} source={{ uri: imageUri(project.canon.image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Doodle />}
+                  {project.canon.image ? <Image resizeMethod="resize" accessibilityLabel={t("release.s0160")} source={{ uri: imageUri(project.canon.image.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" /> : <Doodle />}
                 </View>
                 <View style={{ flex: 1, gap: T.gap.sm }}>
                   <Action icon="image-outline" title={project.canon.image ? t("release.s0161") : t("release.s0162")} disabled={!!busy} onPress={pickReference} />
@@ -1620,7 +1620,7 @@ function Studio() {
                       onPress={() => { setExtraSlot(s.number); setPlace({ scale: 1, dx: 0, dy: 0 }); }}
                       style={{ width: 64, gap: 3 }}>
                       <View style={{ width: 64, height: 64, borderRadius: T.radius.sm, borderWidth: extraSlot === s.number ? 2.5 : 0, borderColor: extraSlot === s.number ? C.accent : 'transparent', overflow: 'hidden', backgroundColor: extraSlot === s.number ? C.paper : C.surface2 }}>
-                        <Image source={{ uri: imageUri(s.finalImage!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                        <Image resizeMethod="resize" source={{ uri: imageUri(s.finalImage!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
                       </View>
                       <Text style={{ fontSize: 10, color: C.muted, textAlign: 'center' }}>{pad(s.number)}</Text>
                     </Pressable>)}
@@ -1630,7 +1630,7 @@ function Studio() {
               {!!slot?.finalImage && <>
                 <View style={{ alignItems: 'center' }}>
                   <View style={{ width: previewWidth, height: previewHeight, borderRadius: T.radius.sm, borderWidth: 1, borderColor: C.line, backgroundColor: '#FFF', overflow: 'hidden' }}>
-                    {!!box && <Image accessibilityLabel={t("release.s0182")} source={{ uri: imageUri(slot.finalImage.path) }}
+                    {!!box && <Image resizeMethod="resize" accessibilityLabel={t("release.s0182")} source={{ uri: imageUri(slot.finalImage.path) }}
                       style={{ position: 'absolute', left: box.x, top: box.y, width: box.w, height: box.h }} resizeMode="stretch" />}
                   </View>
                 </View>
@@ -2082,7 +2082,7 @@ function Studio() {
                  [ASSET_SLOTS.proFeatureArtwork.sourceAfter, 'PRO ·', t('ui.partMotion'), t('ui.waveHand'), true],
                  [ASSET_SLOTS.proFeatureArtwork.sourceSteps, 'PRO ·', t('ui.sequenceMotion'), t('ui.enterHello'), true]] as const).map(([src, tier, label, hint, pro]) =>
                 <View key={label} accessibilityLabel={`${tier} ${label} · ${hint}`} style={{ flex: 1, paddingVertical: 8, borderRadius: 16, backgroundColor: pro ? C.paper : C.surface2, borderWidth: pro ? 1 : 0, borderColor: C.line, alignItems: 'center', gap: 4 }}>
-                  <Image accessibilityIgnoresInvertColors source={src ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
+                  <Image resizeMethod="resize" accessibilityIgnoresInvertColors source={src ?? undefined} style={{ width: 86, height: 86 }} resizeMode="contain" />
                   <View style={{ flexDirection: 'row', gap: 3 }}><Text style={{ fontSize: 11, fontWeight: pro ? '800' : '400', color: pro ? C.ink : C.muted }}>{tier}</Text><Text style={{ fontSize: 11, fontWeight: pro ? '800' : '700', color: pro ? C.ink : C.muted }}>{label}</Text></View>
                   <Text style={{ fontSize: 11, color: C.muted }}>{hint}</Text>
                 </View>)}
@@ -2311,7 +2311,7 @@ function LessonBanner({ onPress }: { onPress: () => void }) {
         <Glyph name="chevron-right" size={16} color={C.ink} />
       </View>
     </View>
-    <Image accessibilityIgnoresInvertColors source={CORN_ART.cheer} style={{ width: 96, height: 96 }} resizeMode="contain" />
+    <Image resizeMethod="resize" accessibilityIgnoresInvertColors source={CORN_ART.cheer} style={{ width: 96, height: 96 }} resizeMode="contain" />
   </Pressable>;
 }
 function IntroCanvas({ id, size, lift }: { id: string; size: number; lift?: Animated.Value }) {

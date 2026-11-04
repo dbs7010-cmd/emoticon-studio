@@ -2,7 +2,7 @@
 // - android.enableMinifyInReleaseBuilds / enableShrinkResourcesInReleaseBuilds 를 gradle.properties 에 둔다(템플릿 build.gradle 이 이 값을 읽는다).
 // - 각 라이브러리는 자기 keep 규칙(consumer rules)을 갖고 있다. 여기서는 WebView 에서 부르는 자바스크립트 다리만 덧붙여 지킨다.
 // - 난독화 매핑 파일은 AGP 가 AAB 안(BUNDLE-METADATA)에 넣는다 — Play 가 비정상 종료 보고를 되돌려 읽을 수 있다.
-const { withGradleProperties, withDangerousMod } = require('expo/config-plugins');
+const { withGradleProperties, withDangerousMod, withAppBuildGradle } = require('expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 
@@ -26,6 +26,12 @@ module.exports = function withReleaseOptimization(config) {
     };
     set('android.enableMinifyInReleaseBuilds', 'true');
     set('android.enableShrinkResourcesInReleaseBuilds', 'true');
+    return c;
+  });
+  // 2026-11-04(Play 권장 조치 'R8 최적화'): 템플릿의 proguard-android.txt 는 -dontoptimize 를 품어 R8 이 줄이기·난독화만 하고
+  // 최적화는 하지 않는다. optimize 판으로 바꾼다 — keep 규칙은 위 RULES 와 각 라이브러리 consumer rules 가 지킨다.
+  config = withAppBuildGradle(config, c => {
+    c.modResults.contents = c.modResults.contents.replace(/getDefaultProguardFile(["']proguard-android.txt["'])/g, 'getDefaultProguardFile("proguard-android-optimize.txt")');
     return c;
   });
   return withDangerousMod(config, ['android', async c => {

@@ -1770,7 +1770,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         </View>}
         {canvasMessage === 'previous' && <View style={{ position: 'absolute', left: 12, right: zoom > 1.05 ? 92 : 12, top: 8, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 6, borderRadius: 18, backgroundColor: T.floating, borderWidth: 1, borderColor: C.line }}>
           <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: C.surface2, overflow: 'hidden' }}>
-            <Image accessibilityLabel={t("release.s0663")} source={{ uri: imageUri(previousImage!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+            <Image resizeMethod="resize" accessibilityLabel={t("release.s0663")} source={{ uri: imageUri(previousImage!.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel={t("release.s0664")} onPress={() => { setContinueDismissed(true); copyPrevious(); }} style={{ flex: 1, minHeight: 48, justifyContent: 'center' }}>
             <Text style={{ fontSize: 14, fontWeight: '700', color: C.ink }}>{t("release.s0664")}</Text>
@@ -1796,7 +1796,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
               </Pressable>
             </View>
             <View style={{ height: 120, borderRadius: C.radius.sm, backgroundColor: C.bg, overflow: 'hidden' }}>
-              <Image accessibilityLabel={t("release.s0160")} source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+              <Image resizeMethod="resize" accessibilityLabel={t("release.s0160")} source={{ uri: imageUri(canon.path) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
             </View>
             {canonLocked.trim().split(/[,·\n]+/).filter(Boolean).slice(0, 3).map(trait => <Text key={trait} numberOfLines={1} style={{ fontSize: 11, color: C.ink }}>· {trait.trim()}</Text>)}
           </View>
@@ -2194,7 +2194,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
         {drawnCuts.map(cut => <Pressable key={cut.number} accessibilityRole="button" accessibilityLabel={t('cutCopy.pick', { n: String(cut.number).padStart(2, '0') })}
           onPress={() => { setCutPicker(false); copyPrevious(cut.number); }}
           style={({ pressed }) => ({ width: 76, alignItems: 'center', gap: 4, padding: 4, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: pressed ? C.fill : '#FFF' })}>
-          <Image source={{ uri: imageUri(cut.image.path) }} style={{ width: 64, height: 64, borderRadius: 8, backgroundColor: C.surface2 }} resizeMode="contain" />
+          <Image resizeMethod="resize" source={{ uri: imageUri(cut.image.path) }} style={{ width: 64, height: 64, borderRadius: 8, backgroundColor: C.surface2 }} resizeMode="contain" />
           <Text style={{ fontSize: 12, fontWeight: '700', color: C.ink }}>{String(cut.number).padStart(2, '0')}</Text>
         </Pressable>)}
       </View>
@@ -2203,7 +2203,7 @@ export function Painter({ slot, slotCount, setName, canon, canonName, canonLocke
       {cutouts.map(cut => <View key={cut.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Pressable accessibilityRole="button" accessibilityLabel={cut.name + " " + t("release.s0755")} onPress={() => { setCutoutPicker(false); void useCutout(cut.id); }}
           style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 56, paddingHorizontal: 8, borderRadius: C.radius.sm, borderWidth: 1, borderColor: C.line, backgroundColor: '#FFF' }}>
-          <Image source={{ uri: imageUri(cut.path) }} style={{ width: 40, height: 40, borderRadius: 8 }} resizeMode="contain" />
+          <Image resizeMethod="resize" source={{ uri: imageUri(cut.path) }} style={{ width: 40, height: 40, borderRadius: 8 }} resizeMode="contain" />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: C.ink }}>{cut.name}</Text>
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel={cut.name + " " + t("release.s0756")} onPress={() => onForgetCutout(cut.id)} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><Glyph name="close" size={18} color={C.muted} /></Pressable>
@@ -2282,7 +2282,7 @@ function BuiltinReferences({ maxHeight, category, onCategory, onPick }: { maxHei
             <Pressable key={category + i} testID="기본 레퍼런스 자리" accessibilityRole="button" accessibilityLabel={t("release.d120", { v0: (category), v1: (i + 1), v2: (BUILTIN_REFERENCES.ready ? '' : " " + t("release.s0080")) })} onPress={() => onPick(i)}
               style={({ pressed }) => ({ width: cell, height: tall, borderRadius: 12, backgroundColor: pressed ? T.fill : T.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' })}>
               {pose
-                ? <Image accessibilityIgnoresInvertColors source={pose} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                ? <Image resizeMethod="resize" accessibilityIgnoresInvertColors source={pose} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                 : <>
                   <View style={{ width: cell * .24, height: cell * .24, borderRadius: cell, backgroundColor: T.lineStrong, marginBottom: 3 }} />
                   <View style={{ width: cell * .32, height: cell * .38, borderRadius: cell * .12, backgroundColor: T.lineStrong, transform: [{ rotate: `${(i % 3 - 1) * 8}deg` }] }} />
@@ -2308,7 +2308,7 @@ function PoseStrip({ category, index, count, onIndex }: { category: string; inde
     const at = index + offset;
     return <View key={offset} style={{ width: cell, height: Math.round(cell * 4 / 3), borderRadius: 10, overflow: 'hidden', backgroundColor: T.surface2,
       opacity: at < 0 || at > count - 1 ? 0 : offset === 0 ? 1 : .5, borderWidth: offset === 0 ? 2 : 0, borderColor: T.point, alignItems: 'center', justifyContent: 'center' }}>
-      {pose ? <Image accessibilityIgnoresInvertColors source={pose} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+      {pose ? <Image resizeMethod="resize" accessibilityIgnoresInvertColors source={pose} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
         : <Glyph name="human-handsup" size={20} color={T.lineStrong} />}
     </View>;
   });
@@ -2370,7 +2370,7 @@ function GuideStrip({ title, hint, artwork, collapsed, onCollapse, onClose, onUn
     {/* 펼친 모습: 그림은 왼쪽에 작게, 할 말과 행동은 오른쪽에. 가로로 눕혀 세로 자리를 아낀다. */}
     {!collapsed && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingBottom: 10 }}>
       <View style={{ width: 96, height: 96, borderRadius: T.radius.sm, backgroundColor: T.surface2, overflow: 'hidden' }}>
-        <Image accessibilityIgnoresInvertColors accessibilityLabel={title + " " + t("release.s0785")} source={artwork} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+        <Image resizeMethod="resize" accessibilityIgnoresInvertColors accessibilityLabel={title + " " + t("release.s0785")} source={artwork} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
       </View>
       <View style={{ flex: 1, gap: 8 }}>
         <Text numberOfLines={3} style={{ fontSize: 13, lineHeight: 19, color: T.muted }}>{hint}</Text>

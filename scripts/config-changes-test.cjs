@@ -13,3 +13,15 @@ if (fs.existsSync(file)) {
   for (const k of ['density', 'screenSize', 'smallestScreenSize', 'screenLayout', 'orientation']) assert.ok(changes.includes(k), 'configChanges 에 ' + k);
 }
 console.log('PASS: config changes — density 추가(중복 없음), 매니페스트에 density·screenSize·smallestScreenSize·screenLayout·orientation');
+
+// 서버 설정 읽기(2026-11-04): EAS 에 따옴표 없이 저장된 값도 읽고, 망가진 값은 버린다(iOS build 7·8 이 '준비 중'이던 원인).
+{
+  const load = value => { if (value === undefined) delete process.env.EMOTICON_FIREBASE_CONFIG; else process.env.EMOTICON_FIREBASE_CONFIG = value; delete require.cache[require.resolve('../app.config.js')]; return require('../app.config.js')().extra.cloud; };
+  const loose = load('{apiKey:AAA,authDomain:x.web.app,projectId:p,storageBucket:p.app,messagingSenderId:1,appId:1:2:web:3,region:us-central1}');
+  assert.ok(loose && loose.appId === '1:2:web:3' && loose.projectId === 'p', '따옴표 없는 값도 읽는다(콜론 든 appId 그대로)');
+  assert.ok(load(JSON.stringify({ apiKey: 'A', projectId: 'p', storageBucket: 'b', appId: '1:2:web:3' })), '정상 JSON 도 읽는다');
+  assert.equal(load('garbage'), undefined, '망가진 값은 버린다');
+  assert.equal(load('{apiKey:A,projectId:p}'), undefined, '필수 값이 빠지면 버린다');
+  load(undefined);
+  console.log('PASS: cloud settings — JSON·따옴표 없는 값 읽기, 망가진 값·빠진 값 버림');
+}

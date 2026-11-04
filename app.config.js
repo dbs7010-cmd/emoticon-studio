@@ -62,7 +62,15 @@ const splashModuleInstalled = (() => { try { require.resolve('expo-splash-screen
 function cloudSettings() {
   const raw = process.env.EMOTICON_FIREBASE_CONFIG;
   if (!raw) return null;
-  try { const c = JSON.parse(raw); return ['apiKey', 'projectId', 'storageBucket', 'appId'].every(k => typeof c[k] === 'string' && c[k]) ? c : null; } catch { return null; }
+  // 2026-11-04: EAS 에 따옴표 없이 저장된 값({apiKey:…,projectId:…}, PowerShell 이 큰따옴표를 지워 생김)도 읽는다.
+  // 그 때문에 iOS build 7·8 에 서버 설정이 빠져 로그인이 '준비 중'이었다. 값에는 쉼표가 없고 콜론은 있을 수 있어(appId) 첫 콜론에서만 나눈다.
+  const parse = text => { try { return JSON.parse(text); } catch { /* 아래 느슨한 형식 */ }
+    const body = String(text).trim().replace(/^{|}$/g, '');
+    const out = {};
+    for (const part of body.split(',')) { const i = part.indexOf(':'); if (i <= 0) return null; out[part.slice(0, i).trim().replace(/^["']|["']$/g, '')] = part.slice(i + 1).trim().replace(/^["']|["']$/g, ''); }
+    return out; };
+  const c = parse(raw);
+  return c && ['apiKey', 'projectId', 'storageBucket', 'appId'].every(k => typeof c[k] === 'string' && c[k]) ? c : null;
 }
 module.exports = () => {
   const adaptive = (base.expo.android && base.expo.android.adaptiveIcon) || {};
