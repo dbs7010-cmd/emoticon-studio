@@ -1,0 +1,512 @@
+09-13 10:27:30.569 E/ticonstudio.app(26114): Not starting debugger since process cannot load the jdwp agent.
+09-13 10:27:30.574 D/ActivityThread(26114): setConscryptValidator
+09-13 10:27:30.574 D/ActivityThread(26114): setConscryptValidator - put
+09-13 10:27:30.580 D/CompatibilityChangeReporter(26114): Compat change id reported: 171979766; UID 10358; state: ENABLED
+09-13 10:27:30.583 W/ziparchive(26114): Unable to open '/data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/base.dm': No such file or directory
+09-13 10:27:30.583 W/ziparchive(26114): Unable to open '/data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/base.dm': No such file or directory
+09-13 10:27:30.868 D/nativeloader(26114): Configuring classloader-namespace for other apk /data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/base.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/lib/arm64:/data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.emoticonstudio.app
+09-13 10:27:30.871 I/SPEG    (26114): Preparing application
+09-13 10:27:31.566 E/ocessService0:0(26330): Not starting debugger since process cannot load the jdwp agent.
+09-13 10:27:31.573 D/ActivityThread(26330): setConscryptValidator
+09-13 10:27:31.573 D/ActivityThread(26330): setConscryptValidator - put
+09-13 10:27:31.580 D/CompatibilityChangeReporter(26330): Compat change id reported: 171979766; UID 99123; state: ENABLED
+09-13 10:27:31.584 D/ApplicationLoaders(26330): Returning zygote-cached class loader: /system/framework/android.test.base.jar
+09-13 10:27:31.586 D/NetworkSecurityConfig(26330): No Network Security Config specified, using platform default
+09-13 10:27:31.589 D/NetworkSecurityConfig(26330): No Network Security Config specified, using platform default
+09-13 10:27:31.589 I/cr_WebViewApkApp(26330): version=149.0.7827.159 (782715901) minSdkVersion=29 processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0 splits=<none>
+09-13 10:27:31.591 I/cr_ChildProcessService(26330): Creating new ChildProcessService pid=26330
+09-13 10:27:31.677 I/cr_LibraryLoader(26330): Successfully loaded native library
+09-13 10:27:31.678 I/cr_CachingUmaRecorder(26330): Flushed 2 samples from 2 histograms, 0 samples were dropped.
+09-13 10:27:31.678 W/chromium(26330): [WARNING:content/app/android/content_main_android.cc:82] android_setCpu already initialized
+09-13 10:27:31.686 W/chromium(26330): [WARNING:content/child/runtime_features.cc:546] Fenced frames cannot be enabled in this configuration. Use --enable-features=FencedFrames instead.
+09-13 10:27:31.686 W/chromium(26330): [WARNING:content/child/runtime_features.cc:571] Topics cannot be enabled in this configuration. Use --enable-features=BrowsingTopics in addition.
+09-13 10:27:31.686 W/chromium(26330): [WARNING:content/child/runtime_features.cc:592] SharedStorage cannot be enabled in this configuration. Use --enable-features=SharedStorageAPI in addition.
+09-13 10:27:31.700 I/chromium(26330): [INFO:third_party/skia/src/ports/SkFontMgr_android_parser.cpp:724] [SkFontMgr Android Parser] '/product/etc/fonts_customization.xml' could not be opened
+09-13 10:27:31.700 I/chromium(26330):
+09-13 10:27:32.365 D/io_stats( 1176): !@ Read_top(KB): ThreadPoolForeg(26410) 160 ticonstudio.app(26114) 48 system_server(2514) 20
+09-13 10:27:32.770 I/cr_ChildProcessService(26330): Destroying ChildProcessService pid=26330
+09-13 10:27:32.772 V/WindowManager( 2514): Remove Window{273ec8c u0 com.emoticonstudio.app/com.emoticonstudio.app.MainActivity}: mSurfaceController=Surface(name=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity$_26114)/@0x13e9888 mAnimatingExit=false mRemoveOnExit=false mHasSurface=true surfaceShowing=false animating=false app-animation=false mWillReplaceWindow=false mDisplayFrozen=false callers=com.android.server.wm.WindowState.removeIfPossible:3040 com.android.server.wm.WindowToken.removeAllWindowsIfPossible:234 com.android.server.wm.ActivityRecord.removeIfPossible:4857 com.android.server.wm.ActivityRecord.onRemovedFromDisplay:4972 com.android.server.wm.DisplayContent.removeAppToken:1674 com.android.server.wm.ActivityRecord.removeFromHistory:4589
+09-13 10:27:32.772 I/WindowManager( 2514): Destroying surface Surface(name=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity$_26114)/@0x13e9888 called by com.android.server.wm.WindowStateAnimator.destroySurface:942 com.android.server.wm.WindowStateAnimator.destroySurfaceLocked:536 com.android.server.wm.WindowState.removeImmediately:2969 com.android.server.wm.WindowState.removeIfPossible:3227 com.android.server.wm.WindowState.removeIfPossible:3040 com.android.server.wm.WindowToken.removeAllWindowsIfPossible:234 com.android.server.wm.ActivityRecord.removeIfPossible:4857 com.android.server.wm.ActivityRecord.onRemovedFromDisplay:4972
+09-13 10:27:39.170 E/ticonstudio.app(27657): Not starting debugger since process cannot load the jdwp agent.
+09-13 10:27:39.175 D/ActivityThread(27657): setConscryptValidator
+09-13 10:27:39.175 D/ActivityThread(27657): setConscryptValidator - put
+09-13 10:27:39.186 D/CompatibilityChangeReporter(27657): Compat change id reported: 171979766; UID 10358; state: ENABLED
+09-13 10:27:39.193 D/nativeloader(27657): Configuring classloader-namespace for other apk /data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/base.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/lib/arm64:/data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.emoticonstudio.app
+09-13 10:27:39.197 V/GraphicsEnvironment(27657): ANGLE Developer option for 'com.emoticonstudio.app' set to: 'default'
+09-13 10:27:39.197 V/GraphicsEnvironment(27657): ANGLE GameManagerService for com.emoticonstudio.app: false
+09-13 10:27:39.197 V/GraphicsEnvironment(27657): App is not on the allowlist for updatable production driver.
+09-13 10:27:39.198 D/NetworkSecurityConfig(27657): No Network Security Config specified, using platform default
+09-13 10:27:39.199 D/NetworkSecurityConfig(27657): No Network Security Config specified, using platform default
+09-13 10:27:39.204 W/SoLoader(27657): Initializing SoLoader: 0
+09-13 10:27:39.204 W/SoLoader(27657): Recording new base apk path: /data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/base.apk
+09-13 10:27:39.204 W/SoLoader(27657): Previously recorded 0 base apk paths.
+09-13 10:27:39.205 I/SoLoader(27657): Preparing SO source: DirectorySoSource[root = /vendor/lib64 flags = 2]
+09-13 10:27:39.205 I/SoLoader(27657): Preparing SO source: DirectorySoSource[root = /system/lib64 flags = 2]
+09-13 10:27:39.205 I/SoLoader(27657): Preparing SO source: DirectApkSoSource[root = [/data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/base.apk!/lib/arm64-v8a]]
+09-13 10:27:39.207 I/SoLoader(27657): Preparing SO source: ApplicationSoSource[DirectorySoSource[root = /data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/lib/arm64 flags = 0]]
+09-13 10:27:39.207 I/SoLoader(27657): init finish: 4 SO sources prepared
+09-13 10:27:39.207 W/SoLoader(27657): SoLoader initialized: 8
+09-13 10:27:39.212 D/jni_lib_merge(27657): Entering merged library JNI_OnLoad.
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing 13 pre-merged libs (including stub)
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register libfabricjni_so.  onload_func: 0x75905f35e8
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register libreact_devsupportjni_so.  onload_func: 0x75906c7c4c
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register libreact_featureflagsjni_so.  onload_func: 0x75906e4068
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register libreact_newarchdefaults_so.  onload_func: 0x7590727dd4
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register libreact_tracingjni_so.  onload_func: 0x75908129c0
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register libreactnativeblob_so.  onload_func: 0x7590817c54
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register libreactnativejni_so.  onload_func: 0x7590823c58
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register libreactnativejni_common_so.  onload_func: 0x7590826b1c
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register librninstance_so.  onload_func: 0x759084c164
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register libturbomodulejsijni_so.  onload_func: 0x75908f7580
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register libuimanagerjni_so.  onload_func: 0x75908fdf94
+09-13 10:27:39.212 D/jni_lib_merge(27657): Preparing to register libyoga_so.  onload_func: 0x759090556c
+09-13 10:27:39.212 D/jni_lib_merge(27657): About to register 12 actual methods.
+09-13 10:27:39.219 D/OpenGLRenderer(27657): RenderThread::requireGlContext()
+09-13 10:27:39.220 I/AdrenoGLES-0(27657): QUALCOMM build                   : 9ab6a2b2d8, Ifc633ebcef
+09-13 10:27:39.220 I/AdrenoGLES-0(27657): Build Date                       : 01/24/23
+09-13 10:27:39.220 I/AdrenoGLES-0(27657): OpenGL ES Shader Compiler Version: E031.41.03.24
+09-13 10:27:39.220 I/AdrenoGLES-0(27657): Local Branch                     :
+09-13 10:27:39.220 I/AdrenoGLES-0(27657): Remote Branch                    :
+09-13 10:27:39.220 I/AdrenoGLES-0(27657): Remote Branch                    :
+09-13 10:27:39.220 I/AdrenoGLES-0(27657): Reconstruct Branch               :
+09-13 10:27:39.220 I/AdrenoGLES-0(27657): Build Config                     : S P 14.1.4 AArch64
+09-13 10:27:39.220 I/AdrenoGLES-0(27657): Driver Path                      : /vendor/lib64/egl/libGLESv2_adreno.so
+09-13 10:27:39.220 I/AdrenoGLES-0(27657): Driver Version                   : 0676.13
+09-13 10:27:39.222 I/AdrenoGLES-0(27657): PFP: 0x01740158, ME: 0x00000000
+09-13 10:27:39.224 W/Adreno-AppProfiles(27657): Could not find QSPM HAL service. Skipping adreno profile processing.
+09-13 10:27:39.225 I/AdrenoUtils(27657): <ReadGpuID:408>: Reading chip ID through GSL
+09-13 10:27:39.228 D/AppCompatDelegate(27657): Checking for metadata for AppLocalesMetadataHolderService : Service not found
+09-13 10:27:39.228 D/OpenGLRenderer(27657): RenderThread::setGrContext()
+09-13 10:27:39.241 W/unknown:BridgelessReact(27657): ReactHost{0}.startSurface(surfaceId = 0): Schedule
+09-13 10:27:39.241 W/unknown:BridgelessReact(27657): ReactHost{0}.attachSurface(surfaceId = 0)
+09-13 10:27:39.241 W/unknown:BridgelessReact(27657): ReactHost{0}.getOrCreateReactInstanceTask()
+09-13 10:27:39.241 W/unknown:BridgelessReact(27657): ReactHost{0}.getOrCreateReactInstanceTask(): Start
+09-13 10:27:39.241 W/unknown:BridgelessReact(27657): ReactHost{0}.getJSBundleLoader()
+09-13 10:27:39.241 W/unknown:BridgelessReact(27657): ReactHost{0}.getOrCreateReactInstanceTask(): Creating BridgelessReactContext
+09-13 10:27:39.242 W/unknown:BridgelessReact(27657): ReactHost{0}.getOrCreateReactInstanceTask(): Creating ReactInstance
+09-13 10:27:39.242 I/DecorView(27657): [INFO] isPopOver=false config=true
+09-13 10:27:39.242 I/DecorView(27657): updateCaptionType: isFloating=false isApplication=true hasWindowDecorCaption=false this=DecorView@db0f1e3[]
+09-13 10:27:39.242 D/DecorView(27657): setCaptionType = 0, this = DecorView@db0f1e3[]
+09-13 10:27:39.243 I/DecorView(27657): getCurrentDensityDpi: from real metrics. densityDpi=480 msg=resources_loaded
+09-13 10:27:39.243 I/DecorView(27657): setWindowBackground: isPopOver=false color=fff7f4ee d=android.graphics.drawable.ColorDrawable@a97da99
+09-13 10:27:39.247 W/unknown:BridgelessReact(27657): ReactHost{0}.onHostResume(activity)
+09-13 10:27:39.247 W/unknown:BridgelessReact(27657): ReactHost{0}.ReactContext.onHostResume()
+09-13 10:27:39.247 I/MSHandlerLifeCycle(27657): check: return. pkg=com.emoticonstudio.app parent=null callers=com.android.internal.policy.DecorView.setVisibility:4408 android.app.ActivityThread.handleResumeActivity:5466 android.app.servertransaction.ResumeActivityItem.execute:54 android.app.servertransaction.ActivityTransactionItem.execute:45 android.app.servertransaction.TransactionExecutor.executeLifecycleState:176
+09-13 10:27:39.247 I/MSHandlerLifeCycle(27657): removeMultiSplitHandler: no exist. decor=DecorView@db0f1e3[]
+09-13 10:27:39.248 D/jni_lib_merge(27657): Entering merged library JNI_OnLoad.
+09-13 10:27:39.248 D/jni_lib_merge(27657): Preparing 4 pre-merged libs (including stub)
+09-13 10:27:39.248 D/jni_lib_merge(27657): Preparing to register libhermes_executor_so.  onload_func: 0x75891a3eec
+09-13 10:27:39.248 D/jni_lib_merge(27657): Preparing to register libhermesinstancejni_so.  onload_func: 0x75891ab69c
+09-13 10:27:39.248 D/jni_lib_merge(27657): Preparing to register libjsijniprofiler_so.  onload_func: 0x75891abf44
+09-13 10:27:39.248 D/jni_lib_merge(27657): About to register 3 actual methods.
+09-13 10:27:39.249 D/NativeCustomFrequencyManager(27657): [NativeCFMS] BpCustomFrequencyManager::BpCustomFrequencyManager()
+09-13 10:27:39.250 I/DecorView(27657): notifyKeepScreenOnChanged: keepScreenOn=false
+09-13 10:27:39.252 D/InsetsController(27657): onStateChanged: InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 81 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(512, 0 - 568, 81), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={3.0} cutoutSpec={M 0,0 H -9.333333333333333‬ V 27 H 9.333333333333333‬ V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=102, center=Point(102, 102)}, RoundedCorner{position=TopRight, radius=102, center=Point(978, 102)}, RoundedCorner{position=BottomRight, radius=102, center=Point(978, 2238)}, RoundedCorner{position=BottomLeft, radius=102, center=Point(102, 2238)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 81) rotation=0}, mSources= { InsetsSource: {mType=ITYPE_STATUS_BAR, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_NAVIGATION_BAR, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_GESTURES, mFrame=[0,0][0,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_GESTURES, mFrame=[1080,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_MANDATORY_GESTURES, mFrame=[0,0][1080,117], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_MANDATORY_GESTURES, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_DISPLAY_CUTOUT, mFrame=[0,0][-100000,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_DISPLAY_CUTOUT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_DISPLAY_CUTOUT, mFrame=[100000,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_DISPLAY_CUTOUT, mFrame=[0,100000][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_TAPPABLE_ELEMENT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_TAPPABLE_ELEMENT, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_IME, mFrame=[0,0][0,0], mVisible=false, mInsetsRoundedCornerFrame=false} } host=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity from=android.view.ViewRootImpl.setView:1732
+09-13 10:27:39.253 I/ViewRootImpl@b150717[MainActivity](27657): setView = com.android.internal.policy.DecorView@db0f1e3 TM=true
+09-13 10:27:39.254 I/MSHandlerLifeCycle(27657): removeMultiSplitHandler: no exist. decor=DecorView@db0f1e3[MainActivity]
+09-13 10:27:39.254 D/IDS_TAG (27657): Starting IDS observe window
+09-13 10:27:39.254 D/IDS_TAG (27657): Getting Shared Preference for com.emoticonstudio.app.MainApplication@a9023a6 uid = 10358
+09-13 10:27:39.254 D/IDS_TAG (27657): App com.emoticonstudio.app.MainApplication@a9023a6 has not finished training
+09-13 10:27:39.254 D/IDS_TAG (27657): Closing IDS observe window
+09-13 10:27:39.255 D/IDS_TAG (27657): Getting Shared Preference for com.emoticonstudio.app.MainApplication@a9023a6 uid = 10358
+09-13 10:27:39.255 D/IDS_TAG (27657): IDS count updated to 1 for com.emoticonstudio.app.MainApplication@a9023a6
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657): performTraversals params={(0,0)(fillxfill) sim={adjust=resize forwardNavigation} layoutInDisplayCutoutMode=always ty=BASE_APPLICATION wanim=0x1030309
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   fl=81810100
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   pfl=12020040
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   vsysui=110
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   apr=LIGHT_NAVIGATION_BARS
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   bhv=DEFAULT
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   fitSides= naviIconColor=0}
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657): performTraversals mFirst=true windowShouldResize=true viewVisibilityChanged=false mForceNextWindowRelayout=false params={(0,0)(fillxfill) sim={adjust=resize forwardNavigation} layoutInDisplayCutoutMode=always ty=BASE_APPLICATION wanim=0x1030309
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   fl=81810100
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   pfl=12020040
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   vsysui=110
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   apr=LIGHT_NAVIGATION_BARS
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   bhv=DEFAULT
+09-13 10:27:39.257 D/ViewRootImpl@b150717[MainActivity](27657):   fitSides= naviIconColor=0}
+09-13 10:27:39.264 E/BufferQueueProducer(27657): Unable to open libpenguin.so: dlopen failed: library "libpenguin.so" not found.
+09-13 10:27:39.264 I/BLASTBufferQueue(27657): new BLASTBufferQueue, mName= ViewRootImpl@b150717[MainActivity] mNativeObject= 0xb4000075eb1fd600 sc.mNativeObject= 0xb4000075eb050800 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:2905 android.view.ViewRootImpl.relayoutWindow:9843 android.view.ViewRootImpl.performTraversals:3880 android.view.ViewRootImpl.doTraversal:3112 android.view.ViewRootImpl$TraversalRunnable.run:10881 android.view.Choreographer$CallbackRecord.run:1301 android.view.Choreographer$CallbackRecord.run:1309 android.view.Choreographer.doCallbacks:923 android.view.Choreographer.doFrame:852 android.view.Choreographer$FrameDisplayEventReceiver.run:1283
+09-13 10:27:39.264 I/BLASTBufferQueue(27657): update, w= 1080 h= 2340 mName = ViewRootImpl@b150717[MainActivity] mNativeObject= 0xb4000075eb1fd600 sc.mNativeObject= 0xb4000075eb050800 format= -1 caller= android.graphics.BLASTBufferQueue.<init>:84 android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:2905 android.view.ViewRootImpl.relayoutWindow:9843 android.view.ViewRootImpl.performTraversals:3880 android.view.ViewRootImpl.doTraversal:3112 android.view.ViewRootImpl$TraversalRunnable.run:10881
+09-13 10:27:39.264 I/ViewRootImpl@b150717[MainActivity](27657): Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) req=(1080,2340)0 dur=6 res=0x3 s={true 0xb4000075eb17e000} ch=true seqId=0
+09-13 10:27:39.264 I/ViewRootImpl@b150717[MainActivity](27657): performConfigurationChange setNightDimText nightDimLevel=0
+09-13 10:27:39.264 D/ViewRootImpl@b150717[MainActivity](27657): mThreadedRenderer.initialize() mSurface={isValid=true 0xb4000075eb17e000} hwInitialized=true
+09-13 10:27:39.265 D/ViewRootImpl@b150717[MainActivity](27657): reportNextDraw android.view.ViewRootImpl.performTraversals:4434 android.view.ViewRootImpl.doTraversal:3112 android.view.ViewRootImpl$TraversalRunnable.run:10881 android.view.Choreographer$CallbackRecord.run:1301 android.view.Choreographer$CallbackRecord.run:1309
+09-13 10:27:39.265 D/ViewRootImpl@b150717[MainActivity](27657): Setup new sync id=0
+09-13 10:27:39.265 D/ViewRootImpl@b150717[MainActivity](27657): Setting syncFrameCallback
+09-13 10:27:39.265 D/ViewRootImpl@b150717[MainActivity](27657): registerCallbacksForSync syncBuffer=false
+09-13 10:27:39.266 D/OpenGLRenderer(27657): eglCreateWindowSurface
+09-13 10:27:39.267 D/ViewRootImpl@b150717[MainActivity](27657): Received frameDrawingCallback syncResult=0 frameNum=1.
+09-13 10:27:39.267 D/ViewRootImpl@b150717[MainActivity](27657): Setting up sync and frameCommitCallback
+09-13 10:27:39.273 I/ExpoModulesCore(27657): ✅ AppContext was initialized
+09-13 10:27:39.278 W/unknown:BridgelessReact(27657): ReactHost{0}.getOrCreateReactInstanceTask(): Loading JS Bundle
+09-13 10:27:39.278 W/unknown:BridgelessReact(27657): ReactHost{0}.getOrCreateReactInstanceTask(): DevSupportManager.onNewReactContextCreated()
+09-13 10:27:39.278 W/unknown:BridgelessReact(27657): ReactHost{0}.startSurface(surfaceId = 0): Execute
+09-13 10:27:39.280 I/BLASTBufferQueue(27657): [ViewRootImpl@b150717[MainActivity]#0](f:0,a:0) onFrameAvailable the first frame is available
+09-13 10:27:39.280 D/ViewRootImpl@b150717[MainActivity](27657): Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true
+09-13 10:27:39.280 D/OpenGLRenderer(27657): CFMS:: SetUp Pid : 27657    Tid : 27679
+09-13 10:27:39.283 D/ViewRootImpl@b150717[MainActivity](27657): onSyncComplete
+09-13 10:27:39.283 D/ViewRootImpl@b150717[MainActivity](27657): setupSync seqId=0 mSyncId=0 fn=1 caller=android.view.ViewRootImpl$$ExternalSyntheticLambda11.accept:6 android.window.SurfaceSyncer.lambda$setupSync$1$android-window-SurfaceSyncer:128 android.window.SurfaceSyncer$$ExternalSyntheticLambda1.accept:8 android.window.SurfaceSyncer$SyncSet.checkIfSyncIsComplete:382 android.window.SurfaceSyncer$SyncSet.markSyncReady:359 android.window.SurfaceSyncer.markSyncReady:151 android.view.ViewRootImpl.performTraversals:4499
+09-13 10:27:39.283 D/ViewRootImpl@b150717[MainActivity](27657): reportDrawFinished seqId=0 mSyncId=-1 fn=1 mSurfaceChangedTransaction=0xb40000760af54300
+09-13 10:27:39.289 W/BridgelessReactContext(27657): [WARNING] Bridgeless doesn't support CatalystInstance. Accessing an API that's not part of the new architecture is not encouraged usage.
+09-13 10:27:39.291 W/unknown:BridgelessReact(27657): ReactHost{0}.ReactContext.onHostResume()
+09-13 10:27:39.291 W/unknown:BridgelessReact(27657): ReactHost{0}.getOrCreateReactInstanceTask(): Executing ReactInstanceEventListeners
+09-13 10:27:39.293 I/ExpoModulesCore(27657): ✅ JSI interop was installed
+09-13 10:27:39.294 I/ViewRootImpl@b150717[MainActivity](27657): MSG_WINDOW_FOCUS_CHANGED 1 0
+09-13 10:27:39.294 D/ViewRootImpl@b150717[MainActivity](27657): mThreadedRenderer.initializeIfNeeded()#2 mSurface={isValid=true 0xb4000075eb17e000}
+09-13 10:27:39.294 I/ExpoModulesCore(27657): ✅ Constants were exported
+09-13 10:27:39.294 D/InputMethodManager(27657): startInputInner - Id : 0
+09-13 10:27:39.294 I/InputMethodManager(27657): startInputInner - mService.startInputOrWindowGainedFocus
+09-13 10:27:39.298 D/InputMethodManager(27657): startInputInner - Id : 0
+09-13 10:27:39.317 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class expo.modules.kotlin.views.GroupViewManagerWrapper
+09-13 10:27:39.318 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.uimanager.LayoutShadowNode
+09-13 10:27:39.319 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.th3rdwave.safeareacontext.SafeAreaViewManager
+09-13 10:27:39.319 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.th3rdwave.safeareacontext.SafeAreaViewShadowNode
+09-13 10:27:39.320 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.th3rdwave.safeareacontext.SafeAreaProviderManager
+09-13 10:27:39.321 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.reactnativecommunity.webview.RNCWebViewManager
+09-13 10:27:39.343 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.safeareaview.ReactSafeAreaViewManager
+09-13 10:27:39.344 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.modal.ReactModalHostManager
+09-13 10:27:39.344 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.progressbar.ReactProgressBarViewManager
+09-13 10:27:39.345 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.scroll.ReactHorizontalScrollViewManager
+09-13 10:27:39.346 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.image.ReactImageManager
+09-13 10:27:39.346 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.text.ReactTextViewManager
+09-13 10:27:39.347 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.scroll.ReactHorizontalScrollContainerViewManager
+09-13 10:27:39.347 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.unimplementedview.ReactUnimplementedViewManager
+09-13 10:27:39.348 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.scroll.ReactScrollViewManager
+09-13 10:27:39.348 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.view.ReactViewManager
+09-13 10:27:39.349 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.drawer.ReactDrawerLayoutManager
+09-13 10:27:39.349 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.switchview.ReactSwitchManager
+09-13 10:27:39.350 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.swiperefresh.SwipeRefreshLayoutManager
+09-13 10:27:39.351 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.textinput.ReactTextInputManager
+09-13 10:27:39.352 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.text.SelectableTextViewManager
+09-13 10:27:39.352 W/unknown:ViewManagerPropertyUpdater(27657): Could not find generated setter for class com.facebook.react.views.virtual.view.ReactVirtualViewManager
+09-13 10:27:39.361 I/ReactNativeJS(27657): Running "main"
+09-13 10:27:39.424 W/unknown:ReactNative(27657): StatusBarModule: Ignored status bar change, current activity is edge-to-edge.
+09-13 10:27:39.424 W/unknown:ReactNative(27657): StatusBarModule: Ignored status bar change, current activity is edge-to-edge.
+09-13 10:27:39.435 D/CompatibilityChangeReporter(27657): Compat change id reported: 210923482; UID 10358; state: ENABLED
+09-13 10:27:39.436 D/CompatibilityChangeReporter(27657): Compat change id reported: 171228096; UID 10358; state: ENABLED
+09-13 10:27:39.437 D/ScrollView(27657): initGoToTop
+09-13 10:27:39.438 I/WebViewFactory(27657): Loading com.google.android.webview version 149.0.7827.159 (code 782715901)
+09-13 10:27:39.439 D/ApplicationLoaders(27657): Returning zygote-cached class loader: /system/framework/android.test.base.jar
+09-13 10:27:39.440 D/nativeloader(27657): Configuring classloader-namespace for other apk /data/app/~~BMyTC7JtIebi5Cd4jeeUcQ==/com.google.android.webview-ljV0ddBFewjzS_BLY9LL1Q==/base.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~BMyTC7JtIebi5Cd4jeeUcQ==/com.google.android.webview-ljV0ddBFewjzS_BLY9LL1Q==/lib/arm64:/data/app/~~BMyTC7JtIebi5Cd4jeeUcQ==/com.google.android.webview-ljV0ddBFewjzS_BLY9LL1Q==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand
+09-13 10:27:39.447 I/cr_WVCFactoryProvider(27657): version=149.0.7827.159 (782715901) minSdkVersion=29 multiprocess=true packageId=127 splits=<none>
+09-13 10:27:39.450 I/chromium(27657): [0913/102739.450267:INFO:android_webview/browser/variations/variations_seed_loader.cc:67] Failed to open file for reading.: No such file or directory (2)
+09-13 10:27:39.450 I/chromium(27657): [0913/102739.450416:INFO:android_webview/browser/variations/variations_seed_loader.cc:67] Failed to open file for reading.: No such file or directory (2)
+09-13 10:27:39.455 I/cr_LibraryLoader(27657): Successfully loaded native library
+09-13 10:27:39.455 I/cr_CachingUmaRecorder(27657): Flushed 47 samples from 22 histograms, 0 samples were dropped.
+09-13 10:27:39.456 I/cr_ChildProcLH(27657): ScopedServiceBindingBatch.tryActivate: false
+09-13 10:27:39.457 I/cr_CombinedPProvider(27657): #registerProvider() provider:WV.wk@5a90cd8 isPolicyCacheEnabled:false policyProvidersSize:0
+09-13 10:27:39.457 I/cr_PolicyProvider(27657): #setManagerAndSource() 0
+09-13 10:27:39.458 I/cr_DisplayManager(27657): Is Display Topology available: false
+09-13 10:27:39.458 I/cr_policy(27657): registerReceiver succeeded after 0ms
+09-13 10:27:39.463 I/cr_CombinedPProvider(27657): #linkNativeInternal() 1
+09-13 10:27:39.464 D/CompatibilityChangeReporter(27657): Compat change id reported: 183155436; UID 10358; state: ENABLED
+09-13 10:27:39.464 I/cr_AppResProvider(27657): #getApplicationRestrictionsFromUserManager() Bundle[EMPTY_PARCEL]
+09-13 10:27:39.464 I/cr_PolicyProvider(27657): #notifySettingsAvailable() 0
+09-13 10:27:39.464 I/cr_CombinedPProvider(27657): #onSettingsAvailable() 0
+09-13 10:27:39.464 I/cr_CombinedPProvider(27657): #flushPolicies()
+09-13 10:27:39.475 W/chromium(27657): [WARNING:net/dns/dns_config_service_android.cc:69] Failed to read DnsConfig.
+09-13 10:27:39.477 E/ocessService0:0(27764): Not starting debugger since process cannot load the jdwp agent.
+09-13 10:27:39.478 W/chromium(27657): [WARNING:android_webview/browser/network_service/net_helpers.cc:137] HTTP Cache size is: 20971520
+09-13 10:27:39.482 D/ActivityThread(27764): setConscryptValidator
+09-13 10:27:39.482 D/ActivityThread(27764): setConscryptValidator - put
+09-13 10:27:39.485 D/CompatibilityChangeReporter(27657): Compat change id reported: 214741472; UID 10358; state: ENABLED
+09-13 10:27:39.491 D/CompatibilityChangeReporter(27764): Compat change id reported: 171979766; UID 99124; state: ENABLED
+09-13 10:27:39.493 D/CompatibilityChangeReporter(27657): Compat change id reported: 193247900; UID 10358; state: ENABLED
+09-13 10:27:39.494 D/ApplicationLoaders(27764): Returning zygote-cached class loader: /system/framework/android.test.base.jar
+09-13 10:27:39.496 D/NetworkSecurityConfig(27764): No Network Security Config specified, using platform default
+09-13 10:27:39.498 D/NetworkSecurityConfig(27764): No Network Security Config specified, using platform default
+09-13 10:27:39.499 I/cr_WebViewApkApp(27764): version=149.0.7827.159 (782715901) minSdkVersion=29 processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0 splits=<none>
+09-13 10:27:39.501 I/cr_ChildProcessService(27764): Creating new ChildProcessService pid=27764
+09-13 10:27:39.510 W/cr_media(27657): BLUETOOTH_CONNECT permission is missing.
+09-13 10:27:39.510 I/cr_LibraryLoader(27764): Successfully loaded native library
+09-13 10:27:39.510 W/cr_media(27657): getBluetoothAdapter() requires BLUETOOTH permission
+09-13 10:27:39.510 W/cr_media(27657): registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+09-13 10:27:39.511 I/cr_CachingUmaRecorder(27764): Flushed 2 samples from 2 histograms, 0 samples were dropped.
+09-13 10:27:39.511 W/chromium(27764): [WARNING:content/app/android/content_main_android.cc:82] android_setCpu already initialized
+09-13 10:27:39.518 W/chromium(27764): [WARNING:content/child/runtime_features.cc:546] Fenced frames cannot be enabled in this configuration. Use --enable-features=FencedFrames instead.
+09-13 10:27:39.518 W/chromium(27764): [WARNING:content/child/runtime_features.cc:571] Topics cannot be enabled in this configuration. Use --enable-features=BrowsingTopics in addition.
+09-13 10:27:39.518 W/chromium(27764): [WARNING:content/child/runtime_features.cc:592] SharedStorage cannot be enabled in this configuration. Use --enable-features=SharedStorageAPI in addition.
+09-13 10:27:39.521 D/vulkan  (27657): searching for layers in '/data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/lib/arm64'
+09-13 10:27:39.521 D/vulkan  (27657): searching for layers in '/data/app/~~CfjqbgOr2b8qXzm27a7lLw==/com.emoticonstudio.app-42Acu9OPC76k0inEeDJFDA==/base.apk!/lib/arm64-v8a'
+09-13 10:27:39.523 I/chromium(27764): [INFO:third_party/skia/src/ports/SkFontMgr_android_parser.cpp:724] [SkFontMgr Android Parser] '/product/etc/fonts_customization.xml' could not be opened
+09-13 10:27:39.523 I/chromium(27764):
+09-13 10:27:39.527 W/Adreno-AppProfiles(27657): Could not find QSPM HAL service. Skipping adreno profile processing.
+09-13 10:27:39.527 I/AdrenoVK-0(27657): ===== BEGIN DUMP OF OVERRIDDEN SETTINGS =====
+09-13 10:27:39.527 I/AdrenoVK-0(27657): ===== END DUMP OF OVERRIDDEN SETTINGS =====
+09-13 10:27:39.529 I/AdrenoVK-0(27657): QUALCOMM build          : 9ab6a2b2d8, Ifc633ebcef
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Build Date              : 01/24/23
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Shader Compiler Version : E031.41.03.24
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Local Branch            :
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Remote Branch           :
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Remote Branch           :
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Reconstruct Branch      :
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Build Config            : S P 14.1.4 AArch64
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Driver Path             : /vendor/lib64/hw/vulkan.adreno.so
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Driver Version          : 0676.13
+09-13 10:27:39.529 I/AdrenoVK-0(27657): PFP                     : 0x01740158
+09-13 10:27:39.529 I/AdrenoVK-0(27657): ME                      : 0x00000000
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Application Name    :
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Application Version : 0x00000001
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Engine Name         :
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Engine Version      : 0x00000001
+09-13 10:27:39.529 I/AdrenoVK-0(27657): Api Version         : 0x00403000
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657): performTraversals params={(0,0)(fillxfill) sim={adjust=resize} layoutInDisplayCutoutMode=always ty=BASE_APPLICATION wanim=0x1030309
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   fl=81810100
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   pfl=16020040
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   vsysui=110
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   apr=LIGHT_STATUS_BARS LIGHT_NAVIGATION_BARS
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   bhv=DEFAULT
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   fitSides= naviIconColor=0}
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657): performTraversals mFirst=false windowShouldResize=false viewVisibilityChanged=false mForceNextWindowRelayout=false params={(0,0)(fillxfill) sim={adjust=resize} layoutInDisplayCutoutMode=always ty=BASE_APPLICATION wanim=0x1030309
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   fl=81810100
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   pfl=16020040
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   vsysui=110
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   apr=LIGHT_STATUS_BARS LIGHT_NAVIGATION_BARS
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   bhv=DEFAULT
+09-13 10:27:39.534 D/ViewRootImpl@b150717[MainActivity](27657):   fitSides= naviIconColor=0}
+09-13 10:27:39.536 I/BLASTBufferQueue(27657): update, w= 1080 h= 2340 mName = ViewRootImpl@b150717[MainActivity] mNativeObject= 0xb4000075eb1fd600 sc.mNativeObject= 0xb400007495b3de00 format= -1 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:2894 android.view.ViewRootImpl.relayoutWindow:9843 android.view.ViewRootImpl.performTraversals:3880 android.view.ViewRootImpl.doTraversal:3112 android.view.ViewRootImpl$TraversalRunnable.run:10881 android.view.Choreographer$CallbackRecord.run:1301
+09-13 10:27:39.536 I/ViewRootImpl@b150717[MainActivity](27657): Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) req=(1080,2340)0 dur=2 res=0x0 s={true 0xb4000075eb17e000} ch=false seqId=0
+09-13 10:27:39.557 I/cr_AppResProvider(27657): #getApplicationRestrictionsFromUserManager() Bundle[EMPTY_PARCEL]
+09-13 10:27:39.557 I/cr_PolicyProvider(27657): #notifySettingsAvailable() 0
+09-13 10:27:39.557 I/cr_CombinedPProvider(27657): #onSettingsAvailable() 0
+09-13 10:27:39.557 I/cr_CombinedPProvider(27657): #flushPolicies()
+09-13 10:27:39.562 I/CameraManagerGlobal(27657): Connecting to camera service
+09-13 10:27:39.566 D/VendorTagDescriptor(27657): addVendorDescriptor: vendor tag id 11706189966126095484 added
+09-13 10:27:39.568 I/DecorView(27657): notifyKeepScreenOnChanged: keepScreenOn=false
+09-13 10:27:39.568 D/ViewRootImpl@b150717[MainActivity](27657): performTraversals mFirst=false windowShouldResize=false viewVisibilityChanged=false mForceNextWindowRelayout=false params={(0,0)(fillxfill) sim={adjust=resize} layoutInDisplayCutoutMode=always ty=BASE_APPLICATION wanim=0x1030309
+09-13 10:27:39.568 D/ViewRootImpl@b150717[MainActivity](27657):   fl=81810100
+09-13 10:27:39.568 D/ViewRootImpl@b150717[MainActivity](27657):   pfl=16020040
+09-13 10:27:39.568 D/ViewRootImpl@b150717[MainActivity](27657):   vsysui=1110
+09-13 10:27:39.568 D/ViewRootImpl@b150717[MainActivity](27657):   apr=LIGHT_STATUS_BARS LIGHT_NAVIGATION_BARS
+09-13 10:27:39.568 D/ViewRootImpl@b150717[MainActivity](27657):   bhv=SHOW_TRANSIENT_BARS_BY_SWIPE
+09-13 10:27:39.568 D/ViewRootImpl@b150717[MainActivity](27657):   fitSides= naviIconColor=0}
+09-13 10:27:39.568 I/CameraManager(27657): registerAvailabilityCallback: Is device callback = false
+09-13 10:27:39.569 I/CameraManagerGlobal(27657): postSingleUpdate device: camera id 0 status STATUS_PRESENT
+09-13 10:27:39.569 I/CameraManagerGlobal(27657): postSingleUpdate device: camera id 1 status STATUS_PRESENT
+09-13 10:27:39.569 I/CameraManagerGlobal(27657): postSingleUpdate device: camera id 2 status STATUS_PRESENT
+09-13 10:27:39.569 I/CameraManagerGlobal(27657): postSingleUpdate device: camera id 3 status STATUS_PRESENT
+09-13 10:27:39.571 I/BLASTBufferQueue(27657): update, w= 1080 h= 2340 mName = ViewRootImpl@b150717[MainActivity] mNativeObject= 0xb4000075eb1fd600 sc.mNativeObject= 0xb400007495b40f60 format= -1 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:2894 android.view.ViewRootImpl.relayoutWindow:9843 android.view.ViewRootImpl.performTraversals:3880 android.view.ViewRootImpl.doTraversal:3112 android.view.ViewRootImpl$TraversalRunnable.run:10881 android.view.Choreographer$CallbackRecord.run:1301
+09-13 10:27:39.571 I/ViewRootImpl@b150717[MainActivity](27657): Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) req=(1080,2340)0 dur=3 res=0x0 s={true 0xb4000075eb17e000} ch=false seqId=0
+09-13 10:27:39.572 I/CameraManagerGlobal(27657): Camera 0 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client jp.ne.paypay.android.app API Level 1
+09-13 10:27:39.573 I/CameraManagerGlobal(27657): Camera 1 facing CAMERA_FACING_FRONT state now CAMERA_STATE_CLOSED for client android.system API Level 2
+09-13 10:27:39.573 I/CameraManagerGlobal(27657): Camera 2 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client android.system API Level 2
+09-13 10:27:39.573 I/CameraManagerGlobal(27657): Camera 20 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client com.sec.android.app.camera API Level 2
+09-13 10:27:39.573 I/CameraManagerGlobal(27657): Camera 21 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client android.system API Level 2
+09-13 10:27:39.573 I/CameraManagerGlobal(27657): Camera 23 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client android.system API Level 2
+09-13 10:27:39.573 I/CameraManagerGlobal(27657): Camera 3 facing CAMERA_FACING_FRONT state now CAMERA_STATE_CLOSED for client android.system API Level 2
+09-13 10:27:39.573 I/CameraManagerGlobal(27657): Camera 4 facing CAMERA_FACING_FRONT state now CAMERA_STATE_CLOSED for client android.system API Level 2
+09-13 10:27:39.573 I/CameraManagerGlobal(27657): Camera 52 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client android.system API Level 2
+09-13 10:27:39.573 I/CameraManagerGlobal(27657): Camera 56 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client android.system API Level 2
+09-13 10:27:39.573 I/CameraManagerGlobal(27657): Camera 58 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client android.system API Level 2
+09-13 10:27:39.573 I/CameraManagerGlobal(27657): Camera 90 facing CAMERA_FACING_FRONT state now CAMERA_STATE_CLOSED for client android.system API Level 2
+09-13 10:27:39.590 W/AudioCapabilities(27657): Unsupported mime audio/x-ape
+09-13 10:27:39.590 W/AudioCapabilities(27657): Unsupported mime audio/x-ima
+09-13 10:27:39.590 W/AudioCapabilities(27657): Unsupported mime audio/mpeg-L1
+09-13 10:27:39.590 W/AudioCapabilities(27657): Unsupported mime audio/mpeg-L2
+09-13 10:27:39.590 W/VideoCapabilities(27657): Unsupported mime video/wvc1
+09-13 10:27:39.590 W/VideoCapabilities(27657): Unsupported mime video/x-ms-wmv
+09-13 10:27:39.593 W/VideoCapabilities(27657): Unsupported mime image/vnd.android.heic
+09-13 10:27:39.593 W/VideoCapabilities(27657): Unsupported mime image/vnd.android.heic
+09-13 10:27:39.593 W/VideoCapabilities(27657): Unrecognized profile/level 32768/256 for video/mp4v-es
+09-13 10:27:39.675 I/cr_A11yState(27657): Enabled accessibility services list updated. [com.browserstack.watcher/.services.Watcher]
+09-13 10:27:39.675 I/cr_A11yState(27657): Informing listeners of changes.
+09-13 10:27:39.675 I/cr_A11yState(27657): New AccessibilityState: State{isComplexUserInteractionServiceEnabled=true, isTouchExplorationEnabled=false, isPerformGesturesEnabled=true, isAnyAccessibilityServiceEnabled=true, isAccessibilityToolPresent=true, isTextShowPasswordEnabled=true, isOnlyAutofillRunning=false, isOnlyPasswordManagersEnabled=false, isKnownScreenReaderEnabled=false}
+09-13 10:27:44.371 D/ProfileInstaller(27657): Installing profile for com.emoticonstudio.app
+09-13 10:27:52.377 D/io_stats( 1176): !@ Write_top(KB): kworker/u16:2(9320) 136 ticonstudio.app(27657) 8
+09-13 10:27:52.576 I/ticonstudio.app(27657): Explicit concurrent copying GC freed 7959(330KB) AllocSpace objects, 0(0B) LOS objects, 49% free, 6492KB/12MB, paused 32us,17us total 19.204ms
+09-13 10:28:09.674 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x0, f=0x0, d=0, '841d832', t=1
+09-13 10:28:09.674 I/ViewRootImpl@b150717[MainActivity](27657): ViewPostIme pointer 0
+09-13 10:28:09.684 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x1, f=0x0, d=0, '841d832', t=1
+09-13 10:28:09.685 I/ViewRootImpl@b150717[MainActivity](27657): ViewPostIme pointer 1
+09-13 10:28:09.772 W/unknown:ReactNative(27657): StatusBarModule: Ignored status bar change, current activity is edge-to-edge.
+09-13 10:28:09.781 D/ScrollView(27657): initGoToTop
+09-13 10:28:09.801 I/Dialog  (27657): mIsDeviceDefault = false, mIsSamsungBasicInteraction = false, isMetaDataInActivity = false
+09-13 10:28:09.802 I/DecorView(27657): [INFO] isPopOver=false config=false
+09-13 10:28:09.802 I/DecorView(27657): updateCaptionType: isFloating=false isApplication=true hasWindowDecorCaption=false this=DecorView@89e0[]
+09-13 10:28:09.802 D/DecorView(27657): setCaptionType = 0, this = DecorView@89e0[]
+09-13 10:28:09.803 I/DecorView(27657): getCurrentDensityDpi: from app context. densityDpi=480 msg=resources_loaded
+09-13 10:28:09.803 I/DecorView(27657): setWindowBackground: isPopOver=false color=0 d=android.graphics.drawable.ColorDrawable@6c5635e
+09-13 10:28:09.803 W/OnBackInvokedCallback(27657): OnBackInvokedCallback is not enabled for the application.
+09-13 10:28:09.803 W/OnBackInvokedCallback(27657): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+09-13 10:28:09.804 D/NativeCustomFrequencyManager(27657): [NativeCFMS] BpCustomFrequencyManager::BpCustomFrequencyManager()
+09-13 10:28:09.804 I/DecorView(27657): notifyKeepScreenOnChanged: keepScreenOn=false
+09-13 10:28:09.806 D/InsetsController(27657): onStateChanged: InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 81 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(512, 0 - 568, 81), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={3.0} cutoutSpec={M 0,0 H -9.333333333333333‬ V 27 H 9.333333333333333‬ V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=102, center=Point(102, 102)}, RoundedCorner{position=TopRight, radius=102, center=Point(978, 102)}, RoundedCorner{position=BottomRight, radius=102, center=Point(978, 2238)}, RoundedCorner{position=BottomLeft, radius=102, center=Point(102, 2238)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 81) rotation=0}, mSources= { InsetsSource: {mType=ITYPE_STATUS_BAR, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_NAVIGATION_BAR, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_GESTURES, mFrame=[0,0][0,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_GESTURES, mFrame=[1080,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_MANDATORY_GESTURES, mFrame=[0,0][1080,117], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_MANDATORY_GESTURES, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_DISPLAY_CUTOUT, mFrame=[0,0][-100000,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_DISPLAY_CUTOUT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_DISPLAY_CUTOUT, mFrame=[100000,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_DISPLAY_CUTOUT, mFrame=[0,100000][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_TAPPABLE_ELEMENT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_TAPPABLE_ELEMENT, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false} } host=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity from=android.view.ViewRootImpl.setView:1732
+09-13 10:28:09.809 I/ViewRootImpl@8448036[MainActivity](27657): setView = com.android.internal.policy.DecorView@89e0 TM=true
+09-13 10:28:09.809 I/DecorView(27657): notifyKeepScreenOnChanged: keepScreenOn=false
+09-13 10:28:09.810 I/DecorView(27657): notifyKeepScreenOnChanged: keepScreenOn=false
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657): performTraversals params={(0,0)(fillxfill) gr=CENTER sim={adjust=resize} layoutInDisplayCutoutMode=always ty=APPLICATION fmt=TRANSPARENT wanim=0x7f12012b
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   fl=81810102
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   pfl=16020040
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   vsysui=1110
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   apr=LIGHT_NAVIGATION_BARS
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   bhv=DEFAULT
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   fitSides=
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):  dimAmount=0.5 naviIconColor=0}
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657): performTraversals mFirst=true windowShouldResize=true viewVisibilityChanged=false mForceNextWindowRelayout=false params={(0,0)(fillxfill) gr=CENTER sim={adjust=resize} layoutInDisplayCutoutMode=always ty=APPLICATION fmt=TRANSPARENT wanim=0x7f12012b
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   fl=81810102
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   pfl=16020040
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   vsysui=1110
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   apr=LIGHT_NAVIGATION_BARS
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   bhv=SHOW_TRANSIENT_BARS_BY_SWIPE
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):   fitSides=
+09-13 10:28:09.810 D/ViewRootImpl@8448036[MainActivity](27657):  dimAmount=0.5 naviIconColor=0}
+09-13 10:28:09.814 D/InsetsController(27657): onStateChanged: InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 81 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(512, 0 - 568, 81), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={3.0} cutoutSpec={M 0,0 H -9.333333333333333‬ V 27 H 9.333333333333333‬ V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=102, center=Point(102, 102)}, RoundedCorner{position=TopRight, radius=102, center=Point(978, 102)}, RoundedCorner{position=BottomRight, radius=102, center=Point(978, 2238)}, RoundedCorner{position=BottomLeft, radius=102, center=Point(102, 2238)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 81) rotation=0}, mSources= { InsetsSource: {mType=ITYPE_STATUS_BAR, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_NAVIGATION_BAR, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_GESTURES, mFrame=[0,0][0,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_GESTURES, mFrame=[1080,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_MANDATORY_GESTURES, mFrame=[0,0][1080,117], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_MANDATORY_GESTURES, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_DISPLAY_CUTOUT, mFrame=[0,0][-100000,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_DISPLAY_CUTOUT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_DISPLAY_CUTOUT, mFrame=[100000,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_DISPLAY_CUTOUT, mFrame=[0,100000][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_TAPPABLE_ELEMENT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_TAPPABLE_ELEMENT, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_IME, mFrame=[0,0][0,0], mVisible=false, mInsetsRoundedCornerFrame=false} } host=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity from=android.view.ViewRootImpl.relayoutWindow:9798
+09-13 10:28:09.814 I/BLASTBufferQueue(27657): new BLASTBufferQueue, mName= ViewRootImpl@8448036[MainActivity] mNativeObject= 0xb4000074873baf00 sc.mNativeObject= 0xb40000760b0fa060 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:2905 android.view.ViewRootImpl.relayoutWindow:9843 android.view.ViewRootImpl.performTraversals:3880 android.view.ViewRootImpl.doTraversal:3112 android.view.ViewRootImpl$TraversalRunnable.run:10881 android.view.Choreographer$CallbackRecord.run:1301 android.view.Choreographer$CallbackRecord.run:1309 android.view.Choreographer.doCallbacks:923 android.view.Choreographer.doFrame:852 android.view.Choreographer$FrameDisplayEventReceiver.run:1283
+09-13 10:28:09.814 I/BLASTBufferQueue(27657): update, w= 1080 h= 2340 mName = ViewRootImpl@8448036[MainActivity] mNativeObject= 0xb4000074873baf00 sc.mNativeObject= 0xb40000760b0fa060 format= -2 caller= android.graphics.BLASTBufferQueue.<init>:84 android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:2905 android.view.ViewRootImpl.relayoutWindow:9843 android.view.ViewRootImpl.performTraversals:3880 android.view.ViewRootImpl.doTraversal:3112 android.view.ViewRootImpl$TraversalRunnable.run:10881
+09-13 10:28:09.815 I/ViewRootImpl@8448036[MainActivity](27657): Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) req=(1080,2340)0 dur=4 res=0x3 s={true 0xb4000074873cf000} ch=true seqId=0
+09-13 10:28:09.815 I/ViewRootImpl@8448036[MainActivity](27657): performConfigurationChange setNightDimText nightDimLevel=0
+09-13 10:28:09.815 D/ViewRootImpl@8448036[MainActivity](27657): mThreadedRenderer.initialize() mSurface={isValid=true 0xb4000074873cf000} hwInitialized=true
+09-13 10:28:09.815 D/OpenGLRenderer(27657): eglCreateWindowSurface
+09-13 10:28:09.815 D/ViewRootImpl@8448036[MainActivity](27657): reportNextDraw android.view.ViewRootImpl.performTraversals:4434 android.view.ViewRootImpl.doTraversal:3112 android.view.ViewRootImpl$TraversalRunnable.run:10881 android.view.Choreographer$CallbackRecord.run:1301 android.view.Choreographer$CallbackRecord.run:1309
+09-13 10:28:09.815 D/ViewRootImpl@8448036[MainActivity](27657): Setup new sync id=0
+09-13 10:28:09.816 D/ViewRootImpl@8448036[MainActivity](27657): Setting syncFrameCallback
+09-13 10:28:09.816 D/ViewRootImpl@8448036[MainActivity](27657): registerCallbacksForSync syncBuffer=false
+09-13 10:28:09.816 D/ViewRootImpl@8448036[MainActivity](27657): Received frameDrawingCallback syncResult=0 frameNum=1.
+09-13 10:28:09.816 D/ViewRootImpl@8448036[MainActivity](27657): Setting up sync and frameCommitCallback
+09-13 10:28:09.823 I/BLASTBufferQueue(27657): [ViewRootImpl@8448036[MainActivity]#1](f:0,a:0) onFrameAvailable the first frame is available
+09-13 10:28:09.824 D/ViewRootImpl@8448036[MainActivity](27657): Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true
+09-13 10:28:09.824 D/OpenGLRenderer(27657): CFMS:: SetUp Pid : 27657    Tid : 27679
+09-13 10:28:09.825 D/ViewRootImpl@8448036[MainActivity](27657): onSyncComplete
+09-13 10:28:09.826 D/ViewRootImpl@8448036[MainActivity](27657): setupSync seqId=0 mSyncId=0 fn=1 caller=android.view.ViewRootImpl$$ExternalSyntheticLambda11.accept:6 android.window.SurfaceSyncer.lambda$setupSync$1$android-window-SurfaceSyncer:128 android.window.SurfaceSyncer$$ExternalSyntheticLambda1.accept:8 android.window.SurfaceSyncer$SyncSet.checkIfSyncIsComplete:382 android.window.SurfaceSyncer$SyncSet.markSyncReady:359 android.window.SurfaceSyncer.markSyncReady:151 android.view.ViewRootImpl.performTraversals:4499
+09-13 10:28:09.829 D/ViewRootImpl@8448036[MainActivity](27657): reportDrawFinished seqId=0 mSyncId=-1 fn=1 mSurfaceChangedTransaction=0xb4000074bbefc600
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657): performTraversals params={(0,0)(fillxfill) gr=CENTER sim={adjust=resize} layoutInDisplayCutoutMode=always ty=APPLICATION fmt=TRANSPARENT wanim=0x7f12012b
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   fl=81810102
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   pfl=16020040
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   vsysui=1110
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   apr=LIGHT_STATUS_BARS LIGHT_NAVIGATION_BARS
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   bhv=SHOW_TRANSIENT_BARS_BY_SWIPE
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   fitSides=
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):  dimAmount=0.5 naviIconColor=0}
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657): performTraversals mFirst=false windowShouldResize=false viewVisibilityChanged=false mForceNextWindowRelayout=false params={(0,0)(fillxfill) gr=CENTER sim={adjust=resize} layoutInDisplayCutoutMode=always ty=APPLICATION fmt=TRANSPARENT wanim=0x7f12012b
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   fl=81810102
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   pfl=16020040
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   vsysui=1110
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   apr=LIGHT_STATUS_BARS LIGHT_NAVIGATION_BARS
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   bhv=SHOW_TRANSIENT_BARS_BY_SWIPE
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):   fitSides=
+09-13 10:28:09.861 D/ViewRootImpl@8448036[MainActivity](27657):  dimAmount=0.5 naviIconColor=0}
+09-13 10:28:09.866 I/BLASTBufferQueue(27657): update, w= 1080 h= 2340 mName = ViewRootImpl@8448036[MainActivity] mNativeObject= 0xb4000074873baf00 sc.mNativeObject= 0xb4000074bbf0c960 format= -2 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:2894 android.view.ViewRootImpl.relayoutWindow:9843 android.view.ViewRootImpl.performTraversals:3880 android.view.ViewRootImpl.doTraversal:3112 android.view.ViewRootImpl$TraversalRunnable.run:10881 android.view.Choreographer$CallbackRecord.run:1301
+09-13 10:28:09.866 I/ViewRootImpl@8448036[MainActivity](27657): Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) req=(1080,2340)0 dur=5 res=0x0 s={true 0xb4000074873cf000} ch=false seqId=0
+09-13 10:28:09.899 I/DecorView(27657): notifyKeepScreenOnChanged: keepScreenOn=false
+09-13 10:28:09.899 I/DecorView(27657): notifyKeepScreenOnChanged: keepScreenOn=false
+09-13 10:28:09.899 I/DecorView(27657): notifyKeepScreenOnChanged: keepScreenOn=false
+09-13 10:28:09.901 E/chromium(27764): [ERROR:cc/tiles/tile_manager.cc:1008] WARNING: tile memory limits exceeded, some content may not draw
+09-13 10:28:09.901 E/chromium(27764): [ERROR:cc/tiles/tile_manager.cc:1008] WARNING: tile memory limits exceeded, some content may not draw
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657): performTraversals params={(0,0)(fillxfill) gr=CENTER sim={adjust=resize} layoutInDisplayCutoutMode=always ty=APPLICATION fmt=TRANSPARENT wanim=0x7f12012b
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   fl=81810102
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   pfl=16020040
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   vsysui=1110
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   apr=LIGHT_STATUS_BARS LIGHT_NAVIGATION_BARS
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   bhv=SHOW_TRANSIENT_BARS_BY_SWIPE
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   fitSides=
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):  dimAmount=0.5 naviIconColor=0}
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657): performTraversals mFirst=false windowShouldResize=false viewVisibilityChanged=false mForceNextWindowRelayout=false params={(0,0)(fillxfill) gr=CENTER sim={adjust=resize} layoutInDisplayCutoutMode=always ty=APPLICATION fmt=TRANSPARENT wanim=0x7f12012b
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   fl=81810102
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   pfl=16020040
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   vsysui=1110
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   apr=LIGHT_STATUS_BARS LIGHT_NAVIGATION_BARS
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   bhv=SHOW_TRANSIENT_BARS_BY_SWIPE
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):   fitSides=
+09-13 10:28:09.902 D/ViewRootImpl@8448036[MainActivity](27657):  dimAmount=0.5 naviIconColor=0}
+09-13 10:28:09.904 I/BLASTBufferQueue(27657): update, w= 1080 h= 2340 mName = ViewRootImpl@8448036[MainActivity] mNativeObject= 0xb4000074873baf00 sc.mNativeObject= 0xb4000074871530a0 format= -2 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:2894 android.view.ViewRootImpl.relayoutWindow:9843 android.view.ViewRootImpl.performTraversals:3880 android.view.ViewRootImpl.doTraversal:3112 android.view.ViewRootImpl$TraversalRunnable.run:10881 android.view.Choreographer$CallbackRecord.run:1301
+09-13 10:28:09.904 I/ViewRootImpl@8448036[MainActivity](27657): Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) req=(1080,2340)0 dur=1 res=0x0 s={true 0xb4000074873cf000} ch=false seqId=0
+09-13 10:28:09.906 I/ViewRootImpl@b150717[MainActivity](27657): MSG_WINDOW_FOCUS_CHANGED 0 0
+09-13 10:28:09.907 I/ViewRootImpl@8448036[MainActivity](27657): MSG_WINDOW_FOCUS_CHANGED 1 0
+09-13 10:28:09.907 D/ViewRootImpl@8448036[MainActivity](27657): mThreadedRenderer.initializeIfNeeded()#2 mSurface={isValid=true 0xb4000074873cf000}
+09-13 10:28:09.907 D/InputMethodManager(27657): startInputInner - Id : 0
+09-13 10:28:09.907 I/InputMethodManager(27657): startInputInner - mService.startInputOrWindowGainedFocus
+09-13 10:28:09.929 E/chromium(27764): [ERROR:cc/tiles/tile_manager.cc:1008] WARNING: tile memory limits exceeded, some content may not draw
+09-13 10:28:09.929 E/chromium(27764): [ERROR:cc/tiles/tile_manager.cc:1008] WARNING: tile memory limits exceeded, some content may not draw
+09-13 10:28:09.993 W/Choreographer(27657): Frame time is 0.100211 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-13 10:28:12.383 D/io_stats( 1176): !@ Read_top(KB): ticonstudio.app(27657) 8
+09-13 10:28:14.104 I/ticonstudio.app(27657): Explicit concurrent copying GC freed 110824(4174KB) AllocSpace objects, 15(788KB) LOS objects, 49% free, 7727KB/15MB, paused 37us,15us total 29.462ms
+09-13 10:28:14.131 D/InputTransport(27657): Input channel destroyed: 'ClientS', fd=111
+09-13 10:28:20.626 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x0, f=0x0, d=0, '2b4d683', t=1
+09-13 10:28:20.627 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 0
+09-13 10:28:21.021 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x1, f=0x0, d=0, '2b4d683', t=1
+09-13 10:28:21.021 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 1
+09-13 10:28:24.157 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x0, f=0x0, d=0, '2b4d683', t=1
+09-13 10:28:24.157 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 0
+09-13 10:28:24.541 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x1, f=0x0, d=0, '2b4d683', t=1
+09-13 10:28:24.542 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 1
+09-13 10:28:35.340 I/ticonstudio.app(27657): Explicit concurrent copying GC freed 23673(833KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 7534KB/14MB, paused 148us,15us total 52.349ms
+09-13 10:28:49.887 W/unknown:ReactNative(27657): StatusBarModule: Ignored status bar change, current activity is edge-to-edge.
+09-13 10:28:50.075 W/Choreographer(27657): Frame time is 0.063767 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-13 10:28:56.735 I/ticonstudio.app(27657): Explicit concurrent copying GC freed 30704(1288KB) AllocSpace objects, 12(256KB) LOS objects, 49% free, 7686KB/15MB, paused 28us,19us total 23.784ms
+09-13 10:29:01.404 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x0, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:01.407 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 0
+09-13 10:29:01.412 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x1, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:01.413 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 1
+09-13 10:29:01.501 D/ScrollView(27657): initGoToTop
+09-13 10:29:06.309 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x0, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:06.310 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 0
+09-13 10:29:06.314 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x1, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:06.314 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 1
+09-13 10:29:08.527 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x0, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:08.529 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 0
+09-13 10:29:08.554 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x1, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:08.554 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 1
+09-13 10:29:17.950 I/ticonstudio.app(27657): Explicit concurrent copying GC freed 65927(2504KB) AllocSpace objects, 7(140KB) LOS objects, 49% free, 7902KB/15MB, paused 27us,19us total 23.808ms
+09-13 10:29:23.418 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x0, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:23.418 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 0
+09-13 10:29:23.421 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x1, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:23.421 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 1
+09-13 10:29:25.607 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x0, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:25.609 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 0
+09-13 10:29:25.617 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x1, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:25.617 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 1
+09-13 10:29:25.689 D/ScrollView(27657): initGoToTop
+09-13 10:29:26.017 W/Choreographer(27657): Frame time is 0.007597 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-13 10:29:38.973 I/ticonstudio.app(27657): Explicit concurrent copying GC freed 52311(1995KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 7844KB/15MB, paused 78us,23us total 46.664ms
+09-13 10:29:40.620 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x0, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:40.623 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 0
+09-13 10:29:40.638 I/InputDispatcher( 2514): Delivering touch to (27657): action: 0x1, f=0x0, d=0, '2b4d683', t=1
+09-13 10:29:40.638 I/ViewRootImpl@8448036[MainActivity](27657): ViewPostIme pointer 1
+09-13 10:29:40.646 D/InputMethodManager(27657): startInputInner - Id : 0
+09-13 10:29:40.646 I/InputMethodManager(27657): startInputInner - mService.startInputOrWindowGainedFocus
+09-13 10:29:40.653 D/CompatibilityChangeReporter(27657): Compat change id reported: 163400105; UID 10358; state: ENABLED
+09-13 10:29:40.653 I/IMM_LC  (27657): showSoftInput(View,I)
+09-13 10:29:40.653 I/IMM_LC  (27657): ssi() - flag : 0 view : com.emoticonstudio.app reason = SHOW_SOFT_INPUT
+09-13 10:29:40.692 W/OnBackInvokedCallback(27657): OnBackInvokedCallback is not enabled for the application.
+09-13 10:29:40.692 W/OnBackInvokedCallback(27657): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+09-13 10:29:40.706 I/ViewRootImpl@8448036[MainActivity](27657): Resizing android.view.ViewRootImpl@3d069c2: frame = [0,0][1080,2340] reportDraw = false forceLayout = false syncSeqId = 0
+09-13 10:29:40.707 D/InsetsController(27657): onStateChanged: InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 81 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(512, 0 - 568, 81), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={3.0} cutoutSpec={M 0,0 H -9.333333333333333‬ V 27 H 9.333333333333333‬ V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=102, center=Point(102, 102)}, RoundedCorner{position=TopRight, radius=102, center=Point(978, 102)}, RoundedCorner{position=BottomRight, radius=102, center=Point(978, 2238)}, RoundedCorner{position=BottomLeft, radius=102, center=Point(102, 2238)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 81) rotation=0}, mSources= { InsetsSource: {mType=ITYPE_STATUS_BAR, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_NAVIGATION_BAR, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_GESTURES, mFrame=[0,0][0,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_GESTURES, mFrame=[1080,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_MANDATORY_GESTURES, mFrame=[0,0][1080,117], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_MANDATORY_GESTURES, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_DISPLAY_CUTOUT, mFrame=[0,0][-100000,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_DISPLAY_CUTOUT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_DISPLAY_CUTOUT, mFrame=[100000,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_DISPLAY_CUTOUT, mFrame=[0,100000][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_TAPPABLE_ELEMENT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_TAPPABLE_ELEMENT, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_IME, mFrame=[0,2340][1080,2340], mVisible=false, mInsetsRoundedCornerFrame=false} } host=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity from=android.view.ViewRootImpl$ViewRootHandler.handleMessageImpl:6736
+09-13 10:29:40.707 I/ViewRootImpl@8448036[MainActivity](27657): handleResized, msg = 4 frames=ClientWindowFrames{frame=[0,0][1080,2340] display=[0,0][1080,2340] parentFrame=[0,0][0,0] parentClippedByDisplayCutout=false} forceNextWindowRelayout=false displayId=0 resizeMode=-1 frameChanged=false displayFrameChanged=false configChanged=false displayChanged=false
+09-13 10:29:40.707 I/ViewRootImpl@b150717[MainActivity](27657): Resizing android.view.ViewRootImpl@8374cff: frame = [0,0][1080,2340] reportDraw = false forceLayout = false syncSeqId = 0
+09-13 10:29:40.708 D/InsetsController(27657): onStateChanged: InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 81 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(512, 0 - 568, 81), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={3.0} cutoutSpec={M 0,0 H -9.333333333333333‬ V 27 H 9.333333333333333‬ V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=102, center=Point(102, 102)}, RoundedCorner{position=TopRight, radius=102, center=Point(978, 102)}, RoundedCorner{position=BottomRight, radius=102, center=Point(978, 2238)}, RoundedCorner{position=BottomLeft, radius=102, center=Point(102, 2238)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 81) rotation=0}, mSources= { InsetsSource: {mType=ITYPE_STATUS_BAR, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_NAVIGATION_BAR, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_GESTURES, mFrame=[0,0][0,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_GESTURES, mFrame=[1080,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_MANDATORY_GESTURES, mFrame=[0,0][1080,117], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_MANDATORY_GESTURES, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_DISPLAY_CUTOUT, mFrame=[0,0][-100000,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_DISPLAY_CUTOUT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_DISPLAY_CUTOUT, mFrame=[100000,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_DISPLAY_CUTOUT, mFrame=[0,100000][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_TAPPABLE_ELEMENT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_TAPPABLE_ELEMENT, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_IME, mFrame=[0,2340][1080,2340], mVisible=false, mInsetsRoundedCornerFrame=false} } host=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity from=android.view.ViewRootImpl$ViewRootHandler.handleMessageImpl:6723
+09-13 10:29:40.708 I/ViewRootImpl@b150717[MainActivity](27657): handleResized, msg = 4 frames=ClientWindowFrames{frame=[0,0][1080,2340] display=[0,0][1080,2340] parentFrame=[0,0][0,0] parentClippedByDisplayCutout=false} forceNextWindowRelayout=false displayId=0 resizeMode=-1 frameChanged=false displayFrameChanged=false configChanged=false displayChanged=false
+09-13 10:29:40.710 I/IMM_LC  (27657): showSoftInput(View,I)
+09-13 10:29:40.710 I/IMM_LC  (27657): ssi() - flag : 0 view : com.emoticonstudio.app reason = SHOW_SOFT_INPUT
+09-13 10:29:40.738 I/ViewRootImpl@b150717[MainActivity](27657): Resizing android.view.ViewRootImpl@8374cff: frame = [0,0][1080,2340] reportDraw = false forceLayout = false syncSeqId = 0
+09-13 10:29:40.738 D/InsetsController(27657): onStateChanged: InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 81 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(512, 0 - 568, 81), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={3.0} cutoutSpec={M 0,0 H -9.333333333333333‬ V 27 H 9.333333333333333‬ V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=102, center=Point(102, 102)}, RoundedCorner{position=TopRight, radius=102, center=Point(978, 102)}, RoundedCorner{position=BottomRight, radius=102, center=Point(978, 2238)}, RoundedCorner{position=BottomLeft, radius=102, center=Point(102, 2238)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 81) rotation=0}, mSources= { InsetsSource: {mType=ITYPE_STATUS_BAR, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_NAVIGATION_BAR, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_GESTURES, mFrame=[0,0][0,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_GESTURES, mFrame=[1080,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_MANDATORY_GESTURES, mFrame=[0,0][1080,117], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_MANDATORY_GESTURES, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_DISPLAY_CUTOUT, mFrame=[0,0][-100000,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_DISPLAY_CUTOUT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_DISPLAY_CUTOUT, mFrame=[100000,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_DISPLAY_CUTOUT, mFrame=[0,100000][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_TAPPABLE_ELEMENT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_TAPPABLE_ELEMENT, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_IME, mFrame=[0,1314][1080,2340], mVisibleFrame=[0,1314][1080,2340], mVisible=false, mInsetsRoundedCornerFrame=false} } host=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity from=android.view.ViewRootImpl$ViewRootHandler.handleMessageImpl:6736
+09-13 10:29:40.738 I/ViewRootImpl@8448036[MainActivity](27657): Resizing android.view.ViewRootImpl@3d069c2: frame = [0,0][1080,2340] reportDraw = false forceLayout = false syncSeqId = 0
+09-13 10:29:40.739 D/InsetsController(27657): onStateChanged: InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 81 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(512, 0 - 568, 81), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={3.0} cutoutSpec={M 0,0 H -9.333333333333333‬ V 27 H 9.333333333333333‬ V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=102, center=Point(102, 102)}, RoundedCorner{position=TopRight, radius=102, center=Point(978, 102)}, RoundedCorner{position=BottomRight, radius=102, center=Point(978, 2238)}, RoundedCorner{position=BottomLeft, radius=102, center=Point(102, 2238)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 81) rotation=0}, mSources= { InsetsSource: {mType=ITYPE_STATUS_BAR, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_NAVIGATION_BAR, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_GESTURES, mFrame=[0,0][0,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_GESTURES, mFrame=[1080,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_MANDATORY_GESTURES, mFrame=[0,0][1080,117], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_MANDATORY_GESTURES, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_DISPLAY_CUTOUT, mFrame=[0,0][-100000,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_DISPLAY_CUTOUT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_DISPLAY_CUTOUT, mFrame=[100000,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_DISPLAY_CUTOUT, mFrame=[0,100000][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_TAPPABLE_ELEMENT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_TAPPABLE_ELEMENT, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_IME, mFrame=[0,1314][1080,2340], mVisibleFrame=[0,1314][1080,2340], mVisible=false, mInsetsRoundedCornerFrame=false} } host=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity from=android.view.ViewRootImpl$ViewRootHandler.handleMessageImpl:6723
+09-13 10:29:40.739 I/ViewRootImpl@b150717[MainActivity](27657): handleResized, msg = 4 frames=ClientWindowFrames{frame=[0,0][1080,2340] display=[0,0][1080,2340] parentFrame=[0,0][0,0] parentClippedByDisplayCutout=false} forceNextWindowRelayout=false displayId=0 resizeMode=-1 frameChanged=false displayFrameChanged=false configChanged=false displayChanged=false
+09-13 10:29:40.739 I/ViewRootImpl@8448036[MainActivity](27657): handleResized, msg = 4 frames=ClientWindowFrames{frame=[0,0][1080,2340] display=[0,0][1080,2340] parentFrame=[0,0][0,0] parentClippedByDisplayCutout=false} forceNextWindowRelayout=false displayId=0 resizeMode=-1 frameChanged=false displayFrameChanged=false configChanged=false displayChanged=false
+09-13 10:29:40.779 D/InsetsController(27657): show(ime(), fromIme=true)
+09-13 10:29:40.780 D/InsetsController(27657): controlAnimationUnchecked: Added types=8 animType=0 host=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity from=android.view.InsetsController.applyAnimation:1576 android.view.InsetsController.applyAnimation:1557 android.view.InsetsController.show:1063
+09-13 10:29:40.780 D/InsetsSourceConsumer(27657): setRequestedVisible: visible=true, type=19, host=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity, from=android.view.InsetsSourceConsumer.show:250 android.view.ImeInsetsSourceConsumer.show:82 android.view.InsetsController.showDirectly:1609 android.view.InsetsController.controlAnimationUnchecked:1232 android.view.InsetsController.applyAnimation:1576 android.view.InsetsController.applyAnimation:1557 android.view.InsetsController.show:1063 android.view.ViewRootImpl$ViewRootHandler.handleMessageImpl:6757 android.view.ViewRootImpl$ViewRootHandler.handleMessage:6693 android.os.Handler.dispatchMessage:106
+09-13 10:29:40.784 I/ViewRootImpl@b150717[MainActivity](27657): Resizing android.view.ViewRootImpl@8374cff: frame = [0,0][1080,2340] reportDraw = false forceLayout = false syncSeqId = 0
+09-13 10:29:40.784 I/ViewRootImpl@8448036[MainActivity](27657): Resizing android.view.ViewRootImpl@3d069c2: frame = [0,0][1080,2340] reportDraw = false forceLayout = false syncSeqId = 0
+09-13 10:29:40.813 D/InsetsController(27657): onStateChanged: InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 81 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(512, 0 - 568, 81), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={3.0} cutoutSpec={M 0,0 H -9.333333333333333‬ V 27 H 9.333333333333333‬ V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=102, center=Point(102, 102)}, RoundedCorner{position=TopRight, radius=102, center=Point(978, 102)}, RoundedCorner{position=BottomRight, radius=102, center=Point(978, 2238)}, RoundedCorner{position=BottomLeft, radius=102, center=Point(102, 2238)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 81) rotation=0}, mSources= { InsetsSource: {mType=ITYPE_STATUS_BAR, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_NAVIGATION_BAR, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_GESTURES, mFrame=[0,0][0,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_GESTURES, mFrame=[1080,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_MANDATORY_GESTURES, mFrame=[0,0][1080,117], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_MANDATORY_GESTURES, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_DISPLAY_CUTOUT, mFrame=[0,0][-100000,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_DISPLAY_CUTOUT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_DISPLAY_CUTOUT, mFrame=[100000,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_DISPLAY_CUTOUT, mFrame=[0,100000][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_TAPPABLE_ELEMENT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_TAPPABLE_ELEMENT, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_IME, mFrame=[0,1314][1080,2340], mVisibleFrame=[0,1314][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false} } host=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity from=android.view.ViewRootImpl$ViewRootHandler.handleMessageImpl:6736
+09-13 10:29:40.813 D/InsetsController(27657): onStateChanged: InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 81 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(512, 0 - 568, 81), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={3.0} cutoutSpec={M 0,0 H -9.333333333333333‬ V 27 H 9.333333333333333‬ V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=102, center=Point(102, 102)}, RoundedCorner{position=TopRight, radius=102, center=Point(978, 102)}, RoundedCorner{position=BottomRight, radius=102, center=Point(978, 2238)}, RoundedCorner{position=BottomLeft, radius=102, center=Point(102, 2238)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 81) rotation=0}, mSources= { InsetsSource: {mType=ITYPE_STATUS_BAR, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_NAVIGATION_BAR, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_GESTURES, mFrame=[0,0][0,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_GESTURES, mFrame=[1080,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_MANDATORY_GESTURES, mFrame=[0,0][1080,117], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_MANDATORY_GESTURES, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_LEFT_DISPLAY_CUTOUT, mFrame=[0,0][-100000,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_DISPLAY_CUTOUT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_RIGHT_DISPLAY_CUTOUT, mFrame=[100000,0][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_DISPLAY_CUTOUT, mFrame=[0,100000][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_TOP_TAPPABLE_ELEMENT, mFrame=[0,0][1080,81], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_BOTTOM_TAPPABLE_ELEMENT, mFrame=[0,2196][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false}, InsetsSource: {mType=ITYPE_IME, mFrame=[0,1314][1080,2340], mVisibleFrame=[0,1314][1080,2340], mVisible=true, mInsetsRoundedCornerFrame=false} } host=com.emoticonstudio.app/com.emoticonstudio.app.MainActivity from=android.view.ViewRootImpl$ViewRootHandler.handleMessageImpl:6723
+09-13 10:29:40.813 I/ViewRootImpl@b150717[MainActivity](27657): handleResized, msg = 4 frames=ClientWindowFrames{frame=[0,0][1080,2340] display=[0,0][1080,2340] parentFrame=[0,0][0,0] parentClippedByDisplayCutout=false} forceNextWindowRelayout=false displayId=0 resizeMode=-1 frameChanged=false displayFrameChanged=false configChanged=false displayChanged=false
+09-13 10:29:40.813 I/ViewRootImpl@8448036[MainActivity](27657): handleResized, msg = 4 frames=ClientWindowFrames{frame=[0,0][1080,2340] display=[0,0][1080,2340] parentFrame=[0,0][0,0] parentClippedByDisplayCutout=false} forceNextWindowRelayout=false displayId=0 resizeMode=-1 frameChanged=false displayFrameChanged=false configChanged=false displayChanged=false
+09-13 10:29:40.848 D/InsetsController(27657): show(ime(), fromIme=true)
+09-13 10:29:41.011 D/InsetsController(27657): cancelAnimation of types: 8, animType: 0, host: com.emoticonstudio.app/com.emoticonstudio.app.MainActivity, from:android.view.InsetsController.notifyFinished:1375 android.view.InsetsAnimationThreadControlRunner$1.lambda$notifyFinished$0$android-view-InsetsAnimationThreadControlRunner$1:84 android.view.InsetsAnimationThreadControlRunner$1$$ExternalSyntheticLambda1.run:4
+09-13 10:29:41.011 D/InsetsSourceConsumer(27657): ensureControlPosition: Point(0, 81) for ITYPE_IME on com.emoticonstudio.app/com.emoticonstudio.app.MainActivity from android.view.InsetsSourceConsumer.notifyAnimationFinished:419
+09-13 10:29:41.046 I/ViewRootImpl@8448036[MainActivity](27657): mWNT: t=0xb4000074bbefc700 mBlastBufferQueue=0xb4000074873baf00 fn= 66 caller= android.view.SyncRtSurfaceTransactionApplier.applyTransaction:96 android.view.SyncRtSurfaceTransactionApplier.lambda$scheduleApply$0$android-view-SyncRtSurfaceTransactionApplier:69 android.view.SyncRtSurfaceTransactionApplier$$ExternalSyntheticLambda0.onFrameDraw:4
+09-13 10:29:43.722 D/InputMethodManager(27657): startInputInner - Id : 0
+09-13 10:29:43.723 I/InputMethodManager(27657): startInputInner - mService.startInputOrWindowGainedFocus
+09-13 10:29:43.751 D/InsetsController(27657): show(ime(), fromIme=true)
+09-13 10:29:44.383 D/InputMethodManager(27657): startInputInner - Id : 0
+09-13 10:29:44.383 I/InputMethodManager(27657): startInputInner - mService.startInputOrWindowGainedFocus
+09-13 10:29:44.404 D/InsetsController(27657): show(ime(), fromIme=true)
+09-13 10:29:45.039 D/InputMethodManager(27657): startInputInner - Id : 0
+09-13 10:29:45.039 I/InputMethodManager(27657): startInputInner - mService.startInputOrWindowGainedFocus
+09-13 10:29:45.059 D/InsetsController(27657): show(ime(), fromIme=true)
+09-13 10:30:00.285 I/ticonstudio.app(27657): Explicit concurrent copying GC freed 42644(2028KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 7817KB/15MB, paused 129us,20us total 52.148ms
+09-13 10:30:00.313 D/InputTransport(27657): Input channel destroyed: 'ClientS', fd=215
+09-13 10:30:00.313 D/InputTransport(27657): Input channel destroyed: 'ClientS', fd=276
+09-13 10:30:00.313 D/InputTransport(27657): Input channel destroyed: 'ClientS', fd=227
+09-13 10:30:00.313 D/InputTransport(27657): Input channel destroyed: 'ClientS', fd=271

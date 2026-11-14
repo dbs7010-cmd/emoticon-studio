@@ -1,0 +1,386 @@
+[
+  {
+    "viewport": "320×800",
+    "screen": "홈",
+    "scale": 1,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "320×800",
+    "screen": "홈",
+    "scale": 1.3,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "320×800",
+    "screen": "홈",
+    "scale": 1.5,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "320×800",
+    "screen": "그리기",
+    "scale": 1,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "320×800",
+    "screen": "그리기",
+    "scale": 1.3,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "320×800",
+    "screen": "그리기",
+    "scale": 1.5,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "320×800",
+    "screen": "보드",
+    "scale": 1,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "320×800",
+    "screen": "보드",
+    "scale": 1.3,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "320×800",
+    "screen": "보드",
+    "scale": 1.5,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "320×800",
+    "screen": "내보내기",
+    "scale": 1,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "320×800",
+    "screen": "내보내기",
+    "scale": 1.3,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "320×800",
+    "screen": "내보내기",
+    "scale": 1.5,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "홈",
+    "scale": 1,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "홈",
+    "scale": 1.3,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "홈",
+    "scale": 1.5,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "그리기",
+    "scale": 1,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "그리기",
+    "scale": 1.3,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "그리기",
+    "scale": 1.5,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "보드",
+    "scale": 1,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "보드",
+    "scale": 1.3,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "보드",
+    "scale": 1.5,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "내보내기",
+    "scale": 1,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "내보내기",
+    "scale": 1.3,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "360×800",
+    "screen": "내보내기",
+    "scale": 1.5,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "홈",
+    "scale": 1,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "홈",
+    "scale": 1.3,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "홈",
+    "scale": 1.5,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "그리기",
+    "scale": 1,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "그리기",
+    "scale": 1.3,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "그리기",
+    "scale": 1.5,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "보드",
+    "scale": 1,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "보드",
+    "scale": 1.3,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "보드",
+    "scale": 1.5,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "내보내기",
+    "scale": 1,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "내보내기",
+    "scale": 1.3,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "390×800",
+    "screen": "내보내기",
+    "scale": 1.5,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "홈",
+    "scale": 1,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "홈",
+    "scale": 1.3,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "홈",
+    "scale": 1.5,
+    "texts": 14,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "그리기",
+    "scale": 1,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "그리기",
+    "scale": 1.3,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "그리기",
+    "scale": 1.5,
+    "texts": 58,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "보드",
+    "scale": 1,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "보드",
+    "scale": 1.3,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "보드",
+    "scale": 1.5,
+    "texts": 38,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "내보내기",
+    "scale": 1,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "내보내기",
+    "scale": 1.3,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  },
+  {
+    "viewport": "412×800",
+    "screen": "내보내기",
+    "scale": 1.5,
+    "texts": 41,
+    "clipped": 0,
+    "worst": null
+  }
+]

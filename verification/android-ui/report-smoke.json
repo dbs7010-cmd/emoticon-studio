@@ -1,0 +1,94 @@
+{
+  "mode": "--ui",
+  "startedAt": "2026-09-13T08:23:00.484Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "U1-draw",
+      "covers": "",
+      "note": "그리기 — 종이 질감·도구 줄·색 칩",
+      "shot": "U1-draw.png"
+    },
+    {
+      "id": "U2-brush",
+      "covers": "",
+      "note": "펜 종류 — 도구 그림과 실제 선 샘플",
+      "shot": "U2-brush.png"
+    },
+    {
+      "id": "U3-width",
+      "covers": "",
+      "note": "굵기 — 다른 설정으로 교체된다",
+      "shot": "U3-width.png"
+    },
+    {
+      "id": "U4-color",
+      "covers": "",
+      "note": "실패 — element (\"~팔레트 열기\") still not existing after 8000ms",
+      "shot": "U4-color.png"
+    },
+    {
+      "id": "U5-quick",
+      "covers": "",
+      "note": "실패 — element (\"~색 #E94F4F\") still not existing after 8000ms",
+      "shot": "U5-quick.png"
+    },
+    {
+      "id": "U6-draw-after",
+      "covers": "",
+      "note": "도구가 펜 그대로라 바로 이어 그린다",
+      "shot": "U6-draw-after.png"
+    },
+    {
+      "id": "U7-caption",
+      "covers": "",
+      "note": "실패 — element (\"~문구\") still not existing after 8000ms",
+      "shot": "U7-caption.png"
+    },
+    {
+      "id": "U8-more",
+      "covers": "",
+      "note": "작업 도구 — 이것만 배경이 어둡다",
+      "shot": "U8-more.png"
+    },
+    {
+      "id": "U9-home",
+      "covers": "",
+      "note": "홈 — 제목 옆 종이 캐릭터",
+      "shot": "U9-home.png"
+    },
+    {
+      "id": "U10-settings",
+      "covers": "",
+      "note": "설정 — 질감 스위치와 지우개 캐릭터",
+      "shot": "U10-settings.png"
+    }
+  ],
+  "skipped": [],
+  "notes": [
+    "U4-color 실패: element (\"~팔레트 열기\") still not existing after 8000ms",
+    "U5-quick 실패: element (\"~색 #E94F4F\") still not existing after 8000ms",
+    "U7-caption 실패: element (\"~문구\") still not existing after 8000ms"
+  ],
+  "crashes": [],
+  "closedBecause": "done",
+  "finishedAt": "2026-09-13T08:26:28.794Z"
+}

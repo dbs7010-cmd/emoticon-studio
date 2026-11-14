@@ -1,0 +1,21 @@
+{
+  "canvas": [
+    0,
+    591,
+    1080,
+    1671
+  ],
+  "textAt": {
+    "x": 359,
+    "y": 1198
+  },
+  "plainPicked": true,
+  "plainAfterOutsideTap": false,
+  "handle": {
+    "x": 682,
+    "y": 1314
+  },
+  "dragPicked": true,
+  "dragAfterOutsideTap": false,
+  "dragAfterSecondTap": false
+}

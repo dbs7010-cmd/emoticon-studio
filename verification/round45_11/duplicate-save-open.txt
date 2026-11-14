@@ -1,0 +1,4 @@
+# 이미 id 가 겹친 저장본(draw-1, draw-3, draw-3)을 45.11 코드로 열었을 때. 자동 복구는 넣지 않았다.
+열었을 때        ids= draw-1,draw-3,draw-3 활성= draw-3 장 수= 3
+장 추가 뒤       ids= draw-1,draw-3,draw-3,draw-4 (겹침: draw-3 )
+저장 결과        ids= draw-1,draw-3,draw-3,draw-4 장 수= 4

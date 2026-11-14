@@ -1,0 +1,6 @@
+fit-body.png     빙글 0.05:경고/0px 0.5:경고/0px 1:경고/0px
+clip-circle.png  빙글 0.05:경고/0px 0.5:경고/0px 1:경고/0px
+clip-square.png  빙글 0.05:경고/3744px 0.5:경고/3744px 1:경고/3744px
+clip-corner.png  빙글 0.05:경고/731px 0.5:경고/731px 1:경고/731px
+비교 204건(등장 효과 36건 제외) · 오탐 8 · 놓침 0
+AssertionError [ERR_ASSERTION]: 잘리지 않는데 경고하는 경우: [["fit-body.png","spin",0.05,true,0],["fit-body.png","spin",0.5,true,0],["fit-body.png","spin",1,true,0],["clip-circle.png","da

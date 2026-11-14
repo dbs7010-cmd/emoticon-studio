@@ -1,0 +1,152 @@
+{
+  "mode": "--r28",
+  "startedAt": "2026-09-14T09:48:16.041Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "28-undo",
+      "covers": "",
+      "note": "무료 펜 두 손가락 되돌리기",
+      "shot": "28-undo.png"
+    },
+    {
+      "id": "28-redo",
+      "covers": "",
+      "note": "세 손가락 다시 실행",
+      "shot": "28-redo.png"
+    },
+    {
+      "id": "28-free-sheet",
+      "covers": "",
+      "note": "무료: 프리셋·진하기·보정 중강 PRO 잠금, 선 보정·약 유지",
+      "shot": "28-free-sheet.png"
+    },
+    {
+      "id": "28-pro-on",
+      "covers": "",
+      "note": "검수용 PRO 켜짐",
+      "shot": "28-pro-on.png"
+    },
+    {
+      "id": "28-pro-sheet",
+      "covers": "",
+      "note": "실패 — element (\"~이 그림 전부 지우기\") still not existing after 8000ms",
+      "shot": "28-pro-sheet.png"
+    },
+    {
+      "id": "28-presets",
+      "covers": "",
+      "note": "실패 — element (\"~브러시 매끈한 잉크\") still not existing after 8000ms",
+      "shot": "28-presets.png"
+    },
+    {
+      "id": "28-opacity",
+      "covers": "",
+      "note": "진하기 38% 매끈한 잉크 세로 획 — 네 프리셋 선 위로 비쳐야 한다",
+      "shot": "28-opacity.png"
+    },
+    {
+      "id": "28-stabilizer",
+      "covers": "",
+      "note": "실패 — element (\"~이 그림 전부 지우기\") still not existing after 8000ms",
+      "shot": "28-stabilizer.png"
+    },
+    {
+      "id": "28-rgb",
+      "covers": "",
+      "note": "RGB·투명도 막대 {\"red\":[\"36\",\"204\"],\"alpha\":[\"100%\",\"48%\"]}",
+      "shot": "28-rgb.png"
+    },
+    {
+      "id": "28-rgb-applied",
+      "covers": "",
+      "note": "적용된 색 #CC24247A — 세로 획이 지그재그 위로 비쳐야 한다",
+      "shot": "28-rgb-applied.png"
+    },
+    {
+      "id": "28-eyedrop",
+      "covers": "",
+      "note": "실패 — 스포이드가 지그재그 색을 읽지 못했다: {\"before\":\"#CC24247A\",\"after\":null}",
+      "shot": "28-eyedrop.png"
+    },
+    {
+      "id": "28-restored",
+      "covers": "",
+      "note": "실패 — element (\"~저장\") still not existing after 8000ms",
+      "shot": "28-restored.png"
+    },
+    {
+      "id": "28-reference",
+      "covers": "",
+      "note": "실패 — element (\"~펜 설정 닫기\") still not existing after 8000ms",
+      "shot": "28-reference.png"
+    },
+    {
+      "id": "28-next-tile",
+      "covers": "",
+      "note": "실패 — element (\"~참고\") still not existing after 8000ms",
+      "shot": "28-next-tile.png"
+    }
+  ],
+  "skipped": [],
+  "notes": [
+    "28-pro-sheet 실패: element (\"~이 그림 전부 지우기\") still not existing after 8000ms",
+    "28-presets 실패: element (\"~브러시 매끈한 잉크\") still not existing after 8000ms",
+    "28-stabilizer 실패: element (\"~이 그림 전부 지우기\") still not existing after 8000ms",
+    "28-eyedrop 실패: 스포이드가 지그재그 색을 읽지 못했다: {\"before\":\"#CC24247A\",\"after\":null}",
+    "28-restored 실패: element (\"~저장\") still not existing after 8000ms",
+    "28-reference 실패: element (\"~펜 설정 닫기\") still not existing after 8000ms",
+    "28-next-tile 실패: element (\"~참고\") still not existing after 8000ms"
+  ],
+  "sessionId": "4a3a32f464e11b62f1c8452ec1a8689e8f0c6496",
+  "brush": {
+    "freeLock": {
+      "marker": true,
+      "strong": true,
+      "opacity": true,
+      "light": true,
+      "switch": true
+    },
+    "opacity": "38%"
+  },
+  "color": {
+    "red": [
+      "36",
+      "204"
+    ],
+    "alpha": [
+      "100%",
+      "48%"
+    ],
+    "hex": "#CC24247A"
+  },
+  "eyedrop": {
+    "before": "#CC24247A",
+    "after": null
+  },
+  "crashes": [],
+  "textStringError": {
+    "found": false,
+    "lines": []
+  },
+  "closedBecause": "done",
+  "finishedAt": "2026-09-14T09:52:08.714Z"
+}

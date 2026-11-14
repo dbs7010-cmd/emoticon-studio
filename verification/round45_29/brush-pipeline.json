@@ -1,0 +1,410 @@
+[
+  {
+    "kind": "pen",
+    "title": "기본 펜",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6877
+      },
+      "committed": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6877
+      },
+      "reopened": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6877
+      }
+    }
+  },
+  {
+    "kind": "soft",
+    "title": "부드러운 펜",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          25,
+          21,
+          32
+        ],
+        "maxA": 240,
+        "ink": 8306
+      },
+      "committed": {
+        "widths": [
+          25,
+          21,
+          32
+        ],
+        "maxA": 240,
+        "ink": 8306
+      },
+      "reopened": {
+        "widths": [
+          25,
+          21,
+          32
+        ],
+        "maxA": 240,
+        "ink": 8306
+      }
+    }
+  },
+  {
+    "kind": "pencil",
+    "title": "연필",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 140,
+        "ink": 6855
+      },
+      "committed": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 140,
+        "ink": 6855
+      },
+      "reopened": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 140,
+        "ink": 6855
+      }
+    }
+  },
+  {
+    "kind": "marker",
+    "title": "마커",
+    "pro": false,
+    "stages": {
+      "during": {
+        "widths": [
+          42,
+          34,
+          52
+        ],
+        "maxA": 140,
+        "ink": 13175
+      },
+      "committed": {
+        "widths": [
+          42,
+          34,
+          52
+        ],
+        "maxA": 140,
+        "ink": 13175
+      },
+      "reopened": {
+        "widths": [
+          42,
+          34,
+          52
+        ],
+        "maxA": 140,
+        "ink": 13175
+      }
+    }
+  },
+  {
+    "kind": "ink",
+    "title": "테이퍼 잉크",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6770
+      },
+      "committed": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6770
+      },
+      "reopened": {
+        "widths": [
+          21,
+          18,
+          27
+        ],
+        "maxA": 255,
+        "ink": 6770
+      }
+    }
+  },
+  {
+    "kind": "brushpen",
+    "title": "붓펜",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 217,
+        "ink": 9540
+      },
+      "committed": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 217,
+        "ink": 9540
+      },
+      "reopened": {
+        "widths": [
+          29,
+          25,
+          37
+        ],
+        "maxA": 217,
+        "ink": 9540
+      }
+    }
+  },
+  {
+    "kind": "crayon",
+    "title": "크레용",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          33,
+          28,
+          42
+        ],
+        "maxA": 204,
+        "ink": 10875
+      },
+      "committed": {
+        "widths": [
+          33,
+          28,
+          42
+        ],
+        "maxA": 204,
+        "ink": 10875
+      },
+      "reopened": {
+        "widths": [
+          33,
+          28,
+          42
+        ],
+        "maxA": 204,
+        "ink": 10875
+      }
+    }
+  },
+  {
+    "kind": "chalk",
+    "title": "분필",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          48,
+          40,
+          60
+        ],
+        "maxA": 179,
+        "ink": 15665
+      },
+      "committed": {
+        "widths": [
+          48,
+          40,
+          60
+        ],
+        "maxA": 179,
+        "ink": 15665
+      },
+      "reopened": {
+        "widths": [
+          48,
+          40,
+          60
+        ],
+        "maxA": 179,
+        "ink": 15665
+      }
+    }
+  },
+  {
+    "kind": "rough",
+    "title": "드라이 잉크",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          23,
+          20,
+          30
+        ],
+        "maxA": 230,
+        "ink": 7445
+      },
+      "committed": {
+        "widths": [
+          23,
+          20,
+          30
+        ],
+        "maxA": 230,
+        "ink": 7445
+      },
+      "reopened": {
+        "widths": [
+          23,
+          20,
+          30
+        ],
+        "maxA": 230,
+        "ink": 7445
+      }
+    }
+  },
+  {
+    "kind": "airbrush",
+    "title": "에어브러시",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          43,
+          36,
+          54
+        ],
+        "maxA": 111,
+        "ink": 14808
+      },
+      "committed": {
+        "widths": [
+          43,
+          36,
+          54
+        ],
+        "maxA": 111,
+        "ink": 14808
+      },
+      "reopened": {
+        "widths": [
+          43,
+          36,
+          54
+        ],
+        "maxA": 111,
+        "ink": 14808
+      }
+    }
+  },
+  {
+    "kind": "dotted",
+    "title": "점선 펜",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          0,
+          0,
+          10
+        ],
+        "maxA": 255,
+        "ink": 3845
+      },
+      "committed": {
+        "widths": [
+          0,
+          0,
+          10
+        ],
+        "maxA": 255,
+        "ink": 3845
+      },
+      "reopened": {
+        "widths": [
+          0,
+          0,
+          10
+        ],
+        "maxA": 255,
+        "ink": 3845
+      }
+    }
+  },
+  {
+    "kind": "outline",
+    "title": "테두리 펜",
+    "pro": true,
+    "stages": {
+      "during": {
+        "widths": [
+          37,
+          31,
+          46
+        ],
+        "maxA": 255,
+        "ink": 12697
+      },
+      "committed": {
+        "widths": [
+          37,
+          31,
+          46
+        ],
+        "maxA": 255,
+        "ink": 12697
+      },
+      "reopened": {
+        "widths": [
+          37,
+          31,
+          46
+        ],
+        "maxA": 255,
+        "ink": 12697
+      }
+    }
+  }
+]

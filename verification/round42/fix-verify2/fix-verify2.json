@@ -1,0 +1,25 @@
+{
+  "A_opened": true,
+  "A_exportEntry": "present",
+  "A_rowsOnOpen": [],
+  "A_recheckFound": true,
+  "A_rowsAfterRecheck": [],
+  "B_opened": true,
+  "B_exportEntry": "completed-cut-01",
+  "B_rowsOnOpen": [
+    "02번 검사 고치기",
+    "03번 검사 고치기"
+  ],
+  "B_recheckFound": true,
+  "B_rowsAfterRecheck": [],
+  "B_boardRedDots": [
+    0,
+    0
+  ],
+  "C_slot": "04 / 32",
+  "C_tile": "슬롯 4 작업 중",
+  "C_redPixels": 0,
+  "C_exportEntry": "present",
+  "C_rows": [],
+  "pass": true
+}

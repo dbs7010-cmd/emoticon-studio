@@ -1,0 +1,163 @@
+
+> emoticon-studio@1.0.0 test
+> npm run typecheck && npm run test:ux
+
+
+> emoticon-studio@1.0.0 typecheck
+> tsc --noEmit
+
+
+> emoticon-studio@1.0.0 test:ux
+> node scripts/ux-test.cjs && node scripts/storage-test.cjs && node scripts/gesture-test.cjs && node scripts/fill-test.cjs && node scripts/export-test.cjs && node scripts/spec-test.cjs && node scripts/recovery-test.cjs && node scripts/e2e-test.cjs && node scripts/pro-test.cjs && node scripts/server-test.cjs && node scripts/color-test.cjs && node scripts/motion-v1-test.cjs && node scripts/iap-test.cjs && node scripts/asset-check-test.cjs && node scripts/release-check-test.cjs && node scripts/product-ux-test.cjs && node scripts/viewport-matrix-test.cjs && node scripts/slot-repeat-test.cjs && node scripts/device-qa.cjs --dry
+
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+[emoticon-studio] disk full
+[emoticon-studio] disk full
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  48dp 미만(보조): 고급 브러시 PRO 44dp, 세부 설정 44dp, 보정 약 44dp, 보정 중 44dp, 보정 강 44dp
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+[emoticon-studio] 저장 파일을 읽지 못했습니다 {
+  "directory": "document/emoticon-studio",
+  "snapshots": [
+    {
+      "name": "store-a.json",
+      "uri": "document/emoticon-studio/store-a.json",
+      "exists": true,
+      "bytes": 21,
+      "head": "{ \"version\": 1, \"revi",
+      "tail": "{ \"version\": 1, \"revi",
+      "revision": null,
+      "stage": "json",
+      "error": "SyntaxError: Unterminated string in JSON at position 21 (line 1 column 22)"
+    },
+    {
+      "name": "store-b.json",
+      "uri": "document/emoticon-studio/store-b.json",
+      "exists": true,
+      "bytes": 50,
+      "head": "{\"version\":1,\"revision\":9,\"projects\":[{\"",
+      "tail": ":1,\"revision\":9,\"projects\":[{\"id\":\"x\"}]}",
+      "revision": null,
+      "stage": "shape",
+      "error": "Error: 프로젝트 저장 데이터가 손상되었습니다."
+    }
+  ]
+}
+[emoticon-studio] 저장 파일을 읽지 못했습니다 {
+  "directory": "document/emoticon-studio",
+  "snapshots": [
+    {
+      "name": "store-a.json",
+      "uri": "document/emoticon-studio/store-a.json",
+      "exists": true,
+      "bytes": 21,
+      "head": "{ \"version\": 1, \"revi",
+      "tail": "{ \"version\": 1, \"revi",
+      "revision": null,
+      "stage": "json",
+      "error": "SyntaxError: Unterminated string in JSON at position 21 (line 1 column 22)"
+    },
+    {
+      "name": "store-b.json",
+      "uri": "document/emoticon-studio/store-b.json",
+      "exists": true,
+      "bytes": 50,
+      "head": "{\"version\":1,\"revision\":9,\"projects\":[{\"",
+      "tail": ":1,\"revision\":9,\"projects\":[{\"id\":\"x\"}]}",
+      "revision": null,
+      "stage": "shape",
+      "error": "Error: 프로젝트 저장 데이터가 손상되었습니다."
+    }
+  ]
+}
+  노랑 글자 0곳 · 노랑 위 글자 #20242C 고정 · PRO 역할 분리
+PASS: one-tap start into an empty canvas, two tabs over one drawing, free effects that reach the canvas, PRO parts announced before use (free users go to PRO first, never blocked at save), a movement kept on a shelf and taken back down without touching the cut, a piece kept as its own picture and brought back, movement order changed by dragging, a batch preview that builds one cut for real without writing anything, empty canvas never counts as finished, 완성 declaration separate from autosave, autosave on backgrounding, one save per double tap, copy-previous as an independent document, captions saved with the drawing, temporary and adopted set references, re-edit returns a cut to 작업 중, board states, the last open cut returning to the board, export flow that only claims what it measured, share retry, legacy stores preserved and readable, guarded set deletion, save failure that never claims a completion, an unreadable store that names the cause and writes nothing. Native modules/WebView mocked; drawing and file delivery still require a device.
+PASS: project image ownership, orphan set difference across projects, shared-path protection, deletion guard for store snapshots and foreign files. File system mocked.
+PASS: one-finger stroke, two-finger tap undo, three-finger tap redo across staggered lifts, drag is not a tap, three consecutive undo+redo steps restore every state in order, new stroke clears redo, reference move/pinch, caption: tap selects (no stroke, no undo step), tap again asks to edit, jitter is not a move, drag moves the words, handle drag scales, two-finger pinch scales (cap 3) and twist rotates, soft bounds keep the centre on the canvas, tapping elsewhere ends the selection without drawing, saved caption equals the on-canvas one. DOM shimmed; Android touch delivery still requires device test.
+PASS: flood fill stays inside closed line art, respects undo/redo, touches only the active drawing, never reaches references, and yields to multi-touch gestures; captions are painted into the export but never into a layer, survive undo, and travel with a copied cut. Canvas rasteriser is a test double; device test still required.
+PASS: zip structure parses, crc32 agrees with zlib, slot ordering, 부가 이미지와 공식 도구용 프레임 폴더·안내 쪽지, 제출 형식(WebP)이 묶음에 들어가고 못 만든 컷은 GIF 로 남는 것, reference/canon/working layers excluded, safe file naming, empty set refused. File system mocked.
+PASS: a flawless final passes, real defects still fail, 공식 가이드에서 읽은 용량·개수·형식이 실제로 강제되고, artwork judgement is never scored, identical exports are reported, messages are Korean, and QA and export judge the same asset. File system mocked.
+  예전 저장 파일 호환: 그대로 열리고, 브러시 이름 변경이 획에 닿지 않는다
+PASS: failed writes keep the last good snapshot and the retryable edit, damaged and future schemas refuse safely, repeated captions are found without mistaking old planning text, pre-완성 stores keep every finished cut, export refuses missing files and unverifiable archives. File system mocked with injected write failure.
+PASS: plan, draw, save, restart, review, export and reopen the archive; every entry is the inspected final PNG at the working canvas size, with references and canon excluded. Services integration, not a screen-level end to end.
+PASS: 서버가 확인한 영수증만 PRO를 만들고(테스트 구매·이상한 대답·연결 실패는 전부 거절), 스토어 영수증만 PRO를 만들고, 손으로 쓴 이용권은 통하지 않으며, 오프라인에서 남은 기간이 유지되고, 모듈 없는 빌드는 구매·복원을 성공으로 처리하지 않으며, 만료 뒤에도 작품과 저장된 PRO 움직임이 남는다. 스토어 연동 자체는 개발 빌드와 상품 등록이 필요해 여기서 검증하지 않는다.
+PASS: 서버 판정 — 살아 있는 구독만 통과, 상품·기간·상태가 어긋나면 거절, 테스트 구매는 서버 설정이 정하고 그 사실이 응답에 남는다. 실제 스토어 호출은 서비스 계정 키가 있어야 하므로 여기서 검증하지 않는다.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: color — 빨강·초록·파랑·투명도 막대가 캔버스 색을 바꾸고 최근 색은 멈춘 뒤 한 번만 기록, 스포이드 켜기·취소·읽은 색 반영·빈 곳 안내, 내 팔레트 저장·재사용·정리, HEX 투명도, 브러시 도구 다시 누르기로 설정, 고급 브러시 저장·복원. 무료: 색·진하기·선 보정 전부 사용, 자물쇠 0, PRO 표시는 고급 브러시 한 줄, 누르면 안내로 가고 캔버스는 그대로. Native/WebView mocked.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: motion v1 — 통통·흔들기·두근거리기 각각 고르는 즉시 미리보기(설정은 고른 뒤)·속도·세기·칸 닫기로 저장·재시작 복원·그대로 닫아도 유지, 움직임 없음(그림·문구 유지), 빈 칸·이전 버전 저장본, PRO 부분 2개·차례로·시작 간격·세부 조절은 펼쳐야 보임·끌기/버튼 순서 바꾸기·저장, PRO 종료 뒤: 저장된 PRO 움직임 유지, 부분 움직임 입구·PRO 보관 움직임은 누르는 순간 안내(칸 불변), 무료 효과 변경 저장은 막히지 않음, 32칸·다른 칸·완성 수·브러시 설정 불변. Native/WebView mocked.
+  규칙 층 PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS: iap — 상품 조회(가격·offer token·네트워크 실패·상품 없음·모듈 없음), 구매 성공 시 서버 확인 뒤에만 이용권·확정, Android purchaseToken 만 전송(주문 번호·원본 JSON 미사용)·token 없음/pending 은 확인 보류, 취소·네트워크·이미 구독·요청 거절·알 수 없음·offer 없음, 서버 없음·연결 실패·거절 시 이용권 없음·미확정, 복원(최신 구독·없음·결제 보류 제외·연결 실패), 앱 시작 재확인(오프라인·서버 실패 유지, 구독 없음·거절 시 종료하되 기록 보존, 재설치 자동 복원), 화면 상태(불러오기·구매 가능·성공·구독 관리·취소·실패+다시 시도·구매 없음·확인 실패·복원 성공·결제 불가 시 제안가·버튼 꺼짐), 오류 코드 노출 없음, 출시 구성 검수 스위치 없음. 실제 Play 결제·서버 배포는 미검증.
+PASS: asset check — PNG 크기·알파 채널·투명 픽셀(필터 해석 포함)·JPEG 크기 판독, 계약 P0 없음 FAIL·P2 WARN, 규격대로면 전부 PASS, 템플릿 복사·알파·크기·스플래시 불투명·피처 그래픽 크기·스크린샷 비율/장수/알파 FAIL, 설정의 템플릿 참조·스플래시 모듈 미설치·미연결 FAIL, android 템플릿 리소스 잔존 FAIL, 실제 app.config 는 브랜드 파일 없으면 템플릿으로 떨어지고 검사가 잡는다.
+PASS: release check — 서명 플러그인(템플릿 디버그 서명 제거·업로드 키만·AAB 디버그 서명 차단 가드·반복 적용 안전·템플릿 변경 시 중단), 설정(내부 검수·영수증 서버 https·applicationId·versionCode 증가/정수·네이티브 버전 동기), 서명 입력(이름만·값 미출력·프로젝트 properties 비밀 FAIL), 저장소 키 파일·비밀번호 값 탐지, 인증서(디버그·임시 키·미등록 FAIL, 등록 키 PASS), AAB 판독(ZIP·PKCS#7·BILLING·JS 번들·expo-iap·app.config), 요약 SIGNING PASS / ASSETS BLOCKED 구분.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  FLOW A(다음 칸·붓·굵기·최근 색·문구 배치): 누르기 9 · 끌기 2 · 확인창 0
+  FLOW B(다음 칸·문구 고치기·직전 움직임): 누르기 6 · 끌기 0 · 확인창 0
+PASS: product ux — 도구 다시 누르기=설정·"펜" 이중 의미 없음, 브러시·색·움직이기 패널 자물쇠 0·PRO 표시 ≤1, 참고·문구·움직이기 입구 하나·저장 버튼 없음, 새 칸·재시작에서 선 종류·굵기·지우개·보정·도구 유지, 빈 칸 이전 그림 이어받기(확인창 없음), 가짜 재생 막대 없음·효과 견본이 실제로 움직임·설정은 고른 뒤, PRO(부분 움직임·여러 칸 한 번에)는 시작 전에 안내, FREE 흐름(브러시·색·문구·움직임·완성·보드·내보내기)에 결제 화면 없음, 열었다 닫기만 하면 세트 불변, 결과 우선 내보내기와 약속 문구 일치, 개발자 문구·오류 원문·글자 기호 없음. Native/WebView mocked.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  viewport  canvas share brush detail color ref layers motion kbRoom boardTile exportCell
+  360×640       360   0.58  0.5  0.5  0.5  0.17  0.5  0.26  260  104  49
+  390×640       390   0.63  0.5  0.5  0.5  0.19  0.5  0.32  260  114  54
+  412×640       401   0.63  0.5  0.5  0.5  0.2  0.5  0.34  260  121  58
+  360×720       360   0.52  0.5  0.5  0.5  0.05  0.43  0.04  308  104  49
+  390×720       390   0.56  0.5  0.5  0.5  0.09  0.44  0.11  308  114  54
+  412×720       412   0.59  0.5  0.5  0.5  0.11  0.44  0.16  308  121  58
+  360×800       360   0.46  0.5  0.5  0.5  0  0.32  0  356  104  49
+  390×800       390    0.5  0.5  0.5  0.5  0  0.33  0  356  114  54
+  412×800       412   0.53  0.5  0.5  0.5  0.01  0.34  0  356  121  58
+  360×900       360   0.41  0.5  0.5  0.5  0  0.18  0  416  104  49
+  390×900       390   0.45  0.5  0.5  0.5  0  0.21  0  416  114  54
+  412×900       412   0.47  0.5  0.5  0.5  0  0.22  0  416  121  58
+  360×1000      360   0.37  0.5  0.5  0.5  0  0.04  0  476  104  49
+  390×1000      390    0.4  0.5  0.5  0.5  0  0.08  0  476  114  54
+  412×1000      412   0.42  0.5  0.5  0.5  0  0.1  0  476  121  58
+PASS: viewport matrix — 640/720/800/900/1000 × 360/390/412: 캔버스 280dp 이상, 굵기 조절 캔버스 안·40dp, 도구 줄 두 줄 안 잘림, 브러시·색·참고·레이어 패널 캔버스 절반 이하, 문구 패널이 키보드 위, 움직이기 패널 45% 미만 겹침, 보드 세 칸·아래 줄, 내보내기 결과 격자. 렌더 스타일 + 기기 레이아웃 크기 기준(픽셀 렌더링 아님).
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+  칸별 누르기: 2:10 3:10 4:10 5:10 6:10 7:10 8:10 9:10 10:10 11:10 12:10 13:10 14:10 15:10 16:10 17:10 18:10 19:10 20:10 21:10 22:10 23:10 24:10
+PASS: slot repeat — 1~24칸 연속 제작: 연필·굵기·도구 유지, 최근 색 맨 앞 유지, 빈 칸마다 이전 그림 제안, 직전 움직임 행 매번, 칸당 누르기 10→10(늘지 않음), 확인창 0, 24칸 그림·문구·움직임 저장, 앞 칸 다시 열면 그대로. Native/WebView mocked.
+labels ok: 53 labels exist in current source
+npm test exit=0

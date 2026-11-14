@@ -39,3 +39,28 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# release signing — keys and real signing properties never enter the repo (docs/RELEASE_SIGNING.md)
+*.keystore
+*.pfx
+upload-signing.properties
+release/*.local.*
+local.properties
+
+# local build/verification binaries — kept on disk as evidence, never committed (41차)
+*.apk
+*.aab
+*.hbc
+.gradle-home/
+# verification: only text evidence (RESULT.md · logs · json · txt) enters the repo; screenshots/dumps stay local
+verification/**
+!verification/**/
+!verification/**/*.md
+!verification/**/*.log
+!verification/**/*.json
+!verification/**/*.txt
+verification/**/node_modules/
+verification/_latest/
+
+# 개인정보처리방침 미리보기(운영자 입력 남은 상태, 게시 금지)
+site/privacy/preview.html

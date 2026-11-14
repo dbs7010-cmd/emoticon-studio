@@ -1,0 +1,8 @@
+{
+  "apk": "C:\\Dev\\emoticon-studio\\android\\app\\build\\outputs\\apk\\release\\app-release.apk",
+  "sha256": "b69e63c8bcd4b1f3d402ba9f3d352c6d336a181b4621ea10b6cf85346cf5c041",
+  "bytes": 81127760,
+  "app": "bs://f102bf6d8720b1f4fec91da8cebe3ad4bb992095",
+  "uploadedAt": "2026-09-13T20:00:58.015Z",
+  "verification": "local bytes unchanged during upload; remote digest unavailable"
+}

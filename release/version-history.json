@@ -1,0 +1,97 @@
+{
+  "note": "Play Console 에 실제로 올린 AAB 만 기록한다(업로드 뒤 추가). release-check 는 app.json android.versionCode 가 여기 최대값보다 커야 통과시킨다. 검증용·내부 빌드는 적지 않는다.",
+  "applicationId": "com.emoticonstudio.app",
+  "released": [
+    {
+      "versionCode": 2,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc2-closedtest-protrial-1e6791a.aab",
+      "commit": "1e6791a",
+      "sha256": "85d3f2a79e65dfdc64a3770072342914c21c20ae2ab9ea160d21a79ddeb5c075",
+      "uploaded": "2026-10-04",
+      "source": "사용자 보고(업로드·심사 제출)"
+    },
+    {
+      "versionCode": 3,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc3-closedtest-protrial-5d59acd.aab",
+      "commit": "5d59acd",
+      "sha256": "f464deba5aee7c36e62d0dbde05f5d8ae19e8903edb9e1cadb8f2aa43e9f4511",
+      "uploaded": "2026-10-07",
+      "source": "사용자 보고(업로드·심사 제출). Console 경고 1개: 가독화 파일 없음(R8 미사용 — 비차단), 지원 기기 변동 0",
+      "review": "승인(2026-10-07, 사용자 보고) · 테스터 안내문 작성(사용자)"
+    },
+    {
+      "versionCode": 4,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc4-closedtest-connected-870907a.aab",
+      "commit": "870907a",
+      "sha256": "8e50fc3a744a8efd4eb29709523b4b2635da7d796e479f682eafc31eb881f9eb",
+      "uploaded": "2026-10-12",
+      "source": "사용자 보고(업로드·심사 제출). 2026-10-15 기록 보강(빌드 신원 파일 기준)"
+    },
+    {
+      "versionCode": 5,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc5-closedtest-connected-5501976.aab",
+      "commit": "5501976",
+      "sha256": "ed40409e220305d33c3eb7d902f6d11d98ce4125597fe0c6c38ade53454170b0",
+      "uploaded": "2026-10-13",
+      "source": "사용자 보고(업로드·심사 제출). 2026-10-15 기록 보강"
+    },
+    {
+      "versionCode": 6,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc6-closedtest-connected-22d1252.aab",
+      "commit": "22d1252",
+      "sha256": "515d582467aaf0fe5320ce9bf545987240e21165cceeb7031a702874be537151",
+      "uploaded": "2026-10-13",
+      "source": "사용자 보고(업로드). 테스터 유지 빌드(원장 §44). 2026-10-15 기록 보강"
+    },
+    {
+      "versionCode": 7,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc7-paid-85bacc8.aab",
+      "commit": "85bacc8",
+      "sha256": "73092fafc05720a2a28659b9d9e5926b9a00c2cc4e976284a518a7b80f2e6a09",
+      "uploaded": "2026-10-13",
+      "source": "사용자 보고(업로드 · 나중을 위해 저장, 검토 제출은 한국 개발자 정보 입력 대기). 2026-10-15 기록 보강"
+    },
+    {
+      "versionCode": 8,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc8-closedtest-connected-6c2803b.aab",
+      "commit": "6c2803b",
+      "sha256": "bf04bda82ce316201d46694e151c4cfc5223d44d18adc6ec6c213d5d5968020f",
+      "uploaded": "2026-10-15",
+      "source": "사용자 보고(Console 업로드 · 나중을 위해 저장, 검토 제출은 한국 개발자 정보 입력 대기)"
+    },
+    {
+      "versionCode": 9,
+      "versionName": "1.0.0",
+      "track": "closed",
+      "file": "emoti-1.0.0-vc9-closedtest-connected-a5c3ef4.aab",
+      "commit": "a5c3ef4",
+      "sha256": "dc7a3618ee651b1d45248aeccd5a086e12f9c63740bee12e47c024bf23fb8cf8",
+      "uploaded": "2026-10-19",
+      "source": "사용자 보고(비공개 테스트 Alpha 트랙 업로드). 한국 개발자 정보(통신판매업 2026-서울노원-1462) 입력 후"
+    },
+    {
+      "versionCode": 10,
+      "versionName": "1.0.0",
+      "track": "internal",
+      "file": "emoti-1.0.0-vc10-paid-8aa499e.aab",
+      "commit": "8aa499e",
+      "sha256": "3d668a060185e8b4b6732486d8b740fb417e492eebe71d4007e7b82e08e7719c",
+      "uploaded": "2026-10-19",
+      "source": "사용자 보고(내부 테스트 트랙, 2026-10-19 21:35 내부 테스터에게 제공됨). 결제 열림·PRO 체험 꺼짐 — 결제 확인용"
+    }
+  ]
+}

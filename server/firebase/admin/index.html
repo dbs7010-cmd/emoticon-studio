@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>emoti 관리자</title>
+<style>
+:root{--ink:#1F1D1A;--muted:#6B655E;--line:#ECE9E3;--soft:#F6F5F2;--accent:#F5E642;--danger:#C2410C;--ok:#15803D;--paper:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#F3F1EC;--muted:#B5AEA4;--line:#3A3631;--soft:#24211E;--paper:#1A1816}}
+:root[data-theme="dark"]{--ink:#F3F1EC;--muted:#B5AEA4;--line:#3A3631;--soft:#24211E;--paper:#1A1816}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Noto Sans KR",sans-serif}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:18px;margin:28px 0 10px}
+button,select,input,textarea{font:inherit;color:inherit}
+button{padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--soft);cursor:pointer}
+button.primary{background:var(--accent);border-color:#1F1D1A;color:#1F1D1A;font-weight:700}
+button:disabled{opacity:.5;cursor:default}
+input,select,textarea{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);width:100%}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:middle}
+th{color:var(--muted);font-weight:600}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.muted{color:var(--muted)}.badge{display:inline-block;padding:1px 8px;border-radius:10px;background:var(--soft);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.cut{border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center;background:repeating-conic-gradient(var(--soft) 0 25%,transparent 0 50%) 0 0/16px 16px}
+.cut img{width:100%;aspect-ratio:1;object-fit:contain}.cut span{font-size:12px;color:var(--muted)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.note{padding:10px 12px;border-radius:10px;background:var(--soft);font-size:13px}
+.err{color:var(--danger)}.okc{color:var(--ok)}
+@media (max-width:640px){table,thead,tbody,tr,td,th{display:block}thead{display:none}td{border:0;padding:3px 0}tr{border-bottom:1px solid var(--line);padding:8px 0}}
+</style>
+</head>
+<body>
+<main>
+  <h1>emoti 관리자</h1>
+  <p class="muted" id="who">로그인이 필요해요.</p>
+  <div class="row"><button class="primary" id="login">구글로 로그인</button><button id="logout" hidden>로그아웃</button><span id="msg"></span></div>
+
+  <section id="app" hidden>
+    <h2>회원 · 체험 PRO</h2>
+    <p class="muted">작가명이나 회원 번호로 찾아요. 비우고 찾으면 최근 로그인 20명이 나와요. 체험 PRO 는 1~30일, 구매 PRO 는 여기서 바꾸지 않아요.</p>
+    <div class="row"><input id="userQ" placeholder="작가명 또는 회원 번호(kakao:… / naver:… / google:…)" style="max-width:420px"><button id="findUser">찾기</button><span id="userMsg"></span></div>
+    <table><thead><tr><th>회원 번호</th><th>로그인</th><th>작가명</th><th>PRO</th><th>최근 로그인</th><th>체험 PRO</th></tr></thead><tbody id="users"></tbody></table>
+
+    <h2>공모전</h2>
+    <div class="row"><select id="contestPick" style="max-width:360px"></select><button id="newContest">새 공모전</button></div>
+    <div class="form" id="contestForm" style="margin-top:12px">
+      <label>id<input id="c_id" placeholder="2026-autumn"></label>
+      <label>제목<input id="c_title"></label>
+      <label>접수번호 머리<input id="c_code" placeholder="E1"></label>
+      <label>상태<select id="c_status"><option>draft</option><option>open</option><option>closed</option><option>judging</option><option>announced</option></select></label>
+      <label>시작<input id="c_start" type="datetime-local"></label>
+      <label>마감<input id="c_end" type="datetime-local"></label>
+      <label>종류<select id="c_kind"><option value="still">멈춰 있는 세트</option><option value="moving">움직이는 세트</option></select></label>
+      <label>칸 수<input id="c_cuts" type="number" min="1" max="64" value="32"></label>
+      <label>움직이는 칸 최소<input id="c_minAnim" type="number" min="0" max="64" value="0"></label>
+      <label>동의 버전<input id="c_consent" value="v1"></label>
+      <label style="grid-column:1/-1">공지<textarea id="c_notice" rows="2"></textarea></label>
+      <label style="grid-column:1/-1">참가 조건·권리 안내(앱의 동의 화면에 그대로 보임)<textarea id="c_rules" rows="4"></textarea></label>
+      <label style="grid-column:1/-1">출품 대상(예: 카카오 이모티콘 스튜디오 제안) · 제출 주체<input id="c_target"></label>
+      <div class="row"><button class="primary" id="saveContest">저장</button><span id="contestMsg"></span></div>
+    </div>
+
+    <h2>접수 <span class="muted" id="subCount"></span></h2>
+    <div class="row"><button id="reload">새로 고침</button><button id="publish">결과 발표(선정작 공개)</button></div>
+    <table><thead><tr><th>접수번호</th><th>세트</th><th>상태</th><th>칸</th><th>크기</th><th>심사</th><th></th></tr></thead><tbody id="subs"></tbody></table>
+
+    <section id="preview" hidden>
+      <h2 id="pvTitle">미리보기</h2>
+      <p class="muted" id="pvInfo"></p>
+      <div class="grid" id="pvGrid"></div>
+      <div class="note" id="pvSubmit" style="margin-top:12px"></div>
+    </section>
+  </section>
+</main>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
+import { getAuth, connectAuthEmulator, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
+import { getFirestore, connectFirestoreEmulator, collection, getDocs } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { getStorage, connectStorageEmulator, ref, getBytes } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-storage.js';
+import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-functions.js';
+import JSZip from 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm';
+
+// 설정: 로컬(127.0.0.1·localhost)은 에뮬레이터, 그 밖은 같은 폴더의 config.json(운영 프로젝트의 공개 웹 설정 — 비밀 아님).
+const local = ['127.0.0.1', 'localhost'].includes(location.hostname);
+const config = local ? { projectId: 'demo-emoti', apiKey: 'demo-key', authDomain: 'localhost', storageBucket: 'demo-emoti.appspot.com' }
+  : await (await fetch('./config.json', { cache: 'no-store' })).json();
+const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app), st = getStorage(app), fn = getFunctions(app);
+if (local) { connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true }); connectFirestoreEmulator(db, '127.0.0.1', 8080); connectStorageEmulator(st, '127.0.0.1', 9199); connectFunctionsEmulator(fn, '127.0.0.1', 5001); }
+const call = (name, data) => httpsCallable(fn, name)(data).then(r => r.data);
+const $ = id => document.getElementById(id);
+const say = (el, text, bad) => { $(el).textContent = text; $(el).className = bad ? 'err' : 'okc'; };
+const STATUS = { uploading: '올리는 중', received: '접수됨', rejected: '거절', withdrawn: '철회', expired: '만료' };
+const REVIEW = { pending: '심사 전', shortlisted: '예선 통과', selected: '선정', not_selected: '비선정' };
+let contests = [], current = null, subs = [];
+
+// 같은 창에서 로그인(팝업 차단·모바일 브라우저에서도 동작).
+$('login').onclick = () => signInWithRedirect(auth, new GoogleAuthProvider()).catch(e => say('msg', e.message, true));
+getRedirectResult(auth).catch(e => say('msg', e.message, true));
+$('logout').onclick = () => signOut(auth);
+onAuthStateChanged(auth, async user => {
+  $('login').hidden = !!user; $('logout').hidden = !user;
+  if (!user) { $('who').textContent = '로그인이 필요해요.'; $('app').hidden = true; return; }
+  const claims = (await user.getIdTokenResult(true)).claims;
+  $('who').textContent = `${user.email || user.uid} — ${claims.admin ? '관리자' : '관리자 권한 없음'}`;
+  $('app').hidden = !claims.admin;
+  if (claims.admin) { await loadContests(); await findUsers(); }
+});
+
+// ── 회원 · 체험 PRO(2026-10-13) — 작가명은 회원이 쓴 글이라 HTML 이 아니라 글자로만 넣는다 ──
+const day = ms => ms ? new Date(ms).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' }) : '-';
+const proText = p => !p.active ? '없음' : p.source === 'store' ? '구매' + (p.sandbox ? '(테스트)' : '') : (p.source === 'trial' ? '체험' : '운영자') + (p.until ? ' ~' + day(p.until) : '');
+async function findUsers() {
+  say('userMsg', '찾는 중…');
+  try {
+    const { users } = await call('adminFindUser', { q: $('userQ').value });
+    const body = $('users'); body.replaceChildren();
+    for (const u of users) {
+      const tr = document.createElement('tr');
+      for (const t of [u.uid, u.provider, u.artistName || '(작가명 전)', proText(u.pro), day(u.lastSignInAt)]) { const td = document.createElement('td'); td.textContent = t; tr.append(td); }
+      const td = document.createElement('td');
+      if (u.pro.active && u.pro.source === 'store') td.textContent = '구매 — 변경 안 함';
+      else {
+        const days = document.createElement('input'); days.type = 'number'; days.min = 1; days.max = 30; days.value = 7; days.style.width = '64px';
+        const give = document.createElement('button'); give.textContent = '일 체험 주기';
+        give.onclick = async () => { try { await call('adminSetPro', { uid: u.uid, active: true, source: 'trial', days: Number(days.value) }); say('userMsg', '체험 PRO 를 줬어요.'); await findUsers(); } catch (e) { say('userMsg', e.message, true); } };
+        td.append(days, give);
+        if (u.pro.active) {
+          const end = document.createElement('button'); end.textContent = '끝내기';
+          end.onclick = async () => { try { await call('adminSetPro', { uid: u.uid, active: false, source: u.pro.source === 'admin' ? 'admin' : 'trial' }); say('userMsg', 'PRO 를 끝냈어요.'); await findUsers(); } catch (e) { say('userMsg', e.message, true); } };
+          td.append(end);
+        }
+      }
+      tr.append(td); body.append(tr);
+    }
+    say('userMsg', users.length ? `${users.length}명` : '찾은 회원이 없어요.');
+  } catch (e) { say('userMsg', e.message, true); }
+}
+$('findUser').onclick = findUsers;
+
+const toLocal = ms => ms ? new Date(ms - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
+async function loadContests() {
+  contests = (await getDocs(collection(db, 'contests'))).docs.map(d => ({ id: d.id, ...d.data() }));
+  $('contestPick').innerHTML = contests.map(c => `<option value="${c.id}">${c.title} · ${c.status}</option>`).join('') || '<option value="">공모전 없음</option>';
+  if (contests.length) pick(current && contests.find(c => c.id === current.id) ? current.id : contests[0].id);
+}
+function pick(id) {
+  current = contests.find(c => c.id === id) || null;
+  $('contestPick').value = id;
+  const c = current || {};
+  $('c_id').value = c.id || ''; $('c_title').value = c.title || ''; $('c_code').value = c.code || 'E'; $('c_status').value = c.status || 'draft';
+  $('c_start').value = toLocal(c.startsAt); $('c_end').value = toLocal(c.endsAt); $('c_kind').value = c.requirements?.kind || 'still';
+  $('c_cuts').value = c.requirements?.cuts || 32; $('c_minAnim').value = c.requirements?.minAnimated || 0; $('c_consent').value = c.consentVersion || 'v1';
+  $('c_notice').value = c.notice || ''; $('c_rules').value = c.rules || ''; $('c_target').value = c.target || '';
+  if (current) loadSubs();
+}
+$('contestPick').onchange = e => pick(e.target.value);
+$('newContest').onclick = () => { current = null; for (const k of ['c_id', 'c_title', 'c_notice', 'c_rules', 'c_target', 'c_start', 'c_end']) $(k).value = ''; $('subs').innerHTML = ''; $('subCount').textContent = ''; };
+$('saveContest').onclick = async () => {
+  try {
+    await call('adminSaveContest', { id: $('c_id').value.trim(), title: $('c_title').value, code: $('c_code').value, status: $('c_status').value,
+      startsAt: Date.parse($('c_start').value), endsAt: Date.parse($('c_end').value), consentVersion: $('c_consent').value,
+      requirements: { kind: $('c_kind').value, cuts: Number($('c_cuts').value), minAnimated: Number($('c_minAnim').value) },
+      notice: $('c_notice').value, rules: $('c_rules').value, target: $('c_target').value });
+    say('contestMsg', '저장했어요.'); current = { id: $('c_id').value.trim() }; await loadContests();
+  } catch (e) { say('contestMsg', e.message, true); }
+};
+
+async function loadSubs() {
+  subs = (await call('adminListSubmissions', { contestId: current.id })).submissions;
+  $('subCount').textContent = `${subs.filter(s => s.status === 'received').length}건 접수 · 전체 ${subs.length}`;
+  $('subs').innerHTML = subs.map((s, i) => `<tr>
+    <td>${s.receiptNo || '<span class="muted">—</span>'}</td><td>${esc(s.setName)}</td>
+    <td><span class="badge">${STATUS[s.status] || s.status}</span>${s.reason ? `<br><span class="err" style="font-size:12px">${esc(s.reason)}</span>` : ''}</td>
+    <td>${s.cuts || '—'}</td><td>${(s.bytes / 1048576).toFixed(1)}MB</td>
+    <td>${s.status === 'received' ? `<select data-review="${i}">${Object.entries(REVIEW).map(([k, v]) => `<option value="${k}" ${s.review?.state === k ? 'selected' : ''}>${v}</option>`).join('')}</select>` : '—'}</td>
+    <td class="row">${s.status === 'received' ? `<button data-preview="${i}">세트 보기</button><button data-download="${i}">내려받기</button>` : ''}</td></tr>`).join('');
+}
+const esc = s => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+$('reload').onclick = () => current && loadSubs();
+$('subs').onchange = async e => {
+  const i = e.target.dataset.review; if (i === undefined) return;
+  try { await call('adminSetReview', { contestId: current.id, uid: subs[i].uid, state: e.target.value }); say('msg', '심사 상태를 바꿨어요.'); } catch (err) { say('msg', err.message, true); }
+};
+$('subs').onclick = async e => {
+  const p = e.target.dataset.preview, d = e.target.dataset.download;
+  if (p !== undefined) return preview(subs[p]);
+  if (d !== undefined) {
+    const s = subs[d], bytes = await getBytes(ref(st, s.path));
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/zip' }));
+    a.download = `${s.receiptNo}-${s.setName || 'set'}.zip`; a.click(); URL.revokeObjectURL(a.href);
+  }
+};
+// 세트 전체 미리보기: 제출 당시 묶음을 그대로 내려받아 칸 파일 전부를 그린다(대표 한 장이 아님). 움직이는 WebP·GIF 는 그대로 움직인다.
+async function preview(s) {
+  $('preview').hidden = false; $('pvTitle').textContent = `${s.receiptNo} · ${s.setName}`; $('pvGrid').innerHTML = '불러오는 중…';
+  const zip = await JSZip.loadAsync(await getBytes(ref(st, s.path)));
+  const cuts = Object.keys(zip.files).filter(n => /^\d{2}\.(png|webp|gif)$/.test(n)).sort();
+  const frames = Object.keys(zip.files).filter(n => n.startsWith('webp-animator/') && n.endsWith('.png')).length;
+  const extras = ['icon.png', 'share.png'].filter(n => zip.files[n]);
+  $('pvInfo').textContent = `칸 ${cuts.length}개 · 공식 도구용 프레임 ${frames}장 · 부가 이미지 ${extras.join(', ') || '없음'}`;
+  const mime = { png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+  const html = [];
+  for (const n of [...cuts, ...extras]) {
+    const blob = new Blob([await zip.files[n].async('uint8array')], { type: mime[n.split('.').pop()] });
+    html.push(`<div class="cut"><img alt="${n}" src="${URL.createObjectURL(blob)}"><span>${n}</span></div>`);
+  }
+  $('pvGrid').innerHTML = html.join('');
+  $('pvSubmit').innerHTML = `<b>출품 준비</b> — ${esc(current.target || '출품 대상 미정')}<br>
+    이 묶음에는 제안에 쓰는 파일(멈춰 있는 PNG 또는 움직이는 WebP·공식 도구용 프레임·읽어주세요)이 들어 있어요.
+    카카오 이모티콘 스튜디오는 공개된 자동 제출 연동을 확인하지 못했어요 — 앱이나 이 페이지가 대신 제출하지 않아요.
+    제출 주체(작가 본인 / 운영자와 작가의 계약)를 정한 뒤, 그 계정으로 스튜디오에서 직접 제안해 주세요.`;
+}
+$('publish').onclick = async () => {
+  if (!current || !confirm('선정작을 공개 발표할까요? 참가자 앱에 결과가 보여요.')) return;
+  try { const r = await call('adminPublishResults', { contestId: current.id }); say('msg', `발표했어요(선정 ${r.results.length}건).`); await loadContests(); } catch (e) { say('msg', e.message, true); }
+};
+</script>
+</body>
+</html>

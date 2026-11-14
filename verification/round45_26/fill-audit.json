@@ -1,0 +1,632 @@
+[
+  {
+    "name": "daily-good-night-hug.png",
+    "total": 4573,
+    "blobs": 7,
+    "main": 2033,
+    "extras": 3,
+    "slivers": 0,
+    "extraArea": 2467,
+    "suspect": true
+  },
+  {
+    "name": "daily-good-night-curl.png",
+    "total": 4813,
+    "blobs": 4,
+    "main": 2425,
+    "extras": 3,
+    "slivers": 0,
+    "extraArea": 2388,
+    "suspect": true
+  },
+  {
+    "name": "sad-crying-cover-face.png",
+    "total": 3747,
+    "blobs": 11,
+    "main": 1841,
+    "extras": 3,
+    "slivers": 0,
+    "extraArea": 1883,
+    "suspect": true
+  },
+  {
+    "name": "surprise-gasp-mouth.png",
+    "total": 4112,
+    "blobs": 7,
+    "main": 2215,
+    "extras": 3,
+    "slivers": 0,
+    "extraArea": 1854,
+    "suspect": true
+  },
+  {
+    "name": "sad-sad-crouch.png",
+    "total": 4338,
+    "blobs": 4,
+    "main": 2617,
+    "extras": 3,
+    "slivers": 0,
+    "extraArea": 1721,
+    "suspect": true
+  },
+  {
+    "name": "greeting-thanks-grand.png",
+    "total": 3287,
+    "blobs": 4,
+    "main": 1603,
+    "extras": 2,
+    "slivers": 0,
+    "extraArea": 1682,
+    "suspect": true
+  },
+  {
+    "name": "greeting-like-hands.png",
+    "total": 4277,
+    "blobs": 7,
+    "main": 2641,
+    "extras": 3,
+    "slivers": 0,
+    "extraArea": 1631,
+    "suspect": true
+  },
+  {
+    "name": "sad-sad-hug-knees.png",
+    "total": 4025,
+    "blobs": 4,
+    "main": 2477,
+    "extras": 3,
+    "slivers": 0,
+    "extraArea": 1548,
+    "suspect": true
+  },
+  {
+    "name": "greeting-thanks-moved.png",
+    "total": 3872,
+    "blobs": 16,
+    "main": 2334,
+    "extras": 5,
+    "slivers": 1,
+    "extraArea": 1465,
+    "suspect": true
+  },
+  {
+    "name": "daily-depart-run.png",
+    "total": 3663,
+    "blobs": 12,
+    "main": 2107,
+    "extras": 4,
+    "slivers": 0,
+    "extraArea": 1459,
+    "suspect": true
+  },
+  {
+    "name": "sad-sorry-deep-bow.png",
+    "total": 3710,
+    "blobs": 4,
+    "main": 2291,
+    "extras": 2,
+    "slivers": 0,
+    "extraArea": 1374,
+    "suspect": true
+  },
+  {
+    "name": "daily-good-night-lie-down.png",
+    "total": 3970,
+    "blobs": 6,
+    "main": 2650,
+    "extras": 4,
+    "slivers": 0,
+    "extraArea": 1319,
+    "suspect": true
+  },
+  {
+    "name": "angry-hmph-arms-crossed.png",
+    "total": 4523,
+    "blobs": 2,
+    "main": 3418,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 1105,
+    "suspect": true
+  },
+  {
+    "name": "sad-are-you-okay-arms-crossed.png",
+    "total": 4575,
+    "blobs": 2,
+    "main": 3579,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 996,
+    "suspect": true
+  },
+  {
+    "name": "greeting-thanks-polite.png",
+    "total": 3423,
+    "blobs": 6,
+    "main": 2389,
+    "extras": 3,
+    "slivers": 0,
+    "extraArea": 982,
+    "suspect": true
+  },
+  {
+    "name": "daily-hungry-bowl.png",
+    "total": 4011,
+    "blobs": 7,
+    "main": 3109,
+    "extras": 3,
+    "slivers": 2,
+    "extraArea": 892,
+    "suspect": true
+  },
+  {
+    "name": "sad-sorry-please.png",
+    "total": 3664,
+    "blobs": 7,
+    "main": 2814,
+    "extras": 2,
+    "slivers": 0,
+    "extraArea": 845,
+    "suspect": true
+  },
+  {
+    "name": "daily-wait-palm.png",
+    "total": 4090,
+    "blobs": 4,
+    "main": 3552,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 524,
+    "suspect": true
+  },
+  {
+    "name": "surprise-flustered-tremble.png",
+    "total": 3691,
+    "blobs": 2,
+    "main": 3219,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 472,
+    "suspect": true
+  },
+  {
+    "name": "daily-good-night-table.png",
+    "total": 2734,
+    "blobs": 3,
+    "main": 2273,
+    "extras": 2,
+    "slivers": 0,
+    "extraArea": 461,
+    "suspect": true
+  },
+  {
+    "name": "surprise-flustered-shy.png",
+    "total": 3821,
+    "blobs": 2,
+    "main": 3382,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 439,
+    "suspect": true
+  },
+  {
+    "name": "daily-wait-reach.png",
+    "total": 3996,
+    "blobs": 6,
+    "main": 3555,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 402,
+    "suspect": true
+  },
+  {
+    "name": "sad-crying-sob.png",
+    "total": 3784,
+    "blobs": 7,
+    "main": 3384,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 375,
+    "suspect": true
+  },
+  {
+    "name": "surprise-gasp-drop.png",
+    "total": 4857,
+    "blobs": 7,
+    "main": 4524,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 305,
+    "suspect": true
+  },
+  {
+    "name": "greeting-like-thumb.png",
+    "total": 4801,
+    "blobs": 8,
+    "main": 4426,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 288,
+    "suspect": true
+  },
+  {
+    "name": "greeting-thanks-friendly.png",
+    "total": 4835,
+    "blobs": 8,
+    "main": 4501,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 285,
+    "suspect": true
+  },
+  {
+    "name": "daily-depart-walk.png",
+    "total": 3523,
+    "blobs": 2,
+    "main": 3257,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 266,
+    "suspect": true
+  },
+  {
+    "name": "daily-wait-call.png",
+    "total": 3795,
+    "blobs": 7,
+    "main": 3479,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 261,
+    "suspect": true
+  },
+  {
+    "name": "sad-sorry-timid.png",
+    "total": 4278,
+    "blobs": 2,
+    "main": 4042,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 236,
+    "suspect": true
+  },
+  {
+    "name": "surprise-no-way-refuse.png",
+    "total": 3735,
+    "blobs": 4,
+    "main": 3497,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 227,
+    "suspect": true
+  },
+  {
+    "name": "daily-good-night-blanket.png",
+    "total": 1982,
+    "blobs": 3,
+    "main": 1795,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 186,
+    "suspect": true
+  },
+  {
+    "name": "greeting-thanks-shy.png",
+    "total": 3786,
+    "blobs": 5,
+    "main": 3579,
+    "extras": 2,
+    "slivers": 0,
+    "extraArea": 181,
+    "suspect": true
+  },
+  {
+    "name": "daily-wait-hands.png",
+    "total": 3170,
+    "blobs": 3,
+    "main": 3009,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 160,
+    "suspect": true
+  },
+  {
+    "name": "sad-crying-crouch.png",
+    "total": 4152,
+    "blobs": 3,
+    "main": 3961,
+    "extras": 1,
+    "slivers": 1,
+    "extraArea": 142,
+    "suspect": true
+  },
+  {
+    "name": "greeting-hello-peek.png",
+    "total": 2668,
+    "blobs": 3,
+    "main": 2559,
+    "extras": 1,
+    "slivers": 0,
+    "extraArea": 108,
+    "suspect": true
+  },
+  {
+    "name": "angry-angry-hips.png",
+    "total": 4759,
+    "blobs": 1,
+    "main": 4759,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "angry-angry-stand.png",
+    "total": 5285,
+    "blobs": 3,
+    "main": 5280,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "angry-angry-stomp.png",
+    "total": 4477,
+    "blobs": 1,
+    "main": 4477,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "angry-hmph-back.png",
+    "total": 4630,
+    "blobs": 1,
+    "main": 4630,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "angry-unfair-stomp.png",
+    "total": 4553,
+    "blobs": 5,
+    "main": 4386,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "daily-depart-point-side.png",
+    "total": 4839,
+    "blobs": 2,
+    "main": 4838,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "daily-depart-run-point.png",
+    "total": 3730,
+    "blobs": 5,
+    "main": 3714,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "daily-depart-wave-back.png",
+    "total": 3496,
+    "blobs": 2,
+    "main": 3495,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "daily-hungry-ache.png",
+    "total": 4134,
+    "blobs": 1,
+    "main": 4134,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "daily-wait-startled.png",
+    "total": 3925,
+    "blobs": 3,
+    "main": 3921,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "greeting-excited-cheer.png",
+    "total": 4876,
+    "blobs": 4,
+    "main": 4853,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "greeting-excited-dance.png",
+    "total": 4563,
+    "blobs": 3,
+    "main": 4560,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "greeting-excited-jump.png",
+    "total": 4464,
+    "blobs": 2,
+    "main": 4448,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "greeting-hello-turn.png",
+    "total": 3962,
+    "blobs": 1,
+    "main": 3962,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "greeting-hello-wave.png",
+    "total": 4574,
+    "blobs": 1,
+    "main": 4574,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "greeting-hello-welcome.png",
+    "total": 4417,
+    "blobs": 3,
+    "main": 4407,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "greeting-like-content.png",
+    "total": 4049,
+    "blobs": 2,
+    "main": 4048,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "sad-crying-loud.png",
+    "total": 4785,
+    "blobs": 5,
+    "main": 4645,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "sad-crying-wipe.png",
+    "total": 5308,
+    "blobs": 4,
+    "main": 5299,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "sad-sad-downcast.png",
+    "total": 3891,
+    "blobs": 1,
+    "main": 3891,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "sad-sad-gesture.png",
+    "total": 4838,
+    "blobs": 2,
+    "main": 4826,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "sad-sad-sit-back.png",
+    "total": 4628,
+    "blobs": 1,
+    "main": 4628,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "sad-sad-slump.png",
+    "total": 3990,
+    "blobs": 1,
+    "main": 3990,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "sad-sad-teary.png",
+    "total": 5010,
+    "blobs": 2,
+    "main": 5009,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "surprise-flustered-shrug.png",
+    "total": 5542,
+    "blobs": 4,
+    "main": 5504,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "surprise-gasp-point.png",
+    "total": 4349,
+    "blobs": 2,
+    "main": 4318,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "surprise-what-scratch.png",
+    "total": 4062,
+    "blobs": 1,
+    "main": 4062,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  },
+  {
+    "name": "surprise-what-tilt.png",
+    "total": 4094,
+    "blobs": 2,
+    "main": 4090,
+    "extras": 0,
+    "slivers": 0,
+    "extraArea": 0,
+    "suspect": false
+  }
+]

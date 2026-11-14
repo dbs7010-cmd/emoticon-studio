@@ -1,0 +1,20 @@
+internalReview: true · receiptEndpoint: undefined · 1.0.0 vc1
+BILLING: true
+무료 10종 이름: 10/10 (모두 있음)
+PRO 20종 이름: 20/20 (모두 있음)
+  있음  marker2
+  있음  pencil2
+  있음  colorpencil
+  있음  glowpen
+  있음  parallelpen
+  있음  wateredge
+  있음  즐겨찾기에 고정
+  없음  즐겨찾기 1번 칸에 넣기
+  있음  예전 브러시
+  있음  pro_lifetime
+  있음  가격을 불러오지 못했어요
+  있음  "즐겨찾기 "
+  있음  "번 칸에 넣기"
+  있음  "즐겨찾기 고정 취소"
+  있음  "즐겨찾기에 있음 "
+  있음  "를 어느 칸에?"

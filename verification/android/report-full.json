@@ -1,0 +1,107 @@
+{
+  "mode": "--full",
+  "startedAt": "2026-09-12T16:45:19.930Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "04-undo",
+      "covers": "두 손가락 탭 되돌리기",
+      "note": "두 손가락 탭 — 한 획이 사라져야 한다",
+      "shot": "04-undo.png"
+    },
+    {
+      "id": "05-redo",
+      "covers": "세 손가락 탭 다시 실행",
+      "note": "세 손가락 탭 — 그 획이 돌아와야 한다",
+      "shot": "05-redo.png"
+    },
+    {
+      "id": "06-save",
+      "covers": "저장이 끝나는가 · 저장 체감 속도",
+      "note": "저장 누름 · 5858ms 뒤 캡처",
+      "shot": "06-save.png"
+    },
+    {
+      "id": "07-restart",
+      "covers": "앱을 껐다 켜도 작품이 남는가",
+      "note": "껐다 켠 뒤 — 작품이 남아 있어야 한다",
+      "shot": "07-restart.png"
+    },
+    {
+      "id": "07b-reenter",
+      "covers": "홈에서 작업하던 칸으로 다시 들어가기",
+      "note": "이어서 만들기로 캔버스 복귀",
+      "shot": "07b-reenter.png"
+    },
+    {
+      "id": "08-layers",
+      "covers": "레이어 줄 · 그림 추가 · 무엇을 편집 중인지 보이는가",
+      "note": "실패 — element (\"~그림 추가\") still not existing after 8000ms",
+      "shot": "08-layers.png"
+    },
+    {
+      "id": "09-select",
+      "covers": "선택 도구로 들어올리기 · 변형 손잡이",
+      "note": "선택 올가미 — 손잡이가 보여야 한다",
+      "shot": "09-select.png"
+    },
+    {
+      "id": "10-select-applied",
+      "covers": "선택 적용 후 그림이 남는가",
+      "note": "실패 — element (\"~선택 적용\") still not existing after 5000ms",
+      "shot": "10-select-applied.png"
+    },
+    {
+      "id": "11-motion",
+      "covers": "움직이기 탭 · 효과 카드 · 버튼 중복",
+      "note": "움직이기 탭",
+      "shot": "11-motion.png"
+    },
+    {
+      "id": "12-motion-applied",
+      "covers": "움직임 적용 후 미리보기",
+      "note": "실패 — element (\"~통통\") still not existing after 8000ms",
+      "shot": "12-motion-applied.png"
+    },
+    {
+      "id": "13-export",
+      "covers": "제출 화면 · 글자 위계 · 잘림",
+      "note": "제출 화면",
+      "shot": "13-export.png"
+    },
+    {
+      "id": "14-share",
+      "covers": "작업 파일 만들기 → 공유 시트로 실제 전달",
+      "note": "실패 — element (\"~작업 파일 만들기\") still not existing after 6000ms",
+      "shot": "14-share.png"
+    }
+  ],
+  "skipped": [],
+  "notes": [
+    "08-layers 실패: element (\"~그림 추가\") still not existing after 8000ms",
+    "10-select-applied 실패: element (\"~선택 적용\") still not existing after 5000ms",
+    "12-motion-applied 실패: element (\"~통통\") still not existing after 8000ms",
+    "14-share 실패: element (\"~작업 파일 만들기\") still not existing after 6000ms"
+  ],
+  "crashes": [],
+  "closedBecause": "done",
+  "finishedAt": "2026-09-12T16:47:54.666Z"
+}

@@ -1,0 +1,78 @@
+{
+  "mode": "--persist",
+  "startedAt": "2026-09-12T19:45:14.340Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "P1-cut",
+      "covers": "그림이 실제로 있는 칸",
+      "note": "그림이 있는 칸 · 저장까지 마친 상태",
+      "shot": "P1-cut.png"
+    },
+    {
+      "id": "P2-tool",
+      "covers": "선택 도구",
+      "note": "선택 도구",
+      "shot": "P2-tool.png"
+    },
+    {
+      "id": "P3-lift",
+      "covers": "들어올림",
+      "note": "첫 획을 들어올림",
+      "shot": "P3-lift.png"
+    },
+    {
+      "id": "P4-move",
+      "covers": "적용 전 이동",
+      "note": "아래 왼쪽으로 옮김 — 적용 전",
+      "shot": "P4-move.png"
+    },
+    {
+      "id": "P5-apply",
+      "covers": "적용",
+      "note": "실패 — element (\"~선택 적용\") still not existing after 6000ms",
+      "shot": "P5-apply.png"
+    }
+  ],
+  "skipped": [
+    {
+      "id": "P6-save",
+      "covers": "저장",
+      "reason": "앞 단계(P5-apply) 실패로 실행하지 못함"
+    },
+    {
+      "id": "P7-restart",
+      "covers": "재실행",
+      "reason": "앞 단계(P5-apply) 실패로 실행하지 못함"
+    },
+    {
+      "id": "P8-reopen",
+      "covers": "칸을 다시 열어 결과 확인",
+      "reason": "앞 단계(P5-apply) 실패로 실행하지 못함"
+    }
+  ],
+  "notes": [
+    "P5-apply 실패(이후 중단): element (\"~선택 적용\") still not existing after 6000ms"
+  ],
+  "crashes": [],
+  "closedBecause": "done",
+  "finishedAt": "2026-09-12T19:46:38.738Z"
+}

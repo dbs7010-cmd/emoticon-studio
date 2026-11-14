@@ -1,0 +1,135 @@
+emoti 이모티 — Google Play 기본 스토어 등록정보 (한국어 ko-KR)
+기준: 2026-10-19 3차 개정 · 정식 출시용(결제 열림 빌드 vc10+) · 대표 캐릭터 콘과 친구들 · 애니메이션 탭 · 손그림 떨림 · 조합 · 무료 강좌 10편 · 실제 구현(커밋 0c56adb)과 대조함
+(2차 개정 2026-10-13 본은 git 이력에 있다.)
+(이전 본은 git 이력에 있다.)
+(이 파일의 [ ] 줄은 안내다. Console 에는 ── 사이의 본문만 붙여 넣는다.)
+
+[Console › 스토어 등록정보 › 앱 이름]  (9자 / 30자)
+──
+emoti 이모티
+──
+※ 지금 Console 칸에는 대문자 'EMOTI 이모티'가 들어 있다 → 소문자 'emoti 이모티'로 고친다.
+
+[Console › 스토어 등록정보 › 간단한 설명]  (80자 이내)
+──
+내 그림을 움직이는 이모티콘으로. 그리고, 움직이고, 한 세트를 파일로 완성해요.
+──
+
+[Console › 스토어 등록정보 › 자세한 설명]  (4000자 이내)
+──
+emoti 이모티는 내가 그린 캐릭터를 움직이는 이모티콘으로 만들고, 한 세트를 끝까지 완성해 파일로 내보내는 제작 앱이에요.
+
+■ 그리기에 집중하는 화면
+- 펜 · 지우개 · 채우기 · 선택(옮기기 · 크기 · 회전 · 뒤집기), 레이어, 참고 사진, 문구를 한 화면에서 써요.
+- 굵기와 불투명도는 캔버스 바로 위에서 바꿔요.
+- 캔버스 밖 여백을 두 손가락으로 톡 치면 되돌리기, 세 손가락이면 다시 실행이에요.
+
+■ 무료 브러시 10종
+기본 펜, 자연 잉크, 테이퍼 펜, 붓펜, 납작 펜, 연필, 색연필, 불투명 채색붓, 마커, 에어브러시.
+
+■ 그림을 움직이게
+- 뿅 · 통통 · 둥실 · 까딱 · 흔들기 · 두근거리기 6가지 움직임을 무료로 붙이고, 세기와 속도를 고를 수 있어요.
+- 손그림 떨림을 켜면 선이 살아 있는 듯 떨려요(무료).
+- 미리 보는 움직임과 저장되는 파일이 같은 방식으로 만들어져요.
+
+■ 장마다 그리는 애니메이션
+- 애니메이션 탭에서 장을 복사해 바뀌는 곳만 고쳐 그리고, 장마다 보여 주는 시간을 정해요.
+- 앞 장이 옅게 비쳐 따라 그리기 쉬워요. 무료 3장, PRO 24장까지.
+
+■ 한 세트를 끝까지
+- 세트를 보드에서 한눈에 보고, 다음에 그릴 칸을 바로 열어요(멈춰 있는 세트 32칸 · 움직이는 세트 24칸 기준).
+- 다음 칸은 이전 칸의 그림과 움직임을 그대로 가져와 이어 그려요.
+- 홈의 '제안까지'가 남은 칸 · 움직이는 칸 · 대표 아이콘을 알려 줘요.
+- 무엇을 그릴지 막막할 때는 표현 가이드를 보세요.
+
+■ 파일 묶음으로 내보내기
+- 360×360 크기, 투명 배경, 용량을 확인하고 PNG · WebP · GIF 파일 묶음(ZIP)으로 내보내요.
+- 겹친 문구나 똑같은 그림처럼 손볼 곳을 미리 알려 줘요.
+- 대표 아이콘 같은 부가 이미지도 만들 수 있어요.
+
+■ 채팅에서 써 보기
+- 만든 이모티콘을 연습용 대화 속에 넣어 크기와 표정을 확인해요. 밝은 바탕·어두운 바탕 모두 볼 수 있어요(실제로 보내지지 않아요).
+
+■ 무료 강좌 10편 · 가이드북
+- 대표 캐릭터 콘과 친구들(고구마 · 완두콩)이 첫 세트 만들기, 브러시와 레이어, 움직이기, 애니메이션, 내보내기, 캐릭터와 표정 만들기를 짧은 영상으로 알려 줘요.
+- 가이드북에서 이모티콘 제안 규격과 제작 팁을 홈에서 바로 봐요.
+
+■ 작품은 내 폰에, 계정은 간단하게
+- 카카오 · 네이버 · 구글로 시작하고 작가명을 정해요. 이메일·전화번호는 받지 않아요.
+- 그림은 폰 안에 저장돼요. 세트를 백업 파일로 만들어 보관하고 되살릴 수 있어요.
+- PRO 는 세트를 클라우드에 백업하고 새 폰에서 되살릴 수 있어요.
+- 지운 세트는 30일 동안 휴지통에 남아요.
+
+■ 무료로도 한 세트를 끝까지
+워터마크 없이 그리고, 움직임을 붙이고, 파일로 내보낼 수 있어요. 광고가 없어요.
+
+■ PRO (한 번 구매로 계속)
+- 움직임 14종 더(쓱 · 빼꼼 · 쿵 · 사라지기 · 폴짝 · 끄덕 · 꾸벅 · 들썩 · 살랑 · 빙글 · 부르르 · 덜덜 · 쾅 · 쭈욱)
+- 원하는 부분만 따로 움직이기(손 흔들기 · 통통 튀기 바로 쓰기) · 두 모습 번갈아
+- 움직임 이어 붙이기와 조합 3가지(등장→인사 · 놀람→떨기 · 폴짝→신남)
+- 애니메이션 24장까지
+- 여러 칸에 같은 움직임을 한 번에 넣기
+- PRO 브러시 20종
+- 클라우드 백업: 세트를 올려 두고 새 폰에서 되살리기
+- PRO 움직임과 조합은 구매 전에 내 그림으로 미리 볼 수 있어요.
+※ 구독이 아니라 한 번 구매예요. 앱을 다시 설치하거나 폰을 바꿔도 '구매 복원'으로 다시 켜져요.
+
+문의: emoticon755@gmail.com
+──
+
+[Console › 스토어 설정 › 연락처 세부정보 › 이메일]
+──
+emoticon755@gmail.com
+──
+
+[Console › 앱 콘텐츠 › 개인정보처리방침 URL]
+── (공개 주소가 실제로 열린 뒤에 입력)
+https://dbs7010-cmd.github.io/emoticon-studio/privacy/   ← 2026-10-04 현재 내용으로 교체 게시·본문 확인 완료
+──
+
+[Console › 앱 콘텐츠 › 앱 액세스]  ★★ 2026-10-13 개정 — vc4 부터 로그인 필수라 아래 '개정본'으로 바꿔야 한다 ★★
+  선택: 'All or some functionality is restricted'(일부 또는 전체 기능이 제한됨) → 안내 추가.
+  심사용 계정: 운영자가 심사 전용 구글 계정을 하나 만들어, 그 아이디·비밀번호를 Console 칸에 직접 넣는다(채팅·저장소에 적지 않는다).
+  전제: Google Cloud › OAuth 동의 화면의 게시 상태가 '프로덕션'이어야 아무 구글 계정이나 로그인된다('테스트'면 등록한 사용자만).
+Instruction name: Sign in with Google (review account)
+──
+The app requires sign-in. On the first screen tap "Google로 시작하기" (Sign in with Google) and sign in with the Google account provided in this form. Then enter any artist name (2–12 Korean/English letters or digits, e.g. "review01") and tap "완료" (Done). After that, every feature is available.
+
+Drawing, the free motion effects, the chat preview, the guidebook and exporting are available without payment. PRO features are unlocked by a one-time in-app purchase (product "pro_lifetime", tap "PRO 보기" at the top right of the home screen); purchases are verified on our server with Google Play. Kakao and Naver sign-in are also offered but are not needed for review.
+──
+
+[이전 본 — vc2·vc3(로그인 없음) 기준, 지금은 쓰지 않음]
+── 이 빌드는 로그인이 없고, 모든 사용자(심사자 포함)가 PRO 기능 전체를 결제 없이 쓴다. 유료 장벽이 없다.
+   권장 선택: 'All functionality is available without special access'(이 선택에는 안내 칸이 없다).
+   이미 'All or some functionality is restricted' 로 안내를 넣어 두었다면, 그 안내 내용을 아래 영어 문장으로 바꾼다.
+Instruction name: No sign-in · all features open in this test build
+──
+This app has no sign-in and no accounts. In this closed test build, every feature is available to every user, including reviewers, without payment: all brushes, all motion effects, part motion, two-pose alternation, and applying motion to several cells, with saving, reopening, and exporting.
+
+In-app purchase is turned off in this build. Features marked "PRO" are free to try during the closed test; the PRO screen (tap the "PRO 체험" badge at the top right of the home screen) explains that some features will require a one-time purchase at full release. No test accounts, promo codes, or hidden switches are needed.
+──
+근거: Play Console 도움말 'Requirements for providing sign in details for review' — 로그인·유료 장벽 등으로 막힌 부분이 있을 때 접근 안내를 요구한다. 이 빌드에는 막힌 부분이 없다.
+(정식 출시 버전에서는: 구매가 열린 빌드에서 PRO 심사 접근 수단을 다시 정한다.)
+
+[Console › 프로덕션 › 새 버전 › 출시 노트]  (정식 출시용 — 2026-10-19)
+<ko-KR>
+emoti 이모티 정식 출시!
+- 내 그림에 움직임을 골라 움직이는 이모티콘을 만들고, 한 세트를 파일 묶음으로 내보내요.
+- 장마다 그리는 애니메이션, 손그림 떨림, 무료 강좌 10편이 들어 있어요.
+- PRO는 한 번 구매로 계속 써요(부분 움직임 · 조합 · 움직임 14종 · PRO 브러시 · 클라우드 백업).
+</ko-KR>
+
+[이전 출시 노트 — 비공개 테스트용, 정식 출시에는 쓰지 않음('PRO 무료 체험' 문장 포함)]
+<ko-KR>
+비공개 테스트 버전이에요.
+- 이번 테스트에서는 PRO 기능(PRO 브러시·움직임 14종·부분 움직임·두 모습 번갈아·여러 칸 한 번에)을 무료로 체험할 수 있어요.
+- 실제 결제는 일어나지 않아요. 정식 출시 시 일부 기능은 별도 구매(한 번 결제)가 필요합니다.
+- 써 보신 뒤 설문에 의견을 남겨 주세요.
+</ko-KR>
+
+[그래픽 업로드 위치]
+- 앱 아이콘(512×512): play-icon-512.png  → 스토어 등록정보 › 그래픽 › 앱 아이콘
+- 그래픽 이미지(1024×500): feature-graphic-1024x500.png → 스토어 등록정보 › 그래픽 › 그래픽 이미지
+- 휴대전화 스크린샷(1080×1920, 5장): phone-01.png ~ phone-05.png → 스토어 등록정보 › 휴대전화 스크린샷 (번호 순서대로, 기존 4장은 지우고 교체)
+  ※ 2026-10-13: 다섯 장 모두 에뮬레이터 실제 화면(흰 홈·움직이기·부분 움직이기·채팅에서 써 보기·보드)으로 새로 만들었다. ① 움직임 ② 홈 ③ 부분 움직이기(PRO) ④ 채팅 ⑤ 보드
+  ※ 2026-10-03: 네 장 모두 에뮬레이터에서 실행한 앱의 실제 캡처로 교체했다(DRAFT 없음). phone-01.png ~ phone-04.png 를 그대로 올린다.

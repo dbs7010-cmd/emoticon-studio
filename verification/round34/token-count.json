@@ -1,0 +1,34 @@
+{
+  "App": {
+    "before": {
+      "hexLiterals": 33,
+      "uniqueHex": 26,
+      "accentSoftFills": 11,
+      "textGlyphClose": 1,
+      "dangerActions": 0
+    },
+    "after": {
+      "hexLiterals": 24,
+      "uniqueHex": 19,
+      "accentSoftFills": 9,
+      "textGlyphClose": 0,
+      "dangerActions": 2
+    }
+  },
+  "ui": {
+    "before": {
+      "hexLiterals": 24,
+      "uniqueHex": 22,
+      "accentSoftFills": 1,
+      "textGlyphClose": 1,
+      "dangerActions": 0
+    },
+    "after": {
+      "hexLiterals": 22,
+      "uniqueHex": 20,
+      "accentSoftFills": 1,
+      "textGlyphClose": 0,
+      "dangerActions": 0
+    }
+  }
+}

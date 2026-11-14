@@ -1,0 +1,194 @@
+{
+  "measuredAt": "2026-10-07T06:41:27.658Z",
+  "drawings": 12,
+  "stillPngKB": {
+    "avg": 18.7,
+    "max": 21.7
+  },
+  "moving": {
+    "webpKB": {
+      "avg": 115.9,
+      "max": 217.1
+    },
+    "gifKB": {
+      "avg": 78.1
+    },
+    "frameCount": 321,
+    "framePngKB": {
+      "avg": 27.8
+    }
+  },
+  "stillSetZipMB": 0.63,
+  "movingSetZipMB": 11.5,
+  "movingSetWithoutFramesMB": 2.76,
+  "perCut": [
+    {
+      "preset": "bounce",
+      "frames": 10,
+      "webpKB": 75.6,
+      "gifKB": 49.1,
+      "framesKB": 277.2
+    },
+    {
+      "preset": "shake",
+      "frames": 10,
+      "webpKB": 95.8,
+      "gifKB": 55.5,
+      "framesKB": 267.6
+    },
+    {
+      "preset": "pulse",
+      "frames": 10,
+      "webpKB": 90.6,
+      "gifKB": 65.8,
+      "framesKB": 309.8
+    },
+    {
+      "preset": "float",
+      "frames": 10,
+      "webpKB": 79.2,
+      "gifKB": 52,
+      "framesKB": 249.5
+    },
+    {
+      "preset": "tilt",
+      "frames": 10,
+      "webpKB": 92.3,
+      "gifKB": 62.8,
+      "framesKB": 306.4
+    },
+    {
+      "preset": "jitter",
+      "frames": 10,
+      "webpKB": 115.3,
+      "gifKB": 77.7,
+      "framesKB": 368.7
+    },
+    {
+      "preset": "pop",
+      "frames": 19,
+      "webpKB": 127.5,
+      "gifKB": 90.6,
+      "framesKB": 425.7
+    },
+    {
+      "preset": "slide",
+      "frames": 19,
+      "webpKB": 135.6,
+      "gifKB": 91.2,
+      "framesKB": 405.4
+    },
+    {
+      "preset": "peek",
+      "frames": 19,
+      "webpKB": 123.4,
+      "gifKB": 86.9,
+      "framesKB": 373.9
+    },
+    {
+      "preset": "drop",
+      "frames": 19,
+      "webpKB": 141,
+      "gifKB": 93.5,
+      "framesKB": 424.9
+    },
+    {
+      "preset": "vanish",
+      "frames": 19,
+      "webpKB": 131.1,
+      "gifKB": 86.4,
+      "framesKB": 421.3
+    },
+    {
+      "preset": "hop",
+      "frames": 19,
+      "webpKB": 217.1,
+      "gifKB": 145.2,
+      "framesKB": 698.5
+    },
+    {
+      "preset": "nod",
+      "frames": 10,
+      "webpKB": 70.3,
+      "gifKB": 46.1,
+      "framesKB": 239.2
+    },
+    {
+      "preset": "bow",
+      "frames": 19,
+      "webpKB": 182.3,
+      "gifKB": 112.7,
+      "framesKB": 558.2
+    },
+    {
+      "preset": "dance",
+      "frames": 10,
+      "webpKB": 93,
+      "gifKB": 66.4,
+      "framesKB": 321.9
+    },
+    {
+      "preset": "sway",
+      "frames": 10,
+      "webpKB": 85.4,
+      "gifKB": 58.8,
+      "framesKB": 292.7
+    },
+    {
+      "preset": "spin",
+      "frames": 19,
+      "webpKB": 173.7,
+      "gifKB": 115.2,
+      "framesKB": 559.4
+    },
+    {
+      "preset": "shiver",
+      "frames": 10,
+      "webpKB": 115.9,
+      "gifKB": 78,
+      "framesKB": 369.7
+    },
+    {
+      "preset": "punch",
+      "frames": 19,
+      "webpKB": 155.5,
+      "gifKB": 112,
+      "framesKB": 523.2
+    },
+    {
+      "preset": "stretch",
+      "frames": 10,
+      "webpKB": 85.4,
+      "gifKB": 67,
+      "framesKB": 299.7
+    },
+    {
+      "preset": "bounce",
+      "frames": 10,
+      "webpKB": 97.4,
+      "gifKB": 67.9,
+      "framesKB": 329.7
+    },
+    {
+      "preset": "shake",
+      "frames": 10,
+      "webpKB": 94.9,
+      "gifKB": 59.3,
+      "framesKB": 268.5
+    },
+    {
+      "preset": "pulse",
+      "frames": 10,
+      "webpKB": 93.7,
+      "gifKB": 64.6,
+      "framesKB": 314
+    },
+    {
+      "preset": "float",
+      "frames": 10,
+      "webpKB": 109.6,
+      "gifKB": 69.3,
+      "framesKB": 305.8
+    }
+  ]
+}

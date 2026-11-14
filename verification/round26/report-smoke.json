@@ -1,0 +1,148 @@
+{
+  "mode": "--r26",
+  "startedAt": "2026-09-13T20:00:58.354Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "04-undo",
+      "covers": "두 손가락 탭 되돌리기",
+      "note": "두 손가락 탭 — 한 획이 사라져야 한다",
+      "shot": "04-undo.png"
+    },
+    {
+      "id": "05-redo",
+      "covers": "세 손가락 탭 다시 실행",
+      "note": "세 손가락 탭 — 그 획이 돌아와야 한다",
+      "shot": "05-redo.png"
+    },
+    {
+      "id": "26-base",
+      "covers": "",
+      "note": "실제 화면 비교용 기본 상태",
+      "shot": "26-base.png"
+    },
+    {
+      "id": "26-brush",
+      "covers": "",
+      "note": "붓 실제 획",
+      "shot": "26-brush.png"
+    },
+    {
+      "id": "26-pencil",
+      "covers": "",
+      "note": "연필 실제 획",
+      "shot": "26-pencil.png"
+    },
+    {
+      "id": "26-color",
+      "covers": "",
+      "note": "팔레트와 캔버스 비교",
+      "shot": "26-color.png"
+    },
+    {
+      "id": "26-color-picked",
+      "covers": "",
+      "note": "색 선택 후 도구 유지 비교",
+      "shot": "26-color-picked.png"
+    },
+    {
+      "id": "26-pen-panel",
+      "covers": "",
+      "note": "설정 패널",
+      "shot": "26-pen-panel.png"
+    },
+    {
+      "id": "26-caption-keyboard",
+      "covers": "",
+      "note": "키보드·적용 접근",
+      "shot": "26-caption-keyboard.png"
+    },
+    {
+      "id": "26-keyboard-closed",
+      "covers": "",
+      "note": "키보드만 닫은 상태",
+      "shot": "26-keyboard-closed.png"
+    },
+    {
+      "id": "26-caption-applied",
+      "covers": "",
+      "note": "실패 — element (\"~문구 적용\") still not existing after 8000ms",
+      "shot": "26-caption-applied.png"
+    },
+    {
+      "id": "26-caption-selected",
+      "covers": "",
+      "note": "실패 — element (\"~문구 고르기\") still not existing after 8000ms",
+      "shot": "26-caption-selected.png"
+    },
+    {
+      "id": "26-save",
+      "covers": "",
+      "note": "저장",
+      "shot": "26-save.png"
+    },
+    {
+      "id": "26-restart",
+      "covers": "",
+      "note": "재실행",
+      "shot": "26-restart.png"
+    },
+    {
+      "id": "26-board",
+      "covers": "",
+      "note": "32칸 화면",
+      "shot": "26-board.png"
+    },
+    {
+      "id": "26-board-bottom",
+      "covers": "",
+      "note": "하단 고정 여부 비교",
+      "shot": "26-board-bottom.png"
+    },
+    {
+      "id": "06-save",
+      "covers": "저장이 끝나는가 · 저장 체감 속도",
+      "note": "실패 — element (\"~저장\") still not existing after 8000ms",
+      "shot": "06-save.png"
+    }
+  ],
+  "skipped": [
+    {
+      "id": "07-restart",
+      "covers": "앱을 껐다 켜도 작품이 남는가",
+      "reason": "앞 단계(06-save) 실패로 실행하지 못함"
+    }
+  ],
+  "notes": [
+    "26-caption-applied 실패: element (\"~문구 적용\") still not existing after 8000ms",
+    "26-caption-selected 실패: element (\"~문구 고르기\") still not existing after 8000ms",
+    "문구 실제 드래그 위치와 PRO 모드는 캡처·요소 좌표 확인 후 별도 검증 필요; 자동 PASS 아님",
+    "06-save 실패(이후 중단): element (\"~저장\") still not existing after 8000ms"
+  ],
+  "sessionId": "2c43a5ab2d0b281b1709bf6fd1282dc162bb55f6",
+  "crashes": [],
+  "textStringError": {
+    "found": false,
+    "lines": []
+  },
+  "closedBecause": "done",
+  "finishedAt": "2026-09-13T20:03:55.510Z"
+}

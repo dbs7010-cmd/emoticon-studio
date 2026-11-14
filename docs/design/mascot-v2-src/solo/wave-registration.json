@@ -1,0 +1,25 @@
+{
+  "canvas": [
+    1024,
+    1024
+  ],
+  "body": "corn-wave-body.png",
+  "arm": "corn-wave-arm.png",
+  "drawOrder": [
+    "arm",
+    "body"
+  ],
+  "armPlacement": [
+    135,
+    485
+  ],
+  "armRasterSize": [
+    170,
+    167
+  ],
+  "suggestedPivot": [
+    285,
+    638
+  ],
+  "note": "Keep full 1024 canvas for both layers; do not independently trim. Pivot is an initial registration suggestion to confirm in app."
+}

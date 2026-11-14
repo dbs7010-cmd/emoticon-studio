@@ -1,0 +1,29 @@
+{
+  "headCommit": "bb1f61739b697cd6618f4407618c1290f6730f4a",
+  "uncommittedFiles": 71,
+  "sourceId": "89ee3f07efbc55074136f5ce613fe0dcda9a266d4a79206916792cba4c907d9b",
+  "applicationId": "com.emoticonstudio.app",
+  "versionName": "1.0.0",
+  "versionCode": 15,
+  "buildType": "release",
+  "aab": {
+    "path": "dist\\emoti-1.0.0-vc15-paid-9b4e960.aab",
+    "sha256": "abeb39e18731d3e23d3a0d640990df051960bb0df07af16387e60aca8a346341",
+    "bytes": 69376446,
+    "builtAt": "2026-10-21T07:06:30.498Z"
+  },
+  "signingCertificateSha256": [
+    "089194ff3c864942b22963136c704e82f885f196f0c86a05773d619cfd17844e"
+  ],
+  "signingCertificateKind": "upload",
+  "internalReview": false,
+  "purchases": "release",
+  "receiptEndpointPresent": true,
+  "groups": {
+    "CONFIG": "PASS",
+    "SIGNING": "PASS",
+    "ARTIFACT": "PASS",
+    "ASSETS": "PASS"
+  },
+  "checkedAt": "2026-10-21T07:07:01.096Z"
+}

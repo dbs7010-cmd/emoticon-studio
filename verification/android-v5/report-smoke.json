@@ -1,0 +1,84 @@
+{
+  "mode": "--contrast",
+  "startedAt": "2026-09-12T21:18:45.506Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "C1-draw",
+      "covers": "",
+      "note": "그리기 — 탭·저장·도구 이름·설명",
+      "shot": "C1-draw.png"
+    },
+    {
+      "id": "C2-menu",
+      "covers": "",
+      "note": "⋯ 메뉴 — 묶음 이름과 비활성 항목",
+      "shot": "C2-menu.png"
+    },
+    {
+      "id": "C3-motion",
+      "covers": "",
+      "note": "움직이기 — 카드·슬라이더·설명",
+      "shot": "C3-motion.png"
+    },
+    {
+      "id": "C4-preset",
+      "covers": "",
+      "note": "선택 상태 — 노랑 배경 + 차콜 글자",
+      "shot": "C4-preset.png"
+    },
+    {
+      "id": "C5-save",
+      "covers": "",
+      "note": "저장됨 — 비활성 상태 글자",
+      "shot": "C5-save.png"
+    },
+    {
+      "id": "C6-home",
+      "covers": "",
+      "note": "홈",
+      "shot": "C6-home.png"
+    },
+    {
+      "id": "C7-settings",
+      "covers": "",
+      "note": "설정 — 안내문과 배너",
+      "shot": "C7-settings.png"
+    },
+    {
+      "id": "C8-board",
+      "covers": "",
+      "note": "세트 — 제목·진행·칸 번호",
+      "shot": "C8-board.png"
+    },
+    {
+      "id": "C9-export",
+      "covers": "",
+      "note": "제출 준비 — 설명 글이 가장 많은 화면",
+      "shot": "C9-export.png"
+    }
+  ],
+  "skipped": [],
+  "notes": [],
+  "crashes": [],
+  "closedBecause": "done",
+  "finishedAt": "2026-09-12T21:20:47.139Z"
+}

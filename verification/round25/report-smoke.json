@@ -1,0 +1,66 @@
+{
+  "mode": "--r25",
+  "startedAt": "2026-09-13T16:12:32.834Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "R1-painter",
+      "covers": "",
+      "note": "페인터 기본 — 펜 3종 에셋·선 샘플 · 색과 굵기 한 줄 · 머리의 되돌리기/다시 실행",
+      "shot": "R1-painter.png"
+    },
+    {
+      "id": "R2-pen-panel",
+      "covers": "",
+      "note": "펜 설정 패널 — 종류 선택이 겹쳐 있지 않아야 한다",
+      "shot": "R2-pen-panel.png"
+    },
+    {
+      "id": "R3-home",
+      "covers": "",
+      "note": "홈 — 작품이 있는 상태",
+      "shot": "R3-home.png"
+    },
+    {
+      "id": "06-save",
+      "covers": "저장이 끝나는가 · 저장 체감 속도",
+      "note": "실패 — element (\"~저장\") still not existing after 8000ms",
+      "shot": "06-save.png"
+    }
+  ],
+  "skipped": [
+    {
+      "id": "07-restart",
+      "covers": "앱을 껐다 켜도 작품이 남는가",
+      "reason": "앞 단계(06-save) 실패로 실행하지 못함"
+    }
+  ],
+  "notes": [
+    "06-save 실패(이후 중단): element (\"~저장\") still not existing after 8000ms"
+  ],
+  "crashes": [],
+  "textStringError": {
+    "found": false,
+    "lines": []
+  },
+  "closedBecause": "done",
+  "finishedAt": "2026-09-13T16:13:59.678Z"
+}

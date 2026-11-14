@@ -1,0 +1,8 @@
+{
+  "apk": "C:\\Dev\\emoticon-studio\\verification\\apk-keep\\app-28th-internal-b5d12fb15367.apk",
+  "sha256": "b5d12fb15367c6642723353c842ece10bc49e560ca26b3814f5bffa75784d958",
+  "bytes": 81152300,
+  "app": "bs://5c288bbd4bd1d790af31fdf6cb736deee276d384",
+  "uploadedAt": "2026-09-14T09:48:15.814Z",
+  "verification": "local bytes unchanged during upload; remote digest unavailable"
+}

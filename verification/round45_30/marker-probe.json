@@ -1,0 +1,46 @@
+[
+  {
+    "kind": "now",
+    "ink": 12325,
+    "edge": 1263,
+    "maxA": 140,
+    "cols": 316,
+    "thickness": 39,
+    "roughness": 1.78,
+    "jitter": 191,
+    "jitterPerCol": 0.604
+  },
+  {
+    "kind": "A",
+    "ink": 12283,
+    "edge": 1253,
+    "maxA": 140,
+    "cols": 316,
+    "thickness": 38.9,
+    "roughness": 1.77,
+    "jitter": 185,
+    "jitterPerCol": 0.585
+  },
+  {
+    "kind": "B",
+    "ink": 12362,
+    "edge": 775,
+    "maxA": 140,
+    "cols": 313,
+    "thickness": 39.5,
+    "roughness": 1.1,
+    "jitter": 149,
+    "jitterPerCol": 0.476
+  },
+  {
+    "kind": "C",
+    "ink": 13186,
+    "edge": 809,
+    "maxA": 140,
+    "cols": 324,
+    "thickness": 40.7,
+    "roughness": 1.11,
+    "jitter": 147,
+    "jitterPerCol": 0.454
+  }
+]

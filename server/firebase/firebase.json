@@ -1,0 +1,90 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs22"
+    }
+  ],
+  "hosting": {
+    "public": "admin",
+    "ignore": [
+      "**/.*"
+    ],
+    "rewrites": [
+      {
+        "source": "/receipt",
+        "function": {
+          "functionId": "verifyPurchase",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/auth/start",
+        "function": {
+          "functionId": "authStart",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/auth/callback/kakao",
+        "function": {
+          "functionId": "authCallbackKakao",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/auth/callback/naver",
+        "function": {
+          "functionId": "authCallbackNaver",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/auth/callback/google",
+        "function": {
+          "functionId": "authCallbackGoogle",
+          "region": "us-central1"
+        }
+      }
+    ],
+    "headers": [
+      {
+        "source": "/auth/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store"
+          }
+        ]
+      }
+    ]
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "storage": {
+      "port": 9199
+    },
+    "functions": {
+      "port": 5001
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
+  }
+}

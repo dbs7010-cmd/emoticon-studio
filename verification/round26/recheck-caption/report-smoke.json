@@ -1,0 +1,176 @@
+{
+  "mode": "--r26",
+  "startedAt": "2026-09-14T08:19:43.247Z",
+  "device": "Samsung Galaxy S23",
+  "steps": [
+    {
+      "id": "01-launch",
+      "covers": "Metro 없이 단독 실행 · 첫 화면 · 한글 렌더",
+      "note": "창 1080×2115",
+      "shot": "01-launch.png"
+    },
+    {
+      "id": "02-new-set",
+      "covers": "빈 캔버스 진입 · 빈 화면 균형",
+      "note": "새 세트로 들어감",
+      "shot": "02-new-set.png"
+    },
+    {
+      "id": "03-draw",
+      "covers": "한 손가락 그리기가 실제로 획을 남기는가",
+      "note": "획 2개",
+      "shot": "03-draw.png"
+    },
+    {
+      "id": "04-undo",
+      "covers": "두 손가락 탭 되돌리기",
+      "note": "두 손가락 탭 — 한 획이 사라져야 한다",
+      "shot": "04-undo.png"
+    },
+    {
+      "id": "05-redo",
+      "covers": "세 손가락 탭 다시 실행",
+      "note": "세 손가락 탭 — 그 획이 돌아와야 한다",
+      "shot": "05-redo.png"
+    },
+    {
+      "id": "26-base",
+      "covers": "",
+      "note": "실제 화면 비교용 기본 상태",
+      "shot": "26-base.png"
+    },
+    {
+      "id": "26-brush",
+      "covers": "",
+      "note": "붓 실제 획",
+      "shot": "26-brush.png"
+    },
+    {
+      "id": "26-pencil",
+      "covers": "",
+      "note": "연필 실제 획",
+      "shot": "26-pencil.png"
+    },
+    {
+      "id": "26-color",
+      "covers": "",
+      "note": "팔레트와 캔버스 비교",
+      "shot": "26-color.png"
+    },
+    {
+      "id": "26-color-picked",
+      "covers": "",
+      "note": "색 선택 후 도구 유지 비교",
+      "shot": "26-color-picked.png"
+    },
+    {
+      "id": "26-pen-panel",
+      "covers": "",
+      "note": "설정 패널",
+      "shot": "26-pen-panel.png"
+    },
+    {
+      "id": "26-caption-keyboard",
+      "covers": "",
+      "note": "키보드·적용 접근",
+      "shot": "26-caption-keyboard.png"
+    },
+    {
+      "id": "26-keyboard-closed",
+      "covers": "",
+      "note": "키보드만 닫고 문구 패널 유지",
+      "shot": "26-keyboard-closed.png"
+    },
+    {
+      "id": "26-caption-applied",
+      "covers": "",
+      "note": "문구 위 위치 적용",
+      "shot": "26-caption-applied.png"
+    },
+    {
+      "id": "26-caption-selected",
+      "covers": "",
+      "note": "이동 전 선택 위치",
+      "shot": "26-caption-selected.png"
+    },
+    {
+      "id": "26-caption-moved",
+      "covers": "",
+      "note": "문구 드래그: {\"x\":540,\"y\":481}",
+      "shot": "26-caption-moved.png"
+    },
+    {
+      "id": "26-caption-reapplied",
+      "covers": "",
+      "note": "이동 후 문구 재적용",
+      "shot": "26-caption-reapplied.png"
+    },
+    {
+      "id": "26-save",
+      "covers": "",
+      "note": "저장",
+      "shot": "26-save.png"
+    },
+    {
+      "id": "26-restart",
+      "covers": "",
+      "note": "재실행",
+      "shot": "26-restart.png"
+    },
+    {
+      "id": "26-board",
+      "covers": "",
+      "note": "{\"dockBefore\":{\"x\":36,\"y\":1992}}",
+      "shot": "26-board.png"
+    },
+    {
+      "id": "26-board-bottom",
+      "covers": "",
+      "note": "{\"dockAfter\":{\"x\":36,\"y\":1992}}",
+      "shot": "26-board-bottom.png"
+    },
+    {
+      "id": "26-caption-reopened",
+      "covers": "",
+      "note": "재실행 후 문구 위치 비교",
+      "shot": "26-caption-reopened.png"
+    },
+    {
+      "id": "26-internal-settings",
+      "covers": "",
+      "note": "내부 빌드 설정과 PRO 스위치",
+      "shot": "26-internal-settings.png"
+    },
+    {
+      "id": "26-internal-pro-on",
+      "covers": "",
+      "note": "PRO 전환",
+      "shot": "26-internal-pro-on.png"
+    },
+    {
+      "id": "26-pro-color",
+      "covers": "",
+      "note": "고급 색상 실제 컨트롤 확인",
+      "shot": "26-pro-color.png"
+    },
+    {
+      "id": "26-pro-hex",
+      "covers": "",
+      "note": "HEX 입력 반영",
+      "shot": "26-pro-hex.png"
+    }
+  ],
+  "skipped": [],
+  "notes": [
+    "close pen panel: accessibility click, no back command",
+    "keyboard dismiss: one accessibility click, zero back/hideKeyboard commands"
+  ],
+  "sessionId": "292c4db8d3cfa6ecfb57fa9a55439b766bfd8279",
+  "crashes": [],
+  "textStringError": {
+    "found": false,
+    "lines": []
+  },
+  "closedBecause": "done",
+  "finishedAt": "2026-09-14T08:22:37.558Z"
+}

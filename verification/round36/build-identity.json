@@ -1,0 +1,28 @@
+{
+  "headCommit": "49206d380f67e8a13d953e39c742cb22347be23f",
+  "uncommittedFiles": 124,
+  "sourceId": "54d2fd8f497a70f508650fa635cf56e774007f6944a1db706d8bd15e23aba5ba",
+  "applicationId": "com.emoticonstudio.app",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "buildType": "release",
+  "aab": {
+    "path": "android\\app\\build\\outputs\\bundle\\release\\app-release.aab",
+    "sha256": "5da6aac1c0c858aad96d410836d7ef53b7ef19b3520bf481c8f5078c20039fda",
+    "bytes": 59617231,
+    "builtAt": "2026-09-14T14:14:30.383Z"
+  },
+  "signingCertificateSha256": [
+    "761141881af40e1622e5d0c6411451aa7814868d753614aaeedaa4f0c5b1a7f8"
+  ],
+  "signingCertificateKind": "dry-run",
+  "internalReview": false,
+  "receiptEndpointPresent": false,
+  "groups": {
+    "CONFIG": "FAIL",
+    "SIGNING": "FAIL",
+    "ARTIFACT": "FAIL",
+    "ASSETS": "BLOCKED"
+  },
+  "checkedAt": "2026-09-14T14:17:02.005Z"
+}
